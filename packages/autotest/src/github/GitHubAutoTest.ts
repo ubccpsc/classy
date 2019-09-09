@@ -327,11 +327,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
-                    msg += ` This replaces the previously queued commit:${removedPrevious.target.commitSHA}`;
+                    msg += `\n\nThis replaces the previously queued commit: \`${removedPrevious.target.commitSHA.slice(-6)}\`.\n\n`;
                 }
                 msg += " Commit will be appended to the grading queue in approximately " +
                     Util.tookHuman(info.timestamp, nextTimeslot) + ".\n" +
-                    "To replace this commit, call autobot and use `#queue` again, and to remove it, `#dequeue`.";
+                    "To replace this commit, call autobot and use `#queue` again, and to remove it, use `#dequeue`.";
             } else {
                 Log.warn("GitHubAutoTest::processCommentQueueRequest(..) - commit: " + info.commitSHA +
                     " - No container info for delivId: " + info.delivId + "; queue ignored.");
