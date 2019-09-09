@@ -106,6 +106,10 @@ export interface GradeReport {
     custom: {};
 
     cluster?: ClusteredResult;
+
+    studentTime?: number;
+    publicTime?: number;
+    privateTime?: number;
 }
 
 /**
