@@ -193,13 +193,18 @@ export class AdminPullRequestsPage extends AdminPage {
             for (const repo of repoList) {
                 const start = Date.now();
                 try {
-                    await this.patchRepo(repo, patch, root);
-                    Log.info("AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo +
-                        "; took: " + Util.took(start));
-                    UI.showSuccessToast("Repo patched: " + repo + " ( " + (++i) + " of " + repoList.length + " )",
-                        {timeout: 1000, animation: 'none'});
+                    const res = await this.patchRepo(repo, patch, root);
+                    if (res) {
+                        Log.info("AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo +
+                            "; took: " + Util.took(start));
+                        UI.showSuccessToast("Repo patched: " + repo + " ( " + (++i) + " of " + repoList.length + " )",
+                            {timeout: 1000, animation: 'none'});
+                    } else {
+                        ++i;
+                        throw new Error();
+                    }
                 } catch (err) {
-                    Log.error("AdminPullRequestPage::patchListOfRepos(..) - patching error for: " + patch + "; ERROR: " + err.message);
+                    Log.error("AdminPullRequestPage::patchListOfRepos(..) - patching error for: " + patch + ".");
                     UI.showErrorToast("Repo NOT patched: " + repo + " (see error console)");
                 }
             }
@@ -209,13 +214,16 @@ export class AdminPullRequestsPage extends AdminPage {
         }
     }
 
-    private async patchRepo(repo: string, patch: string, root: boolean): Promise<void> {
+    private async patchRepo(repo: string, patch: string, root: boolean): Promise<boolean> {
         const url = this.remote + `/portal/admin/patchRepo/${repo}/${patch}/${root}`;
         const options: any = AdminView.getOptions();
         options.method = 'post';
         const res = await fetch(url, options);
         if (res.status !== 200) {
-            throw new Error(`Portal responded: ${res.status}`);
+            Log.warn(`AdminPullRequestsPage::patchRepo() - Repo not patched successfully: ${repo}`);
+            return false;
+        } else {
+            return true;
         }
     }
 
