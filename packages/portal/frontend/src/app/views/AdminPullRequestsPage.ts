@@ -210,10 +210,14 @@ export class AdminPullRequestsPage extends AdminPage {
     }
 
     private async patchRepo(repo: string, patch: string, root: boolean): Promise<void> {
-        const url = this.remote + `/portal/admin/patchRepo?patch=${patch}&repo=${repo}&root=${root}`;
+        const url: URL = new URL(this.remote + `/portal/admin/patchRepo`);
+        url.searchParams.append('patch', patch);
+        url.searchParams.append('repo', repo);
+        url.searchParams.append('root', root.toString());
         const options: any = AdminView.getOptions();
         options.method = 'post';
-        const response = await fetch(url, options);
+        // @ts-ignore
+        return await fetch(url, options);
     }
 
     private async handlePatchAll(): Promise<void> {
