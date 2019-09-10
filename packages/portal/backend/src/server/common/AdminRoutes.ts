@@ -1064,9 +1064,10 @@ export default class AdminRoutes implements IREST {
         const start = Date.now();
         const patch: string = req.params.patch;
         const repoId: string = req.params.repo;
+        const root: boolean = req.params.root === 'true';
         AdminRoutes.rc.getRepository(repoId)
             .then((repo: Repository) => {
-                return AdminRoutes.ghc.createPullRequest(repo, patch);
+                return AdminRoutes.ghc.createPullRequest(repo, patch, false, root);
             })
             .then((result: boolean) => {
                 if (result) {

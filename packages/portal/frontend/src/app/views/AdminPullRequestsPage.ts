@@ -182,6 +182,7 @@ export class AdminPullRequestsPage extends AdminPage {
 
     private async patchListOfRepos(repoList: string[]): Promise<void> {
         const patch = UI.getDropdownValue('adminPatchSelect');
+        const root = UI.getToggleValue('headOrRoot');
         if (repoList.length < 1) {
             UI.showErrorToast("There are no repos to patch.");
         } else if (patch === '-None-') {
@@ -192,7 +193,7 @@ export class AdminPullRequestsPage extends AdminPage {
             for (const repo of repoList) {
                 const start = Date.now();
                 try {
-                    await this.patchRepo(repo, patch);
+                    await this.patchRepo(repo, patch, root);
                     Log.info("AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo +
                         "; took: " + Util.took(start));
                     UI.showSuccessToast("Repo patched: " + repo + " ( " + (++i) + " of " + repoList.length + " )",
@@ -208,8 +209,8 @@ export class AdminPullRequestsPage extends AdminPage {
         }
     }
 
-    private async patchRepo(repo: string, patch: string): Promise<void> {
-        const url = this.remote + `/portal/admin/patchRepo?patch=${patch}&repo=${repo}`;
+    private async patchRepo(repo: string, patch: string, root: boolean): Promise<void> {
+        const url = this.remote + `/portal/admin/patchRepo?patch=${patch}&repo=${repo}&root=${root}`;
         const options: any = AdminView.getOptions();
         options.method = 'post';
         const response = await fetch(url, options);
