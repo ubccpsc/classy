@@ -219,6 +219,7 @@ export class AdminPullRequestsPage extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = 'post';
         const res = await fetch(url, options);
+        const body = await res.json();
         if (res.status !== 200) {
             Log.warn(`AdminPullRequestsPage::patchRepo() - Repo not patched successfully: ${repo}`);
             return false;
