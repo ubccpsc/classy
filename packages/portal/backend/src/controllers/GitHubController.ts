@@ -378,15 +378,17 @@ export class GitHubController implements IGitHubController {
      */
     public async createPullRequest(repo: Repository, prName: string, dryrun: boolean = false, root: boolean = false): Promise<boolean> {
         Log.info(`GitHubController::createPullRequest(..) - Repo: (${repo.id}) start`);
-        if (repo.cloneURL === null || repo.cloneURL === undefined) {
-            Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
-            return false;
-        }
+        // if (repo.cloneURL === null || repo.cloneURL === undefined) {
+        //     Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
+        //     return false;
+        // }
 
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
-        const qs: {[key: string]: string | boolean} = {patch_id: prName, github_url: repo.cloneURL, dryrun: dryrun, from_beginning: root};
+        const qs: {[key: string]: string | boolean} = {
+            patch_id: prName, github_url: `${repo.URL}.git`, dryrun: dryrun, from_beginning: root
+        };
 
         const options = {
             method: 'POST',

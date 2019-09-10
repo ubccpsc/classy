@@ -213,7 +213,10 @@ export class AdminPullRequestsPage extends AdminPage {
         const url = this.remote + `/portal/admin/patchRepo/${repo}/${patch}/${root}`;
         const options: any = AdminView.getOptions();
         options.method = 'post';
-        await fetch(url, options);
+        const res = await fetch(url, options);
+        if (res.status !== 200) {
+            throw new Error(`Portal responded: ${res.status}`);
+        }
     }
 
     private async handlePatchAll(): Promise<void> {
