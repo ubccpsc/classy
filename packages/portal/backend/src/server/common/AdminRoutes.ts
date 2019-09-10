@@ -79,7 +79,7 @@ export default class AdminRoutes implements IREST {
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
         server.get('/portal/admin/listPatches', AdminRoutes.isAdmin, AdminRoutes.listPatches);
-        server.post('/portal/admin/patchRepo', AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+        server.post('/portal/admin/patchRepo/:repo/:patch/:root', AdminRoutes.isAdmin, AdminRoutes.patchRepo);
         server.get('/portal/admin/patchSource', AdminRoutes.isAdmin, AdminRoutes.patchSource);
         // server.post('/portal/admin/patchRepoList', AdminRoutes.isAdmin, AdminRoutes.patchRepoList);
         // server.post('/portal/admin/patchAllRepos', AdminRoutes.isAdmin, AdminRoutes.patchAllRepos);
