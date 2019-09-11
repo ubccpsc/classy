@@ -108,13 +108,13 @@ export class Queue {
 
     public sort(key: string) {
         this.data.sort((a: ContainerInput, b: ContainerInput) => {
-           if ((a.target as any)[key] < (b.target as any)[key]) {
-               return -1;
-           } else if ((a.target as any)[key] > (b.target as any)[key]) {
-               return 1;
-           } else {
-               return 0;
-           }
+            if ((a.target as any)[key] < (b.target as any)[key]) {
+                return -1;
+            } else if ((a.target as any)[key] > (b.target as any)[key]) {
+                return 1;
+            } else {
+                return 0;
+            }
         });
     }
 
@@ -192,7 +192,7 @@ export class Queue {
             // push current elements back onto the front of the stack
             const store = {slots: this.slots, data: this.data};
             await fs.writeJSON(this.persistDir, store);
-            Log.trace("[PTEST] Queue::persist() - done");
+            // Log.trace("[PTEST] Queue::persist() - done");
             return true;
         } catch (err) {
             Log.error("[PTEST] Queue::persist() - ERROR: " + err.message);
@@ -206,14 +206,20 @@ export class Queue {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir);
             Log.info("[PTEST] Queue::load() - rehydrated store: " + JSON.stringify(store));
-            Log.info("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
+            Log.warn("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
 
             // NOTE: this is disabled on purpose for now, but this is what we would do
             // put queues back; add slots to head of queue so they can be run on next tick
             // this.data = store.data;
-            // for (const slot of store.slots) {
-            //     this.data.unshift(slot); // add to head of array
-            // }
+            for (const slot of store.slots) {
+                // this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
+                Log.info("[PTEST] Queue::load() - add executing to HEAD: " + JSON.stringify(slot));
+            }
+
+            for (const data of store.data) {
+                // this.push(data); // add to the head of the queued list (if we are restarting this will always be true anyways)
+                Log.info("[PTEST] Queue::load() - add queued to TAIL: " + JSON.stringify(data));
+            }
         } catch (err) {
             // if anything happens just don't add to the queue
             Log.info("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
