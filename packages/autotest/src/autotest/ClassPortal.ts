@@ -352,7 +352,7 @@ export class ClassPortal implements IClassPortal {
             feedback += await this.getMedianTime(res.delivId);
         }
 
-        if (res.input.containerConfig.maxExecTime) {
+        if (res.input.containerConfig.maxExecTime && (res.output.report.studentTime || res.output.report.publicTime)) {
             feedback += "\n\n";
             feedback += `Executions longer than ${Util.tookHuman(0, res.input.containerConfig.maxExecTime * 1000)} ` +
                 `will be terminated and will not be graded.`;
