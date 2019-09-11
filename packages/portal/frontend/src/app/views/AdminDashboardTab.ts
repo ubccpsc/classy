@@ -270,7 +270,7 @@ export class AdminDashboardTab extends AdminPage {
     private generateTable(annotated: DetailRow[]): string {
         let str = '<span class="normalhistogram"><table style="height: 20px;">';
         str += '<tr>';
-        str += '<td style="width: 2em; text-align: center;">' + annotated.length + '</td>';
+        str += '<td style="width: 2em; text-align: center;">_' + annotated.length + '_</td>'; // underscores for easier searching
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }
