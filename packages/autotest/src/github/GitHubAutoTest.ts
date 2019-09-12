@@ -544,6 +544,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackMode: string = containerConfig.custom.feedbackMode;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(data.input.delivId,
                 data.input.target.personId, data.input.target.timestamp);
+            const futureTarget: boolean = data.input.target.timestamp > Date.now();
 
             if (data.output.postbackOnComplete === true && feedbackDelay === null) {
                 // do this first, doesn't count against quota
@@ -555,7 +556,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
 
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) && feedbackDelay === null) {
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
+                && feedbackDelay === null && !futureTarget) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
