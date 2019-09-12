@@ -546,7 +546,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 data.input.target.personId, data.input.target.timestamp);
             const futureTarget: boolean = data.input.target.timestamp > Date.now();
 
-            if (data.output.postbackOnComplete === true && feedbackDelay === null) {
+            if (data.output.postbackOnComplete === true && feedbackDelay === null && !futureTarget) {
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
