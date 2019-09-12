@@ -311,7 +311,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL);
 
         // Remove any preexisting queued commits
-        const removedPrevious: ContainerInput | null = await this.removeFromScheduleQueue([
+        const removedPrevious: ContainerInput | null = this.removeFromScheduleQueue([
                 {key: "delivId", value: info.delivId},
                 {key: "personId", value: info.personId}
             ]);
@@ -351,7 +351,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async handleCommentUnschedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::handleCommentUnschedule(..) - handling student dequque request for: " +
             info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
-        const res: ContainerInput | null = await this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
+        const res: ContainerInput | null = this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
         let msg;
         if (res) {
             Log.info("GitHubAutoTest::handleCommentUnschedule(..) - Unschedule successful for: " +
@@ -548,7 +548,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
-            if (data.output.postbackOnComplete === true && feedbackDelay === null && !futureTarget) {
+            if (data.output.postbackOnComplete === true && feedbackDelay === null) {
+                if (futureTarget) {
+                    Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
+                        `removing ${data.input.target.personId} from scheduleQueue.`);
+                    this.removeFromScheduleQueue([{key: "commitURL", value: data.input.target.commitURL}]);
+                }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
