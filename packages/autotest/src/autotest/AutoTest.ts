@@ -1,5 +1,4 @@
 import * as Docker from "dockerode";
-import {URL} from "url";
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
@@ -49,11 +48,12 @@ export abstract class AutoTest implements IAutoTest {
         this.classPortal = classPortal;
         this.docker = docker;
         this.loadQueues();
-        // TODO this is a temporary solution
+
+        // TODO: this is a temporary solution to make sure the schedule queue is checked
         setInterval(() => {
-            Log.trace("AutoTest$1() - Calling Tick");
+            Log.trace("AutoTest::<init>::$1 - Calling Tick");
             this.tick();
-            }, 1000 * 60 * 5);
+        }, 1000 * 60 * 5);
     }
 
     public addToStandardQueue(input: ContainerInput): void {
