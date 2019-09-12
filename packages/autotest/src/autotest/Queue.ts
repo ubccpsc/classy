@@ -189,7 +189,8 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
-            Log.info("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir);
+            Log.info("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
+                " # slots: " + this.slots.length + "; # data: " + this.data.length);
             // push current elements back onto the front of the stack
             const store = {slots: this.slots, data: this.data};
             await fs.writeJSON(this.persistDir, store);
@@ -214,14 +215,14 @@ export class Queue {
             // put executions that were running but not done on the front of the queue
             for (const slot of store.slots) {
                 Log.info("[PTEST] Queue::load() - queue: " + this.name +
-                    "; add executing to HEAD: " + JSON.stringify(slot));
+                    "; add executing to HEAD: " + slot.target.commitURL);
                 this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
             }
 
             // push all other planned executions to the end of the queue
             for (const data of store.data) {
                 Log.info("[PTEST] Queue::load() - queue: " + this.name +
-                    "; add queued to TAIL: " + JSON.stringify(data));
+                    "; add queued to TAIL: " + data.target.commitURL);
                 this.push(data); // add to the head of the queued list (if we are restarting this will always be true anyways)
             }
             Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " - done");
