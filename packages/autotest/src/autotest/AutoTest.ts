@@ -188,6 +188,11 @@ export abstract class AutoTest implements IAutoTest {
             Log.trace("AutoTest::updateScheduleQueue() - Adding to the standard queue from scheduled");
             this.addToStandardQueue(this.scheduleQueue.pop());
             scheduleQueueInput = this.scheduleQueue.peek();
+            // TODO create handleScheduleQueuePop
+            // Implemented by child class
+            // GitHubAutoTest will just call
+            // handleCommentStudent(info,await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA))
+            // after it deletes the #schdule flag
         }
     }
 
@@ -198,7 +203,8 @@ export abstract class AutoTest implements IAutoTest {
             const writing = [
                 this.standardQueue.persist(),
                 this.regressionQueue.persist(),
-                this.expressQueue.persist()
+                this.expressQueue.persist(),
+                this.scheduleQueue.persist()
             ];
             await Promise.all(writing);
             Log.info("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
@@ -215,6 +221,7 @@ export abstract class AutoTest implements IAutoTest {
             this.standardQueue.load();
             this.regressionQueue.load();
             this.expressQueue.load();
+            this.scheduleQueue.load();
             Log.info("[PTEST] AutoTest::loadQueues() - done; queues loaded");
         } catch (err) {
             Log.error("[PTEST] AutoTest::loadQueues() - ERROR: " + err.message);
