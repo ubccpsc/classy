@@ -328,7 +328,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
-                    msg += `\n\nThis replaces the previously scheduled commit: \`${removedPrevious.target.commitSHA.slice(0, 6)}\`.\n\n`;
+                    msg += `\n\nThis replaces the previously scheduled commit: \`${removedPrevious.target.commitSHA.slice(0, 7)}\`.\n\n`;
                 }
                 msg += " Commit will be appended to the grading queue in approximately " +
                     Util.tookHuman(info.timestamp, nextTimeslot) + ".\n" +
