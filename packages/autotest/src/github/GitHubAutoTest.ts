@@ -425,7 +425,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // false if res exists and has been previously paid for
         if (res !== null) {
-            const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard');
+            const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard', info.timestamp);
             if (feedbackRequested !== null) {
                 Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
                 return false;
@@ -538,22 +538,19 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const that = this;
-            const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
-            const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
+            const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId,
+                'standard', data.input.target.timestamp);
+            const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId,
+                'check', data.input.target.timestamp);
             const containerConfig: any = await this.getContainerConfig(data.input.delivId);
             const feedbackMode: string = containerConfig.custom.feedbackMode;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(data.input.delivId,
                 data.input.target.personId, data.input.target.timestamp);
-            const futureTarget: boolean = data.input.target.timestamp > Date.now();
-
-            Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
             if (data.output.postbackOnComplete === true && feedbackDelay === null) {
-                if (futureTarget) {
-                    Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
-                        `removing ${data.input.target.personId} from scheduleQueue.`);
-                    this.removeFromScheduleQueue([{key: "commitURL", value: data.input.target.commitURL}]);
-                }
+                Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
+                    `removing ${data.input.target.personId} from scheduleQueue.`);
+                this.removeFromScheduleQueue([{key: "commitURL", value: data.input.target.commitURL}]);
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
@@ -563,8 +560,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
 
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget) {
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) && feedbackDelay === null) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
@@ -745,10 +741,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param commitURL
      * @param delivId
+     * @param kind
+     * @param timestamp
      */
-    private async getRequestor(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
+    private async getRequestor(commitURL: string, delivId: string, kind: string, timestamp: number): Promise<CommitTarget | null> {
         try {
-            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId, kind);
+            const record: CommitTarget = await this.dataStore.getCommentRecord(commitURL, delivId, kind, timestamp);
             if (record !== null) {
                 return record;
             }
