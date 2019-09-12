@@ -189,6 +189,7 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
+            Log.info("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir);
             // push current elements back onto the front of the stack
             const store = {slots: this.slots, data: this.data};
             await fs.writeJSON(this.persistDir, store);
@@ -205,7 +206,7 @@ export class Queue {
         try {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir);
-            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " - start");
+            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
             Log.info("[PTEST] Queue::load() - rehydrating: " +
                 this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);
             // Log.warn("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");

@@ -198,7 +198,8 @@ export abstract class AutoTest implements IAutoTest {
             const writing = [
                 this.standardQueue.persist(),
                 this.regressionQueue.persist(),
-                this.expressQueue.persist()
+                this.expressQueue.persist(),
+                this.scheduleQueue.persist()
             ];
             await Promise.all(writing);
             Log.info("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
@@ -215,6 +216,7 @@ export abstract class AutoTest implements IAutoTest {
             this.standardQueue.load();
             this.regressionQueue.load();
             this.expressQueue.load();
+            this.scheduleQueue.load();
             Log.info("[PTEST] AutoTest::loadQueues() - done; queues loaded");
         } catch (err) {
             Log.error("[PTEST] AutoTest::loadQueues() - ERROR: " + err.message);
