@@ -328,7 +328,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
-                    msg += `\n\nThis replaces the previously queued commit: \`${removedPrevious.target.commitSHA.slice(-6)}\`.\n\n`;
+                    msg += `\n\nThis replaces the previously scheduled commit: \`${removedPrevious.target.commitSHA.slice(-6)}\`.\n\n`;
                 }
                 msg += " Commit will be appended to the grading queue in approximately " +
                     Util.tookHuman(info.timestamp, nextTimeslot) + ".\n" +
@@ -349,7 +349,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async handleCommentUnschedule(info: CommitTarget): Promise<void> {
-        Log.info("GitHubAutoTest::handleCommentUnschedule(..) - handling student dequque request for: " +
+        Log.info("GitHubAutoTest::handleCommentUnschedule(..) - handling student UNschedule request for: " +
             info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
         const res: ContainerInput | null = this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
         let msg;
