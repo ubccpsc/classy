@@ -110,7 +110,7 @@ export class TeamController {
         }
 
         // sort by delivIds
-        myTeams = myTeams.sort(function (a: Team, b: Team) {
+        myTeams = myTeams.sort(function(a: Team, b: Team) {
             return a.delivId.localeCompare(b.delivId);
         });
 
@@ -218,19 +218,20 @@ export class TeamController {
             const existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
-                let repoName: string = '';
-                repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_` : `${deliv.id}_`;
 
-                if (people.length === 1) {
-                    const kind = people[0].kind;
-                    if (kind === PersonKind.ADMIN || kind === PersonKind.STAFF || kind === PersonKind.ADMINSTAFF) {
-                        repoName += people[0].githubId;
-                    } else {
-                        repoName += `user${await this.db.getUniqueTeamNumber(deliv.id)}`;
-                    }
-                } else {
-                    repoName += `team${await this.db.getUniqueTeamNumber(deliv.id)}`;
-                }
+                // let repoName: string = '';
+                // repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_` : `${deliv.id}_`;
+                //
+                // if (people.length === 1) {
+                //     const kind = people[0].kind;
+                //     if (kind === PersonKind.ADMIN || kind === PersonKind.STAFF || kind === PersonKind.ADMINSTAFF) {
+                //         repoName += people[0].githubId;
+                //     } else {
+                //         repoName += `user${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                //     }
+                // } else {
+                //     repoName += `team${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                // }
 
                 const team: Team = {
                     id:        name,
@@ -239,8 +240,8 @@ export class TeamController {
                     URL:       null,
                     personIds: peopleIds,
                     custom:    custom,
-                    repoName:  repoName,
-                    repoUrl:   null,
+                    repoName:  null, // repoName, // team counts above used repoName
+                    repoUrl:   null
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);
@@ -262,7 +263,7 @@ export class TeamController {
             people:   team.personIds,
             URL:      team.URL,
             repoName: team.repoName,
-            repoUrl:  team.repoUrl,
+            repoUrl:  team.repoUrl
         };
 
         return t;
