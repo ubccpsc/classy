@@ -320,19 +320,19 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUT);
 
     // TODO: actually write tests for the PR feature
-    xit("Should fail to create a pull request.", async function() {
-        let res = null;
-        let ex = null;
-        try {
-            // patchtool has not been integrated with tests yet,
-            // so should fail to contact patchtool and return false
-            const repos = await new RepositoryController().getAllRepos();
-            res = await gc.createPullRequest(repos[0], 'patch');
-        } catch (err) {
-            ex = err;
-        }
-        expect(res).to.be.false;
-        expect(ex).to.be.null;
-    }).timeout(Test.TIMEOUT);
+    // xit("Should fail to create a pull request.", async function() {
+    //     let res = null;
+    //     let ex = null;
+    //     try {
+    //         // patchtool has not been integrated with tests yet,
+    //         // so should fail to contact patchtool and return false
+    //         const repos = await new RepositoryController().getAllRepos();
+    //         res = await gc.createPullRequest(repos[0], 'patch');
+    //     } catch (err) {
+    //         ex = err;
+    //     }
+    //     expect(res).to.be.false;
+    //     expect(ex).to.be.null;
+    // }).timeout(Test.TIMEOUT);
 
 });

@@ -22,7 +22,7 @@ import {Person, PersonKind, Repository, Team} from "../../src/Types";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe("AdminController", () => {
+describe.only("AdminController", () => {
 
     let ac: AdminController;
     let cc: ICourseController;
@@ -161,15 +161,16 @@ describe("AdminController", () => {
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
-        Log.test('teams: ' + JSON.stringify(res));
+        Log.test('Teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
             id:       Test.TEAMNAME1,
             delivId:  "d0",
             people:   [Test.USER1.id, Test.USER2.id],
             URL:      null,
             repoName: null,
-            repoUrl:  null,
+            repoUrl:  null
         };
+        Log.test('Expected team: ' + JSON.stringify(t));
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
 
