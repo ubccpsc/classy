@@ -311,7 +311,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL);
 
         // Remove any preexisting queued commits
-        const removedPrevious: ContainerInput | null = await this.removeFromScheduleQueue([
+        const removedPrevious: ContainerInput | null = this.removeFromScheduleQueue([
                 {key: "delivId", value: info.delivId},
                 {key: "personId", value: info.personId}
             ]);
@@ -328,7 +328,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
-                    msg += `\n\nThis replaces the previously queued commit: \`${removedPrevious.target.commitSHA.slice(-6)}\`.\n\n`;
+                    msg += `\n\nThis replaces the previously scheduled commit: \`${removedPrevious.target.commitSHA.slice(0, 7)}\`.\n\n`;
                 }
                 msg += " Commit will be appended to the grading queue in approximately " +
                     Util.tookHuman(info.timestamp, nextTimeslot) + ".\n" +
@@ -349,9 +349,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async handleCommentUnschedule(info: CommitTarget): Promise<void> {
-        Log.info("GitHubAutoTest::handleCommentUnschedule(..) - handling student dequque request for: " +
+        Log.info("GitHubAutoTest::handleCommentUnschedule(..) - handling student UNschedule request for: " +
             info.personId + "; deliv: " + info.delivId + "; for commit: " + info.commitURL);
-        const res: ContainerInput | null = await this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
+        const res: ContainerInput | null = this.removeFromScheduleQueue([{key: "commitURL", value: info.commitURL}]);
         let msg;
         if (res) {
             Log.info("GitHubAutoTest::handleCommentUnschedule(..) - Unschedule successful for: " +
@@ -545,7 +545,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackDelay: string | null = await this.requestFeedbackDelay(data.input.delivId,
                 data.input.target.personId, data.input.target.timestamp);
 
+            const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
+
+            Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
+
             if (data.output.postbackOnComplete === true && feedbackDelay === null) {
+                if (futureTarget) {
+                    Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
+                        `removing ${data.input.target.personId} from scheduleQueue.`);
+                    this.removeFromScheduleQueue([{key: "commitURL", value: data.input.target.commitURL}]);
+                }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
                     data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
@@ -555,7 +564,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
 
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) && feedbackDelay === null) {
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
+                && feedbackDelay === null && !futureTarget) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +

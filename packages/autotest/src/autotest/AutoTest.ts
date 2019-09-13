@@ -188,6 +188,11 @@ export abstract class AutoTest implements IAutoTest {
             Log.trace("AutoTest::updateScheduleQueue() - Adding to the standard queue from scheduled");
             this.addToStandardQueue(this.scheduleQueue.pop());
             scheduleQueueInput = this.scheduleQueue.peek();
+            // TODO create handleScheduleQueuePop
+            // Implemented by child class
+            // GitHubAutoTest will just call
+            // handleCommentStudent(info,await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA))
+            // after it deletes the #schdule flag
         }
     }
 
