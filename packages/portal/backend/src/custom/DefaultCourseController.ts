@@ -10,9 +10,4 @@ export class DefaultCourseController extends CourseController {
         super(ghController);
     }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<string> {
-        Log.info("DefaultCourseController::computeNames() - passing up to CourseController");
-        return super.computeNames(deliv, people);
-    }
-
 }
