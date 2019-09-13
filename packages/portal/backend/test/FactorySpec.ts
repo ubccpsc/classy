@@ -37,7 +37,7 @@ describe('Factory', function() {
 
     it('Can get the course controller for courses', async function() {
         // should be able to get our test controller
-        let actual = await Factory.getCourseController(null, 'classytest');
+        const actual = await Factory.getCourseController(null, 'classytest');
         Log.test("Controller should not be null: " + actual);
         expect(actual).to.not.be.null;
 
