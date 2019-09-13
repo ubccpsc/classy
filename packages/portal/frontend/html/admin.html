@@ -63,7 +63,7 @@
                     </select></div>
                 <div id="studentListTableResults">
                     <ons-list-header>Students</ons-list-header>
-                    <div id="studentListTable" style="width:100%;"></div>
+                    <div id="studentListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 </div>
                 <div id="studentListTableNone" class="noResultsRow">
                     No Results
@@ -86,7 +86,7 @@
                     No Results
                 </div>
                 <ons-list-header>Individuals</ons-list-header>
-                <div id="teamsIndividualListTable" style="width:100%;">
+                <div id="teamsIndividualListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;">
                 </div>
                 <div id="teamsIndividualListTableNone" class="noResultsRow">
                     No Results
@@ -124,7 +124,7 @@
                     <button id="resultsUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
-                <div id="resultsListTable" style="width:100%;"></div>
+                <div id="resultsListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <div id="resultsListTableNone" class="noResultsRow">
                     No Results
                 </div>
@@ -157,7 +157,7 @@
                     <button id="dashboardUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
-                <div id="dashboardListTable" style="width:100%;"></div>
+                <div id="dashboardListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <div id="dashboardListTableNone" class="noResultsRow">
                     No Results
                 </div>
@@ -204,7 +204,7 @@
                     <div class="expandable-content">
                         BETA: This will update your classlist with the latest Classlist data
 
-                        This will act as if you uploaded your own classlist. The goal is to set this on a timer and automatically update it 
+                        This will act as if you uploaded your own classlist. The goal is to set this on a timer and automatically update it
                         once we further understand the implications of this logic.
                     </div>
                 </ons-list-item>
@@ -939,7 +939,7 @@
                         </div>
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
-                            documentation for details about how to construct the URL. The URL should start with "https://" and end with 
+                            documentation for details about how to construct the URL. The URL should start with "https://" and end with
                             ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
                         </div>
                     </ons-list-item>
