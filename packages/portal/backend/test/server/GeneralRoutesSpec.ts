@@ -29,6 +29,7 @@ describe('General Routes', function() {
         await Test.prepareAll();
 
         // add files for getResource
+        // NOTE: if this fails in local testing, ensure your HOST_DIR and PERSIST_DIR are set appropriately
         const pDir = Config.getInstance().getProp(ConfigKey.persistDir);
         fs.ensureDirSync(pDir);
 
