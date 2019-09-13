@@ -22,7 +22,7 @@ import {Person, PersonKind, Repository, Team} from "../../src/Types";
 import '../GlobalSpec'; // load first
 import './GradeControllerSpec'; // load first
 
-describe.only("AdminController", () => {
+describe("AdminController", () => {
 
     let ac: AdminController;
     let cc: ICourseController;
