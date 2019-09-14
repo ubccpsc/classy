@@ -683,9 +683,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_' + Test.USER1.github + '_' + Test.USER2.github);
+        const team = await dc.getTeam('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId);
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_' + Test.USER1.github + '_' + Test.USER2.github, deliv, [team], {});
+        const repo = await rc.createRepository('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId, deliv, [team], {});
 
         ex = null;
         try {

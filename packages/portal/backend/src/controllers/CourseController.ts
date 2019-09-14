@@ -145,7 +145,9 @@ export class CourseController implements ICourseController {
 
         let postfix = '';
         for (const person of people) {
-            postfix = postfix + '_' + person.githubId;
+            // NOTE: use CSID here to be more resilient if CWLs change
+            // TODO: this would be even better if it was person.id
+            postfix = postfix + '_' + person.csId;
         }
 
         let tName = '';
