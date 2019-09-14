@@ -135,10 +135,10 @@ jobs:
 #            name: Converting autotest test results to HTML
 #            when: on_success
 
-      - run:
-            command: cd packages/portal/backend && yarn coveralls
-            name: Running backend coveralls
-            when: on_success
+#      - run:
+#            command: cd packages/portal/backend && yarn coveralls
+#            name: Running backend coveralls
+#            when: on_success
 
 # coveralls doesn't integrate coverage
 # so this overwrites the backend coverage (which we care about more)
