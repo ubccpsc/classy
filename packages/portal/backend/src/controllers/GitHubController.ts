@@ -293,7 +293,7 @@ export class GitHubController implements IGitHubController {
                         team.URL = teamValue.URL;
                         team.githubId = teamValue.githubTeamNumber;
                         team.custom.githubAttached = false; // attaching happens in release
-                        team.repoUrl = repoVal;
+                        // team.repoUrl = repoVal;
                         await dbc.writeTeam(team);
                     }
 

@@ -993,8 +993,8 @@ export default class AdminRoutes implements IREST {
         }
 
         const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
-        const name = await cc.computeNames(deliv, people);
-        const team = await tc.formTeam(name, deliv, people, true);
+        const names = await cc.computeNames(deliv, people);
+        const team = await tc.formTeam(names.teamName, deliv, people, true);
 
         const dbc = DatabaseController.getInstance();
         await dbc.writeAudit(AuditLabel.TEAM_ADMIN, personId, null, team, {});
@@ -1004,8 +1004,8 @@ export default class AdminRoutes implements IREST {
             delivId:  team.delivId,
             people:   team.personIds,
             URL:      team.URL,
-            repoName: team.repoName,
-            repoUrl:  team.repoUrl,
+            // repoName: team.repoName,
+            // repoUrl:  team.repoUrl,
         };
 
         Log.info('AdminRoutes::performPostTeam(..) - team created: ' + team.id);

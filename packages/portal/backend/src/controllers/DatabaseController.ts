@@ -633,8 +633,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
-                repoName:  null, // null for special teams
-                repoUrl:   null,
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -648,8 +648,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
-                repoName:  null, // null for special teams
-                repoUrl:   null,
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -663,8 +663,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
-                repoName:  null, // null for special teams
-                repoUrl:   null,
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);

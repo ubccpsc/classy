@@ -119,7 +119,7 @@ describe("AdminController", () => {
         const names = await cc.computeNames(deliv, [p1, p2]);
 
         // const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
-        const t = await Test.createTeam(names, Test.DELIVIDPROJ, [p1.id, p2.id]);
+        const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         await dbc.writeTeam(t);
     }
 
@@ -167,8 +167,8 @@ describe("AdminController", () => {
             delivId:  "d0",
             people:   [Test.USER1.id, Test.USER2.id],
             URL:      null,
-            repoName: null,
-            repoUrl:  null
+            // repoName: null,
+            // repoUrl:  null
         };
         Log.test('Expected team: ' + JSON.stringify(t));
         expect(actual).to.deep.include(t); // make sure at least one student with the right format is in there
@@ -446,20 +446,19 @@ describe("AdminController", () => {
 
         let res = await cc.computeNames(deliv, [p1, p2]);
 
-        expect(res).to.equal(tExpected);
-        // expect(res.repoName).to.equal(rExpected);
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
 
         // make those teams
-        const t = await Test.createTeam(res, deliv.id, []);
+        const t = await Test.createTeam(res.teamName, deliv.id, []);
         await db.writeTeam(t);
-        const r = await Test.createRepository(t.repoName, deliv.id, res);
+        const r = await Test.createRepository(res.repoName, deliv.id, res.teamName);
         await db.writeRepository(r);
 
         // make sure the bar has been raised
         res = await cc.computeNames(deliv, [p1, p2]);
-        expect(res).to.equal(tExpected);
-        // expect(res.repoName).to.equal(rExpected);
-        // TODO remake this test
+        expect(res.teamName).to.equal(tExpected);
+        expect(res.repoName).to.equal(rExpected);
     });
 
     describe("Slow AdminController Tests", () => {

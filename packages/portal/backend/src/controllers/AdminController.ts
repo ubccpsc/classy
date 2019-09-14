@@ -1,5 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {ClusteredResult} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestDashboardTransport,
     AutoTestGradeTransport,
@@ -15,8 +17,6 @@ import {
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
-
-import {ClusteredResult} from "../../../../common/types/ContainerTypes";
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {GitHubActions} from "./GitHubActions";
@@ -177,8 +177,8 @@ export class AdminController {
                 delivId:  team.delivId,
                 people:   team.personIds,
                 URL:      team.URL,
-                repoName: team.repoName,
-                repoUrl:  team.repoUrl,
+                // repoName: team.repoName,
+                // repoUrl:  team.repoUrl
             };
             teams.push(teamTransport);
 
@@ -674,9 +674,9 @@ export class AdminController {
         if (formSingleTeams === true) {
             // now create teams for individuals
             for (const individual of allPeople) {
-                const name = await cc.computeNames(deliv, [individual]);
+                const names = await cc.computeNames(deliv, [individual]);
 
-                const team = await this.tc.formTeam(name, deliv, [individual], false);
+                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
                 delivTeams.push(team);
             }
         }
@@ -694,13 +694,13 @@ export class AdminController {
             for (const pId of delivTeam.personIds) {
                 people.push(await this.pc.getPerson(pId));
             }
-            const name = await cc.computeNames(deliv, people);
+            const names = await cc.computeNames(deliv, people);
 
             Log.trace('AdminController::planProvision( .. ) - delivTeam: ' + delivTeam.id +
-                '; computed team: ' + name); // + '; computed repo: ' + names.repoName);
+                '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
 
-            const team = await this.tc.getTeam(name); // s.teamName);
-            let repo = await this.rc.getRepository(team.repoName);
+            const team = await this.tc.getTeam(names.teamName);
+            let repo = await this.rc.getRepository(names.repoName);
 
             if (team === null) {
                 // sanity checking team must not be null given what we have done above (should never happen)
@@ -708,12 +708,12 @@ export class AdminController {
             }
 
             if (repo === null) {
-                repo = await this.rc.createRepository(team.repoName, deliv, [team], {});
+                repo = await this.rc.createRepository(names.repoName, deliv, [team], {});
             }
 
             if (repo === null) {
                 // sanity checking repo must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + team.repoName); // names.repoName);
+                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
             }
 
             /* istanbul ignore if */
@@ -845,12 +845,12 @@ export class AdminController {
         for (const team of delivTeams) {
             try {
                 // get repo for team
-                // const people: Person[] = [];
-                // for (const pId of team.personIds) {
-                //     people.push(await this.dbc.getPerson(pId));
-                // }
-                // const names = await cc.computeNames(deliv, people);
-                const repo = await this.dbc.getRepository(team.repoName);
+                const people: Person[] = [];
+                for (const pId of team.personIds) {
+                    people.push(await this.dbc.getPerson(pId));
+                }
+                const names = await cc.computeNames(deliv, people);
+                const repo = await this.dbc.getRepository(names.repoName);
 
                 /* istanbul ignore else */
                 if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {

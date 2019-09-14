@@ -240,8 +240,8 @@ export class TeamController {
                     URL:       null,
                     personIds: peopleIds,
                     custom:    custom,
-                    repoName:  null, // repoName, // team counts above used repoName
-                    repoUrl:   null
+                    // repoName:  null, // repoName, // team counts above used repoName
+                    // repoUrl:   null
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);
@@ -262,8 +262,8 @@ export class TeamController {
             delivId:  team.delivId,
             people:   team.personIds,
             URL:      team.URL,
-            repoName: team.repoName,
-            repoUrl:  team.repoUrl
+            // repoName: team.repoName,
+            // repoUrl:  team.repoUrl
         };
 
         return t;
