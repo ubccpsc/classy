@@ -2,6 +2,8 @@ import Log from "../../../../common/Log";
 import {CourseController} from "../controllers/CourseController";
 import {DatabaseController} from "../controllers/DatabaseController";
 import {IGitHubController} from "../controllers/GitHubController";
+import {RepositoryController} from "../controllers/RepositoryController";
+import {TeamController} from "../controllers/TeamController";
 import {Deliverable, Person, Team} from "../Types";
 
 /**
@@ -40,7 +42,7 @@ export class CustomCourseController extends CourseController {
 
         const db = DatabaseController.getInstance();
         let teamName: string | null = null;
-        const allTeams: Team[] = [];
+        let allTeams: Team[] = [];
         for (const person of people) {
             const teams = await db.getTeamsForPerson(person.id);
             for (const team of teams) {
@@ -57,6 +59,22 @@ export class CustomCourseController extends CourseController {
                 }
             }
         }
+        // remove exact duplicates (common because p1s d1 team _should_ be the same as p2s d1 team)
+        const allTeamsUnique: Team[] = [];
+        allTeams.forEach(function(candidateTeam) {
+            let include = true;
+            allTeamsUnique.forEach(function(matchTeam) {
+                if (candidateTeam.id === matchTeam.id) {
+                    include = false;
+                }
+            });
+            if (include === true) {
+                allTeamsUnique.push(candidateTeam);
+            }
+        });
+        allTeams = allTeamsUnique;
+
+        Log.trace('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - allTeams: ' + JSON.stringify(allTeams));
 
         if (allTeams.length === 1) {
             teamName = allTeams[0].id;
@@ -67,6 +85,7 @@ export class CustomCourseController extends CourseController {
 
         if (teamName === null) {
             const teamNum = await db.getUniqueTeamNumber(deliv.id);
+            Log.trace('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - null teamName; new number: ' + teamNum);
             if (deliv.teamPrefix.length > 0) {
                 teamName = deliv.teamPrefix + "_" + deliv.id + "_team" + teamNum;
             } else {
@@ -75,6 +94,7 @@ export class CustomCourseController extends CourseController {
         }
 
         const postfix = teamName.substr(teamName.lastIndexOf('_') + 1);
+        Log.trace('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - postfix: ' + postfix);
 
         // let postfix = '';
         // for (const person of people) {
@@ -92,22 +112,32 @@ export class CustomCourseController extends CourseController {
 
         let rName = '';
         if (deliv.repoPrefix.length > 0) {
-            rName = deliv.repoPrefix + '_' + deliv.id + postfix;
+            rName = deliv.repoPrefix + '_' + deliv.id + '_' + postfix;
         } else {
-            rName = deliv.id + postfix;
+            rName = deliv.id + '_' + postfix;
         }
 
         // const db = DatabaseController.getInstance();
-        const teamObj = await db.getTeam(teamName);
-        const repoObj = await db.getRepository(rName);
+        let teamObj = await db.getTeam(teamName);
+        let repoObj = await db.getRepository(rName);
 
-        if (teamObj === null && repoObj === null) {
-            Log.info('CustomCourseController::computeNames( ... ) - new; t: ' + teamName + ', r: ' + rName);
-            return {teamName: teamName, repoName: rName};
-        } else {
-            // TODO: should really verify that the existing teams contain the right people already
-            Log.info('CustomCourseController::computeNames( ... ) - existing; t: ' + teamName + ', r: ' + rName);
-            return {teamName: teamName, repoName: rName};
+        if (teamObj === null) {
+            Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
+            const tc = new TeamController();
+            teamObj = await tc.createTeam(teamName, deliv, people, {});
         }
+
+        if (repoObj === null) {
+            Log.info('CustomCourseController::computeNames( ... ) - creating new repo: r: ' + rName);
+            const rc = new RepositoryController();
+            repoObj = await rc.createRepository(rName, deliv, [teamObj], {});
+        }
+
+        if (teamObj === null || repoObj === null) {
+            throw new Error('CustomCourseController::computeNames( ... ) - nulls encountered!; t: ' + teamObj + ', r: ' + repoObj);
+        }
+
+        Log.info('CustomCourseController::computeNames( ... ) - existing; t: ' + teamName + ', r: ' + rName);
+        return {teamName: teamName, repoName: rName};
     }
 }

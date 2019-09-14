@@ -459,7 +459,7 @@ export class DatabaseController {
             // This prevents us from running the tests in production by accident and wiping the database
 
             const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL,
-                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL];
+                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL, this.TICKERCOLL];
 
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
