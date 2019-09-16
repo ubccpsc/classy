@@ -64,7 +64,7 @@ http {
             port_in_redirect   off;
             rewrite            /pl(/.+) $1 break;
             proxy_read_timeout 240;
-            proxy_pass         http://prairielearn:3000/pl;
+            proxy_pass         http://prairielearn:3000;
         }
 
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
