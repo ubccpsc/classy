@@ -77,6 +77,20 @@ describe("CustomCourseController", () => {
         expect(names.repoName).to.equal('d1_team001');
     });
 
+    // TODO: have to decide if we actually want to do this
+    //
+    // it("Names should not be anonymized for staff.", async () => {
+    //     const p1 = await new PersonController().getPerson(Test.ADMIN1.id);
+    //     const p2 = await new PersonController().getPerson(Test.ADMINSTAFF1.id);
+    //     const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+    //
+    //     const names = await cc.computeNames(deliv, [p1, p2]);
+    //     Log.test("Computed names: " + JSON.stringify(names));
+    //
+    //     expect(names.teamName).to.equal('t_d1_team001');
+    //     expect(names.repoName).to.equal('d1_team001');
+    // });
+
     it("Counter should reset for a different deliverable.", async () => {
         const p1 = await new PersonController().getPerson(Test.USER3.id);
         const p2 = await new PersonController().getPerson(Test.USER4.id);
@@ -108,4 +122,5 @@ describe("CustomCourseController", () => {
         expect(names.teamName).to.equal('d0_team000');
         expect(names.repoName).to.equal('d0_team000');
     });
+
 });

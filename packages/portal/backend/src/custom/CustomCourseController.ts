@@ -124,7 +124,16 @@ export class CustomCourseController extends CourseController {
         if (teamObj === null) {
             Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
             const tc = new TeamController();
-            teamObj = await tc.createTeam(teamName, deliv, people, {});
+
+            try {
+                // formTeam enforces team restrictions (createTeam does not)
+                // NOTE: this will fail if we need adminOverride === true
+                teamObj = await tc.formTeam(teamName, deliv, people, false);
+            } catch (err) {
+                Log.error("CustomCourseController::computeNames( ... ) - invalid team: " + err.message);
+                // pass this error on so whoever called this will know why the team formation failed
+                throw err;
+            }
         }
 
         if (repoObj === null) {

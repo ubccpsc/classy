@@ -364,7 +364,7 @@ export default class GeneralRoutes implements IREST {
             const people: Person[] = [];
             let requestor = null;
             for (const pId of nameIds) {
-                const p = await pc.getGitHubPerson(pId); // students will provide github ids // getPerson(pId);
+                const p = await pc.getGitHubPerson(pId); // students will provide github ids
                 if (p !== null) {
                     people.push(p);
                     if (p.id === user) {
