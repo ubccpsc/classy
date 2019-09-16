@@ -171,8 +171,10 @@ services:
         - GH_BOT_TOKEN
         - "COURSE_GH_ORG_TOKEN=${GH_DOCKER_TOKEN}"
         - PATCH_SOURCE_REPO
+        restart: always
     prairielearn:
         image: "prairielearn/prairielearn"
         container_name: prairielearn
         expose:
         - 3000
+        restart: always
