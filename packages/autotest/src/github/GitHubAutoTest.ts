@@ -426,7 +426,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         // false if res exists and has been previously paid for
         if (res !== null) {
             const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard');
-            if (feedbackRequested !== null) {
+            if (feedbackRequested !== null && feedbackRequested.timestamp < Date.now()) {
                 Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
                 return false;
             }
