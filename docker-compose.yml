@@ -178,3 +178,5 @@ services:
         expose:
         - 3000
         restart: always
+        volumes:
+        - "${PL_HOST_PATH}:/course"
