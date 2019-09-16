@@ -175,8 +175,8 @@ services:
     prairielearn:
         image: "prairielearn/prairielearn"
         container_name: prairielearn
-        expose:
-        - 3000
+        ports:
+          - "${PL_HOST_PORT}:3000"
         restart: always
         volumes:
         - "${PL_HOST_PATH}:/course"
