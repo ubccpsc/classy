@@ -48,7 +48,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * Handles push events from Github.
      *
      * Persists the event so it can be restarted later if needed.
-     * Schedules the build on the standard queue.
+     *
+     * Schedules the build on the standard queue if there is a default deliverable and it is open.
+     *
+     *
      *
      * @param info
      * @param delivId
@@ -71,13 +74,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (delivId !== null) {
                 const deliv = await this.classPortal.getContainerDetails(delivId);
                 if (deliv === null) {
-                    Log.warn("GitHubAutoTest::handlePushEvent(..) - Default deliverable had no details.");
-                    return true;
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; no default deliverable");
+                    return false;
                 }
 
                 if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed");
-                    return true;
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed to grading");
+                    return false;
                 }
 
                 const containerConfig = await this.getContainerConfig(delivId);
@@ -85,16 +88,18 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
                     this.addToStandardQueue(input);
                     this.tick();
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
+                    return true;
                 } else {
                     Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
-                        " - No container info for delivId: " + delivId + "; push ignored.");
+                        " - No container info for delivId: " + delivId + "; push ignored");
+                    return false;
                 }
             } else {
                 // no active deliverable, ignore this push event (don't push an error either)
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA + " - No active deliverable; push ignored.");
+                return false;
             }
-            Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
-            return true;
         } catch (err) {
             Log.error("GitHubAutoTest::handlePushEvent(..) - ERROR: " + err.message);
             throw err;

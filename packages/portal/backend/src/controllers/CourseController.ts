@@ -100,16 +100,20 @@ export class CourseController implements ICourseController {
      * @returns {boolean}
      */
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
-        Log.info("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
-            newGrade.personId + ", " + newGrade.score + ", ... ) - start");
+        const LOGPRE = "CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
+            newGrade.personId + ", " + newGrade.score + ", ... ) - ";
+
+        Log.info(LOGPRE + "start");
 
         if (newGrade.timestamp < deliv.openTimestamp) {
             // too early
+            Log.info(LOGPRE + "not recorded; deliverable not yet open");
             return Promise.resolve(false);
         }
 
         if (newGrade.timestamp > deliv.closeTimestamp) {
             // too late
+            Log.info(LOGPRE + "not recorded; deliverable closed");
             return Promise.resolve(false);
         }
 
@@ -117,12 +121,10 @@ export class CourseController implements ICourseController {
         const gradeIsLarger = (existingGrade === null || newGrade.score >= existingGrade.score);
 
         if (gradeIsLarger === true) {
-            Log.trace("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
-                newGrade.personId + ", " + newGrade.score + ", ... ) - returning true");
+            Log.info(LOGPRE + "recorded; deliv open and grade increased");
             return Promise.resolve(true);
         } else {
-            Log.trace("CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
-                newGrade.personId + ", " + newGrade.score + ", ... ) - returning false");
+            Log.info(LOGPRE + "not recorded; deliverable open but grade not increased");
             return Promise.resolve(false);
         }
     }
