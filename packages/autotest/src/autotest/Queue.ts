@@ -189,18 +189,18 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
-            Log.info("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
+            Log.trace("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
                 " # slots: " + this.slots.length + "; # data: " + this.data.length);
+
             // push current elements back onto the front of the stack
             const store = {slots: this.slots, data: this.data};
             await fs.writeJSON(this.persistDir, store);
-            // Log.trace("[PTEST] Queue::persist() - done");
+
             return true;
         } catch (err) {
             Log.error("[PTEST] Queue::persist() - ERROR: " + err.message);
             return false;
         }
-
     }
 
     public load() {
@@ -210,7 +210,6 @@ export class Queue {
             Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
             Log.info("[PTEST] Queue::load() - rehydrating: " +
                 this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);
-            // Log.warn("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
 
             // put executions that were running but not done on the front of the queue
             for (const slot of store.slots) {
@@ -228,7 +227,7 @@ export class Queue {
             Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " - done");
         } catch (err) {
             // if anything happens just don't add to the queue
-            Log.info("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
+            Log.error("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
         }
     }
 }

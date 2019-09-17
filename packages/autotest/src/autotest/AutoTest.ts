@@ -96,6 +96,7 @@ export abstract class AutoTest implements IAutoTest {
 
             // Move scheduled items that are not eligible to run into the standard queue
             this.updateScheduleQueue();
+
             Log.info("AutoTest::tick(..) - moved jobs from the schedule to the standard queue; " +
                 "standard - #wait: " + this.standardQueue.length() + ".");
 
@@ -197,7 +198,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     private async persistQueues(): Promise<boolean> {
-        Log.info("[PTEST] AutoTest::persistQueues() - start");
+        Log.trace("[PTEST] AutoTest::persistQueues() - start");
         try {
             const start = Date.now();
             const writing = [
@@ -207,10 +208,10 @@ export abstract class AutoTest implements IAutoTest {
                 this.scheduleQueue.persist()
             ];
             await Promise.all(writing);
-            Log.info("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
+            Log.trace("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
             return true;
         } catch (err) {
-            Log.info("[PTEST] AutoTest::persistQueues() - ERROR: " + err.message);
+            Log.error("[PTEST] AutoTest::persistQueues() - ERROR: " + err.message);
         }
         return false;
     }
