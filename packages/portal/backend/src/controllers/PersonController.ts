@@ -17,21 +17,37 @@ export class PersonController {
      * @returns {Promise<Person | null>}
      */
     public async createPerson(personPrototype: Person): Promise<Person | null> {
-        Log.info("PersonController::createPerson( " + personPrototype.id + " ) - start");
+        Log.trace("PersonController::createPerson( " + personPrototype.id + " ) - start");
         const existingPerson = await this.db.getPerson(personPrototype.id);
 
         if (existingPerson === null) {
             await this.db.writePerson(personPrototype);
 
-            Log.trace("PersonController::createPerson( " + personPrototype.id + " ) - created");
+            Log.info("PersonController::createPerson( " + personPrototype.id + " ) - new person created");
             const person = await this.db.getPerson(personPrototype.id);
             return person;
 
         } else {
             // merge people
+
+            if (existingPerson.labId !== personPrototype.labId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - lab id change: " + existingPerson.labId + " -> " + personPrototype.labId);
+            }
             existingPerson.labId = personPrototype.labId; // can update
+
+            if (existingPerson.githubId !== personPrototype.githubId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - githubId change: " + existingPerson.githubId + " -> " + personPrototype.githubId);
+            }
             existingPerson.githubId = personPrototype.githubId; // can update
+
+            if (existingPerson.githubId !== personPrototype.githubId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - URL change: " + existingPerson.URL + " -> " + personPrototype.URL);
+            }
             existingPerson.URL = personPrototype.URL; // can update (along with githubId)
+
             // NOTE: existingPerson.custom is _not_ deleted ; unsure if this is the right thing
             // existingPerson.custom = {};
 
@@ -41,7 +57,6 @@ export class PersonController {
             const person = await this.db.getPerson(personPrototype.id);
             return person;
         }
-
     }
 
     /**

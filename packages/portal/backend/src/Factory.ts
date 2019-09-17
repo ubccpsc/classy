@@ -14,7 +14,7 @@ export class Factory {
      *
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
-    // public static OVERRIDE = true; // NOTE: should be commented out when committing
+        // public static OVERRIDE = true; // NOTE: should be commented out when committing
     public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     /**
@@ -29,16 +29,16 @@ export class Factory {
             name = Factory.getName();
         }
         try {
-            Log.info("Factory::getCustomRouteHandler() - instantiating custom route handler for: " + name);
-
             // NOTE: using require instead of import because file might not be present in forks
             // import complains about this, but require does not.
             let plug: any;
             if (name === 'classytest') {
+                Log.info("Factory::getCustomRouteHandler() - instantiating DefaultCourseRoutes for: " + name);
                 plug = await require('./custom/DefaultCourseRoutes'); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name);
                 plug = await require('./custom/CustomCourseRoutes');
             }
 

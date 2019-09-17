@@ -97,8 +97,8 @@ export abstract class AutoTest implements IAutoTest {
             // Move scheduled items that are not eligible to run into the standard queue
             this.updateScheduleQueue();
 
-            Log.info("AutoTest::tick(..) - moved jobs from the schedule to the standard queue; " +
-                "standard - #wait: " + this.standardQueue.length() + ".");
+            // Log.info("AutoTest::tick(..) - moved jobs from the schedule to the standard queue; " +
+            //     "standard - #wait: " + this.standardQueue.length() + ".");
 
             let updated = false;
             const that = this;

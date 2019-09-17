@@ -17,7 +17,7 @@ export class CustomCourseController extends CourseController {
 
     public constructor(ghController: IGitHubController) {
         super(ghController);
-        Log.info("CustomCourseController::<init>");
+        Log.info("CustomCourseController::<init> - start");
     }
 
     // public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null; repoName: string | null}> {

@@ -146,10 +146,10 @@ export class AuthController {
         const auth = await this.dc.getAuth(personId);
         if (auth !== null) {
             if (auth.token === token) {
-                Log.info("AuthController::verifyToken( " + personId + " ) - token verified");
+                Log.trace("AuthController::verifyToken( " + personId + " ) - token verified");
                 return true;
             } else {
-                Log.info("AuthController::verifyToken( " + personId + " ) - token !verified");
+                Log.trace("AuthController::verifyToken( " + personId + " ) - token !verified");
                 return false;
             }
         }
