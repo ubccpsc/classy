@@ -167,7 +167,7 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
-        Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
+        Log.info("AuthRoutes::getAuth(..) - /auth redirect start");
 
         const config = Config.getInstance();
         const setup = {
@@ -180,7 +180,7 @@ export class AuthRoutes implements IREST {
 
         const githubAuth = new ClientOAuth2(setup);
         const uri = githubAuth.code.getUri();
-        Log.info("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
+        Log.trace("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
         res.redirect(uri, next);
     }
 

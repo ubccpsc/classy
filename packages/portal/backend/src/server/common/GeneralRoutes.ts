@@ -27,11 +27,11 @@ import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
 import {AuditLabel, Person} from "../../Types";
-import {ClasslistAgent} from "./ClasslistAgent";
 
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
 import {AuthRoutes} from "./AuthRoutes";
+import {ClasslistAgent} from "./ClasslistAgent";
 
 export default class GeneralRoutes implements IREST {
 
@@ -85,10 +85,10 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getPerson(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getPerson(..) - start');
 
         const user = req.headers.user;
         const token = req.headers.token;
+        Log.info('GeneralRoutes::getPerson(..) - start; user: ' + user);
 
         GeneralRoutes.performGetPerson(user, token).then(function(personTrans) {
             const payload: Payload = {success: personTrans};
@@ -121,10 +121,10 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getGrades(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getGrades(..) - start');
-
         const user = req.headers.user;
         const token = req.headers.token;
+
+        Log.info('GeneralRoutes::getGrades(..) - start; user: ' + user);
 
         GeneralRoutes.performGetGrades(user, token).then(function(grades) {
             const payload: GradeTransportPayload = {success: grades};
@@ -139,10 +139,9 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getTeams(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getTeams(..) - start');
-
         const user = req.headers.user;
         const token = req.headers.token;
+        Log.info('GeneralRoutes::getTeams(..) - start; user: ' + user);
 
         GeneralRoutes.performGetTeams(user, token).then(function(teams) {
             const payload: TeamTransportPayload = {success: teams};
@@ -157,7 +156,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getResource(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getResource(..) - start');
+        Log.info('GeneralRoutes::getResource(..) - start; user: ' + req.headers.user);
 
         const auth = AdminRoutes.processAuth(req);
         // const user = req.headers.user;
@@ -270,10 +269,9 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getRepos(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getRepos(..) - start');
-
         const user = req.headers.user;
         const token = req.headers.token;
+        Log.info('GeneralRoutes::getRepos(..) - start; user: ' + user);
 
         GeneralRoutes.performGetRepos(user, token).then(function(repos) {
             const payload: RepositoryPayload = {success: repos};
@@ -401,10 +399,10 @@ export default class GeneralRoutes implements IREST {
             await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
 
             const teamTrans: TeamTransport = {
-                id:       team.id,
-                delivId:  team.delivId,
-                people:   team.personIds,
-                URL:      team.URL,
+                id:      team.id,
+                delivId: team.delivId,
+                people:  team.personIds,
+                URL:     team.URL
                 // repoName: team.repoName,
                 // repoUrl:  team.repoUrl,
             };
