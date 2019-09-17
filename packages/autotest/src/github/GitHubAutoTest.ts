@@ -67,13 +67,19 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (typeof delivId === "undefined" || delivId === null) {
                 delivId = await this.getDelivId(); // current default deliverable
             }
-            
+
             if (delivId !== null) {
-                if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
-                     Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed");
-                    return;
+                const deliv = await this.classPortal.getContainerDetails(delivId);
+                if (deliv === null) {
+                    Log.warn("GitHubAutoTest::handlePushEvent(..) - Default deliverable had no details.");
+                    return true;
                 }
-                
+
+                if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed");
+                    return true;
+                }
+
                 const containerConfig = await this.getContainerConfig(delivId);
                 if (containerConfig !== null) {
                     const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
