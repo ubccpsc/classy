@@ -66,8 +66,8 @@ describe("CustomCourseController", () => {
     });
 
     it("Names should increment as others exist.", async () => {
-        const p1 = await new PersonController().getPerson(Test.USER3.id);
-        const p2 = await new PersonController().getPerson(Test.USER4.id);
+        const p1 = await new PersonController().getPerson(Test.USER5.id);
+        const p2 = await new PersonController().getPerson(Test.USER6.id);
         const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
 
         const names = await cc.computeNames(deliv, [p1, p2]);
@@ -92,9 +92,9 @@ describe("CustomCourseController", () => {
     // });
 
     it("Counter should reset for a different deliverable.", async () => {
-        const p1 = await new PersonController().getPerson(Test.USER3.id);
-        const p2 = await new PersonController().getPerson(Test.USER4.id);
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID0);
+        const p1 = await new PersonController().getPerson(Test.USER5.id);
+        const p2 = await new PersonController().getPerson(Test.USER6.id);
+        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID2);
 
         // also check with no prefixes
         deliv.teamPrefix = '';
@@ -103,14 +103,14 @@ describe("CustomCourseController", () => {
         const names = await cc.computeNames(deliv, [p1, p2]);
         Log.test("Computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal('d0_team000');
-        expect(names.repoName).to.equal('d0_team000');
+        expect(names.teamName).to.equal('d2_team000');
+        expect(names.repoName).to.equal('d2_team000');
     });
 
     it("Requesting a name that already exists should return the same name regardless of the person order.", async () => {
-        const p1 = await new PersonController().getPerson(Test.USER3.id);
-        const p2 = await new PersonController().getPerson(Test.USER4.id);
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID0);
+        const p1 = await new PersonController().getPerson(Test.USER5.id);
+        const p2 = await new PersonController().getPerson(Test.USER6.id);
+        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID2);
 
         // also check with no prefixes
         deliv.teamPrefix = '';
@@ -119,8 +119,8 @@ describe("CustomCourseController", () => {
         const names = await cc.computeNames(deliv, [p2, p1]);
         Log.test("Computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal('d0_team000');
-        expect(names.repoName).to.equal('d0_team000');
+        expect(names.teamName).to.equal('d2_team000');
+        expect(names.repoName).to.equal('d2_team000');
     });
 
 });
