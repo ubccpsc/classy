@@ -69,6 +69,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             if (delivId !== null) {
+                const deliv = await this.classPortal.getContainerDetails(delivId);
+                if (deliv === null) {
+                    Log.warn("GitHubAutoTest::handlePushEvent(..) - Default deliverable had no details.");
+                    return true;
+                }
+
+                if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed");
+                    return true;
+                }
+
                 const containerConfig = await this.getContainerConfig(delivId);
                 if (containerConfig !== null) {
                     const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
@@ -426,7 +437,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         // false if res exists and has been previously paid for
         if (res !== null) {
             const feedbackRequested: CommitTarget = await this.getRequestor(info.commitURL, info.delivId, 'standard');
-            if (feedbackRequested !== null) {
+            if (feedbackRequested !== null && feedbackRequested.timestamp < Date.now()) {
                 Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
                 return false;
             }
@@ -536,6 +547,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     // }
 
     protected async processExecution(data: AutoTestResult): Promise<void> {
+        // TODO replace this implementation. Is currently forcing new autotest runs :(
         try {
             const that = this;
             const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
@@ -546,6 +558,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 data.input.target.personId, data.input.target.timestamp);
 
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
+            const afterDueDate: boolean = standardFeedbackRequested !== null &&
+                (standardFeedbackRequested.timestamp > containerConfig.closeTimestamp);
 
             Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
@@ -565,7 +579,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // but if we replay the commit comments, we would see it there, so be careful
 
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget) {
+                && feedbackDelay === null && !futureTarget && !afterDueDate) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
@@ -582,6 +596,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (standardFeedbackRequested !== null) {
                     await giveFeedback(standardFeedbackRequested, 'standard');
                 }
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
+                && feedbackDelay === null && !futureTarget && !afterDueDate) {
+                const msg: string = `Grading for this deliverable is now closed.`;
+                await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else {
                 // do nothing
                 if (feedbackDelay) {
