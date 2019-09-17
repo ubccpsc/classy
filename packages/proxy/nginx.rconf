@@ -14,6 +14,8 @@ http {
     server {
         listen   8443 default_server ssl;
 
+        access_log /dev/null
+
         ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
         ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
 
