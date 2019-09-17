@@ -61,7 +61,7 @@ export class TeamController {
      * @returns {Promise<number | null>}
      */
     public async getTeamNumber(name: string): Promise<number | null> {
-        Log.info("TeamController::getTeamNumber( " + name + " ) - start");
+        Log.trace("TeamController::getTeamNumber( " + name + " ) - start");
         const start = Date.now();
 
         const team = await this.db.getTeam(name);
@@ -99,7 +99,7 @@ export class TeamController {
     }
 
     public async getTeamsForPerson(myPerson: Person): Promise<Team[]> {
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
+        Log.trace("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
 
         let myTeams: Team[] = [];
         const allTeams = await this.db.getTeams();
@@ -176,7 +176,7 @@ export class TeamController {
                     labName = p.labId;
                 }
                 if (labName !== p.labId) {
-                    Log.error("TeamController::formTeam( ... ) - members not all in same lab ( " + labName + ", " + p.labId + " )");
+                    Log.warn("TeamController::formTeam( ... ) - members not all in same lab ( " + labName + ", " + p.labId + " )");
                     throw new Error("Team not created; all members are not in the same lab.");
                 }
             }
@@ -187,7 +187,7 @@ export class TeamController {
             const teamsForPerson = await this.getTeamsForPerson(p);
             for (const personTeam of teamsForPerson) {
                 if (personTeam.delivId === deliv.id) {
-                    Log.error("TeamController::formTeam( ... ) - member already on team: " +
+                    Log.warn("TeamController::formTeam( ... ) - member already on team: " +
                         personTeam.id + " for deliverable: " + deliv.id);
                     throw new Error("Team not created; some members are already on existing teams for this deliverable.");
                 }

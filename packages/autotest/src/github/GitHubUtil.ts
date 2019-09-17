@@ -165,7 +165,7 @@ export class GitHubUtil {
      */
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
-            Log.info("GitHubUtil::processPush(..) - start");
+            Log.trace("GitHubUtil::processPush(..) - start");
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;

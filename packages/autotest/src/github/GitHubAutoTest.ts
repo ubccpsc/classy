@@ -115,7 +115,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // ignore commits that do not exist
         if (typeof info === "undefined" || info === null) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - info not provided; skipping.");
+            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - info not provided; skipping");
             return false;
         }
 
@@ -171,7 +171,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (typeof info.flags !== 'undefined') {
                 // reject #force requests by requetors who are not admins or staff
                 if (info.flags.indexOf("#force") >= 0) {
-                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #force.");
+                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #force");
                     const msg = "Only admins can use the #force flag.";
                     delete info.flags;
                     await this.postToGitHub(info, {url: info.postbackURL, message: msg});
@@ -180,7 +180,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 // reject #silent requests by requestors that are not admins or staff
                 if (info.flags.indexOf("#silent") >= 0) {
-                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #silent.");
+                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #silent");
                     const msg = "Only admins can use the #silent flag.";
                     delete info.flags;
                     await this.postToGitHub(info, {url: info.postbackURL, message: msg});
@@ -199,7 +199,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             // reject requests for executing deliverables that are not yet open
             if (deliv.openTimestamp > info.timestamp) {
-                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable not yet open to AutoTest.");
+                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable not yet open to AutoTest");
                 // not open yet
                 const msg = "This deliverable is not yet open for grading.";
                 await this.postToGitHub(info, {url: info.postbackURL, message: msg});
@@ -208,7 +208,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             // reject requests for executing deliverables that are closed, unless the deliverable is configured for late autotest
             if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
-                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable has been closed to AutoTest.");
+                Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, deliverable has been closed to AutoTest");
                 // closed
                 const msg = "This deliverable is closed to grading.";
                 await this.postToGitHub(info, {url: info.postbackURL, message: msg});

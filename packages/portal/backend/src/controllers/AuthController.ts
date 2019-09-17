@@ -146,14 +146,14 @@ export class AuthController {
         const auth = await this.dc.getAuth(personId);
         if (auth !== null) {
             if (auth.token === token) {
-                Log.info("DatabaseController::verifyToken( " + personId + " ) - token verified");
+                Log.info("AuthController::verifyToken( " + personId + " ) - token verified");
                 return true;
             } else {
-                Log.info("DatabaseController::verifyToken( " + personId + " ) - token !verified");
+                Log.info("AuthController::verifyToken( " + personId + " ) - token !verified");
                 return false;
             }
         }
-        Log.info("DatabaseController::verifyToken( " + personId + " ) - no token stored");
+        Log.trace("AuthController::verifyToken( " + personId + " ) - no token stored");
         return false;
     }
 

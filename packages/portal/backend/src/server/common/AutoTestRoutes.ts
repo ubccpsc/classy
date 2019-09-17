@@ -90,6 +90,7 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, payload);
                     return next(true);
                 } else {
+                    // This is more like a warning; if a deliverable isn't configured this is going to happen
                     return AutoTestRoutes.handleError(400, 'Could not retrieve container details for delivId: ' + delivId, res, next);
                 }
             }).catch(function(err) {
@@ -108,7 +109,7 @@ export class AutoTestRoutes implements IREST {
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
+            Log.trace('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
 
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             let defaultDeliverable: string | null = null;

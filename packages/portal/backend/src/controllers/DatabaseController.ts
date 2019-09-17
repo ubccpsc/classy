@@ -672,7 +672,7 @@ export class DatabaseController {
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {
-        Log.info("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
+        Log.trace("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
         const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: record.personId}) as Auth;
         if (auth === null) {
             return await this.writeRecord(this.AUTHCOLL, record);
