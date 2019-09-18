@@ -1,10 +1,17 @@
 import Log from "../../../../../common/Log";
 
-import {CourseTransport, StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
+import {
+    CourseTransport,
+    RepositoryTransport,
+    StudentTransport,
+    TeamTransport,
+    TeamTransportPayload
+} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
+import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
@@ -13,6 +20,7 @@ export class AdminTeamsTab extends AdminPage {
     private teams: TeamTransport[] = [];
     private students: StudentTransport[] = [];
     private course: CourseTransport = null;
+    private repos: RepositoryTransport[] = [];
 
     constructor(remote: string) {
         super(remote);
@@ -28,6 +36,7 @@ export class AdminTeamsTab extends AdminPage {
 
         this.students = [];
         this.teams = [];
+        this.repos = [];
 
         UI.showModal('Retrieving teams.');
         this.course = await AdminView.getCourse(this.remote);
@@ -40,6 +49,7 @@ export class AdminTeamsTab extends AdminPage {
             }
         }
 
+        this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.renderTeams(this.teams, opts.delivId);
 
@@ -105,8 +115,6 @@ export class AdminTeamsTab extends AdminPage {
             let p1 = '';
             let p2 = '';
             let p3 = '';
-            let rn = '';
-            let ru = '';
             if (team.people.length === 0) {
                 // do nothing
             } else if (team.people.length === 1) {
@@ -119,18 +127,30 @@ export class AdminTeamsTab extends AdminPage {
                 p2 = this.getPersonCell(team.people[1]);
                 p3 = this.getPersonCell(team.people[2]);
             }
-            rn = "FIXME";
-            ru = "FIXME";
-            // if (team.repoName) {
-            //     rn = team.repoName;
-            // }
-            // if (team.repoUrl || team.repoName) {
-            //     // TODO please change this. This is a temporary solution for 310-2019W1 having provisioned repos already
-            //     ru = team.repoUrl || `https://github.students.cs.ubc.ca/CPSC310-2019W-T1/${team.repoName}`;
-            // }
+
+            let repoName = null;
+            let repoURL = null;
+            for (const repo of this.repos) {
+                if (repo.id === team.id) {
+                    repoName = repo.id;
+                    repoURL = repo.URL;
+                }
+            }
+            let repoDisplay = '<a href="' + repoURL + '">' + repoName + '</a>';
+            if (repoURL === null) {
+                // repo not yet provisioned; don't show anything
+                repoDisplay = '';
+            }
+
+            let teamDisplay = '<a href="' + team.URL + '">' + team.id + '</a>';
+            if (team.URL === null) {
+                // team not yet provisioned, don't turn this into a link
+                teamDisplay = team.id;
+            }
+
             const row: TableCell[] = [
-                {value: team.id, html: '<a href="' + team.URL + '">' + team.id + '</a>'},
-                {value: rn, html: '<a href="' + ru + '">' + rn + '</a>'},
+                {value: team.id, html: teamDisplay},
+                {value: repoName, html: repoDisplay},
                 {value: p1, html: p1},
                 {value: p2, html: p2},
                 {value: p3, html: p3}
