@@ -44,7 +44,7 @@ services:
           - MONGO_INITDB_ROOT_PASSWORD
         ports:
             - "27017:27017"
-        image: mongo:4.2
+        image: mongo:3-jessie
         restart: always
         user: "${UID}"
         volumes:
