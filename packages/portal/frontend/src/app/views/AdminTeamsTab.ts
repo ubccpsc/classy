@@ -112,14 +112,14 @@ export class AdminTeamsTab extends AdminPage {
             if (team.people.length === 0) {
                 // do nothing
             } else if (team.people.length === 1) {
-                p1 = team.people[0];
+                p1 = this.getPersonCell(team.people[0]);
             } else if (team.people.length === 2) {
-                p1 = team.people[0];
-                p2 = team.people[1];
+                p1 = this.getPersonCell(team.people[0]);
+                p2 = this.getPersonCell(team.people[1]);
             } else if (team.people.length === 3) {
-                p1 = team.people[0];
-                p2 = team.people[1];
-                p3 = team.people[2];
+                p1 = this.getPersonCell(team.people[0]);
+                p2 = this.getPersonCell(team.people[1]);
+                p3 = this.getPersonCell(team.people[2]);
             }
             rn = "FIXME";
             ru = "FIXME";
@@ -182,6 +182,17 @@ export class AdminTeamsTab extends AdminPage {
             UI.showSection('teamsListTableNone');
         }
 
+    }
+
+    private getPersonCell(personId: string): string {
+        let render = personId;
+        // personId -> personId (CWL)
+        for (const student of this.students) {
+            if (student.id === personId) {
+                render = student.githubId + " (" + student.id + ")";
+            }
+        }
+        return render;
     }
 
     private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
