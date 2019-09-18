@@ -199,16 +199,31 @@ export class AdminTeamsTab extends AdminPage {
             UI.hideSection('teamsListTable');
             UI.showSection('teamsListTableNone');
         }
-
     }
 
+    /**
+     * Convert personId -> personId (CWL)
+     *
+     * Also add links if available.
+     *
+     * @param {string} personId
+     * @returns {string}
+     */
     private getPersonCell(personId: string): string {
         let render = personId;
-        // personId -> personId (CWL)
-        for (const student of this.students) {
-            if (student.id === personId) {
-                render = student.githubId + " (" + student.id + ")";
+
+        try {
+            for (const student of this.students) {
+                if (student.id === personId) {
+                    if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                        render = '<a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                    } else {
+                        render = student.githubId + " (" + student.id + ")";
+                    }
+                }
             }
+        } catch (err) {
+            Log.error("AdminTeamsTab::getPersonCell( " + personId + " ) - ERROR: " + err.message);
         }
         return render;
     }
