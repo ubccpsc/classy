@@ -6,7 +6,7 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
-import { ClusteredResult } from "./ContainerTypes";
+import {ClusteredResult} from "./ContainerTypes";
 
 export interface FailurePayload {
     message: string;

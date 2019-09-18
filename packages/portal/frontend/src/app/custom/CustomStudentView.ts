@@ -120,7 +120,8 @@ export class ClassyStudentView extends AbstractStudentView {
             const teamElement = document.getElementById('studentPartnerTeamName');
             // const partnerElement = document.getElementById('studentPartnerTeammates');
             const team = projectTeam;
-            teamElement.innerHTML = team.id + ': ' + JSON.stringify(team.people);
+            // TODO: this should be Member CWLs; but TeamTransport will need to be changed for that
+            teamElement.innerHTML = team.id + ' - Member CSIDs: ' + JSON.stringify(team.people);
         }
     }
 
