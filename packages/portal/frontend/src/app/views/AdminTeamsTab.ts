@@ -10,14 +10,12 @@ import {AdminView} from "./AdminView";
 
 export class AdminTeamsTab extends AdminPage {
 
-    // private readonly remote: string; // url to backend
-    private teams: TeamTransport[];
-    private students: StudentTransport[];
-    private course: CourseTransport;
+    private teams: TeamTransport[] = [];
+    private students: StudentTransport[] = [];
+    private course: CourseTransport = null;
 
     constructor(remote: string) {
         super(remote);
-        // this.remote = remote;
     }
 
     // called by reflection in renderPage
@@ -28,8 +26,8 @@ export class AdminTeamsTab extends AdminPage {
         document.getElementById('teamsListTable').innerHTML = ''; // clear target
         document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
 
-        this.students = null;
-        this.teams = null;
+        this.students = [];
+        this.teams = [];
 
         UI.showModal('Retrieving teams.');
         this.course = await AdminView.getCourse(this.remote);
