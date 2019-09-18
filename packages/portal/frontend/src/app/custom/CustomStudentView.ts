@@ -120,7 +120,7 @@ export class ClassyStudentView extends AbstractStudentView {
             const teamElement = document.getElementById('studentPartnerTeamName');
             // const partnerElement = document.getElementById('studentPartnerTeammates');
             const team = projectTeam;
-            teamElement.innerHTML = team.id;
+            teamElement.innerHTML = team.id + ': ' + JSON.stringify(team.people);
         }
     }
 
