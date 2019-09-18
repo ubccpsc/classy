@@ -122,12 +122,11 @@ export class CustomCourseController extends CourseController {
         let repoObj = await db.getRepository(rName);
 
         if (teamObj === null) {
-            Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
-            const tc = new TeamController();
-
             try {
                 // formTeam enforces team restrictions (createTeam does not)
                 // NOTE: this will fail if we need adminOverride === true
+                Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
+                const tc = new TeamController();
                 teamObj = await tc.formTeam(teamName, deliv, people, false);
             } catch (err) {
                 Log.error("CustomCourseController::computeNames( ... ) - invalid team: " + err.message);
@@ -146,7 +145,7 @@ export class CustomCourseController extends CourseController {
             throw new Error('CustomCourseController::computeNames( ... ) - nulls encountered!; t: ' + teamObj + ', r: ' + repoObj);
         }
 
-        Log.info('CustomCourseController::computeNames( ... ) - existing; t: ' + teamName + ', r: ' + rName);
+        Log.info('CustomCourseController::computeNames( ... ) - done; t: ' + teamName + ', r: ' + rName);
         return {teamName: teamName, repoName: rName};
     }
 }

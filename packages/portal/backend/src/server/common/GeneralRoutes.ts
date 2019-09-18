@@ -286,10 +286,10 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static postTeam(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::postTeam(..) - start');
-
         const user = req.headers.user;
         const token = req.headers.token;
+
+        Log.info('GeneralRoutes::postTeam(..) - start; user: ' + user);
 
         const teamTrans: TeamFormationTransport = req.params;
         GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
@@ -340,7 +340,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
-        Log.trace('GeneralRoutes::performPostTeam(..) - team: ' + JSON.stringify(requestedTeam));
+        Log.info('GeneralRoutes::performPostTeam(..) - team: ' + JSON.stringify(requestedTeam));
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
@@ -393,7 +393,11 @@ export default class GeneralRoutes implements IREST {
             const deliv = await dc.getDeliverable(requestedTeam.delivId);
             const names = await cc.computeNames(deliv, people);
 
-            const team = await tc.formTeam(names.teamName, deliv, people, false);
+            let team = await tc.getTeam(names.teamName); // if a CustomController forms the team, capture that here
+            if (team === null) {
+                // if the CourseController did not form the team, still form it
+                team = await tc.formTeam(names.teamName, deliv, people, false);
+            }
 
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
@@ -403,8 +407,6 @@ export default class GeneralRoutes implements IREST {
                 delivId: team.delivId,
                 people:  team.personIds,
                 URL:     team.URL
-                // repoName: team.repoName,
-                // repoUrl:  team.repoUrl,
             };
 
             Log.info('GeneralRoutes::performPostTeam(..) - team created: ' + team.id);
