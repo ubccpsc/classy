@@ -9,6 +9,9 @@ import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
+    public static readonly STAFF_NAME = 'staff';
+    public static readonly ADMIN_NAME = 'admin';
+
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;
 
@@ -239,7 +242,7 @@ export class TeamController {
                     githubId:  null,
                     URL:       null,
                     personIds: peopleIds,
-                    custom:    custom,
+                    custom:    custom
                     // repoName:  null, // repoName, // team counts above used repoName
                     // repoUrl:   null
                 };
@@ -258,10 +261,10 @@ export class TeamController {
 
     public teamToTransport(team: Team): TeamTransport {
         const t: TeamTransport = {
-            id:       team.id,
-            delivId:  team.delivId,
-            people:   team.personIds,
-            URL:      team.URL,
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
             // repoName: team.repoName,
             // repoUrl:  team.repoUrl
         };

@@ -173,10 +173,10 @@ export class AdminController {
         const teams: TeamTransport[] = [];
         for (const team of allTeams) {
             const teamTransport: TeamTransport = {
-                id:       team.id,
-                delivId:  team.delivId,
-                people:   team.personIds,
-                URL:      team.URL,
+                id:      team.id,
+                delivId: team.delivId,
+                people:  team.personIds,
+                URL:     team.URL
                 // repoName: team.repoName,
                 // repoUrl:  team.repoUrl
             };
@@ -686,8 +686,6 @@ export class AdminController {
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
-            // if (team.URL === null) { // this would be faster, but we are being more conservative here
-
             Log.trace('AdminController::planProvision( .. ) - preparing to provision team: ' + delivTeam.id);
 
             const people: Person[] = [];
@@ -716,15 +714,15 @@ export class AdminController {
                 throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
             }
 
-            /* istanbul ignore if */
-            if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
-                // HACK: this is just for dealing with inconsistent databases
-                // This whole block should be removed in the future
-                Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
-                const config = Config.getInstance();
-                repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-                await this.dbc.writeRepository(repo);
-            }
+            // /* istanbul ignore if */
+            // if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
+            //     // HACK: this is just for dealing with inconsistent databases
+            //     // This whole block should be removed in the future
+            //     Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
+            //     const config = Config.getInstance();
+            //     repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+            //     await this.dbc.writeRepository(repo);
+            // }
 
             reposToProvision.push(repo);
         }
@@ -768,8 +766,7 @@ export class AdminController {
             try {
                 const start = Date.now();
                 Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
-                // Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
-                if (repo.URL === null) {
+                if (repo.URL === null) { // key check: repo.URL is only set if the repo has been provisioned
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
@@ -780,7 +777,7 @@ export class AdminController {
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-                        repo.custom.githubCreated = true;
+                        repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
                         await dbc.writeRepository(repo);
                         Log.info("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
