@@ -258,7 +258,10 @@ export class AdminTeamsTab extends AdminPage {
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
                 const row: TableCell[] = [
-                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}
+                    {
+                        value: student.id, html: student.firstName + ' ' + student.lastName +
+                        ' <a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')'
+                    }
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);
