@@ -88,7 +88,7 @@ export class AdminStudentsTab {
         let labSectionsOptions = ['-All-', '-Unspecified-'];
         const st = new SortableTable(headers, '#studentListTable');
 
-        let count = 0;
+        let count = 1;
         for (const student of students) {
             let labId = '';
             if (student.labId !== null && student.labId.length > 0) {

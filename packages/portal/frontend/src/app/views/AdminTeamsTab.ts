@@ -265,7 +265,7 @@ export class AdminTeamsTab extends AdminPage {
         }
 
         let listContainsStudents = false;
-        let count = 0;
+        let count = 1;
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
 
