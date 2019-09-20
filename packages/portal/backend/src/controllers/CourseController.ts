@@ -55,7 +55,8 @@ export interface ICourseController {
      * @param {Person[]} people
      * @returns {{teamName: string | null; repoName: string | null}}
      */
-    computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null; repoName: string | null}>;
+    computeNames(deliv: Deliverable, people: Person[], adminOverride?: boolean):
+        Promise<{teamName: string | null; repoName: string | null}>;
 }
 
 /**

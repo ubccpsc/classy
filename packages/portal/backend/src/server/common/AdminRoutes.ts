@@ -1,5 +1,8 @@
 import * as cookie from 'cookie';
+
+import * as rp from "request-promise-native";
 import * as restify from 'restify';
+import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
 import {
@@ -30,13 +33,10 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {ClasslistAgent} from "./ClasslistAgent";
 
 import {AuditLabel, Person, Repository} from "../../Types";
-
-import * as rp from "request-promise-native";
-import Config, {ConfigKey} from "../../../../../common/Config";
 import IREST from "../IREST";
+import {ClasslistAgent} from "./ClasslistAgent";
 import {CSVParser} from "./CSVParser";
 
 export default class AdminRoutes implements IREST {
@@ -993,17 +993,23 @@ export default class AdminRoutes implements IREST {
         }
 
         const cc = await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
-        const names = await cc.computeNames(deliv, people);
-        const team = await tc.formTeam(names.teamName, deliv, people, true);
+        const names = await cc.computeNames(deliv, people, true);
+
+        let team = await tc.getTeam(names.teamName);
+        if (team !== null) {
+            // team created by CustomController::computeNames(..)
+        } else {
+            team = await tc.formTeam(names.teamName, deliv, people, true);
+        }
 
         const dbc = DatabaseController.getInstance();
         await dbc.writeAudit(AuditLabel.TEAM_ADMIN, personId, null, team, {});
 
         const teamTrans: TeamTransport = {
-            id:       team.id,
-            delivId:  team.delivId,
-            people:   team.personIds,
-            URL:      team.URL,
+            id:      team.id,
+            delivId: team.delivId,
+            people:  team.personIds,
+            URL:     team.URL
             // repoName: team.repoName,
             // repoUrl:  team.repoUrl,
         };
@@ -1019,8 +1025,8 @@ export default class AdminRoutes implements IREST {
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false,
-            strictSSL: false,
-            method: 'post'
+            strictSSL:          false,
+            method:             'post'
         };
 
         rp(url, opts).then((result) => {
@@ -1039,12 +1045,12 @@ export default class AdminRoutes implements IREST {
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/patches";
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false,
-            strictSSL: false,
-            method: 'get'
+            strictSSL:          false,
+            method:             'get'
         };
 
         rp(url, opts).then((result) => {
-            try  {
+            try {
                 const patches = JSON.parse(result).message;
                 Log.info('AdminRoutes::listPatches(..) - done; ' + patches.length + ' patch' +
                     (patches.length === 1 ? '' : 'es') + ' found; took: ' + Util.took(start));

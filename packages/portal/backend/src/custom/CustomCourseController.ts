@@ -25,12 +25,13 @@ export class CustomCourseController extends CourseController {
     //     return super.computeNames(deliv, people);
     // }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null; repoName: string | null}> {
+    public async computeNames(deliv: Deliverable, people: Person[], adminOverride = false):
+        Promise<{teamName: string | null; repoName: string | null}> {
         if (deliv === null) {
             throw new Error("CustomCourseController::computeNames( ... ) - null Deliverable");
         }
 
-        Log.info('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - start');
+        Log.info('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - start; override: ' + adminOverride);
         if (people.length < 1) {
             throw new Error("CustomCourseController::computeNames( ... ) - must provide people");
         }
@@ -127,7 +128,7 @@ export class CustomCourseController extends CourseController {
                 // NOTE: this will fail if we need adminOverride === true
                 Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
                 const tc = new TeamController();
-                teamObj = await tc.formTeam(teamName, deliv, people, false);
+                teamObj = await tc.formTeam(teamName, deliv, people, adminOverride);
             } catch (err) {
                 Log.error("CustomCourseController::computeNames( ... ) - invalid team: " + err.message);
                 // pass this error on so whoever called this will know why the team formation failed

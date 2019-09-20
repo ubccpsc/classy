@@ -407,7 +407,7 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
-            UI.showErrorToast("Team created successfully: " + body.success[0].id);
+            UI.showSuccessToast("Team created successfully: " + body.success[0].id);
         } else {
             UI.showAlert(body.failure.message);
         }

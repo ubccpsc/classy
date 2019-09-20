@@ -134,7 +134,7 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
-        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start");
+        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start; override: " + adminOverride);
 
         // sanity checking
         if (deliv === null) {
@@ -166,13 +166,13 @@ export class TeamController {
 
         // make sure all students are still registered in the class
         for (const p of people) {
-            if (p.kind === PersonKind.WITHDRAWN) {
+            if (p.kind === PersonKind.WITHDRAWN && !adminOverride) {
                 throw new Error("Team not created; at least one student is not an active member of the class.");
             }
         }
 
         // ensure members are all in the same lab section (if required)
-        if (deliv.teamSameLab === true) {
+        if (deliv.teamSameLab === true && !adminOverride) {
             let labName = null;
             for (const p of people) {
                 if (labName === null) {
@@ -189,7 +189,7 @@ export class TeamController {
         for (const p of people) {
             const teamsForPerson = await this.getTeamsForPerson(p);
             for (const personTeam of teamsForPerson) {
-                if (personTeam.delivId === deliv.id) {
+                if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
                     Log.warn("TeamController::formTeam( ... ) - member already on team: " +
                         personTeam.id + " for deliverable: " + deliv.id);
                     throw new Error("Team not created; some members are already on existing teams for this deliverable.");

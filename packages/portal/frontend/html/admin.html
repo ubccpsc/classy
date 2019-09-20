@@ -246,7 +246,7 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Manually Create Team</ons-list-header>
+                <ons-list-header>Team Management</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-users"></ons-icon>
@@ -259,10 +259,59 @@
                         <ons-button id="adminCreateTeamButton" modifier="medium">Create Team</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Manually creates a team for a deliverable. A comma-separated list of IDs (CSID or CWL, depending on what your course
-                        is using) is provided in the text box. This does the same thing as if the students created the team themselves
-                        but overrides the team size limits (e.g., there can be more or fewer students than the deliverable requires).
-                        Students must still NOT already be on teams that exist for that deliverable.
+                        Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be provided in the text box.
+                        This does the same thing as if the students created the team themselves but overrides the team size limits (e.g.,
+                        there can be more or fewer students than the deliverable requires). Students must still NOT already be on teams
+                        that exist for that deliverable.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-times"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Disband team; name:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamTextXXX1"></ons-input>
+                        <ons-button id="adminCreateTeamButtonXXX1" modifier="medium">Disband Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Disbands a team. This will detach the team from any GitHub repos that it knows about, remove the users from the
+                        team, delete the GitHub team, and delete the team from the local Classy database.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-plus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Add member; team:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamTextXXX1"></ons-input>
+                        User:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamTextXXX1"></ons-input>
+                        <ons-button id="adminCreateTeamButtonXXX1" modifier="medium">Add Member</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Specify the team name and GitHub username for the user. Adds the user to the team. The user must not aleady be on a
+                        team for the deliverable the specified team is associated with. Team size limits will be ignored.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-minus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Remove member; team:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamTextXXX1"></ons-input>
+                        User:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamTextXXX1"></ons-input>
+                        <ons-button id="adminCreateTeamButtonXXX1" modifier="medium">Remove Member</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Specify the team name and GitHub username for the user. User is removed from the team on GitHub (if provisioned) and
+                        local database.
                     </div>
                 </ons-list-item>
 
@@ -940,7 +989,8 @@
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
                             documentation for details about how to construct the URL. The URL should start with "https://" and end with
-                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the
+                            URL.
                         </div>
                     </ons-list-item>
 
@@ -1234,10 +1284,10 @@
                 <ons-list-item>
                     This page is used for creating GitHub Pull Requests for learners' repositories.
                     <!--<ul style="margin-bottom: 0;">-->
-                        <!--<li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a-->
-                            <!--slow operation and can take a up to a minute or more to create a repository.-->
-                        <!--</li>-->
-                        <!--<li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>-->
+                    <!--<li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a-->
+                    <!--slow operation and can take a up to a minute or more to create a repository.-->
+                    <!--</li>-->
+                    <!--<li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>-->
                     <!--</ul>-->
                 </ons-list-item>
                 <ons-list-header>Select Patch</ons-list-header>
