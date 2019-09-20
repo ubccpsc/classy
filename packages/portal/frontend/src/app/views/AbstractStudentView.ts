@@ -166,7 +166,7 @@ export abstract class AbstractStudentView implements IView {
 
         if (this.repos === null || this.repos.length < 1) {
             const el = document.getElementById('studentRepoTable');
-            el.innerHTML = "No released repos.";
+            el.innerHTML = "None released.";
         } else {
             const headers: TableHeader[] = [
                 {
