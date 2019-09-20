@@ -68,7 +68,7 @@ export class AdminTeamsTab extends AdminPage {
             {
                 id:          'num',
                 text:        '#',
-                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
@@ -119,7 +119,7 @@ export class AdminTeamsTab extends AdminPage {
         const st = new SortableTable(headers, '#teamsListTable');
         let listContainsStudents = false;
 
-        let count = 0;
+        let count = 1;
         for (const team of teams) {
             let p1 = '';
             let p2 = '';
@@ -158,7 +158,7 @@ export class AdminTeamsTab extends AdminPage {
             }
 
             const row: TableCell[] = [
-                {value: count++, html: count + ''},
+                {value: count, html: count + ''},
                 {value: team.id, html: teamDisplay},
                 {value: repoName, html: repoDisplay},
                 {value: p1, html: p1},
@@ -169,6 +169,7 @@ export class AdminTeamsTab extends AdminPage {
                 delivOptions.push(team.delivId);
             }
             if (delivId === team.delivId && team.people.length > 0) {
+                count++;
                 st.addRow(row);
                 listContainsStudents = true;
             }
@@ -180,15 +181,6 @@ export class AdminTeamsTab extends AdminPage {
         UI.setDropdownOptions('teamsListSelect', delivOptions, delivId);
 
         const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
-        // delivSelector.innerHTML = '';
-        // for (const deliv of delivOptions) {
-        //     let selected = false;
-        //     if (deliv === delivId) {
-        //         selected = true;
-        //     }
-        //     const o: HTMLOptionElement = new Option(deliv, deliv, false, selected);
-        //     delivSelector.add(o);
-        // }
 
         const that = this;
         delivSelector.onchange = function(evt) {
@@ -245,7 +237,7 @@ export class AdminTeamsTab extends AdminPage {
             {
                 id:          'num',
                 text:        '#',
-                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'

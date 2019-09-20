@@ -38,7 +38,7 @@ export class AdminStudentsTab {
             {
                 id:          'num',
                 text:        '#',
-                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
                 style:       'padding-left: 1em; padding-right: 1em;'
