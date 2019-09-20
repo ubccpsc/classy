@@ -186,22 +186,6 @@ export class GitHubController implements IGitHubController {
 
                 const teamNum = await this.tc.getTeamNumber(team.id);
 
-                // TeamController::getTeamNumber makes sure this never happens
-                // if (teamNum === -1 || teamNum === null) {
-                //     // did not find a team, create one first
-                //     Log.info("GitHubController::releaseRepository(..) - did not find team, creating");
-                //
-                //     const newTeam = await this.gha.createTeam(team.id, "push");
-                //     Log.info("GitHubController::releaseRepository(..) - created team " +
-                //         "with #: " + newTeam.githubTeamNumber);
-                //
-                //     teamNum = newTeam.githubTeamNumber;
-                //     team.githubId = teamNum; // add team number to team
-                //
-                //     await this.gha.addMembersToTeam(team.id, teamNum, team.personIds);
-                //     Log.info("GitHubController::releaseRepository(..) - added members to team");
-                // }
-
                 // now, add the team to the repository
                 const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
                 if (res.githubTeamNumber > 0) {
@@ -242,14 +226,12 @@ export class GitHubController implements IGitHubController {
                 " ) - repo does not exist in datastore (but should)");
         }
 
-        // const gh = GitHubActions.getInstance(true);
         const repoExists = await this.gha.repoExists(repoName);
         Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo exists: " + repoExists);
         if (repoExists === true) {
             // this is fatal, we can't provision a repo that already exists
             Log.error("GitHubController::provisionRepository( " + repoName + " ) - repo already exists on GitHub; provisioning failed");
             throw new Error("provisionRepository( " + repoName + " ) failed; Repository " + repoName + " already exists.");
-            // return false;
         }
 
         let repoVal;
@@ -259,8 +241,6 @@ export class GitHubController implements IGitHubController {
             repoVal = await this.gha.createRepo(repoName);
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
-            // NOTE: this statement commented below isn't done here on purpose;
-            //    repo.url = repoVal
             // we consider the repo to be provisioned once the whole flow is done
             // callers of this method should instead set the URL field
             repo = await dbc.getRepository(repoName);
@@ -306,7 +286,6 @@ export class GitHubController implements IGitHubController {
                             team.URL = teamValue.URL;
                             team.githubId = teamValue.githubTeamNumber;
                             team.custom.githubAttached = false; // attaching happens in release
-                            // team.repoUrl = repoVal;
                             await dbc.writeTeam(team);
                         }
 
