@@ -159,6 +159,17 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector('#adminTeamRemoveMemberButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed');
+            evt.preventDefault();
+
+            that.teamRemoveMemberPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: ' + err.message);
+            });
+        };
+
         (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
             evt.preventDefault();
@@ -402,11 +413,6 @@ export class AdminConfigTab extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = 'post';
 
-        // const team: TeamFormationTransport = {
-        //     delivId:   delivId,
-        //     githubIds: nameList
-        // };
-
         Log.trace('AdminConfigTab::teamAddMemberPressed(..) - body: ' + JSON.stringify({}));
 
         options.body = JSON.stringify({});
@@ -415,7 +421,31 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
-            UI.showSuccessToast("Team member added successfully: " + body.success[0].id);
+            UI.showSuccessToast("Team member added successfully: " + body.success.message);
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async teamRemoveMemberPressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamRemoveMemberPressed(..) - start');
+
+        const teamId = UI.getTextFieldValue('adminTeamRemoveMemberTeam');
+        const memberId = UI.getTextFieldValue('adminTeamRemoveMemberMember');
+
+        const url = this.remote + '/portal/admin/team/' + teamId + '/members/' + memberId;
+        const options: any = AdminView.getOptions();
+        options.method = 'delete';
+
+        Log.trace('AdminConfigTab::teamRemoveMemberPressed(..) - body: ' + JSON.stringify({}));
+
+        options.body = JSON.stringify({});
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team member removed successfully: " + body.success.message);
         } else {
             UI.showAlert(body.failure.message);
         }
