@@ -83,7 +83,7 @@ export class PersonController {
     public async getGitHubPerson(githubId: string): Promise<Person | null> {
         let person = await this.db.getGitHubPerson(githubId);
         if (person === null) {
-            Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
+            Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
 
             // user not registered but might be admin or staff
             const gh = GitHubActions.getInstance();
@@ -91,7 +91,7 @@ export class PersonController {
             const isStaff = await gh.isOnStaffTeam(githubId);
 
             if (isAdmin === true || isStaff === true) {
-                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");
+                Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");
                 person = {
                     id:            githubId,
                     githubId:      githubId,
@@ -107,7 +107,7 @@ export class PersonController {
                 person = await this.createPerson(person);
                 return person;
             } else {
-                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is unknown and not admin/staff.");
+                Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId is unknown and not admin/staff.");
                 return null;
             }
 
