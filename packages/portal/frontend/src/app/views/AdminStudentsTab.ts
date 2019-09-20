@@ -36,6 +36,14 @@ export class AdminStudentsTab {
 
         const headers: TableHeader[] = [
             {
+                id:          'num',
+                text:        '#',
+                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'githubId',
                 text:        'Github Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -44,12 +52,12 @@ export class AdminStudentsTab {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:         'id',
-                text:       'Internal Id',
-                sortable:   true,
+                id:          'id',
+                text:        'Internal Id',
+                sortable:    true,
                 defaultSort: false,
-                sortDown:   true,
-                style:      'padding-left: 1em; padding-right: 1em;',
+                sortDown:    true,
+                style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
                 id:          'fName',
@@ -80,12 +88,14 @@ export class AdminStudentsTab {
         let labSectionsOptions = ['-All-', '-Unspecified-'];
         const st = new SortableTable(headers, '#studentListTable');
 
+        let count = 0;
         for (const student of students) {
             let labId = '';
             if (student.labId !== null && student.labId.length > 0) {
                 labId = student.labId;
             }
             const row: TableCell[] = [
+                {value: count, html: count++ + ''},
                 {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.githubId + '</a>'}, // Should be CWL
                 {value: student.id, html: student.id}, // Should be CSID
                 {value: student.firstName, html: student.firstName},

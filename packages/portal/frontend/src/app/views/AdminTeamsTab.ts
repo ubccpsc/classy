@@ -66,6 +66,14 @@ export class AdminTeamsTab extends AdminPage {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
         const headers: TableHeader[] = [
             {
+                id:          'num',
+                text:        '#',
+                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'id',
                 text:        'Team Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -111,6 +119,7 @@ export class AdminTeamsTab extends AdminPage {
         const st = new SortableTable(headers, '#teamsListTable');
         let listContainsStudents = false;
 
+        let count = 0;
         for (const team of teams) {
             let p1 = '';
             let p2 = '';
@@ -149,6 +158,7 @@ export class AdminTeamsTab extends AdminPage {
             }
 
             const row: TableCell[] = [
+                {value: count++, html: count + ''},
                 {value: team.id, html: teamDisplay},
                 {value: repoName, html: repoDisplay},
                 {value: p1, html: p1},
@@ -233,6 +243,14 @@ export class AdminTeamsTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
+                id:          'num',
+                text:        '#',
+                sortable:    false, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'id',
                 text:        'Student',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -255,13 +273,21 @@ export class AdminTeamsTab extends AdminPage {
         }
 
         let listContainsStudents = false;
+        let count = 0;
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
+
+                let studentHTML = '';
+                if (student.firstName === student.lastName || student.githubId.startsWith('atest-')) {
+                    studentHTML = 'Staff: ' + ' <a href="' + student.userUrl + '">' + student.githubId + '</a>';
+                } else {
+                    studentHTML = student.firstName + ' ' + student.lastName +
+                        ' <a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                }
+
                 const row: TableCell[] = [
-                    {
-                        value: student.id, html: student.firstName + ' ' + student.lastName +
-                        ' <a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')'
-                    }
+                    {value: count, html: count++ + ''},
+                    {value: student.id, html: studentHTML}
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);
