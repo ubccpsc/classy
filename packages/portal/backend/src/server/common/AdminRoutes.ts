@@ -82,7 +82,7 @@ export default class AdminRoutes implements IREST {
         server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.createTeam);
         server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
         server.del('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
-        server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.deleteTeam);
+        server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.teamDelete);
 
         // admin patch routes
         server.get('/portal/admin/listPatches', AdminRoutes.isAdmin, AdminRoutes.listPatches);
@@ -985,8 +985,8 @@ export default class AdminRoutes implements IREST {
      * @param res
      * @param next
      */
-    private static deleteTeam(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::deleteTeam(..) - start');
+    private static teamDelete(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::teamDelete(..) - start');
 
         // isAdmin prehandler verifies that only valid users can do this
 
@@ -995,14 +995,14 @@ export default class AdminRoutes implements IREST {
 
         const userName = AdminRoutes.getUser(req);
         AdminRoutes.handleDeleteTeam(userName, teamId).then(function(success) {
-            Log.trace('AdminRoutes::deleteTeam(..) - done; success: ' + success);
+            Log.trace('AdminRoutes::teamDelete(..) - done; success: ' + success);
 
             const payload: Payload = {
                 success: {
                     message: 'Team ' + teamId + ' deleted; object: ' + success.deletedObject + '; GitHub: ' + success.deletedGithub
                 }
             };
-            res.send(200, payload); // return as text rather than json
+            res.send(200, payload);
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to delete team. ' + err.message, res, next);
@@ -1020,7 +1020,7 @@ export default class AdminRoutes implements IREST {
                 await dbc.writeAudit(AuditLabel.TEAM, personId, team, null, {});
             }
         } else {
-            throw new Error("Unknown team: " + teamId);
+            throw new Error("Team not deleted; unknown team " + teamId);
         }
 
         const deletedGithub = await GitHubActions.getInstance().deleteTeamByName(teamId);

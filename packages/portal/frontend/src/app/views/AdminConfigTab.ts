@@ -148,6 +148,28 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector('#adminDeleteTeamButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed');
+            evt.preventDefault();
+
+            that.teamDeletePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminDeleteTeamManageButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed');
+            evt.preventDefault();
+
+            that.teamDeletePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: ' + err.message);
+            });
+        };
+
         (document.querySelector('#adminTeamAddMemberButton') as OnsButtonElement).onclick = function(evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - add member to team pressed');
             evt.preventDefault();
@@ -401,6 +423,29 @@ export class AdminConfigTab extends AdminPage {
         }
 
         Log.trace('AdminConfigTab::uploadGrades(..) - end');
+    }
+
+    private async teamDeletePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamDeletePressed(..) - start');
+
+        const teamId = UI.getTextFieldValue('adminDeleteTeamManageTeam');
+
+        const url = this.remote + '/portal/admin/team/' + teamId;
+        const options: any = AdminView.getOptions();
+        options.method = 'delete';
+
+        Log.trace('AdminConfigTab::teamDeletePressed(..) - body: ' + JSON.stringify({}));
+
+        options.body = JSON.stringify({});
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team deleted successfully: " + body.success.message);
+        } else {
+            UI.showAlert(body.failure.message);
+        }
     }
 
     private async teamAddMemberPressed(): Promise<void> {
