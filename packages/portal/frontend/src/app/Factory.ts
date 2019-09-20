@@ -34,19 +34,24 @@ export class Factory {
         return Factory.instance;
     }
 
-    private customViewsExist(): boolean {
-        let customHtml = null;
+    /**
+     * Checks for a custom controller. If one exists, there _must_ be custom html as well.
+     *
+     * @returns {boolean}
+     */
+    private customControllerExists(): boolean {
+        let customController = null;
         try {
-            customHtml = require(this.name + '/landing.html');
+            customController = require('./custom/CustomStudentView');
         } catch (err) {
-            Log.info('Factory::customViewsExist() - Custom html pages not found for course: ' + this.name);
+            Log.info('Factory::customControllerExists() - Custom Controller found for course: ' + this.name);
         }
-        return customHtml ? true : false;
+        return customController ? true : false;
     }
 
     public async getView(backendUrl: string): Promise<IView> {
         // Loads a custom view model if custom HTML code exists, default model for default html, etc.
-        const customViewsExist = this.customViewsExist();
+        const customViewsExist = this.customControllerExists();
 
         try {
             if (this.studentView === null) {
@@ -57,10 +62,14 @@ export class Factory {
 
                 let plug: any;
                 if (name === this.TESTNAME) {
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name +
+                        '; using test DefaultStudentView');
                     plug = await require('./custom/DefaultStudentView'); // default for testing
                 } else if (customViewsExist) {
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using CustomStudentView');
                     plug = await require('./custom/CustomStudentView'); // course-specific file;
                 } else {
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using DefaultStudentView');
                     plug = await require('./custom/DefaultStudentView');
                 }
 
@@ -93,7 +102,8 @@ export class Factory {
             dashboard:    true,
             config:       true
         };
-        const customViewsExist = this.customViewsExist();
+
+        const customViewsExist = this.customControllerExists();
 
         try {
             if (this.adminView === null) {
@@ -103,12 +113,15 @@ export class Factory {
                 // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
                     plug = await require('./custom/DefaultAdminView'); // default for testing
                 } else if (customViewsExist) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using CustomAdminView');
                     plug = await require('./custom/CustomAdminView'); // course-specific file;
                 } else {
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
                     plug = await require('./custom/DefaultAdminView');
                 }
 
@@ -145,8 +158,10 @@ export class Factory {
     /**
      * Returns the prefix directory for the HTML files specific to the course.
      *
-     * The recommended approach is to just put your html files in the
-     * 'html/<courseName>' directory.
+     * The required approach is to just put your html files in the
+     * 'html/<courseName>' directory. You will also need to create a
+     * CustomCourseController (even just an empty one that extends
+     * DefaultCourseController).
      *
      * Examples of what these files can look like can be found in the test
      * implementations found in 'html/custom/' by looking at Default files.
@@ -158,23 +173,21 @@ export class Factory {
      *
      * @returns {string}
      */
-    public  getHTMLPrefix() {
+    public getHTMLPrefix() {
         // FORK: Gets the default html/default/landing.html page unless your course
         // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
-        let customPage = null;
 
-        try {
-            customPage = require(this.name + '/landing.html');
-        } catch (err) {
-            Log.info('Factory::getHTMLPrefix() - no custom HTML landing page detected');
-        }
+        const customViewsExist = this.customControllerExists();
 
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
-        if (this.name === 'classytest') {
+        if (this.name === this.TESTNAME) {
+            Log.info("Factory::getHTMLPrefix() - using default test prefix for: " + this.name);
             return 'default';
-        } else if (customPage) {
+        } else if (customViewsExist === true) {
+            Log.info("Factory::getHTMLPrefix() - custom prefix for: " + this.name);
             return this.name;
         } else {
+            Log.info("Factory::getHTMLPrefix() - using default prefix for: " + this.name);
             return 'default';
         }
     }

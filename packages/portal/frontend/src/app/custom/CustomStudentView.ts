@@ -116,9 +116,7 @@ export class ClassyStudentView extends AbstractStudentView {
         } else {
             // already on team
             UI.showSection('studentPartnerDiv');
-
             const teamElement = document.getElementById('studentPartnerTeamName');
-            // const partnerElement = document.getElementById('studentPartnerTeammates');
             const team = projectTeam;
             // TODO: this should be Member CWLs; but TeamTransport will need to be changed for that
             teamElement.innerHTML = team.id + ' - Member CSIDs: ' + JSON.stringify(team.people);
