@@ -141,7 +141,7 @@ export class AdminConfigTab extends AdminPage {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
             evt.preventDefault();
 
-            that.createTeamPressed().then(function() {
+            that.teamCreatePressed().then(function() {
                 // worked
             }).catch(function(err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
@@ -425,6 +425,39 @@ export class AdminConfigTab extends AdminPage {
         Log.trace('AdminConfigTab::uploadGrades(..) - end');
     }
 
+    private async teamCreatePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamCreatePressed(..) - start');
+        const delivDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
+        const delivId = delivDropdown.value;
+
+        const names = UI.getTextFieldValue('adminTeamText');
+        let nameList = names.split(',');
+        nameList = nameList.map(Function.prototype.call, String.prototype.trim); // trim whitespace before/after names
+
+        const url = this.remote + '/portal/admin/team';
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        const team: TeamFormationTransport = {
+            delivId:   delivId,
+            githubIds: nameList
+        };
+
+        Log.trace('AdminConfigTab::teamCreatePressed(..) - body: ' + JSON.stringify(team));
+
+        options.body = JSON.stringify(team);
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team created successfully: " + body.success[0].id);
+            UI.clearTextField('adminTeamText');
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
     private async teamDeletePressed(): Promise<void> {
         Log.trace('AdminConfigTab::teamDeletePressed(..) - start');
 
@@ -443,6 +476,7 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.showSuccessToast("Team deleted successfully: " + body.success.message);
+            UI.clearTextField('adminDeleteTeamManageTeam');
         } else {
             UI.showAlert(body.failure.message);
         }
@@ -467,6 +501,8 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.showSuccessToast("Team member added successfully: " + body.success.message);
+            UI.clearTextField('adminTeamAddMemberTeam');
+            UI.clearTextField('adminTeamAddMemberMember');
         } else {
             UI.showAlert(body.failure.message);
         }
@@ -491,38 +527,8 @@ export class AdminConfigTab extends AdminPage {
 
         if (typeof body.success !== 'undefined') {
             UI.showSuccessToast("Team member removed successfully: " + body.success.message);
-        } else {
-            UI.showAlert(body.failure.message);
-        }
-    }
-
-    private async createTeamPressed(): Promise<void> {
-        Log.trace('AdminConfigTab::createTeamPressed(..) - start');
-        const delivDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
-        const delivId = delivDropdown.value;
-
-        const names = UI.getTextFieldValue('adminTeamText');
-        let nameList = names.split(',');
-        nameList = nameList.map(Function.prototype.call, String.prototype.trim); // trim whitespace before/after names
-
-        const url = this.remote + '/portal/admin/team';
-        const options: any = AdminView.getOptions();
-        options.method = 'post';
-
-        const team: TeamFormationTransport = {
-            delivId:   delivId,
-            githubIds: nameList
-        };
-
-        Log.trace('AdminConfigTab::createTeamPressed(..) - body: ' + JSON.stringify(team));
-
-        options.body = JSON.stringify(team);
-
-        const response = await fetch(url, options);
-        const body = await response.json();
-
-        if (typeof body.success !== 'undefined') {
-            UI.showSuccessToast("Team created successfully: " + body.success[0].id);
+            UI.clearTextField('adminTeamRemoveMemberTeam');
+            UI.clearTextField('adminTeamRemoveMemberMember');
         } else {
             UI.showAlert(body.failure.message);
         }
