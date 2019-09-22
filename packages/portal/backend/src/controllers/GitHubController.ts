@@ -279,7 +279,7 @@ export class GitHubController implements IGitHubController {
                     } else {
 
                         teamValue = await this.gha.createTeam(team.id, 'push');
-                        Log.info("GitHubController::provisionRepository( " + repoName + " ) - createTeam: " + teamValue.teamName);
+                        Log.info("GitHubController::provisionRepository( " + repoName + " ) - teamCreate: " + teamValue.teamName);
 
                         if (teamValue.githubTeamNumber > 0) {
                             // worked
@@ -298,7 +298,7 @@ export class GitHubController implements IGitHubController {
                             memberGithubIds.push(person.githubId);
                         }
 
-                        const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, teamValue.githubTeamNumber, memberGithubIds);
+                        const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, memberGithubIds);
                         Log.info("GitHubController::provisionRepository( " + repoName + " ) - addMembers: " + addMembers.teamName);
                     }
                 }

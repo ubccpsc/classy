@@ -289,16 +289,16 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
-        Log.info('GeneralRoutes::createTeam(..) - start; user: ' + user);
+        Log.info('GeneralRoutes::teamCreate(..) - start; user: ' + user);
 
         const teamTrans: TeamFormationTransport = req.params;
         GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
-            Log.info('GeneralRoutes::createTeam(..) - done; team: ' + JSON.stringify(team));
+            Log.info('GeneralRoutes::teamCreate(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {
-            Log.info('GeneralRoutes::createTeam(..) - ERROR: ' + err.message); // intentionally info
+            Log.info('GeneralRoutes::teamCreate(..) - ERROR: ' + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);

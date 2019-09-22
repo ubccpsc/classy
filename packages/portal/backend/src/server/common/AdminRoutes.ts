@@ -79,7 +79,7 @@ export default class AdminRoutes implements IREST {
         server.del('/portal/admin/repository/:repoId', AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
 
         // admin team functions
-        server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.createTeam);
+        server.post('/portal/admin/team', AdminRoutes.isAdmin, AdminRoutes.teamCreate);
         server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
         server.del('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
         server.del('/portal/admin/team/:teamId', AdminRoutes.isAdmin, AdminRoutes.teamDelete);
@@ -888,8 +888,8 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    public static createTeam(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::createTeam(..) - start');
+    public static teamCreate(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::teamCreate(..) - start');
 
         // handled by isAdmin in the route chain
         // const user = req.headers.user;
@@ -897,13 +897,13 @@ export default class AdminRoutes implements IREST {
         const userName = AdminRoutes.getUser(req);
 
         const teamTrans: TeamFormationTransport = req.params;
-        AdminRoutes.performCreateTeam(userName, teamTrans).then(function(team) {
-            Log.info('AdminRoutes::createTeam(..) - done; team: ' + JSON.stringify(team));
+        AdminRoutes.handleTeamCreate(userName, teamTrans).then(function(team) {
+            Log.info('AdminRoutes::teamCreate(..) - done; team: ' + JSON.stringify(team));
             const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function(err) {
-            Log.info('AdminRoutes::createTeam(..) - ERROR: ' + err.message); // intentionally info
+            Log.info('AdminRoutes::teamCreate(..) - ERROR: ' + err.message); // intentionally info
             // const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             // res.send(400, payload);
             // return next(false);
@@ -911,9 +911,9 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async performCreateTeam(personId: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+    private static async handleTeamCreate(personId: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 
-        Log.info("AdminRoutes::performCreateTeam( .. ) - Team: " + JSON.stringify(requestedTeam));
+        Log.info("AdminRoutes::handleTeamCreate( .. ) - Team: " + JSON.stringify(requestedTeam));
         const tc = new TeamController();
         const dc = new DeliverablesController();
         const pc = new PersonController();
@@ -922,7 +922,7 @@ export default class AdminRoutes implements IREST {
         if (deliv === null) {
             throw new Error("Team not created; Deliverable does not exist: " + requestedTeam.delivId);
         }
-        // NOTE: this isn't great because it largely duplicates what is in GeneralRoutes::performCreateTeam
+        // NOTE: this isn't great because it largely duplicates what is in GeneralRoutes::handleTeamCreate
 
         // remove duplicate names
         const nameIds = requestedTeam.githubIds.filter(function(item, pos, self) {
@@ -975,7 +975,7 @@ export default class AdminRoutes implements IREST {
             // repoUrl:  team.repoUrl,
         };
 
-        Log.info('AdminRoutes::performCreateTeam(..) - team created: ' + team.id);
+        Log.info('AdminRoutes::handleTeamCreate(..) - team created: ' + team.id);
         return teamTrans;
     }
 
@@ -994,7 +994,7 @@ export default class AdminRoutes implements IREST {
         const teamId = req.params.teamId;
 
         const userName = AdminRoutes.getUser(req);
-        AdminRoutes.handleDeleteTeam(userName, teamId).then(function(success) {
+        AdminRoutes.handleTeamDelete(userName, teamId).then(function(success) {
             Log.trace('AdminRoutes::teamDelete(..) - done; success: ' + success);
 
             const payload: Payload = {
@@ -1009,22 +1009,28 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleDeleteTeam(personId: string, teamId: string): Promise<{deletedObject: boolean, deletedGithub: boolean}> {
+    private static async handleTeamDelete(personId: string, teamId: string): Promise<{deletedObject: boolean, deletedGithub: boolean}> {
+        Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - start");
         const dbc = DatabaseController.getInstance();
-        let worked = false;
+
+        let deletedGithub = false;
 
         const team = await dbc.getTeam(teamId);
         if (team !== null) {
-            worked = await dbc.deleteTeam(team);
-            if (worked === true) {
-                await dbc.writeAudit(AuditLabel.TEAM, personId, team, null, {});
+
+            if (team.URL !== null) {
+                deletedGithub = await GitHubActions.getInstance().deleteTeamByName(teamId);
+                Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from GitHub");
             }
+
+            await dbc.deleteTeam(team);
+            await dbc.writeAudit(AuditLabel.TEAM, personId, team, null, {});
+            Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from Classy");
         } else {
             throw new Error("Team not deleted; unknown team " + teamId);
         }
 
-        const deletedGithub = await GitHubActions.getInstance().deleteTeamByName(teamId);
-        return {deletedObject: worked, deletedGithub: deletedGithub};
+        return {deletedObject: true, deletedGithub: deletedGithub};
     }
 
     /**
@@ -1060,13 +1066,14 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleTeamAddMember(requestorName: string, teamId: string, memberId: string): Promise<TeamTransport> {
+    private static async handleTeamAddMember(requestorName: string, teamId: string, githubId: string): Promise<TeamTransport> {
+        Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + " u: " + githubId + " ) - start");
         const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        const person = await pc.getGitHubPerson(memberId);
+        const person = await pc.getGitHubPerson(githubId);
         if (person === null) {
-            throw new Error("Unknown user " + memberId);
+            throw new Error("Unknown GitHub user " + githubId);
         }
 
         const team = await dbc.getTeam(teamId);
@@ -1078,21 +1085,26 @@ export default class AdminRoutes implements IREST {
 
         // make sure user is not already on a team for this deliverable
         const delivId = team.delivId;
-        const personTeams = await dbc.getTeamsForPerson(memberId);
+        const personTeams = await dbc.getTeamsForPerson(githubId);
         for (const t of personTeams) {
             if (t.delivId === delivId) {
-                throw new Error("User " + memberId + " is already on team " + t.id + " for deliverable " + delivId);
+                throw new Error("User " + githubId + " is already on team " + t.id + " for deliverable " + delivId);
             }
         }
 
+        if (team.URL !== null) {
+            await GitHubActions.getInstance().addMembersToTeam(team.id, [githubId]);
+            Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to GitHub team");
+        }
+
+        // do this after github (if applicable) so if github fails, the db isn't updated either
         team.personIds.push(person.id);
         await dbc.writeTeam(team);
-
-        // TODO: if URL !== null, update github too!
 
         const afterTeam = new TeamController().teamToTransport(team);
         await dbc.writeAudit(AuditLabel.TEAM, requestorName, beforeTeam, afterTeam, {});
 
+        Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to Classy team");
         return afterTeam;
     }
 
@@ -1131,13 +1143,14 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleTeamRemoveMember(requestorName: string, teamId: string, memberId: string): Promise<TeamTransport> {
+    private static async handleTeamRemoveMember(requestorName: string, teamId: string, githubId: string): Promise<TeamTransport> {
+        Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + " u: " + githubId + " ) - start");
         const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        const person = await pc.getGitHubPerson(memberId);
+        const person = await pc.getGitHubPerson(githubId);
         if (person === null) {
-            throw new Error("Unknown user " + memberId);
+            throw new Error("Unknown GitHub user " + githubId);
         }
 
         const team = await dbc.getTeam(teamId);
@@ -1147,19 +1160,23 @@ export default class AdminRoutes implements IREST {
 
         // make sure user is already on this team
         if (team.personIds.indexOf(person.id) < 0) {
-            throw new Error("User " + memberId + " is not on team " + teamId);
+            throw new Error("User " + githubId + " is not on team " + teamId);
         }
 
         const beforeTeam = new TeamController().teamToTransport(team);
 
-        // remove person
+        if (team.URL !== null) {
+            await GitHubActions.getInstance().removeMembersFromTeam(team.id, [githubId]);
+            Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from GitHub team");
+        }
+
+        // do this after github (if applicable) so if github fails, the db isn't updated either
         team.personIds = team.personIds.filter((e) => e !== person.id);
         await dbc.writeTeam(team);
 
-        // TODO: if team.URL !== null, remove from github too!
-
         const afterTeam = new TeamController().teamToTransport(team);
         await dbc.writeAudit(AuditLabel.TEAM, requestorName, beforeTeam, afterTeam, {});
+        Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from Classy team");
 
         return afterTeam;
     }
@@ -1247,61 +1264,4 @@ export default class AdminRoutes implements IREST {
             return AdminRoutes.handleError(424, "Patch source repo not found in environment", res, next);
         }
     }
-
-    // private static patchRepoList(req: any, res: any, next: any) {
-    //     Log.trace('AdminRoutes::patchRepoList(..) - start');
-    //     const start = Date.now();
-    //     const patch: string = req.params.patch;
-    //     const reposToPatch = req.body;
-    //     const promises: Array<Promise<Repository>> = [];
-    //     try {
-    //         for (const repoId of reposToPatch) {
-    //             promises.push(AdminRoutes.rc.getRepository(repoId));
-    //         }
-    //         Promise.all(promises)
-    //             .then((repos: Repository[]) => {
-    //                 return repos.map((repo: Repository) => AdminRoutes.ghc.createPullRequest(repo, patch));
-    //             })
-    //             .then((results) => {
-    //                 const failures = reposToPatch.filter((name: string, index: number) => results[index] === false);
-    //                 if (failures.length > 0) {
-    //                     Log.error("AdminRoutes::patchRepoList(..) - " +
-    //                         `${failures.length} repo${failures.length === 1 ? ' was' : 's were'} not patched successfully.`);
-    //                 }
-    //                 Log.info('AdminRoutes::patchRepoList(..) - done; took: ' + Util.took(start));
-    //                 res.send({failures});
-    //                 return next();
-    //             })
-    //             .catch((err) => {
-    //                 return AdminRoutes.handleError(400, 'Unable to patch repo list. ERROR: ' + err.message, res, next);
-    //             });
-    //     } catch (err) {
-    //         return AdminRoutes.handleError(400, 'ErrUnable to patch repo list. ERROR: ' + err.message, res, next);
-    //     }
-    // }
-
-    // private static patchAllRepos(req: any, res: any, next: any) {
-    //     Log.trace('AdminRoutes::patchAllRepos(..) - start');
-    //     const start = Date.now();
-    //     let repoNames: string[];
-    //     const patch: string = req.params.patch;
-    //
-    //     AdminRoutes.rc.getAllRepos().then(function(repos: Repository[]) {
-    //         repoNames = repos.map((repo: Repository) => repo.id);
-    //         const promises: Array<Promise<boolean>> = repos
-    //             .map((repo: Repository) => AdminRoutes.ghc.createPullRequest(repo, patch));
-    //         return Promise.all(promises);
-    //     }).then((results: boolean[]) => {
-    //         const failures = repoNames.filter((name: string, index: number) => !results[index]);
-    //         if (failures.length > 0) {
-    //             Log.error("AdminRoutes::patchAllRepos(..) - " +
-    //                 `${failures.length} repo${failures.length === 1 ? ' was' : 's were'} not patched successfully.`);
-    //         }
-    //         Log.info('AdminRoutes::patchAllRepos(..) - done; took: ' + Util.took(start));
-    //         res.send({failures});
-    //         return next();
-    //     }).catch(function(err: any) {
-    //         return AdminRoutes.handleError(400, 'Unable to patch all repos. ERROR: ' + err.message, res, next);
-    //     });
-    // }
 }

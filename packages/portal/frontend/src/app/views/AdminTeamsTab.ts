@@ -216,11 +216,22 @@ export class AdminTeamsTab extends AdminPage {
 
         try {
             for (const student of this.students) {
-                if (student.id === personId) {
-                    if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                        render = '<a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                if (student.githubId === personId) {
+
+                    if (student.githubId === student.id) {
+                        // render staff (whose GitHub ids should match their CSIDs (according to the system)
+                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                            render = '<a href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
+                        } else {
+                            render = 'Staff: ' + student.githubId;
+                        }
                     } else {
-                        render = student.githubId + " (" + student.id + ")";
+                        // render students
+                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                            render = '<a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                        } else {
+                            render = student.githubId + " (" + student.id + ")";
+                        }
                     }
                 }
             }

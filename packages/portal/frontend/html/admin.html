@@ -261,8 +261,9 @@
                     <div class="expandable-content">
                         Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be provided in the text box.
                         This does the same thing as if the students created the team themselves but overrides the team size limits (e.g.,
-                        there can be more or fewer students than the deliverable requires). Students must still NOT already be on teams
-                        that exist for that deliverable.
+                        there can be more or fewer students than the deliverable requires). Students must NOT already be on a team
+                        for this deliverable. This also does not create the team on GitHub, to do that you will need to use the Provision
+                        and Release page.
                     </div>
                 </ons-list-item>
 
@@ -272,7 +273,8 @@
                     </div>
                     <div class="center">
                         Disband team; name:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminDeleteTeamManageTeam"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminDeleteTeamManageTeam"></ons-input>
                         <ons-button id="adminDeleteTeamManageButton" modifier="medium">Disband Team</ons-button>
                     </div>
                     <div class="expandable-content">
@@ -287,9 +289,11 @@
                     </div>
                     <div class="center">
                         Add member; team:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamAddMemberTeam"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamAddMemberTeam"></ons-input>
                         User:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamAddMemberMember"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamAddMemberMember"></ons-input>
                         <ons-button id="adminTeamAddMemberButton" modifier="medium">Add Member</ons-button>
                     </div>
                     <div class="expandable-content">
@@ -304,9 +308,11 @@
                     </div>
                     <div class="center">
                         Remove member; team:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamRemoveMemberTeam"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamRemoveMemberTeam"></ons-input>
                         User:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamRemoveMemberMember"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamRemoveMemberMember"></ons-input>
                         <ons-button id="adminTeamRemoveMemberButton" modifier="medium">Remove Member</ons-button>
                     </div>
                     <div class="expandable-content">

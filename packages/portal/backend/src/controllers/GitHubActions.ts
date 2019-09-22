@@ -116,14 +116,23 @@ export interface IGitHubActions {
     createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}>;
 
     /**
-     * Add a set of Github members (their usernames) to a given team.
+     * Add a list of Github members (their usernames) to a given team.
      *
      * @param teamName
      * @param githubTeamId
      * @param memberGithubIds: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
-    addMembersToTeam(teamName: string, githubTeamId: number, memberGithubIds: string[]): Promise<GitTeamTuple>;
+    addMembersToTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
+
+    /**
+     * Removes a list of Github members (their usernames) from a given team.
+     *
+     * @param teamName
+     * @param memberGithubIds: string[] // github usernames
+     * @returns {Promise<GitTeamTuple>}
+     */
+    removeMembersFromTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
 
     /**
      * NOTE: needs the team Id (number), not the team name (string)!
@@ -792,19 +801,19 @@ export class GitHubActions implements IGitHubActions {
      */
     public async createTeam(teamName: string, permission: string): Promise<{teamName: string, githubTeamNumber: number, URL: string}> {
 
-        Log.info("GitHubAction::createTeam( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
+        Log.info("GitHubAction::teamCreate( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
         const start = Date.now();
         try {
             await GitHubActions.checkDatabase(null, teamName);
 
             const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
             if (teamNum > 0) {
-                Log.info("GitHubAction::createTeam( " + teamName + ", ... ) - success; exists: " + teamNum);
+                Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - success; exists: " + teamNum);
                 const config = Config.getInstance();
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 return {teamName: teamName, githubTeamNumber: teamNum, URL: url};
             } else {
-                Log.info('GitHubAction::createTeam( ' + teamName + ', ... ) - does not exist; creating');
+                Log.info('GitHubAction::teamCreate( ' + teamName + ', ... ) - does not exist; creating');
                 const uri = this.apiPath + '/orgs/' + this.org + '/teams';
                 const options = {
                     method:  'POST',
@@ -825,12 +834,12 @@ export class GitHubActions implements IGitHubActions {
                 const config = Config.getInstance();
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
-                Log.info("GitHubAction::createTeam(..) - success; new: " + id + "; took: " + Util.took(start));
+                Log.info("GitHubAction::teamCreate(..) - success; new: " + id + "; took: " + Util.took(start));
                 return {teamName: teamName, githubTeamNumber: id, URL: url};
             }
         } catch (err) {
             // explicitly log this failure
-            Log.error("GitHubAction::createTeam(..) - ERROR: " + err);
+            Log.error("GitHubAction::teamCreate(..) - ERROR: " + err);
             throw err;
         }
     }
@@ -843,10 +852,13 @@ export class GitHubActions implements IGitHubActions {
      * @param members: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
-    public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
-        Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; id: " +
-            githubTeamId + "; members: " + JSON.stringify(members));
+    public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
+        Log.info("GitHubAction::addMembersToTeam( " + teamName + ", ..) - start; teamName: " + teamName +
+            "; members: " + JSON.stringify(members));
         const start = Date.now();
+
+        const tc = new TeamController();
+        const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
 
         // sanity check (members should be githubIds, not other ids)
         for (const member of members) {
@@ -864,7 +876,7 @@ export class GitHubActions implements IGitHubActions {
             Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
 
             // PUT /teams/:id/memberships/:username
-            const uri = this.apiPath + '/teams/' + githubTeamId + '/memberships/' + member;
+            const uri = this.apiPath + '/teams/' + teamNumber + '/memberships/' + member;
             Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
             const opts = {
                 method:  'PUT',
@@ -882,7 +894,60 @@ export class GitHubActions implements IGitHubActions {
         const results = await Promise.all(promises);
         Log.info("GitHubAction::addMembersToTeam(..) - success; took: " + Util.took(start) + "; results:" + JSON.stringify(results));
 
-        return {teamName: teamName, githubTeamNumber: githubTeamId};
+        return {teamName: teamName, githubTeamNumber: teamNumber};
+    }
+
+    /**
+     * Remove a set of Github members (their usernames) from a given team.
+     *
+     * @param teamName
+     * @param githubTeamId
+     * @param members: string[] // github usernames
+     * @returns {Promise<GitTeamTuple>}
+     */
+    public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
+        Log.info("GitHubAction::removeMembersFromTeam( " + teamName + ", ..) - start; teamName: " + teamName
+            + "; members: " + JSON.stringify(members));
+        const start = Date.now();
+
+        const tc = new TeamController();
+        const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
+
+        // sanity check (members should be githubIds, not other ids)
+        for (const member of members) {
+            const person = this.dc.getGitHubPerson(member);
+            if (person === null) {
+                const emsg = "GitHubAction::removeMembersFromTeam( .. ) - githubId: " + member +
+                    " is unknown; is this actually an id instead of a githubId?";
+                Log.error(emsg);
+                throw new Error(emsg);
+            }
+        }
+
+        const promises: any = [];
+        for (const member of members) {
+            Log.info("GitHubAction::removeMembersFromTeam(..) - removing member: " + member);
+
+            // DELETE /teams/:id/memberships/:username
+            const uri = this.apiPath + '/teams/' + teamNumber + '/memberships/' + member;
+            Log.info("GitHubAction::removeMembersFromTeam(..) - uri: " + uri);
+            const opts = {
+                method:  'DELETE',
+                uri:     uri,
+                headers: {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                json:    true
+            };
+            promises.push(rp(opts));
+        }
+
+        const results = await Promise.all(promises);
+        Log.info("GitHubAction::removeMembersFromTeam(..) - success; took: " + Util.took(start) + "; results:" + JSON.stringify(results));
+
+        return {teamName: teamName, githubTeamNumber: teamNumber};
     }
 
     /**
@@ -1773,9 +1838,14 @@ export class TestGitHubActions implements IGitHubActions {
         Log.info("TestGitHubActions::<init> - start");
     }
 
-    public async addMembersToTeam(teamName: string, githubTeamId: number, members: string[]): Promise<GitTeamTuple> {
+    public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
         Log.info("TestGitHubActions::addMembersToTeam(..)");
-        return {teamName: teamName, githubTeamNumber: githubTeamId};
+        return {teamName: teamName, githubTeamNumber: 1};
+    }
+
+    public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
+        Log.info("TestGitHubActions::addMembersToTeam(..)");
+        return {teamName: teamName, githubTeamNumber: 1};
     }
 
     public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
@@ -1813,7 +1883,7 @@ export class TestGitHubActions implements IGitHubActions {
             const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
             this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: 'teamURL'};
         }
-        Log.info("TestGitHubActions::createTeam( " + teamName + " ) - created; exists: " +
+        Log.info("TestGitHubActions::teamCreate( " + teamName + " ) - created; exists: " +
             (typeof this.teams[teamName] !== 'undefined') + "; records: " + JSON.stringify(this.teams));
 
         return this.teams[teamName];

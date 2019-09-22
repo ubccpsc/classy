@@ -125,7 +125,7 @@ export class TeamController {
      * Convenience method for creating team objects when only primitive types are known. This is
      * especially useful for students specifying their own teams as it checks to ensure that team
      * constraints (specified in the deliverable) are adhered to. Once all checks pass, the code
-     * passes through to TeamController::createTeam(..).
+     * passes through to TeamController::teamCreate(..).
      *
      * @param teamId
      * @param deliv
@@ -211,11 +211,11 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
-        Log.info("TeamController::createTeam( " + name + ", ... ) - start");
+        Log.info("TeamController::teamCreate( " + name + ", ... ) - start");
 
         try {
             if (deliv === null) {
-                throw new Error("TeamController::createTeam() - null deliverable provided.");
+                throw new Error("TeamController::teamCreate() - null deliverable provided.");
             }
 
             const existingTeam = await this.getTeam(name);
@@ -249,12 +249,12 @@ export class TeamController {
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);
             } else {
-                // Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
+                // Log.info("TeamController::teamCreate( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
                 // return await this.db.getTeam(name);
                 throw new Error("Duplicate team name: " + name);
             }
         } catch (err) {
-            Log.error("TeamController::createTeam() - ERROR: " + err.message);
+            Log.error("TeamController::teamCreate() - ERROR: " + err.message);
             throw err;
         }
     }

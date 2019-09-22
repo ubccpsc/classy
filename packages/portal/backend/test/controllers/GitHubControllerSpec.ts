@@ -56,7 +56,7 @@ describe("GitHubController", () => {
         await dbc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t2);
-        // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
+        // const t3 = await Test.teamCreate(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
         // await dbc.writeTeam(t3);
 
         const dc = new DeliverablesController();

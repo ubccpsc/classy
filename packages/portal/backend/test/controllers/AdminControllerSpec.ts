@@ -118,7 +118,7 @@ describe("AdminController", () => {
         const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);
         const names = await cc.computeNames(deliv, [p1, p2]);
 
-        // const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
+        // const t = await Test.teamCreate(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         await dbc.writeTeam(t);
     }
