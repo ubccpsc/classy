@@ -4,7 +4,7 @@ import {DatabaseController} from "../controllers/DatabaseController";
 import {IGitHubController} from "../controllers/GitHubController";
 import {RepositoryController} from "../controllers/RepositoryController";
 import {TeamController} from "../controllers/TeamController";
-import {Deliverable, Person, Team} from "../Types";
+import {Deliverable, Person, PersonKind, Team} from "../Types";
 
 /**
  *
@@ -87,10 +87,28 @@ export class CustomCourseController extends CourseController {
         if (teamName === null) {
             const teamNum = await db.getUniqueTeamNumber(deliv.id);
             Log.trace('CustomCourseController::computeNames( ' + deliv.id + ', ... ) - null teamName; new number: ' + teamNum);
-            if (deliv.teamPrefix.length > 0) {
-                teamName = deliv.teamPrefix + "_" + deliv.id + "_team" + teamNum;
+            let teamSuffix = '';
+
+            let hasStudents = false;
+            for (const person of people) {
+                // if a team is all admins name it differently so it stands out more
+                if (person.kind === PersonKind.ADMINSTAFF || person.kind === PersonKind.ADMIN || person.kind === PersonKind.STAFF) {
+                    // is admin
+                } else {
+                    hasStudents = true;
+                }
+            }
+
+            if (hasStudents === true) {
+                teamSuffix = "_team" + teamNum;
             } else {
-                teamName = deliv.id + "_team" + teamNum;
+                teamSuffix = "_staff" + teamNum;
+            }
+
+            if (deliv.teamPrefix.length > 0) {
+                teamName = deliv.teamPrefix + "_" + deliv.id + teamSuffix;
+            } else {
+                teamName = deliv.id + teamSuffix;
             }
         }
 
@@ -124,7 +142,7 @@ export class CustomCourseController extends CourseController {
 
         if (teamObj === null) {
             try {
-                // formTeam enforces team restrictions (createTeam does not)
+                // formTeam enforces team restrictions (teamCreate does not)
                 // NOTE: this will fail if we need adminOverride === true
                 Log.info('CustomCourseController::computeNames( ... ) - creating new team: t: ' + teamName);
                 const tc = new TeamController();
