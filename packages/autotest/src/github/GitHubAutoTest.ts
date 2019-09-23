@@ -68,7 +68,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             await this.savePushInfo(info);
 
             if (typeof delivId === "undefined" || delivId === null) {
+                Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; requesting");
                 delivId = await this.getDelivId(); // current default deliverable
+                Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; retrieved: " +
+                    delivId + "; type: " + typeof delivId);
             }
 
             if (delivId !== null) {
@@ -328,9 +331,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         // Remove any preexisting queued commits
         const removedPrevious: ContainerInput | null = this.removeFromScheduleQueue([
-                {key: "delivId", value: info.delivId},
-                {key: "personId", value: info.personId}
-            ]);
+            {key: "delivId", value: info.delivId},
+            {key: "personId", value: info.personId}
+        ]);
 
         const nextTimeslot: number | null = await this.requestNextTimeslot(info.delivId, info.personId);
         if (nextTimeslot) {
