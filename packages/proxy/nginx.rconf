@@ -14,65 +14,13 @@ http {
     server {
         listen   8443 default_server ssl;
 
-        # this is supposed to turn off access logging but is _not_ working (crashes proxy)
-        # access_log /dev/null
-
         ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
         ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
-
-        location /ui {
-            port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
-            rewrite            ^/ui/?$ /ui/index.html permanent;
-            rewrite            /ui(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://refui:<%= ENV["UI_PORT"] %>/;
-        }
-
-        location /geo {
-            port_in_redirect   off;
-            rewrite            /geo(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://geocoder:11316;
-        }
-
-        location /codeshovel {
-            port_in_redirect   off;
-            rewrite            /codeshovel(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://codeshovelui:5000;
-        }
-
-        location /codeshovelserver {
-            port_in_redirect   off;
-            rewrite            /codeshovelserver(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://codeshovelwebservice:8080;
-        }
-
-        location /labs {
-            port_in_redirect   off;
-            rewrite            /labs(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://labcycleui:5000;
-        }
-
-        location /labcycle {
-            port_in_redirect   off;
-            rewrite            /labcycle(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://labcyclewebservice:4321;
-        }
-
-        # location /pl {
-        #     port_in_redirect   off;
-        #     rewrite            /pl(/.+) $1 break;
-        #     proxy_read_timeout 240;
-        #     proxy_pass         http://prairielearn:3000;
-        # }
 
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
             proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
         }
+
     }
 }
