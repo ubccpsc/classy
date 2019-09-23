@@ -37,8 +37,13 @@ export class GitHubUtil {
         const regexp = /(\s|^)\#\w\w+\b/gm;
         const matches = message.match(regexp);
 
+        let msg = message;
+        if (msg.length > 40) {
+            msg = msg.substr(0, 40) + "...";
+        }
+
         Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
-            "; matches: " + JSON.stringify(matches) + " for msg: " + message);
+            "; matches: " + JSON.stringify(matches) + " for msg: " + msg);
 
         let parsedDelivId = null;
         if (matches) {
@@ -56,10 +61,6 @@ export class GitHubUtil {
             }
         }
 
-        let msg = message;
-        if (msg.length > 40) {
-            msg = msg.substr(0, 40) + "...";
-        }
         if (parsedDelivId === null) {
             Log.info("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
                 msg + "; options: " + JSON.stringify(delivIds));

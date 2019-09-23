@@ -188,20 +188,26 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.trace("ClassPortal::getContainerDetails(..) - requesting from: " + url);
-        try {
-            const res = await rp(url, opts);
-            Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
-            const json: AutoTestConfigPayload = JSON.parse(res);
-            if (typeof json.success !== 'undefined') {
-                return json.success;
-            } else {
-                Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
+        Log.info("ClassPortal::getContainerDetails(..) - requesting from: " + url);
+
+        if (delivId === null || delivId === 'null') {
+            Log.info("ClassPortal::getContainerDetails(..) - skipping request; null delivId");
+            return null;
+        } else {
+            try {
+                const res = await rp(url, opts);
+                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
+                const json: AutoTestConfigPayload = JSON.parse(res);
+                if (typeof json.success !== 'undefined') {
+                    return json.success;
+                } else {
+                    Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
+                    return null;
+                }
+            } catch (err) {
+                Log.error("ClassPortal::getContainerDetails(..) - ERROR; url: " + url + "; ERROR: " + err);
                 return null;
             }
-        } catch (err) {
-            Log.error("ClassPortal::getContainerDetails(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return null;
         }
     }
 
