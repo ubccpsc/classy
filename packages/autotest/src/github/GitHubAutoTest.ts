@@ -72,6 +72,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 delivId = await this.getDelivId(); // current default deliverable
                 Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; retrieved: " +
                     delivId + "; type: " + typeof delivId);
+
+                if (delivId === "null") {
+                    // delivId should be null if null, not 'null'; force this flag if this is the case
+                    delivId = null;
+                }
             }
 
             if (delivId !== null) {
