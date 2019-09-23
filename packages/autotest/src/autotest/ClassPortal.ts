@@ -16,6 +16,7 @@ import {
     ClassyConfigurationTransport,
     Payload
 } from "../../../common/types/PortalTypes";
+import Util from "../../../common/Util";
 
 export interface IClassPortal {
 
@@ -187,20 +188,26 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.trace("ClassPortal::getContainerDetails(..) - requesting from: " + url);
-        try {
-            const res = await rp(url, opts);
-            Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
-            const json: AutoTestConfigPayload = JSON.parse(res);
-            if (typeof json.success !== 'undefined') {
-                return json.success;
-            } else {
-                Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
+        Log.info("ClassPortal::getContainerDetails(..) - requesting from: " + url);
+
+        if (delivId === null || delivId === 'null') {
+            Log.info("ClassPortal::getContainerDetails(..) - skipping request; null delivId");
+            return null;
+        } else {
+            try {
+                const res = await rp(url, opts);
+                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
+                const json: AutoTestConfigPayload = JSON.parse(res);
+                if (typeof json.success !== 'undefined') {
+                    return json.success;
+                } else {
+                    Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
+                    return null;
+                }
+            } catch (err) {
+                Log.error("ClassPortal::getContainerDetails(..) - ERROR; url: " + url + "; ERROR: " + err);
                 return null;
             }
-        } catch (err) {
-            Log.error("ClassPortal::getContainerDetails(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return null;
         }
     }
 
@@ -263,6 +270,7 @@ export class ClassPortal implements IClassPortal {
                         feedback = altFeedback;
                     }
                 }
+                feedback += await this.getContainerTime(res);
             }
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
@@ -333,6 +341,53 @@ export class ClassPortal implements IClassPortal {
         } catch (err) {
             Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
+        }
+    }
+
+    private async getContainerTime(res: AutoTestResultTransport): Promise<string> {
+        let feedback = "";
+        if (res.output.report.studentTime) {
+            feedback += "\n\n";
+            feedback += `Your test suite took ${Util.tookHuman(0, res.output.report.studentTime)} to complete in the grading container.`;
+        }
+
+        if (res.output.report.publicTime) {
+            feedback += "\n\n";
+            feedback += `Your implementation took ${Util.tookHuman(0, res.output.report.publicTime)}`;
+            feedback += ` to get through our public test suite in the grading container.`;
+            feedback += await this.getMedianTime(res.delivId);
+        }
+
+        if (res.input.containerConfig.maxExecTime && (res.output.report.studentTime || res.output.report.publicTime)) {
+            feedback += "\n\n";
+            feedback += `Executions longer than ${Util.tookHuman(0, res.input.containerConfig.maxExecTime * 1000)} ` +
+                `will be terminated and will not be graded.`;
+        }
+        return feedback;
+    }
+
+    private async getMedianTime(delivId: string): Promise<string> {
+        const url = this.host + ":" + this.port + "/portal/at/median/" + delivId;
+        const opts: rp.RequestPromiseOptions = {
+            rejectUnauthorized: false, headers: {
+                token: Config.getInstance().getProp(ConfigKey.autotestSecret)
+            }
+        };
+        Log.trace("ClassPortal::getMedianTime(..) - requesting from: " + url);
+        try {
+            const res = await rp(url, opts);
+            Log.trace("ClassPortal::getMedianTime( " + delivId + " ) - success; payload: " + res);
+            const json: any = JSON.parse(res);
+            if (typeof json.success !== 'undefined') {
+                return "\n\nThe median time for successful projects in this deliverable in the last 24 hours is " +
+                    Util.tookHuman(0, json.success);
+            } else {
+                Log.warn("ClassPortal::getMedianTime(..) - ERROR: " + JSON.stringify(json));
+                return "";
+            }
+        } catch (err) {
+            Log.error("ClassPortal::getMedianTime(..) - ERROR; url: " + url + "; ERROR: " + err);
+            return "";
         }
     }
 

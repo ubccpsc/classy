@@ -384,4 +384,12 @@ export class UI {
         }
     }
 
+    public static clearTextField(fieldName: string) {
+        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        if (field !== null) {
+            field.value = '';
+        } else {
+            Log.error('UI::clearTextField( ' + fieldName + ' ) - element does not exist');
+        }
+    }
 }

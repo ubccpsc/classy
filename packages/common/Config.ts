@@ -69,8 +69,9 @@ export enum ConfigKey {
     botName = "botName",
     postback = "postback",
 
-    patchId = "patchId",
+    patchId = "patchId", // Used by sdmm/classy
     patchToolUrl = "patchToolUrl",
+    patchSourceRepo = "patchSourceRepo",
 }
 
 export default class Config {
@@ -138,8 +139,9 @@ export default class Config {
                 autotestPort:   process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
 
-                patchId: process.env.PATCH_ID,
-                patchToolUrl: process.env.PATCH_TOOL_URL,
+                patchId:         process.env.PATCH_ID,
+                patchToolUrl:    process.env.PATCH_TOOL_URL,
+                patchSourceRepo: process.env.PATCH_SOURCE_REPO
             };
 
             // this is not a great place for this

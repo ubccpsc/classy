@@ -27,7 +27,7 @@ export class FrontendDatasetGenerator {
         await this.createDeliverables();
         await this.createPeople();
         await this.createTeams();
-        // await this.createRepositories();
+        await this.createRepositories();
         await this.createGrades();
         await this.createResults();
         Log.info("FrontendDatasetGenerator::create() - done");
@@ -163,12 +163,12 @@ export class FrontendDatasetGenerator {
 
         // these will be created by provision
 
-        // const teams = await this.dc.getTeams();
-        // for (const team of teams) {
-        //     const repoName = team.id;
-        //     const repo = Test.getRepository(repoName, Test.DELIVID0, team.id);
-        //     await this.dc.writeRepository(repo);
-        // }
+        const teams = await this.dc.getTeams();
+        for (const team of teams) {
+            const repoName = team.id;
+            const repo = Test.getRepository(repoName, Test.DELIVID0, team.id);
+            await this.dc.writeRepository(repo);
+        }
     }
 
     private async createResults(): Promise<void> {

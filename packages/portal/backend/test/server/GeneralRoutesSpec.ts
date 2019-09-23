@@ -6,12 +6,12 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {ConfigTransportPayload, Payload, TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../../../../common/TestHarness";
 
 describe('General Routes', function() {
 
@@ -684,9 +684,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_user1CSID_user2CSID');
+        const team = await dc.getTeam('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId);
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_user1CSID_user2CSID', deliv, [team], {});
+        const repo = await rc.createRepository('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId, deliv, [team], {});
 
         ex = null;
         try {

@@ -1,5 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {ClusteredResult} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestDashboardTransport,
     AutoTestGradeTransport,
@@ -15,7 +17,6 @@ import {
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
-
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {GitHubActions} from "./GitHubActions";
@@ -176,6 +177,8 @@ export class AdminController {
                 delivId: team.delivId,
                 people:  team.personIds,
                 URL:     team.URL
+                // repoName: team.repoName,
+                // repoUrl:  team.repoUrl
             };
             teams.push(teamTransport);
 
@@ -260,6 +263,8 @@ export class AdminController {
                 let testSkip: string[] = [];
                 let testError: string[] = [];
 
+                let cluster: ClusteredResult;
+
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
                     const report = result.output.report;
                     if (typeof report.scoreOverall !== 'undefined') {
@@ -284,6 +289,9 @@ export class AdminController {
                     if (typeof report.errorNames !== 'undefined') {
                         testError = report.errorNames;
                     }
+                    if (typeof report.cluster !== 'undefined') {
+                        cluster = report.cluster;
+                    }
                 }
 
                 const resultTrans: AutoTestDashboardTransport = {
@@ -301,8 +309,11 @@ export class AdminController {
                     testPass:  testPass,
                     testFail:  testFail,
                     testError: testError,
-                    testSkip:  testSkip
+                    testSkip:  testSkip,
+
+                    cluster: cluster
                 };
+
                 // just return the first result for a repo, unless they are specified
                 if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);
@@ -675,8 +686,6 @@ export class AdminController {
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
-            // if (team.URL === null) { // this would be faster, but we are being more conservative here
-
             Log.trace('AdminController::planProvision( .. ) - preparing to provision team: ' + delivTeam.id);
 
             const people: Person[] = [];
@@ -693,7 +702,7 @@ export class AdminController {
 
             if (team === null) {
                 // sanity checking team must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + names.teamName);
+                throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + name); // s.teamName);
             }
 
             if (repo === null) {
@@ -702,18 +711,18 @@ export class AdminController {
 
             if (repo === null) {
                 // sanity checking repo must not be null given what we have done above (should never happen)
-                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName);
+                throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
             }
 
-            /* istanbul ignore if */
-            if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
-                // HACK: this is just for dealing with inconsistent databases
-                // This whole block should be removed in the future
-                Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
-                const config = Config.getInstance();
-                repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-                await this.dbc.writeRepository(repo);
-            }
+            // /* istanbul ignore if */
+            // if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
+            //     // HACK: this is just for dealing with inconsistent databases
+            //     // This whole block should be removed in the future
+            //     Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
+            //     const config = Config.getInstance();
+            //     repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
+            //     await this.dbc.writeRepository(repo);
+            // }
 
             reposToProvision.push(repo);
         }
@@ -757,8 +766,7 @@ export class AdminController {
             try {
                 const start = Date.now();
                 Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
-                // Log.info("AdminController::performProvision( .. ) - start for repo: " + repo.id);
-                if (repo.URL === null) {
+                if (repo.URL === null) { // key check: repo.URL is only set if the repo has been provisioned
                     const teams: Team[] = [];
                     for (const teamId of repo.teamIds) {
                         teams.push(await this.dbc.getTeam(teamId));
@@ -769,7 +777,7 @@ export class AdminController {
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-                        repo.custom.githubCreated = true;
+                        repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
                         await dbc.writeRepository(repo);
                         Log.info("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
@@ -849,7 +857,8 @@ export class AdminController {
                         // aka only release provisioned repos
                         reposToRelease.push(repo);
                     } else {
-                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(names));
+                        Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " +
+                            JSON.stringify(team.personIds));
                     }
                 } else {
                     Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");

@@ -118,6 +118,7 @@ describe("AdminController", () => {
         const deliv = await dbc.getDeliverable(Test.DELIVIDPROJ);
         const names = await cc.computeNames(deliv, [p1, p2]);
 
+        // const t = await Test.teamCreate(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         const t = await Test.createTeam(names.teamName, Test.DELIVIDPROJ, [p1.id, p2.id]);
         await dbc.writeTeam(t);
     }
@@ -156,18 +157,21 @@ describe("AdminController", () => {
     });
 
     it("Should be able to get a list of teams.", async () => {
-        const res = await ac.getTeams();
-        expect(res).to.be.an('array');
-        expect(res.length).to.be.greaterThan(0);
+        const actual = await ac.getTeams();
+        Log.test('Actual teams: ' + JSON.stringify(actual));
+        expect(actual).to.be.an('array');
+        expect(actual.length).to.be.greaterThan(0);
 
-        Log.test('teams: ' + JSON.stringify(res));
         const t: TeamTransport = {
-            id:      Test.TEAMNAME1,
-            delivId: "d0",
-            people:  [Test.USER1.id, Test.USER2.id],
-            URL:     null
+            id:       Test.TEAMNAME1,
+            delivId:  "d0",
+            people:   [Test.USER1.id, Test.USER2.id],
+            URL:      null,
+            // repoName: null,
+            // repoUrl:  null
         };
-        expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+        Log.test('Expected team: ' + JSON.stringify(t));
+        expect(actual).to.deep.include(t); // make sure at least one student with the right format is in there
     });
 
     it("Should be able to get a list of grades.", async () => {

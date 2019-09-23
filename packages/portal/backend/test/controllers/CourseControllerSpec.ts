@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+import Log from "../../../../common/Log";
 import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 
@@ -46,8 +47,10 @@ describe("CourseController", () => {
         const p2 = await new PersonController().getPerson(Test.USER2.id);
         const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
         const names = await cc.computeNames(deliv, [p1, p2]);
+        Log.test("computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
+        expect(names.teamName).to.equal('t_d1_' + Test.USER1.csId + '_' + Test.USER2.csId);
+        // expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
         expect(names.repoName).to.equal('d1_user1CSID_user2CSID');
     });
 

@@ -76,11 +76,16 @@ services:
                 - SSL_CERT_PATH
                 - SSL_KEY_PATH
                 - BACKEND_PORT
+                - UI_PORT
             context: ./
             dockerfile: ./packages/proxy/Dockerfile
         container_name: proxy
         depends_on:
             - portal
+            - reference_ui
+            - codeshovelui
+            - labcycleui
+            - geolocation
         ports:
             - "80:8080"
             - "443:8443"
@@ -89,3 +94,89 @@ services:
         volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+    geolocation:
+        image: cpsc310geocoder
+        container_name: geocoder
+        expose:
+          - 11316
+        restart: always
+        user: "${UID}"
+    reference_ui:
+        image: cpsc310reference_ui
+        container_name: refui
+        environment:
+            - PLATFORM
+        expose:
+            - ${UI_PORT}
+        restart: always
+        user: "${UID}"
+    codeshovelwebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-webservice.git
+        container_name: codeshovelwebservice
+        expose:
+        - 8080
+        restart: always
+        environment:
+        - GITHUB_TOKEN=${LC_GITHUB_TOKEN}
+        volumes:
+        - "${CODESHOVEL_LOG_PATH}:/requests.csv"
+        - "${CODESHOVEL_CACHE_PATH}:/cache"
+    codeshovelui:
+        build:
+            args:
+            - "SERVER_ADDRESS=${PUBLICHOSTNAME}/codeshovelserver"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/codeshovel"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/codeshovel-ui.git
+        container_name: codeshovelui
+        depends_on:
+        - codeshovelwebservice
+        expose:
+        - 5000
+        restart: always
+    labcyclewebservice:
+        build:
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./backend.dockerfile
+        container_name: labcyclewebservice
+        depends_on:
+          - portal
+        env_file: .env
+        environment:
+        - "LC_SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+        expose:
+        - 4321
+        restart: always
+        volumes:
+        - "${LC_HOST_MANIFEST_PATH}:${LC_MANIFEST_PATH}"
+    labcycleui:
+        build:
+            args:
+            - "SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
+            - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/labs"
+            context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
+            dockerfile: ./frontend.dockerfile
+        container_name: labcycleui
+        depends_on:
+          - labcyclewebservice
+        expose:
+        - 5000
+        restart: always
+    patchtool:
+        image: "sinatra"
+        build:
+            context: https://${GH_DOCKER_TOKEN}@github.students.cs.ubc.ca/cpsc310/repoPatchTool.git#webservice
+        container_name: patchtool
+        environment:
+        - GH_BOT_TOKEN
+        - "COURSE_GH_ORG_TOKEN=${GH_DOCKER_TOKEN}"
+        - PATCH_SOURCE_REPO
+        restart: always
+    prairielearn:
+        image: "prairielearn/prairielearn"
+        container_name: prairielearn
+        ports:
+          - "${PL_HOST_PORT}:3000"
+        restart: always
+        volumes:
+        - "${PL_HOST_PATH}:/course"

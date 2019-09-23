@@ -9,6 +9,9 @@ import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
+    public static readonly STAFF_NAME = 'staff';
+    public static readonly ADMIN_NAME = 'admin';
+
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;
 
@@ -61,7 +64,7 @@ export class TeamController {
      * @returns {Promise<number | null>}
      */
     public async getTeamNumber(name: string): Promise<number | null> {
-        Log.info("TeamController::getTeamNumber( " + name + " ) - start");
+        Log.trace("TeamController::getTeamNumber( " + name + " ) - start");
         const start = Date.now();
 
         const team = await this.db.getTeam(name);
@@ -99,7 +102,7 @@ export class TeamController {
     }
 
     public async getTeamsForPerson(myPerson: Person): Promise<Team[]> {
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
+        Log.trace("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
 
         let myTeams: Team[] = [];
         const allTeams = await this.db.getTeams();
@@ -110,7 +113,7 @@ export class TeamController {
         }
 
         // sort by delivIds
-        myTeams = myTeams.sort(function (a: Team, b: Team) {
+        myTeams = myTeams.sort(function(a: Team, b: Team) {
             return a.delivId.localeCompare(b.delivId);
         });
 
@@ -122,7 +125,7 @@ export class TeamController {
      * Convenience method for creating team objects when only primitive types are known. This is
      * especially useful for students specifying their own teams as it checks to ensure that team
      * constraints (specified in the deliverable) are adhered to. Once all checks pass, the code
-     * passes through to TeamController::createTeam(..).
+     * passes through to TeamController::teamCreate(..).
      *
      * @param teamId
      * @param deliv
@@ -131,7 +134,7 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async formTeam(teamId: string, deliv: Deliverable, people: Person[], adminOverride: boolean): Promise<Team | null> {
-        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start");
+        Log.info("TeamController::formTeam( " + teamId + ", ... ) - start; override: " + adminOverride);
 
         // sanity checking
         if (deliv === null) {
@@ -163,20 +166,20 @@ export class TeamController {
 
         // make sure all students are still registered in the class
         for (const p of people) {
-            if (p.kind === PersonKind.WITHDRAWN) {
+            if (p.kind === PersonKind.WITHDRAWN && !adminOverride) {
                 throw new Error("Team not created; at least one student is not an active member of the class.");
             }
         }
 
         // ensure members are all in the same lab section (if required)
-        if (deliv.teamSameLab === true) {
+        if (deliv.teamSameLab === true && !adminOverride) {
             let labName = null;
             for (const p of people) {
                 if (labName === null) {
                     labName = p.labId;
                 }
                 if (labName !== p.labId) {
-                    Log.error("TeamController::formTeam( ... ) - members not all in same lab ( " + labName + ", " + p.labId + " )");
+                    Log.warn("TeamController::formTeam( ... ) - members not all in same lab ( " + labName + ", " + p.labId + " )");
                     throw new Error("Team not created; all members are not in the same lab.");
                 }
             }
@@ -186,8 +189,8 @@ export class TeamController {
         for (const p of people) {
             const teamsForPerson = await this.getTeamsForPerson(p);
             for (const personTeam of teamsForPerson) {
-                if (personTeam.delivId === deliv.id) {
-                    Log.error("TeamController::formTeam( ... ) - member already on team: " +
+                if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
+                    Log.warn("TeamController::formTeam( ... ) - member already on team: " +
                         personTeam.id + " for deliverable: " + deliv.id);
                     throw new Error("Team not created; some members are already on existing teams for this deliverable.");
                 }
@@ -208,16 +211,31 @@ export class TeamController {
      * @returns {Promise<Team | null>}
      */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
-        Log.info("TeamController::createTeam( " + name + ", ... ) - start");
+        Log.info("TeamController::teamCreate( " + name + ", ... ) - start");
 
         try {
             if (deliv === null) {
-                throw new Error("TeamController::createTeam() - null deliverable provided.");
+                throw new Error("TeamController::teamCreate() - null deliverable provided.");
             }
 
             const existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
+
+                // let repoName: string = '';
+                // repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_` : `${deliv.id}_`;
+                //
+                // if (people.length === 1) {
+                //     const kind = people[0].kind;
+                //     if (kind === PersonKind.ADMIN || kind === PersonKind.STAFF || kind === PersonKind.ADMINSTAFF) {
+                //         repoName += people[0].githubId;
+                //     } else {
+                //         repoName += `user${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                //     }
+                // } else {
+                //     repoName += `team${await this.db.getUniqueTeamNumber(deliv.id)}`;
+                // }
+
                 const team: Team = {
                     id:        name,
                     delivId:   deliv.id,
@@ -225,16 +243,18 @@ export class TeamController {
                     URL:       null,
                     personIds: peopleIds,
                     custom:    custom
+                    // repoName:  null, // repoName, // team counts above used repoName
+                    // repoUrl:   null
                 };
                 await this.db.writeTeam(team);
                 return await this.db.getTeam(name);
             } else {
-                // Log.info("TeamController::createTeam( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
+                // Log.info("TeamController::teamCreate( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
                 // return await this.db.getTeam(name);
                 throw new Error("Duplicate team name: " + name);
             }
         } catch (err) {
-            Log.error("TeamController::createTeam() - ERROR: " + err.message);
+            Log.error("TeamController::teamCreate() - ERROR: " + err.message);
             throw err;
         }
     }
@@ -245,6 +265,8 @@ export class TeamController {
             delivId: team.delivId,
             people:  team.personIds,
             URL:     team.URL
+            // repoName: team.repoName,
+            // repoUrl:  team.repoUrl
         };
 
         return t;
