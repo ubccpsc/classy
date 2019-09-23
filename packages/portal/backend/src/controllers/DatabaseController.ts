@@ -694,13 +694,13 @@ export class DatabaseController {
         }
 
         if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result found");
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
         } else {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result not found");
         }
         return result;
     }
