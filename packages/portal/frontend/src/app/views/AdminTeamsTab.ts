@@ -51,10 +51,11 @@ export class AdminTeamsTab extends AdminPage {
 
         this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
-        this.renderTeams(this.teams, opts.delivId);
-
         this.students = await AdminStudentsTab.getStudents(this.remote);
+
+        this.renderTeams(this.teams, opts.delivId);
         this.renderIndividuals(this.teams, this.students, opts.delivId);
+
         UI.hideModal();
     }
 
@@ -204,7 +205,7 @@ export class AdminTeamsTab extends AdminPage {
     }
 
     /**
-     * Convert personId -> personId (CWL)
+     * Convert personId to a more useful representation for staff to understand.
      *
      * Also add links if available.
      *
@@ -216,7 +217,7 @@ export class AdminTeamsTab extends AdminPage {
 
         try {
             for (const student of this.students) {
-                if (student.githubId === personId) {
+                if (student.id === personId) {
 
                     if (student.githubId === student.id) {
                         // render staff (whose GitHub ids should match their CSIDs (according to the system)
