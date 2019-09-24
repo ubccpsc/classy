@@ -41,32 +41,32 @@ describe("GitHubUtil", () => {
     it("Should be able to correctly parse #silent from a commit comment.", () => {
         let actual;
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #d1");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d1", 'silent');
         expect(actual).to.be.false;
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot d1");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot d1", 'silent');
         expect(actual).to.be.false;
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #d101 #silent");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d101 #silent", 'silent');
         expect(actual).to.be.true;
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #silent.");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #silent.", 'silent');
         expect(actual).to.be.true;
     });
 
     it("Should be able to correctly parse #force from a commit comment.", () => {
         let actual;
 
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #d1");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d1", 'force');
         expect(actual).to.be.false;
 
-        actual = GitHubUtil.parseForceFromComment("@ubcbot d1");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot d1", 'force');
         expect(actual).to.be.false;
 
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #d101 #silent #force");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d101 #silent #force", 'force');
         expect(actual).to.be.true;
 
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #force.");
+        actual = GitHubUtil.parseCommandFromComment("@ubcbot #force.", 'force');
         expect(actual).to.be.true;
     });
 

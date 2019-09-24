@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+import Log from "../../../common/Log";
 
 import {Factory} from "../src/Factory";
 
@@ -36,19 +37,23 @@ describe('Factory', function() {
 
     it('Can get the course controller for courses', async function() {
         // should be able to get our test controller
-        let actual = await Factory.getCourseController(null, 'classytest');
+        const actual = await Factory.getCourseController(null, 'classytest');
+        Log.test("Controller should not be null: " + actual);
         expect(actual).to.not.be.null;
 
+        // NOTE: this behaviour is different now: we just return the CustomCourseController no matter what.
+
         // should fail to get a controller for a course that doesn't exist
-        actual = null;
-        let ex = null;
-        try {
-            actual = await Factory.getCourseController(null, 'INVALIDcourseNAME');
-        } catch (err) {
-            ex = err;
-        }
-        expect(actual).to.be.null;
-        expect(ex).to.not.be.null;
+        // actual = null;
+        // let ex = null;
+        // try {
+        //     actual = await Factory.getCourseController(null, 'INVALIDcourseNAME');
+        //     Log.test("Controller should be null: " + actual);
+        // } catch (err) {
+        //     ex = err;
+        // }
+        // expect(actual).to.be.null;
+        // expect(ex).to.not.be.null;
 
         // actual = null;
         // ex = null;

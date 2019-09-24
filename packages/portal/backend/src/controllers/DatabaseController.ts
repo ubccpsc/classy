@@ -34,6 +34,7 @@ export class DatabaseController {
     private readonly REPOCOLL = 'repositories';
     private readonly AUTHCOLL = 'auth';
     private readonly AUDITCOLL = 'audit';
+    private readonly TICKERCOLL = 'ids';
 
     /**
      * use getInstance() instead.
@@ -190,6 +191,27 @@ export class DatabaseController {
             Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - not found");
         }
         return grade;
+    }
+
+    /**
+     * Gets and increments a per-deliverable counter. Numbers start at 000 and increment.
+     *
+     * Pre-padding with 0s for easier searching, but will be problematic for deliverables with > 1000 teams.
+     *
+     * @param {string} delivId
+     * @returns {Promise<string>}
+     */
+    public async getUniqueTeamNumber(delivId: string): Promise<string> {
+        const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, {tickerId: delivId}, {$inc: {ticker: 1}});
+        let res: number = 0;
+        if (ticker !== null) {
+            Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker found: " + ticker.ticker);
+            res = ticker.ticker;
+        } else {
+            Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker NOT found. Setting ticker");
+            await this.writeRecord(this.TICKERCOLL, {tickerId: delivId, ticker: 1});
+        }
+        return ("00" + res).slice(-3);
     }
 
     public async writePerson(record: Person): Promise<boolean> {
@@ -437,7 +459,7 @@ export class DatabaseController {
             // This prevents us from running the tests in production by accident and wiping the database
 
             const cols = [this.PERSONCOLL, this.GRADECOLL, this.RESULTCOLL, this.TEAMCOLL,
-                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL];
+                this.DELIVCOLL, this.REPOCOLL, this.AUTHCOLL, this.COURSECOLL, this.AUDITCOLL, this.TICKERCOLL];
 
             for (const col of cols) {
                 Log.info("DatabaseController::clearData() - removing data for collection: " + col);
@@ -521,6 +543,25 @@ export class DatabaseController {
         return [];
     }
 
+    private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
+        try {
+            const start = Date.now();
+            const col = await this.getCollection(column);
+
+            const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
+
+            if (record === null || record === undefined) {
+                return null;
+            } else {
+                delete record._id;
+                return record;
+            }
+        } catch (err) {
+            Log.error("DatabaseController::readAndUpdateSingleRecord(..) - ERROR: " + err);
+            return null;
+        }
+    }
+
     /**
      * Internal use only, do not use this method; use getCollection(..) instead.
      *
@@ -592,6 +633,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -605,6 +648,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -618,6 +663,8 @@ export class DatabaseController {
                 githubId:  null, // to be filled in later
                 URL:       null, // to be filled in later
                 personIds: [], // empty for special teams
+                // repoName:  null, // null for special teams
+                // repoUrl:   null,
                 custom:    {}
             };
             await this.writeTeam(newTeam);
@@ -625,7 +672,7 @@ export class DatabaseController {
     }
 
     public async writeAuth(record: Auth): Promise<boolean> {
-        Log.info("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
+        Log.trace("DatabaseController::writeAuth( " + record.personId + ", ... ) - start");
         const auth = await this.readSingleRecord(this.AUTHCOLL, {personId: record.personId}) as Auth;
         if (auth === null) {
             return await this.writeRecord(this.AUTHCOLL, record);
@@ -647,13 +694,13 @@ export class DatabaseController {
         }
 
         if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - found: " + JSON.stringify(result));
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result found");
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
         } else {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - not found");
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result not found");
         }
         return result;
     }
@@ -676,5 +723,14 @@ export class DatabaseController {
         const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
 
         return result;
+    }
+
+    public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
+        const minScore = 50;
+        const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
+        const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreOverall": {$gt: minScore}};
+        const results = await this.readRecords(this.RESULTCOLL, query);
+        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - Found ${results.length} results.`);
+        return results;
     }
 }

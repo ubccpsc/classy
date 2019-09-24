@@ -32,7 +32,7 @@ export class GradesController {
                 returnGrades.push(grade);
             } else {
                 if (grade !== null && person !== null) {
-                    Log.info("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
+                    Log.trace("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
                 } else {
                     Log.warn("GradesController::getAllGrades() - null; not returning grade: " +
                         JSON.stringify(grade) + "; person: " + JSON.stringify(person));

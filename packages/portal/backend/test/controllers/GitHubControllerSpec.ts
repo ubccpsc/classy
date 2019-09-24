@@ -56,7 +56,7 @@ describe("GitHubController", () => {
         await dbc.writeTeam(t1);
         const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t2);
-        // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
+        // const t3 = await Test.teamCreate(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
         // await dbc.writeTeam(t3);
 
         const dc = new DeliverablesController();
@@ -320,18 +320,19 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUT);
 
     // TODO: actually write tests for the PR feature
-    xit("Should fail to create a pull request.", async function() {
-        let res = null;
-        let ex = null;
-        try {
-            // not implemented yet, should fail right away
-            const repos = await new RepositoryController().getAllRepos();
-            res = await gc.createPullRequest(repos[0], 'patch');
-        } catch (err) {
-            ex = err;
-        }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
-    }).timeout(Test.TIMEOUT);
+    // xit("Should fail to create a pull request.", async function() {
+    //     let res = null;
+    //     let ex = null;
+    //     try {
+    //         // patchtool has not been integrated with tests yet,
+    //         // so should fail to contact patchtool and return false
+    //         const repos = await new RepositoryController().getAllRepos();
+    //         res = await gc.createPullRequest(repos[0], 'patch');
+    //     } catch (err) {
+    //         ex = err;
+    //     }
+    //     expect(res).to.be.false;
+    //     expect(ex).to.be.null;
+    // }).timeout(Test.TIMEOUT);
 
 });

@@ -25,7 +25,7 @@ export class RepositoryController {
     }
 
     public async getReposForPerson(myPerson: Person): Promise<Repository[]> {
-        Log.info("RepositoryController::getReposForPerson( " + myPerson.id + " ) - start");
+        Log.trace("RepositoryController::getReposForPerson( " + myPerson.id + " ) - start");
 
         // TODO: this is slow; there is a faster implementation in db.getReposForPerson now, but it is untested
         // db.getRepositoriesForPerson(myPerson.id)

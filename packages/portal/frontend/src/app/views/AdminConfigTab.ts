@@ -7,6 +7,7 @@ import {AdminDeletePage} from "./AdminDeletePage";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
+import {AdminPullRequestsPage} from "./AdminPullRequestsPage";
 import {AdminView} from "./AdminView";
 
 export class AdminConfigTab extends AdminPage {
@@ -140,10 +141,56 @@ export class AdminConfigTab extends AdminPage {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
             evt.preventDefault();
 
-            that.createTeamPressed().then(function() {
+            that.teamCreatePressed().then(function() {
                 // worked
             }).catch(function(err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
+            });
+        };
+
+        // This is from the admin page which is not currently supported:
+        //
+        // (document.querySelector('#adminDeleteTeamButton') as OnsButtonElement).onclick = function(evt) {
+        //     Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed');
+        //     evt.preventDefault();
+        //
+        //     that.teamDeletePressed().then(function() {
+        //         // worked
+        //     }).catch(function(err) {
+        //         Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: ' + err.message);
+        //     });
+        // };
+
+        (document.querySelector('#adminDeleteTeamManageButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed');
+            evt.preventDefault();
+
+            that.teamDeletePressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminTeamAddMemberButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - add member to team pressed');
+            evt.preventDefault();
+
+            that.teamAddMemberPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: ' + err.message);
+            });
+        };
+
+        (document.querySelector('#adminTeamRemoveMemberButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed');
+            evt.preventDefault();
+
+            that.teamRemoveMemberPressed().then(function() {
+                // worked
+            }).catch(function(err) {
+                Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: ' + err.message);
             });
         };
 
@@ -180,6 +227,24 @@ export class AdminConfigTab extends AdminPage {
                 });
             }).catch(function(err) {
                 Log.error("AdminConfigTab - adminProvision ERROR: " + err.message);
+            });
+        };
+
+        (document.querySelector('#adminManagePullRequestsButton') as OnsButtonElement).onclick = function(evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed');
+            evt.preventDefault();
+
+            that.pushPage('./adminPullRequests.html', {}).then(function() {
+                const pullRequestsPage = new AdminPullRequestsPage(that.remote);
+                pullRequestsPage.init({}).then(function() {
+                    // success
+                    Log.info('AdminConfigTab::handleAdminConfig(..) - PRs page init');
+                }).catch(function(err) {
+                    // error
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - PRs page ERROR: ' + err);
+                });
+            }).catch(function(err) {
+                Log.error("AdminConfigTab - adminPullRequests ERROR: " + err.message);
             });
         };
 
@@ -362,8 +427,8 @@ export class AdminConfigTab extends AdminPage {
         Log.trace('AdminConfigTab::uploadGrades(..) - end');
     }
 
-    private async createTeamPressed(): Promise<void> {
-        Log.trace('AdminConfigTab::createTeamPressed(..) - start');
+    private async teamCreatePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamCreatePressed(..) - start');
         const delivDropdown = document.querySelector('#adminTeamDeliverableSelect') as HTMLSelectElement;
         const delivId = delivDropdown.value;
 
@@ -380,7 +445,7 @@ export class AdminConfigTab extends AdminPage {
             githubIds: nameList
         };
 
-        Log.trace('AdminConfigTab::createTeamPressed(..) - body: ' + JSON.stringify(team));
+        Log.trace('AdminConfigTab::teamCreatePressed(..) - body: ' + JSON.stringify(team));
 
         options.body = JSON.stringify(team);
 
@@ -388,7 +453,84 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
-            UI.showErrorToast("Team created successfully: " + body.success[0].id);
+            UI.showSuccessToast("Team created successfully: " + body.success[0].id);
+            UI.clearTextField('adminTeamText');
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async teamDeletePressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamDeletePressed(..) - start');
+
+        const teamId = UI.getTextFieldValue('adminDeleteTeamManageTeam');
+
+        const url = this.remote + '/portal/admin/team/' + teamId;
+        const options: any = AdminView.getOptions();
+        options.method = 'delete';
+
+        Log.trace('AdminConfigTab::teamDeletePressed(..) - body: ' + JSON.stringify({}));
+
+        options.body = JSON.stringify({});
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team deleted successfully: " + body.success.message);
+            UI.clearTextField('adminDeleteTeamManageTeam');
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async teamAddMemberPressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamAddMemberPressed(..) - start');
+
+        const teamId = UI.getTextFieldValue('adminTeamAddMemberTeam');
+        const memberId = UI.getTextFieldValue('adminTeamAddMemberMember');
+
+        const url = this.remote + '/portal/admin/team/' + teamId + '/members/' + memberId;
+        const options: any = AdminView.getOptions();
+        options.method = 'post';
+
+        Log.trace('AdminConfigTab::teamAddMemberPressed(..) - body: ' + JSON.stringify({}));
+
+        options.body = JSON.stringify({});
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team member added successfully: " + body.success.message);
+            UI.clearTextField('adminTeamAddMemberTeam');
+            UI.clearTextField('adminTeamAddMemberMember');
+        } else {
+            UI.showAlert(body.failure.message);
+        }
+    }
+
+    private async teamRemoveMemberPressed(): Promise<void> {
+        Log.trace('AdminConfigTab::teamRemoveMemberPressed(..) - start');
+
+        const teamId = UI.getTextFieldValue('adminTeamRemoveMemberTeam');
+        const memberId = UI.getTextFieldValue('adminTeamRemoveMemberMember');
+
+        const url = this.remote + '/portal/admin/team/' + teamId + '/members/' + memberId;
+        const options: any = AdminView.getOptions();
+        options.method = 'delete';
+
+        Log.trace('AdminConfigTab::teamRemoveMemberPressed(..) - body: ' + JSON.stringify({}));
+
+        options.body = JSON.stringify({});
+
+        const response = await fetch(url, options);
+        const body = await response.json();
+
+        if (typeof body.success !== 'undefined') {
+            UI.showSuccessToast("Team member removed successfully: " + body.success.message);
+            UI.clearTextField('adminTeamRemoveMemberTeam');
+            UI.clearTextField('adminTeamRemoveMemberMember');
         } else {
             UI.showAlert(body.failure.message);
         }

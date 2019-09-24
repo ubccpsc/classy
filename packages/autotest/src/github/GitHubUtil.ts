@@ -37,8 +37,13 @@ export class GitHubUtil {
         const regexp = /(\s|^)\#\w\w+\b/gm;
         const matches = message.match(regexp);
 
+        let msg = message;
+        if (msg.length > 40) {
+            msg = msg.substr(0, 40) + "...";
+        }
+
         Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
-            "; matches: " + JSON.stringify(matches) + " for msg: " + message);
+            "; matches: " + JSON.stringify(matches) + " for msg: " + msg);
 
         let parsedDelivId = null;
         if (matches) {
@@ -56,10 +61,6 @@ export class GitHubUtil {
             }
         }
 
-        let msg = message;
-        if (msg.length > 40) {
-            msg = msg.substr(0, 40) + "...";
-        }
         if (parsedDelivId === null) {
             Log.info("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
                 msg + "; options: " + JSON.stringify(delivIds));
@@ -69,30 +70,12 @@ export class GitHubUtil {
         return parsedDelivId;
     }
 
-    public static parseCheckFromComment(message: any): boolean {
-        if (message.indexOf('#check') >= 0) {
-            Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; check: true");
+    public static parseCommandFromComment(message: any, cmd: string): boolean {
+        if (message.indexOf(`#${cmd}`) >= 0) {
+            Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: true`);
             return true;
         }
-        Log.trace("GitHubUtil::parseCheckFromComment() - input: " + message + "; silent: false");
-        return false;
-    }
-
-    public static parseSilentFromComment(message: any): boolean {
-        if (message.indexOf('#silent') >= 0) {
-            Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: true");
-            return true;
-        }
-        Log.trace("GitHubUtil::parseSilentFromComment() - input: " + message + "; silent: false");
-        return false;
-    }
-
-    public static parseForceFromComment(message: any): boolean {
-        if (message.indexOf('#force') >= 0) {
-            Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: true");
-            return true;
-        }
-        Log.trace("GitHubUtil::parseForceFromComment() - input: " + message + "; force: false");
+        Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: false`);
         return false;
     }
 
@@ -121,14 +104,10 @@ export class GitHubUtil {
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
             const flags: string[] = [];
-            if (GitHubUtil.parseForceFromComment(message) === true) {
-                flags.push("#force");
-            }
-            if (GitHubUtil.parseSilentFromComment(message) === true) {
-                flags.push("#silent");
-            }
-            if (GitHubUtil.parseCheckFromComment(message) === true) {
-                flags.push("#check");
+            for (const command of ['force', 'silent', 'check', 'schedule', 'unschedule']) {
+                if (GitHubUtil.parseCommandFromComment(message, command)) {
+                    flags.push(`#${command}`);
+                }
             }
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
@@ -187,7 +166,7 @@ export class GitHubUtil {
      */
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
-            Log.info("GitHubUtil::processPush(..) - start");
+            Log.trace("GitHubUtil::processPush(..) - start");
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;

@@ -266,7 +266,7 @@ describe("GitHubActions", () => {
         expect(val.githubTeamNumber).to.be.an('number');
         expect(val.githubTeamNumber > 0).to.be.true;
 
-        const addMembers = await gh.addMembersToTeam(val.teamName, val.githubTeamNumber,
+        const addMembers = await gh.addMembersToTeam(val.teamName,
             [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
         Log.test("Members added");
@@ -534,7 +534,7 @@ describe("GitHubActions", () => {
         }
 
         try {
-            await gh.addMembersToTeam('INVALIDTEAMNAME', -1, ['INVALIDPERSONNAME']);
+            await gh.addMembersToTeam('INVALIDTEAMNAME', ['INVALIDPERSONNAME']);
         } catch (err) {
             // expected
         }
@@ -576,7 +576,7 @@ describe("GitHubActions", () => {
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
         // Expects adding members to work
-        const addMembers = await gh.addMembersToTeam(githubTeam.teamName, githubTeam.githubTeamNumber,
+        const addMembers = await gh.addMembersToTeam(githubTeam.teamName,
             [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers).to.not.be.null;
         const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
@@ -610,7 +610,7 @@ describe("GitHubActions", () => {
 
     // this test wasn't failing for the right reasons and was disabled until we can figure out what is going on
     // it("Should not be able to bulk edit permissions to admins", async function() {
-    //     const githubTeam = await gh.createTeam(TEAMNAME, 'push');
+    //     const githubTeam = await gh.teamCreate(TEAMNAME, 'push');
     //     expect(githubTeam.teamName).to.be.equal(TEAMNAME);
     //     expect(githubTeam.githubTeamNumber).to.be.an('number');
     //     expect(githubTeam.githubTeamNumber > 0).to.be.true;
