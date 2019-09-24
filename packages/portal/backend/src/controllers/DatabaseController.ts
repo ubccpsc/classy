@@ -728,7 +728,7 @@ export class DatabaseController {
     public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
         const minScore = 50;
         const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
-        const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreOverall": {$gt: minScore}};
+        const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreTest": {$gt: minScore}};
         const results = await this.readRecords(this.RESULTCOLL, query);
         Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - Found ${results.length} results.`);
         return results;
