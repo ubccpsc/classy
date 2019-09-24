@@ -346,6 +346,11 @@ export class ClassPortal implements IClassPortal {
 
     private async getContainerTime(res: AutoTestResultTransport): Promise<string> {
         let feedback = "";
+        if (res.output.report.studentTime || res.output.report.publicTime) {
+            feedback += "\n\n";
+            feedback += `**Miscellaneous information**`;
+        }
+
         if (res.output.report.studentTime) {
             feedback += "\n\n";
             feedback += `Your test suite took ${Util.tookHuman(0, res.output.report.studentTime)} to complete in the grading container.`;
