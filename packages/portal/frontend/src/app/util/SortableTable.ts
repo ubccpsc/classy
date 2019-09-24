@@ -258,7 +258,7 @@ export class SortableTable {
     }
 
     // code from: https://www.codexworld.com/export-html-table-data-to-csv-using-javascript/
-    private downloadCSV(csv: string, fileName: string) {
+    private downloadCSV(csv: string, fileName: string, linkName: string) {
         let csvFile;
         let downloadLink;
 
@@ -267,7 +267,7 @@ export class SortableTable {
 
         // Download link
         downloadLink = document.createElement('a');
-        downloadLink.innerHTML = 'Download Table as CSV';
+        downloadLink.innerHTML = linkName;
 
         const table = document.querySelector(this.divName);
         table.appendChild(downloadLink);
@@ -289,7 +289,7 @@ export class SortableTable {
         // downloadLink.click();
     }
 
-    private exportTableToCSV(fileName: string) {
+    private exportTableToCSV() {
         const csv = [];
         const root = document.querySelector(this.divName);
         const rows = root.querySelectorAll('table tr');
@@ -309,12 +309,42 @@ export class SortableTable {
                     row.push((cols[j] as HTMLTableCellElement).innerText);
                 }
             }
-
             csv.push(row.join(','));
         }
 
-        // Download CSV file
-        this.downloadCSV(csv.join('\n'), fileName);
+        return csv.join('\n');
+    }
+
+    private exportTableLinksToCSV() {
+        const csv = [];
+        const root = document.querySelector(this.divName);
+        const rows = root.querySelectorAll('table tr');
+
+        for (let i = 0; i < rows.length; i++) {
+            const row = [];
+            const cols = rows[i].querySelectorAll('td, th');
+
+            // tslint:disable-next-line
+            for (let j = 0; j < cols.length; j++) {
+                if (i === 0) {
+                    let text = (cols[j] as HTMLTableCellElement).innerText;
+                    text = text.replace(' ▼', '');
+                    text = text.replace(' ▲', '');
+                    row.push(text);
+                } else {
+                    const col = cols[j] as HTMLElement;
+
+                    if (col instanceof HTMLAnchorElement) {
+                        row.push(col.href);
+                    } else {
+                        row.push(col.innerText);
+                    }
+                }
+            }
+            csv.push(row.join(','));
+        }
+
+        return csv.join('\n');
     }
 
     public numRows(): number {
@@ -322,6 +352,9 @@ export class SortableTable {
     }
 
     private attachDownload() {
-        this.exportTableToCSV('classy.csv');
+        const csv = this.exportTableToCSV();
+        this.downloadCSV(csv, 'classy.csv', 'Download Values as CSV&nbsp;');
+        const links = this.exportTableLinksToCSV();
+        this.downloadCSV(links, 'classyLinks.csv', '&nbsp;Download Links as CSV');
     }
 }
