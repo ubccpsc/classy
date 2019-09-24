@@ -334,8 +334,9 @@ export class SortableTable {
                 } else {
                     const col = cols[j] as HTMLElement;
 
-                    if (col instanceof HTMLAnchorElement) {
-                        row.push(col.href);
+                    // this is super brittle
+                    if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
+                        row.push(col.children[0].href);
                     } else {
                         row.push(col.innerText);
                     }
