@@ -571,8 +571,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 data.input.target.personId, data.input.target.timestamp);
 
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
-            const afterDueDate: boolean = standardFeedbackRequested !== null &&
-                (standardFeedbackRequested.timestamp > containerConfig.closeTimestamp);
+            // const afterDueDate: boolean = standardFeedbackRequested !== null &&
+            //     (standardFeedbackRequested.timestamp > containerConfig.closeTimestamp);
 
             Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
@@ -591,8 +591,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // since we're not calling saveFeedback this is right
                 // but if we replay the commit comments, we would see it there, so be careful
 
+            // } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
+            //     && feedbackDelay === null && !futureTarget && !afterDueDate) {
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget && !afterDueDate) {
+                && feedbackDelay === null && !futureTarget) {
                 // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
@@ -609,8 +611,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (standardFeedbackRequested !== null) {
                     await giveFeedback(standardFeedbackRequested, 'standard');
                 }
+            // } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
+            //     && feedbackDelay === null && !futureTarget && !afterDueDate) {
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget && !afterDueDate) {
+                && feedbackDelay === null && !futureTarget) {
                 const msg: string = `Grading for this deliverable is now closed.`;
                 await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else {
