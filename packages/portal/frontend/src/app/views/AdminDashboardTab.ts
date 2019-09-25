@@ -2,6 +2,8 @@ import * as moment from "moment";
 import {OnsButtonElement} from "onsenui";
 
 import Log from "../../../../../common/Log";
+
+import {ClusteredResult} from "../../../../../common/types/ContainerTypes";
 import {
     AutoTestDashboardPayload,
     AutoTestDashboardTransport,
@@ -10,8 +12,6 @@ import {
 } from "../../../../../common/types/PortalTypes";
 import {DashboardTable} from "../util/DashboardTable";
 import {TableCell, TableHeader} from "../util/SortableTable";
-
-import { ClusteredResult } from "../../../../../common/types/ContainerTypes";
 import {UI} from "../util/UI";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
@@ -202,12 +202,12 @@ export class AdminDashboardTab extends AdminPage {
                     html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
                            stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
-                {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
+                {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: result.scoreOverall + ''},
                 {value: result.scoreTests, html: result.scoreTests + ''},
                 {value: result.scoreCover, html: result.scoreCover + ''},
-                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'},
+                {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'},
                 {value: '', html: dashRow}
             ];
 
@@ -269,8 +269,9 @@ export class AdminDashboardTab extends AdminPage {
 
     private generateTable(annotated: DetailRow[]): string {
         let str = '<span class="normalhistogram"><table style="height: 20px;">';
-        str += '<tr>';
-        str += '<td style="width: 2em; text-align: center;">_' + annotated.length + '_</td>'; // underscores for easier searching
+        str += '<tr class="selectable">';
+        // underscores for easier searching
+        str += '<td class="selectable" style="width: 2em; text-align: center;">_' + annotated.length + '_</td>';
         for (const a of annotated) {
             str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
         }

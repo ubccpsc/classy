@@ -146,13 +146,13 @@ export class AdminTeamsTab extends AdminPage {
                     repoURL = repo.URL;
                 }
             }
-            let repoDisplay = '<a href="' + repoURL + '">' + repoName + '</a>';
+            let repoDisplay = '<a class="selectable" href="' + repoURL + '">' + repoName + '</a>';
             if (repoURL === null) {
                 // repo not yet provisioned; don't show anything
                 repoDisplay = '';
             }
 
-            let teamDisplay = '<a href="' + team.URL + '">' + team.id + '</a>';
+            let teamDisplay = '<a class="selectable" href="' + team.URL + '">' + team.id + '</a>';
             if (team.URL === null) {
                 // team not yet provisioned, don't turn this into a link
                 teamDisplay = team.id;
@@ -222,14 +222,15 @@ export class AdminTeamsTab extends AdminPage {
                     if (student.githubId === student.id) {
                         // render staff (whose GitHub ids should match their CSIDs (according to the system)
                         if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                            render = '<a href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
+                            render = '<a class="selectable" href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
                         } else {
                             render = 'Staff: ' + student.githubId;
                         }
                     } else {
                         // render students
                         if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                            render = '<a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                            render = '<a class="selectable" href="' + student.userUrl + '">' +
+                                student.githubId + '</a> (' + student.id + ')';
                         } else {
                             render = student.githubId + " (" + student.id + ")";
                         }
@@ -283,10 +284,10 @@ export class AdminTeamsTab extends AdminPage {
 
                 let studentHTML = '';
                 if (student.firstName === student.lastName || student.githubId.startsWith('atest-')) {
-                    studentHTML = 'Staff: ' + ' <a href="' + student.userUrl + '">' + student.githubId + '</a>';
+                    studentHTML = 'Staff: ' + ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>';
                 } else {
                     studentHTML = student.firstName + ' ' + student.lastName +
-                        ' <a href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                        ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
                 }
 
                 const row: TableCell[] = [

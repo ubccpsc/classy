@@ -180,12 +180,12 @@ export class AdminResultsTab extends AdminPage {
                     html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
                            stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
-                {value: result.repoId, html: '<a href="' + result.repoURL + '">' + result.repoId + '</a>'},
+                {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: result.scoreOverall + ''},
                 {value: result.state, html: result.state},
-                {value: ts, html: '<a href="' + result.commitURL + '">' + tsString + '</a>'}
+                {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'}
             ];
 
             st.addRow(row);

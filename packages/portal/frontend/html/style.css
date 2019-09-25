@@ -120,6 +120,10 @@ Dashboard Page
     user-select: text !important;
 }
 
+.selectable {
+    user-select: text !important;
+}
+
 /**
 stdio viewer Page
  */
