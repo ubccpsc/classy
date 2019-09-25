@@ -218,7 +218,9 @@ export class GitHubUtil {
                 postbackURL,
                 timestamp
             };
-            Log.info("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
+
+            Log.info("GitHubUtil::processPush(..) - done");
+            Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
