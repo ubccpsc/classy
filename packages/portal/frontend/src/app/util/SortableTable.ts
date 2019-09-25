@@ -146,10 +146,10 @@ export class SortableTable {
             if (this.sortHeader !== null && header.id === this.sortHeader.id) {
                 if (this.sortHeader.sortDown) {
                     tablePrefix += '<th class="sortableHeader" style="' + header.style +
-                        '" col="' + header.id + '"><b>' + header.text + ' ▲</b></th>';
+                        '" col="' + header.id + '"><b class="sortableHeader">' + header.text + ' ▲</b></th>';
                 } else {
                     tablePrefix += '<th class="sortableHeader"  style="' + header.style +
-                        '" col="' + header.id + '"><b>' + header.text + ' ▼</b></th>';
+                        '" col="' + header.id + '"><b class="sortableHeader">' + header.text + ' ▼</b></th>';
                 }
             } else {
                 tablePrefix += '<th class="sortableHeader" style="' + header.style +
