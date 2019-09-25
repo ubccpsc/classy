@@ -134,7 +134,7 @@ export class SortableTable {
     }
 
     private startTable() {
-        let tablePrefix = '<table style="margin-left: auto; margin-right: auto; border-collapse: collapse;">'; // width: 100%;
+        let tablePrefix = '<table class="sortableTable">';
         tablePrefix += '<tr>';
 
         for (const header of this.headers) {
@@ -170,14 +170,14 @@ export class SortableTable {
         let row = '';
 
         if (isOdd) {
-            row = '<tr class="sortableRow" style="color: black; background: white;">';
+            row = '<tr class="sortableTableRow" style="color: black; background: white;">';
         } else {
-            row = '<tr class="sortableRow" style="color: black; background: lightgrey;">';
+            row = '<tr class="sortableTableRow" style="color: black; background: lightgrey;">';
         }
 
         let i = 0;
         for (const col of cols) {
-            row += '<td class="sortableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + '</td>';
+            row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + '</td>';
             i++;
         }
         row += '</tr>';

@@ -99,6 +99,28 @@ Dashboard Page
 }
 
 /**
+  Styles for all sortable tables.
+ */
+.sortableTable {
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+    user-select: text !important;
+}
+
+.sortableHeader {
+    user-select: text !important;
+}
+
+.sortableTableRow {
+    user-select: text !important;
+}
+
+.sortableTableCell {
+    user-select: text !important;
+}
+
+/**
 stdio viewer Page
  */
 #stdioViewer {
