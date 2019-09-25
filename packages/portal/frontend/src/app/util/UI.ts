@@ -2,6 +2,7 @@
  * Created by rtholmes on 2017-10-04.
  */
 import Log from "../../../../../common/Log";
+import {StudentTransport} from "../../../../../common/types/PortalTypes";
 
 // const OPEN_DELIV_KEY = 'open';
 // const CLOSE_DELIV_KEY = 'close';
@@ -124,6 +125,45 @@ export class UI {
         }
     }
 
+    public static createColumnItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {
+
+        let prefix = '<ons-list-item style="display: table;">';
+        if (typeof tappable !== 'undefined' && tappable === true) {
+            // right now only if subtext
+            prefix = '<ons-list-item style="display: table;" modifier="chevron" tappable>';
+        }
+
+        if (typeof subtext === 'undefined') {
+            // simple list item
+            const taskItem = ons.createElement('<ons-list-item>' + text + '</ons-list-item>') as HTMLElement;
+            return taskItem;
+        } else {
+            // compound list item
+            const taskItem = ons.createElement(
+                prefix +
+                '<span class="list-item__title">' + text + '</span>' +
+                '<span class="list-item__subtitle">' + subtext + '</span>' +
+                '</ons-list-item>') as HTMLElement;
+            return taskItem;
+        }
+    }
+
+    public static createRowItem(columns: HTMLElement[]): HTMLElement {
+        const rowItem: HTMLElement = ons.createElement('<ons-row-item></ons-row-item>') as HTMLElement;
+        columns.forEach(function(column) {
+            rowItem.append(column);
+        });
+        return rowItem;
+    }
+
+    public static createRowColumnItems(tabData: string[]) {
+        const rowColumns: HTMLElement[] = [];
+        for (const tab of tabData) {
+            rowColumns.push(ons.createElement('<ons-col-item>' + tab + '</ons-col-item>'));
+        }
+        return rowColumns;
+    }
+
     public static createListHeader(text: string): HTMLElement {
         const taskHeader = ons.createElement(
             '<ons-list-header>' + text + '</ons-list-header>') as HTMLElement;
@@ -141,6 +181,7 @@ export class UI {
             Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
             if (m !== null) {
                 if (text != null) {
+                    const content = document.querySelectorAll('#modalText') as any;
                     const textFields = document.querySelectorAll('#modalText') as any;
                     for (const t of textFields) {
                         // document.getElementById('modalText').innerHTML = text;
@@ -285,6 +326,26 @@ export class UI {
 
     public static showAlert(message: string) {
         return ons.notification.alert(message);
+    }
+
+    public static templateConfirm(template: string, options: {header?: string, listContent?: Array<{text: string, subtext?: string}>}) {
+        return ons.createElement(template, {append: true}).then(function(classlistDialog: any) {
+            const onsList = classlistDialog.querySelector('ons-list') as HTMLElement;
+            (classlistDialog.querySelector('ons-list-header') as HTMLElement).innerHTML = options.header;
+            classlistDialog.querySelector('ons-button').onclick = function() { classlistDialog.hide(); };
+            if (options && options.listContent) {
+                options.listContent.forEach(function(listItem) {
+                    onsList.appendChild(UI.createListItem(listItem.text, listItem.subtext || ''));
+                });
+            }
+            classlistDialog.show();
+        })
+        .catch(function(err: Error) {
+            Log.error('UI::prompt(..) - ERROR: ' + err.message);
+        });
+    }
+    public static confirm(message: string, options: {template: string, header?: string}) {
+        return ons.notification.confirm(message);
     }
 
     // SDMM: move

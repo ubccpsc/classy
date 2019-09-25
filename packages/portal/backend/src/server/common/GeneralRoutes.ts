@@ -26,12 +26,12 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {AuditLabel, Person} from "../../Types";
+import {AuditLabel, ClasslistChanges, Person} from "../../Types";
+import {ClasslistAgent} from "./ClasslistAgent";
 
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
 import {AuthRoutes} from "./AuthRoutes";
-import {ClasslistAgent} from "./ClasslistAgent";
 
 export default class GeneralRoutes implements IREST {
 
@@ -321,12 +321,13 @@ export default class GeneralRoutes implements IREST {
 
         try {
             const data = await ca.fetchClasslist();
-            const people = await ca.processClasslist(auditInfo, null, data);
+            const classlistChanges = await ca.processClasslist(auditInfo, null, data);
 
             let payload: Payload;
 
-            if (people.length) {
-                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+            if (classlistChanges.classlist.length) {
+                payload = {success: {message: 'Classlist upload successful. '
+                 + (classlistChanges.classlist.length) + ' students processed.'}};
                 res.send(200, payload);
                 Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
             } else {

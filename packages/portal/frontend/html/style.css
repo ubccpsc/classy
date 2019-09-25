@@ -108,3 +108,12 @@ stdio viewer Page
     bottom: 0;
     left: 0;
 }
+
+#adminClasslistConfirmHeader .dialog {
+    width: 80%;
+}
+
+#adminClasslistConfirmHeader ons-list {
+    overflow-y: auto;
+    max-height: 450px;
+}

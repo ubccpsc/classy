@@ -7,7 +7,7 @@ import Log from '../../../../../common/Log';
 import {ClasslistTransport} from "../../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {PersonController} from "../../controllers/PersonController";
-import {AuditLabel, Grade, Person, PersonKind} from "../../Types";
+import {AuditLabel, ClasslistChanges, Grade, Person, PersonKind} from "../../Types";
 import {CSVParser} from "./CSVParser";
 
 export class ClasslistAgent {
@@ -49,8 +49,52 @@ export class ClasslistAgent {
         }
     }
 
-    public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<Person[]> {
+    /**
+     * Produces a report of student updates:
+     * - new students added, old students removed, student data updated
+     * @param beforePoeple A list of students before the Classlist update
+     * @param afterPeople A list of students after the Classlist update
+     */
+    private getClasslistChanges(beforePeople: Person[], afterPeople: Person[]) {
+        Log.info("ClasslistAgent::getClasslistChanges(..) - start");
+        const beforeCSIDs = beforePeople.map(function(person) { return person.csId; });
+        const afterCSIDs = afterPeople.map(function(person) { return person.csId; });
+
+        const changeReport: ClasslistChanges = {
+            created: [], // new registrations
+            updated: [], // only students whose CWL or lab has changed
+            removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
+            classlist: afterPeople // created from list of people in the classlist upload returned from data layer
+        };
+
+        afterPeople.forEach(function(afterPerson) {
+            if (beforeCSIDs.indexOf(afterPerson.csId) === -1) {
+                changeReport.created.push(afterPerson);
+            } else {
+                const beforePerson = beforePeople.find(function(befPerson) {
+                    if (befPerson.csId === afterPerson.csId) {
+                        return true;
+                    }
+                });
+                if (JSON.stringify(afterPerson) !== JSON.stringify(beforePerson)) {
+                    changeReport.updated.push(afterPerson);
+                }
+            }
+        });
+
+        beforePeople.forEach(function(person) {
+            if (afterCSIDs.indexOf(person.csId) === -1 && person.kind === PersonKind.STUDENT) {
+                changeReport.removed.push(person);
+            }
+        });
+
+        Log.trace("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(changeReport));
+        return changeReport;
+    }
+
+    public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<ClasslistChanges> {
         Log.trace("ClasslistAgent::processClasslist(...) - start");
+        const peopleBefore: Person[] = await this.pc.getAllPeople();
 
         if (path !== null) {
             data = await new CSVParser().parsePath(path);
@@ -79,19 +123,21 @@ export class ClasslistAgent {
                     labId:  row.LAB,
                     custom: {}
                 };
+
                 peoplePromises.push(this.pc.createPerson(p));
             } else {
                 Log.error('ClasslistAgent::processClasslist(..) - column missing from: ' + JSON.stringify(row));
                 peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
         }
     }
-        const people = await Promise.all(peoplePromises);
+        const peopleAfter = await Promise.all(peoplePromises);
+        const classlistChanges = this.getClasslistChanges(peopleBefore, peopleAfter);
 
         // audit
         await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId,
-            {}, {}, {numPoeple: people.length});
+            {}, {}, {numPoeple: classlistChanges.classlist.length});
 
-        return people;
+        return classlistChanges;
     }
 
     private duplicateDataCheck(data: any[], columnNames: string[]) {

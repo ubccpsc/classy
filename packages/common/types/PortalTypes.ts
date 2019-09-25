@@ -5,6 +5,7 @@
  *
  * All fields should be primitives.
  */
+import {ClasslistChanges} from "../../portal/backend/src/Types";
 import {AutoTestResult} from "./AutoTestTypes";
 import {ClusteredResult} from "./ContainerTypes";
 
@@ -20,6 +21,11 @@ export interface SuccessPayload {
 
 export interface Payload {
     success?: SuccessPayload | any; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
+export interface ClasslistChangesTransportPayload {
+    success?: ClasslistChanges; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 

@@ -178,6 +178,15 @@ export interface Repository {
     };
 }
 
+// Introduced to produce Classlist Change data - helps with understanding future
+// manual/automatic repo provisioning after Classlist update
+export interface ClasslistChanges {
+    updated: Person[];
+    created: Person[];
+    removed: Person[];
+    classlist: Person[];
+}
+
 /**
  * This is just a placeholder type to hold course-level data that can change.
  * (in contrast to course-level static data in the .env file)
