@@ -26,7 +26,7 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-import {AuditLabel, ClasslistChanges, Person} from "../../Types";
+import {AuditLabel, Person} from "../../Types";
 import {ClasslistAgent} from "./ClasslistAgent";
 
 import IREST from "../IREST";

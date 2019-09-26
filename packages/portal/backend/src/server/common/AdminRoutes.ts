@@ -23,7 +23,7 @@ import {
     TeamTransportPayload,
 } from '../../../../../common/types/PortalTypes';
 import Util from '../../../../../common/Util';
-import {AuditLabel, ClasslistChanges, Person, Repository} from "../../Types";
+import {AuditLabel, Person, Repository} from "../../Types";
 
 import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";

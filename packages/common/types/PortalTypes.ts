@@ -5,7 +5,6 @@
  *
  * All fields should be primitives.
  */
-import {ClasslistChanges} from "../../portal/backend/src/Types";
 import {AutoTestResult} from "./AutoTestTypes";
 import {ClusteredResult} from "./ContainerTypes";
 
@@ -24,8 +23,17 @@ export interface Payload {
     failure?: FailurePayload; // only set if defined
 }
 
+// Introduced to produce Classlist Change data - helps with understanding future
+// manual/automatic repo provisioning after Classlist update
+export interface ClasslistChangesTransport {
+    updated: StudentTransport[];
+    created: StudentTransport[];
+    removed: StudentTransport[];
+    classlist: StudentTransport[];
+}
+
 export interface ClasslistChangesTransportPayload {
-    success?: ClasslistChanges; // only set if defined
+    success?: ClasslistChangesTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
 }
 
