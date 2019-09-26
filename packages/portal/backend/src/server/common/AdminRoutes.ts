@@ -20,7 +20,7 @@ import {
     StudentTransportPayload,
     TeamFormationTransport,
     TeamTransport,
-    TeamTransportPayload,
+    TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 import Util from '../../../../../common/Util';
 import {AuditLabel, Person, Repository} from "../../Types";
