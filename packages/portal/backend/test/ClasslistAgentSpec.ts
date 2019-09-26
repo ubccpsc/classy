@@ -9,6 +9,7 @@ import {ClasslistAgent} from "../src/server/common/ClasslistAgent";
 import "./GlobalSpec";
 
 describe('ClasslistAgent', function() {
+
     const mockAPIData = [{
         SNUM: '8888888', FIRST: 'Todd', LAST: 'Smith', PREF: 'Ted',  ACCT: 'x1x1x', CRS: '999',
         CWL: 'tsmitht', SEC: '101', LAB: 'L1Y', TUT: ''
@@ -21,6 +22,7 @@ describe('ClasslistAgent', function() {
         SNUM: '6666666', FIRST: 'Cletus', LAST: 'Smith', PREF: 'Clé', ACCT: 'c1c1c', CRS: '210',
         CWL: 'cletus1', SEC: '101', LAB: 'L1Y', TUT: ''
     }];
+
     const ca: ClasslistAgent = new ClasslistAgent();
 
     it('Should be able to process an empty classlist', async function() {

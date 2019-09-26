@@ -613,10 +613,6 @@ describe('Admin Routes', function() {
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
     });
 
-    // it('Should be able to upload a classlist and see users who should be withdrawn in removed column', () => {
-
-    // });
-
     it('Should be able to upload a new grades', async function() {
 
         let response = null;

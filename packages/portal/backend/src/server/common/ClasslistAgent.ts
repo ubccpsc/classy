@@ -123,7 +123,6 @@ export class ClasslistAgent {
                     labId:  row.LAB,
                     custom: {}
                 };
-
                 peoplePromises.push(this.pc.createPerson(p));
             } else {
                 Log.error('ClasslistAgent::processClasslist(..) - column missing from: ' + JSON.stringify(row));
