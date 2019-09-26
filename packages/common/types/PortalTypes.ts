@@ -23,6 +23,20 @@ export interface Payload {
     failure?: FailurePayload; // only set if defined
 }
 
+// Introduced to produce Classlist Change data - helps with understanding future
+// manual/automatic repo provisioning after Classlist update
+export interface ClasslistChangesTransport {
+    updated: StudentTransport[];
+    created: StudentTransport[];
+    removed: StudentTransport[];
+    classlist: StudentTransport[];
+}
+
+export interface ClasslistChangesTransportPayload {
+    success?: ClasslistChangesTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface ConfigTransportPayload {
     success?: ConfigTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
