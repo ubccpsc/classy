@@ -2,7 +2,6 @@ import {OnsButtonElement} from "onsenui";
 import Log from "../../../../../common/Log";
 import {CourseTransport, Payload, ProvisionTransport,
     StudentTransport, TeamFormationTransport} from "../../../../../common/types/PortalTypes";
-import {Person} from "../../../../backend/src/Types";
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
 import {AdminDeletePage} from "./AdminDeletePage";
@@ -562,10 +561,10 @@ export class AdminConfigTab extends AdminPage {
     private async updateClasslistPressed(): Promise<void> {
         Log.trace('AdminConfigTab::updateClasslistPressed(..) - start');
 
-        const mapToTextAndSubtext = function(people: Person[]) {
+        const mapToTextAndSubtext = function(people: StudentTransport[]) {
             return people.map(function(person) {
                 return {
-                    text: person.studentNumber + '/' + person.githubId + ': ' + person.fName + ' ' + person.lName,
+                    text: person.id + '/' + person.studentNum + '/' + person.githubId + ': ' + person.firstName + ' ' + person.lastName,
                     subtext: person.labId
                 };
             });
