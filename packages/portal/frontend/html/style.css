@@ -115,5 +115,10 @@ stdio viewer Page
 
 #adminClasslistConfirmHeader ons-list {
     overflow-y: auto;
-    max-height: 450px;
+    height: 80vh;
+}
+
+#adminClasslistConfirmHeader ons-button {
+    text-align: center;
+    width: 100%;
 }
