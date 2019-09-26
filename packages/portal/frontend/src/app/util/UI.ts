@@ -125,45 +125,6 @@ export class UI {
         }
     }
 
-    public static createColumnItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {
-
-        let prefix = '<ons-list-item style="display: table;">';
-        if (typeof tappable !== 'undefined' && tappable === true) {
-            // right now only if subtext
-            prefix = '<ons-list-item style="display: table;" modifier="chevron" tappable>';
-        }
-
-        if (typeof subtext === 'undefined') {
-            // simple list item
-            const taskItem = ons.createElement('<ons-list-item>' + text + '</ons-list-item>') as HTMLElement;
-            return taskItem;
-        } else {
-            // compound list item
-            const taskItem = ons.createElement(
-                prefix +
-                '<span class="list-item__title">' + text + '</span>' +
-                '<span class="list-item__subtitle">' + subtext + '</span>' +
-                '</ons-list-item>') as HTMLElement;
-            return taskItem;
-        }
-    }
-
-    public static createRowItem(columns: HTMLElement[]): HTMLElement {
-        const rowItem: HTMLElement = ons.createElement('<ons-row-item></ons-row-item>') as HTMLElement;
-        columns.forEach(function(column) {
-            rowItem.append(column);
-        });
-        return rowItem;
-    }
-
-    public static createRowColumnItems(tabData: string[]) {
-        const rowColumns: HTMLElement[] = [];
-        for (const tab of tabData) {
-            rowColumns.push(ons.createElement('<ons-col-item>' + tab + '</ons-col-item>'));
-        }
-        return rowColumns;
-    }
-
     public static createListHeader(text: string): HTMLElement {
         const taskHeader = ons.createElement(
             '<ons-list-header>' + text + '</ons-list-header>') as HTMLElement;
