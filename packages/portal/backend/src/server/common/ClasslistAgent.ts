@@ -49,18 +49,6 @@ export class ClasslistAgent {
         }
     }
 
-    private mapPersonToStudent(p: Person) {
-        return {
-            id: p.csId,
-            firstName: p.fName,
-            lastName: p.lName,
-            githubId: p.githubId,
-            userUrl: p.URL,
-            studentNum: p.studentNumber,
-            labId: p.labId
-        };
-    }
-
     /**
      * Produces a report of student updates:
      * - new students added, old students removed, student data updated
@@ -72,7 +60,7 @@ export class ClasslistAgent {
         const that = this;
         const beforeCSIDs = beforePeople.map(function(person) { return person.csId; });
         const afterCSIDs = afterPeople.map(function(person) { return person.csId; });
-        const classlist: StudentTransport[] = afterPeople.map(function(person) { return that.mapPersonToStudent(person);
+        const classlist: StudentTransport[] = afterPeople.map(function(person) { return PersonController.personToTransport(person);
         });
 
         const changeReport: ClasslistChangesTransport = {
@@ -84,7 +72,7 @@ export class ClasslistAgent {
 
         afterPeople.forEach(function(afterPerson) {
             if (beforeCSIDs.indexOf(afterPerson.csId) === -1) {
-                const student = that.mapPersonToStudent(afterPerson);
+                const student = PersonController.personToTransport(afterPerson);
                 changeReport.created.push(student);
             } else {
                 const beforePerson = beforePeople.find(function(befPerson) {
@@ -93,7 +81,7 @@ export class ClasslistAgent {
                     }
                 });
                 if (JSON.stringify(afterPerson) !== JSON.stringify(beforePerson)) {
-                    const student = that.mapPersonToStudent(afterPerson);
+                    const student = PersonController.personToTransport(afterPerson);
                     changeReport.updated.push(student);
                 }
             }
@@ -101,7 +89,7 @@ export class ClasslistAgent {
 
         beforePeople.forEach(function(person) {
             if (afterCSIDs.indexOf(person.csId) === -1 && person.kind === PersonKind.STUDENT) {
-                const student = that.mapPersonToStudent(person);
+                const student = PersonController.personToTransport(person);
                 changeReport.removed.push(student);
             }
         });
