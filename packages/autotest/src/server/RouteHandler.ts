@@ -3,7 +3,6 @@ import * as Docker from "dockerode";
 import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";
-import {Stream} from "stream";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
@@ -226,13 +225,13 @@ export default class RouteHandler {
               };
 
             const handler = (stream: any) => {
-                stream.on('data', (chunk: Stream) => {
+                stream.on('data', (chunk: any) => {
                     Log.trace(chunk.toString());
                 });
-                stream.on('end', (chunk: Stream) => {
+                stream.on('end', (chunk: any) => {
                     Log.info('RouteHandler::postDockerImage(...) - Closing Docker API Connection.');
                 });
-                stream.on('error', (chunk: Stream) => {
+                stream.on('error', (chunk: any) => {
                     Log.error('RouteHandler::postDockerImage(...) Docker Stream ERROR: ' + chunk);
                 });
                 stream.pipe(res);
