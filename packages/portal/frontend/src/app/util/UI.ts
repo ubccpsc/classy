@@ -305,6 +305,16 @@ export class UI {
             Log.error('UI::prompt(..) - ERROR: ' + err.message);
         });
     }
+
+    public static async templateDisplayText(template: string, text: string = '', saveButton: boolean): Promise<HTMLDivElement> {
+        return ons.createElement(template, {append: true}).then(function(textDialog: any) {
+            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-content') as HTMLDivElement;
+            textContentDiv.innerText = text;
+            textDialog.show();
+            return textContentDiv;
+        });
+    }
+
     public static confirm(message: string, options: {template: string, header?: string}) {
         return ons.notification.confirm(message);
     }

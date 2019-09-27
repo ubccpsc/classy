@@ -122,3 +122,8 @@ stdio viewer Page
     text-align: center;
     width: 100%;
 }
+
+#adminDockerBuildDialog .dialog {
+    height: 80vh;
+    width: 80%;
+}

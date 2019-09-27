@@ -310,7 +310,6 @@ export class AdminDeliverablesTab extends AdminPage {
                     const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
                     const fileInput: HTMLInputElement = document.querySelector("#docker-image-file-input");
                     const submit: HTMLButtonElement = document.querySelector("#build-image-button");
-                    const outputArea: HTMLDivElement = document.querySelector("#docker-image-build-output");
 
                     const context = contextInput.value;
                     const tag = 'grader' + (tagInput.value ? ':' + tagInput.value : '');
@@ -321,9 +320,9 @@ export class AdminDeliverablesTab extends AdminPage {
                     fileInput.disabled = true;
                     submit.disabled = true;
 
-                    UI.showModal();
+                    // UI.showModal();
 
-                    that.buildDockerImage(context, tag, file, outputArea).then(function(sha: string) {
+                    that.buildDockerImage(context, tag, file).then(function(sha: string) {
                         imageSha = sha;
                         UI.hideModal();
                     }).catch(async function(err: Error) {
@@ -541,16 +540,21 @@ export class AdminDeliverablesTab extends AdminPage {
         return [];
     }
 
-    private async buildDockerImage(context: string, tag: string, file: string, output: HTMLDivElement): Promise<string> {
+    private async buildDockerImage(context: string, tag: string, file: string): Promise<string> {
         try {
             Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
-            return new Promise<string>(function(resolve, reject) {
+            const output = await UI.templateDisplayText('dockerBuildDialog.html', 'Initializing Docker Build and buffering. Please wait.. ',
+             true);
+
+            return new Promise<string>(async function(resolve, reject) {
                 const xhr = new XMLHttpRequest();
                 let lines: string[] = [];
                 let lastIndex = 0;
-                xhr.onprogress = function() {
+
+                xhr.onprogress = async function() {
+
                     try {
                         const currIndex = xhr.responseText.length;
                         if (lastIndex === currIndex) {
@@ -567,7 +571,6 @@ export class AdminDeliverablesTab extends AdminPage {
                             })
                             .map((s) => s.stream || "\nError code: " + s.errorDetail.code + "\nError Message: " + s.error);
                         output.innerText += chunkLines.join("");
-                        output.scrollIntoView(false);
                         lines = lines.concat(chunkLines);
                     } catch (err) {
                         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
