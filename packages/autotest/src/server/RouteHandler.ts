@@ -226,7 +226,7 @@ export default class RouteHandler {
 
             const handler = (stream: any) => {
                 stream.on('data', (chunk: any) => {
-                    Log.trace(chunk.toString());
+                    Log.trace('RouteHandler::postDockerImage(...) - ' + chunk.toString());
                 });
                 stream.on('end', (chunk: any) => {
                     Log.info('RouteHandler::postDockerImage(...) - Closing Docker API Connection.');
