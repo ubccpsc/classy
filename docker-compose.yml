@@ -85,7 +85,6 @@ services:
             - reference_ui
             - codeshovelui
             - labcycleui
-            - geolocation
         ports:
             - "80:8080"
             - "443:8443"
@@ -97,8 +96,8 @@ services:
     geolocation:
         image: cpsc310geocoder
         container_name: geocoder
-        expose:
-          - 11316
+        ports:
+            - ${GEO_PORT}:${GEO_PORT}
         restart: always
         user: "${UID}"
     reference_ui:
