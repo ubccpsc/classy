@@ -562,8 +562,10 @@ export class AdminDeliverablesTab extends AdminPage {
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
-                            .filter((s) => s.hasOwnProperty("stream"))
-                            .map((s) => s.stream);
+                            .filter((s) => {
+                                return s.hasOwnProperty("stream") || s.hasOwnProperty("error");
+                            })
+                            .map((s) => s.stream || "\nError code: " + s.errorDetail.code + "\nError Message: " + s.error);
                         output.innerText += chunkLines.join("");
                         output.scrollIntoView(false);
                         lines = lines.concat(chunkLines);
