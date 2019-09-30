@@ -306,10 +306,6 @@ export class UI {
         });
     }
 
-    // public static saveText(saveButton: HTMLAnchorElement, innerText: string) {
-    //     saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
-    // }
-
     public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
         return ons.createElement(template, {append: true}).then(function(textDialog: any) {
 
