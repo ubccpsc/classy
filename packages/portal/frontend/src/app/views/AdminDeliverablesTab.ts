@@ -545,8 +545,8 @@ export class AdminDeliverablesTab extends AdminPage {
             Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
-            const output = await UI.templateDisplayText('dockerBuildDialog.html', 'Initializing Docker Build and buffering. Please wait.. ',
-             true);
+            const output = await UI.templateDisplayText('dockerBuildDialog.html',
+                'Initializing Docker Build and buffering. Please wait..\n\n');
 
             return new Promise<string>(async function(resolve, reject) {
                 const xhr = new XMLHttpRequest();

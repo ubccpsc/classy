@@ -127,3 +127,7 @@ stdio viewer Page
     height: 80vh;
     width: 80%;
 }
+
+#adminDockerBuildDialog .dialog-container {
+    overflow-y: auto;
+}

@@ -306,11 +306,28 @@ export class UI {
         });
     }
 
-    public static async templateDisplayText(template: string, text: string = '', saveButton: boolean): Promise<HTMLDivElement> {
+    // public static saveText(saveButton: HTMLAnchorElement, innerText: string) {
+    //     saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+    // }
+
+    public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
         return ons.createElement(template, {append: true}).then(function(textDialog: any) {
+
             const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-content') as HTMLDivElement;
             textContentDiv.innerText = text;
             textDialog.show();
+
+            // Set listeners on buttons to save text and close dialog box
+            const saveButton = textDialog.querySelector('#adminDockerBuildDialog-footer-save');
+            const closeButton = textDialog.querySelector('#adminDockerBuildDialog-footer-close');
+
+            closeButton.onclick = function() { textDialog.hide(); };
+            saveButton.onclick = function() {
+                const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
+                saveButton['download'] = 'Build Log: ' + dateTimeLocal + '.txt';
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+             };
+
             return textContentDiv;
         });
     }
