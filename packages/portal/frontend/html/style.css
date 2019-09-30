@@ -109,7 +109,7 @@ stdio viewer Page
     left: 0;
 }
 
-#adminClasslistConfirmHeader .dialog {
+.dialog {
     width: 80%;
 }
 
@@ -123,17 +123,16 @@ stdio viewer Page
     width: 100%;
 }
 
-#adminDockerBuildDialog .dialog {
-    height: 80vh;
-    width: 80%;
-}
-
 #adminDockerBuildDialog .dialog-container {
     overflow-y: auto;
 }
 
 #adminDockerBuildDialog-footer-container ons-bottom-toolbar {
     justify-content: center;
-    align-items: Center;
+    align-items: center;
     display: flex;
+}
+
+#adminDockerBuildDialog .dialog {
+    height: 80vh;
 }
