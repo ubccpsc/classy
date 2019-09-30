@@ -321,7 +321,12 @@ export class UI {
             const saveButton = textDialog.querySelector('#adminDockerBuildDialog-footer-save');
             const closeButton = textDialog.querySelector('#adminDockerBuildDialog-footer-close');
 
+            saveButton['download'] = 'Classy Build Log';
+
             closeButton.onclick = function() { textDialog.hide(); };
+            saveButton.oncontextmenu = function() {
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+            };
             saveButton.onclick = function() {
                 const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
                 saveButton['download'] = 'Build Log ' + dateTimeLocal + '.txt';
