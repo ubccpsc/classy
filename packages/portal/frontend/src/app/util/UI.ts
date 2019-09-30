@@ -324,7 +324,7 @@ export class UI {
             closeButton.onclick = function() { textDialog.hide(); };
             saveButton.onclick = function() {
                 const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
-                saveButton['download'] = 'Build Log: ' + dateTimeLocal + '.txt';
+                saveButton['download'] = 'Build Log ' + dateTimeLocal + '.txt';
                 saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
              };
 

@@ -131,3 +131,9 @@ stdio viewer Page
 #adminDockerBuildDialog .dialog-container {
     overflow-y: auto;
 }
+
+#adminDockerBuildDialog-footer-container ons-bottom-toolbar {
+    justify-content: center;
+    align-items: Center;
+    display: flex;
+}
