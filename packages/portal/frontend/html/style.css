@@ -123,10 +123,6 @@ stdio viewer Page
     width: 100%;
 }
 
-#adminDockerBuildDialog .dialog-container {
-    overflow-y: auto;
-}
-
 #adminDockerBuildDialog-footer-container ons-bottom-toolbar {
     justify-content: center;
     align-items: center;

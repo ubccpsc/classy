@@ -313,7 +313,7 @@ export class UI {
     public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
         return ons.createElement(template, {append: true}).then(function(textDialog: any) {
 
-            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-content') as HTMLDivElement;
+            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-logs-text') as HTMLDivElement;
             textContentDiv.innerText = text;
             textDialog.show();
 
