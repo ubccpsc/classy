@@ -79,6 +79,8 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 
 3. Finally, any contributions must lint before they can be accepted. This can be run using `yarn run lint` in `classy/`. The global rules in `/tslint.json` should not be changed.
 
+To help with regular development, CircleCI testing [docs/cirleCI.md](can be setup) for a fork to ensure that coverage, test, and linting requirements are met each time code is pushed to your fork.
+
 ## Merging magic
 
 
@@ -99,8 +101,8 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
 
 1. Fork `root` into a GitHub account you control (hereby called the `fork`).
-1. Create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`).
-1. Add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/)).
+2. Create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`).
+3. Add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/)).
 
 ## Development process
 
