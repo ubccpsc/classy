@@ -545,16 +545,13 @@ export class AdminDeliverablesTab extends AdminPage {
             Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
-            const output = await UI.templateDisplayText('dockerBuildDialog.html',
-                'Initializing Docker Build and buffering. Please wait..\n\n');
+            const output = await UI.templateDisplayText('dockerBuildDialog.html', 'Initializing Docker build. Please wait...\n\n');
 
-            return new Promise<string>(async function(resolve, reject) {
+            return new Promise<string>(function(resolve, reject) {
                 const xhr = new XMLHttpRequest();
                 let lines: string[] = [];
                 let lastIndex = 0;
-
-                xhr.onprogress = async function() {
-
+                xhr.onprogress = function() {
                     try {
                         const currIndex = xhr.responseText.length;
                         if (lastIndex === currIndex) {
@@ -566,9 +563,7 @@ export class AdminDeliverablesTab extends AdminPage {
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
-                            .filter((s) => {
-                                return s.hasOwnProperty("stream") || s.hasOwnProperty("error");
-                            })
+                            .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("error"))
                             .map((s) => s.stream || "\nError code: " + s.errorDetail.code + "\nError Message: " + s.error);
                         output.innerText += chunkLines.join("");
                         lines = lines.concat(chunkLines);
