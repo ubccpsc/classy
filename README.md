@@ -79,17 +79,16 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 
 3. Finally, any contributions must lint before they can be accepted. This can be run using `yarn run lint` in `classy/`. The global rules in `/tslint.json` should not be changed.
 
-To help with regular development, CircleCI testing [docs/cirleCI.md](can be setup) for a fork to ensure that coverage, test, and linting requirements are met each time code is pushed to your fork.
+CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
 
 ## Merging magic
 
-
-## Main repos:
+## Main repos
 
 * `ubccpsc/classy/master` (hereby `root`) is the stable source for the repo
 * `<user>/classy/master` (hereby `fork`) is where classes are going to want to work (there will be many of these `fork` repos)
 
-## Goals:
+## Goals
 
 * `fork/master` needs be able to make any changes it needs during the term without impacting `root/master`
 * `fork/master` needs to be able to accept critical patches during the term from `root/master`
