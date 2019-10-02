@@ -107,7 +107,7 @@ This only needs to happen once per fork, so if you already have a configured for
 
 All `fork` changes should be made on `fork/master` or other branches (just ***not*** on `fork/sync`).
 
-### Pulling changes from `root/master` into `fork/master` 
+### Pulling changes from `root/master` into `fork/master`
 
 This can happen regularly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
  

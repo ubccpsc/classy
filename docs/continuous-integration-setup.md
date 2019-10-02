@@ -1,10 +1,10 @@
-# CONTINUOUS INTEGRATION SETUP
+# CIRCLECI CONTINUOUS INTEGRATION SETUP
 
-## Setup Overview 
+## Overview
 
-A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the Master branch of the root project. This setup ensures that code may only be merged into the Master branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, and (c.) after it passes all CI tests.
+A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the `master` branch of the root `ubccpsc` project. This setup ensures that code may only be merged into the `master` branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, AND ONLY (c.) after it passes all tests. Code will be tested against any branch pushed to `origin`, on your fork, before being merged into your main `master` branch.
 
-**Three components:** Github Public or Github Enterprise, Circle CI, and Coveralls.
+**Three Components to Integrate:** Github.com or Github Enterprise, Circle CI, and Coveralls.
 
 **CI Process:** User Pushes Code to Repo **==>** Circle CI Runs Tests **==>** Circle CI Sends Coverage Report to Coveralls **==>** Circle CI Notifies Github that Branch Passes or Fails Tests
 
@@ -18,15 +18,15 @@ Circle CI is a testing tool that integrates directly with Github and is free for
 
 A `yml` file is included in the `./circleci` directory of the `classy` repository. The `yml` file contains the steps that Circle CI uses to run tests and create a coverage report. Necessary encrypted files, which are also included in the `.circleci` directory, are decrypted during Circle CI runtime using an an `ENVKEY` that is mentioned in the "Setup Instructions" in this README.
 
-## Coveralls 
+## Coveralls
 
 Coveralls is a code coverage tool that visually charts the code coverage percentage of a Git repository. 
 
 --------------
 
-# Setup Instructions: 
+# Setup Instructions
 
-## Circle CI: 
+## Circle CI
 
 Register for a CircleCI account on https://circleci.com and grant Circle CI access to the organization or user account where the `classy` fork is hosted. Click on "Add Projects" and select the `classy` repository from a list of repos under the organization or user account.
 
