@@ -1,6 +1,6 @@
 # Fork Customization
 
-Each CPSC course that uses Classy requires a fork of the `root` https://github.com/ubccpsc/classy repository. The fork is used to change code that is custom to a course. Even if you do not plan to change the default Classy code, it is required that you create a fork of the repository because your fork will act as a stable code source that technical staff can run your Classy instance on while code changes are pushed to the root repository.
+Each CPSC course that uses Classy requires a fork of the `root` [https://github.com/ubccpsc/classy] repository. The fork is used to change code that is custom to a course. Even if you do not plan to change the default Classy code, it is required that you create a fork of the repository because your fork will act as a stable code source that technical staff can run your Classy instance on.
 
 Process Overview: Fork Code from Root Classy Repository --> Optional: Modify Forked Classy Code --> Technical Staff Hosts Code on Server
 
@@ -11,7 +11,7 @@ Classy requires that a set of custom files are implemented for each course offer
 - Double-check that your `.env` file `NAME` property contains your course name. The file may be found in the root `./Classy/.env`.
 - Then, run the Bash script `./helper-scripts/default-file-setup.sh` from the root `./Classy` directory.
 
-By running the Bash script above, files will be generated that allow you to either (a.) run the application with its defaults or (b.) modify the code to achieve unique business logic requirements. 
+By running the Bash script above, files will be generated that allow you to either (a.) run the application with its defaults or (b.) modify the code to achieve unique business logic requirements.
 
 ## Modifying the Front-end
 
@@ -19,14 +19,14 @@ The front-end uses Onsen UI, which is a lightweight framework that uses vanilla 
 
 If you are famiiar with the MVC pattern and would like to modify the view, familiarize yourself with the set of custom files that are generated:
 
-### HTML:
+### HTML
 
 - packages/portal/frontend/html/{*name*}/custom.html
 - packages/portal/frontend/html/{*name*}/landing.html
 - packages/portal/frontend/html/{*name*}/login.html
 - packages/portal/frontend/html/{*name*}/student.html
 
-### View Models:
+### View Models
 
 - packages/portal/frontend/src/app/custom/CustomStudentView.ts
 - packages/portal/frontend/src/app/custom/CustomAdminView.ts
@@ -37,7 +37,7 @@ You may modify any of these files generated above. Any custom logic may also be 
 
 The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded by Restify at start-up. These boilerplate files may also be modified:
 
-### Customizable Back-end Files:
+### Customizable Back-end Files
 
 - Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts
 - Classy/packages/portal/backend/src/custom/CustomCourseController.ts
@@ -52,4 +52,4 @@ The default files used to create the custom boilerplate files can be found in th
 
 ## Test Fork Customization 
 
-Continuous Integration (CI) tests can be run to ensure that your front-end and back-end implementations work. If all tests pass, then Classy will run in Production. To implement CI tests, follow the `Classy/docs/continuous-integration-setup.md` instructions.
+Continuous Integration (CI) tests can be run to ensure that your front-end and back-end implementations work. If all tests pass, then Classy will run in Production. To implement CI tests, follow the [`/docs/continuous-integration-setup.md`](/docs/continuous-integration-setup.md) instructions.
