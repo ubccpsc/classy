@@ -38,17 +38,17 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 - The `ENVKEY` is private and you must ask a project owner for it.
 - The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
 
-## Coveralls: 
+## Coveralls
 
 Register for an account on https://coveralls.io and grant Coveralls access to the organization or user account where `classy` is hosted. Click on "Add Repos" on the left panel and select the `classy` repository by (1.) clicking on the organization or user account where `classy` is located, and (2.) toggling the button beside the repo to "on". A `repo token` will be found underneath the repository's settings view of the repository that you added. This `repo token` is the `COVERALLS_REPO_TOKEN` that you must enter into Circle CI's "Build Settings" above. 
 
-## Github: 
+## Github
 
 Underneath the repository settings area, select "Branches" on the left-panel and then:
 
 - Add a Branch Protection Rule
 - Enter the Branch Name Pattern to the Branch Protection Rule: `master`
-- Under Rule Settings, select: 
+- Under Rule Settings, select:
   -- Require pull request reviews before merging (1 or more required approval reviews)
   -- Require status checks to pass before merging (select `ci/circleci:build`, deselect `coverage/coveralls`)
   -- Include Administrators
