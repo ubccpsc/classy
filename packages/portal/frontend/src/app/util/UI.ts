@@ -305,6 +305,32 @@ export class UI {
             Log.error('UI::prompt(..) - ERROR: ' + err.message);
         });
     }
+
+    public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
+        return ons.createElement(template, {append: true}).then(function(textDialog: any) {
+            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-logs-text') as HTMLDivElement;
+            textContentDiv.innerText = text;
+            textDialog.show();
+
+            const saveButton = textDialog.querySelector('#adminDockerBuildDialog-footer-save');
+            const closeButton = textDialog.querySelector('#adminDockerBuildDialog-footer-close');
+            closeButton.onclick = function() { textDialog.hide(); };
+            saveButton.onclick = function() {
+                const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
+                saveButton['download'] = 'Build Log ' + dateTimeLocal + '.txt';
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+             };
+            saveButton['download'] = 'Classy Build Log';
+
+            // Updates data when right-clicked to choose custom save filename
+            saveButton.oncontextmenu = function() {
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+            };
+
+            return textContentDiv;
+        });
+    }
+
     public static confirm(message: string, options: {template: string, header?: string}) {
         return ons.notification.confirm(message);
     }

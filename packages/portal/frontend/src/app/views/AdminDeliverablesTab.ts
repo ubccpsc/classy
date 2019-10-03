@@ -310,7 +310,6 @@ export class AdminDeliverablesTab extends AdminPage {
                     const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
                     const fileInput: HTMLInputElement = document.querySelector("#docker-image-file-input");
                     const submit: HTMLButtonElement = document.querySelector("#build-image-button");
-                    const outputArea: HTMLDivElement = document.querySelector("#docker-image-build-output");
 
                     const context = contextInput.value;
                     const tag = 'grader' + (tagInput.value ? ':' + tagInput.value : '');
@@ -323,7 +322,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
                     UI.showModal();
 
-                    that.buildDockerImage(context, tag, file, outputArea).then(function(sha: string) {
+                    that.buildDockerImage(context, tag, file).then(function(sha: string) {
                         imageSha = sha;
                         UI.hideModal();
                     }).catch(async function(err: Error) {
@@ -541,11 +540,13 @@ export class AdminDeliverablesTab extends AdminPage {
         return [];
     }
 
-    private async buildDockerImage(context: string, tag: string, file: string, output: HTMLDivElement): Promise<string> {
+    private async buildDockerImage(context: string, tag: string, file: string): Promise<string> {
         try {
             Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
+            const output = await UI.templateDisplayText('dockerBuildDialog.html', 'Initializing Docker build. Please wait...\n\n');
+
             return new Promise<string>(function(resolve, reject) {
                 const xhr = new XMLHttpRequest();
                 let lines: string[] = [];
@@ -562,10 +563,9 @@ export class AdminDeliverablesTab extends AdminPage {
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
-                            .filter((s) => s.hasOwnProperty("stream"))
-                            .map((s) => s.stream);
+                            .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("error"))
+                            .map((s) => s.stream || "\n\nError code: " + s.errorDetail.code + "\n\nError Message: " + s.error);
                         output.innerText += chunkLines.join("");
-                        output.scrollIntoView(false);
                         lines = lines.concat(chunkLines);
                     } catch (err) {
                         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
