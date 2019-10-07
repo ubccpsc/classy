@@ -19,7 +19,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe.only("GitHubAutoTest", () => {
+describe("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -149,7 +149,7 @@ describe.only("GitHubAutoTest", () => {
         expect(ex).to.not.be.null;
     });
 
-    it.only("Check comment preconditions fail appropriately", async () => {
+    it("Check comment preconditions fail appropriately", async () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
@@ -265,7 +265,7 @@ describe.only("GitHubAutoTest", () => {
         info.delivId = 'd0';
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
-        expect(meetsPreconditions).to.be.true;
+        expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
         // valid case
@@ -274,32 +274,97 @@ describe.only("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.true;
     });
 
-    it("Should be able to receive a comment event.", async () => {
+    it("Should be able to receive a valid comment event from a student for an open deliverable.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
-            botMentioned: false,
+            botMentioned: true,
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
             personId:     "myUser",
             kind:         'standard',
             repoId:       "d1_project9999",
-            // org:           "310",
             delivId:      "d0",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:    1234567891,
+            timestamp:    TS_IN,
             cloneURL:     "https://cloneURL"
         };
 
+        Log.test('getting data');
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
+        Log.test('handling comment');
         await at.handleCommentEvent(ce);
+        Log.test('re-getting data');
         allData = await data.getAllData();
-        expect(allData.comments.length).to.equal(0);
+        expect(allData.comments.length).to.equal(1);
 
         // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
+
+    it("Should be able to receive a comment event that schedules right away due to no prior request.", async () => {
+        expect(at).not.to.equal(null);
+
+        const pe: CommitTarget = pushes[0];
+        const ce: CommitTarget = {
+            botMentioned: true,
+            commitSHA:    pe.commitSHA,
+            commitURL:    pe.commitURL,
+            personId:     "myUser",
+            kind:         'standard',
+            repoId:       "d1_project9999",
+            delivId:      "d0",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp:    TS_IN,
+            cloneURL:     "https://cloneURL"
+        };
+        ce.flags = ["#schedule"];
+
+        Log.test('getting data');
+        let allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(0);
+
+        Log.test('handling schedule');
+        await at.handleCommentEvent(ce);
+
+        Log.test('re-getting data');
+        allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(1);
+    });
+
+    // TODO: need to strengthen this with a new feedback record in
+    // it("Should be able to receive a comment event that schedules for the future due to prior requests.", async () => {
+    //     expect(at).not.to.equal(null);
+    //
+    //     const pe: CommitTarget = pushes[0];
+    //     const ce: CommitTarget = {
+    //         botMentioned: true,
+    //         commitSHA:    pe.commitSHA,
+    //         commitURL:    pe.commitURL,
+    //         personId:     "cs310test",
+    //         kind:         'standard',
+    //         repoId:       "d1_project9999",
+    //         delivId:      "d1",
+    //         postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+    //         timestamp:    TS_IN,
+    //         cloneURL:     "https://cloneURL"
+    //     };
+    //     ce.flags = ["#schedule"];
+    //
+    //     Log.test('getting data');
+    //     let allData = await data.getAllData();
+    //     expect(allData.comments.length).to.equal(0);
+    //     expect(allData.feedback.length).to.equal(1); // should be one record in there for this user
+    //
+    //     Log.test('handling schedule');
+    //     ce.timestamp = TS_IN + 1000;
+    //     await at.handleCommentEvent(ce);
+    //
+    //     Log.test('re-getting data');
+    //     allData = await data.getAllData();
+    //     expect(allData.comments.length).to.equal(1);
+    // });
 
     it("Should be able to use a comment event to start the express queue.", async () => {
         expect(at).not.to.equal(null);

@@ -107,7 +107,7 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
-        const VALID_PEOPLE = ['foo'];
+        const VALID_PEOPLE = ['staff', 'myUser'];
         if (VALID_PEOPLE.indexOf(userName) >= 0) {
             Log.info("MockClassPortal::getPersonId(..) - valid person: " + userName);
             return Promise.resolve({personId: userName});
