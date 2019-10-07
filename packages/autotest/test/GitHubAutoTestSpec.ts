@@ -19,7 +19,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe("GitHubAutoTest", () => {
+describe.only("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -149,7 +149,7 @@ describe("GitHubAutoTest", () => {
         expect(ex).to.not.be.null;
     });
 
-    it("Check comment preconditions fail appropriately", async () => {
+    it.only("Check comment preconditions fail appropriately", async () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
@@ -180,11 +180,74 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.personId = 'validName';
 
+        Log.test('bot not mentioned');
+        info.botMentioned = false;
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.botMentioned = true;
+
         Log.test('null delivId');
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.delivId = 'd1';
+
+        Log.test('invalid delivId');
+        info.delivId = 'd_' + Date.now();
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.delivId = 'd1';
+
+        // This actually passes: we don't check if the person exists, just if they are staff (and unknown users are not staff)
+        // Log.test('invalid person');
+        // const person = info.personId;
+        // info.personId = 'person_' + Date.now();
+        // meetsPreconditions = await at["checkCommentPreconditions"](info);
+        // expect(meetsPreconditions).to.be.false;
+        // info.personId = person;
+
+        // This actually passes: we don't validate repo existence at this point (since these events should only come from valid repos anyways)
+        // Log.test('invalid repo');
+        // const repo = info.repoId;
+        // info.repoId = 'repo_' + Date.now();
+        // meetsPreconditions = await at["checkCommentPreconditions"](info);
+        // expect(meetsPreconditions).to.be.false;
+        // info.repoId = repo;
+
+        Log.test('force by student');
+        info.flags = ["#force"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
+
+        Log.test('silent by student');
+        info.flags = ["#silent"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
+
+        Log.test('force by autobot');
+        const student = info.personId;
+        info.personId = Config.getInstance().getProp(ConfigKey.botName);
+        info.flags = ["#force"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.personId = student;
+        delete info.flags;
+
+        Log.test('silent by staff');
+        info.personId = 'staff'; // Config.getInstance().getProp(ConfigKey.botName);
+        info.flags = ["#silent"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.true;
+        info.personId = student;
+        delete info.flags;
+
+        Log.test('schedule and unschedule');
+        info.flags = ["#schedule", "#unschedule"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
 
         Log.test('not open yet');
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
@@ -192,17 +255,18 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed');
+        Log.test('closed but with late autotest allowed');
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        // TODO: try an invalid delivId
-
-        // TODO: try an invalid repoId
-
-        // TODO: try an invalid personId
+        Log.test('closed but with late autotest disallowed');
+        info.delivId = 'd0';
+        info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.true;
+        info.timestamp = new Date(2018, 2, 1).getTime();
 
         // valid case
         info.delivId = 'd1';
