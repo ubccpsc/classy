@@ -28,13 +28,6 @@ http {
             proxy_pass         http://refui:<%= ENV["UI_PORT"] %>/;
         }
 
-        location /geo {
-            port_in_redirect   off;
-            rewrite            /geo(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://geocoder:11316;
-        }
-
         location /codeshovel {
             port_in_redirect   off;
             rewrite            /codeshovel(/.+) $1 break;
