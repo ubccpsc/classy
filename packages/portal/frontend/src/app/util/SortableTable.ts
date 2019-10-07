@@ -336,7 +336,7 @@ export class SortableTable {
 
                     // this is super brittle
                     if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
-                        row.push(col.children[0].href);
+                        row.push((col.children[0] as HTMLAnchorElement).href);
                     } else {
                         row.push(col.innerText);
                     }
