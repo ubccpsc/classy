@@ -4,6 +4,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
 import {PersonController} from "../../portal/backend/src/controllers/PersonController";
@@ -62,7 +63,7 @@ describe("GitHub Event Parser", () => {
             gradesReleased: false,
 
             shouldProvision:  true,
-            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
+            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
@@ -130,7 +131,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a push that created a new branch.", async () => {
         const content = readFile("push_create-new-branch.json");
-        const actual = await  GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
+        const actual = await GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
 
         const expected: CommitTarget = {
             delivId:      "d1",
@@ -151,7 +152,7 @@ describe("GitHub Event Parser", () => {
 
     it("Should be able to parse a push that deleted an existing branch.", async () => {
         const content = readFile("push_delete-branch.json");
-        const actual = await  GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
+        const actual = await GitHubUtil.processPush(JSON.parse(content), new MockClassPortal());
 
         const expected: any = null;
         expect(actual).to.equal(expected); // nothing to do when a branch is deleted
