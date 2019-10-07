@@ -39,8 +39,6 @@ describe("AdminController", () => {
     });
 
     beforeEach(async function() {
-        Test.testBefore("AdminControllerSpec", this);
-
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
 
@@ -52,10 +50,6 @@ describe("AdminController", () => {
         tc = new TeamController();
         pc = new PersonController();
         dc = new DeliverablesController();
-    });
-
-    afterEach(function() {
-        Test.testAfter("AdminControllerSpec", this);
     });
 
     after(async function() {
@@ -101,7 +95,7 @@ describe("AdminController", () => {
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
         await gha.deleteTeam(teamNum);
-        teamNum = await  gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
+        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
         await gha.deleteTeam(teamNum);
         teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
         await gha.deleteTeam(teamNum);
@@ -163,10 +157,10 @@ describe("AdminController", () => {
         expect(actual.length).to.be.greaterThan(0);
 
         const t: TeamTransport = {
-            id:       Test.TEAMNAME1,
-            delivId:  "d0",
-            people:   [Test.USER1.id, Test.USER2.id],
-            URL:      null,
+            id:      Test.TEAMNAME1,
+            delivId: "d0",
+            people:  [Test.USER1.id, Test.USER2.id],
+            URL:     null
             // repoName: null,
             // repoUrl:  null
         };

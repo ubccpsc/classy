@@ -29,15 +29,56 @@ export class Test {
         Log.test("Test::suiteAfter( ... ) - suite: " + suiteName);
     }
 
-    public static testBefore(suite: string, context: any) {
+    public static testBefore(context: any) {
         Log.test("*****");
-        Log.test(suite + "::beforeEach( " + context.currentTest.title + " )");
+        let testName = 'UNKNOWN TEST';
+        let suiteName = 'UNKNOWN SUITE';
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.title !== 'undefined') {
+            testName = context.currentTest.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.parent !== 'undefined' &&
+            context.currentTest.parent.title !== 'undefined') {
+            suiteName = context.currentTest.parent.title;
+        }
+
+        Log.test(suiteName + "::beforeEach( " + testName + " )");
         Log.test("*****");
     }
 
-    public static testAfter(suite: string, context: any) {
+    public static testAfter(context: any) {
         Log.test("*****");
-        Log.test(suite + "::afterEach( " + context.currentTest.title + " )");
+
+        let testName = 'UNKNOWN TEST';
+        let suiteName = 'UNKNOWN SUITE';
+        let testStatus = 'UNKNOWN STATUS';
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.title !== 'undefined') {
+            testName = context.currentTest.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.parent !== 'undefined' &&
+            context.currentTest.parent.title !== 'undefined') {
+            suiteName = context.currentTest.parent.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.state !== 'undefined') {
+            testStatus = context.currentTest.state;
+        }
+
+        if (testStatus === 'failed') {
+            Log.test(suiteName + "::afterEach( _TEST FAILED_ " + testName + " ) - state: " + testStatus);
+        } else if (testStatus === 'passed') {
+            Log.test(suiteName + "::afterEach( _TEST PASSED_ " + testName + " ) - state: " + testStatus);
+        } else {
+            Log.test(suiteName + "::afterEach( _TEST UNKNOWN_ " + testName + " ) - state: " + testStatus);
+        }
         Log.test("*****");
     }
 

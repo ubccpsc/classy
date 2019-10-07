@@ -5,6 +5,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
@@ -59,10 +60,6 @@ describe("GitHubAutoTest", () => {
     });
 
     beforeEach(async function() {
-        // Log.test("AutoTest::beforeEach() - start");
-        Log.test("*****");
-        Log.test("GitHubAutoTestSpec::beforeEach( " + this.currentTest.title + " ) - start");
-        Log.test("*****");
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
@@ -74,10 +71,6 @@ describe("GitHubAutoTest", () => {
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
-        // Log.test("AutoTest::afterEach() - done");
-        Log.test("*****");
-        Log.test("GitHubAutoTestSpec::afterEach( " + this.currentTest.title + " ) - done");
-        Log.test("*****");
     });
 
     it("Should be able to be instantiated.", () => {

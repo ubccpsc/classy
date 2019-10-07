@@ -75,10 +75,6 @@ describe("GitHubController", () => {
     });
 
     beforeEach(function() {
-        Log.test('GitHubController::BeforeEach - ***');
-        Log.test('GitHubController::BeforeEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::BeforeEach - ***');
-
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
@@ -87,12 +83,6 @@ describe("GitHubController", () => {
             Log.test("GitHubController::BeforeEach() - skipping (not CI)");
             this.skip();
         }
-    });
-
-    afterEach(function() {
-        Log.test('GitHubController::AfterEach - ***');
-        Log.test('GitHubController::AfterEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::AfterEach - ***');
     });
 
     it("Should be able to clear out prior result", async function() {

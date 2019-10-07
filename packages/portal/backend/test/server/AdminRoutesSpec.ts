@@ -744,6 +744,14 @@ describe('Admin Routes', function() {
             }
         });
 
+        afterEach(function() {
+            if (this.currentTest.state === 'failed') {
+                Log.test("AdminRoutesSpec::slowTests - TEST FAILED: " + this.currentTest.title + "; state: " + this.currentTest.state);
+            } else {
+                Log.test("AdminRoutesSpec::slowTests - TEST PASSED: " + this.currentTest.title + "; state: " + this.currentTest.state);
+            }
+        });
+
         /**
          * With hybrid tests sometimes we need to make sure the cached TestGitHubActions and
          * live GitHubActions are consistently cleaned.
@@ -1202,7 +1210,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
         expect(ex).to.be.null;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should fail to delete a repository if appropriate', async function() {
         const url = '/portal/admin/repository/';
