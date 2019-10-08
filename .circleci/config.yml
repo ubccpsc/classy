@@ -127,11 +127,11 @@ jobs:
                       yarn coverCI
             name: Running autotest tests
             environment:
-              MOCHA_FILE: testOutput/backend/test/test-results.xml
+              MOCHA_FILE: testOutput/autotest/test/test-results.xml
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/autotest/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --save=testOutput;autotest/test/index.html
+            command: mkdir -p testOutput/autotest/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --save=testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
             when: on_success
 
