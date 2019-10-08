@@ -73,9 +73,9 @@ export class Test {
         }
 
         if (testStatus === 'failed') {
-            Log.test(suiteName + "::afterEach( _TEST FAILED_ " + testName + " ) - state: " + testStatus);
+            Log.test(suiteName + "::afterEach( _TEST FAILED_ " + testName + " )");
         } else if (testStatus === 'passed') {
-            Log.test(suiteName + "::afterEach( _TEST PASSED_ " + testName + " ) - state: " + testStatus);
+            Log.test(suiteName + "::afterEach( _TEST PASSED_ " + testName + " )");
         } else {
             Log.test(suiteName + "::afterEach( _TEST UNKNOWN_ " + testName + " ) - state: " + testStatus);
         }
@@ -346,7 +346,7 @@ export class Test {
             gradesReleased: false,
 
             shouldProvision:  true,
-            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete1.git',
+            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
             teamMinSize:      2,
             teamMaxSize:      2,
             teamSameLab:      true,
@@ -484,8 +484,9 @@ export class Test {
     public static readonly REPONAME3 = 'TESTrepo3';
     public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
-    public static readonly REPONAMEREAL_POSTTEST = 'PostTestDoNotDelete1';
-    public static readonly REPONAMEREAL_TESTINGSAMPLE = 'TESTING_SAMPLE_REPO1';
+
+    public static readonly REPONAMEREAL_POSTTEST = 'PostTestDoNotDelete';
+    public static readonly REPONAMEREAL_TESTINGSAMPLE = 'TESTING_SAMPLE_REPO';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
