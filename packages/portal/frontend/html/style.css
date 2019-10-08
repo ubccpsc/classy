@@ -109,7 +109,7 @@ stdio viewer Page
     left: 0;
 }
 
-#adminClasslistConfirmHeader .dialog {
+.dialog {
     width: 80%;
 }
 
@@ -121,4 +121,19 @@ stdio viewer Page
 #adminClasslistConfirmHeader ons-button {
     text-align: center;
     width: 100%;
+}
+
+#adminDockerBuildDialog-footer-container ons-bottom-toolbar {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+#adminDockerBuildDialog-logs-text {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#adminDockerBuildDialog .dialog {
+    height: 80vh;
 }
