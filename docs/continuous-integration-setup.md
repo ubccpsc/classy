@@ -2,11 +2,16 @@
 
 ## Overview
 
-A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the `master` branch of the root `ubccpsc` project. This setup ensures that code may only be merged into the `master` branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, AND ONLY (c.) after it passes all tests. Code will be tested against any branch pushed to `origin`, on your fork, before being merged into your main `master` branch.
+A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the `master` branch of the root `ubccpsc` project. This setup ensures that code may only be merged into the `master` branch (a.) through a pull-request opened on Github, (b.) approved by at least one member of the project, AND ONLY (c.) after it passes all tests. Code will be tested on any branch pushed to the remote `origin` of your fork. A passing CircleCI check is necessary to merge code into your main `master` branch, which will be enforced by Github.
 
 **Three Components to Integrate:** Github.com or Github Enterprise, Circle CI, and Coveralls.
 
-**CI Process:** User Pushes Code to Repo **==>** Circle CI Runs Tests **==>** Circle CI Sends Coverage Report to Coveralls **==>** Circle CI Notifies Github that Branch Passes or Fails Tests
+**CI Process:**
+
+User Pushes Code to Repo
+    **==>** Circle CI Runs Tests
+        **==>** Circle CI Sends Coverage Report to Coveralls
+            **==>** Circle CI Notifies Github that Branch Passes or Fails Tests
 
 ## Github Public or Github Enterprise
 
