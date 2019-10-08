@@ -112,11 +112,11 @@ jobs:
                       yarn coverCI
             name: Running backend tests
             environment:
-              MOCHA_FILE: testOutput/backend/test/test-results.xml
+              MOCHA_FILE: ~/testOutput/backend/test/test-results.xml
             when: on_success
 
       - run:
-            command: ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=packages/portal/backend/testOutput/backend/test/index.html
+            command: ./node_modules/junit-viewer/bin/junit-viewer --results=~/testOutput/backend/test/test-results.xml --save=~/testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 
@@ -127,7 +127,7 @@ jobs:
                       yarn coverCI
             name: Running autotest tests
             environment:
-              MOCHA_FILE: testOutput/autotest/test/test-results.xml
+              MOCHA_FILE: ~/testOutput/autotest/test/test-results.xml
             when: on_success
 
 #      - run:
