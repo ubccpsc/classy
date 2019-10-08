@@ -43,7 +43,6 @@ describe("GitHubActions", () => {
     });
 
     beforeEach(function() {
-        Log.test('GitHubActionSpec::BeforeEach - "' + (this as any).currentTest.title + '"');
         gh.setPageSize(2); // force a small page size for testing
 
         const exec = Test.runSlowTest();
@@ -57,7 +56,6 @@ describe("GitHubActions", () => {
     });
 
     afterEach(function() {
-        Log.test('AfterTest: "' + (this as any).currentTest.title + '"');
         gh.setPageSize(100);
     });
 

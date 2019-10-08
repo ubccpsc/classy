@@ -45,7 +45,7 @@ export class Test {
             suiteName = context.currentTest.parent.title;
         }
 
-        Log.test(suiteName + "::beforeEach( " + testName + " )");
+        Log.test("* START: " + suiteName + " ( " + testName + " )");
         Log.test("*****");
     }
 
@@ -73,11 +73,11 @@ export class Test {
         }
 
         if (testStatus === 'failed') {
-            Log.test(suiteName + "::afterEach( _TEST FAILED_ " + testName + " )");
+            Log.test("* END: " + suiteName + " _TEST FAILED_ ( " + testName + " )");
         } else if (testStatus === 'passed') {
-            Log.test(suiteName + "::afterEach( _TEST PASSED_ " + testName + " )");
+            Log.test("* END: " + suiteName + " _TEST PASSED_ ( " + testName + " )");
         } else {
-            Log.test(suiteName + "::afterEach( _TEST UNKNOWN_ " + testName + " ) - state: " + testStatus);
+            Log.test("* END: " + suiteName + " _TEST UNKNOWN_ ( " + testName + " ) - state: " + testStatus);
         }
         Log.test("*****");
     }

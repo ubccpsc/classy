@@ -744,14 +744,6 @@ describe('Admin Routes', function() {
             }
         });
 
-        afterEach(function() {
-            if (this.currentTest.state === 'failed') {
-                Log.test("AdminRoutesSpec::slowTests - TEST FAILED: " + this.currentTest.title + "; state: " + this.currentTest.state);
-            } else {
-                Log.test("AdminRoutesSpec::slowTests - TEST PASSED: " + this.currentTest.title + "; state: " + this.currentTest.state);
-            }
-        });
-
         /**
          * With hybrid tests sometimes we need to make sure the cached TestGitHubActions and
          * live GitHubActions are consistently cleaned.
