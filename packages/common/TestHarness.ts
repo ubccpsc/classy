@@ -73,11 +73,11 @@ export class Test {
         }
 
         if (testStatus === 'failed') {
-            Log.test("* END: " + suiteName + " _TEST FAILED_ ( " + testName + " )");
+            Log.test("* END: _TEST FAILED_ " + suiteName + " ( " + testName + " )");
         } else if (testStatus === 'passed') {
-            Log.test("* END: " + suiteName + " _TEST PASSED_ ( " + testName + " )");
+            Log.test("* END: _TEST PASSED_ " + suiteName + " ( " + testName + " )");
         } else {
-            Log.test("* END: " + suiteName + " _TEST UNKNOWN_ ( " + testName + " ) - state: " + testStatus);
+            Log.test("* END: _TEST UNKNOWN_ " + suiteName + " ( " + testName + " ) - state: " + testStatus);
         }
         Log.test("*****");
     }
