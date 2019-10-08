@@ -112,7 +112,7 @@ jobs:
                       yarn coverCI
             name: Running backend tests
             environment:
-              MOCHA_FILE: packages/portal/backend/testOutput/backend/test/test-results.xml
+              MOCHA_FILE: testOutput/backend/test/test-results.xml
             when: on_success
 
       - run:
