@@ -6,7 +6,7 @@ Process Overview: Fork Code from Root Classy Repository --> Optional: Modify For
 
 ## Classy Customization
 
-Classy requires that a set of custom files are implemented for each course offering. These files allow you to customize your course by modifying the views on the front-end and the controller logic on the back-end. As most courses require very standard logic, custom files can automatically be generated from default boilerplates. To generate your custom files: 
+Classy requires that a set of custom files are implemented for each course offering. These files allow you to customize your course by modifying the views on the front-end and the controller logic on the back-end. As most courses require very standard logic, custom files can automatically be generated from default boilerplates. To generate your custom files:
 
 - Double-check that your `.env` file `NAME` property contains your course name. The file may be found in the root `./Classy/.env`.
 - Then, run the Bash script `./helper-scripts/default-file-setup.sh` from the root `./Classy` directory.
