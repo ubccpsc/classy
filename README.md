@@ -43,7 +43,48 @@ Instructions for getting started with Classy have been sorted into sections base
 
 ### Instructors
 
-<!-- TOC depthFrom:2 -->autoauto- [Contributing to Classy](#contributing-to-classy)auto- [Table of Contents](#table-of-contents)auto    - [Instructors](#instructors)auto    - [Tech Staff](#tech-staff)auto    - [Developers](#developers)auto- [Modifying Classy on Your Own Fork](#modifying-classy-on-your-own-fork)auto- [Hosting Configuration](#hosting-configuration)auto- [Development Configuration](#development-configuration)auto- [Developer Contribution Acceptance Criteria](#developer-contribution-acceptance-criteria)auto- [Merging magic](#merging-magic)auto- [Main repos](#main-repos)auto- [Goals](#goals)auto    - [Fork initialization](#fork-initialization)auto- [Development process](#development-process)auto    - [Pulling changes from `root/master` into `fork/master`](#pulling-changes-from-rootmaster-into-forkmaster)auto    - [Pushing changes from `fork` to `root/master`](#pushing-changes-from-fork-to-rootmaster)auto    - [Customizing your instance of Classy](#customizing-your-instance-of-classy)auto    - [About dev packages](#about-dev-packages)auto- [License](#license)autoauto<!-- /TOC -->
+<!-- TOC depthfrom:2 -->
+
+- [1. Classy Features](/docs/instructor/features.md)
+- [2. Getting Started](/docs/instructor/gettingstarted.md)
+    - [2.1. Requesting Classy server](/docs/instructor/gettingstarted.md)
+    - [2.2. Implementing Custom Views](/docs/instrcutor/gettingstarted.md#customviews)
+    - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructor/gettingstarted.md#customcontroller)
+    - [2.4. Implementing Custom Routes (Optional)](/docs/instructor/gettingstarted.md#customroutes)
+- [3. Building an AutoGrade Container](/docs/instructor/autograde.md#instructor--build-a-container)
+- [4. Operating a Course](/docs/instructor/courseinstructions.md)
+    - [4.1 - Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
+    - [4.1 - Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
+    - [4.1 - Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
+
+<!-- /TOC -->
+
+### Tech Staff
+
+<!-- TOC depthfrom:2 -->
+
+- [1. Architectural Overview](/docs/tech-staff/architecture.md)
+    - [1.1 - Network Layer](/docs/tech-staff/architecture.md#networklayer)
+    - [1.2 - Application Layer (AutoTest/Portal API/Portal UI)](/docs/tech-staff/architecture.md#applicationlayer)
+- [2. Operations](/docs/tech-staff/operations.md)
+    - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
+    - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)
+    - [2.3. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
+    - [2.4. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
+    - [2.5. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
+    - [2.6. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
+    - [2.7. Back-ups](/docs/tech-staff/operations.md#backups)
+
+<!-- /TOC -->
+
+### Developers
+
+<!-- TOC depthfrom:2 -->
+
+- [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
+- [2. Container Logic and Interfaces](/docs/developer/container.md)
+
+<!-- /TOC -->
 
 ## Modifying Classy on Your Own Fork
 
