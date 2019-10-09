@@ -16,7 +16,7 @@ export interface ContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
     target: CommitTarget; // Details about the push event that led to this request.
     containerConfig: AutoTestConfig; // Container configuration details.
-    closeTimestamp: number;
+    arguments: {[parameter: string]: any};
 }
 
 /**

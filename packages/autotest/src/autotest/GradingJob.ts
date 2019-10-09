@@ -80,7 +80,7 @@ export class GradingJob {
             Env: [
                 `ASSIGNMENT=${this.input.delivId}`,
                 `EXEC_ID=${this.id}`,
-                `LATE=${this.input.closeTimestamp < this.input.target.timestamp}`,
+                `ARGS=${JSON.stringify(this.input.arguments)}`,
             ],
             HostConfig: {
                 AutoRemove: true,

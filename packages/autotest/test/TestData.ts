@@ -57,7 +57,7 @@ export class TestData {
             custom:             {}
         },
         target:          TestData.pushEventA,
-        closeTimestamp: Number.MAX_SAFE_INTEGER,
+        arguments: {},
     };
 
     public static readonly inputRecordB: ContainerInput = {
@@ -70,7 +70,7 @@ export class TestData {
             custom:             {}
         },
         target:          TestData.pushEventB,
-        closeTimestamp: Number.MAX_SAFE_INTEGER,
+        arguments: {},
     };
 
     public static readonly commentRecordUserA: CommitTarget = {

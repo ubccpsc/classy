@@ -230,7 +230,7 @@ describe("ClassPortal Service", () => {
                 custom:             {}
             },
             delivId:         delivId,
-            closeTimestamp: Number.MAX_SAFE_INTEGER,
+            arguments: {},
         };
 
         const result: AutoTestResult = {
