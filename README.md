@@ -82,7 +82,6 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
-    - [1.1 - Network Layer](/docs/developer/architecture.md#networklayer)
 - [2. Operations](/docs/tech-staff/operations.md)
     - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
     - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)
