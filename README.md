@@ -37,7 +37,7 @@ Main course forks:
 * [secapstone/classy](https://github.com/SECapstone/classy)
 * [MDS TBD](NOTSETYET)
 
-## Instructions
+## Table of Contents
 
 Instructions for getting started with Classy have been sorted into sections based on the following user roles:
 
