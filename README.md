@@ -51,7 +51,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.2. Implementing Custom Views](/docs/instrcutors/gettingstarted.md#customviews)
     - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructors/gettingstarted.md#customcontroller)
     - [2.4. Implementing Custom Routes (Optional)](/docs/instructors/gettingstarted.md#customroutes)
-- [3. Building an AutoGrade container](/docs/instructors/buildcontainer.md)
+- [3. Building an AutoGrade Container](/docs/instructors/buildcontainer.md)
 - [4. Operating a Course](/docs/instructors/courseinstructions.md)
     - [4.1 - Classlist Upload](/docs/instructors/courseinstructions.md#classlistupload)
     - [4.1 - Distributing Assignments and Repository Creation](/docs/instructors/courseinstructions.md#repocreation)
@@ -59,7 +59,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- /TOC -->
 
-### Technical Staff
+### Tech Staff
 
 <!-- TOC depthfrom:2 -->
 
