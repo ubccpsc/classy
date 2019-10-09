@@ -79,7 +79,8 @@ export class GradingJob {
             Image: this.input.containerConfig.dockerImage,
             Env: [
                 `ASSIGNMENT=${this.input.delivId}`,
-                `EXEC_ID=${this.id}`
+                `EXEC_ID=${this.id}`,
+                `LATE=${this.input.closeTimestamp < this.input.target.timestamp}`,
             ],
             HostConfig: {
                 AutoRemove: true,
