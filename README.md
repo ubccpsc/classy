@@ -46,18 +46,19 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Classy Features](/docs/instructor/features.md)
-- [2. Getting Started](/docs/instructor/gettingstarted.md)
-    - [2.1. Requesting Classy server](/docs/instructor/gettingstarted.md)
-    - [2.2. Implementing Custom Views](/docs/instrcutor/gettingstarted.md#customviews)
-    - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructor/gettingstarted.md#customcontroller)
-    - [2.4. Implementing Custom Routes (Optional)](/docs/instructor/gettingstarted.md#customroutes)
+    - [1.1. AutoTest](/docs/instructor/features.md#autotest)
+    - [1.2. Portal](/docs/instructor/features.md#portal))
+- [2. Getting Started](/docs/instructor/gettingstarted.md#overview)
+    - [2.1. Requesting Classy Product](/docs/instructor/gettingstarted.md#requesting-classy-product)
+    - [2.2. Front-end Setup (Mandatory)](/docs/instrcutor/gettingstarted.md#front-end-setup)
+    - [2.3. Back-end Setup (Optional)](/docs/instructor/gettingstarted.md#back-end-setup)
 - [3. Building an AutoGrade Container](/docs/instructor/autograde.md#overview)
     - [3.1. Build an AutoGrade Container](/docs/instructor/autograde.md#build-a-container-checklist)
     - [3.2. Testing AutoGrade Containers](/docs/instructor/container.md#test-a-container-checklist)
 - [4. Operating a Course](/docs/instructor/courseinstructions.md)
-    - [4.1 - Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
-    - [4.1 - Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
-    - [4.1 - Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
+    - [4.1. Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
+    - [4.1. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
+    - [4.1. Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
 
 <!-- /TOC -->
 
@@ -66,8 +67,8 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Architectural Overview](/docs/tech-staff/architecture.md)
-    - [1.1 - Network Layer](/docs/tech-staff/architecture.md#networklayer)
-    - [1.2 - Application Layer (AutoTest/Portal API/Portal UI)](/docs/tech-staff/architecture.md#applicationlayer)
+    - [1.1. Network Layer](/docs/tech-staff/architecture.md#networklayer)
+    - [1.2. Application Layer (AutoTest/Portal API/Portal UI)](/docs/tech-staff/architecture.md#applicationlayer)
 - [2. Operations](/docs/tech-staff/operations.md)
     - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
     - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)

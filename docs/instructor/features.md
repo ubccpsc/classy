@@ -1,4 +1,6 @@
-# AutoTest
+# Features
+
+## AutoTest
 
 AutoTest is a service that listens for push and comment events from configured repos on GitHub.
 Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
@@ -15,12 +17,5 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
 
+## Portal
 
-## Authors
-
-* Reid Holmes
-* Nick Bradley
-
-## License
-
-[MIT](LICENSE)
