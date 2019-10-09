@@ -82,14 +82,7 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
-- [2. Operations](/docs/tech-staff/operations.md)
-    - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
-    - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)
-    - [2.3. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
-    - [2.4. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
-    - [2.5. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
-    - [2.6. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
-    - [2.7. Back-ups](/docs/tech-staff/operations.md#backups)
+- [2. Container Logic and Interfaces](/docs/developer/container.md)
 
 <!-- /TOC -->
 
