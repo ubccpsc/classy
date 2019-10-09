@@ -11,20 +11,15 @@ Primary contributors:
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
 
-Main course forks:
+## Instructor Development is Necessary
 
-* [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
-* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
-* [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
-* [cpsc340/classy](https://github.com/CPSC340/classy)
-* [secapstone/classy](https://github.com/SECapstone/classy)
-* [MDS TBD](NOTSETYET)
+It is important to note that _some_ development work will be required for any course wishing to use Classy; e.g., at the very least, the student view must be defined per-course and this must be done in code. Classy is _not_ intended to provide a comprehensive system that can be fully configured through its provided interfaces. That said, the extensions courses need to make should be small and contained, unless your own requirements are somewhat unusual.
 
-## Development Process
+## Contributing to Classy
 
-Classy has been developed as a minimal framework for helping courses stand up a system that can provide GitHub management, team formation, grade distribution, and AutoTest. Courses are free to use any subset of that functionality that they wish. It is important to note that _some_ development work will be required for any course wishing to use Classy; e.g., at the very least, the student view must be defined per-course and this must be done in code. Classy is _not_ intended to provide a comprehensive system that can be fully configured through its provided interfaces. That said, the extensions courses need to make should be small and contained, unless your own requirements are somewhat unusual.
+All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Courses wishing to deploy Classy should fork this repo and make any custom changes to their own Classy fork.
 
-All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Courses wishing to deploy Classy should fork this repo and make any custom changes to their own Classy fork. 
+## Modifying Classy on Your Own Fork
 
 During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August). Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging these bug fixing PRs as well as the feature-based PRs below.
 
@@ -40,14 +35,26 @@ For new features, forks are also encouraged to issue PRs _during_ the term for c
 
 We will do our best to merge new features as long as they make sense for `ubccpsc/classy`, but if a feature is not merged it can exist as a long-lived feature in a course's fork. These features can also be merged between forks via PR as well if it makes sense to do so.
 
+Main course forks:
 
-## Configuration
+* [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
+* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
+* [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
+* [cpsc340/classy](https://github.com/CPSC340/classy)
+* [secapstone/classy](https://github.com/SECapstone/classy)
+* [MDS TBD](NOTSETYET)
 
-Full details about how classy should be configured can be found in [docs/config.md](docs/config.md).
+## Hosting Configuration
 
-## Dev overview
+Full details about how Classy should be configured for a production instance can be found in [docs/config.md](docs/tech-staff/deploy.md).
 
-All Classy development should take place in a course-specific fork. Bug fixes to core `ubccpsc/classy` code can be issued via PR back to `ubccpsc/classy` as required, as can feature-addition PRs (as described above). Classy has been configured with CircleCI for validating patches and any PR that fails to pass CI will not be merged.
+## Development Configuration
+
+Full details about how Classy should be configured for development work can be found in [docs/config.md](docs/developer/config.md).
+
+## Developer Contribution Acceptance Criteria
+
+All Classy development should take place in a course-specific fork. Bug fixes to core `ubccpsc/classy` code can be issued via PR back to `ubccpsc/classy` as required, as can feature-addition PRs (as described above). Classy has been configured with CircleCI for validating work and any PR that fails to pass CI will not be merged.
 
 Forks are encouraged to work using PRs on their local repos as well as using these will make it easier to upstream fixes and new features back to `ubccpsc/classy`.
 

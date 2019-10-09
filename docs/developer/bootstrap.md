@@ -1,4 +1,4 @@
-# Configuring Classy
+# Bootstrapping Classy for Development
 
 To configure and deploy a Classy instance, a number of steps need to be followed: 
 
