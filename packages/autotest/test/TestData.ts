@@ -56,7 +56,8 @@ export class TestData {
             regressionDelivIds: [],
             custom:             {}
         },
-        target:          TestData.pushEventA
+        target:          TestData.pushEventA,
+        closeTimestamp: Number.MAX_SAFE_INTEGER,
     };
 
     public static readonly inputRecordB: ContainerInput = {
@@ -68,7 +69,8 @@ export class TestData {
             regressionDelivIds: [],
             custom:             {}
         },
-        target:          TestData.pushEventB
+        target:          TestData.pushEventB,
+        closeTimestamp: Number.MAX_SAFE_INTEGER,
     };
 
     public static readonly commentRecordUserA: CommitTarget = {

@@ -93,7 +93,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 const containerConfig = await this.getContainerConfig(delivId);
                 if (containerConfig !== null) {
-                    const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
+                    const input: ContainerInput = {delivId, target: info, containerConfig, closeTimestamp: deliv.closeTimestamp};
                     this.addToStandardQueue(input);
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
@@ -247,8 +247,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async schedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
         const containerConfig = await this.getContainerConfig(info.delivId);
+        const deliv = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
-            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig: containerConfig};
+            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig, closeTimestamp: deliv.closeTimestamp};
             this.addToStandardQueue(input);
             this.tick();
             Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
@@ -346,9 +347,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
             const newTarget: CommitTarget = {...info, timestamp: nextTimeslot + 1};
             const containerConfig = await this.getContainerConfig(info.delivId);
+            const deliv = await this.classPortal.getContainerDetails(info.delivId);
             let msg: string = '';
             if (containerConfig !== null) {
-                const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig: containerConfig};
+                const input: ContainerInput = {
+                    delivId: info.delivId,
+                    target: newTarget,
+                    containerConfig,
+                    closeTimestamp: deliv.closeTimestamp
+                };
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {

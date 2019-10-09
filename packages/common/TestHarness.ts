@@ -678,7 +678,8 @@ export class Test {
                 regressionDelivIds: [],
                 custom:             {}
             },
-            delivId:         delivId
+            delivId:         delivId,
+            closeTimestamp: Number.MAX_SAFE_INTEGER,
         };
 
         const result: Result = {
