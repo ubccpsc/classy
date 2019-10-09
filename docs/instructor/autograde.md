@@ -23,47 +23,71 @@ This checklist ensures that you have implemented key technical and business logi
 ### Container Output
 
 - [ ] Your container logic assumes that output data is put in the `/output` path following the user-role sub-directory convention:
-  - ../admin/
-  - ../staff/
-  - ../student/
+  - **../admin/**
+  - **../staff/**
+  - **../student/**
 - [ ] /output/staff sub-directory contains:
-  - report.json grading file at the end of a grading run
+  - **report.json** grading file at the end of a grading run
   - additional files that TAs and instructors need access to after the grading run
-- [ ] The report.json file is valid JSON that follows this Report Schema: https://github.com/ubccpsc/classy/blob/956e78328c14146e2246b89f1fe0c6e60cb689ed/packages/common/types/ContainerTypes.ts#L69-L106.
+- [ ] The **report.json** file is valid JSON that follows this Report Schema: https://github.com/ubccpsc/classy/blob/956e78328c14146e2246b89f1fe0c6e60cb689ed/packages/common/types/ContainerTypes.ts#L69-L106.
 - [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, Classy will provide this default report.json file: https://github.com/ubccpsc/classy/blob/master/packages/autotest/src/autotest/GradingJob.ts#L28-L40.
 - [ ] You container logic assumes that any data that is NOT output to the appropriate `/output` path WILL BE LOST FOREVER after a grading run finishes.
 
 ### Dockerfile
 
-- [ ] `FROM` directive is declared with an operating system and/or additional packages installed to run your business logic.
-- [ ] `RUN` chmod directive is declared that sets necessary permissions on files copied into your image*
+- [ ] **FROM** directive is declared with an operating system and/or additional packages installed to run your business logic.
+- [ ] **RUN** chmod directive is declared that sets necessary permissions on files copied into your image*
     *644  (-rw-r — r — ) owned by root is default when copying files into an image using the COPY directive
-- [ ] `COPY` directive is declared to copy any files cloned from your Git repository to your container.
-- [ ] `CMD` directive is declared to trigger your AutoGrade grading logic each time the container is started by AutoTest
+- [ ] **COPY** directive is declared to copy any files cloned from your Git repository to your container.
+- [ ] **CMD** directive is declared to trigger your AutoGrade grading logic each time the container is started by AutoTest
 
 Dockerfile Github Repository
 
-- [ ] Dockerfile is named 'Dockerfile' by default or customized.
+- [ ] Dockerfile is named `Dockerfile` by default or customized.
 - [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify sub-directories in Classy clone address is understood.
 - [ ] Choose one:
   - Git repository is publicly accessible to be cloned by Classy
   - Git repository is privately accessible and a Github token has been given to technical staff to be added to the Classy environmental configuration file.
 - [ ] If sharing a Classy instance with instructors, the other instructors can also use the same Github token to setup their AutoGrade containers**.
 
-** A Classy instance can only have a single Github clone token that clones AutoGrade repositories that contain Dockerfiles. Hence, this token must be shared by instructors of a course that offers more than one section within a single Classy instance.
+**NOTE:** A Classy instance can only have a single Github clone token that clones AutoGrade repositories that contain Dockerfiles. Hence, this token must be shared by instructors of a course that offers more than one section within a single Classy instance.
 
 ## Test a Container Checklist
 
 Docker containers are notoriously difficult to debug. It is highly recommended that you test the grading logic of your container against an example assignment in development, staging, and production environments.
 
-Development Environment:
+### Development Environment
 
 - [ ] Ensure that Docker is running on your computer.
 - [ ] Enter the directory where the Dockerfile is located.
 - [ ] Build your container in your own environment with the command:
   - `docker build . --tag grader`
-  - You `SHOULD NOT` see any build errors. As a sanity check, you may use the `docker images` command to verify that an image is built with the tag 'grader'.
+  - You **SHOULD NOT** see any build errors. As a sanity check, you may use the `docker images` command to verify that an image is built with the tag 'grader'.
 - [ ] Create a mock submission of some student work in a directory. The submission should mimic the student assignment file structure that you expect the student to submit the assignment in.
-- [ ] Run the 'grader' container with the following filesystem mounts (replace absolute path with your local path): 
-  - /Users/tsmith/Desktop/mockAssnDir:/assn               <--- Contains Mock Submission
-  - /Users/tsmith/Desktop/mockAssnOutput:/ouput     <--- Contains a /staff, /admin, and /student sub-directory.
+- [ ] Run the *grader* container with the following filesystem mounts (replace absolute path with your local path): 
+  - `/Users/tsmith/Desktop/mockAssnDir:/assn`               <--- Contains Mock Submission
+  - `/Users/tsmith/Desktop/mockAssnOutput:/ouput`           <--- Contains a **/staff**, **/admin**, and **/student** sub-directory.
+  - Run container with volume mounts example: `docker run -it -v /Users/tsmith/Desktop/mockAssnDir:/assn -v /Users/tsmith/Desktop/mockAssnOutput:/output grader`
+
+**NOTE:** It becomes difficult to debug and inspect your container if the container filesystem is inaccessible because you are using a minimal Linux distribution image that does not have Bash or Ash installed. It is highly recommended that you install a command line tool, as part of the Dockerfile instructions, to allow for easier debugging by manually running commands and viewing the filesystem within the container.
+
+- [ ] The report.json file in valid JSON format in the local environment is found in the /output/staff directory.
+- [ ] Files that your TAs need to access are available in the /output/staff directory.
+- [ ] Files that instructors need to access are available in the /output/admin directory.
+- [ ] Files that students need to access are available in the /output/student directory.
+- [ ] If you are unable to achieve the results above, attempt to debug your container using the following command: `docker run -it grader bash`.
+- [ ] If any of the steps in the tests have resulted in the unintended results, remove the container (command: docker rmi grader -f), implement a fix, and restart the tests.
+
+### Staging Environment
+
+- [ ] Create an example Deliverable on Classy Development: https://classy-dev.students.cs.ubc.ca.
+- [ ] Under the Deliverable, verify that you can build your container on Classy Development (see image).
+- [ ] Provision a repository with a test user using a boilerplate starter assignment.
+- [ ] Test changes to the starter assignment to ensure that the expected results are produced by AutoTest.
+
+You should see the following checkmark to the left of an AutoGrade image when a container is successfully assigned to a Deliverable:
+<img src="./assets/autotest-options.png"/>
+
+### Production Environment
+
+Follow the steps from Staging in Production on your course Classy server (ie. cs210.students.ubc.ca).
