@@ -118,7 +118,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 **WARNING - Operating Systems:**
 Only Linux distributions have been tested with Classy. While Windows distributions may work, the volume mounting, formatting, and file permissions is untested with Classy. It is highly recommended that you start with Linux. Please speak with Reid Holmes if you need to use a Windows distribution.
 
-### Steps to build a Docker image:
+### Steps to build a Docker image
 
 Declare **FROM** to select an operating system distribution that the container environment can run. (**REQUIRED**)
 Declare **WORKDIR** to set a working path that your Docker directives will be run from. (**OPTIONAL**)
@@ -147,3 +147,35 @@ RUN chmod -R 777 .
 ## CMD will trigger once student code is pushed to a repository.
 CMD ["/app/markAssn.sh"]
 ```
+
+### Container Input Background
+The container input is the student assignment and two environment variables. AutoTest mounts student code from a Github repository into the **/assn** directory of a container each time that AutoGrade starts a container. Your programming logic can assume that the **/assn** directory will me accessible instantly and the assignment is checked-out to the SHA of the commit before the code was pushed to Github. The **.git** folder is included in the assignment directory, which allows the instructor to use additional Git commands to access historical commits of the code. Your container will need Git to be installed before you can access the Git commands. You can specify the installation steps in the Dockerfile.
+
+AutoTest will also input two environment variables that you can use to customize or automate features of your grading logic. These are optional environment variables that are not necessary to implement in your container.
+
+- Input Assignment Location
+  - **/assn**
+
+- Input Environment Variables
+  - **ASSIGNMENT**: string = The name of the deliverable
+  - **EXEC_ID**: string = The Docker container execution ID (long random SHA)
+
+### Container Output Background
+
+While AutoTest provides input for your AutoGrade container, it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A stdio.txt file will be produced automatically by AutoTest. If good log information is output to the console, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the /output/admin or /output/staff directories.
+
+#### Output Filesystem Paths
+
+- **/output/staff** ← {report.json} and any private staff resources.
+- **/output/admin** ← Any private instructor resources 
+- **/output/student **← Files that a student is allowed to see after a grading run
+
+### AutoGrade Container Git Repository
+
+AutoTest needs a place to access the Dockerfile and additional assets to build an AutoGrade container. The minimum technical requirement to build an AutoGrade container is to produce a Dockerfile. A Dockerfile must be placed in the root directory. Alternative names may be given to the Dockerfile, but the alternative name must be specified during the creation of the AutoGrade container.
+
+*Specify a custom Dockerfile name in 'Dockerfile name'*:
+<img src="./assets/dockerfile-classy-admin-portal.png"/>
+
+*Specify a sub-directory location of your Dockerfile with the following # syntax in 'Github URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
+<img src="./assets/subdirectory-dockerfile-classy.png"/>
