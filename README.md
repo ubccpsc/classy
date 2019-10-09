@@ -45,17 +45,17 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Classy Features](/docs/instructors/features.md)
-- [2. Getting Started](/docs/instructors/gettingstarted.md)
-    - [2.1. Requesting Classy server](/docs/instructors/gettingstarted.md)
-    - [2.2. Implementing Custom Views](/docs/instrcutors/gettingstarted.md#customviews)
-    - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructors/gettingstarted.md#customcontroller)
-    - [2.4. Implementing Custom Routes (Optional)](/docs/instructors/gettingstarted.md#customroutes)
-- [3. Building an AutoGrade Container](/docs/instructors/buildcontainer.md)
-- [4. Operating a Course](/docs/instructors/courseinstructions.md)
-    - [4.1 - Classlist Upload](/docs/instructors/courseinstructions.md#classlistupload)
-    - [4.1 - Distributing Assignments and Repository Creation](/docs/instructors/courseinstructions.md#repocreation)
-    - [4.1 - Deliverable Configurations](/docs/instructors/courseinstructions.md#classlistupload)
+- [1. Classy Features](/docs/instructor/features.md)
+- [2. Getting Started](/docs/instructor/gettingstarted.md)
+    - [2.1. Requesting Classy server](/docs/instructor/gettingstarted.md)
+    - [2.2. Implementing Custom Views](/docs/instrcutor/gettingstarted.md#customviews)
+    - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructor/gettingstarted.md#customcontroller)
+    - [2.4. Implementing Custom Routes (Optional)](/docs/instructor/gettingstarted.md#customroutes)
+- [3. Building an AutoGrade Container](/docs/instructor/buildcontainer.md)
+- [4. Operating a Course](/docs/instructor/courseinstructions.md)
+    - [4.1 - Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
+    - [4.1 - Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
+    - [4.1 - Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
 
 <!-- /TOC -->
 
