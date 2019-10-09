@@ -46,8 +46,9 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Classy Features](/docs/instructor/features.md)
-    - [1.1. AutoTest](/docs/instructor/features.md#autotest)
-    - [1.2. Portal](/docs/instructor/features.md#portal))
+    - [1.1. Portal](/docs/instructor/features.md#portal)
+    - [1.2. AutoTest](/docs/instructor/features.md#autotest))
+    - [1.3: Github Enterprise Integration](/docs/instructor/features.md#github-enterprise)
 - [2. Getting Started](/docs/instructor/gettingstarted.md#overview)
     - [2.1. Requesting Classy Product](/docs/instructor/gettingstarted.md#requesting-classy-product)
     - [2.2. Front-end Setup (Mandatory)](/docs/instrcutor/gettingstarted.md#front-end-setup)
