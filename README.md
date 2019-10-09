@@ -45,21 +45,54 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Classy Features](/docs/instructors/autotest.md)
-- [2. Getting Started]
-    - [2.1. Requesting Classy server]
-    - [2.2. Implementing Custom Views]
-    - [2.3. Implementing Custom Course Controller  (Optional)]
-    - [2.4. Implementing Custom Routes (Optional)]
-- [3. Building an AutoGrade container]
+- [1. Classy Features](/docs/instructors/features.md)
+- [2. Getting Started](/docs/instructors/gettingstarted.md)
+    - [2.1. Requesting Classy server](/docs/instructors/gettingstarted.md)
+    - [2.2. Implementing Custom Views](/docs/instrcutors/gettingstarted.md#customviews)
+    - [2.3. Implementing Custom Course Controller  (Optional)](/docs/instructors/gettingstarted.md#customcontroller)
+    - [2.4. Implementing Custom Routes (Optional)](/docs/instructors/gettingstarted.md#customroutes)
+- [3. Building an AutoGrade container](/docs/instructors/buildcontainer.md)
+- [4. Operating a Course](/docs/instructors/courseinstructions.md)
+    - [4.1 - Classlist Upload](/docs/instructors/courseinstructions.md#classlistupload)
+    - [4.1 - Distributing Assignments and Repository Creation](/docs/instructors/courseinstructions.md#repocreation)
+    - [4.1 - Deliverable Configurations](/docs/instructors/courseinstructions.md#classlistupload)
 
 <!-- /TOC -->
 
 ### Technical Staff
 
+<!-- TOC depthfrom:2 -->
+
+- [1. Architectural Overview](/docs/tech-staff/architecture.md)
+    - [1.1 - Network Layer](/docs/tech-staff/architecture.md#networklayer)
+    - [1.2 - Application Layer (AutoTest/Portal API/Portal UI)](/docs/tech-staff/architecture.md#applicationlayer)
+- [2. Operations](/docs/tech-staff/operations.md)
+    - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
+    - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)
+    - [2.3. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
+    - [2.4. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
+    - [2.5. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
+    - [2.6. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
+    - [2.7. Back-ups](/docs/tech-staff/operations.md#backups)
+
+<!-- /TOC -->
+
 ### Developers
 
+<!-- TOC depthfrom:2 -->
 
+- [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
+    - [1.1 - Network Layer](/docs/developer/architecture.md#networklayer)
+- [2. Operations](/docs/tech-staff/operations.md)
+    - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
+    - [2.2. Installing Classy](/docs/tech-staff/gettingstarted.md)
+    - [2.3. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
+    - [2.4. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
+    - [2.5. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
+    - [2.6. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
+    - [2.7. Back-ups](/docs/tech-staff/operations.md#backups)
+
+<!-- /TOC -->
 
 ## Modifying Classy on Your Own Fork
 

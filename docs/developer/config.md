@@ -1,16 +1,19 @@
 # Bootstrapping Classy for Development
 
-To configure and deploy a Classy instance, a number of steps need to be followed:
+To configure and deploy a Classy instance for development, a number of steps need to be followed:
 
 ## Classy setup
+
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
 This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
 The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/master/.env.sample).
 
 ## GitHub setup
+
 Classy manages administrators using GitHub teams. The GitHub organization the course uses should have two teams: `staff` and `admin`. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course). The bot user (often autobot) should be added to the admin team.
 
 ## Deploying Classy
+
 The project requires an ssl certificate.
 You can specify its location with environment variables `SSL_CERT_PATH` and `SSL_KEY_PATH`.
 
