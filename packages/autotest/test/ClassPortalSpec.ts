@@ -229,7 +229,7 @@ describe("ClassPortal Service", () => {
                 regressionDelivIds: [],
                 custom:             {},
                 openTimestamp:      0,
-                closeTimestamp:     Number.MAX_SAFE_INTEGER,
+                closeTimestamp:     10000,
                 lateAutoTest:       true,
             },
             delivId:         delivId,
