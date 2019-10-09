@@ -3,7 +3,6 @@
 [![CircleCI](https://circleci.com/gh/ubccpsc/classy.svg?style=svg)](https://circleci.com/gh/ubccpsc/classy)
 [![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master&service=github)](https://coveralls.io/github/ubccpsc/classy?branch=master)
 
-
 Classy is a classroom management system developed by the Department of Computer Science at UBC. Classy is tightly integrated with GitHub and has the ability to automatically provision student repositories, create teams, and mark assignments. Administrators can configure deliverables, enter grades, and view comprehensive dashboards of all student test executions. Students can use the system to create teams (if required) and view their grades and assignment feedback.
 
 Primary contributors:
@@ -11,17 +10,11 @@ Primary contributors:
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
 
-## Instructor Development is Necessary
-
-It is important to note that _some_ development work will be required for any course wishing to use Classy; e.g., at the very least, the student view must be defined per-course and this must be done in code. Classy is _not_ intended to provide a comprehensive system that can be fully configured through its provided interfaces. That said, the extensions courses need to make should be small and contained, unless your own requirements are somewhat unusual.
-
 ## Contributing to Classy
 
-All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Courses wishing to deploy Classy should fork this repo and make any custom changes to their own Classy fork.
+Each course that uses Classy requires a fork of the core Classy project ([ubccpsc/classy](https://github.com/ubccpsc/classy) where custom development can take place. If custom features are developed that suit the core project, you can request that the feature is merged into the core project by setting up a pull-request of the feature on a branch that is re-based to `ubccpsc/master`.
 
-## Modifying Classy on Your Own Fork
-
-During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August). Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging these bug fixing PRs as well as the feature-based PRs below.
+All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging bug fix PRs as well as the feature-based PRs below.
 
 Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes should they decide to pull from master.
 
@@ -29,7 +22,7 @@ For new features, forks are also encouraged to issue PRs _during_ the term for c
 
 * The new feature should have been validated 'in production' in the fork's current course instance; we want to know for sure that code has worked for another class before adding it to `ubccpsc/classy`.
 * It makes sense for the functionality to be in `ubccpsc/classy` rather than the course-specific fork (e.g., the feature should have broad appeal to many other course instances).
-* The feature is well tested and the code of high quality. 
+* The feature is well tested and the code of high quality.
 * Any additional tests do not overly burden the overall test suite execution duration, and should be resilient to future changes.
 * The contribution must lint before it can be accepted (e.g., `cd classy/; yarn run lint`).
 
@@ -43,6 +36,37 @@ Main course forks:
 * [cpsc340/classy](https://github.com/CPSC340/classy)
 * [secapstone/classy](https://github.com/SECapstone/classy)
 * [MDS TBD](NOTSETYET)
+
+## Instructions
+
+Instructions for getting started with Classy have been sorted into sections based on the following user roles:
+
+### Instructors
+
+<!-- TOC depthfrom:2 -->
+
+- [1. Classy Features](/docs/instructors/autotest.md)
+- [2. Getting Started]
+    - [2.1. Requesting Classy server]
+    - [2.2. Implementing Custom Views]
+    - [2.3. Implementing Custom Course Controller  (Optional)]
+    - [2.4. Implementing Custom Routes (Optional)]
+- [3. Building an AutoGrade container]
+
+<!-- /TOC -->
+
+### Technical Staff
+
+### Developers
+
+
+
+## Modifying Classy on Your Own Fork
+
+Tech staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy.
+
+During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
+
 
 ## Hosting Configuration
 
