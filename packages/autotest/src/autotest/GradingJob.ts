@@ -82,7 +82,7 @@ export class GradingJob {
             Env:        [
                 `ASSIGNMENT=${this.input.delivId}`,
                 `EXEC_ID=${this.id}`,
-                `ARGS=${JSON.stringify(this.input.containerConfig)}`
+                `CONFIG=${JSON.stringify(this.input.containerConfig)}`
             ],
             HostConfig: {
                 AutoRemove:  true,
