@@ -91,3 +91,59 @@ You should see the following checkmark to the left of an AutoGrade image when a 
 ### Production Environment
 
 Follow the steps from Staging in Production on your course Classy server (ie. cs210.students.ubc.ca).
+
+#### Dockerfile
+
+A Dockerfile MUST be written to create a Docker image; As an AutoGrade container is a Docker image, a Dockerfile is necessary to build a custom AutoGrade container. A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that is ready to execute a command without loading time. 
+
+We leverage the Docker build logic above to build our grading container. As the data from these build steps is saved into a pre-compiled and runnable Docker image, AutoTest now listens for Github notification web-hooks that tell it if a student has pushed code to their Github repository. If a Deliverable in Classy is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest triggers the Docker container to run. The CMD directive in your Dockerfile will run each time that a student pushes code to their Github repository with the assignment mounted inside the container. Any output that must be archived MUST be put in the Container Output filesystem path to ensure that it is not lost after the container finishes executing its script.
+
+The original AutoGrade image data will NOT be modified during each AutoGrade run. The data produced when the AutoGrade container is run will NOT persist after the container completes its grading run. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
+
+**NOTE:**
+- A container must be **BUILT** to create an image of your AutoGrade logic that it can repeatedly **RUN**.
+- When a Docker image runs in AutoTest, it executes the file to the right of the **CMD** directive to run your container.
+- The **CMD** directive should result in the output of a report.json file each time your container is run (unless it encounters an error).
+
+<img src="./assets/autograde-image-run.png"/>
+
+##### Helpful Dockerfile directives
+
+**FROM** - Used to retrieve a Docker image base. Many Linux distributions exist, as well as a very minimal Alpine Linux distribution that is approximately 8MB.
+**WORKDIR** - Set the working path that your Docker directives run from.
+**RUN** - An API to the command line of your operating system console.
+**COPY** - Allows you to copy files from the Git repository where your Dockerfile is kept, or somewhere else on the Docker HOST of your course, into the Docker container to be accessible during the AutoGrade container runtime.
+**CMD** - This is the most important directive of your Docker container, as this is the command that is run when Autotest starts your container run.
+
+**WARNING - Operating Systems:**
+Only Linux distributions have been tested with Classy. While Windows distributions may work, the volume mounting, formatting, and file permissions is untested with Classy. It is highly recommended that you start with Linux. Please speak with Reid Holmes if you need to use a Windows distribution.
+
+##### Steps to build a Docker image:
+
+Declare **FROM** to select an operating system distribution that the container environment can run. (**REQUIRED**)
+Declare **WORKDIR** to set a working path that your Docker directives will be run from. (**OPTIONAL**)
+Declare **RUN** to invoke any commands to update or install packages, just as you would on any Linux or Windows command line. (**OPTIONAL**)
+Declare **COPY** to move files into your AutoGrade container, where they will be available to your grading logic, when you start the container. (**OPTIONAL**)
+Declare **CMD** to declare what file should be executed each time AutoTest starts your container. You can assume that the student assignment has been mounted into the container at this point. (**REQUIRED**)
+
+##### Example of a Dockerfile that builds a basic AutoGrade container to produce hardcoded output (MVP full boilerplate source-code: https://github.com/ubccpsctech/autograder_io_basic_example)
+
+```
+## Pre-compiled Linux distributions with pre-installed Node JS, Java, Python, etc. are available.
+## https://hub.docker.com/search/?type=image
+FROM debian:wheezy
+
+WORKDIR /app
+
+## Install any dependencies needed to mark your code using a package manager compatible with your Linux distribution
+RUN apt-get update
+RUN apt-get install git
+
+COPY exampleFiles/markAssn.sh /app/markAssn.sh
+
+## Set chmod -R 777 on your work directory to ensure that AutoTest can read the data
+RUN chmod -R 777 .
+
+## CMD will trigger once student code is pushed to a repository.
+CMD ["/app/markAssn.sh"]
+```
