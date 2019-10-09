@@ -91,10 +91,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
-                const containerConfig = await this.getContainerConfig(delivId);
-                const late: boolean = deliv.closeTimestamp < info.timestamp;
+                const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig !== null) {
-                    const input: ContainerInput = {delivId, target: info, containerConfig, arguments: {late}};
+                    const input: ContainerInput = { delivId, target: info, containerConfig };
                     this.addToStandardQueue(input);
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
@@ -247,11 +246,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async schedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
-        const containerConfig = await this.getContainerConfig(info.delivId);
-        const { closeTimestamp } = await this.classPortal.getContainerDetails(info.delivId);
-        const late: boolean = closeTimestamp < info.timestamp;
+        const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
-            const input: ContainerInput = { delivId: info.delivId, target: info, containerConfig, arguments: { late } };
+            const input: ContainerInput = { delivId: info.delivId, target: info, containerConfig };
             this.addToStandardQueue(input);
             this.tick();
             Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
@@ -349,12 +346,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.trace("GitHubAutoTest::processCommentScheduleRequest(..) - Time requested: " +
                 new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
             const newTarget: CommitTarget = { ...info, timestamp: nextTimeslot };
-            const containerConfig = await this.getContainerConfig(info.delivId);
-            const { closeTimestamp } = await this.classPortal.getContainerDetails(info.delivId);
-            const late: boolean = closeTimestamp < nextTimeslot;
+            const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
             let msg: string = '';
             if (containerConfig !== null) {
-                const input: ContainerInput = { delivId: info.delivId, target: newTarget, containerConfig, arguments: { late } };
+                const input: ContainerInput = { delivId: info.delivId, target: newTarget, containerConfig };
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {

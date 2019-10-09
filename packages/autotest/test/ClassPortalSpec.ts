@@ -227,10 +227,12 @@ describe("ClassPortal Service", () => {
                 studentDelay:       300,
                 maxExecTime:        6000,
                 regressionDelivIds: [],
-                custom:             {}
+                custom:             {},
+                openTimestamp:      0,
+                closeTimestamp:     Number.MAX_SAFE_INTEGER,
+                lateAutoTest:       true,
             },
             delivId:         delivId,
-            arguments: {},
         };
 
         const result: AutoTestResult = {
