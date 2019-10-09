@@ -41,7 +41,7 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] **COPY** directive is declared to copy any files cloned from your Git repository to your container.
 - [ ] **CMD** directive is declared to trigger your AutoGrade grading logic each time the container is started by AutoTest
 
-Dockerfile Github Repository
+### Dockerfile Github Repository
 
 - [ ] Dockerfile is named `Dockerfile` by default or customized.
 - [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify sub-directories in Classy clone address is understood.
@@ -92,7 +92,7 @@ You should see the following checkmark to the left of an AutoGrade image when a 
 
 Follow the steps from Staging in Production on your course Classy server (ie. cs210.students.ubc.ca).
 
-#### Dockerfile
+## Dockerfile Background
 
 A Dockerfile MUST be written to create a Docker image; As an AutoGrade container is a Docker image, a Dockerfile is necessary to build a custom AutoGrade container. A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that is ready to execute a command without loading time. 
 
@@ -107,7 +107,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 
 <img src="./assets/autograde-image-run.png"/>
 
-##### Helpful Dockerfile directives
+### Helpful Dockerfile directives
 
 **FROM** - Used to retrieve a Docker image base. Many Linux distributions exist, as well as a very minimal Alpine Linux distribution that is approximately 8MB.
 **WORKDIR** - Set the working path that your Docker directives run from.
@@ -118,7 +118,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 **WARNING - Operating Systems:**
 Only Linux distributions have been tested with Classy. While Windows distributions may work, the volume mounting, formatting, and file permissions is untested with Classy. It is highly recommended that you start with Linux. Please speak with Reid Holmes if you need to use a Windows distribution.
 
-##### Steps to build a Docker image:
+### Steps to build a Docker image:
 
 Declare **FROM** to select an operating system distribution that the container environment can run. (**REQUIRED**)
 Declare **WORKDIR** to set a working path that your Docker directives will be run from. (**OPTIONAL**)
@@ -126,7 +126,7 @@ Declare **RUN** to invoke any commands to update or install packages, just as yo
 Declare **COPY** to move files into your AutoGrade container, where they will be available to your grading logic, when you start the container. (**OPTIONAL**)
 Declare **CMD** to declare what file should be executed each time AutoTest starts your container. You can assume that the student assignment has been mounted into the container at this point. (**REQUIRED**)
 
-##### Example of a Dockerfile that builds a basic AutoGrade container to produce hardcoded output (MVP full boilerplate source-code: https://github.com/ubccpsctech/autograder_io_basic_example)
+Example of a Dockerfile that builds a basic AutoGrade container to produce hardcoded output (MVP full boilerplate source-code: [https://github.com/ubccpsctech/autograder_io_basic_example](https://github.com/ubccpsctech/autograder_io_basic_example))
 
 ```
 ## Pre-compiled Linux distributions with pre-installed Node JS, Java, Python, etc. are available.
