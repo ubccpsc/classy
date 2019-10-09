@@ -417,7 +417,8 @@ export abstract class AutoTest implements IAutoTest {
 
         try {
             await job.prepare();
-            record = await job.run(this.docker);
+            const args = await this.classPortal.getContainerDetails(input.delivId);
+            record = await job.run(this.docker, args);
 
             let score = -1;
             if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
