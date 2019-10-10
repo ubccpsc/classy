@@ -2,7 +2,7 @@
 
 ## Portal
 
-Portal is a front-end application that uses Onsen UI, which is a lightweight JavaScript framework. Portal has a RESTful API back-end that runs Restify. Portal allows an instructor to manage Github repositories, teams, and assignments from a UI while integrated Docker containers automatically mark student assignments in the background.
+Portal is a front-end application that manages deliverable configuration, repository creation, and teams for AutoTest.
 
 - Dashboard to view grading results and logs
 - Configure Docker containers to automatically mark course assignments on a per assignment basis.
@@ -14,11 +14,11 @@ Portal is a front-end application that uses Onsen UI, which is a lightweight Jav
 - View and export grade results to CSV format.
 - Import latest Classlist information by clicking on a button.
 
-Onsen UI is a lightweight and minimal framework that makes it easy to implement custom views. Custom views can be supported by custom back-end features implemented on Restify.
+Portal uses Onsen UI, a lightweight JavaScript framework, on the front-end and Restify, a Node JS RESTful API, on the back-end. Custom logic can be added to Portal by following the [Back-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup)) and [Front-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup) steps in the Instructor area of the [Table of Contents](/README.md#table-of-contents).
 
 ## AutoTest
 
-AutoTest is a service that listens for push and comment events from configured repos on GitHub. AutoTest has the ability to start a container on every push event to analyze code based on logic that you program into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
+AutoTest is a service that listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
 
 AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
 
@@ -36,16 +36,26 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 In the following scenarios, an instructor has pre-configured AutoTest to mark all `lab2` deliverables using a custom Docker container that he has built. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
-### Student `atest-02` requests feedback for an assignment
+### Student requests feedback for an assignment
 
 <img src="./assets/commit-comment-feedback.png/">
 
-A student pushes code to a repository and requests feedback for the commit SHA displayed by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
+A student pushes code to a repository and requests feedback for the commit displayed in the view. The students requests the grade by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
 
-### Student pushes code to Classy that fails to compile
+### Student requests feedback for an assignment that fails to compile
 
 <img src="./assets/commit-comment-build-failure.png/">
 
 A student pushes code to the repository that does not compile and requests a grade for it. The container has been programmed to output a computed message that includes a compilation failure. The instructor does not explicitly say that the grade feedback is 0% for this commit, but a 0% grade has been recorded in the **Portal** Admin Dashboard, included in a `report.json` file output to AutoTest from the container.
+
+### Student requests feedback for an assignment before configured allotted time
+
+A student pushes code to a repository and requests feedback for the commit displayed in the view. The request for feedback is too soon, as a longer time period was configured by the instructor in the *Deliverable Admin Configuration Panel*. `AutoBot` tells the student to wait for the remaining time period.
+
+<img src="./assets/commit-comment-wait.png/">
+
+### Student requests feedback for an assignment before configured allotted time and schedules next feedback event
+
+A student pushes code to a repository but cannot request grade feedback because the student is within the configured delay period. The student schedules feedback by using the `#schedule` flag with the specified deliverable in a grade request to `AutoBot`.
 
 <img src="./assets/commit-comment-schedule.png/">
