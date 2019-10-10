@@ -40,12 +40,12 @@ In the following scenarios, an instructor has pre-configured AutoTest to mark al
 
 <img src="./assets/commit-comment-feedback.png/">
 
-The student `atest-02` has pushes code to their Github repository for `lab2` and requests feedback by commenting `@autobot #lab2` on the Github commit SHA page. *AutoTest* detects that it has been called to mark an assignment and starts the container configured to mark `lab2` deliverables. `AutoBot` responds, "This commit has been queued for processing against lab2. Your results will be posted here as soon as they are ready." Once the container finishes running the container, a computed message pre-programmed by the instructor is output to Github by *AutoTest*.
+A student pushes code to a repository and requests feedback for the commit SHA displayed by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
 
-### A student pushes code to Classy that fails to compile
+### Student pushes code to Classy that fails to compile
 
 <img src="./assets/commit-comment-build-failure.png/">
 
-1) A student has requests feedback before feedback is available due to a prior request:
+A student pushes code to the repository that does not compile and requests a grade for it. The container has been programmed to output a computed message that includes a compilation failure. The instructor does not explicitly say that the grade feedback is 0% for this commit, but a 0% grade has been recorded in the **Portal** Admin Dashboard, included in a `report.json` file output to AutoTest from the container.
 
-<img src="./assets/commit-comment-feedback.png/">
+<img src="./assets/commit-comment-schedule.png/">
