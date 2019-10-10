@@ -196,7 +196,12 @@ export interface AutoTestConfigTransport {
     regressionDelivIds: string[];
 
     /**
+     * This field is a convenient place to add parameters to the UI that will be passed to
+     * AutoTest grading containers. This property is set in the AutoTest portion of the
+     * Deliverable UI.
+     *
      * A custom JSON object that will be passed to the container. Can be {}.
+     *
      */
     custom: object;
 

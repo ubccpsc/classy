@@ -53,7 +53,6 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
 
         portal = new MockClassPortal();
-
         Config.getInstance().setProp(ConfigKey.postback, false);
 
         Log.test("AutoTest::before() - done");
