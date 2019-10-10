@@ -19,10 +19,14 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 ## Portal
 
-Portal is a front-end application that consists of a RESTful API server and the light-weight Onsen UI framework. The application allows an instructor to manage Github repositories, teams, and assignments. Additional AutoTest configurations also exist. 
+Portal is a front-end application that consists of a RESTful API server and Onsen UI framework. Portal allows an instructor to manage Github repositories, teams, and assignments from a UI while integrated Docker containers automatically mark student assignments in the background.
 
-- Dashboard to view grading results and logs 
+- Dashboard to view grading results and logs
 - Configure Docker containers to automatically mark course assignments on a per assignment basis.
+- Design and integrate your own Docker container to mark student assignments.
   - 1-to-1 or 1-to-many Docker container to assignment grading capabilities.
 - Manage when assignments are automatically graded with open and close dates.
-- Dashboard to 
+- Create Github Teams for assignments and assign the team to share a repo
+- Assign students to their respective repos to work on their assignment.
+- View and export grade results to CSV format.
+- Import latest Classlist information by clicking on a button.
