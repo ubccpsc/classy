@@ -34,9 +34,9 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 ## Github and AutoTest Examples
 
-### Student `atest-02` requests feedback for an assignment
+In the following scenarios, an instructor has pre-configured AutoTest to mark all `lab2` deliverables using a custom Docker container that he has built. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
-In the following scenarios, an instructor has pre-configured AutoTest to mark all `lab2` deliverables using a custom Docker container that he has built.
+### Student `atest-02` requests feedback for an assignment
 
 <img src="./assets/commit-comment-feedback.png/">
 
@@ -46,10 +46,6 @@ The student `atest-02` has pushes code to their Github repository for `lab2` and
 
 <img src="./assets/commit-comment-build-failure.png/">
 
-1) A student requests a grade on non-compiling code:
-
-<img src="./assets/commit-comment-feedback.png/">
-
-4) A student has requests feedback before feedback is available due to a prior request:
+1) A student has requests feedback before feedback is available due to a prior request:
 
 <img src="./assets/commit-comment-feedback.png/">
