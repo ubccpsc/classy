@@ -2,10 +2,11 @@
 
 ## AutoTest
 
-AutoTest is a service that listens for push and comment events from configured repos on GitHub.
+AutoTest is a service that listens for push and comment events from configured repos on GitHub. AutoTest has the ability to start a container on every push event to analyze code based on logic that you program into a Docker container.
+
 Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
 
-AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
+AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
 
 * `#schedule` Schedules a commit for grading in the future when the student's quota is available again. For instance, by default calling `@autobot #d2` when the student still has 6 hours remaining before they can request again does not actually queue the submission for grading. By calling `@autobot #d2 #schedule` the submission will be automatically graded when the student's quota allows. Note: each student has only one `#schedule` slot; only the most recent `#schedule` event will be serviced; once this is complete the slot is available again.
 
@@ -19,7 +20,7 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 ## Portal
 
-Portal is a front-end application that consists of a RESTful API server and Onsen UI framework. Portal allows an instructor to manage Github repositories, teams, and assignments from a UI while integrated Docker containers automatically mark student assignments in the background.
+Portal is a front-end application that uses Onsen UI, which is a lightweight JavaScript framework. Portal has a RESTful API back-end that runs Restify. Portal allows an instructor to manage Github repositories, teams, and assignments from a UI while integrated Docker containers automatically mark student assignments in the background.
 
 - Dashboard to view grading results and logs
 - Configure Docker containers to automatically mark course assignments on a per assignment basis.
@@ -30,3 +31,5 @@ Portal is a front-end application that consists of a RESTful API server and Onse
 - Assign students to their respective repos to work on their assignment.
 - View and export grade results to CSV format.
 - Import latest Classlist information by clicking on a button.
+
+Onsen UI is a lightweight and minimal framework that makes it easy to implement custom views. Custom views can be supported by custom back-end features implemented on Restify.
