@@ -1,21 +1,5 @@
 # Features
 
-## AutoTest
-
-AutoTest is a service that listens for push and comment events from configured repos on GitHub. AutoTest has the ability to start a container on every push event to analyze code based on logic that you program into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
-
-AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
-
-* `#schedule` Schedules a commit for grading in the future when the student's quota is available again. For instance, by default calling `@autobot #d2` when the student still has 6 hours remaining before they can request again does not actually queue the submission for grading. By calling `@autobot #d2 #schedule` the submission will be automatically graded when the student's quota allows. Note: each student has only one `#schedule` slot; only the most recent `#schedule` event will be serviced; once this is complete the slot is available again.
-
-* `#unschedule` Unschedules a commit; this is not strictly necessary as servicing a scheduled grading submission does this automatically (as does calling `#schedule` on another commit), but this is a convenience method that ensures the student does not have a scheduled event requested.
-
-* `#check` Checks to ensure a commit has been queued for grading. This is often used by students who want to confirm that their submission is in fact on the grading queue.
-
-* `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
-
-* `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
-
 ## Portal
 
 Portal is a front-end application that uses Onsen UI, which is a lightweight JavaScript framework. Portal has a RESTful API back-end that runs Restify. Portal allows an instructor to manage Github repositories, teams, and assignments from a UI while integrated Docker containers automatically mark student assignments in the background.
@@ -32,25 +16,37 @@ Portal is a front-end application that uses Onsen UI, which is a lightweight Jav
 
 Onsen UI is a lightweight and minimal framework that makes it easy to implement custom views. Custom views can be supported by custom back-end features implemented on Restify.
 
-## Github Enterprise Integration
+## AutoTest
 
-Common Github Use Cases:
+AutoTest is a service that listens for push and comment events from configured repos on GitHub. AutoTest has the ability to start a container on every push event to analyze code based on logic that you program into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
 
-1) A student requests grade feedback:
+AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
 
-A student pushes code to a Github repository setup by AutoTest. AutoTest starts the Docker container assigned to the deliverable in the Admin configuration panel. The student comments, "@autobot #lab2", indicating that the student is requsting a grade result based on the code pushed in the current commit.
+* `#schedule` Schedules a commit for grading in the future when the student's quota is available again. For instance, by default calling `@autobot #d2` when the student still has 6 hours remaining before they can request again does not actually queue the submission for grading. By calling `@autobot #d2 #schedule` the submission will be automatically graded when the student's quota allows. Note: each student has only one `#schedule` slot; only the most recent `#schedule` event will be serviced; once this is complete the slot is available again.
 
-As AutoTest has not finished to mark the assignment when it received the `push` notification for this commit, grade feedback is queued. When AutoTest finishes marking the assignment, grade feedback is sent back to the student and recorded in the **Admin Grading Dashboard** in Portal.
+* `#unschedule` Unschedules a commit; this is not strictly necessary as servicing a scheduled grading submission does this automatically (as does calling `#schedule` on another commit), but this is a convenience method that ensures the student does not have a scheduled event requested.
+
+* `#check` Checks to ensure a commit has been queued for grading. This is often used by students who want to confirm that their submission is in fact on the grading queue.
+
+* `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
+
+* `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
+
+## Github and AutoTest Examples
+
+### Student `atest-02` requests feedback for an assignment
+
+In the following scenarios, an instructor has pre-configured AutoTest to mark all `lab2` deliverables using a custom Docker container that he has built.
 
 <img src="./assets/commit-comment-feedback.png/">
 
-2) A student build fails:
+The student `atest-02` has pushes code to their Github repository for `lab2` and requests feedback by commenting `@autobot #lab2` on the Github commit SHA page. *AutoTest* detects that it has been called to mark an assignment and starts the container configured to mark `lab2` deliverables. `AutoBot` responds, "This commit has been queued for processing against lab2. Your results will be posted here as soon as they are ready." Once the container finishes running the container, a computed message pre-programmed by the instructor is output to Github by *AutoTest*.
 
-A student pushes code to Classy, but it does not compile. The Docker container is programmed to give feedback to the student before they request a grade.
+### A student pushes code to Classy that fails to compile
 
 <img src="./assets/commit-comment-build-failure.png/">
 
-3) A student requests a grade on non-compiling code:
+1) A student requests a grade on non-compiling code:
 
 <img src="./assets/commit-comment-feedback.png/">
 
