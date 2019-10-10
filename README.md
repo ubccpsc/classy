@@ -59,8 +59,8 @@ Instructions for getting started with Classy have been sorted into sections base
     - [3.2. Testing AutoGrade Containers](/docs/instructor/container.md#test-a-container-checklist)
 - [4. Operating a Course](/docs/instructor/courseinstructions.md)
     - [4.1. Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
-    - [4.1. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
-    - [4.1. Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
+    - [4.2. Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
+    - [4.3. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
 
 <!-- /TOC -->
 

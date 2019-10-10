@@ -2,26 +2,31 @@
 
 ## Overview
 
-Classy requires resources to setup, maintain, and customize before it can be effectively and reliably used to mark assignments at scale.
+Resources to setup, maintain, and customize Classy are required before Classy can effectively and reliably be used to mark assignments at scale.
 
-Syllabus and course instructions will need to be updated to work with *Github* workflows and *Git* version control system logic. It is necessary that, before the start of the course, you are willing to set aside some time to use Classy and learn how it works.
+At a high-level, an instructor will have to fulfill some requirements before they are ready to run a course that uses Classy:
+
+Requirements:
+
+- [ ] Requested [Classy for your Course](#requesting-classy-for-your-course)
+- [ ] Performed [Back-end Setup](#back-end-setup) and [Front-end Setup](#front-end-setup)
+        or: [Quick Front-end and Back-end Bootstrapping](#quick-front-end-and-back-end-bootstrapping)
+- [ ] Tech Staff are notified that you want to use Classy at least three weeks in advance of course start date.
+- [ ] Instructor has shadowed a course instructor who is currently offering Classy.
+- [ ] Presented Technical Staff with Github token to access private [AutoGrade Dockerfile repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
+
+Reccomendations:
+
+- [ ] Retain a TA to build-out Docker AutoGrade container.
+- [ ] Added container logging that is technically valuable to debugging.
+
+Syllabus and course instructions will need to be updated to work with *Github* workflows and *Git* version control system logic. It is necessary that, before the start of the course, you are willing to set aside some time to learn how to use Classy so the documentation is accurate.
 
 ## Requesting Classy for Your Course
 
-You can formally request to use Classy by contacting *CPSC Technical Staff* up until 2 weeks before the start of a course. Classy includes software, hardware, and CPSC technical staff resources that are required to run the software while upholding UBC privacy and data integrity requirements.
+You can formally request Classy for a course by contacting *CPSC Technical Staff*. Classy takes approximately two weeks to setup. Classy includes software, hardware, and CPSC technical staff resources that are necessary to run the software while meeting necessary legal standards, such as privacy and data laws.
 
-Instructor Requirements:
-
-- Tech Staff are notified that you want to use Classy at least three weeks in advance of course start date.
-- Minimal experience or strong familiarity with Docker.
-- Knowledge of programming language ecosystem and tools needed to automate grading in a container environment.
-- Update course documentation and format to reflect new Classy procedures.
-
-Instructor Reccomendations:
-
-- Retain a TA to build-out Docker AutoGrade container.
-- Currently familiar with Github ecosystem.
-- Shadow an instructor currently using Classy.
+Additional steps are: learning how to operate the course, training TAs, buiding out working container logic, and substituting current course instructions with updated Classy instructions. Please start a discussion with CPSC Technical Staff as soon as you develop an interest in using Classy.
 
 ## Quick Front-end and Back-end Bootstrapping
 
@@ -35,7 +40,7 @@ Classy requires that front-end views are implemented to reflect your course logi
 
 Any custom logic may also be implemented in the 'Custom' view model files if the files continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder.  These changes should ***NOT*** be pushed back to `classy/master`.
 
-### Files that must be implemented
+### MUST IMPLEMENT
 
 #### HTML
 
@@ -48,7 +53,7 @@ Any custom logic may also be implemented in the 'Custom' view model files if the
 
 - packages/portal/frontend/src/app/custom/CustomStudentView.ts
 - packages/portal/frontend/src/app/custom/CustomAdminView.ts
-- 
+  
 By running the Bash script above, files will be generated that allow you to either (a.) run the application with its defaults or (b.) modify the code to achieve unique business logic requirements.
 
 ## Back-end Setup

@@ -173,7 +173,7 @@ While AutoTest provides input for your AutoGrade container, it is the responsibi
 
 ### AutoGrade Dockerfile Repository
 
-AutoTest needs a place to access the Dockerfile and additional assets to build an AutoGrade container. The minimum technical requirement to build an AutoGrade container is to produce a Dockerfile. A Dockerfile must be placed in the root directory. Alternative names may be given to the Dockerfile, but the alternative name must be specified during the creation of the AutoGrade container.
+AutoTest needs a place to access the Dockerfile, and additional files, to build an AutoGrade container. The minimum technical requirement to build an AutoGrade container is to produce a Dockerfile. A Dockerfile must be placed in the root directory of a Git repository. Alternative names may be given to the Dockerfile, but the alternative name must be specified during the creation of the AutoGrade container.
 
 *Specify a custom Dockerfile name in 'Dockerfile name'*:
 <img src="./assets/dockerfile-classy-admin-portal.png"/>
