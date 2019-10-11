@@ -47,7 +47,8 @@ export class WebhookUpdater {
     private async updateHooks(): Promise<void> {
         Log.info("WebhookUpdater::updateHooks() - start");
 
-        const REPOS_TO_IGNORE = ['PostTestDoNotDelete', 'bootstrap', 'capstone', 'project_oracle', 'course-csv-dataset ', 'classy'];
+        const REPOS_TO_IGNORE = ['PostTestDoNotDelete1', 'PostTestDoNotDelete', 'bootstrap',
+            'capstone', 'project_oracle', 'course-csv-dataset ', 'classy'];
 
         const reposToUpdate = [];
         const repos = await this.gha.listRepos();

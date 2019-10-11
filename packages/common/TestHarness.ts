@@ -1,9 +1,3 @@
-import Config, {ConfigKey} from "./Config";
-import Log from "./Log";
-import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
-import {GradePayload} from "./types/SDMMTypes";
-import Util from "./Util";
-
 import {DatabaseController} from "../portal/backend/src/controllers/DatabaseController";
 import {DeliverablesController} from "../portal/backend/src/controllers/DeliverablesController";
 import {GitHubActions} from "../portal/backend/src/controllers/GitHubActions";
@@ -13,6 +7,11 @@ import {RepositoryController} from "../portal/backend/src/controllers/Repository
 import {TeamController} from "../portal/backend/src/controllers/TeamController";
 import {Factory} from "../portal/backend/src/Factory";
 import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../portal/backend/src/Types";
+import Config, {ConfigKey} from "./Config";
+import Log from "./Log";
+import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
+import {GradePayload} from "./types/SDMMTypes";
+import Util from "./Util";
 
 export class Test {
 
@@ -30,15 +29,56 @@ export class Test {
         Log.test("Test::suiteAfter( ... ) - suite: " + suiteName);
     }
 
-    public static testBefore(suite: string, context: any) {
+    public static testBefore(context: any) {
         Log.test("*****");
-        Log.test(suite + "::beforeEach( " + context.currentTest.title + " )");
+        let testName = 'UNKNOWN TEST';
+        let suiteName = 'UNKNOWN SUITE';
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.title !== 'undefined') {
+            testName = context.currentTest.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.parent !== 'undefined' &&
+            context.currentTest.parent.title !== 'undefined') {
+            suiteName = context.currentTest.parent.title;
+        }
+
+        Log.test("* START: " + suiteName + " ( " + testName + " )");
         Log.test("*****");
     }
 
-    public static testAfter(suite: string, context: any) {
+    public static testAfter(context: any) {
         Log.test("*****");
-        Log.test(suite + "::afterEach( " + context.currentTest.title + " )");
+
+        let testName = 'UNKNOWN TEST';
+        let suiteName = 'UNKNOWN SUITE';
+        let testStatus = 'UNKNOWN STATUS';
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.title !== 'undefined') {
+            testName = context.currentTest.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.parent !== 'undefined' &&
+            context.currentTest.parent.title !== 'undefined') {
+            suiteName = context.currentTest.parent.title;
+        }
+
+        if (typeof context.currentTest !== 'undefined' &&
+            typeof context.currentTest.state !== 'undefined') {
+            testStatus = context.currentTest.state;
+        }
+
+        if (testStatus === 'failed') {
+            Log.test("* END: _TEST FAILED_ " + suiteName + " ( " + testName + " )");
+        } else if (testStatus === 'passed') {
+            Log.test("* END: _TEST PASSED_ " + suiteName + " ( " + testName + " )");
+        } else {
+            Log.test("* END: _TEST UNKNOWN_ " + suiteName + " ( " + testName + " ) - state: " + testStatus);
+        }
         Log.test("*****");
     }
 
@@ -385,7 +425,7 @@ export class Test {
         }
     }
 
-    public static readonly TEAMNAME1 = 't_d0_user1CSID_user2CSID';
+    public static readonly TEAMNAME1 = 't1_d0_user1CSID_user2CSID';
     public static readonly TEAMNAME2 = 'TESTteam2';
     public static readonly TEAMNAME3 = 'TESTteam3';
     public static readonly TEAMNAME4 = 'TESTteam4';
@@ -400,8 +440,8 @@ export class Test {
     public static getConfigUser(userKey: ConfigKey, num: number = null): any {
         const username = num ? Config.getInstance().getProp(userKey).split(',')[num - 1].trim() : Config.getInstance().getProp(userKey);
         return {
-            id: username + 'ID',
-            csId: username + 'CSID',
+            id:     username + 'ID',
+            csId:   username + 'CSID',
             github: username
         };
     }
@@ -419,11 +459,11 @@ export class Test {
     public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
     public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
     public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff);
-    public static readonly REALUSER1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 1);
-    public static readonly REALUSER2 =  Test.getConfigUser(ConfigKey.githubTestUsers, 2);
-    public static readonly REALUSER3 =  Test.getConfigUser(ConfigKey.githubTestUsers, 3);
+    public static readonly REALUSER1 = Test.getConfigUser(ConfigKey.githubTestUsers, 1);
+    public static readonly REALUSER2 = Test.getConfigUser(ConfigKey.githubTestUsers, 2);
+    public static readonly REALUSER3 = Test.getConfigUser(ConfigKey.githubTestUsers, 3);
 
-    public static readonly GITHUB1 =  Test.getConfigUser(ConfigKey.githubTestUsers, 4);
+    public static readonly GITHUB1 = Test.getConfigUser(ConfigKey.githubTestUsers, 4);
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
     public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
 
@@ -444,7 +484,9 @@ export class Test {
     public static readonly REPONAME3 = 'TESTrepo3';
     public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
-    public static readonly REPONAMEREAL2 = 'PostTestDoNotDelete';
+
+    public static readonly REPONAMEREAL_POSTTEST = 'PostTestDoNotDelete';
+    public static readonly REPONAMEREAL_TESTINGSAMPLE = 'TESTING_SAMPLE_REPO';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';
@@ -462,7 +504,7 @@ export class Test {
             gradesReleased:    false,
             // delay:            -1,
             shouldProvision:   false,
-            importURL:         Config.getInstance().getProp(ConfigKey.githubHost) +  '/classytest/PostTestDoNotDelete.git',
+            importURL:         Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
             teamMinSize:       1,
             teamMaxSize:       1,
             teamSameLab:       false,
@@ -634,9 +676,12 @@ export class Test {
                 studentDelay:       300,
                 maxExecTime:        6000,
                 regressionDelivIds: [],
-                custom:             {}
+                custom:             {},
+                openTimestamp:      0,
+                closeTimestamp:     10000,
+                lateAutoTest:       true,
             },
-            delivId:         delivId
+            delivId:         delivId,
         };
 
         const result: Result = {

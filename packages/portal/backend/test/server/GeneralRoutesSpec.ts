@@ -69,14 +69,6 @@ describe('General Routes', function() {
         return server.stop();
     });
 
-    beforeEach(function() {
-        Test.testAfter("GeneralRoutesSpec", this);
-    });
-
-    afterEach(function() {
-        Test.testAfter("GeneralRoutesSpec", this);
-    });
-
     it('Should be able to get config details', async function() {
 
         let response = null;
@@ -566,7 +558,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1ID is on t_d0_user1CSID_user2CSID ).');
+        expect(body.failure.message).to.include('User is already on a team for this deliverable');
 
         try {
             Log.test('Making request');

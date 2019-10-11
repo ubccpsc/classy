@@ -8,11 +8,9 @@ import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
-/**
- * Simple example for testing.
- */
 export class MockDataStore implements IDataStore {
 
+    // NOTE: this creates temp space but does not use the files in autotest/test/githubAutoTestData
     private readonly dir = Config.getInstance().getProp(ConfigKey.persistDir);
     private readonly RECORD_PATH = this.dir + "/outputRecords.json";
     private readonly COMMENT_PATH = this.dir + "/commentRecords.json";
@@ -239,7 +237,7 @@ export class MockDataStore implements IDataStore {
                 }
             }
             if (ret === null) {
-                Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
+                Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - not found in disk record; took: " + Util.took(start));
             }
         } catch (err) {
             Log.error("MockDataStore::getFeedbackGivenRecordForCommit(..) - ERROR: " + err);
@@ -259,13 +257,13 @@ export class MockDataStore implements IDataStore {
         try {
             Log.info("MockDataStore::getAllData() - before records");
             const records: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
-            Log.info("MockDataStore::getAllData() - before comments");
+            Log.info("MockDataStore::getAllData() - before comments; # records: " + records.length);
             const comments: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
-            Log.info("MockDataStore::getAllData() - before pushes");
+            Log.info("MockDataStore::getAllData() - before pushes; # comments: " + comments.length);
             const pushes: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
-            Log.info("MockDataStore::getAllData() - before feedback");
+            Log.info("MockDataStore::getAllData() - before feedback; # pushes: " + pushes.length);
             const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-            Log.info("MockDataStore::getAllData() - after all reading");
+            Log.info("MockDataStore::getAllData() - after all reading; # feedback: " + feedback.length);
             return {records, comments, pushes, feedback};
         } catch (err) {
             throw new Error("MockDataStore::getAllData() - error populating data: " + err.message);

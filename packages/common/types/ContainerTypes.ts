@@ -2,6 +2,8 @@
  * The result of the grading container after it has run. Set by the Grader
  * service.
  */
+import {AutoTestConfigTransport} from "./PortalTypes";
+
 export enum ContainerState {
     SUCCESS = "SUCCESS",
     FAIL = "FAIL",
@@ -15,7 +17,7 @@ export enum ContainerState {
 export interface ContainerInput {
     delivId: string; // Specifies what delivId the Grader should execute against.
     target: CommitTarget; // Details about the push event that led to this request.
-    containerConfig: AutoTestConfig; // Container configuration details.
+    containerConfig: AutoTestConfigTransport; // Container configuration details.
 }
 
 /**

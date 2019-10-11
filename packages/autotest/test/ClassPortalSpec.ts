@@ -3,14 +3,14 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+
+import {Test} from "../../common/TestHarness";
 import {AutoTestResult} from "../../common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
 import BackendServer from "../../portal/backend/src/server/BackendServer";
 import {Course} from "../../portal/backend/src/Types";
-
-import {Test} from "../../common/TestHarness";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 import "./GlobalSpec";
@@ -62,7 +62,7 @@ describe("ClassPortal Service", () => {
         } catch (err) {
             expect.fail("Should not happen");
         }
-    });
+    }).timeout(Test.TIMEOUT);
 
     it("Should be able for invalid user to not be staff.", async () => {
         try {
@@ -88,7 +88,7 @@ describe("ClassPortal Service", () => {
         } catch (err) {
             expect.fail("Should not happen");
         }
-    });
+    }).timeout(Test.TIMEOUT);
 
     // Tested in the backend (AutoTestRouteSpec)
     // it("Should return the test delay in seconds for a course.", async () => {
@@ -227,9 +227,12 @@ describe("ClassPortal Service", () => {
                 studentDelay:       300,
                 maxExecTime:        6000,
                 regressionDelivIds: [],
-                custom:             {}
+                custom:             {},
+                openTimestamp:      0,
+                closeTimestamp:     10000,
+                lateAutoTest:       true,
             },
-            delivId:         delivId
+            delivId:         delivId,
         };
 
         const result: AutoTestResult = {

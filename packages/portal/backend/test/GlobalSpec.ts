@@ -27,4 +27,12 @@ if (typeof it === 'function') {
         await Test.prepareAll();
         Log.info('GlobalSpec::after() - done');
     });
+
+    beforeEach(function() {
+        Test.testBefore(this);
+    });
+
+    afterEach(function() {
+        Test.testAfter(this);
+    });
 }
