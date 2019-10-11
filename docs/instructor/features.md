@@ -1,24 +1,26 @@
-# Features
+# Overview
 
-## Portal
+Classy is an application that helps instructors distribute and automatically grade assignments that use **Git** version control. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with Git version control.
 
-Portal is a front-end application that manages deliverable configuration, repository creation, and teams for AutoTest.
+Classy consists of a front-end application named *Portal* and a back-end application named *AutoTest*. *Portal* helps instructors manage course administration by enabling instructors to setup assignments, implement autograding, and manage grades. *AutoTest* integrates with Github to create an interactive experience for students by giving grade feedback and notifying a student when a build fails on `commit` and `push` actions. *AutoTest* supports the full customization of these features to fit the business requirements of the course.
+
+## Portal Features
+
+<img src="./assets/commit-comment-schedule.png/">
 
 - Dashboard to view grading results and logs
-- Configure Docker containers to automatically mark course assignments on a per assignment basis.
-- Design and integrate your own Docker container to mark student assignments.
+- Automatically mark course assignments using Docker containers.
   - 1-to-1 or 1-to-many Docker container to assignment grading capabilities.
 - Manage when assignments are automatically graded with open and close dates.
-- Create Github Teams for assignments and assign the team to share a repo
-- Assign students to their respective repos to work on their assignment.
-- View and export grade results to CSV format.
-- Import latest Classlist information by clicking on a button.
+- Assign students private repos to work on assignments.
+- Assign teams of students a common private repo to work on an assignment in.
+- View and export grades (grade export supports CSV format).
+- Import/update Classlist information directly through API.
+- Implement custom front-end views and features using JavaScript and RESTful APIs.
 
-Portal uses Onsen UI, a lightweight JavaScript framework, on the front-end and Restify, a Node JS RESTful API, on the back-end. Custom logic can be added to Portal by following the [Back-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup)) and [Front-end Customization](/docs/instructor/gettingstarted.md#front-end-setup) steps in the Instructor area of the [Table of Contents](/README.md#table-of-contents).
+## AutoTest Features
 
-## AutoTest
-
-AutoTest is a service that listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
+AutoTest listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
 
 AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
 

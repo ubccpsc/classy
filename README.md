@@ -45,7 +45,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Classy Features](/docs/instructor/features.md)
+- [1. Classy Features](/docs/instructor/features.md#overview)
     - [1.1. Portal](/docs/instructor/features.md#portal)
     - [1.2. AutoTest](/docs/instructor/features.md#autotest)
     - [1.3: Github & AutoTest Examples](/docs/instructor/features.md#github-and-autotest-examples)
