@@ -7,6 +7,7 @@ import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from "../../../../../common/Log";
 import {
     AutoTestResultSummaryPayload,
+    ClasslistChangesTransportPayload,
     CourseTransport,
     CourseTransportPayload,
     DeliverableTransport,
@@ -22,8 +23,9 @@ import {
     TeamTransportPayload
 } from '../../../../../common/types/PortalTypes';
 import Util from '../../../../../common/Util';
-import {AdminController} from "../../controllers/AdminController";
+import {AuditLabel, Person, Repository} from "../../Types";
 
+import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {DeliverablesController} from "../../controllers/DeliverablesController";
@@ -33,10 +35,9 @@ import {PersonController} from "../../controllers/PersonController";
 import {RepositoryController} from "../../controllers/RepositoryController";
 import {TeamController} from "../../controllers/TeamController";
 import {Factory} from "../../Factory";
-
-import {AuditLabel, Person, Repository} from "../../Types";
-import IREST from "../IREST";
 import {ClasslistAgent} from "./ClasslistAgent";
+
+import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
 
 export default class AdminRoutes implements IREST {
@@ -492,14 +493,15 @@ export default class AdminRoutes implements IREST {
 
         try {
             const data = await ca.fetchClasslist();
-            const people = await ca.processClasslist(auditUser, null, data);
+            const classlistChanges = await ca.processClasslist(auditUser, null, data);
 
-            let payload: Payload;
+            let payload: ClasslistChangesTransportPayload;
 
-            if (people.length) {
-                payload = {success: {message: 'Classlist upload successful. ' + people.length + ' students processed.'}};
+            if (classlistChanges.classlist.length) {
+                payload = {success: classlistChanges};
                 res.send(200, payload);
-                Log.info('AdminRoutes::updateClasslist(..) - done: ' + payload.success.message);
+                Log.info('AdminRoutes::updateClasslist(..) - done: ' + 'Classlist upload successful. '
+                    + (classlistChanges.classlist.length) + ' students processed.');
             } else {
                 const msg = 'Classlist upload not successful; no students were processed from CSV.';
                 return AdminRoutes.handleError(400, msg, res, next);
@@ -522,15 +524,14 @@ export default class AdminRoutes implements IREST {
             const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
             const ca = new ClasslistAgent();
 
-            ca.processClasslist(userName, path, null).then(function(people) {
-                if (people.length > 0) {
-                    const payload: Payload = {
-                        success: {
-                            message: 'Classlist upload successful. ' + people.length + ' students processed.'
-                        }
+            ca.processClasslist(userName, path, null).then(function(classlistChanges) {
+                if (classlistChanges.classlist.length) {
+                    const payload: ClasslistChangesTransportPayload = {
+                        success: classlistChanges
                     };
                     res.send(200, payload);
-                    Log.info('AdminRoutes::postClasslist(..) - done: ' + payload.success.message);
+                    Log.info('AdminRoutes::postClasslist(..) - done: Classlist upload successful. '
+                        + (classlistChanges.classlist.length) + ' students processed.');
                 } else {
                     const msg = 'Classlist upload not successful; no students were processed from CSV.';
                     return AdminRoutes.handleError(400, msg, res, next);

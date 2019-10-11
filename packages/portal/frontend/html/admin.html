@@ -165,6 +165,48 @@
         </ons-page>
     </template>
 
+    <template id="classlistDialog.html">
+        <ons-dialog id="adminClasslistConfirmHeader">
+            <ons-list-header style="text-align: center; font-weight: 700">
+            </ons-list-header>
+            <ons-scroller>
+                <ons-list>
+                </ons-list>
+            </ons-scroller>
+            <ons-button>
+                Close
+            </ons-button>
+        </div>
+        </ons-dialog>
+    </template>
+
+    <template id="dockerBuildDialog.html">
+        <ons-dialog id="adminDockerBuildDialog">
+            <div id="adminDockerBuildDialog-header-container">
+                <ons-list-header style="text-align: center; font-weight: 700">Build Logs</ons-list-header>
+            </div>
+            <ons-scroller id="adminDockerBuildDialog-logs-container" style="max-height: 70vh; overflow-y: auto">
+                <div id="adminDockerBuildDialog-logs-text">
+                </div>
+            </ons-scroller>
+            </div>
+            <div id="adminDockerBuildDialog-footer-container">
+                <ons-bottom-toolbar>
+                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
+                        <ons-button>
+                            Close
+                        </ons-button>
+                        </a>
+                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
+                        <ons-button>
+                            Save
+                        </ons-button>
+                    </a>
+                </ons-bottom-toolbar>
+            </div>
+        </ons-dialog>
+    </template>
+
     <template id="config.html">
         <ons-page id="AdminConfig">
             <ons-list id="adminDeliverablesList">
@@ -995,8 +1037,7 @@
                         <div class="expandable-content">
                             See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
                             documentation for details about how to construct the URL. The URL should start with "https://" and end with
-                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the
-                            URL.
+                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
                         </div>
                     </ons-list-item>
 
@@ -1087,7 +1128,6 @@
                     </div>
                 </ons-list-item>
 
-                <!--
                 <ons-list-header>Select Teams to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -1104,7 +1144,6 @@
                         with the team.
                     </div>
                 </ons-list-item>
-                -->
 
                 <ons-list-header>Select Repositories to Delete</ons-list-header>
                 <ons-list-item expandable>

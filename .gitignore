@@ -30,6 +30,14 @@ packages/portal/backend/**/*.map
 packages/portal/frontend/**/*.js
 packages/portal/frontend/**/*.map
 
+## Fork-specific resources
+packages/portal/backend/test/cs310/
+packages/portal/frontend/html/cs310/
+packages/portal/frontend/src/app/custom/CustomAdminView.ts
+packages/portal/frontend/src/app/custom/CustomStudentView.ts
+packages/portal/backend/src/custom/CustomCourseController.ts
+packages/portal/backend/src/custom/CustomCourseRoutes.ts
+
 .circleci/
 
 # Webstorm
