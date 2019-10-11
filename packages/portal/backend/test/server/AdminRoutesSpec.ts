@@ -5,6 +5,8 @@ import * as request from 'supertest';
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {
     AutoTestConfigTransport,
     AutoTestResultPayload,
@@ -24,11 +26,7 @@ import {DeliverablesController} from "../../src/controllers/DeliverablesControll
 import {GitHubActions} from "../../src/controllers/GitHubActions";
 import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
-
-import {PersonKind} from "../../../backend/src/Types";
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../../../../common/TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
@@ -1129,7 +1127,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
 
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should be able to delete a deliverable', async function() {
         const url = '/portal/admin/deliverable/' + Test.DELIVID0;
@@ -1204,7 +1202,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
         expect(ex).to.be.null;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should fail to delete a repository if appropriate', async function() {
         const url = '/portal/admin/repository/';

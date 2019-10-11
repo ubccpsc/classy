@@ -71,7 +71,7 @@ export class GitHubCleaner {
     private async cleanRepositories(): Promise<void> {
         Log.info("GitHubCleaner::cleanRepositories() - start");
 
-        const REPOS_TO_KEEP = ['PostTestDoNotDelete'];
+        const REPOS_TO_KEEP = ['PostTestDoNotDelete', 'PostTestDoNotDelete1'];
 
         const reposToRemove = [];
         const repos = await this.gha.listRepos();

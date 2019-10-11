@@ -6,6 +6,7 @@ import {GitRepository} from "../../../common/GitRepository";
 import Log from "../../../common/Log";
 import {AutoTestResult} from "../../../common/types/AutoTestTypes";
 import {ContainerInput, ContainerState} from "../../../common/types/ContainerTypes";
+import {AutoTestConfigTransport} from "../../../common/types/PortalTypes";
 
 export class GradingJob {
     public readonly record: AutoTestResult;
@@ -18,12 +19,12 @@ export class GradingJob {
         this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
         this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
         this.record = {
-            delivId: this.input.delivId,
-            repoId: this.input.target.repoId,
+            delivId:   this.input.delivId,
+            repoId:    this.input.target.repoId,
             commitURL: this.input.target.commitURL,
             commitSHA: this.input.target.commitSHA,
-            input: this.input,
-            output: {
+            input:     this.input,
+            output:    {
                 timestamp:          Date.now(),
                 report:             {
                     scoreOverall: 0,
@@ -74,23 +75,25 @@ export class GradingJob {
 
     public async run(docker: Docker): Promise<AutoTestResult> {
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
+
         const container = await docker.createContainer({
-            User: Config.getInstance().getProp(ConfigKey.dockerUid),
-            Image: this.input.containerConfig.dockerImage,
-            Env: [
+            User:       Config.getInstance().getProp(ConfigKey.dockerUid),
+            Image:      this.input.containerConfig.dockerImage,
+            Env:        [
                 `ASSIGNMENT=${this.input.delivId}`,
-                `EXEC_ID=${this.id}`
+                `EXEC_ID=${this.id}`,
+                `INPUT=${JSON.stringify(this.input)}`
             ],
             HostConfig: {
-                AutoRemove: true,
-                Binds: [
+                AutoRemove:  true,
+                Binds:       [
                     `${hostDir}/assn:/assn`,
                     `${hostDir}:/output`
                 ],
-                ExtraHosts: [
+                ExtraHosts:  [
                     Config.getInstance().getProp(ConfigKey.hostsAllow)
                 ],
-                NetworkMode: "grading_net",
+                NetworkMode: "grading_net"
             }
         });
         const maxExecTime = this.input.containerConfig.maxExecTime;

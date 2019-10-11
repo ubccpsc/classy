@@ -6,6 +6,8 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -16,8 +18,6 @@ import {
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../../../../common/TestHarness";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
@@ -264,7 +264,7 @@ describe('AutoTest Routes', function() {
         expect(body.success.isAdmin).to.not.be.undefined;
         expect(body.success.isStaff).to.be.false;
         expect(body.success.isAdmin).to.be.false;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should reject an unauthorized personId request', async function() {
 

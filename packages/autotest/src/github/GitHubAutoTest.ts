@@ -91,9 +91,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
-                const containerConfig = await this.getContainerConfig(delivId);
+                const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig !== null) {
-                    const input: ContainerInput = {delivId, target: info, containerConfig: containerConfig};
+                    const input: ContainerInput = {delivId, target: info, containerConfig};
                     this.addToStandardQueue(input);
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
@@ -246,9 +246,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async schedule(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
-        const containerConfig = await this.getContainerConfig(info.delivId);
+        const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
-            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig: containerConfig};
+            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig};
             this.addToStandardQueue(input);
             this.tick();
             Log.info("GitHubAutoTest::schedule(..) - scheduling completed for: " + info.commitURL);
@@ -340,15 +340,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             {key: "personId", value: info.personId}
         ]);
 
-        const nextTimeslot: number | null = await this.requestNextTimeslot(info.delivId, info.personId);
+        let nextTimeslot: number | null = await this.requestNextTimeslot(info.delivId, info.personId);
         if (nextTimeslot) {
+            nextTimeslot += 1;
             Log.trace("GitHubAutoTest::processCommentScheduleRequest(..) - Time requested: " +
                 new Date(info.timestamp).toLocaleTimeString() + "; Time eligible: " + new Date(nextTimeslot).toLocaleTimeString());
-            const newTarget: CommitTarget = {...info, timestamp: nextTimeslot + 1};
-            const containerConfig = await this.getContainerConfig(info.delivId);
+            const newTarget: CommitTarget = {...info, timestamp: nextTimeslot};
+            const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
             let msg: string = '';
             if (containerConfig !== null) {
-                const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig: containerConfig};
+                const input: ContainerInput = {delivId: info.delivId, target: newTarget, containerConfig};
                 this.addToScheduleQueue(input);
                 msg = "Commit scheduled for grading.";
                 if (removedPrevious) {
@@ -560,46 +561,46 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     // }
 
     protected async processExecution(data: AutoTestResult): Promise<void> {
-        // TODO replace this implementation. Is currently forcing new autotest runs :(
         try {
             const that = this;
-            const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'standard');
-            const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, data.input.delivId, 'check');
-            const containerConfig: any = await this.getContainerConfig(data.input.delivId);
-            const feedbackMode: string = containerConfig.custom.feedbackMode;
-            const feedbackDelay: string | null = await this.requestFeedbackDelay(data.input.delivId,
-                data.input.target.personId, data.input.target.timestamp);
+            const delivId = data.input.delivId;
 
+            const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, delivId, 'standard');
+            const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, delivId, 'check');
+            const containerConfig: any = await this.classPortal.getContainerDetails(delivId);
+            const feedbackMode: string = containerConfig.custom.feedbackMode;
+            const personId = data.input.target.personId;
+            const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
-            const afterDueDate: boolean = standardFeedbackRequested !== null &&
-                (standardFeedbackRequested.timestamp > containerConfig.closeTimestamp);
 
             Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
-            if (data.output.postbackOnComplete === true && feedbackDelay === null) {
-                if (futureTarget) {
+            if (data.output.postbackOnComplete === true) {
+                // handle 'free' feedback as specified by the grading container
+                // feedbackDelay should not matter here; this is for auto-postback results
+
+                // intentionally skips calling saveFeedback (because the request should be free)
+                if (futureTarget === true) {
+                    // if #schedule has been requested, remove for this commit because this feedback is being returned for free
                     Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
                         `removing ${data.input.target.personId} from scheduleQueue.`);
                     this.removeFromScheduleQueue([{key: "commitURL", value: data.input.target.commitURL}]);
                 }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
                 const msg = await this.classPortal.formatFeedback(data, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                // NOTE: if the feedback was requested for this build it shouldn't count
-                // since we're not calling saveFeedback this is right
-                // but if we replay the commit comments, we would see it there, so be careful
+            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) &&
+                feedbackDelay === null && futureTarget === false) {
+                // handle user-requested feedback
 
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget && !afterDueDate) {
-                // feedback has been previously requested
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
-                    Log.info("GitHubAutoTest::processExecution(..) - check feedback requested; deliv: " +
-                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + target.personId);
+                    Log.info("GitHubAutoTest::processExecution(..) - " + kind + " feedback requested; deliv: " +
+                        delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + target.personId);
                     const msg = await that.classPortal.formatFeedback(data, feedbackMode);
                     await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-                    await that.saveFeedbackGiven(data.input.delivId, target.personId,
+                    await that.saveFeedbackGiven(delivId, target.personId,
                         target.timestamp, data.commitURL, kind);
                     return;
                 };
@@ -609,13 +610,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (standardFeedbackRequested !== null) {
                     await giveFeedback(standardFeedbackRequested, 'standard');
                 }
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null)
-                && feedbackDelay === null && !futureTarget && !afterDueDate) {
-                const msg: string = `Grading for this deliverable is now closed.`;
-                await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else {
-                // do nothing
-                if (feedbackDelay) {
+                // no feedback should be returned
+
+                if (feedbackDelay !== null) {
                     Log.info("GitHubAutoTest::processExecution(..) - commit no longer eligible for receiving feedback: " +
                         data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
                         ". This was probably caused by a race condition.");
@@ -733,20 +731,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);
         }
         return null;
-    }
-
-    /**
-     * Gets the container details for this deliverable
-     */
-    private async getContainerConfig(delivId: string): Promise<AutoTestConfigTransport | null> {
-        Log.trace("GitHubAutoTest::getContainerConfig() - start");
-        try {
-            const details = await this.classPortal.getContainerDetails(delivId);
-            Log.trace("GitHubAutoTest::getContainerConfig() - RESPONSE: " + JSON.stringify(details));
-            return details;
-        } catch (err) {
-            Log.error("GitHubAutoTest::getContainerConfig() - ERROR: " + err);
-        }
     }
 
     /**

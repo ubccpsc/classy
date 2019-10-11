@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";

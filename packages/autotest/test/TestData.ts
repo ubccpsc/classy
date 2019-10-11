@@ -54,9 +54,12 @@ export class TestData {
             studentDelay:       300,
             maxExecTime:        6000,
             regressionDelivIds: [],
-            custom:             {}
+            custom:             {},
+            openTimestamp:      0,
+            closeTimestamp:     10000,
+            lateAutoTest:       true,
         },
-        target:          TestData.pushEventA
+        target:          TestData.pushEventA,
     };
 
     public static readonly inputRecordB: ContainerInput = {
@@ -66,9 +69,12 @@ export class TestData {
             studentDelay:       300,
             maxExecTime:        6000,
             regressionDelivIds: [],
-            custom:             {}
+            custom:             {},
+            openTimestamp:      0,
+            closeTimestamp:     10000,
+            lateAutoTest:       true,
         },
-        target:          TestData.pushEventB
+        target:          TestData.pushEventB,
     };
 
     public static readonly commentRecordUserA: CommitTarget = {

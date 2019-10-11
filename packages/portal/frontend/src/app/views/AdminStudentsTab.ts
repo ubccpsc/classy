@@ -96,7 +96,10 @@ export class AdminStudentsTab {
             }
             const row: TableCell[] = [
                 {value: count, html: count++ + ''},
-                {value: student.githubId, html: '<a href="' + student.userUrl + '">' + student.githubId + '</a>'}, // Should be CWL
+                {
+                    value: student.githubId, html: '<a class="selectable" href="' + student.userUrl + '">' +
+                    student.githubId + '</a>' // Should be CWL
+                },
                 {value: student.id, html: student.id}, // Should be CSID
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},

@@ -75,10 +75,6 @@ describe("GitHubController", () => {
     });
 
     beforeEach(function() {
-        Log.test('GitHubController::BeforeEach - ***');
-        Log.test('GitHubController::BeforeEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::BeforeEach - ***');
-
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
@@ -87,12 +83,6 @@ describe("GitHubController", () => {
             Log.test("GitHubController::BeforeEach() - skipping (not CI)");
             this.skip();
         }
-    });
-
-    afterEach(function() {
-        Log.test('GitHubController::AfterEach - ***');
-        Log.test('GitHubController::AfterEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::AfterEach - ***');
     });
 
     it("Should be able to clear out prior result", async function() {
@@ -132,15 +122,14 @@ describe("GitHubController", () => {
     });
 
     it("Should be able to provision a repo.", async function() {
-        const githubHost  = Config.getInstance().getProp(ConfigKey.githubHost);
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = githubHost + '/classytest/TESTING_SAMPLE_REPO';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -152,7 +141,6 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
         const importUrl = 'https://github.com/SECapstone/bootstrap';
         let res = null;
         let ex = null;
