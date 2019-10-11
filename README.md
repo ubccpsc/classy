@@ -48,7 +48,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1. Classy Features](/docs/instructor/features.md#overview)
     - [1.1. Portal](/docs/instructor/features.md#portal)
     - [1.2. AutoTest](/docs/instructor/features.md#autotest)
-    - [1.3: Github & AutoTest Examples](/docs/instructor/features.md#github-and-autotest-examples)
+    - [1.3: Github & AutoTest Interactive Examples](/docs/instructor/features.md#github-and-autotest-interactive-examples)
 - [2. Getting Started](/docs/instructor/gettingstarted.md#overview)
     - [2.1. Requesting Classy for Your Course](/docs/instructor/gettingstarted.md#requesting-classy-for-your-course)
     - [2.2. Default Front-end and Back-end Bootstrapping](/docs/instructor/gettingstarted.md#quick-front-end-and-back-end-bootstrapping)
@@ -61,7 +61,10 @@ Instructions for getting started with Classy have been sorted into sections base
     - [4.1. Classlist Upload](/docs/instructor/courseinstructions.md#classlistupload)
     - [4.2. Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
     - [4.3. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
-
+- [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
+    - [5.1.1 - Github Interactive Commands](/docs/instructor.autotest.md#student-autobot-commands)
+    - [5.1.2 - Admin AutoBot Commands](/docs/instructor.autotest.md#admin-autobot-commands)
+  
 <!-- /TOC -->
 
 ### Tech Staff
