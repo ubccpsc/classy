@@ -14,7 +14,7 @@ Portal is a front-end application that manages deliverable configuration, reposi
 - View and export grade results to CSV format.
 - Import latest Classlist information by clicking on a button.
 
-Portal uses Onsen UI, a lightweight JavaScript framework, on the front-end and Restify, a Node JS RESTful API, on the back-end. Custom logic can be added to Portal by following the [Back-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup)) and [Front-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup) steps in the Instructor area of the [Table of Contents](/README.md#table-of-contents).
+Portal uses Onsen UI, a lightweight JavaScript framework, on the front-end and Restify, a Node JS RESTful API, on the back-end. Custom logic can be added to Portal by following the [Back-end Customization]((/docs/instructor/gettingstarted.md#front-end-setup)) and [Front-end Customization](/docs/instructor/gettingstarted.md#front-end-setup) steps in the Instructor area of the [Table of Contents](/README.md#table-of-contents).
 
 ## AutoTest
 
