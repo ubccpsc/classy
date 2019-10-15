@@ -2,8 +2,6 @@
 
 ## Overview
 
-Resources to setup, maintain, and customize Classy are required before Classy can effectively and reliably be used to mark assignments at scale.
-
 At a high-level, an instructor will have to fulfill some requirements before they are ready to run a course that uses Classy:
 
 Requirements:
