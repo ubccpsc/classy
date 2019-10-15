@@ -180,7 +180,7 @@ On `fork`:
 1. `git merge upstream/master` (merges the changes into your local repo).
 1. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
-<img src="docs/dev-local.png"/>
+<img src="docs/assets/dev-local.png"/>
 
 ### Pushing changes from `fork` to `root/master`
 
