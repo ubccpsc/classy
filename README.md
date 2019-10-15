@@ -59,7 +59,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [3.2. Testing AutoGrade Containers](/docs/instructor/container.md#test-a-container-checklist)
 - [4. Operating a Course](/docs/instructor/courseinstructions.md#overview)
     - [4.1. Classlist Enrollment](/docs/instructor/courseinstructions.md#classlistupload)
-    - [4.2. Deliverable Configurations](/docs/instructors/courseinstruction.md#classlistupload)
+    - [4.2. Deliverable Configuration](/docs/instructors/courseinstruction.md#classlistupload)
     - [4.3. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
     - [5.1.1 - Github Interactive Commands](/docs/instructor.autotest.md#student-autobot-commands)
