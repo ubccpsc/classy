@@ -4,7 +4,7 @@
 
 Classy can automatically grade student code by running Docker containers that are designed to produce grade output data. `AutoTest` is an application inside Classy that starts a container each time a student pushes code to a repository. The student code is mounted to a disk volume inside the container, which allows a script to run with instructions that mark student code. When the script produces grade output data, the data is taken from the container, which AutoTest then sends to the database. Classy reads from the database to present the compiled grade records to instructors in the front-end application.
 
-<img src="./assets/autograde-flow.png"/>
+<img src="../assets/autograde-flow.png"/>
 
 To create an AutoGrade Container, follow the [Build a Container Checklist](#build-a-container-checklist). Your grading business logic should be implemented on top of the container technical requirements. Click on the headers in the checklist to learn more context about the technical requirements.
 
@@ -86,7 +86,7 @@ Docker containers are notoriously difficult to debug. It is highly recommended�
 - [ ] Test changes to the starter assignment to ensure that the expected results are produced by AutoTest.
 
 You should see the following checkmark to the left of an AutoGrade image when a container is successfully assigned to a Deliverable:
-<img src="./assets/autotest-options.png"/>
+<img src="../assets/autotest-options.png"/>
 
 ### Production Environment
 
@@ -105,7 +105,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 - When a Docker image runs in AutoTest, it executes the file to the right of the **CMD** directive to run your container.
 - The **CMD** directive should result in the output of a report.json file each time your container is run (unless it encounters an error).
 
-<img src="./assets/autograde-image-run.png"/>
+<img src="../assets/autograde-image-run.png"/>
 
 ### Helpful Dockerfile directives
 
@@ -176,7 +176,7 @@ While AutoTest provides input for your AutoGrade container, it is the responsibi
 AutoTest needs a place to access the Dockerfile, and additional files, to build an AutoGrade container. The minimum technical requirement to build an AutoGrade container is to produce a Dockerfile. A Dockerfile must be placed in the root directory of a Git repository. Alternative names may be given to the Dockerfile, but the alternative name must be specified during the creation of the AutoGrade container.
 
 *Specify a custom Dockerfile name in 'Dockerfile name'*:
-<img src="./assets/dockerfile-classy-admin-portal.png"/>
+<img src="../assets/dockerfile-classy-admin-portal.png"/>
 
 *Specify a sub-directory location of your Dockerfile with the following # syntax in 'Github URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
-<img src="./assets/subdirectory-dockerfile-classy.png"/>
+<img src="../assets/subdirectory-dockerfile-classy.png"/>

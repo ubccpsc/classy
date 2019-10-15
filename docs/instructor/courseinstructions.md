@@ -12,7 +12,7 @@ The default Admin view contains a **Update Classlist** action that adds students
 
 If more customizable classlist updates are necessary, a CSV may be uploaded with a custom classlist by the instructor. To upload a custom CSV, you will need to add the `ACCT`, `SNUM`, `CWL`, `LAST`, `FIRST`, and `LAB` headers to the CSV to produce a format accepted by Classy.
 
-<img src="./assets/admin-config-classlist.png" alt="Classlist API update and customizable classlist upload feature">
+<img src="../assets/admin-config-classlist.png" alt="Classlist API update and customizable classlist upload feature">
 
 ## Deliverable Configuration
 
@@ -24,11 +24,11 @@ A deliverable has many possible configurations that result in unique AutoTest be
 
 These three actions, however, create the core scope of desirable AutoTest functionality. Hence, if you are learning how to use AutoTest and you are not sure where to start, always start by creating a deliverable. The **Admin Configuration Panel** will display the option of creating a deliverable:
 
-<img src="./assets/admin-create-deliv.png" alt="The option to create a new deliverable can be found at the top of the Admin Configuration Panel">
+<img src="../assets/admin-create-deliv.png" alt="The option to create a new deliverable can be found at the top of the Admin Configuration Panel">
 
 The **Admin Configuration Panel** will display a list of all deliverables. Clicking on the deliverable will open up a list of configuration settings for the deliverable:
 
-<img src="./assets/admin-config-deliv-config.png" alt="A list of configuration options appears when the deliverable is clicked on">
+<img src="../assets/admin-config-deliv-config.png" alt="A list of configuration options appears when the deliverable is clicked on">
 
 It is *mandatory* to include a `Deliverable Id` name. The `Deliverable Id` cannot be changed once it is created. All other configuration settings on the **Deliverable Configuration Panel** are *optional*.
 
@@ -43,7 +43,7 @@ Repository creation *necessary* pre-requisites:
 
 `Provisioning Options` *should* be considered before provisioning repositories. It is likely that an instructor will want to distribute starter code as boilerplate material for a student, as it will give the assignment a structure that helps integrate it with autograding functionality:
 
-<img src="./assets/admin-provisioning-options.png" alt="A panel of optional provisioning configurations under the Deliverable Configuration Panel">
+<img src="../assets/admin-provisioning-options.png" alt="A panel of optional provisioning configurations under the Deliverable Configuration Panel">
 
 Once the pre-requisites have been met and your provisioning options have been configured, an option to **provision** and **release** repositories can be found under **Admin Configuration Panel** by clicking on **Manage Repositories**.
 
