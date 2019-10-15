@@ -2,7 +2,7 @@
 
 Classy is an application that helps instructors distribute and automatically grade assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control.
 
-Classy consists of a front-end application named *Portal* and a back-end application named *AutoTest*. *Portal* helps instructors manage course administration by enabling instructors to setup assignments, implement autograding, and manage grades. *AutoTest* integrates with Github to create an interactive experience for students by giving grade feedback and notifying a student when a build fails on `commit` and `push` actions. *AutoTest* supports the full customization of these features to fit the business requirements of the course.
+Classy consists of a front-end application named *Portal* and a back-end application named *AutoTest*. *Portal* helps instructors manage course administration by enabling instructors to setup assignments, setup autograding, and manage grades. *AutoTest* integrates with Github to create an interactive experience for students by giving automated feedback and notifying a student if a build fails on `commit` and `push` actions. *AutoTest* supports the full customization of these features to fit the business requirements of the course.
 
 ## Portal Features
 
@@ -13,14 +13,15 @@ Classy consists of a front-end application named *Portal* and a back-end applica
   - 1-to-1 or 1-to-many Docker container to assignment grading capabilities.
 - Manage when assignments are automatically graded with open and close dates.
 - Assign students private repos to work on assignments.
-- Assign teams of students a common private repo to work on an assignment in.
-- View and export grades (grade export supports CSV format).
+- Assign teams a common private repo to collaborate on.
+- View/export grades (grade export supports CSV format).
 - Import/update Classlist information directly through API.
 - Implement custom front-end views and features using JavaScript and RESTful APIs.
 
 ## AutoTest Features
 
-- Students receive grade feedback for a commit and automatic build failure notifications on push events.
+- Students receive grade feedback for grade requests on `commit` actioms and automatic build failure notifications on `push` actions.
+- Student grade feedback quotas based on customizable time.
 - Instructors build Docker containers to compute automated feedback and grades for code commits.
 - TAs have access to container logs and grades to quickly give human feedback to students.
 - Grading and feedback containers are configurable for 1-to-many assignments and 1-to-1 assignments.

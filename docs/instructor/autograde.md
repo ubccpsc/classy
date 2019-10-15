@@ -2,7 +2,7 @@
 
 ## Overview
 
-Classy can automatically grade student code by running Docker containers that are designed to produce grade output data. `AutoTest` is an application inside Classy that starts a container each time a student pushes code to a repository. The student code is mounted to a disk volume inside the container, which allows a script to run with instructions on how to mark student code. When the script produces grade output data, the data is taken from the container, which AutoTest then sends to a database. Classy reads from the database to present the compiled grade records to instructors in the front-end application.
+Classy can automatically grade student code by running Docker containers that are designed to produce grade output data. `AutoTest` is an application inside Classy that starts a container each time a student pushes code to a repository. The student code is mounted to a disk volume inside the container, which allows a script to run with instructions that mark student code. When the script produces grade output data, the data is taken from the container, which AutoTest then sends to the database. Classy reads from the database to present the compiled grade records to instructors in the front-end application.
 
 <img src="./assets/autograde-flow.png"/>
 
@@ -10,13 +10,13 @@ To create an AutoGrade Container, follow the [Build a Container Checklist](#buil
 
 ## Build a Container Checklist
 
-This checklist ensures that you have implemented key technical and business logic requirements that ensure your AutoGrade container is functional after it is built in an AutoTest environment:
+This checklist ensures that you have implemented key technical and business logic requirements that ensure your AutoGrade container is functional after it is configured with AutoTest:
 
 ### [Container Input](#container-input-details)
 
 - [ ] Your grading logic assumes that the student code is found in the `/assn` path when the container runs.
 - [ ] Your grading logic assumes that the code in the `/assn` directory is checked out to the SHA of the last commit before the push.
-- [ ] If necessary for your course Business Logic, you implement the following environment variables:
+- [ ] If necessary for your course logic, you implement the following environment variables:
   - ASSIGNMENT: the deliverable name of the assignment that is running.
   - EXEC_ID: an always unique execution SHA produced each time a container runs.
 
