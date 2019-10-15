@@ -34,3 +34,19 @@ It is *mandatory* to include a `Deliverable Id` name. The `Deliverable Id` canno
 
 ## Distributing Assignments and Repository Creation
 
+Repositories are Git workspace areas where version control history is stored privately or publicly. As AutoTest deals with sensitive student information, all repositories that are provisioned will be private. Only staff and admin roles have access to private repositories as standard AutoTest behaviour because admin and staff teams need access to student code. Staff and admins are given admin access to any repository that is provisioned by AutoTest by adding the staff and admins to respective `admin` and `staff` teams that are granted admin repository permissions.
+
+Repository creation *necessary* pre-requisites:
+
+- Classlist enrollment
+- Deliverable has been created
+
+`Provisioning Options` *should* be considered before provisioning repositories. It is likely that an instructor will want to distribute starter code as boilerplate material for a student, as it will give the assignment a structure that helps integrate it with autograding functionality:
+
+<img src="./assets/admin-provisioning-options.png" alt="A panel of optional provisioning configurations under the Deliverable Configuration Panel">
+
+Once the pre-requisites have been met and your provisioning options have been configured, an option to **provision** and **release** repositories can be found under **Admin Configuration Panel** by clicking on **Manage Repositories**.
+
+*Provisioning* repositories will create the Github repositories and place starter code in the assignment. If you class has many students, you must leave enough time to provision the repositories (ie. ~2 hours). It takes approximately 5 seconds to distribute 1 repository due to Github limitations.
+
+*Releasing* repositories gives a student or team access to read and write to their Github repositories. This action is much quicker than repository provisioning and will likely not take longerj than 2 minutes.
