@@ -56,6 +56,7 @@ export class CSVParser {
             const dc = new DeliverablesController();
             const pc = new PersonController();
             const deliv = await dc.getDeliverable(delivId);
+
             if (deliv === null) {
                 throw new Error("Unknown deliverable: " + delivId);
             }
@@ -65,6 +66,7 @@ export class CSVParser {
             for (const row of data) {
 
                 if (typeof row.CSID === 'undefined' && typeof row.GITHUB !== 'undefined') {
+                    Log.info('CSVParser::processGrades(..) - CSID absent but GITHUB present; GITHUB: ' + row.GITHUB);
                     const person = await pc.getGitHubPerson(row.GITHUB);
                     if (person !== null) {
                         row.CSID = person.csId;
@@ -73,10 +75,11 @@ export class CSVParser {
                 }
 
                 if (typeof row.CSID === 'undefined' && typeof row.CWL !== 'undefined') {
+                    Log.info('CSVParser::processGrades(..) - CSID absent but CWL present; CWL: ' + row.CWL);
                     const person = await pc.getGitHubPerson(row.CWL); // GITHUB && CWL are the same at UBC
                     if (person !== null) {
                         row.CSID = person.csId;
-                        Log.info('CSVParser::processGrades(..) - CWL -> CSID: ' + row.GITHUB + " -> " + row.CSID);
+                        Log.info('CSVParser::processGrades(..) - CWL -> CSID: ' + row.CWL + " -> " + row.CSID);
                     }
                 }
 
