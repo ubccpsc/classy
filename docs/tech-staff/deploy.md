@@ -24,9 +24,11 @@ The following software should be installed on the host before attempting to depl
 
 ## System Configuration
 
-1. Create a new (system) user _classy_ in a new group _classy_.
-   This is the user that all the services will run under to ensure consistent file permission with the host.
-   
+### Create User Group
+
+Create a new (system) user _classy_ in a new group _classy_.
+This is the user that all the services will run under to ensure consistent file permission with the host.
+
     ```bash
     adduser --system --group classy
     ```
@@ -35,9 +37,10 @@ The following software should be installed on the host before attempting to depl
     ```bash
     usermod --append --groups classy <uid>
     ```
+### Create SSL Certificates
 
-2. Use `certbot` to get SSL certificates for the host from Let's Encrypt:
-    
+Use `certbot` to get SSL certificates for the host from Let's Encrypt:
+
     1. Create a certbot deploy hook that will run when new certificates are obtained:
         ```bash
         #!/bin/sh

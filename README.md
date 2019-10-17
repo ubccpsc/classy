@@ -62,8 +62,8 @@ Instructions for getting started with Classy have been sorted into sections base
     - [4.2. Deliverable Configuration](/docs/instructors/courseinstruction.md#classlistupload)
     - [4.3. Distributing Assignments and Repository Creation](/docs/instructor/courseinstructions.md#repocreation)
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
-    - [5.1.1 - Github Interactive Commands](/docs/instructor.autotest.md#student-autobot-commands)
-    - [5.1.2 - Admin AutoBot Commands](/docs/instructor.autotest.md#admin-autobot-commands)
+    - [5.1.1 Github Interactive Commands](/docs/instructor.autotest.md#student-autobot-commands)
+    - [5.1.2 Admin AutoBot Commands](/docs/instructor.autotest.md#admin-autobot-commands)
   
 <!-- /TOC -->
 
@@ -77,6 +77,8 @@ Instructions for getting started with Classy have been sorted into sections base
 - [2. Operations](/docs/tech-staff/operations.md)
     - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
     - [2.2. Installing Classy](/docs/tech-staff/deploy.md)
+      - [2.2.1 Create User Group](/docs/tech-staff/deploy.md#create-user-group);
+      - [2.2.2 Create SSL Certificates](/docs/tech-staff/deploy.md#create-ssl-certificates);
     - [2.3. Environmental Configuration](/docs/tech-staff/envconfig.md)
     - [2.4. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
     - [2.5. SSL Updates](/docs/tech-staff/operations.md#sslupdates)
