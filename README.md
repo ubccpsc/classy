@@ -73,16 +73,18 @@ Instructions for getting started with Classy have been sorted into sections base
 
 - [1. Architectural Overview](/docs/tech-staff/architecture.md)
     - [1.1. Network Layer](/docs/tech-staff/architecture.md#networklayer)
-    - [1.2. Application Layer (AutoTest/Portal API/Portal UI)](/docs/tech-staff/architecture.md#applicationlayer)
+    - [1.2. Application Layer (AutoTest/Portal Front & Back-End)](/docs/tech-staff/architecture.md#applicationlayer)
 - [2. Operations](/docs/tech-staff/operations.md)
     - [2.1. Requesting Server Resources](/docs/tech-staff/operations#serverresources.md)
     - [2.2. Installing Classy](/docs/tech-staff/deploy.md)
     - [2.3. Environmental Configuration](/docs/tech-staff/envconfig.md)
     - [2.4. Patching Classy Servers](/docs/tech-staff/gettingstarted.md#customviews)
-    - [2.5. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
-    - [2.6. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
-    - [2.7. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
-    - [2.8. Back-ups](/docs/tech-staff/operations.md#backups)
+    - [2.5. SSL Updates](/docs/tech-staff/operations.md#sslupdates)
+    - [2.6. Updating Classy Code](/docs/tech-staff/gettingstarted.md#customcontroller)
+    - [2.7. Starting/Stopping Classy](/docs/tech-staff/gettingstarted.md#customroutes)
+    - [2.8. Health-Checks](/docs/tech-staff/operations.md#healthchecks)
+    - [2.9. Back-ups](/docs/tech-staff/operations.md#backups)
+    - [2.10. Semester Transitions](/docs/tech-staff/operations.md#semestertransitions)
 
 <!-- /TOC -->
 
