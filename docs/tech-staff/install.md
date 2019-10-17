@@ -265,5 +265,3 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
     # Clean up our test network
     docker network rm test_net
     ```
-
-## Integrate Github
