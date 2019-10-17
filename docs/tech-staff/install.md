@@ -70,8 +70,10 @@ NOTE: These instructions will work for a Linux operating system. OS/X requires t
 2. Configure the `.env` (more instructions inside this file)
 
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
-This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed.
-It is ***CRUCIAL*** that your `.env` file is never committed to version control.  
+This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. For more detailed configuration instructions, visit [Environmental Configuration](/docs/tech-staff/envconfig.md).
+
+If you are doing **ANY** development work where you are committing and pushing code to Github, it is ***CRUCIAL*** that your `.env` file is never committed to version control.
+
 The sample configuration file includes a lot of documentation inline: [`.env.sample`](https://github.com/ubccpsc/classy/blob/master/.env.sample)
 
     ```bash
