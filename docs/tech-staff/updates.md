@@ -4,11 +4,11 @@
 
 Hardware is hosted on VM infrastructure that must be maintained with the latest security releases and updates. Patching the OS is based off of standard OS update procedures.  
 
-If it is necessary to stop and start Classy, then follow the [2.3 Starting/Stopping Classy](/docs/tech-staff/startstop.md#starting-classy) build, start, and stop steps in the README.md.
+If it is necessary to stop and start Classy, then follow the [2.3 Build/Start/Stop Classy](/docs/tech-staff/startstop.md) build, start, and stop steps in the README.md.
 
 ## Software
 
-Patching Classy, or its software dependencies, requires [Stopping](/docs/tech-staff/startstop.md#stopping-classy) and [Starting](/docs/tech-staff/startstop.md#starting-classy) Classy. 
+Patching Classy, or its software dependencies, requires [Stopping](/docs/tech-staff/startstop.md#stopping-classy) and [Starting](/docs/tech-staff/startstop.md#starting-classy) Classy.
 
 Classy is hosted on Github to manage version control. The Classy repository is cloned on a VM during installation. Git is installed on the VM operating system and the `.git` folder is left in the installation directory found in [Installation: Install Classy](/docs/tech-staff/install.md#install-files).
 
@@ -26,4 +26,4 @@ From *within the installation directory*, to pull in changes:
 - If the build successfully completes, then type `docker-compose up -d` to run the application in detached mode.
 - Go to the http path of the application (ie. https://classy-dev.students.cs.ubc.ca) to ensure that the application is running as intended.
 
-In the case that software dependencies must be updated, then follow the [2.3 Starting/Stopping Classy](/docs/tech-staff/startstop.md#starting-classy) build, start, and stop steps in the `README.md` after updating the software.
+In the case that software dependencies must be updated, then follow the [2.3 Starting/Stopping Classy](/docs/tech-staff/startstop.md) build, start, and stop steps in the `README.md` after updating the software.
