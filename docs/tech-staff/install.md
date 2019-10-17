@@ -1,15 +1,12 @@
-# Installation Guide
+# Install Classy
 
-[Installation Notes](#installation-notes)
+- If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
+  convert the leading spaces so that the command will be correctly interpreted by the shell.
+
 [Software Dependencies](#software-dependencies)
 [System Configuration](#system-configuration)
 [Github Configuration](#github-configuration)  
 [Classy Configuration](#classy-configuration)  
-
-## Installation Notes
-
-- If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
-  convert the leading spaces so that the command will be correctly interpreted by the shell.
 
 ## Software Dependencies
 
