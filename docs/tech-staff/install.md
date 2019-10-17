@@ -1,11 +1,11 @@
-# Deploy Guide
+# Installation Guide
 [Guide Notes](#guide-notes)  
 [Prerequisite Software](#prerequisite-software)  
 [System Configuration](#system-configuration)  
 [Github Configuration](#github-configuration)  
 [Classy Configuration](#classy-configuration)  
-[Build](#build)  
-[Run](#run)  
+
+Classy requires a series of steps to ensure that it is setup correctly to run on its host operating system and integrates with external services, such as Github. Additional steps
 
 ## Guide Notes
 
@@ -37,6 +37,7 @@ This is the user that all the services will run under to ensure consistent file 
     ```bash
     usermod --append --groups classy <uid>
     ```
+
 ### Create SSL Certificates
 
 Use `certbot` to get SSL certificates for the host from Let's Encrypt:
@@ -162,14 +163,17 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
     4. Cert renewal could be put in cron somewhere, something like:
         ```bash
-	0 0,12 * * * root sleep $((RANDOM % 3600)) && certbot renew
+        0 0,12 * * * root sleep $((RANDOM % 3600)) && certbot renew
         ```
         However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
         and then find a good time to do it manually.
-    
-3. Add the firewall rules to block unwanted traffic (if using autotest).
 
-    ```bash
+### Create Firewall Rules
+
+1. Add the firewall rules to block unwanted traffic (if using autotest).
+
+    ```
+    bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
 
     # Block any traffic destined for the same host (any subnet)
@@ -181,16 +185,16 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
     # (i.e. don't allow requests to a student-operated host or mirrored reference UI instance)
     # NOTE: make sure this rule is inserted in the chain *before* a permissive accept.
     sudo iptables -I DOCKER-USER 1 -s 172.28.0.0/16 -j DROP
- 
+
     # Add exceptions here. Depending on where the services are hosted, use ONE of the two forms below.
     # If the service is hosted on the SAME machine on a specific port
     # (e.g. SERVICE_PORT would be the GEO_PORT set in the .env):
     sudo iptables -I INPUT 1 -s 172.28.0.0/16 -d $(hostname) -p tcp --dport SERVICE_PORT -j ACCEPT
-    
+
     # If the service is hosted externally on a DIFFERENT machine:
     sudo iptables -I DOCKER-USER 1 -s 172.28.0.0/16 -d HOST_IP -j ACCEPT
     ```
-    
+
     **Notes:**
     - These rules will apply to all grading container executions (i.e. all deliverables). 
     - Do NOT add an exception for GitHub (the student's project is automatically passed into the grading container).
@@ -198,13 +202,14 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
       added to the grading container.
     - These rules **must always be applied** (i.e. they should persist across reboots).
 
-4. Test the system. To ensure the firewall rules are working as expected we can run some simple commands from a container
+2. Test the system. To ensure the firewall rules are working as expected we can run some simple commands from a container
    connected to the subnet.
-   
-    ```bash
+
+    ```
+    bash
     # Create the same network that docker-compose will create (with a different name)
     docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" test_net   
- 
+
     # Check that the container cannot resolve hostnames (since DNS traffic is blocked).
     docker run --rm=true --net test_net alpine nslookup google.ca
     # Check that the container cannot access various common ports.
@@ -271,82 +276,3 @@ The sample configuration file includes a lot of documentation inline: [`.env.sam
     cd /opt/classy
     nano .env
     ```
-    
-## Build
-
-```bash
-cd /opt/classy
-
-# Create a subnet that the grading containers will attach to. This makes it easier to set up firewall rules (above).
-docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" grading_net
-
-# Copy default front-end and back-end templates to customizable files needed to run Classy:
-./helper-scripts/default-file-setup.sh
-# Or if you have yarn: (runs the same script, see package.json)
-yarn run pre-build
-
-docker-compose build
-```
-
-## Run
-
-```bash
-# docker-compose commands must be run from the following directory
-cd /opt/classy
-```
-
-1. Start up everything:
-
-    ```bash
-    docker-compose up --detach
-    ```
-
-    You should now be able to open portal on the host you've installed classy on (e.g. <https://$(hostname)>).
-    The system should also be able to receive commit and comment events from GitHub and process them accordingly.
-
-To shut down everything:
-```bash
-docker-compose down
-```
-
-If you want to start a single service, execute: (where `<service>` is something like 'db')
-```bash
-docker-compose up -d <service>
-```
-
-If you want to run the db for testing, execute:
-```bash
-docker run -p 27017:27017 mongo
-```
-
-If you want to run the db for development with persistent data, execute:
-```bash
-docker run -p 27017:27017 -v /var/opt/classy/db:/data/db mongo
-```
-
-
-2. Add a cron job to backup the database daily at 0400. MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD should
-   match the values set in the .env file.
-   
-    ```bash
-    echo '0 4 * * * root docker exec db mongodump --username MONGO_INITDB_ROOT_USERNAME --password MONGO_INITDB_ROOT_PASSWORD --gzip --archive > /var/opt/classy/backups/classydb.$(date +\%Y\%m\%dT\%H\%M\%S).gz' | sudo tee /etc/cron.d/backup-classy-db
-    ```
-    
-    **Restore:** To restore a backup you can use:
-    ```bash
-    cat BACKUP_NAME | docker exec -i db mongorestore --gzip --archive
-    ```
-    
-    Note: you can also use the additional options for [mongodump](https://docs.mongodb.com/manual/reference/program/mongodump/)
-    and [mongorestore](https://docs.mongodb.com/manual/reference/program/mongorestore/) described in the docs.
-    
-3. Archive old executions. AutoTest stores the output of each run on disk and, depending on the size of the output, can cause space issues.
-   You can apply the following cron job (as root) that will archive (and then remove) runs more than a week old.
-   Adapt as needed: this will run every Wednesday at 0300 and archive runs older than 7 days (based on last modified time);
-   all runs are stored together in a single compressed tarball called `runs-TIMESTAMP.tar.gz` under `/cs/portal-backup/cs310.ugrad.cs.ubc.ca/classy`.
-
-    ```bash
-    echo '0 3 * * WED root cd /var/opt/classy/runs && find . ! -path . -type d -mtime +7 -print0 | tar -czvf /cs/portal-backup/cs310.ugrad.cs.ubc.ca/classy/runs-$(date +\%Y\%m\%dT\%H\%M\%S).tar.gz --remove-files --null -T  -' | tee /etc/cron.d/archive-classy-runs
-    ```
-    
-    You can list the contents of the tarball using `tar -tvf FILENAME.tar.gz`.
