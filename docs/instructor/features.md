@@ -18,6 +18,19 @@ Classy consists of a front-end application named *Portal* and a back-end applica
 - Import/update Classlist information directly through API.
 - Implement custom front-end views and features using JavaScript and RESTful APIs.
 
+## User Roles
+
+Classy manages administrators using GitHub teams within the GitHub organization that is assigned to the course.
+
+Two teams have access to the Classy Admin portal:
+
+- `staff`
+- `admin`
+  
+Admin users may configure the course. Staff users are only able to help administer the course by viewing student repositories, AutoGrade container execution logs, and viewing grades.
+
+A bot user, *AutoBot* unless requested otherwise for a necessary use-case, will be added to the admin team. This gives *AutoBot* access to student repositories to allow for AutoGrade capabilities and giving grade feedback.
+
 ## AutoTest Features
 
 - Students receive grade feedback for grade requests on `commit` actioms and automatic build failure notifications on `push` actions.

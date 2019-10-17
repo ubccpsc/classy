@@ -1,7 +1,9 @@
 # Install Classy
 
-- If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
-  convert the leading spaces so that the command will be correctly interpreted by the shell.
+It is *highly* recommended that the instructions in this document are followed in order.
+
+If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
+convert the leading spaces so that the command will be correctly interpreted by the shell.
 
 [Software Dependencies](#software-dependencies)
 [System Configuration](#system-configuration)
@@ -18,8 +20,6 @@ The following software should be installed on the host before attempting to depl
 - Git (must be version compatible with docker v18; working with git version 2.16.5)
 - Certbot (Let's Encrypt, certbot 0.35.1)
 
-Classy requires a series of steps to ensure that it is setup correctly to run on its host operating system and integrates with external services, such as Github. Additional steps
-
 ### System Configuration
 
 Create a new (system) user _classy_ in a new group _classy_.
@@ -32,6 +32,51 @@ This is the user that all the services will run under to ensure consistent file 
     To add someone to the (newly created) classy group:
     ```bash
     usermod --append --groups classy <uid>
+    ```
+
+### Install Files
+
+NOTE: These instructions will work for a Linux operating system. OS/X requires that you explore extra configuration instructions that support a /User/ directory structure.
+
+1. Install classy in `/opt/classy`:
+
+    ```bash
+    git clone https://github.com/ubccpsc/classy.git /tmp/classy
+    sudo -i  # stay as root for remainder of this Classy Configuration section 
+    cp -r /tmp/classy /opt && rm -rf /tmp/classy
+    cp /opt/classy/.env.sample /opt/classy/.env
+    chown -Rh classy:classy /opt/classy
+    chmod -R ug+rwX,o-rwx /opt/classy
+    find /opt/classy -type d -exec chmod g+s {} \;
+    /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+ 
+    mkdir /var/opt/classy
+    mkdir /var/opt/classy/backups  # for database backups
+    mkdir /var/opt/classy/db       # for database storage
+    mkdir /var/opt/classy/runs     # for grading container output
+    chown -Rh classy:classy /var/opt/classy
+    find /var/opt/classy -type d -exec chmod 770 {} \;
+    find /var/opt/classy -type f -exec chmod 660 {} \;
+    ```
+
+    Pull in changes:
+    ```bash
+    newgrp classy
+    umask 007
+    cd /opt/classy
+    git pull
+    ```
+
+2. Configure the `.env` (more instructions inside this file)
+
+You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
+This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed.
+It is ***CRUCIAL*** that your `.env` file is never committed to version control.  
+The sample configuration file includes a lot of documentation inline: [`.env.sample`](https://github.com/ubccpsc/classy/blob/master/.env.sample)
+
+    ```bash
+    cd /opt/classy
+    nano .env
     ```
 
 ### Create SSL Certificates
@@ -168,8 +213,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
 1. Add the firewall rules to block unwanted traffic (if using autotest).
 
-    ```
-    bash
+    ```bash
     # These two rules will block all traffic coming FROM the subnet (i.e. grading container)
 
     # Block any traffic destined for the same host (any subnet)
@@ -201,8 +245,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 2. Test the system. To ensure the firewall rules are working as expected we can run some simple commands from a container
    connected to the subnet.
 
-    ```
-    bash
+    ```bash
     # Create the same network that docker-compose will create (with a different name)
     docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" test_net   
 
@@ -221,54 +264,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
     docker network rm test_net
     ```
 
-## Github Configuration
+## Configure Github
 
-Classy manages administrators using GitHub teams (within the GitHub organization the course uses).  
-Two teams have access to the Classy admin portal:
-- staff
-- admin (these users can also configure the course)
 
-The bot user (probably autobot) should be added to the admin team.
-
-## Classy Configuration
-
-1. Install classy in `/opt/classy`:
-
-    ```bash
-    git clone https://github.com/ubccpsc/classy.git /tmp/classy
-    sudo -i  # stay as root for remainder of this Classy Configuration section 
-    cp -r /tmp/classy /opt && rm -rf /tmp/classy
-    cp /opt/classy/.env.sample /opt/classy/.env
-    chown -Rh classy:classy /opt/classy
-    chmod -R ug+rwX,o-rwx /opt/classy
-    find /opt/classy -type d -exec chmod g+s {} \;
-    /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
- 
-    mkdir /var/opt/classy
-    mkdir /var/opt/classy/backups  # for database backups
-    mkdir /var/opt/classy/db       # for database storage
-    mkdir /var/opt/classy/runs     # for grading container output
-    chown -Rh classy:classy /var/opt/classy
-    find /var/opt/classy -type d -exec chmod 770 {} \;
-    find /var/opt/classy -type f -exec chmod 660 {} \;
-    ```
-
-    Pull in changes:
-    ```bash
-    newgrp classy
-    umask 007
-    cd /opt/classy
-    git pull
-    ```
-
-2. Configure the `.env` (more instructions inside this file)
-
-You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
-This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed.
-It is ***CRUCIAL*** that your `.env` file is never committed to version control.  
-The sample configuration file includes a lot of documentation inline: [`.env.sample`](https://github.com/ubccpsc/classy/blob/master/.env.sample)
-
-    ```bash
-    cd /opt/classy
-    nano .env
-    ```
+## Integrate Github
