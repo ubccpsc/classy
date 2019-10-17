@@ -1,18 +1,17 @@
 # Installation Guide
-[Guide Notes](#guide-notes)  
-[Prerequisite Software](#prerequisite-software)  
-[System Configuration](#system-configuration)  
+
+[Installation Notes](#installation-notes)
+[Software Dependencies](#software-dependencies)
+[System Configuration](#system-configuration)
 [Github Configuration](#github-configuration)  
 [Classy Configuration](#classy-configuration)  
 
-Classy requires a series of steps to ensure that it is setup correctly to run on its host operating system and integrates with external services, such as Github. Additional steps
-
-## Guide Notes
+## Installation Notes
 
 - If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
   convert the leading spaces so that the command will be correctly interpreted by the shell.
 
-## Prerequisite Software
+## Software Dependencies
 
 The following software should be installed on the host before attempting to deploy Classy.  
 (Versions shown run classy successfully. Versions do not need to be pinned.)
@@ -22,9 +21,9 @@ The following software should be installed on the host before attempting to depl
 - Git (must be version compatible with docker v18; working with git version 2.16.5)
 - Certbot (Let's Encrypt, certbot 0.35.1)
 
-## System Configuration
+Classy requires a series of steps to ensure that it is setup correctly to run on its host operating system and integrates with external services, such as Github. Additional steps
 
-### Create User Group
+### System Configuration
 
 Create a new (system) user _classy_ in a new group _classy_.
 This is the user that all the services will run under to ensure consistent file permission with the host.
@@ -168,7 +167,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
         However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
         and then find a good time to do it manually.
 
-### Create Firewall Rules
+### Configure Firewall Rules
 
 1. Add the firewall rules to block unwanted traffic (if using autotest).
 
