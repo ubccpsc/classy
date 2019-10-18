@@ -74,13 +74,14 @@ Instructions for getting started with Classy have been sorted into sections base
 
 - [1. Architecture](/docs/tech-staff/architecture.md)
 - [2. Operations](/docs/tech-staff/operations.md)
-    - [2.1. Hardware Requirements](/docs/tech-staff/hardware.md)
-    - [2.2. Installation](/docs/tech-staff/install.md)
-      - [2.2.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
-      - [2.2.2 Install Classy](/docs/tech-staff/install.md#install-classy)
-      - [2.2.2 System Configuration](/docs/tech-staff/install.md#create-user-group)
-      - [2.2.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
-      - [2.2.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
+    - [2.1 Hardware Requirements](/docs/tech-staff/hardware.md)
+    - [2.2 Fork Customization](/docs/tech-staff/forkcustomization.md)
+    - [2.3 Installation](/docs/tech-staff/install.md)
+      -2.3.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
+      -2.3.2 Install Classy](/docs/tech-staff/install.md#install-classy)
+      -2.3.2 System Configuration](/docs/tech-staff/install.md#create-user-group)
+      -2.3.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
+      -2.3.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
     - [2.3 Github Setup](/docs/tech-staff/githubsetup.md)
     - [2.4 Backup Configuration](/docs/tech-staff/backups.md)
     - [2.5 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
@@ -99,6 +100,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
 - [2. Container Logic and Interfaces](/docs/developer/container.md)
 - [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)] --> NEEDS INSTRUCTIONS
+- [4. Continuous Integration Setup](/docs/developer/continuousintegration.md)
 
 <!-- /TOC -->
 
