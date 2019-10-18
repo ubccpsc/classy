@@ -62,7 +62,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [4.2 Deliverable Configuration](/docs/instructors/portal.md#classlistupload)
     - [4.3 Distributing Assignments and Repository Creation](/docs/instructor/portal.md#repocreation)
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
-    - [5.1 User Roles](/docs/instructor/autotest.md#user-roles)
+    - [5.1 User Types](/docs/instructor/autotest.md#user-types)
     - [5.2 Student AutoBot Commands](/docs/instructor/autotest.md#student-autobot-commands)
     - [5.3 Admin AutoBot Commands](/docs/instructor/autotest.md#admin-autobot-commands)
   

@@ -2,7 +2,7 @@
 
 Explains how a student or admin interacts with AutoTets on Github.
 
-## User Roles
+## User Types
 
 Classy manages administrators using GitHub teams within the GitHub organization that is assigned to the course.
 
