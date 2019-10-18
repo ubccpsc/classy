@@ -82,15 +82,13 @@ Instructions for getting started with Classy have been sorted into sections base
       - [2.2.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
       - [2.2.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
     - [2.3 Github Setup](/docs/tech-staff/githubsetup.md)
-    - [2.3 Backup Configuration](/docs/tech-staff/backups.md)
-      - [2.3.1 MongoDB](/docs/tech-staff/backups.md#database)
-      - [2.3.2 AutoTest Executions](/docs/tech-staff/backups.md#autotest-executions)
-    - [2.3 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
-    - [2.4 Patching](/docs/tech-staff/updates.md)
-      - [2.4.1 Hardware](/docs/tech-staff/updates.md#os)
-      - [2.4.2 Software](/docs/tech-staff/updates.md#classy)
-      - [2.4.3 SSL Certificates](/docs/tech-staff/updates.md#ssl-certificates) --> NEEDS INSTRUCTIONS
-    - [2.8 Semester Transitions](/docs/tech-staff/semestertransitions.md#semester-transitions) --> NEEDS INSTRUCTIONS
+    - [2.4 Backup Configuration](/docs/tech-staff/backups.md)
+    - [2.5 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
+    - [2.6 Patching](/docs/tech-staff/updates.md)
+      - [2.6.1 Hardware](/docs/tech-staff/updates.md#os)
+      - [2.6.2 Software](/docs/tech-staff/updates.md#classy)
+      - [2.6.3 SSL Certificates](/docs/tech-staff/updates.md#ssl-certificates) --> NEEDS INSTRUCTIONS
+    - [2.7 Semester Transitions](/docs/tech-staff/semestertransitions.md#semester-transitions) --> NEEDS INSTRUCTIONS
 
 <!-- /TOC -->
 
@@ -100,7 +98,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
 - [2. Container Logic and Interfaces](/docs/developer/container.md)
-- [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)]
+- [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)] --> NEEDS INSTRUCTIONS
 
 <!-- /TOC -->
 

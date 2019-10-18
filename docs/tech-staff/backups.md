@@ -1,4 +1,10 @@
-# Configuring Database Backup
+# Backup Configuration
+
+<!-- TOC depthfrom:2 -->
+- [Backup Configuration](#backup-configuration)
+  - [Database](#database)
+  - [AutoTest Executions](#autotest-executions)
+<!-- /TOC -->
 
 ## Database
 
