@@ -1,23 +1,18 @@
 # Install Classy
 
 <!-- TOC depthfrom:2 -->
-- [Install Classy](#install-classy)
-  - [Software Dependencies](#software-dependencies)
-  - [System Configuration](#system-configuration)
-  - [Install Files](#install-files)
-  - [Create SSL Certificates](#create-ssl-certificates)
-  - [Configure Firewall Rules](#configure-firewall-rules)
+- [1. Install Classy](#install-classy)
+  - [1.1 Software Dependencies](#software-dependencies)
+  - [1.2 System Configuration](#system-configuration)
+  - [1.3 Install Classy](#install-classy)
+  - [1.4 Create SSL Certificates](#create-ssl-certificates)
+  - [1.5 Configure Firewall Rules](#configure-firewall-rules)
 <!-- /TOC -->
 
 It is *highly* recommended that the instructions in this document are followed in order.
 
 If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
 convert the leading spaces so that the command will be correctly interpreted by the shell.
-
-[Software Dependencies](#software-dependencies)
-[System Configuration](#system-configuration)
-[Github Configuration](#github-configuration)  
-[Classy Configuration](#classy-configuration)  
 
 ## Software Dependencies
 
@@ -43,9 +38,9 @@ This is the user that all the services will run under to ensure consistent file 
     usermod --append --groups classy <uid>
     ```
 
-## Install Files
+## Install Classy
 
-NOTE: These instructions will work for a Linux operating system. OS/X requires that you explore extra configuration instructions that support a /User/ directory structure.
+NOTE: These instructions will work for a Linux operating system. OS/X requires that you explore changes to the configuration because of a different /User/ directory structure.
 
 1. Install classy in `/opt/classy`:
 

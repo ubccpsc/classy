@@ -1,5 +1,12 @@
 # Architecture
 
+<!-- TOC depthfrom:2 -->
+- [Architecture](#architecture)
+  - [Overview](#overview)
+  - [Network Layer](#network-layer)
+  - [Application Layer](#application-layer)
+<!-- /TOC -->
+
 ## Overview
 
 Classy consists of multiple supporting applications: AutoTest, Portal Front-End, and Portal Back-End. Classy uses MongoDB for its data layer. The applications are containerized, which means that they run in Docker containers in a virtual environment where they can communicate. The virtual that currently hosts Classy is a VM server.

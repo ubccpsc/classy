@@ -72,14 +72,12 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Architectural Overview](/docs/tech-staff/architecture.md)
-    - [1.1 Network Layer](/docs/tech-staff/architecture.md#networklayer)
-    - [1.2 Application Layer](/docs/tech-staff/architecture.md#applicationlayer)
+- [1. Architecture Overview](/docs/tech-staff/architecture.md)
 - [2. Operations](/docs/tech-staff/operations.md)
     - [2.1. Hardware Requirements](/docs/tech-staff/hardware.md)
-    - [2.2. Install Classy](/docs/tech-staff/install.md)
+    - [2.2. Installation](/docs/tech-staff/install.md)
       - [2.2.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
-      - [2.2.2 Install Files](/docs/tech-staff/install.md#install-files)
+      - [2.2.2 Install Classy](/docs/tech-staff/install.md#install-classy)
       - [2.2.2 System Configuration](/docs/tech-staff/install.md#create-user-group)
       - [2.2.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
       - [2.2.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
@@ -87,13 +85,12 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.3 Backup Configuration](/docs/tech-staff/backups.md)
       - [2.3.1 MongoDB](/docs/tech-staff/backups.md#database)
       - [2.3.2 AutoTest Executions](/docs/tech-staff/backups.md#autotest-executions)
-    - [2.3 Build/Start/Stop Classy](/docs/tech-staff/startstop.md)
+    - [2.3 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
     - [2.4 Patching](/docs/tech-staff/updates.md)
       - [2.4.1 Hardware](/docs/tech-staff/updates.md#os)
       - [2.4.2 Software](/docs/tech-staff/updates.md#classy)
-      - [2.4.3 SSL Certs](/docs/tech-staff/updates.md#classy)
-    - [2.5 SSL Updates](/docs/tech-staff/operations.md#sslupdates)
-    - [2.8 Semester Transitions](/docs/tech-staff/operations.md#semestertransitions)
+      - [2.4.3 SSL Certificates](/docs/tech-staff/updates.md#ssl-certificates) --> NEEDS INSTRUCTIONS
+    - [2.8 Semester Transitions](/docs/tech-staff/semestertransitions.md#semester-transitions) --> NEEDS INSTRUCTIONS
 
 <!-- /TOC -->
 

@@ -1,12 +1,8 @@
 # Build/Start/Stop Classy
 
-<!-- TOC depthfrom:2 -->
-- [Build/Start/Stop Classy](#buildstartstop-classy)
-  - [Building Classy](#building-classy)
-  - [Starting Classy](#starting-classy)
-  - [Stopping Classy](#stopping-classy)
-<!-- /TOC -->
-
+[Building Classy](#building-classy)
+[Starting Classy](#starting-classy)
+[Stopping Classy](#stopping-classy)
 
 Docker Compose is a Docker orchestration tool that is used to streamline basic operations tasks. Docker Compose commands can build, start, and stop Classy. Logs may also be compiled from multiple sources and vierwed. 
 
