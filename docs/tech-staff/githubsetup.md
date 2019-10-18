@@ -8,9 +8,9 @@
 
 ERROR: Invalid Classy Credentials
 
-<img src="docs/assets/invalid-classy-credentials.png">
+<img src="../assets/invalid-classy-credentials.png">
 
-*If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github. *
+*If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github.*
 
 How to Debug:
 
@@ -54,15 +54,15 @@ OAuth configuration is set in the **/opt/classy/.env** file by configuration two
 How To Produce OAuth Credentials:
 
   1. Login as an owner of the organization.
-  <img src="docs/assets/organization-profile.png">
+  <img src="../assets/organization-profile.png">
 
   2. Click on the organization settings.
-  <img src="docs/assets/organization-profile.png">
+  <img src="../assets/organization-profile.png">
 
   3. Click on OAuth Apps under the Developer Settings side-panel.
-  <img src="docs/assets/oauth-application-credentials.png">
+  <img src="../assets/oauth-application-credentials.png">
 
-*The two blue fields are intentionally removed. The Client ID and Client Secret must be entered into the /opt/classy/.env environment properties.*
+*The two blue fields are intentionally removed. The Client ID and Client Secret must be entered into the **/opt/classy/.env** environment properties.*
 
 **NOTE**: CWL and Github.com integrations are NOT compatible. If Classy is integrated with Github.com instead of Github Enterprise, real Github users are required.
 
@@ -77,7 +77,6 @@ Admins must be manually added to an organization team by an owner of the organiz
 ### Adding User as Github Organization Owner
 
 Github admins and owners of an organization may grant a user owner permissions of an organization.
-
 
 ### Github Tokens
 
