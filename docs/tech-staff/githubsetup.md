@@ -1,6 +1,8 @@
 # Github Setup
 
-*Classy is integrated with Github.com or Github Enterprise to provide interactive and gamified learning experienced for students. When a student pushes code to a Github repository, Classy gives feedback and a grade to the student. Classy, therefore, requires the appropriate permissions to access and interact with a student repository.*
+*Classy is integrated with Github.com or Github Enterprise to provide a gamified and interactive learning experience for students. When a student pushes code to a Github repository, Classy gives feedback and a grade to the student. Classy, therefore, requires the appropriate permissions to access and interact with a student repository.* 
+
+This setup guide describes the appropriate Github organization setup steps from the appropriate user roles.
 
 ## Configure Github
 
