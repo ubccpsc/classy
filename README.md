@@ -72,7 +72,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Architecture](/docs/tech-staff/architecture.md)
+- [1. Architectural Overview](/docs/tech-staff/architecture.md)
     - [1.1 Network Layer](/docs/tech-staff/architecture.md#networklayer)
     - [1.2 Application Layer](/docs/tech-staff/architecture.md#applicationlayer)
 - [2. Operations](/docs/tech-staff/operations.md)
