@@ -37,16 +37,16 @@ Login screen → Github OAuth Login Page (CWL background integration) → Screen
 
     1. Go to Classy website (ie. https://classy-dev.students.ubc.ca):
 
-    ![Classy website](docs/assets/classy-management-portal.png "Classy website)
-<!-- <img src="docs/assets/classy-management-portal.png"> -->
+    ![Classy website](../assets/classy-management-portal.png "Classy website)
+<!-- <img src="../assets/classy-management-portal.png"> -->
 
-    2. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
+    1. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
 
-<img src="docs/assets/enterprise-login-portal.png">
+<img src="../assets/enterprise-login-portal.png">
 
     3. See the students, staff, or admin page depending on user permissions:
 
-<img src="docs/assets/classy-logged-in.png">
+<img src="../assets/classy-logged-in.png">
 
 ## Integrate Github
 
