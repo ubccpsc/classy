@@ -48,7 +48,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1. Classy Features](/docs/instructor/features.md#overview)
     - [1.1 Portal](/docs/instructor/features.md#portal)
     - [1.2 AutoTest](/docs/instructor/features.md#autotest)
-    - [1.4 Github & AutoTest Examples](/docs/instructor/features.md#github-and-autotest-interactive-examples)
+    - [1.4 Github & AutoTest Examples](/docs/instructor/features.md#github-and-autotest-examples)
 - [2. Getting Started](/docs/instructor/gettingstarted.md#overview)
     - [2.1 Requesting Classy for Your Course](/docs/instructor/gettingstarted.md#requesting-classy-for-your-course)
     - [2.2 Default Front-end and Back-end Bootstrapping](/docs/instructor/gettingstarted.md#quick-front-end-and-back-end-bootstrapping)
