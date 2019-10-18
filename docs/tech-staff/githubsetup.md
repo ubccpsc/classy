@@ -8,7 +8,7 @@
 
 ERROR: Invalid Classy Credentials
 
-<img src="docs/assets/invalid-classy-credentials.png>
+<img src="docs/assets/invalid-classy-credentials.png">
 
 *If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github. *
 
@@ -35,17 +35,18 @@ A user who logs into Classy should be met with a Student, Staff, or Admin view w
 
 Login screen → Github OAuth Login Page (CWL background integration) → Screenshots of Student/Staff/Admin views.
 
-    1. Go to Classy service website (ie. https://classy-dev.students.ubc.ca):
+    1. Go to Classy website (ie. https://classy-dev.students.ubc.ca):
 
-    <img src="docs/assets/classy-management-portal.png>
+    ![Classy website](docs/assets/classy-management-portal.png "Classy website)
+<!-- <img src="docs/assets/classy-management-portal.png"> -->
 
-    1. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
+    2. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
 
-    <img src="docs/assets/enterprise-login-portal.png">
+<img src="docs/assets/enterprise-login-portal.png">
 
-    1. See the students, staff, or admin page depending on user permissions:
+    3. See the students, staff, or admin page depending on user permissions:
 
-    <img src="docs/assets/classy-logged-in.png">
+<img src="docs/assets/classy-logged-in.png">
 
 ## Integrate Github
 
