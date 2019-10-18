@@ -2,6 +2,19 @@
 
 Explains how a student or admin interacts with AutoTets on Github.
 
+## User Roles
+
+Classy manages administrators using GitHub teams within the GitHub organization that is assigned to the course.
+
+Two teams have access to the Classy Admin portal:
+
+- `staff`
+- `admin`
+  
+Admin users may configure the course. Staff users are only able to help administer the course by viewing student repositories, AutoGrade container execution logs, and viewing grades.
+
+A bot user, *AutoBot* unless requested otherwise for a necessary use-case, will be added to the admin team. This gives *AutoBot* access to student repositories to allow for AutoGrade capabilities and giving grade feedback.
+
 ## Student AutoBot Commands
 
 AutoTest listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.

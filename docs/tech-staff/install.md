@@ -238,7 +238,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
     ```
 
     **Notes:**
-    - These rules will apply to all grading container executions (i.e. all deliverables). 
+    - These rules will apply to all grading container executions (i.e. all deliverables).
     - Do NOT add an exception for GitHub (the student's project is automatically passed into the grading container).
     - These rules also block DNS requests so the HOSTS_ALLOW env var can be used to specify host entries that should be
       added to the grading container.

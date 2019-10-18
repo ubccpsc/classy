@@ -12,4 +12,10 @@ The network layer requires access to the internet to install, build, and run Cla
 
 If Docker is properly installed and the environment that is hosting Classy has access to the internet, minimal effort is needed to setup the network layer.
 
+<img src="../assets/classy-network-layer.svg">
+
 ## Application Layer
+
+The appication layer is containerized for staging and production Classy instances. The Portal and AutoTest applications are Node JS based applications that are hosted with Nginx routing and a NoSQL MongoDB database.
+
+<img src="../assets/vm-container-applications.svg">
