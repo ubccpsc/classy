@@ -1,5 +1,14 @@
 # Install Classy
 
+<!-- TOC depthfrom:2 -->
+- [Install Classy](#install-classy)
+  - [Software Dependencies](#software-dependencies)
+  - [System Configuration](#system-configuration)
+  - [Install Files](#install-files)
+  - [Create SSL Certificates](#create-ssl-certificates)
+  - [Configure Firewall Rules](#configure-firewall-rules)
+<!-- /TOC -->
+
 It is *highly* recommended that the instructions in this document are followed in order.
 
 If you copy commands containing here documents, either copy the commands from a rendered view of the markdown, or
@@ -20,7 +29,7 @@ The following software should be installed on the host before attempting to depl
 - Git (must be version compatible with docker v18; working with git version 2.16.5)
 - Certbot (Let's Encrypt, certbot 0.35.1)
 
-### System Configuration
+## System Configuration
 
 Create a new (system) user _classy_ in a new group _classy_.
 This is the user that all the services will run under to ensure consistent file permission with the host.
@@ -34,7 +43,7 @@ This is the user that all the services will run under to ensure consistent file 
     usermod --append --groups classy <uid>
     ```
 
-### Install Files
+## Install Files
 
 NOTE: These instructions will work for a Linux operating system. OS/X requires that you explore extra configuration instructions that support a /User/ directory structure.
 
@@ -81,7 +90,7 @@ The sample configuration file includes a lot of documentation inline: [`.env.sam
     nano .env
     ```
 
-### Create SSL Certificates
+## Create SSL Certificates
 
 Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
@@ -211,7 +220,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
         However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
         and then find a good time to do it manually.
 
-### Configure Firewall Rules
+## Configure Firewall Rules
 
 1. Add the firewall rules to block unwanted traffic (if using autotest).
 
