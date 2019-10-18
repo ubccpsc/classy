@@ -4,7 +4,7 @@ Classy is an application that helps instructors distribute and automatically gra
 
 Classy consists of a front-end application named *Portal* and a back-end application named *AutoTest*. *Portal* helps instructors manage course administration by enabling instructors to setup assignments, setup autograding, and manage grades. *AutoTest* integrates with Github to create an interactive experience for students by giving automated feedback and notifying a student if a build fails on `commit` and `push` actions. *AutoTest* supports the full customization of these features to fit the business requirements of the course.
 
-## Portal Features
+## Portal
 
 <img src="../assets/portal-admin-deliverable.png/">
 
@@ -18,7 +18,7 @@ Classy consists of a front-end application named *Portal* and a back-end applica
 - Import/update Classlist information directly through API.
 - Implement custom front-end views and features using JavaScript and RESTful APIs.
 
-## AutoTest Features
+## AutoTest
 
 - Students receive grade feedback for grade requests on `commit` actioms and automatic build failure notifications on `push` actions.
 - Student grade feedback quotas based on customizable time.
