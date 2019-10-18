@@ -108,6 +108,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
 - [2. Container Logic and Interfaces](/docs/developer/container.md)
+- [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)]
 
 <!-- /TOC -->
 
