@@ -8,7 +8,7 @@
 
 ERROR: Invalid Classy Credentials
 
-<img src="../docs/assets/invalid-classy-credentials.png>
+<img src="docs/assets/invalid-classy-credentials.png>
 
 *If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github. *
 
@@ -37,15 +37,15 @@ Login screen → Github OAuth Login Page (CWL background integration) → Screen
 
     1. Go to Classy service website (ie. https://classy-dev.students.ubc.ca):
 
-    <img src="../docs/assets/classy-management-portal.png>
+    <img src="docs/assets/classy-management-portal.png>
 
     1. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
 
-    <img src="../docs/assets/enterprise-login-portal.png">
+    <img src="docs/assets/enterprise-login-portal.png">
 
     1. See the students, staff, or admin page depending on user permissions:
 
-    <img src="../docs/assets/classy-logged-in.png">
+    <img src="docs/assets/classy-logged-in.png">
 
 ## Integrate Github
 
@@ -59,15 +59,15 @@ How To Produce OAuth Credentials:
 
     1. Login as an owner of the organization.
 
-    <img src="../docs/assets/organization-profile.png">
+    <img src="docs/assets/organization-profile.png">
 
     2. Click on the organization settings.
 
-    <img src="../docs/assets/organization-profile.png">
+    <img src="docs/assets/organization-profile.png">
 
     3. Click on OAuth Apps under the Developer Settings side-panel.
 
-    <img src="../docs/assets/oauth-application-credentials.png">
+    <img src="docs/assets/oauth-application-credentials.png">
 
 *The two blue fields are intentionally removed. The Client ID and Client Secret must be entered into the /opt/classy/.env environment properties.*
 
@@ -90,7 +90,7 @@ Github admins and owners of an organization may grant a user owner permissions o
 
 Two Github tokens may be added to the Classy environmental configuration file. The Classy Bot Token is mandatory and the Docker AutoGrade Token is optional.
 
-#### Classy Bot Token Steps
+Classy Bot Token Steps
 
 - Login as the bot name decided for the course (AutoBot is the standard user unless requested by instructor)
 - Click on the user settings icon and click on Developer Settings.
@@ -111,5 +111,3 @@ TO DO: Screenshot of the Github access permissions for the token.
 TO DO: Screenshot of the Github access permissions for the token.
 
 <TO DO: Details on how the enviornmental config file should be updated should be included when you have your repository, users, and API keys created>
-# Github Setup
-
