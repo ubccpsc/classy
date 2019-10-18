@@ -29,14 +29,14 @@ The following software should be installed on the host before attempting to depl
 Create a new (system) user _classy_ in a new group _classy_.
 This is the user that all the services will run under to ensure consistent file permission with the host.
 
-    ```bash
-    adduser --system --group classy
-    ```
+  ```bash
+  adduser --system --group classy
+  ```
 
-    To add someone to the (newly created) classy group:
-    ```bash
-    usermod --append --groups classy <uid>
-    ```
+  To add someone to the (newly created) classy group:
+  ```bash
+  usermod --append --groups classy <uid>
+  ```
 
 ## Install Classy
 
