@@ -1,5 +1,26 @@
 # Instructor: Build and Integrate an AutoGrade Container
 
+<!-- TOC depthfrom:2 -->
+- [Instructor: Build and Integrate an AutoGrade Container](#instructor-build-and-integrate-an-autograde-container)
+  - [Overview](#overview)
+  - [Build a Container Checklist](#build-a-container-checklist)
+    - [Container Input](#container-input)
+    - [Container Output](#container-output)
+    - [Dockerfile](#dockerfile)
+    - [Dockerfile Github Repository](#dockerfile-github-repository)
+  - [Test a Container Checklist](#test-a-container-checklist)
+    - [Development Environment](#development-environment)
+    - [Staging Environment](#staging-environment)
+    - [Production Environment](#production-environment)
+  - [Dockerfile Explained](#dockerfile-explained)
+    - [Helpful Dockerfile Directives](#helpful-dockerfile-directives)
+    - [Steps to build a Docker image](#steps-to-build-a-docker-image)
+    - [Container Input Details](#container-input-details)
+    - [Container Output Details](#container-output-details)
+      - [Output Filesystem Paths](#output-filesystem-paths)
+    - [AutoGrade Dockerfile Repository](#autograde-dockerfile-repository)
+<!-- /TOC -->
+
 ## Overview
 
 Classy can automatically grade student code by running Docker containers that are designed to produce grade output data. `AutoTest` is an application inside Classy that starts a container each time a student pushes code to a repository. The student code is mounted to a disk volume inside the container that allows for a script, which is designed to mark the student code in the container, to be executed against the student code. When the script produces grade output data, the data is taken out of the container by AutoTest and sent to the database. The compiled grade records, therefore, accumulate in the database, where Classy may retrieve them to be veiwed by the course instructor.
@@ -107,7 +128,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 
 <img src="../assets/autograde-image-run.png"/>
 
-### Helpful Dockerfile directives
+### Helpful Dockerfile Directives
 
 **FROM** - Used to retrieve a Docker image base. Many Linux distributions exist, as well as a very minimal Alpine Linux distribution that is approximately 8MB.
 **WORKDIR** - Set the working path that your Docker directives run from.

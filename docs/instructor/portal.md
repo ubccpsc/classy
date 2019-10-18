@@ -1,4 +1,12 @@
-# Course Instructions
+# Portal Manual
+
+<!-- TOC depthfrom:2 -->
+- [Portal Manual](#portal-manual)
+  - [Overview](#overview)
+  - [Classlist Enrollment](#classlist-enrollment)
+  - [Deliverable Configuration](#deliverable-configuration)
+  - [Distributing Assignments and Repository Creation](#distributing-assignments-and-repository-creation)
+<!-- /TOC -->
 
 ## Overview
 
