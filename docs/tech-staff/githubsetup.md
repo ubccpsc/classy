@@ -14,14 +14,13 @@ ERROR: Invalid Classy Credentials
 
 How to Debug:
 
-    1. Login to Github through the UI.
-    2. Visibly inspect the organization teams to confirm that the CWL user(s) who is experiencing this error has been added to an **admin**, **staff**, or **students** team.
-      a. If an admin user is missing, add them manually.
-      b. If a staff or student user is missing, contact Michael Sanderson to determine why they are missing. He should fix it, as users will automatically be removed from the staff and admin teams if they are not in the class list registry. 
+  1. Login to Github through the UI.
+  2. Visibly inspect the organization teams to confirm that the CWL user(s) who is experiencing this error has been added to an **admin**, **staff**, or **students** team.
+    a. If an admin user is missing, add them manually.
+    b. If a staff or student user is missing, contact Michael Sanderson to determine why they are missing. He should fix it, as users will automatically be removed from the staff and admin teams if they are not in the class list registry. 
 
-     After adding the user(s) to the appropriate team, reload the view to see if the issue is fixed, **OR** continue to the next debug step.
-
-    3. If the CWL user has been added to a team, but this error persists, it is likely that Classy does not have permission to read the team to see what users exist underneath it.
+  After adding the user(s) to the appropriate team, reload the view to see if the issue is fixed, **OR** continue to the next debug step.
+  3. If the CWL user has been added to a team, but this error persists, it is likely that Classy does not have permission to read the team to see what users exist underneath it.
 
 Reload the view after each of these steps to see if the issue is fixed:
 
@@ -54,17 +53,14 @@ OAuth configuration is set in the **/opt/classy/.env** file by configuration two
 
 How To Produce OAuth Credentials:
 
-    1. Login as an owner of the organization.
+  1. Login as an owner of the organization.
+  <img src="docs/assets/organization-profile.png">
 
-    <img src="docs/assets/organization-profile.png">
+  2. Click on the organization settings.
+  <img src="docs/assets/organization-profile.png">
 
-    2. Click on the organization settings.
-
-    <img src="docs/assets/organization-profile.png">
-
-    3. Click on OAuth Apps under the Developer Settings side-panel.
-
-    <img src="docs/assets/oauth-application-credentials.png">
+  3. Click on OAuth Apps under the Developer Settings side-panel.
+  <img src="docs/assets/oauth-application-credentials.png">
 
 *The two blue fields are intentionally removed. The Client ID and Client Secret must be entered into the /opt/classy/.env environment properties.*
 
