@@ -89,131 +89,131 @@ The sample configuration file includes a lot of documentation inline: [`.env.sam
 
 Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
-    1. Create a certbot deploy hook that will run when new certificates are obtained:
-        ```bash
-        #!/bin/sh
-        # /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-        # Copies the current certificates to Classy
+ 1. Create a certbot deploy hook that will run when new certificates are obtained:
+     ```bash
+     #!/bin/sh
+     # /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+     # Copies the current certificates to Classy
 
-        # Stop on error
-        set -e
+     # Stop on error
+     set -e
 
-        # A good indication that classy is actually installed.
-        [[ -f /opt/classy/docker-compose.yml ]] || { echo "copy-certs.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
+     # A good indication that classy is actually installed.
+     [[ -f /opt/classy/docker-compose.yml ]] || { echo "copy-certs.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
-        {
-          date
+     {
+       date
 
-          if [[ ! -d /opt/classy/ssl ]]
-          then
-              echo "+ mkdir /opt/classy/ssl"
-              mkdir /opt/classy/ssl
-          fi
+       if [[ ! -d /opt/classy/ssl ]]
+       then
+           echo "+ mkdir /opt/classy/ssl"
+           mkdir /opt/classy/ssl
+       fi
 
-          # echo commands
-          set -x
+       # echo commands
+       set -x
 
-          cp -Hfp /etc/letsencrypt/live/$HOSTNAME/* /opt/classy/ssl/
-          chown -R --reference=/opt/classy /opt/classy/ssl
-          chmod -R ug=rX,o= /opt/classy/ssl
+       cp -Hfp /etc/letsencrypt/live/$HOSTNAME/* /opt/classy/ssl/
+       chown -R --reference=/opt/classy /opt/classy/ssl
+       chmod -R ug=rX,o= /opt/classy/ssl
 
-        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
-        ```
-        ```bash
-        vi /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-        # Enter file contents above
-        chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-        ```
+     } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
+     ```
+     ```bash
+     vi /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+     # Enter file contents above
+     chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+     ```
     
-    2. Get the initial certificates:
-        ```bash
-        sudo certbot certonly -n --standalone --agree-tos -m sa-certs@cs.ubc.ca --no-eff-email -d $(hostname)
-         ```   
-        
-        Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should
-        have copied the certificate files to /opt/classy/ssl. If not, manually run: (this only needs to be done once)
-        ```bash
-        sudo /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-        ```
+ 2. Get the initial certificates:
+     ```bash
+     sudo certbot certonly -n --standalone --agree-tos -m sa-certs@cs.ubc.ca --no-eff-email -d $(hostname)
+      ```   
+     
+     Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should
+     have copied the certificate files to /opt/classy/ssl. If not, manually run: (this only needs to be done once)
+     ```bash
+     sudo /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
+     ```
     
-    3. Configure pre and post-renewal hooks to automatically start and stop Classy when it is time to renew:
-        ```bash
-        #!/bin/sh
-        # /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
-        # Stop Classy so that port 80 and 443 can be used by certbot
+ 3. Configure pre and post-renewal hooks to automatically start and stop Classy when it is time to renew:
+     ```bash
+     #!/bin/sh
+     # /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+     # Stop Classy so that port 80 and 443 can be used by certbot
 
-        # Stop on error
-        set -e
+     # Stop on error
+     set -e
 
-        # A good indication that classy is actually installed.
-        [[ -f /opt/classy/docker-compose.yml ]] || { echo "stop-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
+     # A good indication that classy is actually installed.
+     [[ -f /opt/classy/docker-compose.yml ]] || { echo "stop-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
-        {
-          date
+     {
+       date
 
-          # echo commands
-          set -x
+       # echo commands
+       set -x
 
-          # This will halt if there is no running container named proxy.
-          docker ps -f name=proxy | grep proxy 
+       # This will halt if there is no running container named proxy.
+       docker ps -f name=proxy | grep proxy 
 
-          docker stop proxy
+       docker stop proxy
 
-          # The old way is overkill...
-          #cd /opt/classy
-          #/usr/local/bin/docker-compose stop
+       # The old way is overkill...
+       #cd /opt/classy
+       #/usr/local/bin/docker-compose stop
 
-        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
-        ```
-        
-        ```bash
-        #!/bin/sh
-        # /etc/letsencrypt/renewal-hooks/post/start-classy.sh
-        # Restart classy
+     } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
+     ```
+     
+     ```bash
+     #!/bin/sh
+     # /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+     # Restart classy
 
-        # Stop on error
-        set -e
+     # Stop on error
+     set -e
 
-        # A good indication that classy is actually installed.
-        [[ -f /opt/classy/docker-compose.yml ]] || { echo "start-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
+     # A good indication that classy is actually installed.
+     [[ -f /opt/classy/docker-compose.yml ]] || { echo "start-classy.sh error: /opt/classy/docker-compose.yml doesn't exist!"; exit 1; }
 
-        {
-          date
+     {
+       date
 
-          # echo commands
-          set -x
+       # echo commands
+       set -x
 
-          # This will halt if there is no container named proxy.
-          docker ps -a -f name=proxy | grep proxy 
+       # This will halt if there is no container named proxy.
+       docker ps -a -f name=proxy | grep proxy 
 
-          docker start proxy
+       docker start proxy
 
-          # The old way is overkill...
-          #cd /opt/classy
-          #/usr/local/bin/docker-compose up --detach
+       # The old way is overkill...
+       #cd /opt/classy
+       #/usr/local/bin/docker-compose up --detach
 
-        } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
-        ```
-        
-        ```bash
-        vi /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
-        # Content from above
-        vi /etc/letsencrypt/renewal-hooks/post/start-classy.sh
-        # Content from above
-        chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
-        chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
-        ```
-        
-        Classy needs to be stopped so that port 80 isn't bound when certbot attempts to renew the certificates. It
-        would need to be restarted in any case to mount the new certificates. Note: the deploy hook should also run on
-        successfully renewal copy the latest version of the certificates to `/opt/classy/ssl` before restarting Classy.
+     } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
+     ```
+     
+     ```bash
+     vi /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+     # Content from above
+     vi /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+     # Content from above
+     chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
+     chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
+     ```
+     
+     Classy needs to be stopped so that port 80 isn't bound when certbot attempts to renew the certificates. It
+     would need to be restarted in any case to mount the new certificates. Note: the deploy hook should also run on
+     successfully renewal copy the latest version of the certificates to `/opt/classy/ssl` before restarting Classy.
 
-    4. Cert renewal could be put in cron somewhere, something like:
-        ```bash
-        0 0,12 * * * root sleep $((RANDOM % 3600)) && certbot renew
-        ```
-        However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
-        and then find a good time to do it manually.
+ 4. Cert renewal could be put in cron somewhere, something like:
+     ```bash
+     0 0,12 * * * root sleep $((RANDOM % 3600)) && certbot renew
+     ```
+     However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
+     and then find a good time to do it manually.
 
 ## Configure Firewall Rules
 
