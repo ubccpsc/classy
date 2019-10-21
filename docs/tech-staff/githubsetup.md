@@ -12,6 +12,8 @@
   - [Debug Github](#debug-github)
     - [Invalid Classy Credentials](#invalid-classy-credentials)
     - [Github Integration - Expected Behaviour](#github-integration---expected-behaviour)
+    - [Github Issues](#github-issues)
+      - [Repo Retirement](#repo-retirement)
 <!-- /TOC -->
 
 *Classy is integrated with Github.com or Github Enterprise to provide a gamified and interactive learning experience for students. When a student pushes code to a Github repository, Classy gives feedback and a grade to the student. Classy, therefore, requires the appropriate permissions to access and interact with a student repository.*
@@ -116,3 +118,11 @@ Login screen → Github OAuth Login Page (CWL background integration) → Screen
 
   4. The admin should be able to clone repositories with starter code in the repository.
   5. The admin should be able to clone the Git repository that is used to build his AutoGrade container.
+
+### Github Issues
+
+#### Repo Retirement
+
+Occasionally, a Github organization will encounter an API bug that cannot be resolved without technical support (which may take time). If you do re-create an organization, repository names that are deleted with an organization will be **retired**. Retiring a repository precludes the creation of a new repository with the same name under the organization when it is re-created.
+
+If this issue is encountered, you may either have to contact Github to coordinate un-retiring repositories or create a new organization name.

@@ -98,7 +98,9 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
-- [2. Container Logic and Interfaces](/docs/developer/container.md)
+  - [1.1 Software Dependencies](/docs/developer/bootstrap#software-dependencies)
+  - [1.2 Environmental Config](/docs/developer/bootstrap#environmental-config)
+  - [1.2 Install/Build/Run](/docs/developer/bootstrap#install-build-run)
 - [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)] --> NEEDS INSTRUCTIONS
 - [4. Continuous Integration Setup](/docs/developer/continuousintegration.md)
 
@@ -122,7 +124,7 @@ Full details about how Classy should be configured for development work can be f
 
 All Classy development should take place in a course-specific fork. Bug fixes to core `ubccpsc/classy` code can be issued via PR back to `ubccpsc/classy` as required, as can feature-addition PRs (as described above). Classy has been configured with CircleCI for validating work and any PR that fails to pass CI will not be merged.
 
-Forks are encouraged to work using PRs on their local repos as well as using these will make it easier to upstream fixes and new features back to `ubccpsc/classy`.
+Forks are encouraged to work using PRs on their local xrepos as well as using these will make it easier to upstream fixes and new features back to `ubccpsc/classy`.
 
 To do this you can:
 
