@@ -22,7 +22,7 @@ Classy has been configured with CircleCI for validating work so that any pull-re
 
 <!-- TOC depthfrom:2 -->
 
-- [Contributing Guide](/docs/developer/contributing.md)
+- [Contributing to Classy Project](/docs/developer/contributing.md)
 
 <!-- /TOC -->
 

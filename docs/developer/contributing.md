@@ -1,6 +1,6 @@
-# Contributing to Classy
+# Contributing to Classy Project
 
-- [Contributing to Classy](#contributing-to-classy)
+- [Contributing to Classy Project](#contributing-to-classy-project)
   - [Developer Contribution Acceptance Criteria](#developer-contribution-acceptance-criteria)
     - [Requirements](#requirements)
     - [Nice to Have's](#nice-to-haves)
@@ -40,15 +40,15 @@ Main course forks:
 
 ## Developer Contribution Acceptance Criteria
 
-The following guidelines can be helpful for evaluating any PRs on a local fork (although obviously these are up to the fork maintainer and will only be enforced if PRs are made back to `ubccpsc/classy`):
+The following guidelines can be helpful for evaluating any PRs on a local fork (although obviously these are up to the fork maintainer and will only be enforced if PRs are made back to `ubccpsc/classy`).
 
-The test coverage of the system must be maintained; the expected coverage rate for any given file should be 90%+. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
+The test coverage of the system must be maintained; the expected coverage rate for any given file should be greater than 90%. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
 
 CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
 
 ### Requirements
 
-- [ ] Test coverage is over 90%
+- [ ] Test coverage is over 90% with new features well-defined in test names
 - [ ] Code is in a feature branch (ie. `feature/my-new-feature`)
 - [ ] Code has been rebased to `ubccpsc/master`
 - [ ] A pull-request has been setup to `ubccpsc/master` from your feature branch
