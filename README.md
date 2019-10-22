@@ -22,14 +22,7 @@ Classy has been configured with CircleCI for validating work so that any pull-re
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Git Help](/docs/developer/contributing.md)
-  - [1.1 Request a Remote Fork is Made](/docs/developer/contributing#software-dependencies)
-  - [1.2 Local Development Fork Setup](/docs/developer/contributing#environmental-config)
-  - [1.3 Modifying Classy on Your Fork](/docs/developer/contributing#install-build-run)
-  - [1.4 Cherry-Picking Changes](/docs/developer/contributing.md#cherry--picking-changes)
-  - [1.5 Node Library Dependencies](/docs/developer/contributing.md#node-library-dependencies)
-- [2. Contributing to Classy](#contributing-to-classy)
-- [3. Setup CircleCI & Coveralls for a Fork](/docs/developer/continuousintegration.md)
+- [Contributing Guide](/docs/developer/contributing.md)
 
 <!-- /TOC -->
 
@@ -77,7 +70,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- /TOC -->
 
-### Dev Ops
+### Technical Staff Operations
 
 <!-- TOC depthfrom:2 -->
 
