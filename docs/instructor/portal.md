@@ -36,7 +36,7 @@ These three actions, however, create the core scope of desirable AutoTest functi
 
 The **Admin Configuration Panel** will display a list of all deliverables. Clicking on the deliverable will open up a list of configuration settings for the deliverable:
 
-<p style="text-align: center"><img src="../assets/admin-config-deliv-config.png" alt="A list of configuration options appears when the deliverable is clicked on"></p>
+<p align="center"><img src="../assets/admin-config-deliv-config.png" alt="A list of configuration options appears when the deliverable is clicked on"></p>
 
 It is *mandatory* to include a `Deliverable Id` name. The `Deliverable Id` cannot be changed once it is created. All other configuration settings on the **Deliverable Configuration Panel** are *optional*.
 
