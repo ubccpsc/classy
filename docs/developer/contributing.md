@@ -108,7 +108,7 @@ On `fork`:
 3. `git merge upstream/master` (merges the changes into your local repo).
 4. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
-<img src="docs/assets/pulling-changes-to-fork.png"/>
+<img src="../assets/pulling-changes-to-fork.png"/>
 
 ### Pull-Requests from `fork` to `root/master`
 
