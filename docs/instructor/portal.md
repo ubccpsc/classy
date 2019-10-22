@@ -20,7 +20,7 @@ The default Admin view contains a **Update Classlist** action that adds students
 
 If more customizable classlist updates are necessary, a CSV may be uploaded with a custom classlist by the instructor. To upload a custom CSV, you will need to add the `ACCT`, `SNUM`, `CWL`, `LAST`, `FIRST`, and `LAB` headers to the CSV to produce a format accepted by Classy.
 
-<img src="../assets/admin-config-classlist.png" alt="Classlist API update and customizable classlist upload feature">
+<p align="center"><img src="../assets/admin-config-classlist.png" alt="Classlist API update and customizable classlist upload feature"></p>
 
 ## Deliverable Configuration
 
