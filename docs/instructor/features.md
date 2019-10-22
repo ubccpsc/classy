@@ -6,10 +6,12 @@
   - [AutoTest](#autotest)
   - [Github and AutoTest Examples](#github-and-autotest-examples)
     - [Student User Examples](#student-user-examples)
-      - [Feedback for an assignment](#feedback-for-an-assignment)
+      - [Feedback for an Assignment](#feedback-for-an-assignment)
       - [Feedback for an Assignment that Fails to Compile](#feedback-for-an-assignment-that-fails-to-compile)
       - [Feedback for an Assignment Before Allowed Time](#feedback-for-an-assignment-before-allowed-time)
       - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature)
+    - [Admin User Examples](#admin-user-examples)
+      - [Feedback for an Assignment that is Open/Closed](#feedback-for-an-assignment-that-is-openclosed)
 <!-- /TOC -->
 
 Classy is an application that helps instructors distribute and automatically grade assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control.
@@ -45,7 +47,7 @@ In the following scenarios, an instructor has pre-configured AutoTest to mark al
 
 ### Student User Examples
 
-#### Feedback for an assignment
+#### Feedback for an Assignment
 
 <img src="../assets/commit-comment-feedback.png/">
 
@@ -70,3 +72,9 @@ A student pushes code to a repository and requests feedback for the commit displ
 A student pushes code to a repository but cannot request grade feedback because the student is within the configured delay period. The student schedules feedback by using the `#schedule` flag with the specified deliverable in a grade request to `AutoBot`.
 
 <img src="../assets/commit-comment-schedule.png/">
+
+### Admin User Examples
+
+#### Feedback for an Assignment that is Open/Closed
+
+TO DO

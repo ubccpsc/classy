@@ -27,14 +27,15 @@ Classy manages administrators using GitHub teams. The GitHub organization that t
 
 ## Install/Build/Run
 
-To install Classy for development: 
+To install Classy for development:
 
-1. Navigate to the base of the `Classy` repository.
-2. Type `yarn install` to fetch library dependencies.
-3. Type `yarn run build` to build the project.
+1. Type `git clone https://github.com/ORGNAME/classy`
+2. `cd Classy` to navigate inside the directory.
+3. Inside the directory, type `yarn install` to fetch library dependencies.
+4. Then type `yarn run build` to build the project.
 
    During the build step, a source-map was produced with the built code, which allows you to set breakpoints and debug in your IDE.
-4. You are ready to run any of the applications.
+5. You are ready to run any of the applications (commands found in `package.json` files under respective application package directories).
 
 ## QA Checklist
 
@@ -51,10 +52,4 @@ More checks may need to be made depending on the nature of your work, but these 
 
 - Items 1-5 can all be fulfilled by CircleCI integration.
 - Item 6 can only be done manually at this time.
-
-## SSL Certificates
-
-The project requires an ssl certificate to build and run the containers successfully. You can
-specify SSL certificate locations with environment variables `SSL_CERT_PATH` and `SSL_KEY_PATH`.
-
-The application, however, can be run in development mode without supporting SSL certificates.
+- Item 6 requires a properly setup environmental file with SSL certificates.
