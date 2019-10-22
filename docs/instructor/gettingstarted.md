@@ -11,14 +11,14 @@ Requirements:
         or: [Quick Front-end and Back-end Bootstrapping](#quick-front-end-and-back-end-bootstrapping)
 - [ ] Tech Staff are notified that you want to use Classy at least three weeks in advance of course start date.
 - [ ] Instructor has shadowed a course instructor who is currently offering Classy.
-- [ ] Presented Technical Staff with Github token to access private [AutoGrade Dockerfile repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
+- [ ] Given Technical Staff a Github token to access private [AutoGrade Dockerfile repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
 
 Reccomendations:
 
 - [ ] Retain a TA to build-out Docker AutoGrade container.
-- [ ] Added container logging that is technically valuable to debugging.
+- [ ] Add container logging that allows for quick debugging of container logic.
 
-Syllabus and course instructions will need to be updated to work with *Github* workflows and *Git* version control system logic. It is necessary that, before the start of the course, you are willing to set aside some time to learn how to use Classy so the documentation is accurate.
+Syllabus and course instructions will need to be updated to work with *Github* workflows and *Git* version control. It is necessary that, before the start of the course, you are willing to set aside some time to experiment with Classy so that the documentation is sound.
 
 ## Requesting Classy for Your Course
 

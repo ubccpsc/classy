@@ -19,19 +19,22 @@ The software dependencies that are currently used in production and recommended 
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set.
 This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
 
-Pre-requisites before you can setup an environmental file for development:
-
-- [ ] Create SSL certificates
-- [ ] Create `AutoBot` token on Github Development or Github.com (do not use Production Github Enterprise instances)
-- [ ] Setup environmental file
-
 The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/master/.env.sample).
 
 ## GitHub setup
 
-Classy manages administrators using GitHub teams. The GitHub organization the course uses should have two teams: `staff` and `admin`. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added to the admin team.
+Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added to the admin team.
 
 ## Install/Build/Run
+
+To install Classy for development: 
+
+1. Navigate to the base of the `Classy` repository.
+2. Type `yarn install` to fetch library dependencies.
+3. Type `yarn run build` to build the project.
+
+   During the build step, a source-map was produced with the built code, which allows you to set breakpoints and debug in your IDE.
+4. You are ready to run any of the applications.
 
 ## QA Checklist
 
