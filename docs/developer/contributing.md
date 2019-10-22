@@ -121,7 +121,7 @@ On `fork`:
 1. `git push origin sync` (sends cherry picked commits to server).
 1. Open the `sync` branch in the GitHub web interface and make a pull request `fork/sync` to `root/master` (sends cherry picked commits to `root/master` that can then be evaluated in a PR before being merged into `root/master`).
 
-<img src="docs/assets/collaboration-github-flow.svg"/>
+<img src="../assets/collaboration-github-flow.svg"/>
 
 ### Node Library Dependencies
 

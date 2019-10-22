@@ -70,7 +70,7 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- /TOC -->
 
-### Technical Staff Operations
+### Technical Staff
 
 <!-- TOC depthfrom:2 -->
 
