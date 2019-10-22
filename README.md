@@ -10,33 +10,6 @@ Primary contributors:
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
 
-## Contributing to Classy
-
-Each course that uses Classy requires a fork of the core Classy project ([ubccpsc/classy](https://github.com/ubccpsc/classy) where custom development can take place. If custom features are developed that suit the core project, you can request that the feature is merged into the core project by setting up a pull-request of the feature on a branch that is re-based to `ubccpsc/master`.
-
-All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging bug fix PRs as well as the feature-based PRs below.
-
-Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes should they decide to pull from master.
-
-For new features, forks are also encouraged to issue PRs _during_ the term for consideration during the merging period. Again, since this code will be going into master, please make sure that:
-
-* The new feature should have been validated 'in production' in the fork's current course instance; we want to know for sure that code has worked for another class before adding it to `ubccpsc/classy`.
-* It makes sense for the functionality to be in `ubccpsc/classy` rather than the course-specific fork (e.g., the feature should have broad appeal to many other course instances).
-* The feature is well tested and the code of high quality.
-* Any additional tests do not overly burden the overall test suite execution duration, and should be resilient to future changes.
-* The contribution must lint before it can be accepted (e.g., `cd classy/; yarn run lint`).
-
-We will do our best to merge new features as long as they make sense for `ubccpsc/classy`, but if a feature is not merged it can exist as a long-lived feature in a course's fork. These features can also be merged between forks via PR as well if it makes sense to do so.
-
-Main course forks:
-
-* [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
-* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
-* [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
-* [cpsc340/classy](https://github.com/CPSC340/classy)
-* [secapstone/classy](https://github.com/SECapstone/classy)
-* [MDS TBD](NOTSETYET)
-
 ## Table of Contents
 
 Instructions for getting started with Classy have been sorted into sections based on the following user roles:
@@ -77,19 +50,17 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.1 Hardware Requirements](/docs/tech-staff/hardware.md)
     - [2.2 Fork Customization](/docs/tech-staff/forkcustomization.md)
     - [2.3 Installation](/docs/tech-staff/install.md)
-      -[2.3.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
-      -[2.3.2 Install Classy](/docs/tech-staff/install.md#install-classy)
-      -[2.3.2 System Configuration](/docs/tech-staff/install.md#create-user-group)
-      -[2.3.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
-      -[2.3.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
+        - [2.3.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
+        - [2.3.2 Install Classy](/docs/tech-staff/install.md#install-classy)
+        - [2.3.2 System Configuration](/docs/tech-staff/install.md#create-user-group)
+        - [2.3.3 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
+        - [2.3.4 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
     - [2.3 Github Setup](/docs/tech-staff/githubsetup.md)
     - [2.4 Backup Configuration](/docs/tech-staff/backups.md)
     - [2.5 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
     - [2.6 Patching](/docs/tech-staff/updates.md)
-      - [2.6.1 Hardware](/docs/tech-staff/updates.md#os)
-      - [2.6.2 Software](/docs/tech-staff/updates.md#classy)
-      - [2.6.3 SSL Certificates](/docs/tech-staff/updates.md#ssl-certificates) --> NEEDS INSTRUCTIONS
-    - [2.7 Semester Transitions](/docs/tech-staff/semestertransitions.md#semester-transitions) --> NEEDS INSTRUCTIONS
+      - [2.6.1 Operating System](/docs/tech-staff/updates.md#operating-system)
+      - [2.6.2 Classy](/docs/tech-staff/updates.md#classy)
 
 <!-- /TOC -->
 
@@ -101,8 +72,8 @@ Instructions for getting started with Classy have been sorted into sections base
   - [1.1 Software Dependencies](/docs/developer/bootstrap#software-dependencies)
   - [1.2 Environmental Config](/docs/developer/bootstrap#environmental-config)
   - [1.2 Install/Build/Run](/docs/developer/bootstrap#install-build-run)
-- [3. Bootstrapping CI Testing Github Organization](/docs/developer/ci.md)] --> NEEDS INSTRUCTIONS
-- [4. Continuous Integration Setup](/docs/developer/continuousintegration.md)
+- [2. Contributing to Classy](/docs/developer/contributing.md)
+- [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
 
 <!-- /TOC -->
 
@@ -111,10 +82,6 @@ Instructions for getting started with Classy have been sorted into sections base
 Tech staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy.
 
 During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
-
-## Development Configuration
-
-Full details about how Classy should be configured for development work can be found in [docs/config.md](docs/developer/config.md).
 
 ## Developer Contribution Acceptance Criteria
 
@@ -156,7 +123,7 @@ CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that covera
 
 ## Main repos
 
-* `ubccpsc/classy/master` (hereby `root`) is the stable source for the repo
+* `ubccpsc/classy/master` (hereby `root`) is the core project that repos pull stable code from
 * `<user>/classy/master` (hereby `fork`) is where classes are going to want to work (there will be many of these `fork` repos)
 
 ## Goals
@@ -183,10 +150,11 @@ All `fork` changes should be made on `fork/master` or other branches (just ***no
 This can happen regularly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
 
 On `fork`:
+
 1. `git checkout master`
-1. `git fetch upstream` (pulls down the changes from `root/master` to your local repo).
-1. `git merge upstream/master` (merges the changes into your local repo).
-1. `git push` (pushes the changes from your local repo to its remote GitHub repo).
+2. `git fetch upstream` (pulls down the changes from `root/master` to your local repo).
+3. `git merge upstream/master` (merges the changes into your local repo).
+4. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
 <img src="docs/assets/dev-local.png"/>
 
@@ -208,12 +176,12 @@ On `fork`:
 1. To add to the backend, you should modify `packages/portal/backend/src/custom/CustomCourseController.ts` and `packages/portal/backend/src/custom/CustomRoutes.ts`. These changes should ***NOT*** be pushed back into `classy/master` but should only stay in the fork.
 2. To add to the frontend, you should add the `pacakges/portal/frontend/src/app/custom/CustomStudentView.ts`. These changes should ***NOT*** be pushed back into `classy/master` but should only stay in the fork.
 
-### About dev packages
+### About Node Library Dependencies
 
-Wherever possible, please try to minimize external package dependencies. Classy has been configured to use [yarn workspaces](https://yarnpkg.com/lang/en/docs/workspaces/#toc-how-to-use-it).
+Please minimize external package dependencies. Classy has been configured to use [yarn workspaces](https://yarnpkg.com/lang/en/docs/workspaces/#toc-how-to-use-it).
 You should add global dependencies to the root `package.json` and package-specific dependencies in the package-level `package.json`.
 
-Specific dev instructions are included in [`packages/portal/backend/README.md`](packages/portal/backend/README.md), [`packages/portal/frontend/README.md`](packages/portal/frontend/README.md), and [`packages/autotest/README.md`](packages/autotest/README.md).
+Specific development instructions are included in [`packages/portal/backend/README.md`](packages/portal/backend/README.md), [`packages/portal/frontend/README.md`](packages/portal/frontend/README.md), and [`packages/autotest/README.md`](packages/autotest/README.md).
 
 ## License
 

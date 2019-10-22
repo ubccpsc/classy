@@ -2,18 +2,17 @@
 
 <!-- TOC depthfrom:2 -->
 - [Patching](#patching)
-  - [Hardware](#hardware)
-  - [Software](#software)
-  - [SSL Certificates](#ssl-certificates)
+  - [Operating System](#operating-system)
+  - [Classy](#classy)
 <!-- /TOC -->
 
-## Hardware
+## Operating System
 
 Hardware is hosted on VM infrastructure that must be maintained with the latest security releases and updates. Patching the OS is based off of standard OS update procedures.  
 
 If it is necessary to stop and start Classy, then follow the [2.3 Build/Start/Stop Classy](/docs/tech-staff/startstop.md) build, start, and stop steps in the README.md.
 
-## Software
+## Classy
 
 Patching Classy, or its software dependencies, requires [Stopping](/docs/tech-staff/startstop.md#stopping-classy) and [Starting](/docs/tech-staff/startstop.md#starting-classy) Classy.
 
@@ -34,6 +33,3 @@ From *within the installation directory*, to pull in changes:
 - Go to the http path of the application (ie. https://classy-dev.students.cs.ubc.ca) to ensure that the application is running as intended.
 
 In the case that software dependencies must be updated, then follow the [2.3 Starting/Stopping Classy](/docs/tech-staff/startstop.md) build, start, and stop steps in the `README.md` after updating the software.
-
-## SSL Certificates
-
