@@ -112,10 +112,6 @@ Tech staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/cla
 
 During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
 
-## Hosting Configuration
-
-Full details about how Classy should be configured for a production instance can be found in [docs/config.md](docs/tech-staff/deploy.md).
-
 ## Development Configuration
 
 Full details about how Classy should be configured for development work can be found in [docs/config.md](docs/developer/config.md).
@@ -128,7 +124,7 @@ Forks are encouraged to work using PRs on their local xrepos as well as using th
 
 To do this you can:
 
-```
+```bash
 # if you made some changes and forgot to branch:
 git stash
 git checkout -b <DESCRIPTIVE_BRANCH_NAME>
@@ -205,7 +201,7 @@ On `fork`:
 1. `git push origin sync` (sends cherry picked commits to server).
 1. Open the `sync` branch in the GitHub web interface and make a pull request `fork/sync` to `root/master` (sends cherry picked commits to `root/master` that can then be evaluated in a PR before being merged into `root/master`).
 
-<img src="docs/dev-upstream.png"/>
+<img src="docs/assets/collaboration-github-flow.svg"/>
 
 ### Customizing your instance of Classy
 

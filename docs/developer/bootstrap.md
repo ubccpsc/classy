@@ -1,6 +1,6 @@
 # Bootstrapping Classy for Development
 
-Configuring your development instance of Classy does not require that you build the applcation containers such as they are deployed on production. The [Classy](https://github.com/ubccpsc/classy) repository contains two RESTful APIs and a front-end webpack compilation that is hosted on one of the two RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE.
+Configuring your development instance of Classy does not require that you build the applcation containers such as they are deployed on production. The [Classy](https://github.com/ubccpsc/classy) repository contains two RESTful APIs, and a JavaScript framework front-end that is hosted on one of the two RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line. Debugging the application is supported with TypeScript source maps that are produced during compilation.
 
 ## Software Dependencies
 
@@ -10,7 +10,9 @@ The software dependencies that are currently used in production and recommended 
 - Yarn v1.15.2 [Installation](https://yarnpkg.com/lang/en/docs/install)
 - Docker v19.03.2, build 6a30dfc [Install](https://docs.docker.com/install/)
 - IDE: Webstorm is recommended
-- MongoDB (Optional: run in Docker with `docker run -p 27017:27017 mongo`)
+- MongoDB (Docker: `docker run -p 27017:27017 mongo`, or [Install](https://docs.mongodb.com/manual/installation/))
+
+**NOTE**: MongoDB must be running before starting **AutoTest** or **Portal**.
 
 ## Environmental Config
 
@@ -28,6 +30,8 @@ The sample configuration file includes a lot of documentation inline so [take a 
 ## GitHub setup
 
 Classy manages administrators using GitHub teams. The GitHub organization the course uses should have two teams: `staff` and `admin`. GitHub users on the `staff` and `admin` teams will have access to the Classy admin portal, although users on the `admin` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added to the admin team.
+
+## Install/Build/Run
 
 ## QA Checklist
 
@@ -51,23 +55,3 @@ The project requires an ssl certificate to build and run the containers successf
 specify SSL certificate locations with environment variables `SSL_CERT_PATH` and `SSL_KEY_PATH`.
 
 The application, however, can be run in development mode without supporting SSL certificates.
-
-Build the Docker image from the Dockerfile in the root of the project:
-
-```bash
-docker build -t classy:base .
-```
-
-This image is used as the base image for the other services.
-
-Then, to deploy, run:
-
-```bash
-docker-compose -f docker-compose.yml -f docker-compose.yml up --build -d
-```
-
-If you want to start a single service, in the `classy/` folder execute `docker-compose up -d <service>` (where service is something like `db`).
-
-If you want to run the db for testing, in `classy/` run `docker run -p 27017:27017 mongo`
-
-If you want to run the db for development and with persistant data, in `classy/` run `docker run -p 27017:27017 -v <ABSOULTE PATH TO CLASSY>/data/db:/data/db mongo`  
