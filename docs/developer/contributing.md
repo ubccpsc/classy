@@ -5,6 +5,8 @@
   - [Remote Setup of a Fork](#remote-setup-of-a-fork)
   - [Modifying Classy on Your Fork](#modifying-classy-on-your-fork)
   - [Developer Contribution Acceptance Criteria](#developer-contribution-acceptance-criteria)
+    - [Requirements](#requirements)
+    - [Nice to Have's](#nice-to-haves)
   - [Merging magic](#merging-magic)
   - [Main repos](#main-repos)
   - [Goals](#goals)
@@ -47,7 +49,7 @@ This only needs to happen once per fork, so if you already have a configured for
 
 ## Remote Setup of a Fork
 
-Technical staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting technical staff.
+Technical staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
 
 ## Modifying Classy on Your Fork
 
@@ -57,7 +59,29 @@ Custom changes can be made to code in your fork, but the custom changes should *
 
 ## Developer Contribution Acceptance Criteria
 
-To do this you can:
+The following guidelines can be helpful for evaluating any PRs on a local fork (although obviously these are up to the fork maintainer and will only be enforced if PRs are made back to `ubccpsc/classy`):
+
+The test coverage of the system must be maintained; the expected coverage rate for any given file should be 90%+. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
+
+CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
+
+### Requirements
+
+- [ ] Test coverage is over 90%
+- [ ] Code is in a feature branch (ie. `feature/my-new-feature`)
+- [ ] Code has been rebased to `ubccpsc/master`
+- [ ] A pull-request has been setup to `ubccpsc/master` from your feature branch
+- [ ] New feature has been tested on a working branch on your fork repository
+- [ ] Code passes all existing tests
+- [ ] Pull-request passes CircleCI tests
+- [ ] Code must pass linting with `yarn run lint` with no linting rule changes
+- [ ] README has been updated with example of feature
+
+### Nice to Have's
+
+- [ ] No new node libraries are introduced
+- [ ] No new line spacing introduced
+- [ ] Code has been reviewed in pull-request prior to pull-request to `ubccpsc/master`
 
 ```bash
 # if you made some changes and forgot to branch:
@@ -72,16 +96,6 @@ git checkout -b <DESCRIPTIVE_BRANCH_NAME>
 git commit -a
 git push --set-upstream origin <DESCRIPTIVE_BRANCH_NAME>
 ```
-
-The following guidelines can be helpful for evaluating any PRs on a local fork (although obviously these are up to the fork maintainer and will only be enforced if PRs are made back to `ubccpsc/classy`):
-
-1. The Pull Request must pass all existing tests. New contributions should not require existing tests to be changed as other courses might depend on the modified behaviour; if you feel such a change is needed, please mention the rationale in the Pull Request comments.
-
-2. The test coverage of the system must be maintained; the expected coverage rate for any given file should be 90%+. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
-
-3. Finally, any contributions must lint before they can be accepted. This can be run using `yarn run lint` in `classy/`. The global rules in `/tslint.json` should not be changed.
-
-CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
 
 ## Merging magic
 
@@ -108,7 +122,7 @@ On `fork`:
 3. `git merge upstream/master` (merges the changes into your local repo).
 4. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
-<img src="../assets/pulling-changes-to-fork.png"/>
+<img src="../assets/pulling-changes-to-fork.svg"/>
 
 ### Pull-Requests from `fork` to `root/master`
 
