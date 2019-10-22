@@ -9,7 +9,7 @@
   - [Main repos](#main-repos)
   - [Goals](#goals)
     - [Pulling changes from `root/master` into `fork/master`](#pulling-changes-from-rootmaster-into-forkmaster)
-    - [Pushing changes from `fork` to `root/master`](#pushing-changes-from-fork-to-rootmaster)
+    - [Pull-Requests from `fork` to `root/master`](#pull-requests-from-fork-to-rootmaster)
     - [Node Library Dependencies](#node-library-dependencies)
 
 Each course that uses Classy requires a fork of the core Classy project ([ubccpsc/classy](https://github.com/ubccpsc/classy) where custom development can take place. If custom features are developed that suit the core project, you can request that the feature is merged into the core project by setting up a pull-request of the feature on a branch that is re-based to `ubccpsc/master`.
@@ -108,18 +108,19 @@ On `fork`:
 3. `git merge upstream/master` (merges the changes into your local repo).
 4. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
-<img src="docs/assets/dev-local.png"/>
+<img src="docs/assets/pulling-changes-to-fork.png"/>
 
-### Pushing changes from `fork` to `root/master`
+### Pull-Requests from `fork` to `root/master`
 
 This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`.
 
 On `fork`:
+
 1. Pull changes from `root/master` into `fork/sync` (described above but replace `master` with `sync` in the two relevant commands).
-1. `git checkout sync` (probably already checked out).
-1. `git cherry-pick -x <SHA>` for each `<SHA>` you want to upstream. BE CAREFUL: these commits should not include any course-specific code. Also, to clarify, these commits should be in the history of `fork/master`. Merge conflicts are likely at this step and need to be resolved before moving to the next step.
-1. `git push origin sync` (sends cherry picked commits to server).
-1. Open the `sync` branch in the GitHub web interface and make a pull request `fork/sync` to `root/master` (sends cherry picked commits to `root/master` that can then be evaluated in a PR before being merged into `root/master`).
+2. `git checkout sync` (probably already checked out).
+3. `git cherry-pick -x <SHA>` for each `<SHA>` you want to upstream. BE CAREFUL: these commits should not include any course-specific code. Also, to clarify, these commits should be in the history of `fork/master`. Merge conflicts are likely at this step and need to be resolved before moving to the next step.
+4. `git push origin sync` (sends cherry picked commits to server).
+5. Open the `sync` branch in the GitHub web interface and make a pull request `fork/sync` to `root/master` (sends cherry picked commits to `root/master` that can then be evaluated in a PR before being merged into `root/master`).
 
 <img src="../assets/collaboration-github-flow.svg"/>
 
