@@ -1,13 +1,12 @@
 # Contributing to Classy
 
 - [Contributing to Classy](#contributing-to-classy)
-  - [Local Development Fork Setup](#local-development-fork-setup)
-  - [Remote Setup of a Fork](#remote-setup-of-a-fork)
-  - [Modifying Classy on Your Fork](#modifying-classy-on-your-fork)
   - [Developer Contribution Acceptance Criteria](#developer-contribution-acceptance-criteria)
     - [Requirements](#requirements)
     - [Nice to Have's](#nice-to-haves)
-  - [Merging magic](#merging-magic)
+  - [Local Development Fork Setup](#local-development-fork-setup)
+  - [Remote Setup of a Fork](#remote-setup-of-a-fork)
+  - [Modifying Classy on Your Fork](#modifying-classy-on-your-fork)
   - [Main repos](#main-repos)
   - [Goals](#goals)
     - [Pulling changes from `root/master` into `fork/master`](#pulling-changes-from-rootmaster-into-forkmaster)
@@ -38,24 +37,6 @@ Main course forks:
 * [cpsc340/classy](https://github.com/CPSC340/classy)
 * [secapstone/classy](https://github.com/SECapstone/classy)
 * [MDS TBD](NOTSETYET)
-
-## Local Development Fork Setup
-
-This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
-
-1. Fork `root` into a GitHub account you control (hereby called the `fork`).
-2. Create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`).
-3. Add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/)).
-
-## Remote Setup of a Fork
-
-Technical staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
-
-## Modifying Classy on Your Fork
-
-During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
-
-Custom changes can be made to code in your fork, but the custom changes should **NOT** be pushed back to the root `Classy` repository, unless it is a needed feature.
 
 ## Developer Contribution Acceptance Criteria
 
@@ -97,7 +78,23 @@ git commit -a
 git push --set-upstream origin <DESCRIPTIVE_BRANCH_NAME>
 ```
 
-## Merging magic
+## Local Development Fork Setup
+
+This only needs to happen once per fork, so if you already have a configured fork with a sync branch, you can ignore this step.
+
+1. Fork `root` into a GitHub account you control (hereby called the `fork`).
+2. Create a branch called `sync` on your `fork` (`git branch sync`) and create `fork/sync` on the server (`git push origin sync`).
+3. Add the upstream branch `git remote add upstream https://github.com/ubccpsc/classy.git` ([LINK](https://help.github.com/articles/configuring-a-remote-for-a-fork/)).
+
+## Remote Setup of a Fork
+
+Technical staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
+
+## Modifying Classy on Your Fork
+
+During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
+
+Custom changes can be made to code in your fork, but the custom changes should **NOT** be pushed back to the root `Classy` repository, unless it is a needed feature.
 
 ## Main repos
 
