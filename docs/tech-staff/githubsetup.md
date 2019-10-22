@@ -107,17 +107,14 @@ A user who logs into Classy should be met with a Student, Staff, or Admin view w
 
 Login screen → Github OAuth Login Page (CWL background integration) → Screenshots of Student/Staff/Admin views.
 
-  1. Go to Classy website (ie. https://classy-dev.students.ubc.ca):
-  <img src="../assets/classy-management-portal.png">
+  1. Go to Classy website (ie. https://classy-dev.students.ubc.ca). Click on 'Portal Login' to start authentication flow:
+  <p align="center"><img src="../assets/classy-login-main.png"></p>
 
-  2. Go to Github Login page if NOT already authenticated on Github Enterprise website (you may have to accept agreement on additional page):
-  <img src="../assets/enterprise-login-page.png">
+  2. See the students, staff, or admin page depending on user permissions:
+  <p align="center"><img src="../assets/classy-logged-in.png"></p>
 
-  3. See the students, staff, or admin page depending on user permissions:
-  <img src="../assets/classy-logged-in.png">
-
-  4. The admin should be able to clone repositories with starter code in the repository.
-  5. The admin should be able to clone the Git repository that is used to build his AutoGrade container.
+  3. The admin should be able to clone repositories with starter code in the repository.
+  4. The admin should be able to clone the Git repository that is used to build his AutoGrade container.
 
 ### Github Issues
 
