@@ -10,6 +10,29 @@ Primary contributors:
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
 
+## Contributing to Classy
+
+Features that add value to the Classy project can be merged back into the main project if there is adequate code coverage (> 90%) and the feature has been tested in a downstream fork for a semester. Bug fixes can also be issued via PR back to `ubccpsc/classy` as required. Any feature that is practical, improves the ease of administering a course, and is likely to be used by instructors is likely to have value. Features that are only very customized around a course, and unlikely to be used by other instructors, will likely not be accepted as core Classy code.
+
+To contribute code to Classy, setup a pull-request that has your code in a feature branch, ie. `feature/my-new-feature`, ready to merge into the root `ubccpsc/master` branch. The code should, ideally, be re-based to the `ubccpsc/master` branch before it is merged into `ubccpsc/master`. The re-base will eliminate any future downstream/upstream merge issues.
+
+Any non-necessary files, such as custom back-end and front-end files should **NOT** be part of the pull-request. Please add non-necessary files to your `.gitignore` file.
+
+Classy has been configured with CircleCI for validating work so that any pull-request that fails to pass CI will not be merged.
+
+<!-- TOC depthfrom:2 -->
+
+- [1. Git Help](/docs/developer/contributing.md)
+  - [1.1 Request a Remote Fork is Made](/docs/developer/contributing#software-dependencies)
+  - [1.2 Local Development Fork Setup](/docs/developer/contributing#environmental-config)
+  - [1.3 Modifying Classy on Your Fork](/docs/developer/contributing#install-build-run)
+  - [1.4 Cherry-Picking Changes](/docs/developer/contributing.md#cherry--picking-changes)
+  - [1.5 Node Library Dependencies](/docs/developer/contributing.md#node-library-dependencies)
+- [2. Contributing to Classy](#contributing-to-classy)
+- [3. Setup CircleCI & Coveralls for a Fork](/docs/developer/continuousintegration.md)
+
+<!-- /TOC -->
+
 ## Table of Contents
 
 Instructions for getting started with Classy have been sorted into sections based on the following user roles:
@@ -41,7 +64,20 @@ Instructions for getting started with Classy have been sorted into sections base
   
 <!-- /TOC -->
 
-### Tech Staff
+### Developers
+
+<!-- TOC depthfrom:2 -->
+
+- [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
+  - [1.1 Software Dependencies](/docs/developer/bootstrap#software-dependencies)
+  - [1.2 Environmental Config](/docs/developer/bootstrap#environmental-config)
+  - [1.2 Install/Build/Run](/docs/developer/bootstrap#install-build-run)
+- [2. Contributing to Classy](#contributing-to-classy)
+- [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
+
+<!-- /TOC -->
+
+### Dev Ops
 
 <!-- TOC depthfrom:2 -->
 
@@ -61,42 +97,6 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.6 Patching](/docs/tech-staff/updates.md)
       - [2.6.1 Operating System](/docs/tech-staff/updates.md#operating-system)
       - [2.6.2 Classy](/docs/tech-staff/updates.md#classy)
-
-<!-- /TOC -->
-
-### Developers
-
-<!-- TOC depthfrom:2 -->
-
-- [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
-  - [1.1 Software Dependencies](/docs/developer/bootstrap#software-dependencies)
-  - [1.2 Environmental Config](/docs/developer/bootstrap#environmental-config)
-  - [1.2 Install/Build/Run](/docs/developer/bootstrap#install-build-run)
-- [2. Contributing to Classy](#contributing-to-classy)
-- [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
-
-<!-- /TOC -->
-
-## Contributing to Classy
-
-Features that add value to the Classy project can be merged back into the main project if there is adequate code coverage (> 90%) and the feature has been tested in a downstream fork for a semester. Bug fixes can also be issued via PR back to `ubccpsc/classy` as required. Any feature that is practical, improves the ease of administering a course, and is likely to be used by instructors is likely to have value. Features that are only very customized around a course, and unlikely to be used by other instructors, will likely not be accepted as core Classy code.
-
-To contribute code to Classy, setup a pull-request that has your code in a feature branch, ie. `feature/my-new-feature`, ready to merge into the root `ubccpsc/master` branch. The code should, ideally, be re-based to the `ubccpsc/master` branch before it is merged into `ubccpsc/master`. The re-base will eliminate any future downstream/upstream merge issues.
-
-Any non-necessary files, such as custom back-end and front-end files should **NOT** be part of the pull-request. Please add non-necessary files to your `.gitignore` file.
-
-Classy has been configured with CircleCI for validating work so that any pull-request that fails to pass CI will not be merged.
-
-<!-- TOC depthfrom:2 -->
-
-- [1. Git Help](/docs/developer/contributing.md)
-  - [1.1 Request a Remote Fork is Made](/docs/developer/contributing#software-dependencies)
-  - [1.2 Local Development Fork Setup](/docs/developer/contributing#environmental-config)
-  - [1.3 Modifying Classy on Your Fork](/docs/developer/contributing#install-build-run)
-  - [1.4 Cherry-Picking Changes](/docs/developer/contributing.md#cherry--picking-changes)]
-  - [1.5 Node Library Dependencies](/docs/developer/contributing.md#node-library-dependencies)
-- [2. Contributing to Classy](#contributing-to-classy)
-- [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
 
 <!-- /TOC -->
 
