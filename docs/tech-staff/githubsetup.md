@@ -81,7 +81,7 @@ TO DO: Screenshot of the Github access permissions for the token.
 
 ### Invalid Classy Credentials
 
-<img src="../assets/invalid-classy-credentials.png">
+<p align="center"><img src="../assets/invalid-classy-credentials.png"></p>
 
 *If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github.*
 
