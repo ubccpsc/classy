@@ -107,7 +107,7 @@ Docker containers are notoriously difficult to debug. It is highlyÂ recommendedÂ
 - [ ] Test changes to the starter assignment to ensure that the expected results are produced by AutoTest.
 
 You should see the following checkmark to the left of an AutoGrade image when a container is successfully assigned to a Deliverable:
-<img src="../assets/autotest-options.png"/>
+<p align="center"><img src="../assets/autotest-options.png"/></p>
 
 ### Production Environment
 
