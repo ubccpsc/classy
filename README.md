@@ -49,7 +49,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [4. Portal Manual](/docs/instructor/portal.md#overview)
     - [4.1 Classlist Enrollment](/docs/instructor/portal.md#classlist-enrollment)
     - [4.2 Deliverable Configuration](/docs/instructors/portal.md#deliverable-configuration)
-    - [4.3 Distributing Assignments and Repository Creation](/docs/instructor/portal.md##istributing-assignments-and-repository-creation)
+    - [4.3 Distributing Assignments and Repository Creation](/docs/instructor/portal.md#distributing-assignments-and-repository-creation)
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
     - [5.1 User Types](/docs/instructor/autotest.md#user-types)
     - [5.2 Student AutoBot Commands](/docs/instructor/autotest.md#student-autobot-commands)
@@ -61,9 +61,9 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
-  - [1.1 Software Dependencies](/docs/developer/bootstrap#software-dependencies)
-  - [1.2 Environmental Config](/docs/developer/bootstrap#environmental-config)
-  - [1.2 Install/Build/Run](/docs/developer/bootstrap#install-build-run)
+  - [1.1 Software Dependencies](/docs/developer/bootstrap.md#software-dependencies)
+  - [1.2 Environmental Config](/docs/developer/bootstrap.md#environmental-config)
+  - [1.2 Install/Build/Run](/docs/developer/bootstrap.mnd#install-build-run)
 - [2. Contributing to Classy](#contributing-to-classy)
 - [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
 
