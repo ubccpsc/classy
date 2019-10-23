@@ -2,7 +2,7 @@
 
 Classy can automatically grade student code by running Docker containers that are designed to produce grade output data. `AutoTest` is an application inside Classy that starts a container each time a student pushes code to a repository. The student code is mounted to a disk volume inside the container, which allows a script to run with instructions on how to mark student code. When the script produces grade output data, the data is taken from the container, which AutoTest then sends to a database. Classy reads from the database to present the compiled grade records to instructors in the front-end application.
 
-<img src="../assets/autograde-flow.png"/>
+<img src="../assets/autograde-flow.svg"/>
 
 To create an AutoGrade Container, follow the AutoGrade Technical Requirements Checklist. Your grading business logic should be implemented on top of the container technical requirements. Click on the headers in the checklist to learn more context about the technical requirements.
 
