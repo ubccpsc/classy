@@ -83,7 +83,7 @@ describe("DeliverablesController", () => {
     });
 
     // this test should be last
-    it("Should enforce constraints on deliverables when saving.", async () => {
+    it("Should enforce default constraint on student delay in deliverables when saving.", async () => {
         const db = DatabaseController.getInstance();
 
         const allPeople = await db.getPeople();
