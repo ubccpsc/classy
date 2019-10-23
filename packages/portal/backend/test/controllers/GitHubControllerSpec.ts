@@ -135,13 +135,14 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should fail to provision a repo that already exists.", async function() {
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
