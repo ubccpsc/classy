@@ -1,8 +1,9 @@
+import {AutoTestConfigTransport} from "./PortalTypes";
+
 /**
  * The result of the grading container after it has run. Set by the Grader
  * service.
  */
-import {AutoTestConfigTransport} from "./PortalTypes";
 
 export enum ContainerState {
     SUCCESS = "SUCCESS",

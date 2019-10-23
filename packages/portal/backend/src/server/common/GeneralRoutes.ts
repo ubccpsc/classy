@@ -180,21 +180,41 @@ export default class GeneralRoutes implements IREST {
             const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
             Log.info("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
 
-            const rs = fs.createReadStream(filePath);
-            rs.on("error", (err: any) => {
-                if (err.code === "ENOENT") {
-                    Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-                    res.send(404, err.message);
+            try {
+                if (fs.lstatSync(filePath).isDirectory()) {
+                    Log.info("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
+                    const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + req.url;
+                    const body = "<html><body>" +
+                        fs.readdirSync(filePath).map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`)
+                        + "</body></html>";
+                    res.writeHead(200, {
+                        'Content-Length': Buffer.byteLength(body),
+                        'Content-Type': 'text/html'
+                    });
+                    res.write(body);
+                    res.end();
                 } else {
-                    Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
-                    res.send(500, err.message);
+                    const rs = fs.createReadStream(filePath);
+                    rs.on("error", (err: any) => {
+                        if (err.code === "ENOENT") {
+                            Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist. " +
+                                "This really shouldn't have reached here: " + path);
+                            res.send(404, err.message);
+                        } else {
+                            Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
+                            res.send(500, err.message);
+                        }
+                    });
+                    rs.on("end", () => {
+                        Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+                        rs.close();
+                    });
+                    rs.pipe(res);
                 }
-            });
-            rs.on("end", () => {
-                Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
-                rs.close();
-            });
-            rs.pipe(res);
+            } catch (err) {
+                Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+                res.send(404, err.message);
+            }
 
             return next();
         }).catch(function(err) {
