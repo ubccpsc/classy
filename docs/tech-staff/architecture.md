@@ -1,4 +1,13 @@
-# Operations
+# Architecture
+
+<!-- TOC depthfrom:2 -->
+
+- [Architecture](#architecture)
+  - [Overview](#overview)
+  - [Network Layer](#network-layer)
+  - [Application Layer](#application-layer)
+
+<!-- /TOC -->
 
 ## Overview
 
