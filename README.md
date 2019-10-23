@@ -73,7 +73,23 @@ Instructions for getting started with Classy have been sorted into sections base
 
 <!-- TOC depthfrom:2 -->
 
-- [1. Operations](/docs/tech-staff/operations.md)
+- [1. Architecture](/docs/tech-staff/architecture.md#overview)
+    - [1.1 Network Layer](/docs/tech-staff/architecture.md#network-layer)
+    - [1.2 Application Layer](/docs/tech-staff/architecture.md#application-layer)
+- [1.2 Hardware Requirements](/docs/tech-staff/hardware.md)
+- [1.3 Fork Customization](/docs/tech-staff/forkcustomization.md)
+- [1.4 Installation](/docs/tech-staff/install.md)
+    - [1.4.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
+    - [1.4.2 Install Classy](/docs/tech-staff/install.md#install-classy)
+    - [1.4.3 System Configuration](/docs/tech-staff/install.md#create-user-group)
+    - [1.4.4 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
+    - [1.4.5 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
+- [1.5 Github Setup](/docs/tech-staff/githubsetup.md)
+- [1.6 Backup Configuration](/docs/tech-staff/backups.md)
+- [1.7 Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
+- [1.8 Patching](/docs/tech-staff/updates.md)
+    - [1.8.1 Operating System](/docs/tech-staff/updates.md#operating-system)
+    - [1.8.2 Classy](/docs/tech-staff/updates.md#classy)
 
 <!-- /TOC -->
 
