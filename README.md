@@ -63,7 +63,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1. Bootstrapping Classy for Development](/docs/developer/bootstrap.md)
   - [1.1 Software Dependencies](/docs/developer/bootstrap.md#software-dependencies)
   - [1.2 Environmental Config](/docs/developer/bootstrap.md#environmental-config)
-  - [1.2 Install/Build/Run](/docs/developer/bootstrap.mnd#install-build-run)
+  - [1.2 Install/Build/Run](/docs/developer/bootstrap.md#install-build-run)
 - [2. Contributing to Classy](#contributing-to-classy)
 - [3. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
 
