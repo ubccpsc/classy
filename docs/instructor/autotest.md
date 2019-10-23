@@ -30,5 +30,3 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 * `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
-
-## Admin AutoBot Commands

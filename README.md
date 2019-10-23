@@ -53,7 +53,6 @@ Instructions for getting started with Classy have been sorted into sections base
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
     - [5.1 User Types](/docs/instructor/autotest.md#user-types)
     - [5.2 Student AutoBot Commands](/docs/instructor/autotest.md#student-autobot-commands)
-    - [5.3 Admin AutoBot Commands](/docs/instructor/autotest.md#admin-autobot-commands)
   
 <!-- /TOC -->
 
