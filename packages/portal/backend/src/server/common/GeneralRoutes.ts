@@ -187,7 +187,7 @@ export default class GeneralRoutes implements IREST {
                     const body = "<html><body>" +
                         `<p><strong>${path}</strong></p>` +
                         [".."].concat(fs.readdirSync(filePath))
-                            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join()
+                            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join("")
                         + "</body></html>";
                     res.writeHead(200, {
                         'Content-Length': Buffer.byteLength(body),
