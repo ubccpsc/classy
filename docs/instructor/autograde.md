@@ -126,7 +126,7 @@ The original AutoGrade image data will NOT be modified during each AutoGrade run
 - When a Docker image runs in AutoTest, it executes the file to the right of the **CMD** directive to run your container.
 - The **CMD** directive should result in the output of a report.json file each time your container is run (unless it encounters an error).
 
-<img src="../assets/autograde-image-run.png"/>
+<img src="../assets/autograde-image-run.svg"/>
 
 ### Helpful Dockerfile Directives
 

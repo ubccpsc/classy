@@ -45,7 +45,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.4 Optional Back-end Customization](/docs/instructor/gettingstarted.md#back-end-setup)
 - [3. AutoGrade Setup](/docs/instructor/autograde.md#overview)
     - [3.1 Build a Container Checklist](/docs/instructor/autograde.md#build-a-container-checklist)
-    - [3.2 Test a Container Checklist](/docs/instructor/container.md#test-a-container-checklist)
+    - [3.2 Test a Container Checklist](/docs/instructor/autograde.md#test-a-container-checklist)
 - [4. Portal Manual](/docs/instructor/portal.md#overview)
     - [4.1 Classlist Enrollment](/docs/instructor/portal.md#classlistupload)
     - [4.2 Deliverable Configuration](/docs/instructors/portal.md#classlistupload)
