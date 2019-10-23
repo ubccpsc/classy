@@ -47,7 +47,7 @@ In the following scenarios, an instructor has pre-configured AutoTest to mark al
 
 #### Feedback for an Assignment
 
-<img src="../assets/test-screenshot.png/">
+<img src="../assets/commit-comment-feedback.png/">
 
 A student pushes code to a repository and requests feedback for the commit displayed in the view. The students requests the grade by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
 
