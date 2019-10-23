@@ -183,10 +183,11 @@ export default class GeneralRoutes implements IREST {
             try {
                 if (fs.lstatSync(filePath).isDirectory()) {
                     Log.info("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
-                    const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + req.url;
+                    const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + req.url.replace(/\/$/, "");
                     const body = "<html><body>" +
+                        `<p><strong>${path}</strong></p>` +
                         [".."].concat(fs.readdirSync(filePath))
-                            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`)
+                            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join()
                         + "</body></html>";
                     res.writeHead(200, {
                         'Content-Length': Buffer.byteLength(body),
