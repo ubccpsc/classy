@@ -74,7 +74,7 @@ Instructions for getting started with Classy have been sorted into sections base
 <!-- TOC depthfrom:2 -->
 
 - [1. Architecture](/docs/tech-staff/architecture.md)
-- [2. Operations](/docs/tech-staff/operations.md)
+- [2. Operations]
     - [2.1 Hardware Requirements](/docs/tech-staff/hardware.md)
     - [2.2 Fork Customization](/docs/tech-staff/forkcustomization.md)
     - [2.3 Installation](/docs/tech-staff/install.md)
