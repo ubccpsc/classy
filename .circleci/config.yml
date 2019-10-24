@@ -225,23 +225,37 @@ jobs:
             curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
             chmod +x /usr/local/bin/docker-compose
 
+      # FOR PRODUCTION
       - run:
           name: Start container and verify it's working
           command: |
             set -x
             docker-compose up -d
 
-      - run:
-          name: Curl command to test Portal front-end
-          command: curl https://localhost/
+      # FOR DEBUGGING
+    #   - run:
+    #       name: Start container and verify it's working
+    #       command: |
+    #         set -x
+    #         docker-compose up
 
-      - run:
-          name: Curl command to test Portal back-end
-          command: curl https://localhost/portal/config
+            # ISSUES:
 
-      - run:
-          name: Curl command to test AutoTest back-end (expect no real response)
-          command: curl https://localhost/portal/anything
+            #                 #!/bin/bash -eo pipefail
+            # curl https://localhost/
+            # curl: (7) Failed to connect to localhost port 443: Connection refused
+            # Exited with code 7
+    #   - run:
+    #       name: CURL command to test Portal front-end
+    #       command: curl https://localhost
+
+    #   - run:
+    #       name: CURL command to test Portal back-end
+    #       command: curl https://localhost/portal/config
+
+    #   - run:
+    #       name: CURL command to test AutoTest back-end (expect no real response)
+    #       command: curl https://localhost/portal/anything
 
       - run:
           name: Shut down containers
@@ -261,5 +275,15 @@ jobs:
 workflows:
   version: 2
   docker_compose_tests:
+    jobs:
+      - build_run_stop
+  nightly:
+    triggers:
+      - schedule:
+          cron: "0 0 * * *"
+          filters:
+            branches:
+              only:
+                - feature/circle-ci-24-hour-build-test
     jobs:
       - build_run_stop
