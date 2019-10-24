@@ -192,6 +192,21 @@ jobs:
           name: "Export UID and GID to configuration file"
           command: echo -e "GID=0\nUID=0\n" >> .env
 
+     # SSLs needed to build Portal container or else misleading "volume name is too short" Docker create error
+      - run:
+          name: "Export UID and GID to configuration file"
+          command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/fullchain.pem\nHOST_SSL_KEY_PATH=~/project/ssl/privkey.pem\n" >> .env
+
+      - run:
+          command: cd .circleci && mkdir -p ~/project/ssl && openssl aes-256-cbc -d -md sha512 -in fullchain.enc -out ~/project/ssl/fullchain.pem -k $ENVKEY
+          name: Configuring SSL-1
+          when: always
+
+      - run:
+          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ~project/privkey.pem -k $ENVKEY
+          name: Configuring SSL-2
+          when: always
+
       # This should go into custom primary image, here's only for the sake of explanation
       - run:
           name: Install Docker client
@@ -221,7 +236,7 @@ jobs:
             #   appropriate/curl --retry 10 --retry-delay 1 --retry-connrefused http://localhost:8080/contacts/test
 
       - run:
-          command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem
+          command: rm .env && docker system prune -ay
           name: Cleaning up
           when: always
 
