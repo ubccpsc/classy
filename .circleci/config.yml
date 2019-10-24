@@ -139,6 +139,30 @@ jobs:
             command: cd packages/portal/backend && yarn coveralls
             name: Running backend coveralls
             when: on_success
+# coveralls doesn't integrate coverage
+# so this overwrites the backend coverage (which we care about more)
+# this is disabled and shouldn't be enabled until this is fixed
+#      - run:
+#            command: cd packages/autotest && yarn coveralls
+#            name: Running autotest coveralls
+#            when: always
+
+      - run:
+            command: cd packages/portal/backend && yarn codecov
+            name: Running backend codecov
+            when: on_success
+
+      - store_test_results:
+          path: testOutput
+
+      - store_artifacts:
+          path: testOutput
+
+      - run:
+            command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem
+            name: Cleaning up
+            when: always
+
   docker_build:
     docker:
       # using custom image, see .circleci/images/primary/Dockerfile
@@ -190,28 +214,3 @@ workflows:
   docker_compose_build:
     jobs:
       - docker_build
-
-# coveralls doesn't integrate coverage
-# so this overwrites the backend coverage (which we care about more)
-# this is disabled and shouldn't be enabled until this is fixed
-#      - run:
-#            command: cd packages/autotest && yarn coveralls
-#            name: Running autotest coveralls
-#            when: always
-
-      - run:
-            command: cd packages/portal/backend && yarn codecov
-            name: Running backend codecov
-            when: on_success
-
-      - store_test_results:
-          path: testOutput
-
-      - store_artifacts:
-          path: testOutput
-
-      - run:
-            command: rm .env && rm packages/portal/backend/ssl/fullchain.pem && rm packages/portal/backend/ssl/privkey.pem
-            name: Cleaning up
-            when: always
-
