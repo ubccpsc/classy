@@ -17,7 +17,7 @@ Each course that uses Classy requires a fork of the core Classy project ([ubccps
 
 All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging bug fix PRs as well as the feature-based PRs below.
 
-Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes should they decide to pull from master.
+Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes when they pull from upstream.
 
 For new features, forks are also encouraged to issue PRs _during_ the term for consideration during the merging period. Again, since this code will be going into master, please make sure that:
 
@@ -52,11 +52,11 @@ CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that covera
 - [ ] Code is in a feature branch (ie. `feature/my-new-feature`)
 - [ ] Code has been rebased to `ubccpsc/master`
 - [ ] A pull-request has been setup to `ubccpsc/master` from your feature branch
-- [ ] New feature has been tested on a working branch on your fork repository
+- [ ] Any new feature has been tested on a working branch on your fork repository
 - [ ] Code passes all existing tests
 - [ ] Pull-request passes CircleCI tests
 - [ ] Code must pass linting with `yarn run lint` with no linting rule changes
-- [ ] README has been updated with example of feature
+- [ ] README has been updated with an example of the feature
 
 ### Nice to Have's
 
