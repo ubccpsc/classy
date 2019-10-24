@@ -203,7 +203,7 @@ jobs:
           when: always
 
       - run:
-          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ~project/privkey.pem -k $ENVKEY
+          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ~/project/privkey.pem -k $ENVKEY
           name: Configuring SSL-2
           when: always
 
