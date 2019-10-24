@@ -18,7 +18,7 @@ Classy consists of a front-end application named *Portal* and a back-end applica
 
 ## Portal
 
-<p align="center"><img src="../assets/portal-admin-config.png/"></p>
+<img src="../assets/portal-admin-config.png/">
 
 - Dashboard to view grading results and logs
 - Automatically mark course assignments using Docker containers.
