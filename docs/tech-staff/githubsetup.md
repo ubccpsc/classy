@@ -81,7 +81,7 @@ TO DO: Screenshot of the Github access permissions for the token.
 
 ### Invalid Classy Credentials
 
-<p align="center"><img src="../assets/invalid-classy-credentials.png"></p>
+<img src="../assets/invalid-classy-credentials.png">
 
 *If you, or all students, are experiencing this error, then Classy cannot find a user in the admin, student, or staff groups on Github.*
 
@@ -108,10 +108,10 @@ A user who logs into Classy should be met with a Student, Staff, or Admin view w
 Login screen → Github OAuth Login Page (CWL background integration) → Screenshots of Student/Staff/Admin views.
 
   1. Go to Classy website (ie. https://classy-dev.students.ubc.ca). Click on 'Portal Login' to start authentication flow:
-  <p align="center"><img src="../assets/classy-login-main.png"></p>
+  <img src="../assets/classy-login-main.png">
 
   2. See the students, staff, or admin page depending on user permissions:
-  <p align="center"><img src="../assets/classy-logged-in.png"></p>
+  <img src="../assets/classy-logged-in.png">
 
   3. The admin should be able to clone repositories with starter code in the repository.
   4. The admin should be able to clone the Git repository that is used to build his AutoGrade container.
