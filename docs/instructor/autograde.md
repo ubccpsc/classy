@@ -107,7 +107,8 @@ Docker containers are notoriously difficult to debug. It is highlyÂ recommendedÂ
 - [ ] Test changes to the starter assignment to ensure that the expected results are produced by AutoTest.
 
 You should see the following checkmark to the left of an AutoGrade image when a container is successfully assigned to a Deliverable:
-<p align="center"><img src="../assets/autotest-options.png"/></p>
+
+<img src="../assets/autotest-options.png"/>
 
 ### Production Environment
 
@@ -197,7 +198,9 @@ While AutoTest provides input for your AutoGrade container, it is the responsibi
 AutoTest needs a place to access the Dockerfile, and additional files, to build an AutoGrade container. The minimum technical requirement to build an AutoGrade container is to produce a Dockerfile. A Dockerfile must be placed in the root directory of a Git repository. Alternative names may be given to the Dockerfile, but the alternative name must be specified during the creation of the AutoGrade container.
 
 *Specify a custom Dockerfile name in 'Dockerfile name'*:
+
 <img src="../assets/dockerfile-classy-admin-portal.png"/>
 
 *Specify a sub-directory location of your Dockerfile with the following # syntax in 'Github URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
+
 <img src="../assets/subdirectory-dockerfile-classy.png"/>
