@@ -94,17 +94,26 @@ describe("DeliverablesController", () => {
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
 
-        // deliv.repoPrefix = '';
-        // deliv.teamPrefix = '';
         deliv.autotest.studentDelay = 60; // 1 minute
+        const valid = await dc.saveDeliverable(deliv);
+        expect(valid).to.not.be.null;
+
+        deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+        expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
+    });
+
+    it("Should enforce custom entered student delay as greater than default", async () => {
+        const db = DatabaseController.getInstance();
+        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+        deliv.autotest.studentDelay = 901; // 15 minutes, 1 second
 
         const valid = await dc.saveDeliverable(deliv);
         expect(valid).to.not.be.null;
 
         deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
-        // expect(deliv.repoPrefix).to.equal(Test.DELIVID1);
-        // expect(deliv.teamPrefix).to.equal('t_' + Test.DELIVID1); // disable this prefix
-        expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
+        expect(deliv.autotest.studentDelay).to.be.equal(901);
     });
 });
