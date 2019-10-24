@@ -163,7 +163,7 @@ jobs:
             name: Cleaning up
             when: always
 
-  docker_compose_build:
+  build_run_stop:
     docker:
       # using custom image, see .circleci/images/primary/Dockerfile
       - image: circleci/cci-demo-docker-primary:0.0.2
@@ -260,7 +260,6 @@ jobs:
           path: /tmp/test-results
 workflows:
   version: 2
-  docker_compose_build:
+  docker_compose_tests:
     jobs:
-      - docker_compose_build
-      - docker_compose_up
+      - build_run_stop
