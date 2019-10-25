@@ -216,7 +216,7 @@ jobs:
           command: |
             set -x
             SSL_PATH="~/project/packages/portal/backend/ssl"
-            mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/key.key -out $SSL_PATH/cert.crt -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
+            mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
       - run:
