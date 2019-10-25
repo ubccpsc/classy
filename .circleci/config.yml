@@ -187,12 +187,12 @@ jobs:
             name: Configuring .env
             when: always
 
-     # CircleCI runs in root, which is 0 for UID & GID. Must do after file encrypted.
+     # CircleCI runs in root, which is 0 for UID & GID. Must do after file unencrypted.
       - run:
           name: "Export UID and GID to configuration file"
           command: echo -e "GID=0\nUID=0\n" >> .env
 
-     # SSLs needed to build Portal container or else misleading "volume name is too short" Docker create error
+     # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
       - run:
           name: "Export UID and GID to configuration file"
           command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/fullchain.pem\nHOST_SSL_KEY_PATH=~/project/ssl/privkey.pem\n" >> .env
@@ -279,6 +279,7 @@ workflows:
   nightly:
     triggers:
       - schedule:
+          # 5am PST time in UTC
           cron: "0 12 * * *"
           filters:
             branches:
