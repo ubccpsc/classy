@@ -175,7 +175,7 @@ jobs:
 
     steps:
       - checkout
-      - setup_remote_docker
+    #   - setup_remote_docker
 
       - run:
           name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
