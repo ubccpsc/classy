@@ -194,10 +194,10 @@ jobs:
 
      # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
       - run:
-          name: "Export UID and GID to configuration file"
+          name: "Export SSL CERT and SSL KEY paths"
           command: |
             set -x
-            SSL_PATH="~/project/packages/portal/backend/ssl"
+            SSL_PATH="/home/circleci/project/packages/portal/backend/ssl"
             echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
@@ -215,7 +215,7 @@ jobs:
           name: Generate self-signed certs
           command: |
             set -x
-            SSL_PATH="~/project/packages/portal/backend/ssl"
+            SSL_PATH="home/circleci/project/packages/portal/backend/ssl"
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
@@ -272,7 +272,7 @@ jobs:
           command: docker-compose down
 
       - run:
-          command: rm .env && rm ~/project/packages/portal/backend/ssl/fullchain.pem && rm ~/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af
+          command: rm .env && rm /home/circleci/project/packages/portal/backend/ssl/fullchain.pem && rm /home/circleci/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af
           name: Cleaning up
           when: always
 
