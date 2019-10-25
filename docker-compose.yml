@@ -65,7 +65,7 @@ services:
             - ${BACKEND_PORT}
         restart: always
         user: "${UID}"
-        mounts:
+        volumes:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
             - "${HOST_DIR}:${PERSIST_DIR}:ro"
