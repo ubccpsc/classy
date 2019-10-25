@@ -195,7 +195,7 @@ jobs:
      # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
       - run:
           name: "Export UID and GID to configuration file"
-          command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/fullchain.pem\nHOST_SSL_KEY_PATH=~/project/ssl/privkey.pem\n" >> .env
+          command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/cert.crt\nHOST_SSL_KEY_PATH=~/project/ssl/key.key\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
     #   - run:
@@ -210,7 +210,7 @@ jobs:
 
       - run:
           name: Generate self-signed certs
-          command: mkdir -p ~/project/ssl/ && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout privkey.pem -out fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
+          command: mkdir -p ~/project/ssl/ && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout key.key -out cert.crt -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
       - run:
@@ -266,7 +266,7 @@ jobs:
           command: docker-compose down
 
       - run:
-          command: rm .env && rm ~/project/ssl/fullchain.pem && rm ~/project/ssl/privkey.pem && docker system prune -af
+          command: rm .env && rm ~/project/ssl/cert.crt && rm ~/project/ssl/key.key && docker system prune -af
           name: Cleaning up
           when: always
 
