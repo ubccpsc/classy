@@ -197,8 +197,10 @@ jobs:
           name: "Export SSL CERT and SSL KEY paths"
           command: |
             set -x
-            SSL_PATH="/tmp/portal/backend/ssl"
-            echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
+            SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
+            # HACK. CircleCI does not support mounting volumes with Docker, so we have to add this file to Classy/packages/portal/backend/ssl directory
+            # and not overwrite it during the "mounting", which mounts the filename as an empty directory in container
+            echo -e "HOST_SSL_CERT_PATH=/dev/null\nHOST_SSL_KEY_PATH=/dev/null\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
     #   - run:
@@ -215,9 +217,8 @@ jobs:
           name: Generate self-signed certs
           command: |
             set -x
-            SSL_PATH="/tmp/portal/backend/ssl"
+            SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
-            chmod 0755 -R /tmp/portal
           when: always
 
       - run:
@@ -279,7 +280,7 @@ jobs:
           command: docker-compose down
 
       - run:
-          command: rm .env && rm /tmp/portal/backend/ssl/fullchain.pem && rm /tmp/portal/backend/ssl/privkey.pem && docker system prune -af
+          command: rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af
           name: Cleaning up
           when: always
 
