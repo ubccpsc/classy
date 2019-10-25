@@ -195,7 +195,7 @@ jobs:
      # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
       - run:
           name: "Export UID and GID to configuration file"
-          command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/fullchain.pem\nHOST_SSL_KEY_PATH=~/project/ssl/privkey.pem\n" >> .env
+          command: echo -e "HOST_SSL_CERT_PATH=~/project/ssl/privkey.pem\nHOST_SSL_KEY_PATH=~/project/ssl/fullchain.pem\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
       - run:
