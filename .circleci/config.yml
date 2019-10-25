@@ -213,7 +213,10 @@ jobs:
 
       - run:
           name: Generate self-signed certs
-          command: mkdir -p ~/project/ssl/ && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout key.key -out cert.crt -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
+          command: |
+            set -x
+            SSL_PATH="~/project/packages/portal/backend/ssl"
+            mkdir -p ~/project/ssl/ && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout key.key -out cert.crt -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
       - run:
