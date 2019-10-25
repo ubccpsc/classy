@@ -219,8 +219,8 @@ jobs:
           name: Create paths for artifact collections
           command: |
             set -x
-            sudo mkdir -p /tmp/test-logs/ && touch /tmp/test-logs/stdout
-            sudo mkdir -p /tmp/test-results/ && touch /tmp/test-results/stdout
+            sudo mkdir -p /tmp/test-logs/ && sudo chmod 777 -R /tmp/test-logs && touch /tmp/test-logs/stdout
+            sudo mkdir -p /tmp/test-results/ && sudo chmod 777 -R /tmp/test-results && touch /tmp/test-results/stdout
 
       - run:
           name: Start container and verify it's working
