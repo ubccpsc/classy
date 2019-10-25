@@ -165,8 +165,9 @@ jobs:
 
   build_run_stop:
     machine:
+      image: ubuntu-1604:201903-01
       # using custom image, see .circleci/images/primary/Dockerfile
-      image: circleci/cci-demo-docker-primary:0.0.2
+    #   - image: circleci/cci-demo-docker-primary:0.0.2
     working_directory: ~/project
 
     environment:
