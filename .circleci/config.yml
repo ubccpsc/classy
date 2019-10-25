@@ -262,17 +262,18 @@ jobs:
             # curl https://localhost/
             # curl: (7) Failed to connect to localhost port 443: Connection refused
             # Exited with code 7
+      # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
-          name: CURL command to test Portal front-end
-          command: curl https://localhost
+          name: curl command to test Portal front-end
+          command: curl -k https://localhost
 
       - run:
-          name: CURL command to test Portal back-end
-          command: curl https://localhost/portal/config
+          name: curl command to test Portal back-end
+          command: curl -k https://localhost/portal/config
 
       - run:
-          name: CURL command to test AutoTest back-end (expect no real response)
-          command: curl https://localhost/portal/anything
+          name: curl command to test AutoTest back-end (expect no real response)
+          command: curl -k https://localhost/portal/anything
 
       - run:
           name: Shut down containers
