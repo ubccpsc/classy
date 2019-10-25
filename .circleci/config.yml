@@ -166,8 +166,6 @@ jobs:
   build_run_stop:
     machine:
       image: ubuntu-1604:201903-01
-      # using custom image, see .circleci/images/primary/Dockerfile
-    #   - image: circleci/cci-demo-docker-primary:0.0.2
     working_directory: ~/project
 
     environment:
@@ -175,7 +173,6 @@ jobs:
 
     steps:
       - checkout
-    #   - setup_remote_docker
 
       - run:
           name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
@@ -201,17 +198,6 @@ jobs:
             SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
             echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
-     # NOT necessary to build containers, but necessary to run them in the near future
-    #   - run:
-    #       command: cd .circleci && mkdir -p ~/project/ssl && openssl aes-256-cbc -d -md sha512 -in fullchain.enc -out ~/project/ssl/fullchain.pem -k $ENVKEY
-    #       name: Configuring SSL-1
-    #       when: always
-
-    #   - run:
-    #       command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ~/project/ssl/privkey.pem -k $ENVKEY
-    #       name: Configuring SSL-2
-    #       when: always
-
       - run:
           name: Generate self-signed certs
           command: |
@@ -219,22 +205,6 @@ jobs:
             SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
-
-    #   - run:
-    #       name: Install Docker client
-    #       command: |
-    #         set -x
-    #         VER="19.03.2"
-    #         curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-    #         tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-    #         mv /tmp/docker/* /usr/bin
-
-    #   - run:
-    #       name: Install Docker Compose
-    #       command: |
-    #         set -x
-    #         curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-    #         chmod +x /usr/local/bin/docker-compose
 
       - run:
           name: Create mount path for MongoDB
