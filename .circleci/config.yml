@@ -197,8 +197,8 @@ jobs:
           name: "Export UID and GID to configuration file"
           command: |
             set -x
-            SSL_PATH = ~/project/packages/portal/backend/ssl
-            echo -e "HOST_SSL_CERT_PATH=${SSL_PATH}/fullchain.pem\nHOST_SSL_KEY_PATH=${SSL_PATH}/privkey.pem\n" >> .env
+            SSL_PATH="~/project/packages/portal/backend/ssl"
+            echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
     #   - run:
