@@ -224,19 +224,19 @@ jobs:
             curl -L https://github.com/docker/compose/releases/download/1.24.1/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
             chmod +x /usr/local/bin/docker-compose
 
-      # FOR PRODUCTION
-      - run:
-          name: Start container and verify it's working
-          command: |
-            set -x
-            docker-compose up -d
-
-      # FOR DEBUGGING
+    #   # FOR PRODUCTION
     #   - run:
     #       name: Start container and verify it's working
     #       command: |
     #         set -x
-    #         docker-compose up
+    #         docker-compose up -d
+
+      # FOR DEBUGGING
+      - run:
+          name: Start container and verify it's working
+          command: |
+            set -x
+            docker-compose up
 
             # ISSUES:
 
