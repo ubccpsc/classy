@@ -220,21 +220,21 @@ jobs:
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
-      - run:
-          name: Install Docker client
-          command: |
-            set -x
-            VER="19.03.2"
-            curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-            tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-            mv /tmp/docker/* /usr/bin
+    #   - run:
+    #       name: Install Docker client
+    #       command: |
+    #         set -x
+    #         VER="19.03.2"
+    #         curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
+    #         tar -xz -C /tmp -f /tmp/docker-$VER.tgz
+    #         mv /tmp/docker/* /usr/bin
 
-      - run:
-          name: Install Docker Compose
-          command: |
-            set -x
-            curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
-            chmod +x /usr/local/bin/docker-compose
+    #   - run:
+    #       name: Install Docker Compose
+    #       command: |
+    #         set -x
+    #         curl -L https://github.com/docker/compose/releases/download/1.23.2/docker-compose-`uname -s`-`uname -m` > /usr/local/bin/docker-compose
+    #         chmod +x /usr/local/bin/docker-compose
 
       - run:
           name: Create mount path for MongoDB
