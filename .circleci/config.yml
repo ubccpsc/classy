@@ -246,8 +246,9 @@ jobs:
           command: docker-compose down 2>&1 | tee -a /tmp/test-logs/stdout
 
       - run:
-          name: Cleaning up
-          command: rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af 2>&1 | tee -a /tmp/test-logs/stdout
+          name: Cleaning up Docker containers and images
+          command: |
+            docker system prune -af 2>&1 | tee -a /tmp/test-logs/stdout
           when: always
 
       - store_artifacts:
@@ -256,6 +257,19 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results
+
+      - run:
+          name: Cleaning up SSLs and Environment
+          command: |
+            rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem
+          when: always
+
+      - run:
+          name: Cleaning up artifacts
+          command: |
+            set -x
+            rm -rf /tmp/test-results && rm -rf /tmp/test-logs
+          when: always
 workflows:
   version: 2
   docker_compose_tests:
