@@ -220,20 +220,20 @@ jobs:
           name: Start container and verify it's working
           command: |
             set -x
-            docker-compose up 2>&1 | tee -a /tmp/test-logs/stdout
+            docker-compose up -d 2>&1 | tee -a /tmp/test-logs/stdout
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
-          name: curl command to test Portal front-end
-          command: curl -k https://localhost
+          name: curl command to test Portal front-end (expect a bunch of onsen UI html)
+          command: curl -k https://localhost 2>&1 | tee -a /tmp/test-results/curl-output
 
       - run:
-          name: curl command to test Portal back-end
-          command: curl -k https://localhost/portal/config
+          name: curl command to test Portal back-end (expect 'success', org - 'classytest', name - classytest')
+          command: curl -k https://localhost/portal/config 2>&1 | tee -a /tmp/test-results/curl-output
 
       - run:
-          name: curl command to test AutoTest back-end (expect no real response)
-          command: curl -k https://localhost/portal/anything
+          name: curl command to test AutoTest back-end (expect 'Invalid AutoTest Secret - undefined')
+          command: curl -k https://localhost/portal/at 2>&1 | tee -a /tmp/test-results/curl-output
 
       - run:
           name: Shut down containers
