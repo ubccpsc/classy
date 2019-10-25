@@ -169,7 +169,7 @@ jobs:
     working_directory: ~/project
 
     environment:
-      TEST_RESULTS: /tmp/test-results
+      TEST_RESULTS: /tmp/test-logs
 
     steps:
       - checkout
@@ -177,18 +177,21 @@ jobs:
       - run:
           name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
           command: |
+            set -x
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
      # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
-            name: Configuring .env
-            when: always
+          name: Configuring .env
+          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+          when: always
 
      # CircleCI runs in root, which is 0 for UID & GID. Must do after file unencrypted.
       - run:
           name: "Export UID and GID to configuration file"
-          command: echo -e "GID=0\nUID=0\n" >> .env
+          command: |
+            set -x
+            echo -e "GID=0\nUID=0\n" >> .env
 
      # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
       - run:
@@ -217,21 +220,8 @@ jobs:
           name: Start container and verify it's working
           command: |
             set -x
-            docker-compose up -d
+            docker-compose up 2>&1 | tee -a /tmp/test-logs/stdout
 
-      # FOR DEBUGGING
-    #   - run:
-    #       name: Start container and verify it's working
-    #       command: |
-    #         set -x
-    #         docker-compose up
-
-            # ISSUES:
-
-            #                 #!/bin/bash -eo pipefail
-            # curl https://localhost/
-            # curl: (7) Failed to connect to localhost port 443: Connection refused
-            # Exited with code 7
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
           name: curl command to test Portal front-end
@@ -247,15 +237,15 @@ jobs:
 
       - run:
           name: Shut down containers
-          command: docker-compose down
+          command: docker-compose down 2>&1 | tee -a /tmp/test-logs/stdout
 
       - run:
-          command: rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af
           name: Cleaning up
+          command: rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem && docker system prune -af 2>&1 | tee -a /tmp/test-logs/stdout
           when: always
 
       - store_artifacts:
-          path: /tmp/test-results
+          path: /tmp/test-logs
           destination: raw-test-output
 
       - store_test_results:
