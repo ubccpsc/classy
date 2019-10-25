@@ -164,9 +164,9 @@ jobs:
             when: always
 
   build_run_stop:
-    docker:
+    machine:
       # using custom image, see .circleci/images/primary/Dockerfile
-      - image: circleci/cci-demo-docker-primary:0.0.2
+      image: circleci/cci-demo-docker-primary:0.0.2
     working_directory: ~/project
 
     environment:
@@ -198,9 +198,7 @@ jobs:
           command: |
             set -x
             SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
-            # HACK. CircleCI does not support mounting volumes with Docker, so we have to add this file to Classy/packages/portal/backend/ssl directory
-            # and not overwrite it during the "mounting", which mounts the filename as an empty directory in container
-            echo -e "HOST_SSL_CERT_PATH=/dev/null\nHOST_SSL_KEY_PATH=/dev/null\n" >> .env
+            echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
      # NOT necessary to build containers, but necessary to run them in the near future
     #   - run:
