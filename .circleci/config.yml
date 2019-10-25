@@ -215,7 +215,13 @@ jobs:
             set -x
             sudo mkdir -p /var/opt/classy/db
 
-    #   # FOR PRODUCTION
+      - run:
+          name: Create paths for artifact collections
+          command: |
+            set -x
+            sudo mkdir -p /tmp/test-logs/stdout && touch /tmp/test-logs/stdout
+            sudo mkdir -p /tmp/test-results/stdout && touch /tmp/test-results/stdout
+
       - run:
           name: Start container and verify it's working
           command: |
@@ -254,6 +260,7 @@ workflows:
   version: 2
   docker_compose_tests:
     jobs:
+    #   - build
       - build_run_stop
   nightly:
     triggers:
