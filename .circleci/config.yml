@@ -268,7 +268,7 @@ jobs:
           name: Cleaning up artifacts
           command: |
             set -x
-            rm -rf /tmp/test-results && rm -rf /tmp/test-logs
+            sudo rm -rf /tmp/test-results && sudo rm -rf /tmp/test-logs
           when: always
 workflows:
   version: 2
