@@ -240,7 +240,7 @@ jobs:
           name: Create mount path for MongoDB
           command: |
             set -x
-            mkdir -p /var/opt/classy/db
+            sudo mkdir -p /var/opt/classy/db
 
     #   # FOR PRODUCTION
     #   - run:
