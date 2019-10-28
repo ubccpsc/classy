@@ -234,10 +234,11 @@ jobs:
           command: |
             set -x
             string="<title>Classy</title>"
-            if curl -s "https://localhost" | grep -q "$string"; then
-              echo "'$string' found/n Test passed"
+            curl -s "https://localhost" 2>&1 | tee -a /tmp/test-results/portal-html.txt
+            if cat /tmp/test-results/portal-html.txt | grep -q "$string"; then
+              printf "'$string' found/n Test passed"
             else
-              echo "'$string' not found/n Test failed"
+              printf "'$string' not found/n Test failed"
               exit 1
             fi
 
