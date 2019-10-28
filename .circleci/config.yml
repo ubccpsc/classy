@@ -230,8 +230,16 @@ jobs:
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
-          name: curl command to test Portal front-end (expect a bunch of onsen UI html)
-          command: curl -k https://localhost 2>&1 | tee -a /tmp/test-results/stdout
+          name: curl command to test Portal front-end (expect Classy UI HTML)
+          command: |
+            set -x
+            string="<title>Classy</title>"
+            if curl -s "https://localhost" | grep -q "$string"; then
+              echo "'$string' found/n Test passed"
+            else
+              echo "'$string' not found/n Test failed"
+              exit 1
+            fi
 
       - run:
           name: curl command to test Portal back-end (expect 'success', org - 'classytest', name - classytest')
