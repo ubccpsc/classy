@@ -223,7 +223,7 @@ jobs:
             sudo mkdir -p /tmp/test-results/ && sudo chmod 777 -R /tmp/test-results && touch /tmp/test-results/stdout
 
       - run:
-          name: Start container and verify it's working
+          name: Build and start container to verify it is working
           command: |
             set -x
             docker-compose up -d 2>&1 | tee -a /tmp/test-logs/stdout
@@ -232,7 +232,7 @@ jobs:
       - run:
           name: curl command to test Portal front-end (expect Classy UI HTML)
           command: |
-            string="<title>Classy</title>"
+            string="<title>Claasdfasfsdssy</title>"
             curl -k "https://localhost" 2>&1 | tee -a /tmp/test-results/portal-html.txt
             if cat /tmp/test-results/portal-html.txt | grep -q "$string"; then
               printf "'$string' found\n Test passed" 2>&1 | tee -a /tmp/test-results/portal-html.txt
