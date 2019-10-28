@@ -236,24 +236,26 @@ jobs:
             URL=https://localhost
             LOG_PATH=/tmp/test-results/portal-html.txt
             curl -k $URL 2>&1 | tee -a $LOG_PATH
-            if cat $LOG_PATH | grep -q "$STRING"; then
+            if [ cat $LOG_PATH | grep -q "$STRING" ]; then
               printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
             else
-              printf "'$STRING' not found\n Test failed\n" 2>&1 | tee -a $LOG_PATH
+              printf "\n'$STRING' not found\n Test failed\n" 2>&1 | tee -a $LOG_PATH
               exit 1
             fi
 
       - run:
           name: curl command to test Portal back-end (expect 'success', org - 'classytest', name - classytest')
           command: |
-            GH_URL='https://status.github.com/api/status.json'
-            GH_STATUS=$(curl -s $GH_URL |  jq --raw-output '.status')
-            echo "GitHub API Status: $GH_STATUS"
-            if [ "$GH_STATUS" != "good" ]; then
-              echo "Error [GitHub API status: $GH_STATUS]"
+            URL='https://localhost/portal/config'
+            LOG_PATH=/tmp/test-results/back-end-response.txt
+            RES=curl -k $URL 2>&1 | tee -a $LOG_PATH
+            CLASSY_ORG=$(cat $LOG_PATH |  jq --raw-output '.success.org')
+            if [ "$CLASSY_ORG" != "classytest" ]; then
+              printf "\nClassy organization is $CLASSY_ORG value. Expected 'classytest'.\n Test failed\n" 2>&1 | tee -a $LOG_PATH
               exit 1
+            else
+              printf "\n$CLASSY_ORG equals classytest. \nTest passed\n" 2>&1 | tee -a $LOG_PATH
             fi
-            curl -k https://localhost/portal/config 2>&1 | tee -a /tmp/test-results/stdout
 
       - run:
           name: curl command to test AutoTest back-end (expect 'Invalid AutoTest Secret - undefined')
