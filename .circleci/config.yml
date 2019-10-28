@@ -234,7 +234,7 @@ jobs:
           command: |
             set -x
             string="<title>Classy</title>"
-            curl -s "https://localhost" 2>&1 | tee -a /tmp/test-results/portal-html.txt
+            curl -k "https://localhost" 2>&1 | tee -a /tmp/test-results/portal-html.txt
             if cat /tmp/test-results/portal-html.txt | grep -q "$string"; then
               printf "'$string' found/n Test passed"
             else
