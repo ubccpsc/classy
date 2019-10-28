@@ -229,11 +229,11 @@ jobs:
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
-          name: curl command to test Portal front-end (expect Classy UI HTML)
+          name: Test to see that Portal front-end static HTML is served
           command: |
             STRING="<title>Classy</title>"
             URL=https://localhost
-            LOG_PATH=/tmp/test-results/portal-front-end.log
+            LOG_PATH=/tmp/test-results/portal-front-end-test.log
             curl -k $URL 2>&1 | tee -a $LOG_PATH
             if cat $LOG_PATH | grep -q "$STRING"; then
               printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
@@ -242,11 +242,11 @@ jobs:
             fi
 
       - run:
-          name: curl command to test Portal back-end (expect 'success', org - 'classytest', name - classytest')
+          name: Test to see that Portal back-end API is running in `classytest` mode
           command: |
             URL='https://localhost/portal/config'
-            LOG_PATH=/tmp/test-results/portal-back-end.log
-            RES=curl -k $URL 2>&1 | tee -a $LOG_PATH
+            LOG_PATH=/tmp/test-results/portal-back-end-test.log
+            curl -k $URL 2>&1 | tee -a $LOG_PATH
             CLASSY_ORG=$(cat $LOG_PATH |  jq --raw-output '.success.org')
             if [ "$CLASSY_ORG" != "classytest" ]; then
               printf "\nClassy organization is $CLASSY_ORG value. Expected 'classytest'.\n Test failed\n" 2>&1 | tee -a $LOG_PATH
@@ -256,8 +256,18 @@ jobs:
             fi
 
       - run:
-          name: curl command to test AutoTest back-end (expect 'Invalid AutoTest Secret - undefined')
-          command: curl -k https://localhost/portal/at 2>&1 | tee -a /tmp/test-results/stdout
+          name: Test to see that AutoTest is running
+          command: |
+            STRING='Failed to process commit'
+            URL='https://localhost/githubWebhook'
+            LOG_PATH=/tmp/test-results/autotest-test.log
+            curl -k -x POST $URL 2>&1 | tee -a $LOG_PATH
+            if cat $LOG_PATH | grep -q "$STRING"; then
+              printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
+            else
+              printf "\n'$STRING' not found\n Test failed\n" 2>&1 | tee -a $LOG_PATH
+              exit 1
+            fi
 
       - run:
           name: Shut down containers
