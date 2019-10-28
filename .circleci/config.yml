@@ -232,18 +232,28 @@ jobs:
       - run:
           name: curl command to test Portal front-end (expect Classy UI HTML)
           command: |
-            string="<title>Claasdfasfsdssy</title>"
-            curl -k "https://localhost" 2>&1 | tee -a /tmp/test-results/portal-html.txt
-            if cat /tmp/test-results/portal-html.txt | grep -q "$string"; then
-              printf "'$string' found\n Test passed" 2>&1 | tee -a /tmp/test-results/portal-html.txt
+            STRING="<title>Classy</title>"
+            URL=https://localhost
+            LOG_PATH=/tmp/test-results/portal-html.txt
+            curl -k $URL 2>&1 | tee -a $LOG_PATH
+            if cat $LOG_PATH | grep -q "$STRING"; then
+              printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
             else
-              printf "'$string' not found\n Test failed" 2>&1 | tee -a /tmp/test-results/portal-html.txt
+              printf "'$STRING' not found\n Test failed\n" 2>&1 | tee -a $LOG_PATH
               exit 1
             fi
 
       - run:
           name: curl command to test Portal back-end (expect 'success', org - 'classytest', name - classytest')
-          command: curl -k https://localhost/portal/config 2>&1 | tee -a /tmp/test-results/stdout
+          command: |
+            GH_URL='https://status.github.com/api/status.json'
+            GH_STATUS=$(curl -s $GH_URL |  jq --raw-output '.status')
+            echo "GitHub API Status: $GH_STATUS"
+            if [ "$GH_STATUS" != "good" ]; then
+              echo "Error [GitHub API status: $GH_STATUS]"
+              exit 1
+            fi
+            curl -k https://localhost/portal/config 2>&1 | tee -a /tmp/test-results/stdout
 
       - run:
           name: curl command to test AutoTest back-end (expect 'Invalid AutoTest Secret - undefined')
