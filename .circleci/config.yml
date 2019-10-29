@@ -220,8 +220,8 @@ jobs:
           command: |
             set -x
             sudo mkdir -p /tmp/test-logs/
-            cd /tmp/test-logs/ && sudo chmod 777 -R /tmp/test-logs
-            touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
+            cd /tmp/test-logs/ && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
+            sudo chmod 777 -R /tmp/test-logs
 
       - run:
           name: Build and start container to verify it is working
