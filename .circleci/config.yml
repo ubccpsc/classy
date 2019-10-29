@@ -220,14 +220,14 @@ jobs:
           command: |
             set -x
             sudo mkdir -p /tmp/test-logs/
-            cd /tmp/test-logs/ && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log
+            cd /tmp/test-logs/ && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
             sudo chmod 777 -R /tmp/test-logs
 
       - run:
           name: Build and start container to verify it is working
           command: |
             set -x
-            docker-compose up -d 2>&1 | tee -a /tmp/test-logs/docker-stdout
+            docker-compose up -d 2>&1 | tee -a /tmp/test-logs/docker-stdout.log
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
@@ -274,17 +274,17 @@ jobs:
 
       - run:
           name: Shut down containers
-          command: docker-compose down 2>&1 | tee -a /tmp/test-logs/docker-stdout
+          command: docker-compose down 2>&1 | tee -a /tmp/test-logs/docker-stdout.log
 
       - run:
           name: Cleaning up Docker containers and images
           command: |
-            docker system prune -af 2>&1 | tee -a /tmp/test-logs/docker-stdout
+            docker system prune -af 2>&1 | tee -a /tmp/test-logs/docker-stdout.log
           when: always
 
       - store_artifacts:
           path: /tmp/test-logs
-          destination: raw-test-output
+          destination: raw-test-outputgit
 
       - run:
           name: Cleaning up SSLs and Environment
