@@ -198,7 +198,7 @@ jobs:
           name: "Export SSL CERT and SSL KEY paths"
           command: |
             set -x
-            SSL_PATH="~/project/packages/portal/backend/ssl"
+            SSL_PATH="/home/circleci/project/packages/portal/backend/ssl"
             echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
       - run:
