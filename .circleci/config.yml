@@ -169,7 +169,7 @@ jobs:
     working_directory: ~/project
 
     environment:
-      TEST_RESULTS: ~/project/test-logs
+      TEST_LOGS: ~/project/test-logs
 
     steps:
       - checkout
@@ -219,9 +219,9 @@ jobs:
           name: Create paths for artifact collections
           command: |
             set -x
-            sudo mkdir -p ~/project/test-logs/
-            cd ~/project/test-logs/ && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
-            sudo chmod 777 -R ~/project/test-logs
+            sudo mkdir -p ${TEST_LOGS}
+            cd ${TEST_LOGS} && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
+            sudo chmod 777 -R ${TEST_LOGS}
 
       - run:
           name: Build and start container to verify it is working
@@ -289,7 +289,7 @@ jobs:
       - run:
           name: Cleaning up SSLs and Environment
           command: |
-            rm .env && rm ${HOME}/project/packages/portal/backend/ssl/fullchain.pem && rm ${HOME}/project/packages/portal/backend/ssl/privkey.pem
+            rm .env && rm ~/project/packages/portal/backend/ssl/fullchain.pem && rm ~/project/packages/portal/backend/ssl/privkey.pem
           when: always
 
       - run:
