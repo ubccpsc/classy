@@ -233,6 +233,7 @@ jobs:
       - run:
           name: Test to see that Portal front-end static HTML is served
           command: |
+            set -x
             STRING="<title>Classy</title>"
             URL=https://localhost
             LOG_PATH=${TEST_LOGS}/portal-front-end-test.log
@@ -247,6 +248,7 @@ jobs:
       - run:
           name: Test to see that Portal back-end API is running in `classytest` mode
           command: |
+            set -x
             URL='https://localhost/portal/config'
             LOG_PATH=${TEST_LOGS}/portal-back-end-test.log
             curl -ks $URL 2>&1 | tee -a $LOG_PATH
@@ -261,6 +263,7 @@ jobs:
       - run:
           name: Test to see that AutoTest is running
           command: |
+            set -x
             STRING='Failed to process commit'
             URL='https://localhost/portal/githubWebhook'
             LOG_PATH=${TEST_LOGS}/autotest-test.log
