@@ -283,7 +283,7 @@ jobs:
           when: always
 
       - store_artifacts:
-          path: ${TEST_LOGS}
+          path: /home/circleci/project/test-logs
           destination: raw-test-output
 
       - run:
