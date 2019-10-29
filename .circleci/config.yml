@@ -262,7 +262,7 @@ jobs:
           name: Test to see that AutoTest is running
           command: |
             STRING='Failed to process commit'
-            URL='https://localhost/githubWebhook'
+            URL='https://localhost/portal/githubWebhook'
             LOG_PATH=~/project/test-logs/autotest-test.log
             curl -k -X POST $URL 2>&1 | tee -a $LOG_PATH
             if cat $LOG_PATH | grep -q "$STRING"; then
