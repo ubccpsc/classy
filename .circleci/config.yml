@@ -227,7 +227,7 @@ jobs:
           name: Build and start container to verify it is working
           command: |
             set -x
-            docker-compose up -d 2>&1 | tee -a ~/project/test-logs/docker-stdout.log
+            docker-compose up -d 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
@@ -235,7 +235,7 @@ jobs:
           command: |
             STRING="<title>Classy</title>"
             URL=https://localhost
-            LOG_PATH=~/project/test-logs/portal-front-end-test.log
+            LOG_PATH=${TEST_LOGS}/portal-front-end-test.log
             curl -k $URL 2>&1 | tee -a $LOG_PATH
             if cat $LOG_PATH | grep -q "$STRING"; then
               printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
@@ -248,7 +248,7 @@ jobs:
           name: Test to see that Portal back-end API is running in `classytest` mode
           command: |
             URL='https://localhost/portal/config'
-            LOG_PATH=~/project/test-logs/portal-back-end-test.log
+            LOG_PATH=${TEST_LOGS}/portal-back-end-test.log
             curl -ks $URL 2>&1 | tee -a $LOG_PATH
             CLASSY_ORG=$(cat $LOG_PATH | jq --raw-output '.success.org')
             if [ "$CLASSY_ORG" != "classytest" ]; then
@@ -263,7 +263,7 @@ jobs:
           command: |
             STRING='Failed to process commit'
             URL='https://localhost/portal/githubWebhook'
-            LOG_PATH=~/project/test-logs/autotest-test.log
+            LOG_PATH=${TEST_LOGS}/autotest-test.log
             curl -k -X POST $URL 2>&1 | tee -a $LOG_PATH
             if cat $LOG_PATH | grep -q "$STRING"; then
               printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
@@ -274,17 +274,17 @@ jobs:
 
       - run:
           name: Shut down containers
-          command: docker-compose down 2>&1 | tee -a ~/project/test-logs/docker-stdout.log
+          command: docker-compose down 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
 
       - run:
           name: Cleaning up Docker containers and images
           command: |
-            docker system prune -af 2>&1 | tee -a ~/project/test-logs/docker-stdout.log
+            docker system prune -af 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
           when: always
 
       - store_artifacts:
-          path: ~/propject/test-logs
-          destination: raw-test-outputgit
+          path: ${TEST_LOGS}
+          destination: raw-test-output
 
       - run:
           name: Cleaning up SSLs and Environment
@@ -296,7 +296,7 @@ jobs:
           name: Cleaning up artifacts
           command: |
             set -x
-            sudo rm -rf ~/project/test-logs
+            sudo rm -rf ${TEST_LOGS}
           when: always
 workflows:
   version: 2
