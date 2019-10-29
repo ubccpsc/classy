@@ -169,7 +169,7 @@ jobs:
     working_directory: ~/project
 
     environment:
-      TEST_LOGS: ~/project/test-logs
+      TEST_LOGS: eval echo ~/project/test-logs
 
     steps:
       - checkout
