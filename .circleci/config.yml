@@ -305,8 +305,7 @@ workflows:
   version: 2
   docker_compose_tests:
     jobs:
-    #   - build
-      - build_run_stop
+      - build
   nightly:
     triggers:
       - schedule:
@@ -315,6 +314,6 @@ workflows:
           filters:
             branches:
               only:
-                - feature/circle-ci-24-hour-build-test
+                - master
     jobs:
       - build_run_stop
