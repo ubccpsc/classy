@@ -301,8 +301,8 @@ workflows:
   version: 2
   docker_compose_tests:
     jobs:
-    #   - build
-      - build_run_stop
+      - build
+    #   - build_run_stop
   nightly:
     triggers:
       - schedule:
