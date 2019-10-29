@@ -226,7 +226,7 @@ jobs:
           name: Build and start container to verify it is working
           command: |
             set -x
-            docker-compose up -d 2>&1 | tee -a /tmp/test-logs/stdout
+            docker-compose up -d 2>&1 | tee -a /tmp/test-logs/docker-stdout
 
       # curl -k command turns of SSL cert verification. These are self-signed certs and we just want to know the app is running
       - run:
