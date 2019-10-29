@@ -249,7 +249,7 @@ jobs:
           command: |
             URL='https://localhost/portal/config'
             LOG_PATH=/tmp/test-logs/portal-back-end-test.log
-            curl -k $URL 2>&1 | tee -a $LOG_PATH
+            curl -ks $URL 2>&1 | tee -a $LOG_PATH
             CLASSY_ORG=cat $LOG_PATH | jq --raw-output '.success.org'
             if [ "$CLASSY_ORG" != "classytest" ]; then
               printf "\nClassy organization is $CLASSY_ORG value. Expected 'classytest'.\n Test failed\n" 2>&1 | tee -a $LOG_PATH
