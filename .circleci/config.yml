@@ -198,22 +198,20 @@ jobs:
           name: "Export SSL CERT and SSL KEY paths"
           command: |
             set -x
-            SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
+            SSL_PATH="~/project/packages/portal/backend/ssl"
             echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
 
       - run:
           name: Generate self-signed certs
           command: |
             set -x
-            SSL_PATH="${HOME}/project/packages/portal/backend/ssl"
+            SSL_PATH="~/project/packages/portal/backend/ssl"
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
       - run:
           name: Create mount path for MongoDB
-          command: |
-            set -x
-            sudo mkdir -p /var/opt/classy/db
+          command: sudo mkdir -p /var/opt/classy/db
 
       - run:
           name: Create paths for artifact collections
@@ -281,8 +279,7 @@ jobs:
 
       - run:
           name: Cleaning up Docker containers and images
-          command: |
-            docker system prune -af 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+          command: docker system prune -af 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
           when: always
 
       - store_artifacts:
@@ -291,8 +288,7 @@ jobs:
 
       - run:
           name: Cleaning up SSLs and Environment
-          command: |
-            rm .env && rm ~/project/packages/portal/backend/ssl/fullchain.pem && rm ~/project/packages/portal/backend/ssl/privkey.pem
+          command: rm .env && rm ~/project/packages/portal/backend/ssl/fullchain.pem && rm ~/project/packages/portal/backend/ssl/privkey.pem
           when: always
 
       - run:
@@ -305,7 +301,8 @@ workflows:
   version: 2
   docker_compose_tests:
     jobs:
-      - build
+    #   - build
+      - build_run_stop
   nightly:
     triggers:
       - schedule:
@@ -314,6 +311,6 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - feature/circle-ci-24-hour-build-test
     jobs:
       - build_run_stop
