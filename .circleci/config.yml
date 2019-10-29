@@ -240,6 +240,7 @@ jobs:
               printf "\n'$STRING' found\n Test passed\n" 2>&1 | tee -a $LOG_PATH
             else
               printf "\n'$STRING' not found\n Test failed\n" 2>&1 | tee -a $LOG_PATH
+              exit 1
             fi
 
       - run:
