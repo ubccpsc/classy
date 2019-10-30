@@ -83,7 +83,7 @@ describe("DeliverablesController", () => {
     });
 
     // this test should be last
-    it("Should enforce default constraint on student delay in deliverables when saving.", async () => {
+    it("Should enforce minimum constraint on student delay in deliverables when saving.", async () => {
         const db = DatabaseController.getInstance();
 
         const allPeople = await db.getPeople();
@@ -103,7 +103,7 @@ describe("DeliverablesController", () => {
         expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
     });
 
-    it("Should enforce custom entered student delay as greater than default", async () => {
+    it("Should enforce custom entered minimum delay between grade requests", async () => {
         const db = DatabaseController.getInstance();
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
