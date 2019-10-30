@@ -437,7 +437,7 @@ describe("GitHubActions", () => {
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
-        const importUrl = githubHost + '/repos/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const selectedFiles = 'AutoTest.md';
         const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;

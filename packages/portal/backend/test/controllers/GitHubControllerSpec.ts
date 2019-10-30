@@ -173,7 +173,7 @@ describe("GitHubController", () => {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = githubHost + '/repos/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -201,7 +201,7 @@ describe("GitHubController", () => {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = githubHost + '/repos/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -246,7 +246,7 @@ describe("GitHubController", () => {
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
         Log.test("Custom setup done");
 
-        const importURL = githubHost + '/repos/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
         Log.test("Custom test done: " + success);
         expect(success).to.be.true;
