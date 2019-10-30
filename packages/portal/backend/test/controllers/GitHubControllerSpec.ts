@@ -247,7 +247,7 @@ describe("GitHubController", () => {
         Log.test("Custom setup done");
 
         const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
-        const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
+        const success = await gc.createRepository(repo.id, importURL, "README.md");
         Log.test("Custom test done: " + success);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
