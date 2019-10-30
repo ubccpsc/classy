@@ -53,7 +53,7 @@ Forks are encouraged to work using PRs on their local repos as well as using the
 
 To do this you can:
 
-```
+```bash
 # if you made some changes and forgot to branch:
 git stash
 git checkout -b <DESCRIPTIVE_BRANCH_NAME>
