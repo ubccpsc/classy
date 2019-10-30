@@ -27,6 +27,8 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 * `#check` Checks to ensure a commit has been queued for grading. This is often used by students who want to confirm that their submission is in fact on the grading queue.
 
+## Instructor AutoBot Commands
+
 * `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
