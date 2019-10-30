@@ -300,7 +300,7 @@ jobs:
           when: always
 workflows:
   version: 2
-  integration_tests:
+  ci_tests:
     jobs:
       - build
     # Uncomment if you want to run the Docker-compose workflow in regular pushes
