@@ -210,10 +210,9 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
  4. Cert renewal could be put in cron somewhere, something like:
      ```bash
-     0 0,12 * * * root sleep $((RANDOM % 3600)) && certbot renew
+     0 4 1 * * root certbot renew
      ```
-     However, we don't want classy being shut down just whenever. Better to wait for Lets Encrypt to email an alert (sa-certs@cs.ubc.ca)
-     and then find a good time to do it manually.
+     4am on the 1st of the month seems like a reasonable time to up/down nginx...
 
 ## Configure Firewall Rules
 
