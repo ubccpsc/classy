@@ -208,9 +208,9 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
      would need to be restarted in any case to mount the new certificates. Note: the deploy hook should also run on
      successfully renewal copy the latest version of the certificates to `/opt/classy/ssl` before restarting Classy.
 
- 4. Cert renewal could be put in cron somewhere, something like:
+ 4. Cert renewal could be put in /etc/cron.d/certbot-renew, something like:
      ```bash
-     0 4 1 * * root certbot renew
+     13 4 1 * * root certbot renew
      ```
      4am on the 1st of the month seems like a reasonable time to up/down nginx...
 
