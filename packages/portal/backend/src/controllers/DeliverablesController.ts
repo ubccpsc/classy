@@ -42,7 +42,7 @@ export class DeliverablesController {
         // }
 
         // the above was pretty complicated
-        const MIN_DELAY = Config.getInstance().getProp(ConfigKey.default_student_delay) || 60 * 15; // ENV setting or 15 minutes
+        const MIN_DELAY = Config.getInstance().getProp(ConfigKey.minimum_student_delay) || 60 * 15; // ENV setting or 15 minutes
         if (deliv.autotest.studentDelay < MIN_DELAY) {
             deliv.autotest.studentDelay = MIN_DELAY;
         }

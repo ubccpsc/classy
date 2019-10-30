@@ -31,7 +31,7 @@ export enum ConfigKey {
     classlist_username = "classlist_username",
     classlist_password = "classlist_password",
 
-    default_student_delay = "default_student_delay",
+    minimum_student_delay = "minimum_student_delay",
     publichostname = "publichostname",
 
     backendUrl = "backendUrl",
@@ -102,7 +102,7 @@ export default class Config {
                 classlist_username: process.env.CLASSLIST_USERNAME,
                 classlist_password: process.env.CLASSLIST_PASSWORD,
 
-                default_student_delay: process.env.DEFAULT_STUDENT_DELAY,
+                minimum_student_delay: process.env.MINIMUM_STUDENT_DELAY,
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 hostDir:  process.env.HOST_DIR,
