@@ -15,6 +15,9 @@
   ],
   "license": "MIT",
   "version": "0.4.0",
+  "engines": {
+    "node": ">= 8.9 < 9"
+  },
   "dependencies": {
     "coveralls": "^3.0.2",
     "dockerode": "^2.5.7",
