@@ -109,7 +109,7 @@ jobs:
             command: |
                       set -e
                       cd packages/portal/backend
-                      yarn coverCI
+                      npm coverCI
             name: Running backend tests
             environment:
               MOCHA_FILE: testOutput/backend/test/test-results.xml
