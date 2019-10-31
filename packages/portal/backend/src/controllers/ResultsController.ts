@@ -13,7 +13,7 @@ export class ResultsController {
     public async getAllResults(): Promise<Result[]> {
         Log.trace("ResultsController::getAllResults() - start");
 
-        const results = await this.db.getResults();
+        const results = await this.db.getAllResults();
 
         // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
         results.sort(function(a: Result, b: Result) {
@@ -60,10 +60,30 @@ export class ResultsController {
         return outcome;
     }
 
+    /**
+     * Find a result for a specific SHA. Return null if such a result does not exist.
+     *
+     * @param delivId
+     * @param repoId
+     * @param sha
+     */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResult | null> {
         Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
 
         const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
+        return outcome;
+    }
+
+    /**
+     * Find all of the results for a given deliverable and repo. Return [] if there are no results.
+     *
+     * @param delivId
+     * @param repoId
+     */
+    public async getResults(delivId: string, repoId: string): Promise<AutoTestResult[]> {
+        Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - start");
+
+        const outcome = await DatabaseController.getInstance().getResults(delivId, repoId);
         return outcome;
     }
 

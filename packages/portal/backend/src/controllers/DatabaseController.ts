@@ -91,7 +91,7 @@ export class DatabaseController {
         return teams;
     }
 
-    public async getResults(): Promise<Result[]> {
+    public async getAllResults(): Promise<Result[]> {
         const query = {};
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
@@ -682,9 +682,35 @@ export class DatabaseController {
         }
     }
 
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result> {
-
+    /**
+     * For a given deliverable and repo, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     * @param repoId
+     */
+    public async getResults(delivId: string, repoId: string): Promise<Result[]> {
         const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
+
+        return results;
+    }
+
+    /**
+     * Find the result for a given deliverable, repo, SHA tuple or null if such a result does not exist.
+     *
+     * @param delivId
+     * @param repoId
+     * @param sha
+     */
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result | null> {
+        const results = await this.getResults(delivId, repoId) as Result[];
         let result = null;
         for (const res of results) {
             if (res.commitSHA === sha) {
@@ -693,13 +719,7 @@ export class DatabaseController {
             }
         }
 
-        if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result found");
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
-                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
-                result.input.target = (result.input as any).pushInfo;
-            }
-        } else {
+        if (result === null) {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result not found");
         }
         return result;
