@@ -445,6 +445,7 @@ describe('AutoTest Routes', function() {
         // NOTE: this is a terrible tests; without the service running we get nothing
         let response = null;
         const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
+        const autotestUrl = Config.getInstance().getProp(ConfigKey.autotestUrl);
 
         const url = '/portal/githubWebhook';
         try {
@@ -458,7 +459,11 @@ describe('AutoTest Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
         const text = response.text;
-        expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+        if (autotestUrl.indexOf('localhost') > -1) {
+            expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+        } else {
+            expect(text.indexOf('ENOTFOUND')).to.be.greaterThan(0); // non-localhost autotest hostname name results in different error
+        }
     });
 
     describe('GET /portal/at/docker/images', function() {
