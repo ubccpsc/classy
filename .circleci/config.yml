@@ -110,7 +110,9 @@ jobs:
             command: |
                       set -e
                       cd packages/portal/backend
-                      ./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI
+                      ## HACK, we have to use the RAW command instead of yarn command (and then use NPM to run the tests)
+                      ## https://github.com/istanbuljs/nyc/issues/921
+                      ./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov npm run testCI
             name: Running backend tests
             environment:
               MOCHA_FILE: testOutput/backend/test/test-results.xml
