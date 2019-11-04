@@ -46,7 +46,7 @@
         "nyc": "11.3.0",
         "request": "2.88.0",
         "request-promise-native": "^1.0.5",
-        "restify": "^6.3.4",
+        "restify": "^8.4.0",
         "source-map-loader": "^0.2.3",
         "supertest": "^3.0.0",
         "tmp-promise": "^1.0.4",
