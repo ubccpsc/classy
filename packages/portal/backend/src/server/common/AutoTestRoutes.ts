@@ -390,7 +390,12 @@ export class AutoTestRoutes implements IREST {
             res.send(200, succ);
         }).catch(function(err) {
             Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err.message);
-            return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
+            if (err.message && err.message.indexOf("hang up") >= 0) {
+                Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response');
+                return res.end();
+            } else {
+                return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
+            }
         });
     }
 
