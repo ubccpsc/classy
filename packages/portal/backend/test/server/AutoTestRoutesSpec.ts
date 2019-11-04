@@ -390,7 +390,7 @@ describe('AutoTest Routes', function() {
             custom:    {}
         };
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
@@ -424,7 +424,7 @@ describe('AutoTest Routes', function() {
 
         delete gradePayload.score; // remove field
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
