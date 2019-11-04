@@ -134,7 +134,7 @@ jobs:
       - run:
             command: mkdir -p testOutput/autotest/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
-            when: on_success
+            when: always
 
       - run:
             command: cd packages/portal/backend && yarn coveralls
