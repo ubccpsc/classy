@@ -280,7 +280,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
-        const url = this.host + ":" + this.port + "/portal/at/result/";
+        const url = this.host + ":" + this.port + "/portal/at/result";
 
         try {
             const opts: rp.RequestPromiseOptions = {
