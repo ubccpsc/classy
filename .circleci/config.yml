@@ -119,7 +119,7 @@ jobs:
       - run:
             command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
             name: Converting backend test results to HTML
-            when: on_success
+            when: always
 
       - run:
             command: |
