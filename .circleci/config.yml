@@ -303,9 +303,9 @@ workflows:
   version: 2
   ci_tests:
     jobs:
-      - build
+    #   - build
     # Uncomment if you want to run the Docker-compose workflow in regular pushes
-    #   - build_run_stop
+      - build_run_stop
   nightly:
     triggers:
       - schedule:
