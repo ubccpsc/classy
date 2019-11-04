@@ -58,7 +58,7 @@ export default class GeneralRoutes implements IREST {
         server.post('/portal/team', GeneralRoutes.postTeam);
 
         // server.get('/portal/resource/:path', GeneralRoutes.getResource);
-        server.get('/portal/resource/.*', GeneralRoutes.getResource);
+        server.get('/portal/resource/*', GeneralRoutes.getResource);
 
         // IP restricted
         server.put('/portal/classlist', GeneralRoutes.updateClasslist);

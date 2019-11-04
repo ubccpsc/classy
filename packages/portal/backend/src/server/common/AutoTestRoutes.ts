@@ -41,7 +41,7 @@ export class AutoTestRoutes implements IREST {
         server.get('/portal/at/personId/:githubId', AutoTestRoutes.atPersonId);
         server.get('/portal/at/container/:delivId', AutoTestRoutes.atContainerDetails);
 
-        server.post('/portal/at/grade/', AutoTestRoutes.atGrade);
+        server.post('/portal/at/grade', AutoTestRoutes.atGrade);
 
         server.post('/portal/at/result/', AutoTestRoutes.atPostResult);
         server.get('/portal/at/result/:delivId/:repoId/:sha', AutoTestRoutes.atGetResult);
