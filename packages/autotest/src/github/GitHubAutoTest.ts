@@ -95,6 +95,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (containerConfig !== null) {
                     const input: ContainerInput = {delivId, target: info, containerConfig};
                     this.addToStandardQueue(input);
+
+                    if (Array.isArray(deliv.regressionDelivIds) && deliv.regressionDelivIds.length > 0) {
+                        for (const regressionId of deliv.regressionDelivIds) {
+                            const regressionDetails = await this.classPortal.getContainerDetails(regressionId);
+                            if (regressionDetails !== null) {
+                                Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
+                                const regressionInput: ContainerInput = {
+                                    delivId:         regressionId,
+                                    target:          info,
+                                    containerConfig: regressionDetails
+                                };
+                                this.addToRegressionQueue(regressionInput);
+                            }
+                        }
+                    }
+
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
                     return true;

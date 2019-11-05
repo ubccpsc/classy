@@ -65,6 +65,15 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
+    public addToRegressionQueue(input: ContainerInput): void {
+        Log.info("AutoTest::addToRegressionQueue(..) - start; commit: " + input.target.commitSHA);
+        try {
+            this.regressionQueue.push(input);
+        } catch (err) {
+            Log.error("AutoTest::addToRegressionQueue(..) - ERROR: " + err);
+        }
+    }
+
     public addToScheduleQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToScheduleQueue(..) - start; commit: " + input.target.commitSHA);
         try {
