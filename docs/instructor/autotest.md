@@ -32,3 +32,11 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 * `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
+
+## Avoiding Queue Pile-Ups
+
+AutoTest queues student assignments that are to be marked by AutoTest. Due to a large number of students in a course who share the same deadline for a deliverable, many assignments may enter the AutoTest queue at nearly the same time. AutoTest can only concurrently mark up to four assignments. As an AutoGrade container, which marks a student assignment, may take longer than a minute to mark student assignments, if a student is allowed to push and request grade feedback on an assignment in short time intervals during a busy period, the rate at which students push code and request grade feedback may ovewhelm AutoTest. While AutoTest will continue to function, it may be a large inconvenience for students who need a grade shortly before an assignment is due, but have to wait until after the close date set on a deliverable.
+
+An instructor can set the minimum grade feedback delay to optimize the rate at which students should receive feedback for assignments. As queue issues may appear in large class sizes, the recommended minimum delay for student assignments is configured by default for 15 minutes.
+
+If your class requires a shorter minimum grade feedback delay, a custom minimum can be set in the `.env` file `MINIMUM_STUDENT_DELAY` property.

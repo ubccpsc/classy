@@ -54,6 +54,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [5.1 User Types](/docs/instructor/autotest.md#user-types)
     - [5.2 Student AutoBot Commands](/docs/instructor/autotest.md#student-autobot-commands)
     - [5.3 Instructor AutoBot Commands](/docs/instructor/autotest.md#instructor-autobot-commands)
+    - [5.4 Avoiding Queue Pile-ups](/docs/instructor/autotest.md#avoiding-queue-pile--ups)
   
 <!-- /TOC -->
 
