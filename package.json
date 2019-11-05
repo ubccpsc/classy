@@ -39,7 +39,6 @@
         "jsonschema": "1.2.2",
         "lerna": "^2.0.0-rc.5",
         "mocha": "4.0.1",
-        "nyc": "11.3.0",
         "ts-node": "4.1.0",
         "tslint": "^5.11.0",
         "typescript": "^3.5.2",
