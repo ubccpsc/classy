@@ -119,7 +119,7 @@ jobs:
       - run:
             command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
             name: Converting backend test results to HTML
-            when: always
+            when: on_success
 
       - run:
             command: |
@@ -134,7 +134,7 @@ jobs:
       - run:
             command: mkdir -p testOutput/autotest/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
-            when: always
+            when: on_success
 
       - run:
             command: cd packages/portal/backend && yarn coveralls
