@@ -232,7 +232,7 @@ export class ClassPortal implements IClassPortal {
 
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendGrade(..) - grade accepted; url: " + grade.URL);
+                Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId + "; url: " + grade.URL);
                 return json;
             } else {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; grade not accepted:  " + JSON.stringify(json));

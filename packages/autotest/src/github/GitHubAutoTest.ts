@@ -114,6 +114,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                     containerConfig: regressionDetails
                                 };
 
+                                Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
                                 Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
                                     "; input: " + JSON.stringify(regressionInput));
 
