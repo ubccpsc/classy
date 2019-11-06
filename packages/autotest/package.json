@@ -30,7 +30,7 @@
     "mocha-junit-reporter": "^1.17.0",
     "mongodb": "^3.0.2",
     "nyc": "^12.0.2",
-    "postcss-cssnext": "2.11.0",
+    "postcss-preset-env": "6.7.0",
     "request": "^2.83.0",
     "request-promise-native": "^1.0.5",
     "restify": "^8.4.0",
