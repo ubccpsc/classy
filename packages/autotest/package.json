@@ -34,8 +34,8 @@
     "request-promise-native": "^1.0.5",
     "restify": "^8.4.0",
     "ts-node": "^7.0.0",
-    "typescript": "^2.9.2"
-  },
+    "typescript": "^3.7.2"
+},
   "scripts": {
     "build": "tsc",
     "build:prod": "tsc --outDir bin --sourceMap false",
