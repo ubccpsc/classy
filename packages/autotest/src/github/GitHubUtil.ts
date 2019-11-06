@@ -271,13 +271,13 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await rp(message.url, options);
-                    Log.trace("GitHubUtil::postMarkdownToGithub(..) - success");
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - success for url: " + message.url);
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
                 }
             } else {
-                Log.trace("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false) for url: " + message.url);
             }
         } catch (err) {
             Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);

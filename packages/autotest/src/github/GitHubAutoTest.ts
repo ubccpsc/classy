@@ -267,7 +267,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message to: " + message.url);
         } else {
             Log.info("GitHubAutoTest::postToGitHub(..) - posting message to: " + message.url);
-            // const gh = new GitHubService();
+            Log.info("GitHubAutoTest::postToGitHub(..) - info: " + JSON.stringify(info)); // TODO: debugging only
+            Log.info("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message)); // TODO: debugging only
             return await GitHubUtil.postMarkdownToGithub(message);
         }
     }
@@ -616,7 +617,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + "; feedbackMode: " + feedbackMode);
                 const msg = await this.classPortal.formatFeedback(data, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) &&
