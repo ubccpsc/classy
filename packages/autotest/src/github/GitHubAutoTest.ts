@@ -102,6 +102,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                             if (regressionDetails !== null) {
                                 const regressionInfo: CommitTarget = JSON.parse(JSON.stringify(info)); // ensure we have a copy
                                 regressionInfo.delivId = regressionId;
+
+                                if (typeof regressionInfo.flags === 'undefined' || Array.isArray(regressionInfo.flags) === false) {
+                                    regressionInfo.flags = [];
+                                }
                                 regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
 
                                 const regressionInput: ContainerInput = {
