@@ -99,6 +99,8 @@ export class AdminController {
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
 
                 if (shouldSave === true) {
+                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for delivId: "
+                        + newGrade.delivId + "; URL: " + grade.URL);
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);

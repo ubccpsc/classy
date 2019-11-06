@@ -274,7 +274,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async schedule(info: CommitTarget): Promise<void> {
-        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
+        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId +
+            "; delivId: " + info.delivId + "; SHA: " + info.commitURL);
+
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
             const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig};

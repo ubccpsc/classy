@@ -246,7 +246,9 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
-        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
+        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode + "; delivId: " +
+            res.delivId + "; URL: " + res.commitURL);
+
         let feedback: string = '';
         try {
             if (res.input.target.kind === 'check') {
@@ -263,11 +265,18 @@ export class ClassPortal implements IClassPortal {
                 feedback = gradeRecord.feedback;
                 let altFeedback: string = "";
                 if (typeof feedbackMode === "string" && feedbackMode !== "default") {
-                    altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
 
-                    if (typeof altFeedback === "string") {
-                        Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
-                        feedback = altFeedback;
+                    if (typeof gradeRecord.custom !== 'undefined' &&
+                        typeof (gradeRecord.custom as any)[feedbackMode] !== 'undefined' &&
+                        (gradeRecord.custom as any)[feedbackMode].feedback !== 'undefined') {
+                        // really be sure that the feedbackMode feedback exists, otherwise use regular feedback
+
+                        altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
+
+                        if (typeof altFeedback === "string") {
+                            Log.info("ClassPortal::formatFeedback(..) - using altFeedback for URL : " + res.commitURL);
+                            feedback = altFeedback;
+                        }
                     }
                 }
                 feedback += await this.getContainerTime(res);
