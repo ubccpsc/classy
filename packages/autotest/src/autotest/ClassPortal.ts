@@ -246,6 +246,12 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+
+        // if it isn't specified, make it be 'default'
+        if (typeof feedbackMode === 'undefined') {
+            feedbackMode = 'default';
+        }
+
         Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode + "; delivId: " +
             res.delivId + "; URL: " + res.commitURL);
 
@@ -264,7 +270,7 @@ export class ClassPortal implements IClassPortal {
                 const gradeRecord = res.output.report;
                 feedback = gradeRecord.feedback;
                 let altFeedback: string = "";
-                if (typeof feedbackMode === "string" && feedbackMode !== "default") {
+                if (feedbackMode !== "default") {
 
                     if (typeof gradeRecord.custom !== 'undefined' &&
                         typeof (gradeRecord.custom as any)[feedbackMode] !== 'undefined' &&
