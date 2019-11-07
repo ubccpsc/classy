@@ -520,8 +520,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             throw new Error("GitHubAutoTest::handleCommentEvent( .. ) - info is null");
         }
 
-        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
-            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commenter: " +
+            info.personId + "; SHA: " + info.commitSHA);
 
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
