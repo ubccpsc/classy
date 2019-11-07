@@ -100,7 +100,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::tick(..) - start; " +
                 "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
                 "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
-                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ";" +
+                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + "; " +
                 "schedule - #wait: " + this.scheduleQueue.length() + ".");
 
             // Move scheduled items that are not eligible to run into the standard queue

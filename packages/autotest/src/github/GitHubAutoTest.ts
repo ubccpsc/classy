@@ -115,7 +115,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 };
 
                                 Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
-                                Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
+                                Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
                                     "; input: " + JSON.stringify(regressionInput));
 
                                 this.addToRegressionQueue(regressionInput);
@@ -267,8 +267,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message to: " + message.url);
         } else {
             Log.info("GitHubAutoTest::postToGitHub(..) - posting message to: " + message.url);
-            Log.info("GitHubAutoTest::postToGitHub(..) - info: " + JSON.stringify(info)); // TODO: debugging only
-            Log.info("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message)); // TODO: debugging only
+            Log.trace("GitHubAutoTest::postToGitHub(..) - info: " + JSON.stringify(info));
+            Log.trace("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message));
             return await GitHubUtil.postMarkdownToGithub(message);
         }
     }
