@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8.9.0
+      - image: circleci/node:12
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -105,18 +105,19 @@ jobs:
             name: Configure local git
             when: on_success
 
+            ## WORKS
       - run:
             command: |
                       set -e
                       cd packages/portal/backend
-                      yarn coverCI
+                      ./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI
             name: Running backend tests
             environment:
               MOCHA_FILE: testOutput/backend/test/test-results.xml
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/backend/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=testOutput/backend/test/index.html
+            command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 
@@ -131,7 +132,7 @@ jobs:
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/autotest/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --save=testOutput/autotest/test/index.html
+            command: mkdir -p testOutput/autotest/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
             when: on_success
 

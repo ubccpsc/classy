@@ -117,7 +117,7 @@ describe('AutoTest Routes', function() {
     it('Should reject an authorized result', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
 
         let body = null;
         try {
@@ -135,7 +135,7 @@ describe('AutoTest Routes', function() {
     it('Should accept a valid result payload', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
         const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
 
         try {
@@ -151,7 +151,7 @@ describe('AutoTest Routes', function() {
     it('Should reject an invalid result payload', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
 
         const body = { // : IAutoTestResult
             delivId:   Test.DELIVID0,
@@ -390,7 +390,7 @@ describe('AutoTest Routes', function() {
             custom:    {}
         };
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
@@ -424,7 +424,7 @@ describe('AutoTest Routes', function() {
 
         delete gradePayload.score; // remove field
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
