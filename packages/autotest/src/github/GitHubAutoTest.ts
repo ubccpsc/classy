@@ -106,7 +106,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 if (typeof regressionInfo.flags === 'undefined' || Array.isArray(regressionInfo.flags) === false) {
                                     regressionInfo.flags = [];
                                 }
-                                regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
+                                // This was problematic because timeouts wouldn't postback
+                                // regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
 
                                 const regressionInput: ContainerInput = {
                                     delivId:         regressionId,

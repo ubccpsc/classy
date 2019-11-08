@@ -409,8 +409,8 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) - done; SHA: " + data.commitSHA +
-                "; final processing took: " + Util.took(start));
+            Log.info("AutoTest::handleExecutionComplete(..) - done; delivId: " + data.delivId + "; SHA: " +
+                data.commitSHA + "; final processing took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

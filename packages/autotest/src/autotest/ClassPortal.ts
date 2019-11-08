@@ -265,6 +265,7 @@ export class ClassPortal implements IClassPortal {
                     state = res.output.state;
                 }
                 feedback = `AutoTest status for commit: **_${state}_**`;
+                Log.info("ClassPortal::formatFeedback(..) - check; URL: " + res.commitURL + "; status: " + state);
             } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
@@ -280,7 +281,7 @@ export class ClassPortal implements IClassPortal {
                         altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
 
                         if (typeof altFeedback === "string") {
-                            Log.info("ClassPortal::formatFeedback(..) - using altFeedback for URL : " + res.commitURL);
+                            Log.info("ClassPortal::formatFeedback(..) - using altFeedback; URL : " + res.commitURL);
                             feedback = altFeedback;
                         }
                     }
@@ -290,6 +291,13 @@ export class ClassPortal implements IClassPortal {
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
             return null;
+        }
+        if (feedback !== null && feedback.length > 40) {
+            Log.info("ClassPortal::formatFeedback(..) - feedback generated; URL: " + res.commitURL +
+                "; feedback: " + feedback.substr(0, 40));
+        } else {
+            Log.info("ClassPortal::formatFeedback(..) - feedback generated; URL: " + res.commitURL +
+                "; feedback: " + feedback);
         }
         return feedback;
     }
