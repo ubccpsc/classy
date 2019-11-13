@@ -1,5 +1,11 @@
 #!/bin/bash
 
+## Exports data in JSON array format to the output path you specified.
+## Available tables for export: teams, results, people, course, deliverables, comments
+##
+## Example usage: ./data_export_json.sh output.json results "{ delivId: 'd2' }"
+
+
 ## $1 - filename to export json to
 ## $2 - table to export
 ## $3 - optional query parameters in string ie. "{ delivId: 'd2' }"
