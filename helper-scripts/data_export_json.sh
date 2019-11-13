@@ -11,8 +11,9 @@
 user=`grep MONGO_INITDB_ROOT_USERNAME ./.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
 pw=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
 database=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^NAME=//'`
+outputPath="$1"
+table="$2"
 query="--query=$3"
-outputPath=''
 
 if [ -z $1 ]
   then
@@ -32,4 +33,4 @@ if [ -z $3 ]
     query=''
 fi
 
-docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$2" --authenticationDatabase=admin > "$1"
+docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$table" "$query" --authenticationDatabase=admin > "$outputPath"
