@@ -170,7 +170,8 @@ export class GitHubUtil {
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + payload.ref);
+            const ref = payload.ref;
+            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -216,7 +217,8 @@ export class GitHubUtil {
                 commitSHA,
                 commitURL,
                 postbackURL,
-                timestamp
+                timestamp,
+                ref
             };
 
             Log.info("GitHubUtil::processPush(..) - done");
