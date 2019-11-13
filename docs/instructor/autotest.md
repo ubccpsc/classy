@@ -10,7 +10,7 @@ Two teams have access to the Classy Admin portal:
 
 - `staff`
 - `admin`
-  
+
 Admin users may configure the course. Staff users are only able to help administer the course by viewing student repositories, AutoGrade container execution logs, and viewing grades.
 
 A bot user, *AutoBot* unless requested otherwise for a necessary use-case, will be added to the admin team. This gives *AutoBot* access to student repositories to allow for AutoGrade capabilities and giving grade feedback.
@@ -35,8 +35,19 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 ## Avoiding Queue Pile-Ups
 
-AutoTest queues student assignments that are to be marked by AutoTest. Due to a large number of students in a course who share the same deadline for a deliverable, many assignments may enter the AutoTest queue at nearly the same time. AutoTest can only concurrently mark up to four assignments. As an AutoGrade container, which marks a student assignment, may take longer than a minute to mark student assignments, if a student is allowed to push and request grade feedback on an assignment in short time intervals during a busy period, the rate at which students push code and request grade feedback may ovewhelm AutoTest. While AutoTest will continue to function, it may be a large inconvenience for students who need a grade shortly before an assignment is due, but have to wait until after the close date set on a deliverable.
+AutoTest queues student assignments before they are marked by a grading container. In CPSC courses, it is normal for a large number of students to be enrolled in a course. If a large number of students are enrolled in a course and the students share the same deadline for an assignment, AutoTest may queue a larger number of assignments near the deadline. AutoTest can only concurrently mark a small number of assignments. The queue, therefore, may experience a pile-up of assignments that are waiting to be graded, as assignments leave the queue at a slower rate at which they enter the queue.
 
-An instructor can set the minimum grade feedback delay to optimize the rate at which students should receive feedback for assignments. As queue issues may appear in large class sizes, the recommended minimum delay for student assignments is configured by default for 15 minutes.
+When a queue pile-up occurs, AutoTest will continue to function. While AutoTest will continue to function,students must wait for their grade results. This wait may inconvenience students if they urgently need grade feedback to continue with the assignment.
 
-If your class requires a shorter minimum grade feedback delay, a custom minimum can be set in the `.env` file `MINIMUM_STUDENT_DELAY` property.
+To minimize the potential of a queue pile-up:
+
+1) An AutoGrade container should be optimized to perform grading as quickly as possible.
+  - Any internal container initialization should be done during the container BUILD step when possible.
+  - If possible, cache any upstream dependencies that require a download and installation.
+2) A minimum grade feedback delay should be set that is appropriate for your class.
+
+A minimum grade feedback delay is the amount of time that a student must wait between grade requests. Without modifying a container, the minimum delay is the easiest variable to change to minimize the chance of a queue pile-up. *The recommended minimum delay between a grade request is 15 minutes*.
+
+If an instructor has prior experience running AutoTest in a course and has not experienced pile-ups, an instructor may experiment with a lesser minimum delay.
+
+If your class requires a shorter minimum grade feedback delay, a custom minimum can be set in the `.env` file `MINIMUM_STUDENT_DELAY` property, which requires access to the server configuration. Technical staff can assist.
