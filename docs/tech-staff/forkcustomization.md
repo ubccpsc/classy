@@ -1,8 +1,8 @@
 # Fork Customization
 
-Each CPSC course that uses Classy requires a fork of the `root` [https://github.com/ubccpsc/classy] repository. The fork is used to change code that is custom to a course. Even if you do not plan to change the default Classy code, it is required that you create a fork of the repository because your fork will act as a stable code source that technical staff can run your Classy server off of.
+Each course that wants to use Classy must fork the `root` [https://github.com/ubccpsc/classy] project. The fork is used to store any modifications that are custom to course. Even if you do not plan to change the default Classy code, it is required that you create a fork of the repository because your fork will act as a stable code source.
 
-Any user can fork the [UBCCPSC Classy](https://github.com/ubccpsc/classy) respository because it is open-source. It is strongly recommended that technical staff  setup the fork for an instructor to ensure that technical staff always have access to the fork. Access to the fork is necessary to pull in code changes from the instructor's fork into their Classy server. It is necessary that you add the instructor of the course to the fork as an owner of the organization. With owner permissions, the instructor can manage adding students and staff to the organization when it is necessary.
+Any user can fork the [UBCCPSC Classy](https://github.com/ubccpsc/classy) respository, but it is strongly recommended that technical staff create the fork in an organization for an instructor. This will give technical staff access to your fork. Access to the fork is necessary to maintain Classy for your course by downstreaming changes to your fork. The instructor of the course should always be an owner of the organization. With owner permissions, the instructor can manage adding students, TAs, or instructors to the organization when necessary.
 
 - [ ] Setup fork for instructor on Github.com
   - Use format `ubccpsc999` for organization name
@@ -12,9 +12,9 @@ Any user can fork the [UBCCPSC Classy](https://github.com/ubccpsc/classy) respos
 
 ## Test Fork Customization
 
-Continuous Integration (CI) tests can be run on code in a fork to ensure that major features are not broken. This use case is reccomended if the instructor is doing development on AutoTest or Portal Back-End. 
+Continuous Integration (CI) tests can be run on a fork to ensure that major features are not broken during development or updates. CI tests are *highly* reccomended if the instructor is doing development work on Classy.
 
-Continuous Integration tests will notify the instructor, and developers, when tests fail on a fork. This redundancy minimizes the risk that broken features do not make their way into a production Classy environment.
+Continuous Integration tests will notify contributors when tests fail on the fork. This redundancy minimizes the risk that broken features do not make their way into a production Classy environment.
 
 - [ ] If an instructor will be doing custom development work on AutoTest, check to see if integration tests are required for the type of work that the instructor is doing.
 - [ ] To implement CI tests, follow the [`/docs/continuous-integration-setup.md`](/docs/continuous-integration-setup.md) instructions.
