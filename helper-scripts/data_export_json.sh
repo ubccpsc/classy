@@ -10,13 +10,14 @@
 ## $2 - table to export
 ## $3 - optional query parameters in string ie. "{ delivId: 'd2' }"
 
-# user=`grep MONGO_INITDB_ROOT_USERNAME /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
-# pw=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
-# database=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^NAME=//'`
+user=`grep MONGO_INITDB_ROOT_USERNAME /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
+pw=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
+database=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^NAME=//'`
 
-user=`grep MONGO_INITDB_ROOT_USERNAME ./.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
-pw=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
-database=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^NAME=//'`
+# user=`grep MONGO_INITDB_ROOT_USERNAME ./.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
+# pw=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
+# database=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^NAME=//'`
+
 outputPath="$1"
 table="$2"
 query="--query=$3"
