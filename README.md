@@ -48,7 +48,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [3.2 Test a Container Checklist](/docs/instructor/autograde.md#test-a-container-checklist)
 - [4. Portal Manual](/docs/instructor/portal.md#overview)
     - [4.1 Classlist Enrollment](/docs/instructor/portal.md#classlist-enrollment)
-    - [4.2 Deliverable Configuration](/docs/instructors/portal.md#deliverable-configuration)
+    - [4.2 Deliverable Configuration](/docs/instructor/portal.md#deliverable-configuration)
     - [4.3 Distributing Assignments and Repository Creation](/docs/instructor/portal.md#distributing-assignments-and-repository-creation)
 - [5. AutoTest Manual](/docs/instructor/autotest.md#overview)
     - [5.1 User Types](/docs/instructor/autotest.md#user-types)
