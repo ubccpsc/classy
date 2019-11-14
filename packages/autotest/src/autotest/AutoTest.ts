@@ -150,23 +150,24 @@ export abstract class AutoTest implements IAutoTest {
                 return false;
             };
 
-            // express
-            // Log.trace("Queue::tick(..) - handle express");
+            // express first; if jobs are waiting here, make them happen
             tickQueue(this.expressQueue);
-            // express -> standard
-            promoteQueue(this.expressQueue, this.standardQueue);
-            // express -> regression
+            // express -> regression; if express jobs are waiting, override regression queue
             promoteQueue(this.expressQueue, this.regressionQueue);
+            // express -> standard; if express jobs are waiting, override standard queue
+            promoteQueue(this.expressQueue, this.standardQueue);
 
-            // standard
-            // Log.trace("Queue::tick(..) - handle standard");
+            // standard second; if slots are available after express promotions, schedule these
             tickQueue(this.standardQueue);
-            // standard -> regression
+            // standard -> regression; if regression has space, run the standard queue here
             promoteQueue(this.standardQueue, this.regressionQueue);
 
-            // regression
-            // Log.trace("Queue::tick(..) - handle regression");
+            // regression; only schedule if others have no waiting jobs
             tickQueue(this.regressionQueue);
+            // regression -> standard; if standard has space (after checking express and standard), run the regression queue here
+            promoteQueue(this.regressionQueue, this.standardQueue);
+            // regression -> express; NEVER do this; this is intentionally disabled so express is always available
+            // promoteQueue(--- BAD IDEA this.regressionQueue, this.expressQueue BAD IDEA ---);
 
             if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
                 this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
