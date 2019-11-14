@@ -299,12 +299,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async processCommentExists(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
-        Log.info("GitHubAutoTest::processCommentExists(..) - handling request for user: " +
-            info.personId + " for commit: " + info.commitURL);
-
         // previously processed
-        Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; handling for: " +
-            info.personId + "; SHA: " + info.commitSHA);
+        Log.info("GitHubAutoTest::processCommentExists(..) - handling request for: " +
+            info.personId + "; delivId: " + info.delivId + "; commit: " + info.commitURL);
 
         const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
         let feedbackMode;
@@ -321,8 +318,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const previousFeedback = await this.dataStore.getFeedbackGivenRecordForCommit(info);
             if (previousFeedback === null) {
                 // new request, charge for feedback given
-                Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
-                    info.personId + "; SHA: " + info.commitSHA);
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL, 'standard');
 
                 if (res.input.target.personId !== info.personId) {
@@ -827,6 +822,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async saveFeedbackGiven(delivId: string, userName: string, timestamp: number, commitURL: string, kind: string): Promise<void> {
         try {
+            Log.info("GitHubAutoTest::saveFeedbackGiven(..) - feedback request logged for: " +
+                userName + "; delivId: " + delivId + "; commit: " + commitURL);
             const record: IFeedbackGiven = {
                 commitURL,
                 delivId,
