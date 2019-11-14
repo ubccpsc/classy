@@ -5,9 +5,35 @@
 ##
 ## Example usage: ./data_export_json.sh output.json results "{ delivId: 'd2' }"
 
+## Args:
 ## $1 - filename to export json to
 ## $2 - table to export
 ## $3 - optional query parameters in string ie. "{ delivId: 'd2' }"
+
+printf "### Classy JSON Data Exporter v1\n"
+
+if [ $1 = "--help" ] || [ $1 = "-h" ]
+  then
+    printf "
+    This script exports data from MongoDB to a JSON file. If no arguments are supplied, the default export settings will be used.
+
+    Default Export Settings: Exports the entire `results` table to the ~/results.json destination file path.
+
+    Flags:
+    --help or -h Displays this menu
+    --quiet or -q Does not display prompts
+
+    Custom arguments:
+    \$1 - filename to export json to
+    \$2 - table to export
+    \$3 - optional query parameters in string ie. \"{ delivId: 'd2' }\"
+
+    Default export settings: ./data_export_json.sh
+    Example custom export settings: ./data_export_json.sh output.json results \"{ delivId: 'd2' }\"\n"
+    exit 0
+fi
+
+printf '# This script exports data from MongoDB to a JSON file. If no arguments are supplied, the default export settings are used. \n'
 
 user=`grep MONGO_INITDB_ROOT_USERNAME /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
 pw=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
@@ -17,37 +43,34 @@ outputPath="$1"
 table="$2"
 query="$3"
 
-printf "### Classy JSON Data Exporter v1\n"
-printf '# This script exports data from MongoDB to a JSON file. By default, the `results` table of
-a course will be exported to your current directory.'
-
-printf '\nOptional script arguments:
-1. Output destination file path ie. ~/results.json
-2. The database table to export ie. "comments" or "results"
-3. A query that returns only matching results from the table\n'
-
-
+printf '\nSettings: \n'
 if [ -z $1 ]
   then
     outputPath="results.json"
-    printf "\nDestination filepath set as default: $outputPath\n"
+    printf "\nDestination filepath: $outputPath\n"
+  else
+    printf "\nDestination filepath: $outputPath\n"
 fi
 
 if [ -z $2 ]
   then
     table='results'
     printf "MongoDB table set as default: $database\n"
+  else
+    printf "MongoDB table set as custom: $outputPath\n"
 fi
 
 if [ -z $3 ]
   then
     query=''
     printf "Query set as default: null \n\n"
+  else
+    printf "Query set as custom: $query \n\n"
 fi
 
-
-while true; do
-    read -p "Do you want to continue with data export operation? " yn
+while true;
+    do
+        read -p "Do you want to continue with data export operation? " yn
     case $yn in
         [Yy]* ) break;;
         [Nn]* ) exit;;
