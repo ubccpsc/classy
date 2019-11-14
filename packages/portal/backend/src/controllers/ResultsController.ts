@@ -49,7 +49,7 @@ export class ResultsController {
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
-        Log.info("ResultsController::createResult(..) - start");
+        Log.info("ResultsController::createResult(..) - start for commit: " + record.commitURL);
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
 
         const rc = new RepositoryController();

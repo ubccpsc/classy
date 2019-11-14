@@ -324,6 +324,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
                     info.personId + "; SHA: " + info.commitSHA);
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL, 'standard');
+
+                // NOTE: at this point we will have a result that finished computing before it was requested
+                // so the result.target field will be from the push and not the comment.
+                res.input.target.botMentioned = info.botMentioned;
+                res.input.target.personId = info.personId;
+                Log.info("GitHubAutoTest::processCommentExists(..) - updating target for: " +
+                    res.commitURL + " to: " + JSON.stringify(res.input.target));
+                await this.classPortal.sendResult(res);
             } else {
                 // previously paid, don't charge
                 Log.info("GitHubAutoTest::processCommentExists(..) - result already exists and paid for for: " +

@@ -388,6 +388,9 @@ export abstract class AutoTest implements IAutoTest {
                 "; SHA: " + data.commitSHA);
 
             try {
+                // Sends the result payload to Classy for saving in the database.
+                // NOTE: If the result was requested after the job was started, the request will not
+                // be reflected in the data.input.target fields.
                 const resultPayload = await this.classPortal.sendResult(data);
                 if (typeof resultPayload.failure !== 'undefined') {
                     Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " +
