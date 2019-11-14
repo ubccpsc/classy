@@ -17,9 +17,34 @@ outputPath="$1"
 table="$2"
 query="$3"
 
-echo "### Data Exporter v1"
-echo "# This script exports data JSON data from MongoDB to a JSON file. By default, the `results` table of
-a course will be exported to your current directory."
+printf "### Classy JSON Data Exporter v1\n"
+printf '# This script exports data from MongoDB to a JSON file. By default, the `results` table of
+a course will be exported to your current directory.'
+
+printf '\nOptional script arguments:
+1. Output destination file path ie. ~/results.json
+2. The database table to export ie. "comments" or "results"
+3. A query that returns only matching results from the table\n'
+
+
+if [ -z $1 ]
+  then
+    outputPath="results.json"
+    printf "\nDestination filepath set as default: $outputPath\n"
+fi
+
+if [ -z $2 ]
+  then
+    table='results'
+    printf "MongoDB table set as default: $database\n"
+fi
+
+if [ -z $3 ]
+  then
+    query=''
+    printf "Query set as default: null \n\n"
+fi
+
 
 while true; do
     read -p "Do you want to continue with data export operation? " yn
@@ -29,23 +54,5 @@ while true; do
         * ) echo "Please answer 'yes' or 'no': ";;
     esac
 done
-
-if [ -z $1 ]
-  then
-    read -p "Enter destination file path or press 'Enter' to default to ~/results.json: " outputPath
-    outputPath=(echo outputPath)
-    echo "\nDestination filepath: $outputPath\n"
-fi
-
-if [ -z $2 ]
-  then
-    read -p "What table would you like to export from MongoDB ${database} database? : " table
-    echo "\nMongoDB table: $database\n"
-fi
-
-if [ -z $3 ]
-  then
-    read -p "Please enter an optional query. Your query must be a valid MongoDB query in JSON format (ie. '{ delivId: 'd2' }'): " query
-fi
 
 docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$table" --query="$query" --authenticationDatabase=admin --jsonArray > "$outputPath"
