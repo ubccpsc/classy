@@ -12,7 +12,7 @@
 
 user=`grep MONGO_INITDB_ROOT_USERNAME /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
 pw=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
-database=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^NAME=//'`
+database=`grep NAME /opt/classy/.env -m 1 | sed -e 's/^NAME=//'`
 
 # user=`grep MONGO_INITDB_ROOT_USERNAME ./.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
 # pw=`grep MONGO_INITDB_ROOT_PASSWORD ./.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
