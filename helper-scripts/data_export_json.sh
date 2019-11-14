@@ -34,11 +34,13 @@ if [ -z $1 ]
   then
     read -p "Enter destination file path or press 'Enter' to default to ~/results.json: " outputPath
     outputPath=(echo outputPath)
+    echo "\nDestination filepath: $outputPath\n"
 fi
 
 if [ -z $2 ]
   then
     read -p "What table would you like to export from MongoDB ${database} database? : " table
+    echo "\nMongoDB table: $database\n"
 fi
 
 if [ -z $3 ]
