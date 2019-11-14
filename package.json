@@ -67,6 +67,7 @@
         "lint": "tslint --project tsconfig.json",
         "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
         "cover": "nyc --reporter text --reporter html yarn run test",
+        "export:results": "./helper-scripts/data_export_json.sh ~/results.json results",
         "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
         "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
     }
