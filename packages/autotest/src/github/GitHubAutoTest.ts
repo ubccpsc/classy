@@ -540,6 +540,18 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
+        const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
+            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA + "; hasPush: " + (pushEvent !== null));
+
+        if (pushEvent !== null && typeof pushEvent.ref === 'string') {
+            // if we have a push event for this commit, add it to the record
+            info.ref = pushEvent.ref;
+        } else {
+            // we don't have a push event so just explicitly set ref to '' (so string operations don't fail)
+            info.ref = '';
+        }
+
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {

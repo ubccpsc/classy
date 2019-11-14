@@ -80,6 +80,11 @@ export class GitHubUtil {
     }
 
     /**
+     *
+     * Processes a comment on a commit. Sent by GitHub.
+     *
+     * https://developer.github.com/v3/activity/events/types/#commitcommentevent
+     *
      * Throws exception if something goes wrong.
      *
      * @param payload
@@ -144,8 +149,10 @@ export class GitHubUtil {
             if (msg.length > 40) {
                 msg = msg.substr(0, 40) + "...";
             }
+
             Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
                 repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
+            Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
 
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
@@ -157,6 +164,11 @@ export class GitHubUtil {
     }
 
     /**
+     *
+     * Processes a push event. Sent by GitHub.
+     *
+     * https://developer.github.com/v3/activity/events/types/#pushevent
+     *
      * Throw an exception if something goes wrong.
      *
      * Returns null for push operations we do not need to handle (like branch deletion).
