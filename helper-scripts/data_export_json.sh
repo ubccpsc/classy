@@ -40,4 +40,5 @@ if [ -z $3 ]
     query=''
 fi
 
+echo "docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$table" "$query" --authenticationDatabase=admin > "$outputPath""
 docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$table" "$query" --authenticationDatabase=admin > "$outputPath"
