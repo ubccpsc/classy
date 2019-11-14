@@ -44,10 +44,8 @@ To minimize the potential of a queue pile-up:
 1) An AutoGrade container should be optimized to perform grading as quickly as possible.
   - Any internal container initialization should be done during the container BUILD step when possible.
   - If possible, cache any upstream dependencies that require a download and installation.
-2) A minimum grade feedback delay should be set that is appropriate for your class.
+2) A minimum grade feedback delay should be set that is appropriate for your deliverable.
 
-A minimum grade feedback delay is the amount of time that a student must wait between grade requests. Without modifying a container, the minimum delay is the easiest variable to change to minimize the chance of a queue pile-up. *The recommended minimum delay between a grade request is 15 minutes*.
-
-If an instructor has prior experience running AutoTest in a course and has not experienced pile-ups, an instructor may experiment with a lesser minimum delay.
+A minimum grade feedback delay is the amount of time that a student must wait between grade requests. Without modifying a container, the minimum delay is the easiest variable to change to minimize the chance of a queue pile-up. *The recommended minimum delay between grade requests is 15 minutes (300 seconds), but it most commonly set at 12 hours (43,200 seconds)*.
 
 If your class requires a shorter minimum grade feedback delay, a custom minimum can be set in the `.env` file `MINIMUM_STUDENT_DELAY` property, which requires access to the server configuration. Technical staff can assist.
