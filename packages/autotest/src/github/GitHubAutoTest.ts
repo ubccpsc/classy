@@ -329,6 +329,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // so the result.target field will be from the push and not the comment.
                 res.input.target.botMentioned = info.botMentioned;
                 res.input.target.personId = info.personId;
+                res.input.target.kind = 'standard'; // was push from the original request
                 Log.info("GitHubAutoTest::processCommentExists(..) - updating target for: " +
                     res.commitURL + " to: " + JSON.stringify(res.input.target));
                 await this.classPortal.sendResult(res);

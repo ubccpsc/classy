@@ -13,8 +13,7 @@ import {Deliverable, Person} from "../../portal/backend/src/Types";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
-// const loadFirst = require('./GlobalSpec');
-import './GlobalSpec'; // load first
+import "./GlobalSpec"; // load first
 
 /* tslint:disable:max-line-length */
 describe("GitHub Event Parser", () => {
@@ -122,11 +121,12 @@ describe("GitHub Event Parser", () => {
             timestamp:    1516324553000,
             botMentioned: false,
             personId:     null,
-            kind:         'push'
+            kind:         "push",
+            ref:          "refs/heads/master"
         };
         delete expected.timestamp;
         delete actual.timestamp;
-        expect(expected).to.deep.equal(actual);
+        expect(actual).to.deep.equal(expected);
     });
 
     it("Should be able to parse a push that created a new branch.", async () => {
@@ -143,11 +143,12 @@ describe("GitHub Event Parser", () => {
             timestamp:    1516322017000,
             botMentioned: false,
             personId:     null,
-            kind:         'push'
+            kind:         "push",
+            ref:          "refs/heads/test2"
         };
         delete expected.timestamp;
         delete actual.timestamp;
-        expect(expected).to.deep.equal(actual);
+        expect(actual).to.deep.equal(expected);
     });
 
     it("Should be able to parse a push that deleted an existing branch.", async () => {
@@ -172,12 +173,13 @@ describe("GitHub Event Parser", () => {
             timestamp:    1516324487000,
             botMentioned: false,
             personId:     null,
-            kind:         'push'
+            kind:         "push",
+            ref:          "refs/heads/test2"
         };
 
         delete expected.timestamp;
         delete actual.timestamp;
-        expect(expected).to.deep.equal(actual);
+        expect(actual).to.deep.equal(expected);
     });
 
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function() {
@@ -219,11 +221,11 @@ describe("GitHub Event Parser", () => {
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             personId:     PERSONID,
-            kind:         'standard',
+            kind:         "standard",
             repoId:       "d1_project9999",
             delivId:      "d4",
             timestamp:    1516324833000,
-            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             flags:        []
         };
 
@@ -243,11 +245,11 @@ describe("GitHub Event Parser", () => {
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
             personId:     PERSONID,
-            kind:         'standard',
+            kind:         "standard",
             repoId:       "d1_project9999",
             delivId:      null,
             timestamp:    1516320674000,
-            cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
+            cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
             flags:        []
         };
 
@@ -269,7 +271,7 @@ describe("GitHub Event Parser", () => {
             commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             personId:     PERSONID,
-            kind:         'standard',
+            kind:         "standard",
             repoId:       "d1_project9999",
             delivId:      "d4",
             timestamp:    1516324931000,
