@@ -12,7 +12,20 @@
 
 printf "### Classy JSON Data Exporter v1\n"
 
-if [ $1 = "--help" ] || [ $1 = "-h" ]
+help=''
+quiet=''
+
+while getopts ":hq" opt; do
+  case ${opt} in
+    h ) help='true'
+      ;;
+    q ) quiet='true'
+      ;;
+  esac
+done
+shift $((OPTIND -1))
+
+if [ $help == "true" ]
   then
     printf "
     This script exports data from MongoDB to a JSON file. If no arguments are supplied, the default export settings will be used.
@@ -20,8 +33,8 @@ if [ $1 = "--help" ] || [ $1 = "-h" ]
     Default Export Settings: Exports the entire `results` table to the ~/results.json destination file path.
 
     Flags:
-    --help or -h Displays this menu
-    --quiet or -q Does not display prompts
+    -h Displays the help menu
+    -q Continues without display prompt
 
     Custom arguments:
     \$1 - filename to export json to
@@ -33,8 +46,6 @@ if [ $1 = "--help" ] || [ $1 = "-h" ]
     exit 0
 fi
 
-printf '# This script exports data from MongoDB to a JSON file. If no arguments are supplied, the default export settings are used. \n'
-
 user=`grep MONGO_INITDB_ROOT_USERNAME /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_USERNAME=//'`
 pw=`grep MONGO_INITDB_ROOT_PASSWORD /opt/classy/.env | sed -e 's/^MONGO_INITDB_ROOT_PASSWORD=//'`
 database=`grep NAME /opt/classy/.env -m 1 | sed -e 's/^NAME=//'`
@@ -43,32 +54,28 @@ outputPath="$1"
 table="$2"
 query="$3"
 
-printf '\nSettings: \n'
+printf '\nSelected settings: \n'
 if [ -z $1 ]
   then
     outputPath="results.json"
-    printf "\nDestination filepath: $outputPath\n"
-  else
-    printf "\nDestination filepath: $outputPath\n"
 fi
 
 if [ -z $2 ]
   then
     table='results'
-    printf "MongoDB table set as default: $database\n"
-  else
-    printf "MongoDB table set as custom: $outputPath\n"
 fi
 
 if [ -z $3 ]
   then
     query=''
-    printf "Query set as default: null \n\n"
-  else
-    printf "Query set as custom: $query \n\n"
 fi
 
-while true;
+printf "
+    Destination file path: $outputPath
+    MongoDB table set as custom: $table
+    Query: $query \n\n"
+
+while [[ true ]] && [[ $quiet != 'true' ]];
     do
         read -p "Do you want to continue with data export operation? " yn
     case $yn in
