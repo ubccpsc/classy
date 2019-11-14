@@ -545,10 +545,21 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA + "; hasPush: " + (pushEvent !== null));
 
         if (pushEvent !== null && typeof pushEvent.ref === 'string') {
-            // if we have a push event for this commit, add it to the record
+            // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
             info.ref = pushEvent.ref;
         } else {
-            // we don't have a push event so just explicitly set ref to '' (so string operations don't fail)
+            // We don't have a push event so just explicitly set ref to '' (so string operations don't fail).
+            //
+            // NOTE: this happens when a comment is made on a commit that is not the one that was pushed
+            // e.g., when 3 commits are pushed and the comment is on any commit that isn't the most recent
+            // in the push. This typically happens on < 5% of student comments. The GitHub API does not provide
+            // a way to recover this information.
+            //
+            // One hack might be to look at the ref of the preceeding push for this repo, but that is not
+            // going to be reliable enough to use as a grading criteria for most courses.
+            //
+            // Another approach would be to just comment here and ask for only grading on the pushed commit
+            // but that might feel overly restrictive.
             info.ref = '';
         }
 
