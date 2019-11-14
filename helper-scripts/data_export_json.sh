@@ -33,6 +33,7 @@ done
 if [ -z $1 ]
   then
     read -p "Enter destination file path or press 'Enter' to default to ~/results.json: " outputPath
+    outputPath=(echo outputPath)
 fi
 
 if [ -z $2 ]
