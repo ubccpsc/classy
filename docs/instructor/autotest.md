@@ -10,7 +10,7 @@ Two teams have access to the Classy Admin portal:
 
 - `staff`
 - `admin`
-  
+
 Admin users may configure the course. Staff users are only able to help administer the course by viewing student repositories, AutoGrade container execution logs, and viewing grades.
 
 A bot user, *AutoBot* unless requested otherwise for a necessary use-case, will be added to the admin team. This gives *AutoBot* access to student repositories to allow for AutoGrade capabilities and giving grade feedback.
@@ -32,3 +32,20 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 * `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
+
+## Avoiding Queue Pile-Ups
+
+AutoTest queues student assignments before they are marked by a grading container. In CPSC courses, it is normal for a large number of students to be enrolled in a course. If a large number of students are enrolled in a course and the students share the same deadline for an assignment, AutoTest may queue a larger number of assignments near the deadline. AutoTest can only concurrently mark a small number of assignments. The queue, therefore, may experience a pile-up of assignments that are waiting to be graded, as assignments leave the queue at a slower rate at which they enter the queue.
+
+When a queue pile-up occurs, AutoTest will continue to function. While AutoTest will continue to function,students must wait for their grade results. This wait may inconvenience students if they urgently need grade feedback to continue with the assignment.
+
+To minimize the potential of a queue pile-up:
+
+1) An AutoGrade container should be optimized to perform grading as quickly as possible.
+  - Any internal container initialization should be done during the container BUILD step when possible.
+  - If possible, cache any upstream dependencies that require a download and installation.
+2) A minimum grade feedback delay should be set that is appropriate for your deliverable.
+
+A minimum grade feedback delay is the amount of time that a student must wait between grade requests. Without modifying a container, the minimum delay is the easiest variable to change to minimize the chance of a queue pile-up. *The recommended minimum delay between grade requests is 15 minutes (300 seconds), but it most commonly set at 12 hours (43,200 seconds)*.
+
+If your class requires a shorter minimum grade feedback delay, a custom minimum can be set in the `.env` file `MINIMUM_STUDENT_DELAY` property, which requires access to the server configuration. Technical staff can assist.
