@@ -31,7 +31,7 @@ fi
 if [ -z $2 ]
   then
     echo "WARNING: No table selected. Defaulting to export 'results' table..."
-    query=''
+    table='results'
 fi
 
 if [ -z $3 ]
