@@ -37,7 +37,6 @@ fi
 if [ -z $3 ]
   then
     echo "No query arguments supplied. Defaulting to entire table export."
-    query=''
 fi
 
 echo "docker exec db mongoexport --username="$user" --password="$pw" --db="$database" --collection="$table" "$query" --authenticationDatabase=admin > "$outputPath""
