@@ -5,11 +5,6 @@
 ##
 ## Example usage: ./data_export_json.sh output.json results "{ delivId: 'd2' }"
 
-## Args:
-## $1 - filename to export json to
-## $2 - table to export
-## $3 - optional query parameters in string ie. "{ delivId: 'd2' }"
-
 printf "### Classy JSON Data Exporter v1\n"
 
 help=''
@@ -43,9 +38,9 @@ if [ "$help" == "true" ]
     -q Continues without display prompt
 
     Custom arguments:
-    \$1 - filename to export json to
-    \$2 - table to export
-    \$3 - optional query parameters in string ie. \"{ delivId: 'd2' }\n"
+    \$1 - string: filename to export json to
+    \$2 - string: table to export
+    \$3 - string: optional query parameters in string ie. \"{ delivId: 'd2' }\n"
 
     exit 0
 fi
