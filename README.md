@@ -12,7 +12,7 @@ Primary contributors:
 
 ## Contributing to Classy
 
-Features that add value can be merged back into the core Classy project if there is adequate code coverage (> 90%) and the feature has been tested in a downstream fork for a semester. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value. Features, on the other hand, that are only useful to a single course will likley not add value. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
+Features that add value to Classy should be merged back into the core Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value. Features, on the other hand, that are only useful to a single course will likley not add value. The feature needs to have adequate code coverage (> 90%) and have been tested in a downstream fork for a semester to be eligible as a contribution. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
 
 To contribute code to Classy, create a PR that has your code in a feature branch (ie. `feature/my-new-feature`) ready to merge into the root `ubccpsc/master` branch. The code should be re-based on the `ubccpsc/master` branch before a PR is setup, as the re-base will eliminate any later downstream and upstream merge issues. Classy has been configured with CircleCI for validating work so that any PR that fails to pass CI will not be merged.
 
