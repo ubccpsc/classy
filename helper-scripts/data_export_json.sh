@@ -34,8 +34,8 @@ if [ "$help" == "true" ]
         Example: ./data_export_json.sh output.json results \"{ delivId: 'd2' }\"
 
     Flags:
-    -h Displays the help menu
-    -q Continues without display prompt
+    --help or -h Displays the help menu
+    --quiet or -q Continues without display prompt
 
     Custom arguments:
     \$1 - string: filename to export json to
