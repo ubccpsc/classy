@@ -53,7 +53,6 @@ outputPath="$1"
 table="$2"
 query="$3"
 
-printf '\nSelected settings: \n'
 if [ -z "$1" ]
   then
     outputPath="results.json"
@@ -70,6 +69,8 @@ if [ -z "$3" ]
 fi
 
 printf "
+Selected settings:
+
     Destination file path: $outputPath
     MongoDB table set as custom: $table
     Query: $query \n\n"
