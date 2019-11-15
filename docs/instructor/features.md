@@ -12,9 +12,9 @@
       - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature)
 <!-- /TOC -->
 
-Classy is an application that helps instructors distribute and automatically grade assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control.
+Classy helps automate the distribution and grading of assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
 
-Classy consists of a front-end application named *Portal* and a back-end application named *AutoTest*. *Portal* helps instructors manage course administration by enabling instructors to setup assignments, setup autograding, and manage grades. *AutoTest* integrates with Github to create an interactive experience for students by giving automated feedback and notifying a student if a build fails on `commit` and `push` actions. *AutoTest* supports the full customization of these features to fit the business requirements of the course.
+Classy's front-end consists of a front-end JavaScript framework and a back-end for front-end RESTful API. The front-end application is named *Portal*. Classy's back-end consists of a RESTful API. The back-end application is named *AutoTest*. While *Portal* helps instructors manage course administration by enabling instructors to setup assignments, setup autograding, and manage grades, *AutoTest* integrates with Github to create an interactive grading experience. Automated feedback to students can occur on student `commit` and `push` actions. Customized grade feedback can be produced where a student build fails or passes, with additional reports, such as coverage. *AutoTest* supports the full customization of these features to fit the business requirements of a course through the custom logic that an instructor programs into a Docker container.
 
 ## Portal
 
