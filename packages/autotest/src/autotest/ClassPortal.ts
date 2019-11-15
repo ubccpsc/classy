@@ -103,8 +103,8 @@ export class ClassPortal implements IClassPortal {
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
 
+        const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
-            const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
             Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -119,12 +119,12 @@ export class ClassPortal implements IClassPortal {
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
+                Log.error("ClassPortal::isStaff(..) - inner ERROR; url: " + url + "; ERROR: " + JSON.stringify(json));
                 return NO_ACCESS;
             }
 
         } catch (err) {
-            Log.error("ClassPortal::isStaff(..) - ERROR: " + err);
+            Log.error("ClassPortal::isStaff(..) - outer ERROR; url: " + url + "; ERROR: " + err);
             return NO_ACCESS;
         }
     }
@@ -212,7 +212,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
-        const url = this.host + ":" + this.port + "/portal/at/grade/";
+        const url = this.host + ":" + this.port + "/portal/at/grade";
         try {
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -303,7 +303,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
-        const url = this.host + ":" + this.port + "/portal/at/result/";
+        const url = this.host + ":" + this.port + "/portal/at/result";
 
         try {
             const opts: rp.RequestPromiseOptions = {
