@@ -59,17 +59,17 @@ table="$2"
 query="$3"
 
 printf '\nSelected settings: \n'
-if [ -z $1 ]
+if [ -z "$1" ]
   then
     outputPath="results.json"
 fi
 
-if [ -z $2 ]
+if [ -z "$2" ]
   then
     table='results'
 fi
 
-if [ -z $3 ]
+if [ -z "$3" ]
   then
     query=''
 fi
