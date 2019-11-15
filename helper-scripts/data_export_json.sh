@@ -25,12 +25,12 @@ while getopts ":hq" opt; do
 done
 shift $((OPTIND -1))
 
-if [ $help == "true" ]
+if [ "$help" == "true" ]
   then
     printf "
     This script exports data from MongoDB to a JSON file. If no arguments are supplied, the default export settings will be used.
 
-    Default Export Settings: Exports the entire `results` table to the ~/results.json destination file path.
+    Default Export Settings: Exports the entire 'results' table to the ~/results.json destination file path.
 
     Flags:
     -h Displays the help menu
