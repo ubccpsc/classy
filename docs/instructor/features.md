@@ -41,7 +41,7 @@ Classy's front-end consists of a front-end JavaScript framework and a back-end f
 
 ## Github and AutoTest Examples
 
-In the following scenarios, an instructor has pre-configured AutoTest to mark all `lab2` deliverables using a custom Docker container that he has built. The expected behaviour of AutoTest is demonstrated based on the student actions.
+In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom built AutoGrade container. AutoTest runs the AutoGrade container for each `push` and marks the latest `commit`. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
 ### Student User Examples
 
