@@ -32,6 +32,12 @@ if [ "$help" == "true" ]
 
     Default Export Settings: Exports the entire 'results' table to the ~/results.json destination file path.
 
+        Example: ./data_export_json.sh
+
+    Custom Export Settings: Will export matches of a query in a table to a specified destination file path.
+
+        Example: ./data_export_json.sh output.json results \"{ delivId: 'd2' }\"
+
     Flags:
     -h Displays the help menu
     -q Continues without display prompt
@@ -39,10 +45,8 @@ if [ "$help" == "true" ]
     Custom arguments:
     \$1 - filename to export json to
     \$2 - table to export
-    \$3 - optional query parameters in string ie. \"{ delivId: 'd2' }\"
+    \$3 - optional query parameters in string ie. \"{ delivId: 'd2' }\n"
 
-    Default export settings: ./data_export_json.sh
-    Example custom export settings: ./data_export_json.sh output.json results \"{ delivId: 'd2' }\"\n"
     exit 0
 fi
 
