@@ -13,9 +13,9 @@
     - [Pull-Requests from `fork` to `root/master`](#pull-requests-from-fork-to-rootmaster)
     - [Node Library Dependencies](#node-library-dependencies)
 
-Each course that uses Classy requires a fork of the core Classy project ([ubccpsc/classy](https://github.com/ubccpsc/classy) where custom development can take place. If custom features are developed that suit the core project, you can request that the feature is merged into the core project by setting up a pull-request of the feature on a branch that is re-based to `ubccpsc/master`.
-
 All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging bug fix PRs as well as the feature-based PRs below.
+
+A fork of the core Classy project, ([ubccpsc/classy](https://github.com/ubccpsc/classy), is required by any course that uses Classy. The fork is where custom development for a course can take place. If custom features are developed that suit the core project, the feature can be merged into the core project. Before setting up a pull-request, ensure that your code is in a feature branch and the branch is re-based to `ubccpsc/master`.
 
 Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes when they pull from upstream.
 
@@ -125,7 +125,7 @@ On `fork`:
 
 On `fork`:
 
-This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `master` branch. Instead, try to create a testing or release branch to run your code changes in.
+This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `master` branch. Instead, try to create a testing or release branch to run your modified code in.
 
 <img src="../assets/pull-request-to-upstream.svg"/>
 
