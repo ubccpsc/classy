@@ -60,14 +60,12 @@
     },
     "scripts": {
         "postinstall": "git config core.hooksPath .githooks",
-        "pre-build": "./helper-scripts/default-file-setup.sh",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
         "lintOLD": "tslint -c tslint.json 'packages/portal/backend/src/**/*.ts' 'packages/portal/backend/test/**/*.ts' 'packages/portal/frontend/src/**/*.ts' 'packages/portal/frontend/test/**/*.ts' 'packages/autotest/src/**/*.ts' 'packages/autotest/test/**/*.ts'",
         "lint": "tslint --project tsconfig.json",
         "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
         "cover": "nyc --reporter text --reporter html yarn run test",
-        "export:results": "./helper-scripts/data_export_json.sh ~/results.json results",
         "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
         "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
     }
