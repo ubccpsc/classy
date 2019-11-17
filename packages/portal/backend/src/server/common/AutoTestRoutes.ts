@@ -103,7 +103,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atConfiguration(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start GET');
+        Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start');
         const start = Date.now();
 
         let payload: ClassyConfigurationPayload;
@@ -113,12 +113,15 @@ export class AutoTestRoutes implements IREST {
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.trace('AutoTestRouteHandler::atConfiguration(..) - name: ' + name);
+            Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name + '; took: ' + Util.took(start));
 
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             let defaultDeliverable: string | null = null;
+            Log.info('AutoTestRouteHandler::atConfiguration(..) - cc; took: ' + Util.took(start));
+
             cc.getCourse().then(function(course) {
                 defaultDeliverable = course.defaultDeliverableId;
+                Log.info('AutoTestRouteHandler::atConfiguration(..) - default: ' + defaultDeliverable + '; took: ' + Util.took(start));
                 return cc.getDeliverables();
             }).then(function(deliverables) {
                 const delivIds = [];

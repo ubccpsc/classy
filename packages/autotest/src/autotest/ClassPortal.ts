@@ -169,20 +169,20 @@ export class ClassPortal implements IClassPortal {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.info("ClassPortal::getDefaultDeliverableId(..) - requesting from: " + url);
+        Log.info("ClassPortal::getConfiguration(..) - requesting from: " + url);
         try {
-            const res = await rp(url, opts); // .then(function(res) {
-            Log.info("ClassPortal::getDefaultDeliverableId() - success; took: " + Util.took(start));
-            Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload:", res);
+            const res = await rp(url, opts);
+            Log.info("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
+            Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
             const json: ClassyConfigurationPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR: " + JSON.stringify(json));
+                Log.trace("ClassPortal::getConfiguration() - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
-            Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR; url: " + url + "; ERROR: " + err);
+            Log.trace("ClassPortal::getConfiguration() - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         }
     }
