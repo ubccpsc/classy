@@ -92,7 +92,7 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.trace("GitHubUtil::processComment(..) - start");
+            Log.info("GitHubUtil::processComment(..) - start");
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -104,9 +104,13 @@ export class GitHubUtil {
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
+            Log.info("GitHubUtil::processComment(..) - 1");
+
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
+
+            Log.info("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = [];
             for (const command of ['force', 'silent', 'check', 'schedule', 'unschedule']) {
@@ -120,6 +124,8 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
+            Log.info("GitHubUtil::processComment(..) - 3");
+
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
@@ -130,6 +136,8 @@ export class GitHubUtil {
             if (flags.indexOf("#check") >= 0) {
                 kind = 'check';
             }
+
+            Log.info("GitHubUtil::processComment(..) - 4");
 
             const commentEvent: CommitTarget = {
                 delivId,
@@ -158,7 +166,7 @@ export class GitHubUtil {
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
-            Log.error("GitHubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
+            Log.error("GitHubUtil::processComment(..) - ERROR payload: ", payload);
             return null;
         }
     }

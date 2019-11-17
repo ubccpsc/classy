@@ -60,6 +60,7 @@ export class AdminController {
      */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
         Log.info("AdminController::processNewAutoTestGrade( .. ) - start");
+
         const cc = await Factory.getCourseController(this.gh);
 
         try {
@@ -78,6 +79,8 @@ export class AdminController {
                 return false;
             }
 
+            Log.info("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
+
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
 
@@ -95,8 +98,13 @@ export class AdminController {
                     custom:    grade.custom
                 };
 
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
+                    "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
+                    "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {
                     Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for delivId: "

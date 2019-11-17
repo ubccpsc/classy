@@ -212,6 +212,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
+        const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/grade";
         try {
             const opts: rp.RequestPromiseOptions = {
@@ -239,7 +240,7 @@ export class ClassPortal implements IClassPortal {
                 return json;
             }
         } catch (err) {
-            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
         }
@@ -303,6 +304,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
+        const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/result";
 
         try {
@@ -330,7 +332,7 @@ export class ClassPortal implements IClassPortal {
                 return json;
             }
         } catch (err) {
-            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
         }
