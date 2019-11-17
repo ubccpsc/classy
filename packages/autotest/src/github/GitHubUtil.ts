@@ -40,6 +40,9 @@ export class GitHubUtil {
         let msg = message;
         if (msg.length > 40) {
             msg = msg.substr(0, 40) + "...";
+            if (msg.indexOf('\n') > 0) {
+                msg = msg.substr(0, msg.indexOf('\n'));
+            }
         }
 
         Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
