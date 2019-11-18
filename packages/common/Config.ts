@@ -73,6 +73,11 @@ export enum ConfigKey {
     patchId = "patchId", // Used by sdmm/classy
     patchToolUrl = "patchToolUrl",
     patchSourceRepo = "patchSourceRepo",
+
+    // ADMIN_TEAM_NAME
+    adminTeamName = "adminTeamName",
+    // STAFF_TEAM_NAME
+    staffTeamName = "staffTeamName",
 }
 
 export default class Config {
@@ -143,7 +148,10 @@ export default class Config {
 
                 patchId:         process.env.PATCH_ID,
                 patchToolUrl:    process.env.PATCH_TOOL_URL,
-                patchSourceRepo: process.env.PATCH_SOURCE_REPO
+                patchSourceRepo: process.env.PATCH_SOURCE_REPO,
+
+                adminTeamName:  process.env.ADMIN_TEAM_NAME,
+                staffTeamName:  process.env.STAFF_TEAM_NAME,
             };
 
             // this is not a great place for this

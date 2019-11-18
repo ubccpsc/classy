@@ -4,13 +4,14 @@ import {TeamTransport} from "../../../../common/types/PortalTypes";
 import Util from "../../../../common/Util";
 import {Deliverable, Person, PersonKind, Team} from "../Types";
 
+import Config, {ConfigKey} from "../../../../common/Config";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
-    public static readonly STAFF_NAME = 'staff';
-    public static readonly ADMIN_NAME = 'admin';
+    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName);
+    public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName);
 
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;
@@ -39,7 +40,7 @@ export class TeamController {
         // remove special teams
         const teamsToReturn = [];
         for (const team of teams) {
-            if (team.id === 'admin' || team.id === 'staff' || team.id === 'students') {
+            if (team.id === TeamController.ADMIN_NAME || team.id === TeamController.STAFF_NAME || team.id === 'students') {
                 // do not include
             } else {
                 teamsToReturn.push(team);

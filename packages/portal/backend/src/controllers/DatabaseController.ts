@@ -5,6 +5,7 @@ import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
 
 import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {TeamController} from "./TeamController";
 
 export class DatabaseController {
     /**
@@ -674,7 +675,7 @@ export class DatabaseController {
             // Make sure required Team objects exist.
             // Cannot use TeamController because this would cause an infinite loop since
             // TeamController uses this code to get the database instance.
-            let teamName = 'admin';
+            let teamName = TeamController.ADMIN_NAME;
             let team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
@@ -689,7 +690,7 @@ export class DatabaseController {
                 };
                 await this.writeTeam(newTeam);
             }
-            teamName = 'staff';
+            teamName = TeamController.STAFF_NAME;
             team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
