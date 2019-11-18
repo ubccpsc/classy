@@ -35,6 +35,7 @@ Two scripts exist on the VM that can perform the database dump and grading run a
 - [ ] Once grading runs have been archived, host filesystem run have been deleted
   - Command: `rm -rf /var/opt/classy/runs/*`
 - [ ] ClassList API **sections** and **term** have been updated in `/opt/classy/.env` file.
+  - Course sections found here: [Course Schedule](https://courses.students.ubc.ca/cs/courseschedule?pname=subjarea&tname=subj-department&dept=CPSC)
 - [ ] A new Github organization namespace has been created for the term  (ie. **cpsc210-2019w-t1**)
   - Instructions: [Add Students and Staff to Github Organization](/docs/tech-staff/githubsetup.md#add-students-and-staff-to-github-organization)
 - [ ] A new OAuth application has been created under the new Github organization and integrated in the `/opt/classy/.env` file
