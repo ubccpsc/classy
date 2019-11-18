@@ -93,16 +93,19 @@ export class DatabaseController {
 
     public async getAllResults(): Promise<Result[]> {
         const query = {};
+        const start = Date.now();
+        Log.trace("DatabaseController::getAllResults() - start");
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
-        Log.trace("DatabaseController::getResult() - #: " + results.length);
+
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
         }
+        Log.trace("DatabaseController::getAllResults() - done; #: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -178,8 +181,10 @@ export class DatabaseController {
     }
 
     public async getGrades(): Promise<Grade[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getGrades() - start");
         const grades = await this.readRecords(this.GRADECOLL, {}) as Grade[];
-        Log.trace("DatabaseController::getGrades() - #: " + grades.length);
+        Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
 
@@ -691,6 +696,8 @@ export class DatabaseController {
      * @param repoId
      */
     public async getResults(delivId: string, repoId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - start");
         const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
@@ -698,6 +705,9 @@ export class DatabaseController {
                 result.input.target = (result.input as any).pushInfo;
             }
         }
+
+        Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
 
         return results;
     }

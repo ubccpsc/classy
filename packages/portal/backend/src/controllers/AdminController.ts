@@ -222,6 +222,9 @@ export class AdminController {
      */
     public async getGrades(): Promise<GradeTransport[]> {
         const allGrades = await this.gc.getAllGrades();
+        Log.info("AdminController::getGrades() - start");
+        const start = Date.now();
+
         const grades: GradeTransport[] = [];
         const pc = new PersonController();
         for (const grade of allGrades) {
@@ -239,6 +242,8 @@ export class AdminController {
             };
             grades.push(gradeTrans);
         }
+
+        Log.info("AdminController::getGrades() - done; took: " + Util.took(start));
         return grades;
     }
 
@@ -338,6 +343,9 @@ export class AdminController {
     }
 
     public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
+        Log.trace("AdminController::matchResults(..) - start");
+        const start = Date.now();
+
         const allResults = await this.resC.getAllResults();
         const NUM_RESULTS = 1000;
 
@@ -357,7 +365,8 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.trace("AdminController::matchResults(..) - # results: " + results.length);
+
+        Log.trace("AdminController::matchResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -448,7 +457,7 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.info("AdminController::getResults(..) - # results: " + results.length + "; took: " + Util.took(start));
+        Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -459,6 +468,8 @@ export class AdminController {
      */
     public async getDeliverables(): Promise<DeliverableTransport[]> {
         const deliverables = await this.dbc.getDeliverables();
+        const start = Date.now();
+        Log.trace("AdminController::getDeliverables() - start");
 
         let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
@@ -472,6 +483,7 @@ export class AdminController {
             return d1.id.localeCompare(d2.id);
         });
 
+        Log.trace("AdminController::getDeliverables() - done; # delivs: " + delivs.length + "; took: " + Util.took(start));
         return delivs;
     }
 

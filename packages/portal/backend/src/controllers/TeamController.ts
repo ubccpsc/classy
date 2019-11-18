@@ -32,6 +32,7 @@ export class TeamController {
      */
     public async getAllTeams(): Promise<Team[]> {
         Log.trace("TeamController::getAllTeams() - start");
+        const start = Date.now();
 
         const teams = await this.db.getTeams();
 
@@ -45,13 +46,17 @@ export class TeamController {
             }
         }
 
+        Log.trace("TeamController::getAllTeams() - done; took: " + Util.took(start));
         return teamsToReturn;
     }
 
     public async getTeam(name: string): Promise<Team | null> {
         Log.info("TeamController::getTeam( " + name + " ) - start");
+        const start = Date.now();
 
         const team = await this.db.getTeam(name);
+
+        Log.info("TeamController::getTeam( " + name + " ) - done; took: " + Util.took(start));
         return team;
     }
 
@@ -103,6 +108,7 @@ export class TeamController {
 
     public async getTeamsForPerson(myPerson: Person): Promise<Team[]> {
         Log.trace("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
+        const start = Date.now();
 
         let myTeams: Team[] = [];
         const allTeams = await this.db.getTeams();
@@ -117,7 +123,8 @@ export class TeamController {
             return a.delivId.localeCompare(b.delivId);
         });
 
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " + myTeams.length);
+        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " +
+            myTeams.length + "; took: " + Util.took(start));
         return myTeams;
     }
 

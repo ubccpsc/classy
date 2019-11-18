@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
 import {GradeReport} from "../../../../common/types/ContainerTypes";
+import Util from "../../../../common/Util";
 import {Result} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -12,6 +13,7 @@ export class ResultsController {
 
     public async getAllResults(): Promise<Result[]> {
         Log.trace("ResultsController::getAllResults() - start");
+        const start = Date.now();
 
         const results = await this.db.getAllResults();
 
@@ -34,6 +36,7 @@ export class ResultsController {
             return tsB - tsA;
         });
 
+        Log.trace("ResultsController::getAllResults() - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -44,19 +47,25 @@ export class ResultsController {
      * @returns {Result}
      */
     public async getResultFromURL(url: string, delivId: string): Promise<Result | null> {
+        Log.trace("ResultsController::getResultFromURL() - start; delivId: " + delivId + "; url: " + url);
+        const start = Date.now();
+
         const result = await this.db.getResultFromURL(url, delivId);
+        Log.trace("ResultsController::getResultFromURL() - start; delivId: " + delivId + "; url: " + url + "; took: " + Util.took(start));
+
         return result;
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start for commit: " + record.commitURL);
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
+        const start = Date.now();
 
         const rc = new RepositoryController();
         const people = await rc.getPeopleForRepo(record.repoId);
 
         const outcome = await DatabaseController.getInstance().writeResult({...record, people});
-        Log.trace("ResultsController::createResult(..) - result written");
+        Log.trace("ResultsController::createResult(..) - done; commit: " + record.commitURL + "; took: " + Util.took(start));
         return outcome;
     }
 
@@ -69,8 +78,11 @@ export class ResultsController {
      */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResult | null> {
         Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
+
+        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - done; took: " + Util.took(start));
         return outcome;
     }
 
@@ -82,8 +94,13 @@ export class ResultsController {
      */
     public async getResults(delivId: string, repoId: string): Promise<AutoTestResult[]> {
         Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - start");
+        const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResults(delivId, repoId);
+
+        Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
         return outcome;
     }
 
