@@ -92,6 +92,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1.8 Patching](/docs/tech-staff/updates.md)
     - [1.8.1 Operating System](/docs/tech-staff/updates.md#operating-system)
     - [1.8.2 Classy](/docs/tech-staff/updates.md#classy)
+- [1.9 Term Transitions](/docs/tech-staff/termtransitions.md#overview)
 
 <!-- /TOC -->
 
