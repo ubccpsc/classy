@@ -3,8 +3,8 @@
 <!-- TOC depthfrom:2 -->
 - [Backup Configuration](#backup-configuration)
   - [Term Transition](#term-transition)
+    - [Back-up and Archive Network Locations](#back-up-and-archive-network-locations)
     - [Archive Runs and Back-up Database](#archive-runs-and-back-up-database)
-    - [Network Locations](#network-locations)
     - [Term Transition Checklist](#term-transition-checklist)
   - [Database](#database)
   - [AutoTest Executions](#autotest-executions)
@@ -14,6 +14,11 @@
 
 Each Classy VM is assigned a hostname that is re-used for a course. As Classy is not designed to run multiple instances on a host, term transitions require an exact end-date. The end-date marks a time that data from the prior term will no longer be modified and can be safely archived on a network storage location without disrupting course operations.
 
+### Back-up and Archive Network Locations
+
+Back-up storage: `/cs/portal-backup/$HOSTNAME/classy/$org/`.
+Archive storage: `/cs/portal-backup/$HOSTNAME/classy/$org/runs-$(date +\%Y\%m\%dT\%H\%M\%S)`
+
 ### Archive Runs and Back-up Database
 
 There are two types of archive data to produce: (1.) a MongoDB data dump, and (2.) a tarball of course container grading runs.
@@ -22,23 +27,25 @@ MongoDB offers the `mongodump` tool to dump the database and automatically expor
 
 The grading runs of a course consist of student assignments, log information, and results that are stored on the Classy VM filesystem in the path specified in the `HOST_DIR` attribute in the `.env` file.
 
-Two scripts exist that perform the database dump and grading run archive operations on the VM.
+Two scripts exist on the VM that can perform the database dump and grading run archive operations:
 
 - `/opt/classy-scripts/archive-classy-runs.sh`
 - `/opt/classy-scripts/backup-classy-db.sh`
-
-### Network Locations
-
-Back-up storage: `/cs/portal-backup/$HOSTNAME/classy/$org/`.
-Archive storage: `/cs/portal-backup/$HOSTNAME/classy/$org/runs-$(date +\%Y\%m\%dT\%H\%M\%S)`
 
 ### Term Transition Checklist
 
 - [ ] Staff and faculty have agreed on an end-date when Classy archiving can take place without disrupting course operations
 - [ ] Database has been backed-up to **Back-up storage location**
-    - Run script: `/opt/classy-scripts/backup-classy-db.sh`
+    - Script: `/opt/classy-scripts/backup-classy-db.sh`
 - [ ] Grading runs have been archived to **Archive storage location**
-    - Run script: `/opt/classy-scripts/archive-classy-runs.sh`
+    - Script: `/opt/classy-scripts/archive-classy-runs.sh`
+- [ ] Once database has been backed-up, host MongoDB volume mount location has been deleted
+    - Command: `rm -rf /var/opt/classy/db/*`
+- [ ] Once grading runs have been archived, host filesystem run have been deleted
+    - Command: `rm -rf /var/opt/classy/runs/*`
+- ClassList API **sections** and **term** have been updated in `/opt/classy/.env` file.
+- A new OAuth application has been created under the new Github semester and integrated in the `/opt/classy/.env` file.
+    - Instructions: [Setup Github OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
 
 ## Database
 
