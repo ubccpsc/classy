@@ -63,8 +63,6 @@ A student pushes code to the repository that does not compile and requests a gra
 
 #### Feedback for an Assignment Before Allowed Time
 
-- User role: `student`
-
 A student pushes code to a repository and requests feedback for the commit displayed in the view. The request for feedback is too soon, as a longer time period was configured by the instructor in the *Deliverable Admin Configuration Panel*. `AutoBot` tells the student to wait for the remaining time period.
 
 <img src="../assets/commit-comment-wait.png/">
