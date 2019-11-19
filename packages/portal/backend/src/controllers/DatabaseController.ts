@@ -23,7 +23,10 @@ export class DatabaseController {
     }
 
     private static instance: DatabaseController = null;
+
     private db: Db = null;
+    private writeDb: Db = null;
+    private slowDb: Db = null;
 
     private readonly COURSECOLL = 'course';
     private readonly PERSONCOLL = 'people';
@@ -74,7 +77,7 @@ export class DatabaseController {
     }
 
     public async getRepositories(): Promise<Repository[]> {
-        const repos = await this.readRecords(this.REPOCOLL, {}) as Repository[];
+        const repos = await this.readRecords(this.REPOCOLL, 'fast', {}) as Repository[];
         Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
         return repos;
     }
@@ -86,7 +89,7 @@ export class DatabaseController {
     }
 
     public async getTeams(): Promise<Team[]> {
-        const teams = await this.readRecords(this.TEAMCOLL, {}) as Team[];
+        const teams = await this.readRecords(this.TEAMCOLL, 'fast', {}) as Team[];
         Log.trace("DatabaseController::getTeams() - #: " + teams.length);
         return teams;
     }
@@ -97,7 +100,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getAllResults() - start");
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', query, latestFirst) as Result[];
 
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
@@ -111,7 +114,7 @@ export class DatabaseController {
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
         Log.info("DatabaseController::getTeamsForPerson() - start");
-        const teams = await this.readRecords(this.TEAMCOLL, {});
+        const teams = await this.readRecords(this.TEAMCOLL, 'fast', {});
         const myTeams = [];
         for (const t of teams as Team[]) {
             if (t.personIds.indexOf(personId) >= 0) {
@@ -147,7 +150,7 @@ export class DatabaseController {
         ];
         // tslint:enable
 
-        const collection = await this.getCollection(this.REPOCOLL);
+        const collection = await this.getCollection(this.REPOCOLL, 'fast');
         const records: any[] = await collection.aggregate(query).toArray();
 
         return records;
@@ -163,13 +166,13 @@ export class DatabaseController {
     // }
 
     public async getPeople(): Promise<Person[]> {
-        const people = await this.readRecords(this.PERSONCOLL, {}) as Person[];
+        const people = await this.readRecords(this.PERSONCOLL, 'fast', {}) as Person[];
         Log.trace("DatabaseController::getPeople() - #: " + people.length);
         return people;
     }
 
     public async getDeliverables(): Promise<Deliverable[]> {
-        const delivs = await this.readRecords(this.DELIVCOLL, {}) as Deliverable[];
+        const delivs = await this.readRecords(this.DELIVCOLL, 'fast', {}) as Deliverable[];
         Log.trace("DatabaseController::getDeliverables() - #: " + delivs.length);
         return delivs;
     }
@@ -183,7 +186,7 @@ export class DatabaseController {
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
-        const grades = await this.readRecords(this.GRADECOLL, {}) as Grade[];
+        const grades = await this.readRecords(this.GRADECOLL, 'slow', {}) as Grade[];
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
@@ -409,7 +412,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - writing");
         // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName);
+            const collection = await this.getCollection(colName, 'write');
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
             // Log.trace("DatabaseController::writeRecord(..) - write complete");
@@ -424,7 +427,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName);
+            const collection = await this.getCollection(colName, 'write');
             const copy = Object.assign({}, record);
             const res = await collection.replaceOne(query, copy); // copy was record
             Log.trace("DatabaseController::updateRecord(..) - write complete; res: " + JSON.stringify(res));
@@ -442,9 +445,17 @@ export class DatabaseController {
      *
      *   (await getCollection('users')).find().toArray().then( ... )
      */
-    public async getCollection(collectionName: string): Promise<Collection> {
+    public async getCollection(collectionName: string, queryKind?: string): Promise<Collection> {
         try {
-            const db = await this.open();
+            let db;
+            if (typeof queryKind === 'undefined' || queryKind === null) {
+                db = await this.open('fast');
+            } else if (queryKind === 'slow') {
+                db = await this.open('slow');
+            } else {
+                db = await this.open('fast');
+            }
+
             return db.collection(collectionName);
         } catch (err) {
             Log.error("DatabaseController::getCollection( " + collectionName +
@@ -491,7 +502,7 @@ export class DatabaseController {
         try {
             // Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, 'fast');
 
             const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
@@ -517,7 +528,7 @@ export class DatabaseController {
      * * @param {{}} sort? send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
-    public async readRecords(column: string, query: {}, sort?: {}): Promise<any[]> {
+    public async readRecords(column: string, kind: string, query: {}, sort?: {}): Promise<any[]> {
         try {
             if (typeof sort === 'undefined') {
                 Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
@@ -527,7 +538,7 @@ export class DatabaseController {
             }
 
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, kind);
 
             let records: any[];
             if (typeof sort === 'undefined') {
@@ -557,7 +568,7 @@ export class DatabaseController {
     private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
         try {
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, 'write');
 
             const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
 
@@ -578,11 +589,19 @@ export class DatabaseController {
      *
      * @returns {Promise<Db>}
      */
-    private async open(): Promise<Db> {
+    private async open(kind: string): Promise<Db> {
         try {
             // Log.trace("DatabaseController::open() - start");
-            if (this.db === null) {
+            let db = null;
+            if (kind === 'slow') {
+                db = this.slowDb;
+            } else if (kind === 'write') {
+                db = this.writeDb;
+            } else {
+                db = this.db;
+            }
 
+            if (db === null) {
                 // just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
                 let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
@@ -596,7 +615,16 @@ export class DatabaseController {
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
 
                 const client = await MongoClient.connect(dbHost);
-                this.db = await client.db(dbName);
+                if (kind === 'slow') {
+                    this.slowDb = await client.db(dbName);
+                    db = this.slowDb;
+                } else if (kind === 'write') {
+                    this.writeDb = await client.db(dbName);
+                    db = this.writeDb;
+                } else {
+                    this.db = await client.db(dbName);
+                    db = this.db;
+                }
 
                 // ensure required records / indexes exist
                 await this.initDatabase();
@@ -604,7 +632,7 @@ export class DatabaseController {
                 Log.info("DatabaseController::open() - db null; new connection made");
             }
             // Log.trace("DatabaseController::open() - returning db");
-            return this.db;
+            return db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
             Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
@@ -705,7 +733,7 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - start");
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -731,7 +759,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - start");
 
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, {repoId: repoId}, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', {repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -757,7 +785,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
 
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId}, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', {delivId: delivId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -816,10 +844,12 @@ export class DatabaseController {
 
     public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
         const minScore = 50;
+        const start = Date.now();
         const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
         const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreTest": {$gt: minScore}};
-        const results = await this.readRecords(this.RESULTCOLL, query);
-        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - Found ${results.length} results.`);
+        const results = await this.readRecords(this.RESULTCOLL, 'fast', query);
+        const took = Util.took(start);
+        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - # results: ${results.length}; took: ${took}`);
         return results;
     }
 }
