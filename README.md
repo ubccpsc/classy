@@ -12,13 +12,11 @@ Primary contributors:
 
 ## Contributing to Classy
 
-Features that add value to the Classy project can be merged back into the main project if there is adequate code coverage (> 90%) and the feature has been tested in a downstream fork for a semester. Bug fixes can also be issued via PR back to `ubccpsc/classy` as required. Any feature that is practical, improves the ease of administering a course, and is likely to be used by instructors is likely to have value. Features that are only very customized around a course, and unlikely to be used by other instructors, will likely not be accepted as core Classy code.
+Features that add value to Classy should be merged back into the root Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value and be accepted as core code. Features, on the other hand, that are only useful to a single course will likely not be accepted as core code. A feature needs to have adequate code coverage (> 90%) and have been tested in a downstream fork for a semester to be contributed as core code. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
 
-To contribute code to Classy, setup a pull-request that has your code in a feature branch, ie. `feature/my-new-feature`, ready to merge into the root `ubccpsc/master` branch. The code should, ideally, be re-based to the `ubccpsc/master` branch before it is merged into `ubccpsc/master`. The re-base will eliminate any future downstream/upstream merge issues.
+To contribute code to Classy, create a PR that has your code in a feature branch (ie. `feature/my-new-feature`) ready to merge into the root `ubccpsc/master` branch. The code should be re-based on the `ubccpsc/master` branch before a PR is setup, as the re-base will eliminate any later downstream and upstream merge conflicts. Classy has been configured with CircleCI for validating work. Any PRs that fail to pass CircleCI tests will not be merged.
 
-Any non-necessary files, such as custom back-end and front-end files should **NOT** be part of the pull-request. Please add non-necessary files to your `.gitignore` file.
-
-Classy has been configured with CircleCI for validating work so that any pull-request that fails to pass CI will not be merged.
+Any non-necessary files, such as custom back-end and front-end files should **NOT** be part of the pull-request. Please add non-necessary files to your [Global Git Ignore Configuration](https://help.github.com/en/github/using-git/ignoring-files#create-a-global-gitignore).
 
 <!-- TOC depthfrom:2 -->
 
