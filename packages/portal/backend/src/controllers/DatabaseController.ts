@@ -524,6 +524,8 @@ export class DatabaseController {
     /**
      *
      * @param {string} column
+     * @param {string} kind this is the kind of query ('slow', 'write', or null)
+     * * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
      * * @param {{}} sort? send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
@@ -539,7 +541,7 @@ export class DatabaseController {
 
             let LIMITS = 999999999;
             if (limitResults === true) {
-                LIMITS = 200;
+                LIMITS = 400;
                 Log.trace("DatabaseController::readRecords( " + column + ", ... ) - limited results query");
             }
 
