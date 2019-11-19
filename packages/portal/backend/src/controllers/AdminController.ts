@@ -345,12 +345,13 @@ export class AdminController {
     public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
+        const WILDCARD = 'any';
 
         let allResults: Result[] = [];
-        if (reqRepoId !== 'any') {
+        if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
             allResults = await this.resC.getResultsForRepo(reqRepoId);
-        } else if (reqDelivId !== 'any') {
+        } else if (reqDelivId !== WILDCARD) {
             allResults = await this.resC.getResultsForDeliverable(reqDelivId);
         } else {
             allResults = await this.resC.getAllResults();
@@ -365,8 +366,8 @@ export class AdminController {
             const delivId = result.delivId;
             const repoId = result.input.target.repoId;
 
-            if ((reqDelivId === 'any' || delivId === reqDelivId) &&
-                (reqRepoId === 'any' || repoId === reqRepoId) &&
+            if ((reqDelivId === WILDCARD || delivId === reqDelivId) &&
+                (reqRepoId === WILDCARD || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
 
                 results.push(result);

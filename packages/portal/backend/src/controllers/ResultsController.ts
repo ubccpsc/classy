@@ -333,7 +333,7 @@ export class ResultsController {
         Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - start");
         const start = Date.now();
 
-        const outcome = await DatabaseController.getInstance().getResultsForDeliverable(repoId);
+        const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
 
         Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " +
             outcome.length + "; took: " + Util.took(start));
