@@ -5,11 +5,14 @@
   - [Portal](#portal)
   - [AutoTest](#autotest)
   - [Github and AutoTest Examples](#github-and-autotest-examples)
-    - [Student User Examples](#student-user-examples)
+    - [Student Role Examples](#student-role-examples)
       - [Feedback for an Assignment](#feedback-for-an-assignment)
       - [Feedback for an Assignment that Fails to Compile](#feedback-for-an-assignment-that-fails-to-compile)
       - [Feedback for an Assignment Before Allowed Time](#feedback-for-an-assignment-before-allowed-time)
       - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature)
+    - [Admin Role Examples](#admin-role-examples)
+      - [Request Feedback When Student Cannot](#request-feedback-when-student-cannot)
+      - [](#)
 <!-- /TOC -->
 
 Classy helps automate the distribution and grading of assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
@@ -43,7 +46,7 @@ Classy's front-end consists of a front-end JavaScript framework and a back-end f
 
 In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom built AutoGrade container. AutoTest runs the AutoGrade container for each `push` and marks the latest `commit`. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
-### Student User Examples
+### Student Role Examples
 
 #### Feedback for an Assignment
 
@@ -70,3 +73,11 @@ A student pushes code to a repository and requests feedback for the commit displ
 A student pushes code to a repository but cannot request grade feedback because the student is within the configured delay period. The student schedules feedback by using the `#schedule` flag with the specified deliverable in a grade request to `AutoBot`.
 
 <img src="../assets/commit-comment-schedule.png/">
+
+### Admin Role Examples
+
+#### Request Feedback When Student Cannot
+
+<img src="../assets/admin-request-feedback.png/">
+
+#### 
