@@ -12,7 +12,8 @@
       - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature)
     - [Admin Role Examples](#admin-role-examples)
       - [Request Feedback When Student Cannot](#request-feedback-when-student-cannot)
-      - [](#)
+      - [Force a Re-Grade](#force-a-re-grade)
+      - [Force Silent Re-Grade](#force-silent-re-grade)
 <!-- /TOC -->
 
 Classy helps automate the distribution and grading of assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
@@ -80,4 +81,10 @@ A student pushes code to a repository but cannot request grade feedback because 
 
 <img src="../assets/admin-request-feedback.png/">
 
-#### 
+#### Force a Re-Grade
+
+<img src="../assets/admin-force-regrade.png/">
+
+#### Force Silent Re-Grade
+
+<img src="../assets/admin-silent-regrade.png/">
