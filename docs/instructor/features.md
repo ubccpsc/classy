@@ -79,12 +79,18 @@ A student pushes code to a repository but cannot request grade feedback because 
 
 #### Request Feedback When Student Cannot
 
+A student pushes code to a repository but cannot request grade feedback because of the grade feedback delay. In any such case, an admin or staff may override the delay and request feedback.
+
 <img src="../assets/admin-request-feedback.png/">
 
 #### Force a Re-Grade
 
+A student may request that pushed code is re-graded if an error is suspected with the grade result. An admin or staff may force the re-grade of a commit. If a prior grade result exists, it will be purged and replaced by the new result.
+
 <img src="../assets/admin-force-regrade.png/">
 
 #### Force Silent Re-Grade
+
+If there is a known error with a grade result, but the grade results should still be kept secret, an admin or staff may request a silent re-grade of a commit. If a prior grade result exists, it will be purged and replaced by the new result.
 
 <img src="../assets/admin-silent-regrade.png/">
