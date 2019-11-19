@@ -278,7 +278,7 @@ describe("GitHubAutoTest", () => {
             kind:         'standard',
             repoId:       "d1_project9999",
             delivId:      "d0",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            postbackURL:  "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
             timestamp:    TS_IN,
             cloneURL:     "https://cloneURL"
         };
