@@ -1,6 +1,6 @@
 # Term Transitions
 
-Each Classy VM is assigned a hostname that is re-used for a course. As Classy is not designed to run multiple instances on a host, term transitions require an exact end-date. The end-date marks a time that data from the prior term will no longer be modified and can safely be archived on a network storage location without disruption to the course.
+Each Classy VM is assigned a hostname that is re-used for a course. As Classy is not designed to run multiple instances on a host, term transitions require an exact end-date. The end-date marks a time that data from the prior term will no longer be modified and can safely be archived on a network storage location without disruption to a course.
 
 ## Back-up and Archive Network Locations
 
@@ -9,7 +9,7 @@ Each Classy VM is assigned a hostname that is re-used for a course. As Classy is
 
 ## Archive Data Database
 
-There are two types of data to produce:
+There are two types of data to archive:
 
 1. MongoDB `gzip` data dump
 2. Container grading run tarball
@@ -18,10 +18,12 @@ MongoDB offers the `mongodump` tool to dump the database and automatically expor
 
 The grading runs of a course consist of student assignments, log information, and results that are stored on the Classy VM filesystem in the path specified in the `HOST_DIR` attribute in the `.env` file.
 
-Two scripts exist on the VM that can perform the database dump and grading run archive operations:
+Two scripts can perform the database dump and grading run archive operations:
 
 - `/opt/classy-scripts/archive-classy-runs.sh`
 - `/opt/classy-scripts/backup-classy-db.sh`
+
+A CRON job is configured to automatically back-up the database and grading run data. After the end-date of the semester transition, it is no longer necessary to retain the back-ups created by the CRON jobs. Hence, delete all of the database and grading run back-ups *prior* to the last back-up and archive of the database.
 
 ## Term Transition Checklist
 
@@ -40,3 +42,5 @@ Two scripts exist on the VM that can perform the database dump and grading run a
   - Instructions: [Add Students and Staff to Github Organization](/docs/tech-staff/githubsetup.md#add-students-and-staff-to-github-organization)
 - [ ] A new OAuth application has been created under the new Github organization and integrated in the `/opt/classy/.env` file
   - Instructions: [Setup Github OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
+- [ ] Only the last two database and grading run back-ups are retained
+  - All grading run and database back-ups prior to the last back-ups have been deleted
