@@ -616,12 +616,15 @@ export class DatabaseController {
 
                 const client = await MongoClient.connect(dbHost);
                 if (kind === 'slow') {
+                    Log.info("DatabaseController::open() - creating slowDb");
                     this.slowDb = await client.db(dbName);
                     db = this.slowDb;
                 } else if (kind === 'write') {
+                    Log.info("DatabaseController::open() - creating writeDb");
                     this.writeDb = await client.db(dbName);
                     db = this.writeDb;
                 } else {
+                    Log.info("DatabaseController::open() - creating db");
                     this.db = await client.db(dbName);
                     db = this.db;
                 }
