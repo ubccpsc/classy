@@ -519,7 +519,13 @@ export class DatabaseController {
      */
     public async readRecords(column: string, query: {}, sort?: {}): Promise<any[]> {
         try {
-            // Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
+            if (typeof sort === 'undefined') {
+                Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
+            } else {
+                Log.trace("DatabaseController::readRecords( " + column + ", " +
+                    JSON.stringify(query) + ", " + JSON.stringify(sort) + " ) - start");
+            }
+
             const start = Date.now();
             const col = await this.getCollection(column);
 
@@ -531,15 +537,15 @@ export class DatabaseController {
             }
 
             if (records === null || records.length === 0) {
-                // Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
-                //     JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
+                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
+                    JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
                 return [];
             } else {
-                // Log.trace("DatabaseController::readRecords(..) - done; # records: " +
-                //     records.length + ". took: " + Util.took(start));
                 for (const r of records) {
                     delete r._id; // remove the record id, just so we can't use it
                 }
+                Log.trace("DatabaseController::readRecords(..) - done; query: " + JSON.stringify(query) + "; # records: " +
+                    records.length + ". took: " + Util.took(start));
                 return records;
             }
         } catch (err) {
@@ -698,7 +704,8 @@ export class DatabaseController {
     public async getResults(delivId: string, repoId: string): Promise<Result[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - start");
-        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result[];
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -707,6 +714,58 @@ export class DatabaseController {
         }
 
         Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
+
+        return results;
+    }
+
+    /**
+     * For a given deliverable, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     */
+    public async getResultsForRepo(repoId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - start");
+
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, {repoId: repoId}, latestFirst) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
+
+        Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
+
+        return results;
+    }
+
+    /**
+     * For a given deliverable, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     */
+    public async getResultsForDeliverable(delivId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
+
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId}, latestFirst) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
+
+        Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - done; #: " +
             results.length + "; took: " + Util.took(start));
 
         return results;

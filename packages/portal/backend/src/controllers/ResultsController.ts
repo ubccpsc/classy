@@ -316,4 +316,28 @@ export class ResultsController {
         Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
     }
+
+    public async getResultsForDeliverable(delivId: string) {
+        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
+        const start = Date.now();
+
+        const outcome = await DatabaseController.getInstance().getResultsForDeliverable(delivId);
+
+        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
+        return outcome;
+    }
+
+    public async getResultsForRepo(repoId: string) {
+        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - start");
+        const start = Date.now();
+
+        const outcome = await DatabaseController.getInstance().getResultsForDeliverable(repoId);
+
+        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
+        return outcome;
+    }
 }

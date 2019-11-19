@@ -346,7 +346,17 @@ export class AdminController {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
 
-        const allResults = await this.resC.getAllResults();
+        let allResults: Result[] = [];
+        if (reqRepoId !== 'any') {
+            // if both aren't 'any' just use this one too
+            allResults = await this.resC.getResultsForRepo(reqRepoId);
+        } else if (reqDelivId !== 'any') {
+            allResults = await this.resC.getResultsForDeliverable(reqDelivId);
+        } else {
+            allResults = await this.resC.getAllResults();
+        }
+        Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
+
         const NUM_RESULTS = 1000;
 
         const results: Result[] = [];
