@@ -1,12 +1,14 @@
 # Install Classy
 
 <!-- TOC depthfrom:2 -->
-- [1. Install Classy](#install-classy)
-  - [1.1 Software Dependencies](#software-dependencies)
-  - [1.2 System Configuration](#system-configuration)
-  - [1.3 Install Classy](#install-classy)
-  - [1.4 Create SSL Certificates](#create-ssl-certificates)
-  - [1.5 Configure Firewall Rules](#configure-firewall-rules)
+- [Install Classy](#install-classy)
+  - [Software Dependencies](#software-dependencies)
+  - [System Configuration](#system-configuration)
+  - [Install Classy](#install-classy-1)
+  - [Create SSL Certificates](#create-ssl-certificates)
+    - [Produce Certificates for a VM](#produce-certificates-for-a-vm)
+      - [Configuration Steps](#configuration-steps)
+  - [Configure Firewall Rules](#configure-firewall-rules)
 <!-- /TOC -->
 
 It is *highly* recommended that the instructions in this document are followed in order.
@@ -87,9 +89,20 @@ The sample configuration file includes a lot of documentation inline: [`.env.sam
 
 ## Create SSL Certificates
 
-Use `certbot` to get SSL certificates for the host from Let's Encrypt:
+Let's Encrypt is a free service that provides valid SSL certificates for domain names. Classy requires valid SSL certificates to run its Portal Back-End RESTful API and Nginx applications. The Classy `/opt/classy/.env` file includes two variables, `HOST_SSL_CERT_PATH` and `HOST_SSL_CERT_PATH`, where the locations of the SSL certificates must be declared. Let's Encrypt uses `certbot`, a command line utility, to produce and renew SSL certificates.
 
- 1. Create a certbot deploy hook that will run when new certificates are obtained:
+Each Classy VM is given a hostname that is used by students to access Classy. The hostname is also the domain name that Let's Encrypt must produce valid SSL certificates for. For example, the `cs999` course may be given the hostname `cs999.students.cs.ubc.ca`, which is the domain name that SSL certificates must be produced for.
+
+The certificates issued by Let's Encrypt are **short-lived certificates** that only last 90 days. Renewal of certificates may only occur within 30 days of the expiry date.
+
+### Produce Certificates for a VM
+
+When certificates are being produced for the first time, configuration should also be performed to automate the renewal of certificates.
+
+#### Configuration Steps
+
+1. Run `vi /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh` and enter file contents below:
+
      ```bash
      #!/bin/sh
      # /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
@@ -119,24 +132,27 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
      } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
      ```
+
+2. Then set executable permissions for the file:
+
      ```bash
-     vi /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
-     # Enter file contents above
      chmod +x /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
      ```
-    
- 2. Get the initial certificates:
+
+3. Get the initial certificates:
+
      ```bash
      sudo certbot certonly -n --standalone --agree-tos -m sa-certs@cs.ubc.ca --no-eff-email -d $(hostname)
-      ```   
-     
-     Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should
-     have copied the certificate files to /opt/classy/ssl. If not, manually run: (this only needs to be done once)
+      ```
+
+4. Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should have copied the certificate files to /opt/classy/ssl. If not, manually run (this only needs to be done once):
+
      ```bash
      sudo /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh
      ```
-    
- 3. Configure pre and post-renewal hooks to automatically start and stop Classy when it is time to renew:
+
+5. Configure pre and post-renewal hooks to automatically start and stop Classy when it is time to renew:
+
      ```bash
      #!/bin/sh
      # /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
@@ -165,7 +181,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
      } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
      ```
-     
+
      ```bash
      #!/bin/sh
      # /etc/letsencrypt/renewal-hooks/post/start-classy.sh
@@ -194,7 +210,7 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
 
      } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
      ```
-     
+
      ```bash
      vi /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
      # Content from above
@@ -203,15 +219,17 @@ Use `certbot` to get SSL certificates for the host from Let's Encrypt:
      chmod +x /etc/letsencrypt/renewal-hooks/pre/stop-classy.sh
      chmod +x /etc/letsencrypt/renewal-hooks/post/start-classy.sh
      ```
-     
+
      Classy needs to be stopped so that port 80 isn't bound when certbot attempts to renew the certificates. It
      would need to be restarted in any case to mount the new certificates. Note: the deploy hook should also run on
      successfully renewal copy the latest version of the certificates to `/opt/classy/ssl` before restarting Classy.
 
- 4. Cert renewal could be put in /etc/cron.d/certbot-renew, something like:
+6. Cert renewal could be put in /etc/cron.d/certbot-renew, something like:
+
      ```bash
      13 4 1 * * root certbot renew
      ```
+
      4am on the 1st of the month seems like a reasonable time to up/down nginx...
 
 ## Configure Firewall Rules

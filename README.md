@@ -12,11 +12,11 @@ Primary contributors:
 
 ## Contributing to Classy
 
-Features that add value to Classy should be merged back into the root Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value and be accepted as core code. Features, on the other hand, that are only useful to a single course will likely not be accepted as core code. A feature needs to have adequate code coverage (> 90%) and have been tested in a downstream fork for a semester to be contributed as core code. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
+Features that add value to Classy should be merged back into the Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value and be accepted as core code. Features, on the other hand, that are only useful to a single course will likely not be accepted as core code. A feature needs to have adequate code coverage (> 90%) and have been tested for a semester in a downstream fork to be eligible as core code. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
 
-To contribute code to Classy, create a PR that has your code in a feature branch (ie. `feature/my-new-feature`) ready to merge into the root `ubccpsc/master` branch. The code should be re-based on the `ubccpsc/master` branch before a PR is setup, as the re-base will eliminate any later downstream and upstream merge conflicts. Classy has been configured with CircleCI for validating work. Any PRs that fail to pass CircleCI tests will not be merged.
+To contribute code to Classy, create a PR that has your code in a feature branch (ie. `feature/my-new-feature`) ready to merge into the root `ubccpsc/master` branch. To ensure that the code is ready to merge, rebase your feature branch on the `ubccpsc/master` branch. Rebasing will help eliminate any later downstream and upstream merge conflicts. Classy has been configured with CircleCI for validating work. Any PRs must pass the CircleCI testsuites.
 
-Any non-necessary files, such as custom back-end and front-end files should **NOT** be part of the pull-request. Please add non-necessary files to your [Global Git Ignore Configuration](https://help.github.com/en/github/using-git/ignoring-files#create-a-global-gitignore).
+Any unnecessary files, such as custom back-end and front-end files should **NOT** be part of the PR. Add unnecessary files to your [Global Git Ignore Configuration](https://help.github.com/en/github/using-git/ignoring-files#create-a-global-gitignore).
 
 <!-- TOC depthfrom:2 -->
 
@@ -90,6 +90,7 @@ Instructions for getting started with Classy have been sorted into sections base
 - [1.8 Patching](/docs/tech-staff/updates.md)
     - [1.8.1 Operating System](/docs/tech-staff/updates.md#operating-system)
     - [1.8.2 Classy](/docs/tech-staff/updates.md#classy)
+- [1.9 Term Transitions](/docs/tech-staff/termtransitions.md#overview)
 
 <!-- /TOC -->
 
