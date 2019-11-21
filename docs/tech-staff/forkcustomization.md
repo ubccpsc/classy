@@ -12,11 +12,11 @@ Any user can fork the [UBCCPSC Classy](https://github.com/ubccpsc/classy) respos
 - [ ] Add relevant technical staff to the fork with owner permissions
 - [ ] Setup branch permissions so that the `master` branch is protected.
 
-## CI on a Fork
+## Continuous Integration Testing on a Fork
 
-Continuous Integration (CI) tests can be run on a fork to ensure that major features are not broken during development or updates. CI tests are *highly* reccomended if the instructor is doing development work on Classy.
+Continuous Integration (CI) tests can be run on forks that have active development work to ensure major features are not broken or diverge during development work. CI tests are *highly* reccomended if the instructor is doing significant development work on Classy.
 
-Continuous Integration tests will notify contributors when tests fail on the fork. This redundancy minimizes the risk that broken features do not make their way into a production Classy environment.
+Continuous Integration tests will notify contributors when tests fail on the fork. This preventative tactic minimizes the risk that broken features do not make their way into a production Classy environment.
 
 - [ ] If an instructor will be doing custom development work on AutoTest, check to see if integration tests are required for the type of work that the instructor is doing.
 - [ ] To implement CI tests, follow the [Continuous Integration Setup](/docs/developer/continuousintegration.md) instructions.
