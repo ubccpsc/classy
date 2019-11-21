@@ -56,7 +56,7 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 
 ### Coveralls Setup
 
-Register for an account on https://coveralls.io and grant Coveralls access to the organization or user account where `classy` is hosted. Click on "Add Repos" on the left panel and select the `classy` repository by (1.) clicking on the organization or user account where `classy` is located, and (2.) toggling the button beside the repo to "on". A `repo token` will be found underneath the repository's settings view of the repository that you added. This `repo token` is the `COVERALLS_REPO_TOKEN` that you must enter into Circle CI's "Build Settings" above. 
+Register for an account on [Coveralls.io](https://coveralls.io) and grant Coveralls access to the organization or user account where `classy` is hosted. Click on "Add Repos" on the left panel and select the `classy` repository by (1.) clicking on the organization or user account where `classy` is located, and (2.) toggling the button beside the repo to "on". A `repo token` will be found underneath the repository's settings view of the repository that you added. This `repo token` is the `COVERALLS_REPO_TOKEN` that you must enter into Circle CI's "Build Settings" above.
 
 ### Github Setup
 
@@ -65,6 +65,6 @@ Underneath the repository settings area, select "Branches" on the left-panel and
 - Add a Branch Protection Rule
 - Enter the Branch Name Pattern to the Branch Protection Rule: `master`
 - Under Rule Settings, select:
-  -- Require pull request reviews before merging (1 or more required approval reviews)
+  -- Require pull request reviews before merging (1 or more approval required before merge)
   -- Require status checks to pass before merging (select `ci/circleci:build`, deselect `coverage/coveralls`)
   -- Include Administrators
