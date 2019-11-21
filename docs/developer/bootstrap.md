@@ -1,6 +1,6 @@
 # Bootstrapping Classy for Development
 
-Configuring your development instance of Classy can occur without building the Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two RESTful APIs and a JavaScript  front-end application that is served by on one of the RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
+Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two RESTful APIs and a JavaScript front-end application that is served by on one of the RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
 
 ## Software Dependencies
 
