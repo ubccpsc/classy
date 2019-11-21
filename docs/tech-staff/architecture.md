@@ -6,16 +6,15 @@
   - [Overview](#overview)
   - [Network Layer](#network-layer)
   - [Application Layer](#application-layer)
+  - [Data Layer](#data-layer)
 
 <!-- /TOC -->
 
 ## Overview
 
-Classy consists of multiple supporting applications: AutoTest, Portal Front-End, and Portal Back-End. Classy uses MongoDB as its data layer. The applications are containerized, which means that they run in Docker containers on a host where they can communicate. Classy is currently hosted on virtual machines (VMs).
+Classy consists of three supporting applications: AutoTest, Portal Front-End, and Portal Back-End. Classy uses MongoDB as its data store. The applications are containerized, which means that they run in Docker containers. Each Classy instance is hosted on a single VM where the containerized applications share a single enviromental configuration file.
 
-Classy requires technical operational support to offer Classy in a course due to its integrated systems, SSL certificates, ongoing development, hardware requirements, security updates, and other technical concerns.
-
-In addition to operating Classy, bootstrapping integrated systems and customizing configurations requires documentation that ensures Classy is configured correctly before Classy is ready to be used in a course.
+Running Classy requires operations support to manage its integrated systems, SSL certificates, ongoing development, hardware requirements, and security updates. Classy has a moderate amount of complexity that requires instructions are accurately followed when bootstrapping integrated systems and customizing its configuration.
 
 ## Network Layer
 
@@ -30,3 +29,9 @@ If Docker is properly installed and the environment that is hosting Classy has a
 In staging and production environments, the appication layer is broken into supporting applications that are Dockerized. The Portal and AutoTest applications are Node JS based applications that are hosted with Nginx routing and a NoSQL MongoDB database.
 
 <img src="../assets/vm-container-applications.svg">
+
+## Data Layer
+
+The data layer consists of the MongoDB database, which is containerized and started with the applications layer.
+
+MongoDB is mounted to share a volume on the host VM to ensure that data persists after the container is stopped and started.

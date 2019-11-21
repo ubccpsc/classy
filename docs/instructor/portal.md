@@ -16,7 +16,7 @@ AutoTest configurations allow for the unique customization of course content. Th
 
 Classy is integrated with Classlist to access student enrollment information. An instructor must update the classlist enrollment before Classy receives any student enrollment information.
 
-The **Admin Settings** view contains an **Update Classlist** button that automatically retrieves the current student information from Classlist. Add, update, and delete information will be viewable each time you click on **Update Classlist*.
+The **Admin Settings** view contains an **Update Classlist** button that automatically retrieves the current student information from Classlist. Add, update, and delete information will be viewable each time you click on **Update Classlist**.
 
 If more customizable classlist updates are necessary, a CSV may be uploaded with a custom classlist by the instructor. To upload a custom CSV, you will need to add the `ACCT`, `SNUM`, `CWL`, `LAST`, `FIRST`, and `LAB` headers to the CSV to produce a format accepted by Classy.
 
