@@ -41,7 +41,7 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd2';
+    private readonly DELIVID: string = 'd3';
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
