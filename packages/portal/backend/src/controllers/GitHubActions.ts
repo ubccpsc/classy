@@ -567,7 +567,7 @@ export class GitHubActions implements IGitHubActions {
     }
 
     private async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
-        Log.info("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
+        Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
 
         const start = Date.now();
 
@@ -1143,6 +1143,7 @@ export class GitHubActions implements IGitHubActions {
 
     public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
         const gh = this;
+        const start = Date.now();
 
         if (teamName !== 'staff' && teamName !== 'admin') {
             // sanity-check non admin/staff teams
@@ -1157,12 +1158,14 @@ export class GitHubActions implements IGitHubActions {
         const teamMembers = await gh.getTeamMembers(teamNumber);
         for (const member of teamMembers) {
             if (member === userName) {
-                Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' IS on team: ' + teamName + ' for org: ' + gh.org);
+                Log.info('GitHubAction::isOnTeam(..) - user: ' + userName +
+                    ' IS on team: ' + teamName + '; took: ' + Util.took(start));
                 return true;
             }
         }
 
-        Log.info('GitHubAction::isOnTeam(..) - user: ' + userName + ' is NOT on team: ' + teamName + ' for org: ' + gh.org);
+        Log.info('GitHubAction::isOnTeam(..) - user: ' + userName +
+            ' is NOT on team: ' + teamName + '; took: ' + Util.took(start));
         return false;
     }
 

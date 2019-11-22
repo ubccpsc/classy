@@ -441,7 +441,7 @@ export class DatabaseValidator {
         if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
             // preprocess sdmm results differently
 
-            const outputRecords = await this.dc.readRecords('output', {});
+            const outputRecords = await this.dc.readRecords('output', 'slow', false, {});
             for (const output of outputRecords as any) {
                 Log.trace('considering: output record: ' + output.commitSHA);
 
@@ -489,7 +489,7 @@ export class DatabaseValidator {
                             skipNames:    [],
                             failNames:    [],
                             errorNames:   [],
-                            result:        null,
+                            result:       null,
                             custom:       {},
                             attachments:  []
                         };

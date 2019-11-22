@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
 import {GradeReport} from "../../../../common/types/ContainerTypes";
+import Util from "../../../../common/Util";
 import {Result} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -12,8 +13,9 @@ export class ResultsController {
 
     public async getAllResults(): Promise<Result[]> {
         Log.trace("ResultsController::getAllResults() - start");
+        const start = Date.now();
 
-        const results = await this.db.getResults();
+        const results = await this.db.getAllResults();
 
         // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
         results.sort(function(a: Result, b: Result) {
@@ -34,6 +36,7 @@ export class ResultsController {
             return tsB - tsA;
         });
 
+        Log.trace("ResultsController::getAllResults() - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -44,26 +47,60 @@ export class ResultsController {
      * @returns {Result}
      */
     public async getResultFromURL(url: string, delivId: string): Promise<Result | null> {
+        Log.trace("ResultsController::getResultFromURL() - start; delivId: " + delivId + "; url: " + url);
+        const start = Date.now();
+
         const result = await this.db.getResultFromURL(url, delivId);
+        Log.trace("ResultsController::getResultFromURL() - start; delivId: " + delivId + "; url: " + url + "; took: " + Util.took(start));
+
         return result;
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
-        Log.info("ResultsController::createResult(..) - start");
+        Log.info("ResultsController::createResult(..) - start for commit: " + record.commitURL);
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
+        const start = Date.now();
 
         const rc = new RepositoryController();
         const people = await rc.getPeopleForRepo(record.repoId);
 
         const outcome = await DatabaseController.getInstance().writeResult({...record, people});
-        Log.trace("ResultsController::createResult(..) - result written");
+        Log.trace("ResultsController::createResult(..) - done; commit: " + record.commitURL + "; took: " + Util.took(start));
         return outcome;
     }
 
+    /**
+     * Find a result for a specific SHA. Return null if such a result does not exist.
+     *
+     * @param delivId
+     * @param repoId
+     * @param sha
+     */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResult | null> {
         Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
+
+        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - done; took: " + Util.took(start));
+        return outcome;
+    }
+
+    /**
+     * Find all of the results for a given deliverable and repo. Return [] if there are no results.
+     *
+     * @param delivId
+     * @param repoId
+     */
+    public async getResults(delivId: string, repoId: string): Promise<AutoTestResult[]> {
+        Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - start");
+        const start = Date.now();
+
+        const outcome = await DatabaseController.getInstance().getResults(delivId, repoId);
+
+        Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
         return outcome;
     }
 
@@ -278,5 +315,29 @@ export class ResultsController {
         }
         Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
+    }
+
+    public async getResultsForDeliverable(delivId: string) {
+        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
+        const start = Date.now();
+
+        const outcome = await DatabaseController.getInstance().getResultsForDeliverable(delivId);
+
+        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
+        return outcome;
+    }
+
+    public async getResultsForRepo(repoId: string) {
+        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - start");
+        const start = Date.now();
+
+        const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
+
+        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " +
+            outcome.length + "; took: " + Util.took(start));
+
+        return outcome;
     }
 }

@@ -37,7 +37,7 @@ services:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
     db:
-        command: --quiet
+        command: --quiet --slowms 250
         container_name: db
         environment:
           - MONGO_INITDB_ROOT_USERNAME

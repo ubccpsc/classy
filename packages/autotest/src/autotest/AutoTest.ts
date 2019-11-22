@@ -65,6 +65,15 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
+    public addToRegressionQueue(input: ContainerInput): void {
+        Log.info("AutoTest::addToRegressionQueue(..) - start; commit: " + input.target.commitSHA);
+        try {
+            this.regressionQueue.push(input);
+        } catch (err) {
+            Log.error("AutoTest::addToRegressionQueue(..) - ERROR: " + err);
+        }
+    }
+
     public addToScheduleQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToScheduleQueue(..) - start; commit: " + input.target.commitSHA);
         try {
@@ -91,7 +100,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::tick(..) - start; " +
                 "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
                 "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
-                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ";" +
+                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + "; " +
                 "schedule - #wait: " + this.scheduleQueue.length() + ".");
 
             // Move scheduled items that are not eligible to run into the standard queue
@@ -141,23 +150,24 @@ export abstract class AutoTest implements IAutoTest {
                 return false;
             };
 
-            // express
-            // Log.trace("Queue::tick(..) - handle express");
+            // express first; if jobs are waiting here, make them happen
             tickQueue(this.expressQueue);
-            // express -> standard
-            promoteQueue(this.expressQueue, this.standardQueue);
-            // express -> regression
+            // express -> regression; if express jobs are waiting, override regression queue
             promoteQueue(this.expressQueue, this.regressionQueue);
+            // express -> standard; if express jobs are waiting, override standard queue
+            promoteQueue(this.expressQueue, this.standardQueue);
 
-            // standard
-            // Log.trace("Queue::tick(..) - handle standard");
+            // standard second; if slots are available after express promotions, schedule these
             tickQueue(this.standardQueue);
-            // standard -> regression
+            // standard -> regression; if regression has space, run the standard queue here
             promoteQueue(this.standardQueue, this.regressionQueue);
 
-            // regression
-            // Log.trace("Queue::tick(..) - handle regression");
+            // regression; only schedule if others have no waiting jobs
             tickQueue(this.regressionQueue);
+            // regression -> standard; if standard has space (after checking express and standard), run the regression queue here
+            promoteQueue(this.regressionQueue, this.standardQueue);
+            // regression -> express; NEVER do this; this is intentionally disabled so express is always available
+            // promoteQueue(--- BAD IDEA this.regressionQueue, this.expressQueue BAD IDEA ---);
 
             if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
                 this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
@@ -379,6 +389,9 @@ export abstract class AutoTest implements IAutoTest {
                 "; SHA: " + data.commitSHA);
 
             try {
+                // Sends the result payload to Classy for saving in the database.
+                // NOTE: If the result was requested after the job was started, the request will not
+                // be reflected in the data.input.target fields.
                 const resultPayload = await this.classPortal.sendResult(data);
                 if (typeof resultPayload.failure !== 'undefined') {
                     Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " +
@@ -400,8 +413,8 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) - done; SHA: " + data.commitSHA +
-                "; final processing took: " + Util.took(start));
+            Log.info("AutoTest::handleExecutionComplete(..) - done; delivId: " + data.delivId + "; SHA: " +
+                data.commitSHA + "; final processing took: " + Util.took(start));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

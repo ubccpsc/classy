@@ -95,6 +95,35 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (containerConfig !== null) {
                     const input: ContainerInput = {delivId, target: info, containerConfig};
                     this.addToStandardQueue(input);
+
+                    if (Array.isArray(deliv.regressionDelivIds) && deliv.regressionDelivIds.length > 0) {
+                        for (const regressionId of deliv.regressionDelivIds) {
+                            const regressionDetails = await this.classPortal.getContainerDetails(regressionId);
+                            if (regressionDetails !== null) {
+                                const regressionInfo: CommitTarget = JSON.parse(JSON.stringify(info)); // ensure we have a copy
+                                regressionInfo.delivId = regressionId;
+
+                                if (typeof regressionInfo.flags === 'undefined' || Array.isArray(regressionInfo.flags) === false) {
+                                    regressionInfo.flags = [];
+                                }
+                                // This was problematic because timeouts wouldn't postback
+                                // regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
+
+                                const regressionInput: ContainerInput = {
+                                    delivId:         regressionId,
+                                    target:          regressionInfo,
+                                    containerConfig: regressionDetails
+                                };
+
+                                Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
+                                Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
+                                    "; input: " + JSON.stringify(regressionInput));
+
+                                this.addToRegressionQueue(regressionInput);
+                            }
+                        }
+                    }
+
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
                     return true;
@@ -239,13 +268,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message to: " + message.url);
         } else {
             Log.info("GitHubAutoTest::postToGitHub(..) - posting message to: " + message.url);
-            // const gh = new GitHubService();
+            Log.trace("GitHubAutoTest::postToGitHub(..) - info: " + JSON.stringify(info));
+            Log.trace("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message));
             return await GitHubUtil.postMarkdownToGithub(message);
         }
     }
 
     protected async schedule(info: CommitTarget): Promise<void> {
-        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId + "; SHA: " + info.commitURL);
+        Log.info("GitHubAutoTest::schedule(..) - scheduling for: " + info.personId +
+            "; delivId: " + info.delivId + "; SHA: " + info.commitURL);
+
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
             const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig};
@@ -267,22 +299,39 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async processCommentExists(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
-        Log.info("GitHubAutoTest::processCommentExists(..) - handling request for user: " +
-            info.personId + " for commit: " + info.commitURL);
-
         // previously processed
-        Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; handling for: " +
-            info.personId + "; SHA: " + info.commitSHA);
-        const msg = await this.classPortal.formatFeedback(res);
+        Log.info("GitHubAutoTest::processCommentExists(..) - handling request for: " +
+            info.personId + "; delivId: " + info.delivId + "; commit: " + info.commitURL);
+
+        const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
+        let feedbackMode;
+        if (containerDetails !== null &&
+            typeof containerDetails.custom !== 'undefined' &&
+            typeof (containerDetails.custom as any).feedbackMode !== 'undefined') {
+            feedbackMode = (containerDetails.custom as any).feedbackMode;
+        }
+
+        const msg = await this.classPortal.formatFeedback(res, feedbackMode);
         await this.postToGitHub(info, {url: info.postbackURL, message: msg});
         await this.saveCommentInfo(info);
         if (res.output.postbackOnComplete === false) {
             const previousFeedback = await this.dataStore.getFeedbackGivenRecordForCommit(info);
             if (previousFeedback === null) {
                 // new request, charge for feedback given
-                Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request logged for: " +
-                    info.personId + "; SHA: " + info.commitSHA);
                 await this.saveFeedbackGiven(info.delivId, info.personId, info.timestamp, info.commitURL, 'standard');
+
+                if (res.input.target.personId !== info.personId) {
+                    // NOTE: at this point we will have a result that finished computing before it was requested
+                    // so the result.target field will be from the push and not the comment.
+                    res.input.target.botMentioned = info.botMentioned;
+                    res.input.target.personId = info.personId;
+                    res.input.target.kind = 'standard'; // was push from the original request
+                    Log.info("GitHubAutoTest::processCommentExists(..) - updating target for: " +
+                        res.commitURL + " to: " + JSON.stringify(res.input.target));
+                    await this.classPortal.sendResult(res);
+                } else {
+                    Log.info("GitHubAutoTest::processCommentExists(..) - updating target not needed for: " + res.commitURL);
+                }
             } else {
                 // previously paid, don't charge
                 Log.info("GitHubAutoTest::processCommentExists(..) - result already exists and paid for for: " +
@@ -489,14 +538,37 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             throw new Error("GitHubAutoTest::handleCommentEvent( .. ) - info is null");
         }
 
-        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
-            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commenter: " +
+            info.personId + "; SHA: " + info.commitSHA);
 
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
         if (preconditionsMet === false) {
             Log.info("GitHubAutoTest::handleCommentEvent(..) - preconditions not met; not processing comment further.");
             return false;
+        }
+
+        const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
+        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
+            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA + "; hasPush: " + (pushEvent !== null));
+
+        if (pushEvent !== null && typeof pushEvent.ref === 'string') {
+            // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
+            info.ref = pushEvent.ref;
+        } else {
+            // We don't have a push event so just explicitly set ref to '' (so string operations don't fail).
+            //
+            // NOTE: this happens when a comment is made on a commit that is not the one that was pushed
+            // e.g., when 3 commits are pushed and the comment is on any commit that isn't the most recent
+            // in the push. This typically happens on < 5% of student comments. The GitHub API does not provide
+            // a way to recover this information.
+            //
+            // One hack might be to look at the ref of the preceeding push for this repo, but that is not
+            // going to be reliable enough to use as a grading criteria for most courses.
+            //
+            // Another approach would be to just comment here and ask for only grading on the pushed commit
+            // but that might feel overly restrictive.
+            info.ref = '';
         }
 
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
@@ -567,8 +639,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             const standardFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, delivId, 'standard');
             const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, delivId, 'check');
-            const containerConfig: any = await this.classPortal.getContainerDetails(delivId);
-            const feedbackMode: string = containerConfig.custom.feedbackMode;
+            const containerConfig = await this.classPortal.getContainerDetails(delivId);
+
+            let feedbackMode: string | undefined;
+            if (containerConfig !== null &&
+                typeof containerConfig.custom !== 'undefined' &&
+                typeof (containerConfig.custom as any).feedbackMode !== 'undefined') {
+                feedbackMode = (containerConfig.custom as any).feedbackMode;
+            }
+
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
@@ -588,7 +667,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + "; feedbackMode: " + feedbackMode);
                 const msg = await this.classPortal.formatFeedback(data, feedbackMode);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) &&
@@ -743,6 +822,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async saveFeedbackGiven(delivId: string, userName: string, timestamp: number, commitURL: string, kind: string): Promise<void> {
         try {
+            Log.info("GitHubAutoTest::saveFeedbackGiven(..) - feedback request logged for: " +
+                userName + "; delivId: " + delivId + "; commit: " + commitURL);
             const record: IFeedbackGiven = {
                 commitURL,
                 delivId,

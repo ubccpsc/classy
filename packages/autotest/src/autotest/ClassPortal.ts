@@ -102,9 +102,10 @@ export class ClassPortal implements IClassPortal {
 
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
+        const start = Date.now();
 
+        const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
-            const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
             Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -114,17 +115,17 @@ export class ClassPortal implements IClassPortal {
             };
 
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res);
+            Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res + "; took: " + Util.took(start));
             const json: AutoTestAuthPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.error("ClassPortal::isStaff(..) - ERROR: " + JSON.stringify(json));
+                Log.error("ClassPortal::isStaff(..) - inner ERROR; url: " + url + "; ERROR: " + JSON.stringify(json));
                 return NO_ACCESS;
             }
 
         } catch (err) {
-            Log.error("ClassPortal::isStaff(..) - ERROR: " + err);
+            Log.error("ClassPortal::isStaff(..) - outer ERROR; url: " + url + "; ERROR: " + err);
             return NO_ACCESS;
         }
     }
@@ -132,6 +133,8 @@ export class ClassPortal implements IClassPortal {
     public async getPersonId(githubId: string): Promise<AutoTestPersonIdTransport> {
         // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
         const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
+        const start = Date.now();
+
         try {
             Log.info("ClassPortal::personId(..) - requesting from: " + url);
             const opts: rp.RequestPromiseOptions = {
@@ -142,7 +145,7 @@ export class ClassPortal implements IClassPortal {
             };
 
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res);
+            Log.info("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
             const json: Payload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success; // AutoTestPersonIdTransport
@@ -159,30 +162,35 @@ export class ClassPortal implements IClassPortal {
     public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
 
         const url = this.host + ":" + this.port + "/portal/at";
+        const start = Date.now();
+
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.trace("ClassPortal::getDefaultDeliverableId(..) - requesting from: " + url);
+        Log.info("ClassPortal::getConfiguration(..) - requesting from: " + url);
         try {
-            const res = await rp(url, opts); // .then(function(res) {
-            Log.trace("ClassPortal::getDefaultDeliverableId() - success; payload: " + res);
+            const res = await rp(url, opts);
+            Log.info("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
+            Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
             const json: ClassyConfigurationPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
-                Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR: " + JSON.stringify(json));
+                Log.trace("ClassPortal::getConfiguration() - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
-            Log.trace("ClassPortal::getDefaultDeliverableId() - ERROR; url: " + url + "; ERROR: " + err);
+            Log.trace("ClassPortal::getConfiguration() - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         }
     }
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
         const url = this.host + ":" + this.port + "/portal/at/container/" + delivId;
+        const start = Date.now();
+
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -196,7 +204,8 @@ export class ClassPortal implements IClassPortal {
         } else {
             try {
                 const res = await rp(url, opts);
-                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload: " + res);
+                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; took: " + Util.took(start));
+                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
                 const json: AutoTestConfigPayload = JSON.parse(res);
                 if (typeof json.success !== 'undefined') {
                     return json.success;
@@ -211,8 +220,9 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose errors
+    public async sendGrade(grade: AutoTestGradeTransport): Promise<Payload> { // really just a mechanism to report more verbose error
         const url = this.host + ":" + this.port + "/portal/at/grade";
+        const start = Date.now();
         try {
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
@@ -232,21 +242,31 @@ export class ClassPortal implements IClassPortal {
 
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendGrade(..) - grade accepted; url: " + grade.URL);
+                Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
+                    "; url: " + grade.URL + "; took: " + Util.took(start));
                 return json;
             } else {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; grade not accepted:  " + JSON.stringify(json));
                 return json;
             }
         } catch (err) {
-            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
         }
     }
 
     public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
-        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode);
+        const start = Date.now();
+
+        // if it isn't specified, make it be 'default'
+        if (typeof feedbackMode === 'undefined') {
+            feedbackMode = 'default';
+        }
+
+        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode + "; delivId: " +
+            res.delivId + "; URL: " + res.commitURL);
+
         let feedback: string = '';
         try {
             if (res.input.target.kind === 'check') {
@@ -257,17 +277,25 @@ export class ClassPortal implements IClassPortal {
                     state = res.output.state;
                 }
                 feedback = `AutoTest status for commit: **_${state}_**`;
+                Log.info("ClassPortal::formatFeedback(..) - check; URL: " + res.commitURL + "; status: " + state);
             } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
                 feedback = gradeRecord.feedback;
                 let altFeedback: string = "";
-                if (typeof feedbackMode === "string" && feedbackMode !== "default") {
-                    altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
+                if (feedbackMode !== "default") {
 
-                    if (typeof altFeedback === "string") {
-                        Log.info("ClassPortal::formatFeedback(..) - using altFeedback");
-                        feedback = altFeedback;
+                    if (typeof gradeRecord.custom !== 'undefined' &&
+                        typeof (gradeRecord.custom as any)[feedbackMode] !== 'undefined' &&
+                        (gradeRecord.custom as any)[feedbackMode].feedback !== 'undefined') {
+                        // really be sure that the feedbackMode feedback exists, otherwise use regular feedback
+
+                        altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
+
+                        if (typeof altFeedback === "string") {
+                            Log.info("ClassPortal::formatFeedback(..) - using altFeedback; URL : " + res.commitURL);
+                            feedback = altFeedback;
+                        }
                     }
                 }
                 feedback += await this.getContainerTime(res);
@@ -276,10 +304,23 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
             return null;
         }
+
+        let msg = feedback;
+        if (msg !== null && msg.length > 40) {
+            msg = msg.substr(0, 40) + "...";
+            if (msg.indexOf('\n') > 0) {
+                msg = msg.substr(0, msg.indexOf('\n'));
+            }
+        }
+
+        Log.info("ClassPortal::formatFeedback(..) - feedback generated; URL: " +
+            res.commitURL + "; feedback: " + msg + "; took: " + Util.took(start));
+
         return feedback;
     }
 
     public async sendResult(result: AutoTestResult): Promise<Payload> { // really just a mechanism to report more verbose errors
+        const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/result";
 
         try {
@@ -300,14 +341,15 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = res;
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " + result.input.target.commitSHA);
+                Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " +
+                    result.input.target.commitSHA + "; took: " + Util.took(start));
                 return json;
             } else {
                 Log.error("ClassPortal::sendResult(..) - ERROR; result not acccepted:  " + JSON.stringify(json));
                 return json;
             }
         } catch (err) {
-            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err);
+            Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
             const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
             return pay;
         }
@@ -315,19 +357,22 @@ export class ClassPortal implements IClassPortal {
 
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
         Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
+
         try {
             const opts: rp.RequestPromiseOptions = {
                 rejectUnauthorized: false,
                 method:             'get',
                 headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
+
             Log.info("ClassPortal::getResult(..) - requesting from: " + url);
             const res = await rp(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length);
+                Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length + "; took: " + Util.took(start));
                 const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
                     return success[0];
@@ -335,7 +380,8 @@ export class ClassPortal implements IClassPortal {
                     return null;
                 }
             } else {
-                Log.error("ClassPortal::getResult(..) - ERROR; result not received:  " + JSON.stringify(json));
+                Log.error("ClassPortal::getResult(..) - ERROR; result not received:  " +
+                    JSON.stringify(json) + "; took: " + Util.took(start));
                 return null;
             }
         } catch (err) {
@@ -373,15 +419,19 @@ export class ClassPortal implements IClassPortal {
 
     private async getMedianTime(delivId: string): Promise<string> {
         const url = this.host + ":" + this.port + "/portal/at/median/" + delivId;
+        const start = Date.now();
+
+        Log.info("ClassPortal::getMedianTime(..) - requesting from: " + url);
+
         const opts: rp.RequestPromiseOptions = {
             rejectUnauthorized: false, headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
-        Log.trace("ClassPortal::getMedianTime(..) - requesting from: " + url);
+
         try {
             const res = await rp(url, opts);
-            Log.trace("ClassPortal::getMedianTime( " + delivId + " ) - success; payload: " + res);
+            Log.info("ClassPortal::getMedianTime( " + delivId + " ) - success; took: " + Util.took(start));
             const json: any = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
                 return "\n\nThe median time for successful projects in this deliverable in the last 24 hours is " +

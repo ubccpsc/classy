@@ -89,7 +89,8 @@ export default class RouteHandler {
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
-                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified);
+                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
+                        "; took: " + Util.took(start));
                 } else {
                     Log.warn("RouteHandler::postGithubHook(..) - webhook secrets do not match");
                     Log.warn("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
@@ -109,6 +110,7 @@ export default class RouteHandler {
                 res.json(200, "pong");
             } else {
                 RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
+                    Log.info("RouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
                     if (commitEvent !== null) {
                         res.json(200, commitEvent); // report back our interpretation of the hook
                     } else {

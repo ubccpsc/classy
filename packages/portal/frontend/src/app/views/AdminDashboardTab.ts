@@ -57,9 +57,11 @@ export class AdminDashboardTab extends AdminPage {
         const fab = document.querySelector('#dashboardUpdateButton') as OnsButtonElement;
         fab.onclick = function(evt: any) {
             Log.info('AdminDashboardTab::init(..)::updateButton::onClick');
+            UI.showModal('Retrieving results.');
             that.performQueries().then(function(newResults) {
                 // TODO: need to track and update the current value of deliv and repo
                 that.render(delivs, repos, newResults);
+                UI.hideModal();
             }).catch(function(err) {
                 UI.showError(err);
             });
@@ -70,6 +72,8 @@ export class AdminDashboardTab extends AdminPage {
 
     private async performQueries(): Promise<AutoTestDashboardTransport[]> {
         Log.info('AdminDashboardTab::performQueries(..) - start');
+        const start = Date.now();
+
         let deliv = UI.getDropdownValue('dashboardDelivSelect');
         if (deliv === '-Any-') {
             deliv = 'any';
@@ -80,7 +84,9 @@ export class AdminDashboardTab extends AdminPage {
         }
         this.delivValue = deliv;
         this.repoValue = repo;
-        return await AdminDashboardTab.getDashboard(this.remote, deliv, repo);
+        const results = await AdminDashboardTab.getDashboard(this.remote, deliv, repo);
+        Log.info('AdminDashboardTab::performQueries(..) - done; # results: ' + results.length + "; took: " + UI.took(start));
+        return results;
     }
 
     private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
@@ -200,7 +206,7 @@ export class AdminDashboardTab extends AdminPage {
                 {
                     value: '',
                     html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                           stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                               stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
                 {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 {value: result.delivId, html: result.delivId},
@@ -228,7 +234,7 @@ export class AdminDashboardTab extends AdminPage {
     private generateHistogram(row: AutoTestDashboardTransport): string {
 
         const passNames = row.testPass as string[];
-        const failNames = row.testFail  as string[];
+        const failNames = row.testFail as string[];
         const skipNames = row.testSkip as string[];
         const errorNames = row.testError as string[];
 

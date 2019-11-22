@@ -137,7 +137,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should be able to get a list of results when there are none.", async () => {
-        const results = await dc.getResults();
+        const results = await dc.getAllResults();
         expectEmptyArray(results);
     });
 

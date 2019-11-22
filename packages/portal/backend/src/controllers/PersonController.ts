@@ -122,8 +122,9 @@ export class PersonController {
      * @returns {boolean}
      */
     public async getPerson(personId: string): Promise<Person | null> {
-        Log.trace("PersonController::getPerson( ... ) - start");
+        // Log.trace("PersonController::getPerson( ... ) - start");
         Log.trace("PersonController::getPerson( " + personId + " ) - start");
+        const start = Date.now();
 
         const person = await this.db.getPerson(personId);
         if (person === null) {
@@ -132,6 +133,7 @@ export class PersonController {
             //     Config.getInstance().getProp(ConfigKey.org));
             return null;
         }
+        Log.trace("PersonController::getPerson( " + personId + " ) - done; took: " + Util.took(start));
         return person;
     }
 
@@ -142,7 +144,10 @@ export class PersonController {
      */
     public async getAllPeople(): Promise<Person[]> {
         Log.trace("PersonController::getAllPeople() - start");
-        return await this.db.getPeople();
+        const start = Date.now();
+        const people = await this.db.getPeople();
+        Log.trace("PersonController::getAllPeople() - done; took: " + Util.took(start));
+        return people;
     }
 
     public async getRepos(personId: string): Promise<Repository[] | null> {
