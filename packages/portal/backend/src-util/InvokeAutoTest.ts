@@ -40,7 +40,7 @@ export class InvokeAutoTest {
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
      * @type {string}
      */
-    private readonly TEST_USERS: string[] = []; // ['b4v7']; // ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
+    private readonly TEST_USERS: string[] = []; // ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
@@ -49,7 +49,7 @@ export class InvokeAutoTest {
      */
     private INVISIBLE = true;
 
-    // for d4 we use the d3 grade
+    // for d4 we use the d3 grade to select the commit to run against
     private readonly DELIVID = 'd3';
 
     /**
@@ -65,7 +65,8 @@ export class InvokeAutoTest {
     // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
     // private readonly MSG  = "@autobot #d2 #force #silent.";
-    private readonly MSG  = "@autobot #d3 #force #silent.";
+    private readonly MSG = "@autobot #d3 #force #silent.";
+    // private readonly MSG = "@autobot #d4 #force #silent.";
     // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
     //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
     //     "by December 14 @ 0800; we will finalize all project grades that day.";
@@ -86,7 +87,10 @@ export class InvokeAutoTest {
         // You might use some other approach here; any commit URL
         // will work with the code below.
         const gradesC = new GradesController();
+        Log.info("InvokeAutoTest::process() - requesting grades");
         const allGrades = await gradesC.getAllGrades(false);
+        Log.info("InvokeAutoTest::process() - # grades retrieved: " + allGrades.length);
+
         const grades = [];
         for (const grade of allGrades as Grade[]) {
             if (grade.delivId === this.DELIVID) {
@@ -105,6 +109,12 @@ export class InvokeAutoTest {
                 // Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
                 continue;
             }
+
+            // useful if you just want to run on a subset of grades (e.g., the ones that might have timed out)
+            // if (grade.score > 25) {
+            //     Log.info("InvokeAutoTest::process() - skipping result; grade > 25: " + grade.score + "; URL: " + url);
+            //     continue;
+            // }
 
             Log.info("InvokeAutoTest::process() - processing result: " + url);
             alreadyProcessed.push(url);
