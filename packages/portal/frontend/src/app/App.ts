@@ -164,7 +164,7 @@ export class App {
 
             (document.querySelector('#loginButton') as OnsButtonElement).onclick = function() {
                 // localStorage.setItem('org', org);
-                const url = that.backendURL + '/portal/auth/?name=' + name;
+                const url = that.backendURL + '/portal/auth?name=' + name;
                 Log.trace('App::performInit() - login pressed for: ' + name + '; url: ' + url);
                 window.location.replace(url);
             };

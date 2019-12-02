@@ -1,5 +1,7 @@
 import * as crypto from "crypto";
 import * as Docker from "dockerode";
+import * as http from "http";
+import * as querystring from "querystring";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../common/Config";
@@ -202,15 +204,42 @@ export default class RouteHandler {
             const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
             const tag = body.tag;
             const file = body.file;
-            const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
-            stream.on("error", (err: Error) => {
-                Log.error("Error building image. " + err.message);
-                res.send(500, "Error building image. " + err.message);
-            });
-            stream.on("end", () => {
-                Log.info("Finished building image.");
-            });
-            stream.pipe(res);
+
+            // Temporary: Work-around of 'dockerode' issue: https://github.com/apocas/dockerode/issues/536
+            // Uncomment when fixed:
+
+            // const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
+            // stream.on("error", (err: Error) => {
+            //     Log.error("Error building image. " + err.message);
+            //     res.send(500, "Error building image. " + err.message);
+            // });
+            // stream.on("end", () => {
+            //     Log.info("Finished building image.");
+            // });
+            // stream.pipe(res);
+
+            const dockerOptions = {remote, t: tag, dockerfile: file};
+            const reqParams = querystring.stringify(dockerOptions);
+            const reqOptions = {
+                socketPath: '/var/run/docker.sock',
+                path: '/v1.24/build?' + reqParams,
+                method: 'POST'
+              };
+
+            const handler = (stream: any) => {
+                stream.on('data', (chunk: any) => {
+                    Log.trace('RouteHandler::postDockerImage(...) - ' + chunk.toString());
+                });
+                stream.on('end', (chunk: any) => {
+                    Log.info('RouteHandler::postDockerImage(...) - Closing Docker API Connection.');
+                });
+                stream.on('error', (chunk: any) => {
+                    Log.error('RouteHandler::postDockerImage(...) Docker Stream ERROR: ' + chunk);
+                });
+                stream.pipe(res);
+            };
+            const dockerReq = http.request(reqOptions, handler);
+            dockerReq.end(0);
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             res.send(err.statusCode, err.message);

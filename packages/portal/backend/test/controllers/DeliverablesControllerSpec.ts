@@ -83,7 +83,7 @@ describe("DeliverablesController", () => {
     });
 
     // this test should be last
-    it("Should enforce constraints on deliverables when saving.", async () => {
+    it("Should enforce minimum constraint on student delay in deliverables when saving.", async () => {
         const db = DatabaseController.getInstance();
 
         const allPeople = await db.getPeople();
@@ -94,17 +94,26 @@ describe("DeliverablesController", () => {
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
 
-        // deliv.repoPrefix = '';
-        // deliv.teamPrefix = '';
         deliv.autotest.studentDelay = 60; // 1 minute
+        const valid = await dc.saveDeliverable(deliv);
+        expect(valid).to.not.be.null;
+
+        deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+        expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
+    });
+
+    it("Should enforce custom entered minimum delay between grade requests", async () => {
+        const db = DatabaseController.getInstance();
+        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        expect(deliv).to.not.be.null;
+        deliv.autotest.studentDelay = 901; // 15 minutes, 1 second
 
         const valid = await dc.saveDeliverable(deliv);
         expect(valid).to.not.be.null;
 
         deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
-        // expect(deliv.repoPrefix).to.equal(Test.DELIVID1);
-        // expect(deliv.teamPrefix).to.equal('t_' + Test.DELIVID1); // disable this prefix
-        expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
+        expect(deliv.autotest.studentDelay).to.be.equal(901);
     });
 });

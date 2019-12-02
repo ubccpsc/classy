@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:8.9.0
+      - image: circleci/node:12
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -105,18 +105,19 @@ jobs:
             name: Configure local git
             when: on_success
 
+            ## WORKS
       - run:
             command: |
                       set -e
                       cd packages/portal/backend
-                      yarn coverCI
+                      ./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI
             name: Running backend tests
             environment:
               MOCHA_FILE: testOutput/backend/test/test-results.xml
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/backend/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --save=testOutput/backend/test/index.html
+            command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
 
@@ -131,14 +132,14 @@ jobs:
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/autotest/test/ && ./node_modules/junit-viewer/bin/junit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --save=testOutput/autotest/test/index.html
+            command: mkdir -p testOutput/autotest/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
             name: Converting autotest test results to HTML
             when: on_success
 
-#      - run:
-#            command: cd packages/portal/backend && yarn coveralls
-#            name: Running backend coveralls
-#            when: on_success
+      - run:
+            command: cd packages/portal/backend && yarn coveralls
+            name: Running backend coveralls
+            when: on_success
 
 # coveralls doesn't integrate coverage
 # so this overwrites the backend coverage (which we care about more)
@@ -164,3 +165,110 @@ jobs:
             name: Cleaning up
             when: always
 
+  build_run_stop:
+    machine:
+      image: ubuntu-1604:201903-01
+    working_directory: ~/project
+
+    environment:
+      TEST_LOGS: /home/circleci/project/test-logs
+
+    steps:
+      - checkout
+
+      - run:
+          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
+          command: |
+            set -x
+            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
+
+     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+      - run:
+          name: Configuring .env
+          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+          when: always
+
+     # CircleCI runs in root, which is 0 for UID & GID. Must do after file unencrypted.
+      - run:
+          name: "Export UID and GID to configuration file"
+          command: |
+            set -x
+            echo -e "GID=0\nUID=0\n" >> .env
+
+     # SSLs need to be set for Portal container or else "volume name is too short" Docker Portal create error
+      - run:
+          name: "Export SSL CERT and SSL KEY paths"
+          command: |
+            set -x
+            SSL_PATH=~/project/packages/portal/backend/ssl
+            echo -e "HOST_SSL_CERT_PATH=$SSL_PATH/fullchain.pem\nHOST_SSL_KEY_PATH=$SSL_PATH/privkey.pem\n" >> .env
+
+      - run:
+          name: Generate self-signed certs
+          command: |
+            set -x
+            SSL_PATH=~/project/packages/portal/backend/ssl
+            mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
+          when: always
+
+      - run:
+          name: Create mount path for MongoDB
+          command: sudo mkdir -p /var/opt/classy/db
+
+      - run:
+          name: Create paths for artifact collections
+          command: |
+            set -x
+            sudo mkdir -p ${TEST_LOGS}
+            cd ${TEST_LOGS} && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
+            sudo chmod 777 -R ${TEST_LOGS}
+
+      - run:
+          name: Build and start container to verify it is working
+          command: |
+            set -x
+            docker-compose up -d 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+
+      - run:
+          name: Shut down containers
+          command: docker-compose down 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+
+      - run:
+          name: Cleaning up Docker containers and images
+          command: docker system prune -af 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+          when: always
+
+      - store_artifacts:
+          path: /home/circleci/project/test-logs
+          destination: raw-test-output
+
+      - run:
+          name: Cleaning up SSLs and Environment
+          command: rm .env && rm ~/project/packages/portal/backend/ssl/fullchain.pem && rm ~/project/packages/portal/backend/ssl/privkey.pem
+          when: always
+
+      - run:
+          name: Cleaning up artifacts
+          command: |
+            set -x
+            sudo rm -rf ${TEST_LOGS}
+          when: always
+workflows:
+  version: 2
+  ci_tests:
+    jobs:
+      - build
+    # Uncomment if you want to run the Docker-compose workflow in regular pushes
+    #   - build_run_stop
+  nightly:
+    triggers:
+      - schedule:
+          # 5am PST time in UTC
+          cron: "0 12 * * *"
+          filters:
+            branches:
+              only:
+                - master
+    jobs:
+      # Can add any jobs you want to run at 5am here
+      - build_run_stop
