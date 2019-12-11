@@ -2,6 +2,8 @@
 
 Each Classy VM is assigned a hostname that is re-used for a course. As Classy is not designed to run multiple instances on a host, term transitions require an exact end-date. The end-date marks a time that data from the prior term will no longer be modified and can safely be archived on a network storage location without disruption to a course.
 
+[Github re-configuration](#github-term-transition-checklist) and [VM re-configuration](#vm-term-transition-checklist) must occur.
+
 ## Back-up and Archive Network Locations
 
 - Database: `/cs/portal-backup/$HOSTNAME/classy/$org/`
@@ -25,7 +27,7 @@ Two scripts can perform the database dump and grading run archive operations:
 
 A CRON job is configured to automatically back-up the database and grading run data. After the end-date of the semester transition, it is no longer necessary to retain the back-ups created by the CRON jobs. Hence, delete all of the database and grading run back-ups *prior* to the last back-up and archive of the database.
 
-## Term Transition Checklist
+## VM Term Transition Checklist
 
 - [ ] Staff and faculty have agreed on an end-date when Classy archiving can take place without disrupting course operations
 - [ ] Database has been backed-up to **Back-up storage location**
@@ -40,7 +42,12 @@ A CRON job is configured to automatically back-up the database and grading run d
   - Course sections found here: [Course Schedule](https://courses.students.ubc.ca/cs/courseschedule?pname=subjarea&tname=subj-department&dept=CPSC)
 - [ ] A new Github organization namespace has been created for the term  (ie. **cpsc210-2019w-t1**)
   - Instructions: [Add Students and Staff to Github Organization](/docs/tech-staff/githubsetup.md#add-students-and-staff-to-github-organization)
-- [ ] A new OAuth application has been created under the new Github organization and integrated in the `/opt/classy/.env` file
-  - Instructions: [Setup Github OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
 - [ ] Only the last two database and grading run back-ups are retained
   - All grading run and database back-ups prior to the last back-ups have been deleted
+
+## Github Term Transition Checklist
+
+- [ ] If another course is being offered next term, setup a new Github organization for the term
+- [ ] A new OAuth application has been created under the new Github organization and integrated in the `/opt/classy/.env` file
+  - Instructions: [Setup Github OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
+- [ ] An instructor may request additional Github configuration steps, such as adding TAs as organization owners
