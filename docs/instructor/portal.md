@@ -57,5 +57,5 @@ Once the pre-requisites have been met and your provisioning options have been co
 
 *Provisioning* repositories will create the Github repositories and place starter code in the assignment. Due to Github limitations, it takes approximately 5 seconds to distribute a repository. If your class has many students, you must leave enough time to provision the repositories (ie. ~2 hours for a large class).
 
-*Releasing* repositories gives a student or team access to read and write to their Github repositories. This action is much quicker than repository provisioning and will likely not take longerj than 2 minutes for an entire class.
+*Releasing* repositories gives a student or team access to read and write to their Github repositories. This action is much quicker than repository provisioning and will likely not take longer than 2 minutes for an entire class.
 
