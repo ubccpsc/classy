@@ -105,6 +105,7 @@ services:
         container_name: refui
         environment:
             - PLATFORM
+            - LOG_LEVEL
         expose:
             - ${UI_PORT}
         restart: always
