@@ -199,7 +199,13 @@ export class TeamController {
                 if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
                     Log.warn("TeamController::formTeam( ... ) - member already on team: " +
                         personTeam.id + " for deliverable: " + deliv.id);
-                    throw new Error("Team not created; some members are already on existing teams for this deliverable.");
+                    if (people.length === 1) {
+                        // FIXME This hack was inserted to try and get the term up and running.
+                        // THIS SHOULD NOT END UP ON MASTER
+                        return personTeam;
+                    } else {
+                        throw new Error("Team not created; some members are already on existing teams for this deliverable.");
+                    }
                 }
             }
         }
