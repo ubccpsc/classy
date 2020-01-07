@@ -135,13 +135,14 @@ describe("GitHubController", () => {
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should fail to provision a repo that already exists.", async function() {
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -169,9 +170,10 @@ describe("GitHubController", () => {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = 'https://github.com/SECapstone/capstone';
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -196,9 +198,10 @@ describe("GitHubController", () => {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = 'https://github.com/SECapstone/capstone';
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -237,13 +240,14 @@ describe("GitHubController", () => {
         // await Test.deleteStaleRepositories();
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
 
         await gha.deleteRepo(repo.id); // delete repo from github
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
         Log.test("Custom setup done");
 
-        const importURL = 'https://github.com/SECapstone/capstone';
-        const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const success = await gc.createRepository(repo.id, importURL, "README.md");
         Log.test("Custom test done: " + success);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
