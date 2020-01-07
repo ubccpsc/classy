@@ -300,11 +300,11 @@ describe("TeamController", () => {
         let ex = null;
         try {
             const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const p3 = await pc.getGitHubPerson(Test.USER3.github);
-            const p4 = await pc.getGitHubPerson(Test.USER4.github);
+            const p5 = await pc.getGitHubPerson(Test.USER5.github);
+            const p6 = await pc.getGitHubPerson(Test.USER6.github);
             const id = 'testTeamName_' + Date.now();
-            await tc.formTeam(id, proj, [p3, p4], false);
-            team = await tc.formTeam(id, proj, [p3, p4], false);
+            await tc.formTeam(id, proj, [p5, p6], false);
+            team = await tc.formTeam(id, proj, [p5, p6], false);
         } catch (err) {
             Log.test(err);
             ex = err;
