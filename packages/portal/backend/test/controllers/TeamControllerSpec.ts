@@ -280,7 +280,7 @@ describe("TeamController", () => {
             const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
             const p1 = await pc.getGitHubPerson(Test.USER1.github);
             const p2 = await pc.getGitHubPerson(Test.USER2.github);
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p2], false);
+            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -296,15 +296,14 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(4);
 
+        // Should still work
         let team = null;
         let ex = null;
         try {
             const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const p5 = await pc.getGitHubPerson(Test.USER5.github);
-            const p6 = await pc.getGitHubPerson(Test.USER6.github);
-            const id = 'testTeamName_' + Date.now();
-            await tc.formTeam(id, proj, [p5, p6], false);
-            team = await tc.formTeam(id, proj, [p5, p6], false);
+            const p1 = await pc.getGitHubPerson(Test.USER1.github);
+            const p2 = await pc.getGitHubPerson(Test.USER2.github);
+            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -313,8 +312,8 @@ describe("TeamController", () => {
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(5);
-    });
+        expect(teams).to.have.lengthOf(4);
+    }).timeout(Test.TIMEOUT);
 
     it("Translation to transport type should work.", async () => {
         const team = await tc.getTeam(Test.TEAMNAME1);
