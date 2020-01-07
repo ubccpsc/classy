@@ -199,7 +199,9 @@ export class TeamController {
                 if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
                     Log.warn("TeamController::formTeam( ... ) - member already on team: " +
                         personTeam.id + " for deliverable: " + deliv.id);
-                    if (personTeam.personIds.length === people.length && people.every((p) => p.id in personTeam.personIds)) {
+                    if (personTeam.personIds.length === people.length &&
+                        people.every((p) => p.id in personTeam.personIds &&
+                        personTeam.id === teamId)) {
                         // The team being made is the same as one that was already made, so return the old one
                         return personTeam;
                     } else {
