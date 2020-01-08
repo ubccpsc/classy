@@ -195,15 +195,15 @@ export class TeamController {
         // ensure members are not already on a team for that deliverable
         for (const person of people) {
             const teamsForPerson = await this.getTeamsForPerson(person);
-            for (const personTeam of teamsForPerson) {
-                if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
+            for (const existingTeam of teamsForPerson) {
+                if (existingTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
                     Log.warn("TeamController::formTeam( ... ) - member already on team: " +
-                        personTeam.id + " for deliverable: " + deliv.id);
-                    if (personTeam.personIds.length === people.length &&
-                        people.every((p) => p.id in personTeam.personIds &&
-                        personTeam.id === teamId)) {
+                        existingTeam.id + " for deliverable: " + deliv.id);
+                    if (existingTeam.personIds.length === people.length &&
+                        people.every((p) => existingTeam.personIds.includes(p.id)) &&
+                        existingTeam.id === teamId) {
                         // The team being made is the same as one that was already made, so return the old one
-                        return personTeam;
+                        return existingTeam;
                     } else {
                         throw new Error("Team not created; some members are already on existing teams for this deliverable.");
                     }
