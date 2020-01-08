@@ -120,7 +120,7 @@ export default class BackendServer {
                 // serve up the static frontend resources
                 const frontendHTML = __dirname + '/../../../frontend/html';
                 Log.info('BackendServer::start() - Serving static from: ' + frontendHTML);
-                that.rest.get('/\/.*/', restify.plugins.serveStatic({
+                that.rest.get('/*/', restify.plugins.serveStatic({
                     directory: frontendHTML,
                     default:   'index.html'
                 }));

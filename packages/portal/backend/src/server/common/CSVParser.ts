@@ -47,6 +47,20 @@ export class CSVParser {
         });
     }
 
+    /**
+     * Process grades for a given deliverable.
+     *
+     * The CSV should have three columns (each with a case-sensitive header):
+     *   * CSID
+     *   * GRADE
+     *   * COMMENT
+     *
+     * If CSID is absent but CWL or GITHUB is present, we map them to the CSID and proceed as needed.
+     *
+     * @param requestorId
+     * @param delivId
+     * @param path
+     */
     public async processGrades(requestorId: string, delivId: string, path: string): Promise<boolean[]> {
         try {
             Log.info('CSVParser::processGrades(..) - start');
@@ -66,7 +80,7 @@ export class CSVParser {
             for (const row of data) {
 
                 if (typeof row.CSID === 'undefined' && typeof row.GITHUB !== 'undefined') {
-                    Log.info('CSVParser::processGrades(..) - CSID absent but GITHUB present; GITHUB: ' + row.GITHUB);
+                    Log.trace('CSVParser::processGrades(..) - CSID absent but GITHUB present; GITHUB: ' + row.GITHUB);
                     const person = await pc.getGitHubPerson(row.GITHUB);
                     if (person !== null) {
                         row.CSID = person.csId;
@@ -75,7 +89,7 @@ export class CSVParser {
                 }
 
                 if (typeof row.CSID === 'undefined' && typeof row.CWL !== 'undefined') {
-                    Log.info('CSVParser::processGrades(..) - CSID absent but CWL present; CWL: ' + row.CWL);
+                    Log.trace('CSVParser::processGrades(..) - CSID absent but CWL present; CWL: ' + row.CWL);
                     const person = await pc.getGitHubPerson(row.CWL); // GITHUB && CWL are the same at UBC
                     if (person !== null) {
                         row.CSID = person.csId;
@@ -116,9 +130,10 @@ export class CSVParser {
 
             const grades = await Promise.all(gradePromises);
 
-            // audit
+            // audit grade update
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.GRADE_ADMIN, requestorId, {}, {}, {numGrades: grades.length});
+            Log.info('CSVParser::processGrades(..) - done; # grades: ' + grades.length);
 
             return grades;
         } catch (err) {

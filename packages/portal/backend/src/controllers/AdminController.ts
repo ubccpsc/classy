@@ -60,6 +60,7 @@ export class AdminController {
      */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
         Log.info("AdminController::processNewAutoTestGrade( .. ) - start");
+
         const cc = await Factory.getCourseController(this.gh);
 
         try {
@@ -78,6 +79,8 @@ export class AdminController {
                 return false;
             }
 
+            Log.info("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
+
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
 
@@ -95,10 +98,17 @@ export class AdminController {
                     custom:    grade.custom
                 };
 
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
+                    "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+                Log.info("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
+                    "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {
+                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for delivId: "
+                        + newGrade.delivId + "; URL: " + grade.URL);
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
@@ -212,6 +222,9 @@ export class AdminController {
      */
     public async getGrades(): Promise<GradeTransport[]> {
         const allGrades = await this.gc.getAllGrades();
+        Log.info("AdminController::getGrades() - start");
+        const start = Date.now();
+
         const grades: GradeTransport[] = [];
         const pc = new PersonController();
         for (const grade of allGrades) {
@@ -229,6 +242,8 @@ export class AdminController {
             };
             grades.push(gradeTrans);
         }
+
+        Log.info("AdminController::getGrades() - done; took: " + Util.took(start));
         return grades;
     }
 
@@ -328,7 +343,21 @@ export class AdminController {
     }
 
     public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
-        const allResults = await this.resC.getAllResults();
+        Log.trace("AdminController::matchResults(..) - start");
+        const start = Date.now();
+        const WILDCARD = 'any';
+
+        let allResults: Result[] = [];
+        if (reqRepoId !== WILDCARD) {
+            // if both aren't 'any' just use this one too
+            allResults = await this.resC.getResultsForRepo(reqRepoId);
+        } else if (reqDelivId !== WILDCARD) {
+            allResults = await this.resC.getResultsForDeliverable(reqDelivId);
+        } else {
+            allResults = await this.resC.getAllResults();
+        }
+        Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
+
         const NUM_RESULTS = 1000;
 
         const results: Result[] = [];
@@ -337,8 +366,8 @@ export class AdminController {
             const delivId = result.delivId;
             const repoId = result.input.target.repoId;
 
-            if ((reqDelivId === 'any' || delivId === reqDelivId) &&
-                (reqRepoId === 'any' || repoId === reqRepoId) &&
+            if ((reqDelivId === WILDCARD || delivId === reqDelivId) &&
+                (reqRepoId === WILDCARD || repoId === reqRepoId) &&
                 results.length <= NUM_RESULTS) {
 
                 results.push(result);
@@ -347,7 +376,8 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.trace("AdminController::matchResults(..) - # results: " + results.length);
+
+        Log.trace("AdminController::matchResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -438,7 +468,7 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.info("AdminController::getResults(..) - # results: " + results.length + "; took: " + Util.took(start));
+        Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -449,6 +479,8 @@ export class AdminController {
      */
     public async getDeliverables(): Promise<DeliverableTransport[]> {
         const deliverables = await this.dbc.getDeliverables();
+        const start = Date.now();
+        Log.trace("AdminController::getDeliverables() - start");
 
         let delivs: DeliverableTransport[] = [];
         for (const deliv of deliverables) {
@@ -462,6 +494,7 @@ export class AdminController {
             return d1.id.localeCompare(d2.id);
         });
 
+        Log.trace("AdminController::getDeliverables() - done; # delivs: " + delivs.length + "; took: " + Util.took(start));
         return delivs;
     }
 

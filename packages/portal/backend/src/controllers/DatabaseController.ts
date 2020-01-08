@@ -23,7 +23,10 @@ export class DatabaseController {
     }
 
     private static instance: DatabaseController = null;
+
     private db: Db = null;
+    private writeDb: Db = null;
+    private slowDb: Db = null;
 
     private readonly COURSECOLL = 'course';
     private readonly PERSONCOLL = 'people';
@@ -74,7 +77,7 @@ export class DatabaseController {
     }
 
     public async getRepositories(): Promise<Repository[]> {
-        const repos = await this.readRecords(this.REPOCOLL, {}) as Repository[];
+        const repos = await this.readRecords(this.REPOCOLL, 'fast', false, {}) as Repository[];
         Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
         return repos;
     }
@@ -86,29 +89,32 @@ export class DatabaseController {
     }
 
     public async getTeams(): Promise<Team[]> {
-        const teams = await this.readRecords(this.TEAMCOLL, {}) as Team[];
+        const teams = await this.readRecords(this.TEAMCOLL, 'fast', false, {}) as Team[];
         Log.trace("DatabaseController::getTeams() - #: " + teams.length);
         return teams;
     }
 
-    public async getResults(): Promise<Result[]> {
+    public async getAllResults(): Promise<Result[]> {
         const query = {};
+        const start = Date.now();
+        Log.trace("DatabaseController::getAllResults() - start");
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, query, latestFirst) as Result[];
-        Log.trace("DatabaseController::getResult() - #: " + results.length);
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', false, query, latestFirst) as Result[];
+
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
         }
+        Log.trace("DatabaseController::getAllResults() - done; #: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
         Log.info("DatabaseController::getTeamsForPerson() - start");
-        const teams = await this.readRecords(this.TEAMCOLL, {});
+        const teams = await this.readRecords(this.TEAMCOLL, 'fast', false, {});
         const myTeams = [];
         for (const t of teams as Team[]) {
             if (t.personIds.indexOf(personId) >= 0) {
@@ -144,7 +150,7 @@ export class DatabaseController {
         ];
         // tslint:enable
 
-        const collection = await this.getCollection(this.REPOCOLL);
+        const collection = await this.getCollection(this.REPOCOLL, 'fast');
         const records: any[] = await collection.aggregate(query).toArray();
 
         return records;
@@ -160,13 +166,13 @@ export class DatabaseController {
     // }
 
     public async getPeople(): Promise<Person[]> {
-        const people = await this.readRecords(this.PERSONCOLL, {}) as Person[];
+        const people = await this.readRecords(this.PERSONCOLL, 'fast', false, {}) as Person[];
         Log.trace("DatabaseController::getPeople() - #: " + people.length);
         return people;
     }
 
     public async getDeliverables(): Promise<Deliverable[]> {
-        const delivs = await this.readRecords(this.DELIVCOLL, {}) as Deliverable[];
+        const delivs = await this.readRecords(this.DELIVCOLL, 'fast', false, {}) as Deliverable[];
         Log.trace("DatabaseController::getDeliverables() - #: " + delivs.length);
         return delivs;
     }
@@ -178,8 +184,10 @@ export class DatabaseController {
     }
 
     public async getGrades(): Promise<Grade[]> {
-        const grades = await this.readRecords(this.GRADECOLL, {}) as Grade[];
-        Log.trace("DatabaseController::getGrades() - #: " + grades.length);
+        const start = Date.now();
+        Log.trace("DatabaseController::getGrades() - start");
+        const grades = await this.readRecords(this.GRADECOLL, 'slow', false, {}) as Grade[];
+        Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
 
@@ -404,7 +412,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - writing");
         // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName);
+            const collection = await this.getCollection(colName, 'write');
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
             // Log.trace("DatabaseController::writeRecord(..) - write complete");
@@ -419,7 +427,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName);
+            const collection = await this.getCollection(colName, 'write');
             const copy = Object.assign({}, record);
             const res = await collection.replaceOne(query, copy); // copy was record
             Log.trace("DatabaseController::updateRecord(..) - write complete; res: " + JSON.stringify(res));
@@ -437,9 +445,17 @@ export class DatabaseController {
      *
      *   (await getCollection('users')).find().toArray().then( ... )
      */
-    public async getCollection(collectionName: string): Promise<Collection> {
+    public async getCollection(collectionName: string, queryKind?: string): Promise<Collection> {
         try {
-            const db = await this.open();
+            let db;
+            if (typeof queryKind === 'undefined' || queryKind === null) {
+                db = await this.open('fast');
+            } else if (queryKind === 'slow') {
+                db = await this.open('slow');
+            } else {
+                db = await this.open('fast');
+            }
+
             return db.collection(collectionName);
         } catch (err) {
             Log.error("DatabaseController::getCollection( " + collectionName +
@@ -486,7 +502,7 @@ export class DatabaseController {
         try {
             // Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, 'fast');
 
             const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
@@ -508,33 +524,47 @@ export class DatabaseController {
     /**
      *
      * @param {string} column
+     * @param {string} kind this is the kind of query ('slow', 'write', or null)
+     * * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
      * * @param {{}} sort? send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
-    public async readRecords(column: string, query: {}, sort?: {}): Promise<any[]> {
+    public async readRecords(column: string, kind: string, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
         try {
-            // Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
+            if (typeof sort === 'undefined') {
+                Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
+            } else {
+                Log.trace("DatabaseController::readRecords( " + column + ", " +
+                    JSON.stringify(query) + ", " + JSON.stringify(sort) + " ) - start");
+            }
+
+            let LIMITS = 999999999;
+            if (limitResults === true) {
+                LIMITS = 400;
+                Log.trace("DatabaseController::readRecords( " + column + ", ... ) - limited results query");
+            }
+
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, kind);
 
             let records: any[];
             if (typeof sort === 'undefined') {
-                records = await (col as any).find(query).toArray();
+                records = await (col as any).find(query).limit(LIMITS).toArray();
             } else {
-                records = await (col as any).find(query).sort(sort).toArray();
+                records = await (col as any).find(query).limit(LIMITS).sort(sort).toArray();
             }
 
             if (records === null || records.length === 0) {
-                // Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
-                //     JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
+                Log.trace("DatabaseController::readRecords(..) - done; no records found for: " +
+                    JSON.stringify(query) + " in: " + column + "; took: " + Util.took(start));
                 return [];
             } else {
-                // Log.trace("DatabaseController::readRecords(..) - done; # records: " +
-                //     records.length + ". took: " + Util.took(start));
                 for (const r of records) {
                     delete r._id; // remove the record id, just so we can't use it
                 }
+                Log.trace("DatabaseController::readRecords(..) - done; query: " + JSON.stringify(query) + "; # records: " +
+                    records.length + ". took: " + Util.took(start));
                 return records;
             }
         } catch (err) {
@@ -546,7 +576,7 @@ export class DatabaseController {
     private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
         try {
             const start = Date.now();
-            const col = await this.getCollection(column);
+            const col = await this.getCollection(column, 'write');
 
             const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
 
@@ -567,11 +597,19 @@ export class DatabaseController {
      *
      * @returns {Promise<Db>}
      */
-    private async open(): Promise<Db> {
+    private async open(kind: string): Promise<Db> {
         try {
             // Log.trace("DatabaseController::open() - start");
-            if (this.db === null) {
+            let db = null;
+            if (kind === 'slow') {
+                db = this.slowDb;
+            } else if (kind === 'write') {
+                db = this.writeDb;
+            } else {
+                db = this.db;
+            }
 
+            if (db === null) {
                 // just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
                 let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
@@ -585,15 +623,27 @@ export class DatabaseController {
                 Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
 
                 const client = await MongoClient.connect(dbHost);
-                this.db = await client.db(dbName);
+                if (kind === 'slow') {
+                    Log.info("DatabaseController::open() - creating slowDb");
+                    this.slowDb = await client.db(dbName);
+                    db = this.slowDb;
+                } else if (kind === 'write') {
+                    Log.info("DatabaseController::open() - creating writeDb");
+                    this.writeDb = await client.db(dbName);
+                    db = this.writeDb;
+                } else {
+                    Log.info("DatabaseController::open() - creating standard db");
+                    this.db = await client.db(dbName);
+                    db = this.db;
 
-                // ensure required records / indexes exist
-                await this.initDatabase();
+                    // ensure required records / indexes exist
+                    await this.initDatabase();
+                }
 
                 Log.info("DatabaseController::open() - db null; new connection made");
             }
             // Log.trace("DatabaseController::open() - returning db");
-            return this.db;
+            return db;
         } catch (err) {
             Log.error("DatabaseController::open() - ERROR: " + err);
             Log.error("DatabaseController::open() - ERROR: Host probably does not have a database configured " +
@@ -607,67 +657,70 @@ export class DatabaseController {
      * This can include objects or indexes that must be created.
      */
     private async initDatabase() {
+        try {
+            if (this.db === null) {
+                throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
+            }
 
-        if (this.db === null) {
-            throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
-        }
+            // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
+            // https://stackoverflow.com/a/35020346
 
-        // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
-        // https://stackoverflow.com/a/35020346
+            // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
+            const coll = await this.getCollection(this.RESULTCOLL);
+            await coll.createIndex({
+                "input.target.timestamp": -1
+            }, {name: "ts"});
 
-        // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
-        const coll = await this.getCollection(this.RESULTCOLL);
-        await coll.createIndex({
-            "input.target.timestamp": -1
-        }, {name: "ts"});
-
-        // Make sure required Team objects exist.
-        // Cannot use TeamController because this would cause an infinite loop since
-        // TeamController uses this code to get the database instance.
-        let teamName = 'admin';
-        let team = await this.getTeam(teamName);
-        if (team === null) {
-            const newTeam: Team = {
-                id:        teamName,
-                delivId:   null, // null for special teams
-                githubId:  null, // to be filled in later
-                URL:       null, // to be filled in later
-                personIds: [], // empty for special teams
-                // repoName:  null, // null for special teams
-                // repoUrl:   null,
-                custom:    {}
-            };
-            await this.writeTeam(newTeam);
-        }
-        teamName = 'staff';
-        team = await this.getTeam(teamName);
-        if (team === null) {
-            const newTeam: Team = {
-                id:        teamName,
-                delivId:   null, // null for special teams
-                githubId:  null, // to be filled in later
-                URL:       null, // to be filled in later
-                personIds: [], // empty for special teams
-                // repoName:  null, // null for special teams
-                // repoUrl:   null,
-                custom:    {}
-            };
-            await this.writeTeam(newTeam);
-        }
-        teamName = 'students';
-        team = await this.getTeam(teamName);
-        if (team === null) {
-            const newTeam: Team = {
-                id:        teamName,
-                delivId:   null, // null for special teams
-                githubId:  null, // to be filled in later
-                URL:       null, // to be filled in later
-                personIds: [], // empty for special teams
-                // repoName:  null, // null for special teams
-                // repoUrl:   null,
-                custom:    {}
-            };
-            await this.writeTeam(newTeam);
+            // Make sure required Team objects exist.
+            // Cannot use TeamController because this would cause an infinite loop since
+            // TeamController uses this code to get the database instance.
+            let teamName = 'admin';
+            let team = await this.getTeam(teamName);
+            if (team === null) {
+                const newTeam: Team = {
+                    id:        teamName,
+                    delivId:   null, // null for special teams
+                    githubId:  null, // to be filled in later
+                    URL:       null, // to be filled in later
+                    personIds: [], // empty for special teams
+                    // repoName:  null, // null for special teams
+                    // repoUrl:   null,
+                    custom:    {}
+                };
+                await this.writeTeam(newTeam);
+            }
+            teamName = 'staff';
+            team = await this.getTeam(teamName);
+            if (team === null) {
+                const newTeam: Team = {
+                    id:        teamName,
+                    delivId:   null, // null for special teams
+                    githubId:  null, // to be filled in later
+                    URL:       null, // to be filled in later
+                    personIds: [], // empty for special teams
+                    // repoName:  null, // null for special teams
+                    // repoUrl:   null,
+                    custom:    {}
+                };
+                await this.writeTeam(newTeam);
+            }
+            teamName = 'students';
+            team = await this.getTeam(teamName);
+            if (team === null) {
+                const newTeam: Team = {
+                    id:        teamName,
+                    delivId:   null, // null for special teams
+                    githubId:  null, // to be filled in later
+                    URL:       null, // to be filled in later
+                    personIds: [], // empty for special teams
+                    // repoName:  null, // null for special teams
+                    // repoUrl:   null,
+                    custom:    {}
+                };
+                await this.writeTeam(newTeam);
+            }
+        } catch (err) {
+            Log.error("DatabaseController::initDatabase() - ERROR: " + err.message);
         }
     }
 
@@ -682,9 +735,94 @@ export class DatabaseController {
         }
     }
 
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result> {
+    /**
+     * For a given deliverable and repo, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     * @param repoId
+     */
+    public async getResults(delivId: string, repoId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - start");
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', false,
+            {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
 
-        const results = await this.readRecords(this.RESULTCOLL, {delivId: delivId, repoId: repoId}) as Result[];
+        Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
+
+        return results;
+    }
+
+    /**
+     * For a given deliverable, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     */
+    public async getResultsForRepo(repoId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - start");
+
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', false, {repoId: repoId}, latestFirst) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
+
+        Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
+
+        return results;
+    }
+
+    /**
+     * For a given deliverable, find all the results.
+     *
+     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     *
+     * @param delivId
+     */
+    public async getResultsForDeliverable(delivId: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
+
+        const latestFirst = {"input.target.timestamp": -1}; // most recent first
+        const results = await this.readRecords(this.RESULTCOLL, 'slow', true, {delivId: delivId}, latestFirst) as Result[];
+        for (const result of results) {
+            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+                result.input.target = (result.input as any).pushInfo;
+            }
+        }
+
+        Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - done; #: " +
+            results.length + "; took: " + Util.took(start));
+
+        return results;
+    }
+
+    /**
+     * Find the result for a given deliverable, repo, SHA tuple or null if such a result does not exist.
+     *
+     * @param delivId
+     * @param repoId
+     * @param sha
+     */
+    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result | null> {
+        const results = await this.getResults(delivId, repoId) as Result[];
         let result = null;
         for (const res of results) {
             if (res.commitSHA === sha) {
@@ -693,13 +831,7 @@ export class DatabaseController {
             }
         }
 
-        if (result !== null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result found");
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
-                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
-                result.input.target = (result.input as any).pushInfo;
-            }
-        } else {
+        if (result === null) {
             Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result not found");
         }
         return result;
@@ -715,22 +847,22 @@ export class DatabaseController {
      */
     public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
         const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
-
         return result;
     }
 
     public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
         const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
-
         return result;
     }
 
     public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
         const minScore = 50;
+        const start = Date.now();
         const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
         const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreTest": {$gt: minScore}};
-        const results = await this.readRecords(this.RESULTCOLL, query);
-        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - Found ${results.length} results.`);
+        const results = await this.readRecords(this.RESULTCOLL, 'fast', true, query);
+        const took = Util.took(start);
+        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - # results: ${results.length}; took: ${took}`);
         return results;
     }
 }

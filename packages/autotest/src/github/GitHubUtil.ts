@@ -40,6 +40,9 @@ export class GitHubUtil {
         let msg = message;
         if (msg.length > 40) {
             msg = msg.substr(0, 40) + "...";
+            if (msg.indexOf('\n') > 0) {
+                msg = msg.substr(0, msg.indexOf('\n'));
+            }
         }
 
         Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
@@ -80,6 +83,11 @@ export class GitHubUtil {
     }
 
     /**
+     *
+     * Processes a comment on a commit. Sent by GitHub.
+     *
+     * https://developer.github.com/v3/activity/events/types/#commitcommentevent
+     *
      * Throws exception if something goes wrong.
      *
      * @param payload
@@ -87,7 +95,7 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.trace("GitHubUtil::processComment(..) - start");
+            Log.info("GitHubUtil::processComment(..) - start");
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -99,9 +107,13 @@ export class GitHubUtil {
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
+            Log.info("GitHubUtil::processComment(..) - 1");
+
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
+
+            Log.info("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = [];
             for (const command of ['force', 'silent', 'check', 'schedule', 'unschedule']) {
@@ -115,6 +127,8 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
+            Log.info("GitHubUtil::processComment(..) - 3");
+
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
@@ -125,6 +139,8 @@ export class GitHubUtil {
             if (flags.indexOf("#check") >= 0) {
                 kind = 'check';
             }
+
+            Log.info("GitHubUtil::processComment(..) - 4");
 
             const commentEvent: CommitTarget = {
                 delivId,
@@ -143,20 +159,30 @@ export class GitHubUtil {
             let msg = message;
             if (msg.length > 40) {
                 msg = msg.substr(0, 40) + "...";
+                if (msg.indexOf("\n") > 0) {
+                    msg = msg.substring(0, msg.indexOf("\n"));
+                }
             }
+
             Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
                 repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
+            Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
 
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
-            Log.error("GitHubUtil::processComment(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
+            Log.error("GitHubUtil::processComment(..) - ERROR payload: ", payload);
             return null;
         }
     }
 
     /**
+     *
+     * Processes a push event. Sent by GitHub.
+     *
+     * https://developer.github.com/v3/activity/events/types/#pushevent
+     *
      * Throw an exception if something goes wrong.
      *
      * Returns null for push operations we do not need to handle (like branch deletion).
@@ -170,7 +196,8 @@ export class GitHubUtil {
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL);
+            const ref = payload.ref;
+            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -216,7 +243,8 @@ export class GitHubUtil {
                 commitSHA,
                 commitURL,
                 postbackURL,
-                timestamp
+                timestamp,
+                ref
             };
 
             Log.info("GitHubUtil::processPush(..) - done");
@@ -271,13 +299,13 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await rp(message.url, options);
-                    Log.trace("GitHubUtil::postMarkdownToGithub(..) - success");
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - success for url: " + message.url);
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
                 }
             } else {
-                Log.trace("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false)");
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false) for url: " + message.url);
             }
         } catch (err) {
             Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);

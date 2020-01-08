@@ -46,13 +46,16 @@ export class GradesController {
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
         Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
-
+        const start = Date.now();
         const grade = await this.db.getGrade(personId, delivId);
+
+        Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - done; took: " + Util.took(start));
         return grade;
     }
 
     public async getReleasedGradesForPerson(personId: string): Promise<Grade[]> {
-        Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - start");
+        Log.info("GradesController::getReleasedGradesForPerson( " + personId + " ) - start");
+        const start = Date.now();
 
         const delivc = new DeliverablesController();
         const delivs = await delivc.getAllDeliverables();
@@ -88,6 +91,8 @@ export class GradesController {
             return g1.delivId.localeCompare(g2.delivId);
         });
 
+        Log.info("GradesController::getReleasedGradesForPerson( " + personId + " ) - # grades: " +
+            grades.length + "; took: " + Util.took(start));
         return grades;
     }
 
@@ -102,6 +107,7 @@ export class GradesController {
      */
     public async createGrade(repoId: string, delivId: string, grade: GradePayload): Promise<boolean> {
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - start");
+        const start = Date.now();
         // Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
 
         // find all people on a repo
@@ -157,20 +163,27 @@ export class GradesController {
             await this.db.writeGrade(gradeRecord);
         }
 
+        Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - done; took: " + Util.took(start));
         return true; // if an exception hasn't been thrown we must be ok
     }
 
     public async saveGrade(grade: Grade): Promise<boolean> {
-        Log.info("GradesController::saveGrade( ... ) - start");
+        Log.info("GradesController::saveGrade( .. ) - start; person: " +
+            grade.personId + "; deliv: " + grade.delivId + "; score: " + grade.score);
+        const start = Date.now();
 
         const existingGrade = await this.db.getGrade(grade.personId, grade.delivId);
         if (existingGrade !== null) {
+            Log.trace("GradesController::saveGrade( .. ) - updating existing grade");
             (grade.custom as any).previousGrade = existingGrade; // persist previous grade
             if (grade.URL === null && existingGrade.URL !== null) {
                 grade.URL = existingGrade.URL; // restore the URL, if it exists on the previous but not on the update (e.g., for CSV upload)
             }
         }
-        return await this.db.writeGrade(grade);
+        const worked = await this.db.writeGrade(grade);
+        Log.info("GradesController::saveGrade( .. ) - done; person: " +
+            grade.personId + "; deliv: " + grade.delivId + "; score: " + grade.score + "; took: " + Util.took(start));
+        return worked;
     }
 
     /**

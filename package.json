@@ -17,7 +17,7 @@
     "license": "MIT",
     "version": "0.4.0",
     "engines": {
-        "node": ">= 8.9 < 9"
+        "node": ">= 12.13 < 13"
     },
     "workspaces": [
         "packages/*",
@@ -34,15 +34,14 @@
         "@types/node": "~8.10.53",
         "@types/request": "~2.48.1",
         "@types/request-promise-native": "^1.0.11",
-        "@types/restify": "^5.0.7",
+        "@types/restify": "^8.4.1",
         "chai": "4.1.2",
         "jsonschema": "1.2.2",
         "lerna": "^2.0.0-rc.5",
         "mocha": "4.0.1",
-        "nyc": "11.3.0",
         "ts-node": "4.1.0",
         "tslint": "^5.11.0",
-        "typescript": "^3.5.2",
+        "typescript": "^3.7.2",
         "webpack": "^3.11.0"
     },
     "dependencies": {
@@ -54,11 +53,13 @@
         "mongodb": "^3.0.2",
         "request": "^2.83.0",
         "request-promise-native": "^1.0.5",
-        "restify": "^6.3.4"
+        "restify": "^8.4.0"
+    },
+    "resolutions": {
+        "**/mem": "^4.0.0"
     },
     "scripts": {
         "postinstall": "git config core.hooksPath .githooks",
-        "pre-build": "./helper-scripts/default-file-setup.sh",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
         "lintOLD": "tslint -c tslint.json 'packages/portal/backend/src/**/*.ts' 'packages/portal/backend/test/**/*.ts' 'packages/portal/frontend/src/**/*.ts' 'packages/portal/frontend/test/**/*.ts' 'packages/autotest/src/**/*.ts' 'packages/autotest/test/**/*.ts'",

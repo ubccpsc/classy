@@ -543,8 +543,8 @@ describe('Admin Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        expect(body.success.message).to.contain('5 students');
+        expect(body.success).to.be.an('object');
+        expect(body.success.classlist.length).to.equal(5);
     });
 
     it('Should fail to upload bad classlists', async function() {
@@ -600,8 +600,8 @@ describe('Admin Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        expect(body.success.message).to.contain('5 students processed'); // capture how many changed?
+        expect(body.success).to.be.an('object');
+        expect(body.success.classlist.length).to.equal(5); // capture how many changed?
 
         people = await dc.getPeople();
         expect(peopleLength).to.equal(people.length); // no new people should have been added
@@ -1309,8 +1309,9 @@ describe('Admin Routes', function() {
         }
 
         expect(body).to.haveOwnProperty('success');
-        expect(body.success).to.haveOwnProperty('message');
-        expect(body.success.message).to.contain('Classlist upload successful');
+        expect(body.success).to.haveOwnProperty('created');
+        expect(body.success).to.haveOwnProperty('updated');
+        expect(body.success).to.haveOwnProperty('removed');
     });
 
     it('Should NOT be able to update a classlist if not authorized as admin', async function() {

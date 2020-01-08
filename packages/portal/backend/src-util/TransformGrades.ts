@@ -41,17 +41,7 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd1';
-
-    /**
-     * To make this request we are actually transforming a commit URL into an API request URL.
-     * Having to hard-code these is not pretty, but it makes the code much simpler. The format
-     * you need should be pretty easy to infer from what is present here.
-     *
-     * @type {string}
-     */
-    // private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
-    // private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
+    private readonly DELIVID: string = 'd3';
 
     constructor() {
         Log.info("TransformGrades::<init> - start");
@@ -84,6 +74,30 @@ export class TransformGrades {
 
             const result = await resultsC.getResultFromURL(url, this.DELIVID);
             if (result !== null) {
+
+                Log.info("Considering grade for " + this.DELIVID + " for url: " + url);
+
+                // make sure row is valid
+                if (typeof result.output === 'undefined' ||
+                    typeof result.output.report === 'undefined' ||
+                    typeof result.output.report.scoreTest === 'undefined' ||
+                    typeof result.output.report.scoreOverall === 'undefined' ||
+                    typeof result.output.report.custom === 'undefined'
+                ) {
+                    Log.error("FATAL: NO GRADE RECORD");
+                    break;
+                }
+                if (typeof (result.output.report.custom as any).private === 'undefined' ||
+                    typeof (result.output.report.custom as any).private.scoreTest === 'undefined'
+                ) {
+                    Log.warn("WARNING: NO PRIVATE RECORD; filling with 0s");
+
+                    (result.output.report.custom as any).private = {};
+                    (result.output.report.custom as any).private.scoreTest = 0;
+
+                    continue; // just skip this row; this is a fatal error though that we need to figure out
+                }
+
                 const scorePub = Number(result.output.report.scoreTest);
                 const scoreCover = Number(result.output.report.scoreCover);
                 const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
@@ -94,38 +108,38 @@ export class TransformGrades {
                     // 25% private tests
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; original: " +
+                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
                         scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
                     }
                 }
                 if (this.DELIVID === 'd2') {
                     // 25% private tests
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; original: " +
-                        scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
+                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
+                        scorePubOverall + "; new: " + finalScore);
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0) + "; url: " + url);
+                            scorePubOverall + "; new: " + finalScore);
                     }
                 } else if (this.DELIVID === 'd3') {
                     // 50% private tests
                     finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + " for url: " + url + "; original: " +
+                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
                         scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
                     // if there's a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0) + "; url: " + url);
+                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
                     }
                 }
 

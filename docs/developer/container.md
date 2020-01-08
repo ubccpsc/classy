@@ -1,6 +1,6 @@
 # AutoTest Containers
 
-AutoTest uses course-specific containers to evaluate and execute student code for formative and summative assessment. This model gives course owners full control over how their student submissions are assessed and the kind of feedback that is provided to them. 
+AutoTest uses course-specific containers to evaluate and execute student code for formative and summative assessment. This model gives course owners full control over how their student submissions are assessed and the kind of feedback that is provided to them.
 
 Usually AutoTest executes against all push events students make to GitHub (the most recent commit within a push), although students can request AutoTest to run on any commit within a push. The automatic execution is used to provide sanity checking feedback to students and is not meant to be used for grading (e.g., in CPSC 310 they are given warnings that their code does not build and that the test suite will not run). 
 
@@ -84,7 +84,7 @@ There is also a mechanism for the container to return file-based output that can
 After a grace period, AutoTest will forcibly terminate the container with a SIGKILL.
 It is recommended that the _exec_ form of `CMD` and `ENTRYPOINT` are used to start the main process so that these signals are forwarded to the main process.
 
--  AutoTest will capture all output sent to `stdout` and `stderr` but will retain only a fixed amount of the most recent output.
+- AutoTest will capture all output sent to `stdout` and `stderr` but will retain only a fixed amount of the most recent output.
 Output should be managed in the container to ensure necessary output is removed by AutoTest.
 
 - Containers should exit with code 0 unless they are unable to produce feedback. AutoTest will post a generic error message if the exit code is non-zero.

@@ -32,6 +32,7 @@ export class TeamController {
      */
     public async getAllTeams(): Promise<Team[]> {
         Log.trace("TeamController::getAllTeams() - start");
+        const start = Date.now();
 
         const teams = await this.db.getTeams();
 
@@ -45,13 +46,17 @@ export class TeamController {
             }
         }
 
+        Log.trace("TeamController::getAllTeams() - done; took: " + Util.took(start));
         return teamsToReturn;
     }
 
     public async getTeam(name: string): Promise<Team | null> {
         Log.info("TeamController::getTeam( " + name + " ) - start");
+        const start = Date.now();
 
         const team = await this.db.getTeam(name);
+
+        Log.info("TeamController::getTeam( " + name + " ) - done; took: " + Util.took(start));
         return team;
     }
 
@@ -103,6 +108,7 @@ export class TeamController {
 
     public async getTeamsForPerson(myPerson: Person): Promise<Team[]> {
         Log.trace("TeamController::getTeamsForPerson( " + myPerson.id + " ) - start");
+        const start = Date.now();
 
         let myTeams: Team[] = [];
         const allTeams = await this.db.getTeams();
@@ -117,7 +123,8 @@ export class TeamController {
             return a.delivId.localeCompare(b.delivId);
         });
 
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " + myTeams.length);
+        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " +
+            myTeams.length + "; took: " + Util.took(start));
         return myTeams;
     }
 
@@ -186,13 +193,20 @@ export class TeamController {
         }
 
         // ensure members are not already on a team for that deliverable
-        for (const p of people) {
-            const teamsForPerson = await this.getTeamsForPerson(p);
-            for (const personTeam of teamsForPerson) {
-                if (personTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
+        for (const person of people) {
+            const teamsForPerson = await this.getTeamsForPerson(person);
+            for (const existingTeam of teamsForPerson) {
+                if (existingTeam.delivId === deliv.id) { // NOTE: no adminOverride for this, this must be enforced
                     Log.warn("TeamController::formTeam( ... ) - member already on team: " +
-                        personTeam.id + " for deliverable: " + deliv.id);
-                    throw new Error("Team not created; some members are already on existing teams for this deliverable.");
+                        existingTeam.id + " for deliverable: " + deliv.id);
+                    if (existingTeam.personIds.length === people.length &&
+                        people.every((p) => existingTeam.personIds.includes(p.id)) &&
+                        existingTeam.id === teamId) {
+                        // The team being made is the same as one that was already made, so return the old one
+                        return existingTeam;
+                    } else {
+                        throw new Error("Team not created; some members are already on existing teams for this deliverable.");
+                    }
                 }
             }
         }

@@ -50,9 +50,11 @@ export class AdminResultsTab extends AdminPage {
         const fab = document.querySelector('#resultsUpdateButton') as OnsButtonElement;
         fab.onclick = function(evt: any) {
             Log.info('AdminResultsTab::init(..)::updateButton::onClick');
+            UI.showModal('Retrieving results.');
             that.performQueries().then(function(newResults) {
                 // TODO: need to track and update the current value of deliv and repo
                 that.render(delivs, repos, newResults);
+                UI.hideModal();
             }).catch(function(err) {
                 UI.showError(err);
             });
@@ -63,6 +65,7 @@ export class AdminResultsTab extends AdminPage {
 
     private async performQueries(): Promise<AutoTestResultSummaryTransport[]> {
         Log.info('AdminResultsTab::performQueries(..) - start');
+        const start = Date.now();
         let deliv = UI.getDropdownValue('resultsDelivSelect');
         if (deliv === '-Any-') {
             deliv = 'any';
@@ -74,7 +77,9 @@ export class AdminResultsTab extends AdminPage {
 
         this.delivValue = deliv;
         this.repoValue = repo;
-        return await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
+        const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
+        Log.info('AdminResultsTab::performQueries(..) - done; # values: ' + values.length + "; took: " + UI.took(start));
+        return values;
     }
 
     private render(delivs: DeliverableTransport[],
@@ -178,7 +183,7 @@ export class AdminResultsTab extends AdminPage {
                 {
                     value: '',
                     html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                           stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                               stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
                 {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
                 // {value: result.repoId, html: result.repoId},
