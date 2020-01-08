@@ -154,6 +154,8 @@ services:
             args:
             - "SERVER_ADDRESS=${PUBLICHOSTNAME}/labcycle"
             - "PUBLIC_ADDRESS=${PUBLICHOSTNAME}/labs"
+            - "LABS=${LC_LABS}"
+            - "TERM=${LC_TERM}"
             context: https://${LC_GITHUB_TOKEN}@github.com/braxtonhall/labcycle.git
             dockerfile: ./frontend.dockerfile
         container_name: labcycleui

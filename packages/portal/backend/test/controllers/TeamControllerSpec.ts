@@ -280,7 +280,30 @@ describe("TeamController", () => {
             const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
             const p1 = await pc.getGitHubPerson(Test.USER1.github);
             const p2 = await pc.getGitHubPerson(Test.USER2.github);
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p2], false);
+            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
+        } catch (err) {
+            Log.test(err);
+            ex = err;
+        }
+        expect(ex).to.be.null;
+        expect(team).to.not.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(4);
+    }).timeout(Test.TIMEOUT);
+
+    it("Should silently do nothing team is to be formed that already exists", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(4);
+
+        // Should still work
+        let team = null;
+        let ex = null;
+        try {
+            const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
+            const p1 = await pc.getGitHubPerson(Test.USER1.github);
+            const p2 = await pc.getGitHubPerson(Test.USER2.github);
+            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;

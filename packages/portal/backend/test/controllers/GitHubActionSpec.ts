@@ -430,14 +430,15 @@ describe("GitHubActions", () => {
         const val = await gh.createRepo(REPONAME3);
         const newName = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(val).to.equal(newName);
 
         // perform the import
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
-        const importUrl = 'https://github.com/SECapstone/capstone'; // hardcoded public repo
-        const selectedFiles = 'AutoTest.md';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const selectedFiles = 'README.md';
         const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;
 

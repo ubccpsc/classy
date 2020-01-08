@@ -2,6 +2,7 @@
  * Created by rtholmes on 2017-10-04.
  */
 import Log from "../../../../../common/Log";
+import {StudentTransport} from "../../../../../common/types/PortalTypes";
 
 // const OPEN_DELIV_KEY = 'open';
 // const CLOSE_DELIV_KEY = 'close';
@@ -141,6 +142,7 @@ export class UI {
             Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
             if (m !== null) {
                 if (text != null) {
+                    const content = document.querySelectorAll('#modalText') as any;
                     const textFields = document.querySelectorAll('#modalText') as any;
                     for (const t of textFields) {
                         // document.getElementById('modalText').innerHTML = text;
@@ -285,6 +287,52 @@ export class UI {
 
     public static showAlert(message: string) {
         return ons.notification.alert(message);
+    }
+
+    public static templateConfirm(template: string, options: {header?: string, listContent?: Array<{text: string, subtext?: string}>}) {
+        return ons.createElement(template, {append: true}).then(function(classlistDialog: any) {
+            const onsList = classlistDialog.querySelector('ons-list') as HTMLElement;
+            (classlistDialog.querySelector('ons-list-header') as HTMLElement).innerHTML = options.header;
+            classlistDialog.querySelector('ons-button').onclick = function() { classlistDialog.hide(); };
+            if (options && options.listContent) {
+                options.listContent.forEach(function(listItem) {
+                    onsList.appendChild(UI.createListItem(listItem.text, listItem.subtext || ''));
+                });
+            }
+            classlistDialog.show();
+        })
+        .catch(function(err: Error) {
+            Log.error('UI::prompt(..) - ERROR: ' + err.message);
+        });
+    }
+
+    public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
+        return ons.createElement(template, {append: true}).then(function(textDialog: any) {
+            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-logs-text') as HTMLDivElement;
+            textContentDiv.innerText = text;
+            textDialog.show();
+
+            const saveButton = textDialog.querySelector('#adminDockerBuildDialog-footer-save');
+            const closeButton = textDialog.querySelector('#adminDockerBuildDialog-footer-close');
+            closeButton.onclick = function() { textDialog.hide(); };
+            saveButton.onclick = function() {
+                const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
+                saveButton['download'] = 'Build Log ' + dateTimeLocal + '.txt';
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+             };
+            saveButton['download'] = 'Classy Build Log';
+
+            // Updates data when right-clicked to choose custom save filename
+            saveButton.oncontextmenu = function() {
+                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+            };
+
+            return textContentDiv;
+        });
+    }
+
+    public static confirm(message: string, options: {template: string, header?: string}) {
+        return ons.notification.confirm(message);
     }
 
     // SDMM: move

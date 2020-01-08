@@ -180,7 +180,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (delivId === null) {
             Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, null delivId");
             // no deliverable, give warning and abort
-            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
             return false;
         }
@@ -190,7 +190,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (deliv === null) {
             Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown delivId: " + delivId);
             // no deliverable, give warning and abort
-            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #d0).";
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
             return false;
         }

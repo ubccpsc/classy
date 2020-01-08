@@ -331,7 +331,7 @@ export class AdminProvisionPage extends AdminPage {
                 Log.info('AdminProvisionPage::handleProvision(..) - provisioning complete; repo: ' + repoId +
                     '; took: ' + Util.took(start));
                 UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {timeout: 10000});
+                    {timeout: 10000, force: true});
             } catch (err) {
                 Log.error('AdminProvisionPage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
                 UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');
