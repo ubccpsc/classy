@@ -787,6 +787,7 @@ export class AdminController {
     public async performProvision(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
+        const cc = await Factory.getCourseController(ghc);
 
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
@@ -805,7 +806,8 @@ export class AdminController {
                         teams.push(await this.dbc.getTeam(teamId));
                     }
                     Log.info("AdminController::performProvision( .. ) - about to provision: " + repo.id);
-                    const success = await ghc.provisionRepository(repo.id, teams, importURL);
+                    let success = await ghc.provisionRepository(repo.id, teams, importURL);
+                    success = success ? success && await cc.finalizeProvisionedRepo(repo, teams) : success;
                     Log.info("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
