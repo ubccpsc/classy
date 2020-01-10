@@ -183,17 +183,12 @@ export default class GeneralRoutes implements IREST {
             try {
                 if (fs.lstatSync(filePath).isDirectory()) {
                     Log.info("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
-                    const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + req.url.replace(/\/$/, "");
-                    const body = "<html><body>" +
-                        `<p><strong>${path}</strong></p>` +
-                        [".."].concat(fs.readdirSync(filePath))
-                            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join("")
-                        + "</body></html>";
+                    const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
                     res.writeHead(200, {
-                        'Content-Length': Buffer.byteLength(body),
+                        'Content-Length': Buffer.byteLength(html),
                         'Content-Type': 'text/html'
                     });
-                    res.write(body);
+                    res.write(html);
                     res.end();
                 } else {
                     const rs = fs.createReadStream(filePath);
@@ -230,6 +225,15 @@ export default class GeneralRoutes implements IREST {
         });
     }
 
+    public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
+        const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + baseUrl.replace(/\/$/, "");
+        let body = `<html><body><p><strong>${relativePath}</strong></p>`;
+        body += [".."].concat(fs.readdirSync(absolutePath))
+            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join("");
+        body += "</body></html>";
+        return body;
+    }
+
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
         Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
@@ -254,11 +258,11 @@ export default class GeneralRoutes implements IREST {
         try {
             const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
 
-            if (path.indexOf('/student/') >= 0) {
+            if (/\/student(\/|$)/.test(path)) {
                 Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
                 // works for everyone (performGetCredentials would have thrown exception if not a valid user)
                 proceed = true;
-            } else if (path.indexOf('/admin/') >= 0) {
+            } else if (/\/admin(\/|$)/.test(path)) {
 
                 // works for admin only
                 if (priv.isAdmin === true) {
@@ -267,7 +271,7 @@ export default class GeneralRoutes implements IREST {
                 } else {
                     Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
                 }
-            } else if (path.indexOf('/staff/') >= 0) {
+            } else if (/\/staff(\/|$)/.test(path)) {
                 Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
                 // works for admin and staff
                 if (priv.isAdmin === true || priv.isStaff === true) {
