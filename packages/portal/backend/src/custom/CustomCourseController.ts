@@ -180,7 +180,7 @@ export class CustomCourseController extends CourseController {
         const LOGPRE = "CustomCourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
 
-        if (!newGrade.custom["isMaster"]) {
+        if (newGrade.custom["isMaster"] === false) {
             Log.info(LOGPRE + "not recorded; push was not on master");
             return Promise.resolve(false);
         } else {
