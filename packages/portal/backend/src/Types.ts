@@ -236,7 +236,7 @@ export interface Grade {
         // studentID?: any, // AssignmentController // TODO: make into assignment.personId
         // released?: any, // AssignmentController // TODO: make into assignment.released
         assignmentGrade?: AssignmentGrade
-    };
+    } | any;
 }
 
 export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
