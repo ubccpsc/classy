@@ -4,7 +4,7 @@ import {DatabaseController} from "../controllers/DatabaseController";
 import {IGitHubController} from "../controllers/GitHubController";
 import {RepositoryController} from "../controllers/RepositoryController";
 import {TeamController} from "../controllers/TeamController";
-import {Deliverable, Person, PersonKind, Team} from "../Types";
+import {Deliverable, Grade, Person, PersonKind, Team} from "../Types";
 
 /**
  *
@@ -166,5 +166,25 @@ export class CustomCourseController extends CourseController {
 
         Log.info('CustomCourseController::computeNames( ... ) - done; t: ' + teamName + ', r: ' + rName);
         return {teamName: teamName, repoName: rName};
+    }
+
+    /**
+     * Extends the default behaviour: requires that push was on master
+     *
+     * @param {Deliverable} deliv
+     * @param {Grade} newGrade
+     * @param {Grade} existingGrade
+     * @returns {boolean}
+     */
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+        const LOGPRE = "CustomCourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
+            newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
+
+        if (!newGrade.custom["isMaster"]) {
+            Log.info(LOGPRE + "not recorded; push was not on master");
+            return Promise.resolve(false);
+        } else {
+            return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+        }
     }
 }
