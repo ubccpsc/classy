@@ -32,7 +32,7 @@ export class CSVParser {
                 trim:             true
             };
 
-            const parser = parse(options, (err, data: any[]) => {
+            const parser = parse(options, (err: Error, data: any[]) => {
                 if (err) {
                     const msg = 'CSV parse error: ' + err;
                     Log.error("CSVParser::parsePath(..) - ERROR: " + msg);
