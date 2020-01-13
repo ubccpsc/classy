@@ -787,7 +787,7 @@ export class AdminController {
     public async performProvision(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
-        const cc = await Factory.getCourseController(ghc);
+        const cc = await Factory.getCourseController(this.gh);
 
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
