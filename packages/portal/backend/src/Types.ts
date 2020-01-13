@@ -227,7 +227,8 @@ export interface Grade {
     urlName: string | null; // name associated with URL (e.g., project name)
     URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    /*
     custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
         sdmmStatus?: boolean
 
@@ -236,7 +237,8 @@ export interface Grade {
         // studentID?: any, // AssignmentController // TODO: make into assignment.personId
         // released?: any, // AssignmentController // TODO: make into assignment.released
         assignmentGrade?: AssignmentGrade
-    } | any;
+    };
+     */
 }
 
 export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
