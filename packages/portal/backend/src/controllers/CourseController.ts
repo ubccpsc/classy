@@ -1,5 +1,5 @@
 import Log from "../../../../common/Log";
-import {Deliverable, Grade, Person} from "../Types";
+import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
@@ -57,6 +57,14 @@ export interface ICourseController {
      */
     computeNames(deliv: Deliverable, people: Person[], adminOverride?: boolean):
         Promise<{teamName: string | null; repoName: string | null}>;
+
+    /**
+     * For adding any finishing touches to a newly made repo
+     * e.g.: add branch protection to the master branch in 310
+     * @param repo
+     * @param teams
+     */
+    finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean>;
 }
 
 /**
@@ -180,6 +188,11 @@ export class CourseController implements ICourseController {
             return {teamName: tName, repoName: rName};
             // return tName;
         }
+    }
+
+    public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
+        Log.warn("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
+        return true;
     }
 
     // NOTE: the default implementation is currently broken; do not use it.
