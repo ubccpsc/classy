@@ -211,7 +211,7 @@ export default class RouteHandler {
                 path: '/v1.24/build?' + reqParams,
                 method: 'POST'
               };
-
+            Log.trace(`RouteHandler::postDockerImage(...) - reqParams: ${reqParams}, reqOptions: ${JSON.stringify(reqOptions)}`);
             const handler = (stream: any) => {
                 stream.on('data', (chunk: any) => {
                     Log.trace('RouteHandler::postDockerImage(...) - ' + chunk.toString());
@@ -226,6 +226,7 @@ export default class RouteHandler {
             };
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
+            Log.trace(`RouteHandler::postDockerImage(...) - request: ${JSON.stringify(dockerReq)}`);
 //             Log.info("RouteHandler::getDockerImage(..) - Preparing to build image");
 //             const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
 //             // New experimental code because I think the stuff lower doesn't work
