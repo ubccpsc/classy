@@ -1620,7 +1620,9 @@ export class GitHubActions implements IGitHubActions {
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
-                    'Accept':        'application/json'
+                    // TODO this API is being used in a beta state. Get off the beta!
+                    // https://developer.github.com/enterprise/2.19/v3/repos/branches/#update-branch-protection
+                    'Accept':        'application/vnd.github.luke-cage-preview+json'
                 },
                 body,
                 json:                    true
