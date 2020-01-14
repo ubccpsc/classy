@@ -4,7 +4,7 @@ import {DatabaseController} from "../controllers/DatabaseController";
 import {IGitHubController} from "../controllers/GitHubController";
 import {RepositoryController} from "../controllers/RepositoryController";
 import {TeamController} from "../controllers/TeamController";
-import {Deliverable, Person, PersonKind, Team} from "../Types";
+import {Deliverable, Grade, Person, PersonKind, Repository, Team} from "../Types";
 
 /**
  *
@@ -166,5 +166,41 @@ export class CustomCourseController extends CourseController {
 
         Log.info('CustomCourseController::computeNames( ... ) - done; t: ' + teamName + ', r: ' + rName);
         return {teamName: teamName, repoName: rName};
+    }
+
+    /**
+     * Extends the default behaviour: requires that push was on master
+     *
+     * @param {Deliverable} deliv
+     * @param {Grade} newGrade
+     * @param {Grade} existingGrade
+     * @returns {boolean}
+     */
+    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+        const LOGPRE = "CustomCourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
+            newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
+
+        if (newGrade.custom["isMaster"] === false) {
+            Log.info(LOGPRE + "not recorded; push was not on master");
+            return Promise.resolve(false);
+        } else {
+            return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
+        }
+    }
+
+    /**
+     * Extends the default behaviour: adds branch protection rules
+     * @param repo
+     * @param teams
+     */
+    public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
+        Log.info("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Adding branch protection");
+        if (repo.delivId.endsWith("0")) {
+            Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Zeroth deliv needs no rule");
+            return true;
+        } else {
+            Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Protecting master");
+            return this.gh.updateBranchProtection(repo, [{name: "master", reviews: 1}]);
+        }
     }
 }

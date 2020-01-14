@@ -100,7 +100,7 @@ export class Factory {
 
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
-            const handler = new plug[constructorName]();
+            const handler = new plug[constructorName](ghController);
             Log.info("Factory::getCourseController() - handler instantiated");
             return handler;
         } catch (err) {

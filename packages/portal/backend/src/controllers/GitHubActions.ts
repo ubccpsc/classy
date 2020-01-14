@@ -8,7 +8,7 @@ import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
-import {GitTeamTuple} from "./GitHubController";
+import {BranchRule, GitTeamTuple} from "./GitHubController";
 import {TeamController} from "./TeamController";
 
 // tslint:disable-next-line
@@ -223,6 +223,8 @@ export interface IGitHubActions {
     getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
 
     getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
+
+    addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -1591,6 +1593,49 @@ export class GitHubActions implements IGitHubActions {
         }
     }
 
+    /**
+     * Adds a single branch protection rule to a repo
+     * @param repoId
+     * @param rule
+     */
+    public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
+        Log.info("GitHubAction::addBranchProtectionRule(..) - start; repo:", repoId, "; branch:", rule.name);
+        const start = Date.now();
+        try {
+            const uri = `${this.apiPath}/repos/${this.org}/${repoId}/branches/${rule.name}/protection`;
+            const body: any = {
+                required_status_checks: null,
+                enforce_admins: null,
+                required_pull_request_reviews: {
+                    dismissal_restrictions: {},
+                    dismiss_stale_reviews: true,
+                    require_code_owner_reviews: false,
+                    required_approving_review_count: rule.reviews
+                },
+                restrictions: null
+            };
+            const options = {
+                method:                  'PUT',
+                uri,
+                headers:                 {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    // TODO this API is being used in a beta state. Get off the beta!
+                    // https://developer.github.com/enterprise/2.19/v3/repos/branches/#update-branch-protection
+                    'Accept':        'application/vnd.github.luke-cage-preview+json'
+                },
+                body,
+                json:                    true
+            };
+            const response = await rp(options);
+            Log.info("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - Success! took: ", Util.took(start));
+            return true;
+        } catch (err) {
+            Log.warn("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - ERROR:", err.message);
+        }
+        return false;
+    }
+
     /* istanbul ignore next */
     /**
      * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
@@ -2144,6 +2189,10 @@ export class TestGitHubActions implements IGitHubActions {
 
     public getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
         return;
+    }
+
+    public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
+        return true;
     }
 
 }
