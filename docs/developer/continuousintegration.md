@@ -28,7 +28,7 @@ A `yml` file is included in the `./circleci` directory of the `classy` repositor
 
 ### Coveralls
 
-Coveralls is a code coverage tool that visually charts the code coverage percentage of a Git repository. 
+Coveralls is a code coverage tool that visually charts the code coverage percentage of a Git repository.
 
 ## How Continuous Integration Works
 
@@ -53,6 +53,26 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 
 - The `ENVKEY` is private and you must ask a project owner for it.
 - The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
+- the `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Enterprise Integration](#circleci-github-enterprise-integration).
+
+#### CircleCI Github Enterprise Integration
+
+CircleCI Github Enterprise Integrations: 
+
+Running Classy’s continuous integration test suite requires a live Github integration. Github.com or Github Enterprise integrations are possible with Classy. 
+
+The Github organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy .env file. Therefore, any modifications to a Github integration for CircleCI requires updating the .env file in Classy.
+
+Testing CircleCI .env files have been pre-configured, encrypted, and stored in the Classy repository in the classy/.circleci directory. All CircleCI testing configuration files must be encrypted. CircleCI stores the encryption key, which it uses to unencrypt the files during the test runtime.
+
+You can choose what CircleCI Github pre-configuration to run by substituting the ENCRYPT_ENV variable filename without the filename extension (ie. ` env-dev_students_cs`).  
+
+To unencrypt a configuration file, one must have the encryption key. The command to unencrypt the file is `openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY`. 
+
+If you decide to create a new configuration file:
+
+- The customized .env file must be Encrypted with the `openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY ` command and added to the classy/.circleci directory.
+- The filename of the encrypted .env file should be added as the ENCRYPT_ENV environment variable in the CircleCI configuration (see photo above).
 
 ### Coveralls Setup
 
