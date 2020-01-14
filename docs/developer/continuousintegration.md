@@ -63,6 +63,8 @@ Running Classy’s continuous integration test suite requires a live Github inte
 
 The Github organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy .env file. Therefore, any modifications to a Github integration for CircleCI requires updating the .env file in Classy.
 
+<img src="../assets/circle-ci-key.png"/>
+
 Testing CircleCI .env files have been pre-configured, encrypted, and stored in the Classy repository in the classy/.circleci directory. All CircleCI testing configuration files must be encrypted. CircleCI stores the encryption key, which it uses to unencrypt the files during the test runtime.
 
 You can choose what CircleCI Github pre-configuration to run by substituting the ENCRYPT_ENV variable filename without the filename extension (ie. ` env-dev_students_cs`).  
