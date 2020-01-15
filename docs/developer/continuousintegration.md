@@ -1,4 +1,4 @@
-# CIRCLECI CONTINUOUS INTEGRATION SETUP
+# CircleCI Continuous Integration Setup
 
 ## Overview
 
@@ -53,13 +53,11 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 
 - The `ENVKEY` is private and you must ask a project owner for it.
 - The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
-- the `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Enterprise Integration](#circleci-github-enterprise-integration).
+- the `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Integration](#circleci-github-integration).
 
-#### CircleCI Github Enterprise Integration
+#### CircleCI Github Integration
 
-CircleCI Github Enterprise Integrations: 
-
-Running Classy’s continuous integration test suite requires a live Github integration. Github.com or Github Enterprise integrations are possible with Classy. 
+Running Classy’s continuous integration test suite requires a live Github integration. Github.com or Github Enterprise integrations are possible with Classy.
 
 The Github organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy .env file. Therefore, any modifications to a Github integration for CircleCI requires updating the .env file in Classy.
 
