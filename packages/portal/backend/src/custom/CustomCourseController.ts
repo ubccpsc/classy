@@ -185,7 +185,7 @@ export class CustomCourseController extends CourseController {
             return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
         }
 
-        let isMaster;
+        let isMaster = false;
         try {
             const result = await this.resC.getResultFromURL(newGrade.URL, deliv.id);
             isMaster = result.output.report.custom["isMaster"];
