@@ -176,14 +176,24 @@ export class CustomCourseController extends CourseController {
      * @param {Grade} existingGrade
      * @returns {boolean}
      */
-    public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
+    public async handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         const LOGPRE = "CustomCourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
             newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
 
         if (deliv.id.endsWith("0")) {
             Log.info(LOGPRE + "Grade is for the zeroth deliv; redirecting to default impl");
             return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-        } else if (newGrade.custom["isMaster"]) {
+        }
+
+        let isMaster;
+        try {
+            const result = await this.resC.getResultFromURL(newGrade.URL, deliv.id);
+            isMaster = result.output.report.custom["isMaster"];
+        } catch (err) {
+            Log.warn(LOGPRE + "Was not able to get branch info from result. Error:", err);
+        }
+
+        if (isMaster) {
             Log.info(LOGPRE + "Grade was on master; redirecting to default impl");
             return super.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
         } else {

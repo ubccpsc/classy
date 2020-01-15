@@ -106,7 +106,7 @@ export interface GradeReport {
     // significantly impact the performance of the dashboard.
     // Use attachments instead for large bits of data you wish
     // to persist.
-    custom: {};
+    custom: any;
 
     cluster?: ClusteredResult;
 
