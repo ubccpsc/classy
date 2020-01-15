@@ -41,9 +41,9 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
     COVERALLS_REPO_TOKEN: randomLongString
     ENVKEY: randomLongString
 
-- The `ENVKEY` is private and you must ask a project owner for it.
-- The `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
-- the `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Integration](#circleci-github-integration).
+- `ENVKEY` is private and you must ask a project owner for it.
+- `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
+- `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Integration](#circleci-github-integration).
 
 #### CircleCI Github Integration
 
