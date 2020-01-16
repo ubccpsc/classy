@@ -1,6 +1,6 @@
 # Overview
 
-Explains how a student or admin interacts with AutoTets on Github.
+Explains how a student or admin interacts with AutoTest on Github.
 
 ## User Types
 
@@ -29,7 +29,7 @@ AutoTest can compute feedback either when a GitHub push event (e.g., a `git push
 
 ## Instructor AutoBot Commands
 
-* `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again).
+* `#force` Admin-user only. Forces the submission to be re-graded (e.g., purges the cached result if it exists and grades it again). (i.e. Used after updating the grading container to rerun on the same SHA.)
 
 * `#slient` Admin-user only. This is used to invoke the bot, but suppresses feedback. `#silent` is usually used in conjunction with `#force`.
 
