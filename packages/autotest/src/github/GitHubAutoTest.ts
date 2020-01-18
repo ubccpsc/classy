@@ -304,14 +304,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + "; delivId: " + info.delivId + "; commit: " + info.commitURL);
 
         const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
-        let feedbackMode;
-        if (containerDetails !== null &&
-            typeof containerDetails.custom !== 'undefined' &&
-            typeof (containerDetails.custom as any).feedbackMode !== 'undefined') {
-            feedbackMode = (containerDetails.custom as any).feedbackMode;
-        }
 
-        const msg = await this.classPortal.formatFeedback(res, feedbackMode);
+        const msg = await this.classPortal.formatFeedback(res);
         await this.postToGitHub(info, {url: info.postbackURL, message: msg});
         await this.saveCommentInfo(info);
         if (res.output.postbackOnComplete === false) {
@@ -641,13 +635,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const checkFeedbackRequested: CommitTarget = await this.getRequestor(data.commitURL, delivId, 'check');
             const containerConfig = await this.classPortal.getContainerDetails(delivId);
 
-            let feedbackMode: string | undefined;
-            if (containerConfig !== null &&
-                typeof containerConfig.custom !== 'undefined' &&
-                typeof (containerConfig.custom as any).feedbackMode !== 'undefined') {
-                feedbackMode = (containerConfig.custom as any).feedbackMode;
-            }
-
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
@@ -667,8 +654,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
                 // do this first, doesn't count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + "; feedbackMode: " + feedbackMode);
-                const msg = await this.classPortal.formatFeedback(data, feedbackMode);
+                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + ";");
+                const msg = await this.classPortal.formatFeedback(data);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
             } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) &&
                 feedbackDelay === null && futureTarget === false) {
@@ -677,7 +664,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 const giveFeedback = async function(target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - " + kind + " feedback requested; deliv: " +
                         delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + '; for: ' + target.personId);
-                    const msg = await that.classPortal.formatFeedback(data, feedbackMode);
+                    const msg = await that.classPortal.formatFeedback(data);
                     await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                     await that.saveFeedbackGiven(delivId, target.personId,
                         target.timestamp, data.commitURL, kind);

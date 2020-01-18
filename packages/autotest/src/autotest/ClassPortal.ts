@@ -90,10 +90,9 @@ export interface IClassPortal {
      * on portal just returns gradeRecord.feedback but courses are free to adjust this as needed using
      * their CourseController class.
      *
-     * @param {string} feedbackMode
      * @returns {Promise<Payload>}
      */
-    formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null>;
+    formatFeedback(res: AutoTestResultTransport): Promise<string | null>;
 }
 
 export class ClassPortal implements IClassPortal {
@@ -256,15 +255,10 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+    public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         const start = Date.now();
 
-        // if it isn't specified, make it be 'default'
-        if (typeof feedbackMode === 'undefined') {
-            feedbackMode = 'default';
-        }
-
-        Log.info("ClassPortal::formatFeedback(..) - start; feedbackMode: " + feedbackMode + "; delivId: " +
+        Log.info("ClassPortal::formatFeedback(..) - start; delivId: " +
             res.delivId + "; URL: " + res.commitURL);
 
         let feedback: string = '';
@@ -282,23 +276,6 @@ export class ClassPortal implements IClassPortal {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
                 feedback = gradeRecord.feedback;
-                let altFeedback: string = "";
-                if (feedbackMode !== "default") {
-
-                    if (typeof gradeRecord.custom !== 'undefined' &&
-                        typeof (gradeRecord.custom as any)[feedbackMode] !== 'undefined' &&
-                        (gradeRecord.custom as any)[feedbackMode].feedback !== 'undefined') {
-                        // really be sure that the feedbackMode feedback exists, otherwise use regular feedback
-
-                        altFeedback = (gradeRecord.custom as any)[feedbackMode].feedback;
-
-                        if (typeof altFeedback === "string") {
-                            Log.info("ClassPortal::formatFeedback(..) - using altFeedback; URL : " + res.commitURL);
-                            feedback = altFeedback;
-                        }
-                    }
-                }
-                feedback += await this.getContainerTime(res);
             }
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
@@ -388,33 +365,6 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::getResult(..) - ERROR; url: " + url + "; ERROR: " + err);
             return null;
         }
-    }
-
-    private async getContainerTime(res: AutoTestResultTransport): Promise<string> {
-        let feedback = "";
-        if (res.output.report.studentTime || res.output.report.publicTime) {
-            feedback += "\n\n";
-            feedback += `**Miscellaneous information**`;
-        }
-
-        if (res.output.report.studentTime) {
-            feedback += "\n\n";
-            feedback += `Your test suite took ${Util.tookHuman(0, res.output.report.studentTime)} to complete in the grading container.`;
-        }
-
-        if (res.output.report.publicTime) {
-            feedback += "\n\n";
-            feedback += `Your implementation took ${Util.tookHuman(0, res.output.report.publicTime)}`;
-            feedback += ` to get through our public test suite in the grading container.`;
-            feedback += await this.getMedianTime(res.delivId);
-        }
-
-        if (res.input.containerConfig.maxExecTime && (res.output.report.studentTime || res.output.report.publicTime)) {
-            feedback += "\n\n";
-            feedback += `Executions longer than ${Util.tookHuman(0, res.input.containerConfig.maxExecTime * 1000)} ` +
-                `will be terminated and will not be graded.`;
-        }
-        return feedback;
     }
 
     private async getMedianTime(delivId: string): Promise<string> {
