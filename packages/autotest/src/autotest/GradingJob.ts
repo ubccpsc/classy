@@ -105,16 +105,17 @@ export class GradingJob {
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
 
         const out = this.record.output;
-        if (exitCode === -1) {
-            out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
-            out.state = ContainerState.TIMEOUT;
-        } else {
-            try {
-                const shouldPostback: boolean = exitCode !== 0;
-                out.report = await fs.readJson(this.path + "/staff/report.json");
-                out.postbackOnComplete = shouldPostback;
-                out.state = ContainerState.SUCCESS;
-            } catch (err) {
+
+        try {
+            const shouldPostback: boolean = exitCode !== 0;
+            out.report = await fs.readJson(this.path + "/staff/report.json");
+            out.postbackOnComplete = shouldPostback;
+            out.state = ContainerState.SUCCESS;
+        } catch (err) {
+            if (exitCode === -1) {
+                out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
+                out.state = ContainerState.TIMEOUT;
+            } else {
                 Log.error("GradeWorker::execute() - ERROR Reading grade report. " + err);
                 out.report.feedback = "Failed to read grade report.";
                 out.state = ContainerState.NO_REPORT;
