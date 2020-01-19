@@ -107,11 +107,13 @@ export class GradingJob {
         const out = this.record.output;
 
         try {
-            const shouldPostback: boolean = exitCode !== 0;
+            // Shouldn't always postback on exitcode -1, as could have timed out _after_ report was made
+            const shouldPostback: boolean = exitCode !== 0 && exitCode !== -1;
             out.report = await fs.readJson(this.path + "/staff/report.json");
             out.postbackOnComplete = shouldPostback;
             out.state = ContainerState.SUCCESS;
         } catch (err) {
+            out.postbackOnComplete = true;
             if (exitCode === -1) {
                 out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
                 out.state = ContainerState.TIMEOUT;
