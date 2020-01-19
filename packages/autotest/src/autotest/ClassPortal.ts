@@ -384,8 +384,7 @@ export class ClassPortal implements IClassPortal {
             Log.info("ClassPortal::getMedianTime( " + delivId + " ) - success; took: " + Util.took(start));
             const json: any = JSON.parse(res);
             if (typeof json.success !== 'undefined') {
-                return "\n\nThe median time for successful projects in this deliverable in the last 24 hours is " +
-                    Util.tookHuman(0, json.success);
+                return Util.tookHuman(0, json.success);
             } else {
                 Log.warn("ClassPortal::getMedianTime(..) - ERROR: " + JSON.stringify(json));
                 return "";
