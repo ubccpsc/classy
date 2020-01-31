@@ -835,6 +835,11 @@ export class GitHubActions implements IGitHubActions {
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
                 Log.info("GitHubAction::teamCreate(..) - success; new: " + id + "; took: " + Util.took(start));
+
+                // remove default token provider/maintainer from team
+                await this.removeMembersFromTeam(teamName,
+                    [Config.getInstance().getProp(ConfigKey.githubBotName)]);
+
                 return {teamName: teamName, githubTeamNumber: id, URL: url};
             }
         } catch (err) {
