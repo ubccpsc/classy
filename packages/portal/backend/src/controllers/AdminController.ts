@@ -252,16 +252,21 @@ export class AdminController {
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
      * @param maxNumResults (optional, default 500)
+     * @param best
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getDashboard(reqDelivId: string, reqRepoId: string, maxNumResults?: number): Promise<AutoTestDashboardTransport[]> {
+    public async getDashboard(
+        reqDelivId: string,
+        reqRepoId: string,
+        maxNumResults?: number,
+        best: boolean = false): Promise<AutoTestDashboardTransport[]> {
         Log.info("AdminController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = maxNumResults ? maxNumResults : 500; // max # of records
 
         const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, best);
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
@@ -414,13 +419,13 @@ export class AdminController {
      * @param best
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(reqDelivId: string, reqRepoId: string, best: boolean = false): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
         const results: AutoTestResultSummaryTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId, best);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 

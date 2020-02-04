@@ -310,7 +310,7 @@ export default class AdminRoutes implements IREST {
 
         const delivId = req.params.delivId;
 
-        cc.getResults(delivId, 'any', true).then((results) => {
+        cc.getDashboard(delivId, 'any', Number.MAX_SAFE_INTEGER, true).then((results) => {
             Log.info('AdminRoutes::getBestResults(..) - done; # results: ' + results.length + '; took: ' + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
