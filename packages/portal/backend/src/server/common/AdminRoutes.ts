@@ -62,6 +62,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/export/dashboard/:delivId/:repoId',
             AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
         server.get('/portal/admin/results/:delivId/:repoId', AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
+        server.get('/portal/admin/bestResults/:delivId', AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // Highest score results
 
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
@@ -296,6 +297,26 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to retrieve results. ERROR: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Returns AutoTestResultPayload[]
+     */
+    private static getBestResults(req: any, res: any, next: any) {
+        Log.trace('AdminRoutes::getBestResults(..) - start');
+        const start = Date.now();
+        const cc = new AdminController(AdminRoutes.ghc);
+
+        const delivId = req.params.delivId;
+
+        cc.getResults(delivId, 'any', true).then((results) => {
+            Log.info('AdminRoutes::getBestResults(..) - done; # results: ' + results.length + '; took: ' + Util.took(start));
+            const payload: AutoTestResultSummaryPayload = {success: results};
+            res.send(payload);
+            return next();
+        }).catch((err) => {
+            return AdminRoutes.handleError(400, 'Unable to retrieve highest results. ERROR: ' + err.message, res, next);
         });
     }
 

@@ -40,6 +40,14 @@ export class ResultsController {
         return results;
     }
 
+    public async getBestResults(deliv: string): Promise<Result[]> {
+        Log.trace("ResultsController::getBestResults() - start");
+        const start = Date.now();
+        const results = await this.db.getBestResults(deliv);
+        Log.trace("ResultsController::getBestResults() - done; # results: " + results.length + "; took: " + Util.took(start));
+        return results;
+    }
+
     /**
      * Gets the result from a commitURL.
      *

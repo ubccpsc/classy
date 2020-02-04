@@ -112,6 +112,27 @@ export class DatabaseController {
         return results;
     }
 
+    public async getBestResults(deliv: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getBestResults() - start");
+        const pipeline = [
+            { $match : { delivId : deliv } },
+            { $group: { _id: 'URL' } },
+            { $lookup:
+                {
+                    from: this.RESULTCOLL,
+                    localField: '_id',
+                    foreignField: 'commitURL',
+                    as: 'results'
+                }
+            }
+        ];
+        const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.results[0]) as Result[];
+        Log.trace("DatabaseController::getBestResults() - done; #: " + results.length + "; took: " + Util.took(start));
+        return results;
+    }
+
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
         Log.info("DatabaseController::getTeamsForPerson() - start");
         const teams = await this.readRecords(this.TEAMCOLL, QueryKind.FAST, false, {});

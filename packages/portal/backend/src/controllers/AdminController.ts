@@ -342,13 +342,15 @@ export class AdminController {
         return results;
     }
 
-    public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
+    public async matchResults(reqDelivId: string, reqRepoId: string, best: boolean = false): Promise<Result[]> {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
         const WILDCARD = 'any';
 
         let allResults: Result[] = [];
-        if (reqRepoId !== WILDCARD) {
+        if (best && reqDelivId !== WILDCARD) {
+            allResults = await this.resC.getBestResults(reqDelivId);
+        } else if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
@@ -409,15 +411,16 @@ export class AdminController {
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
+     * @param best
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(reqDelivId: string, reqRepoId: string, best: boolean = false): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
         const results: AutoTestResultSummaryTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, best);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 
