@@ -112,9 +112,9 @@ export class DatabaseController {
         return results;
     }
 
-    public async getBestResults(deliv: string): Promise<Result[]> {
+    public async getGradedResults(deliv: string): Promise<Result[]> {
         const start = Date.now();
-        Log.trace("DatabaseController::getBestResults() - start");
+        Log.trace("DatabaseController::getGradedResults() - start");
         const pipeline = [
             { $match : { delivId : deliv } },
             { $group: { _id: '$URL' } },
@@ -130,7 +130,7 @@ export class DatabaseController {
         const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
         const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.results[0]);
         results.forEach((r) => delete r._id);
-        Log.trace("DatabaseController::getBestResults() - done; #: " + results.length + "; took: " + Util.took(start));
+        Log.trace("DatabaseController::getGradedResults() - done; #: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -149,28 +149,27 @@ export class DatabaseController {
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
         Log.info("DatabaseController::getRepositoriesForPerson() - start");
 
-        // tslint:disable
-        const query = [{
-            "$lookup": {
-                "from":         "teams",
-                "localField":   "teamIds",
-                "foreignField": "id",
-                "as":           "teams"
-            }
-        },
+        const query = [
             {
-                "$lookup": {
-                    "from":         "people",
-                    "localField":   "teams.personIds",
-                    "foreignField": "id",
-                    "as":           "teammembers"
+                $lookup: {
+                    from:         "teams",
+                    localField:   "teamIds",
+                    foreignField: "id",
+                    as:           "teams"
                 }
             },
             {
-                "$match": {"teammembers.id": personId}
+                $lookup: {
+                    from:         "people",
+                    localField:   "teams.personIds",
+                    foreignField: "id",
+                    as:           "teammembers"
+                }
+            },
+            {
+                $match: {"teammembers.id": personId}
             }
         ];
-        // tslint:enable
 
         const collection = await this.getCollection(this.REPOCOLL, QueryKind.FAST);
         const records: any[] = await collection.aggregate(query).toArray();

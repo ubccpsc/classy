@@ -40,11 +40,11 @@ export class ResultsController {
         return results;
     }
 
-    public async getBestResults(deliv: string): Promise<Result[]> {
-        Log.trace("ResultsController::getBestResults() - start");
+    public async getGradedResults(deliv: string): Promise<Result[]> {
+        Log.trace("ResultsController::getGradedResults() - start");
         const start = Date.now();
-        const results = await this.db.getBestResults(deliv);
-        Log.trace("ResultsController::getBestResults() - done; # results: " + results.length + "; took: " + Util.took(start));
+        const results = await this.db.getGradedResults(deliv);
+        Log.trace("ResultsController::getGradedResults() - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 

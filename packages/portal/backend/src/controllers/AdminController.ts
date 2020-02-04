@@ -354,7 +354,7 @@ export class AdminController {
 
         let allResults: Result[] = [];
         if (best && reqDelivId !== WILDCARD) {
-            allResults = await this.resC.getBestResults(reqDelivId);
+            allResults = await this.resC.getGradedResults(reqDelivId);
         } else if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
             allResults = await this.resC.getResultsForRepo(reqRepoId);
