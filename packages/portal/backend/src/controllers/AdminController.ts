@@ -24,7 +24,7 @@ import {GitHubController, IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
 import {RepositoryController} from "./RepositoryController";
-import {ResultsController} from "./ResultsController";
+import {ResultsController, ResultsKind} from "./ResultsController";
 import {TeamController} from "./TeamController";
 
 export class AdminController {
@@ -252,21 +252,21 @@ export class AdminController {
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
      * @param maxNumResults (optional, default 500)
-     * @param best
+     * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
     public async getDashboard(
         reqDelivId: string,
         reqRepoId: string,
         maxNumResults?: number,
-        best: boolean = false): Promise<AutoTestDashboardTransport[]> {
+        kind: ResultsKind = ResultsKind.ALL): Promise<AutoTestDashboardTransport[]> {
         Log.info("AdminController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = maxNumResults ? maxNumResults : 500; // max # of records
 
         const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId, best);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
@@ -347,20 +347,18 @@ export class AdminController {
         return results;
     }
 
-    public async matchResults(reqDelivId: string, reqRepoId: string, best: boolean = false): Promise<Result[]> {
+    public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
         const WILDCARD = 'any';
 
         let allResults: Result[] = [];
-        if (best && reqDelivId !== WILDCARD) {
-            allResults = await this.resC.getGradedResults(reqDelivId);
-        } else if (reqRepoId !== WILDCARD) {
+        if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
-            allResults = await this.resC.getResultsForDeliverable(reqDelivId);
-        } else {
+            allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind);
+        } else { // TODO make the kind work for all results as well
             allResults = await this.resC.getAllResults();
         }
         Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
@@ -416,16 +414,19 @@ export class AdminController {
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
-     * @param best
+     * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(
+        reqDelivId: string,
+        reqRepoId: string,
+        kind: ResultsKind = ResultsKind.ALL): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
         const results: AutoTestResultSummaryTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 

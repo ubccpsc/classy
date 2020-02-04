@@ -125,12 +125,47 @@ export class DatabaseController {
                     foreignField: 'commitURL',
                     as: 'results'
                 }
-            }
+            },
+            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
         ];
         const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
-        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.results[0]);
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
         results.forEach((r) => delete r._id);
         Log.trace("DatabaseController::getGradedResults() - done; #: " + results.length + "; took: " + Util.took(start));
+        return results;
+    }
+
+    public async getBestResults(deliv: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getBestResults() - start");
+        const pipeline = [
+            { $match : { delivId : deliv } },
+            { $group: { _id: '$repoId', maxScore: { $max: "$output.report.scoreOverall" } } },
+            { $lookup:
+                {
+                    from: this.RESULTCOLL,
+                    let: { srcRepo: "$_id", score: "$maxScore" },
+                    pipeline: [
+                        { $match:
+                            { $expr:
+                                { $and:
+                                    [
+                                        { $eq: [ "$repoId",  "$$srcRepo" ] },
+                                        { $eq: [ "$output.report.scoreOverall", "$$score" ] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'results'
+                }
+            },
+            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
+        ];
+        const collection = await this.getCollection(this.RESULTCOLL, QueryKind.SLOW);
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
+        results.forEach((r) => delete r._id);
+        Log.trace("DatabaseController::getBestResults() - done; #: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 

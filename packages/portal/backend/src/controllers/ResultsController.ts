@@ -40,14 +40,6 @@ export class ResultsController {
         return results;
     }
 
-    public async getGradedResults(deliv: string): Promise<Result[]> {
-        Log.trace("ResultsController::getGradedResults() - start");
-        const start = Date.now();
-        const results = await this.db.getGradedResults(deliv);
-        Log.trace("ResultsController::getGradedResults() - done; # results: " + results.length + "; took: " + Util.took(start));
-        return results;
-    }
-
     /**
      * Gets the result from a commitURL.
      *
@@ -325,11 +317,19 @@ export class ResultsController {
         return null; // everything is good
     }
 
-    public async getResultsForDeliverable(delivId: string) {
+    public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
         Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
         const start = Date.now();
 
-        const outcome = await DatabaseController.getInstance().getResultsForDeliverable(delivId);
+        let outcome: Result[] = [];
+        const dbc = DatabaseController.getInstance();
+        if (kind === ResultsKind.ALL) {
+            outcome = await dbc.getResultsForDeliverable(delivId);
+        } else if (kind === ResultsKind.BEST) {
+            outcome = await dbc.getBestResults(delivId);
+        } else if (kind === ResultsKind.GRADED) {
+            outcome = await dbc.getGradedResults(delivId);
+        }
 
         Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - done; # results: " +
             outcome.length + "; took: " + Util.took(start));
@@ -348,4 +348,10 @@ export class ResultsController {
 
         return outcome;
     }
+}
+
+export enum ResultsKind {
+    ALL = 'all',
+    BEST = 'best',
+    GRADED = 'graded'
 }
