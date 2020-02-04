@@ -117,7 +117,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getBestResults() - start");
         const pipeline = [
             { $match : { delivId : deliv } },
-            { $group: { _id: 'URL' } },
+            { $group: { _id: '$URL' } },
             { $lookup:
                 {
                     from: this.RESULTCOLL,
@@ -128,7 +128,8 @@ export class DatabaseController {
             }
         ];
         const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
-        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.results[0]) as Result[];
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.results[0]);
+        results.forEach((r) => delete r._id);
         Log.trace("DatabaseController::getBestResults() - done; #: " + results.length + "; took: " + Util.took(start));
         return results;
     }
