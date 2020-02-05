@@ -31,7 +31,7 @@ class Scatterplot {
     }
     
     getPlotIds(data) {
-        return data.map(t => t.teamName);
+        return data.map(t => t.repoId);
     }
     
     getScatterPlotData(scale, x, y, ids) {

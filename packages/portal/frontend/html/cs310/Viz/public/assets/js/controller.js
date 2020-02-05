@@ -6,9 +6,9 @@ class UIController {
         this.SCATTERPLOT = new Scatterplot();
         this.BOX_PLOT = new BoxPlot();
         this.TOP_N_FAIL = 15;
-        this.X_DEFAULT = "Loc";
+        this.X_DEFAULT = "Coverage";
         this.Y_DEFAULT = "Pass Count";
-        this.ORG_URL = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2";
+        this.ORG_URL = "https://github.students.cs.ubc.ca/CPSC310-2019W-T2"; // TODO get this from somewhere
         this.checkpoint = "c1";
         this.SMALL_MULT_CONFIG = [
             [{xData: "numTests", xTitle: "Student Tests", yData: "passCount", yTitle: "Pass Count"}, {xData: "coverageScore", xTitle: "Coverage", yData: "passCount", yTitle: "Pass Count"}],
@@ -21,11 +21,11 @@ class UIController {
     init() {
         const ctrl = this;
         $('[data-toggle="tooltip"]').tooltip();
-        this.DATA_HANDLER.init().then(() => { // Initial setup of listeners and rendering of page
+        this.DATA_HANDLER.init().then(async () => { // Initial setup of listeners and rendering of page
             this.populateTeamDropdown(this.checkpoint);
             $(`#xAttr option:contains(${this.X_DEFAULT})`).prop("selected", true);
             $(`#yAttr option:contains(${this.Y_DEFAULT})`).prop("selected", true);
-            this.renderAllElements();
+            await this.renderAllElements();
     
             // Change scatterplot axes
             $('div#classTab select.deliv-attr').on('change', function() {
@@ -45,11 +45,11 @@ class UIController {
             });
     
             // Switch deliverables
-            $("button.deliverables").on('click', function () {
+            $("button.deliverables").on('click', async function () {
                 $("button.deliverables.active").removeClass("active");
                 $(this).addClass("active");
                 ctrl.checkpoint = $("button.deliverables.active").data('deliverable');
-                ctrl.renderAllElements();
+                await ctrl.renderAllElements();
             });
     
             // Switch tabs
@@ -76,8 +76,8 @@ class UIController {
             });
     
             // Change team in team view
-            $("select#teamSelectContainer").on("change", function() {
-                ctrl.renderTeamPage();
+            $("select#teamSelectContainer").on("change", async function() {
+                await ctrl.renderTeamPage();
             })
     
         }).catch((err) => { // Also catches errors thrown in .then() above
@@ -85,7 +85,7 @@ class UIController {
         })
     }
 
-    renderAllElements() {
+    async renderAllElements() {
         const xDefault = $("#xAttr").find('option:selected').val();
         const yDefault = $("#yAttr").find('option:selected').val();
         const xTitle   = $("#xAttr").find('option:selected').text();
@@ -95,28 +95,28 @@ class UIController {
         const data = this.DATA_HANDLER.getClassData(this.checkpoint);
         this.BOX_PLOT.render(data, "deliverablesSummary");
         this.SCATTERPLOT.render('overview', 2, data, xDefault, yDefault, axesLabels);
-        this.renderSmallMult();
+        //this.renderSmallMult();
         this.renderTopTest();
         this.renderClusterStatus();
-        this.renderTeamPage();
+        await this.renderTeamPage();
     }
 
-    renderTeamPage() {
-        this.renderTestHistory();
+    async renderTeamPage() {
+        await this.renderTestHistory();
         this.renderClusters();
         this.renderTeamInfo();
     }
 
     renderTeamInfo() {
         const teamId = this.getActiveTeam();
-        const team   = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.teamName === teamId)[0];
-        const split  = teamId.split("_");
-        $("#member1").text(`Member Name (${split[1]})`);
-        $("#member2").text(`Member Name (${split[2]})`);
+        const team   = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
+        // const split  = teamId.split("_");
+        // $("#member1").text(`Member Name (${split[1]})`);
+        // $("#member2").text(`Member Name (${split[2]})`);
         $("#repoLink > a").attr("href", `${this.ORG_URL}/${teamId}`);
-        const overall = team.overAllScore  === null ? 0 : team.overAllScore;
-        const test    = team.testScore     === null ? 0 : team.testScore;
-        const cov     = team.coverageScore === null ? 0 : team.coverageScore;
+        const overall = team.scoreOverall  === null ? 0 : team.scoreOverall;
+        const test    = team.scoreTests    === null ? 0 : team.scoreTests;
+        const cov     = team.scoreCover    === null ? 0 : team.scoreCover;
         $("#overallScore").text(`Overall: ${overall}%`);
         $("#testScore").text(`Tests: ${test}%`);
         $("#coverageScore").text(`Coverage: ${cov}%`);
@@ -163,15 +163,16 @@ class UIController {
         this.renderHandlebars(clusterStatus, "#classClusterOverview", "#classClusterContainer");
     }
 
-    renderTestHistory() {
-        const team = this.DATA_HANDLER.getTeamData(this.checkpoint)[this.getActiveTeam()];
-        const testHistories = BarChartUtils.testHistory(team);
+    async renderTestHistory() {
+        let team = this.getActiveTeam();
+        const teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, team);
+        const testHistories = BarChartUtils.testHistory(teamData, this.DATA_HANDLER.getAllTests(this.checkpoint));
         this.renderHandlebars(testHistories, "#teamTestOverview", "#teamTestContainer");
     }
 
     renderClusters() {
-        const teamId = this.getActiveTeam();
-        const team = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.teamName === teamId)[0];
+        let teamId = this.getActiveTeam();
+        const team = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
         const clusters = this.DATA_HANDLER.getClusters(this.checkpoint);
         const clusterStatuses = BarChartUtils.getClusterData(clusters, team);
         this.renderHandlebars(clusterStatuses, "#teamClusterStatus", "#teamClusterContainer");
@@ -228,15 +229,20 @@ class UIController {
     }
 
     populateTeamDropdown() {
-        const teams = this.DATA_HANDLER.getTeamList();
+        const teams = this.DATA_HANDLER.getTeamList().map((x) => {return {teamName: x}});
         const source = $("#teamOptions").html();
         const template = Handlebars.compile(source);
         const html = template(teams);
         $('#teamSelectContainer').html(html);
+        //this.renderHandlebars(teams, "#teamOptions", "#teamSelectContainer")
     }
 
     getActiveTeam() {
-        return $("#teamSelectContainer").find('option:selected').text();
+        let team = $("#teamSelectContainer").find('option:selected').text();
+        if (!team) {
+            team = this.DATA_HANDLER.getTeamList()[0];
+        }
+        return team;
     }
 
 }

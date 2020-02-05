@@ -15,9 +15,9 @@ class BoxPlot {
     render(data, location) {
         const boxPlotData = this.trimData(data);
     
-        const testScrBox = this.getBoxPlot('Test', boxPlotData.testScore, '#2e2c46');
-        const overAllScrBox = this.getBoxPlot('Overall', boxPlotData.overAllScore, '#2e2c46');
-        const coverageScrBox = this.getBoxPlot('Coverage', boxPlotData.coverageScore, '#2e2c46');
+        const testScrBox = this.getBoxPlot('Test', boxPlotData.scoreTests, '#2e2c46');
+        const overAllScrBox = this.getBoxPlot('Overall', boxPlotData.scoreOverall, '#2e2c46');
+        const coverageScrBox = this.getBoxPlot('Coverage', boxPlotData.scoreCover, '#2e2c46');
     
         this.allBox = [overAllScrBox, testScrBox, coverageScrBox];
 
@@ -29,9 +29,9 @@ class BoxPlot {
 
     trimData(data) {
         return {
-            testScore: data.map(x => x.testScore),
-            overAllScore: data.map(x => x.overAllScore),
-            coverageScore: data.map(x => x.coverageScore)
+            scoreTests: data.map(x => x.scoreTests),
+            scoreOverall: data.map(x => x.scoreOverall),
+            scoreCover: data.map(x => x.scoreCover)
         }
     }
 

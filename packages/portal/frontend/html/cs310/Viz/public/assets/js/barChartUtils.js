@@ -67,30 +67,27 @@ class BarChartUtils {
     }
     
     // Make handlebars input for all commits for the team test history vis
-    static testHistory(teamHistory) {
+    static testHistory(teamHistory, allTests) {
         const comFail = {status: "commit failed", color:"#dddddd"};
         const fail = {status: "failed", color:"#fc8d62"};
         const pass = {status: "passed", color:"#66c2a5"};
         const skip = {status: "skipped", color:"#8da0cb"};
-        const nearestSuccess = BarChartUtils.getNearestSuccess(teamHistory); // Need to ensure something with tests
-        const allTests = nearestSuccess.report.failList.concat(nearestSuccess.report.passNames);
         const testObjs = [];
         for (const test of allTests) {
             const testObj = {"testName": test, "entries": []}
             for (let i = 0; i < teamHistory.length; i++) {
                 const commit = teamHistory[i];
-                const mark = {"href": commit.commitObj.url, "index": i}
-                const report = commit.report;
-                if (report.state !== "SUCCESS") {
+                const mark = {"href": commit.commitURL, "index": i}
+                if (commit.state !== "SUCCESS") {
                     $.extend(mark, comFail);
-                } else if (report.passNames.includes(test)) {
+                } else if (commit.testPass.includes(test)) {
                     $.extend(mark, pass);
-                } else if (report.failNames.includes(test)) {
+                } else if (commit.testFail.includes(test)) {
                     $.extend(mark, fail);
-                } else if (report.skipNames.includes(test)) {
+                } else if (commit.testSkip.includes(test)) {
                     $.extend(mark, skip);
-                } else if (report.errorNames.includes(test)) {
-                    console.log("Unexpected errorNames"); // Not targetting D3
+                } else if (commit.testError.includes(test)) {
+                    console.log("Unexpected testError"); // Not targetting D3
                 } else {
                     $.extend(mark, fail); // Somehow nothing ran but bot returning SUCCESS, treat as fail
                 }
@@ -101,20 +98,13 @@ class BarChartUtils {
         return testObjs;   
     }
     
-    static getNearestSuccess(teamHistory) {
-        for (const commit of teamHistory) {
-            if (commit.report.state === "SUCCESS") {
-                return commit;
-            }
-        }
-    }
-    
     static getClusterData(clusters, teamData) {
         const toReturn = [];
         for (const [cName, cTests] of Object.entries(clusters)) {
-            const failSkip = teamData.failNames.concat(teamData.skipNames);
+            const failSkip = teamData.testFail.concat(teamData.testSkip);
+            const pass = teamData.testPass;
             const total = cTests.length;
-            const passNum = cTests.filter(x => teamData.passNames.includes(x)).length;
+            const passNum = cTests.filter(x => pass.includes(x)).length;
             const failNum = cTests.filter(x => failSkip.includes(x)).length;
             const passPctScaled = BarChartUtils.scale(passNum, total);
             const failPctScaled = BarChartUtils.scale(failNum, total);
@@ -127,6 +117,4 @@ class BarChartUtils {
         }
         return toReturn;
     }
-
-
 }
