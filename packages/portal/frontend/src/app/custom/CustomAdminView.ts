@@ -19,14 +19,17 @@ export class ClassyAdminView extends AdminView {
     protected async handleAdminDashboard(opts: any): Promise<void> {
         Log.info('CustomAdminView::handleDashboard(..) - start');
         return this.dashTab.init(opts).then((res) => {
-            const UIRow = document.querySelector("#AdminDashboardList > div");
-            const button = document.createElement("button");
-            button.style.marginLeft = "100px";
-            button.innerHTML = "DOESN'T WORK";
-            const path = Factory.getInstance().getHTMLPrefix() + "/Viz/public/index.html";
-            button.addEventListener("click", () => {window.open(path);});
-            UIRow.append(button);
-            return res;
+            if (!document.querySelector("#vizButton")) {
+                const UIRow = document.querySelector("#AdminDashboardList > div");
+                const button = document.createElement("button");
+                button.id = "vizButton";
+                button.style.marginLeft = "100px";
+                button.innerHTML = "DOESN'T WORK";
+                const path = Factory.getInstance().getHTMLPrefix() + "/Viz/public/index.html";
+                button.addEventListener("click", () => {window.open(path);});
+                UIRow.append(button);
+                return res;
+            }
         });
     }
 }
