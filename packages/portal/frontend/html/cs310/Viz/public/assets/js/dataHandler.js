@@ -24,8 +24,8 @@ class DataHandler {
             this.clusters["c1"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c1"))
             this.clusters["c2"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c2"))
             this.inverseClusters = this.reverseIndexClusters(); // TODO move to constructor
-            this.classData["c1"] = this.fixMissingData(c1Data);
-            this.classData["c2"] = this.fixMissingData(c2Data);
+            this.classData["c1"] = this.fixMissingData(c1Data.filter((x) => x.repoId.startsWith("project_")));
+            this.classData["c2"] = this.fixMissingData(c2Data.filter((x) => x.repoId.startsWith("project_")));
             this.makeAllTests();
             this.testData["c1"] = this.makeTestData("c1");
             this.testData["c2"] = this.makeTestData("c2");
@@ -40,8 +40,8 @@ class DataHandler {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'user':         localStorage.user, // May need to replace if running locally
-                'token':        localStorage.token // May need to replace if running locally
+                'user':         "lucasaz", // May need to replace if running locally
+                'token':        "82eea87210e5476a6be25c0e68c1f57931c4d8cd" // May need to replace if running locally
             }
         };
         const response = await fetch(url, options);
