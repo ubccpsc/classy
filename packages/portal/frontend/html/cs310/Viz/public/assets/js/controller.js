@@ -81,7 +81,9 @@ class UIController {
             })
     
         }).catch((err) => { // Also catches errors thrown in .then() above
-            alert("FAILED SETUP: " + err);
+            if (window.confirm("Something failed, you're probably not logged in to Classy. Click OK to redirect. If that doens't work, probably tell Lucas.")) {
+                window.location.href = "https://cs310.students.cs.ubc.ca";
+            };
         })
     }
 
