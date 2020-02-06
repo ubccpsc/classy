@@ -24,7 +24,7 @@ export class ClassyAdminView extends AdminView {
                 const button = document.createElement("button");
                 button.id = "vizButton";
                 button.style.marginLeft = "100px";
-                button.innerHTML = "DOESN'T WORK";
+                button.innerHTML = "Viz (beta)";
                 const path = Factory.getInstance().getHTMLPrefix() + "/Viz/public/index.html";
                 button.addEventListener("click", () => {window.open(path);});
                 UIRow.append(button);
