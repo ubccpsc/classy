@@ -314,11 +314,13 @@ export class AdminController {
                     }
                 }
 
+                const state = this.selectState(result);
+
                 const resultTrans: AutoTestDashboardTransport = {
                     repoId:       repoId,
                     repoURL:      repoURL,
                     delivId:      result.delivId,
-                    state:        result.output.state,
+                    state:        state,
                     timestamp:    result.output.timestamp,
                     commitSHA:    result.input.target.commitSHA,
                     commitURL:    result.input.target.commitURL,
@@ -453,11 +455,7 @@ export class AdminController {
                     }
                 }
 
-                // if the VM state is SUCCESS, return the report state
-                let state = result.output.state.toString();
-                if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
-                    state = result.output.report.result;
-                }
+                const state = this.selectState(result);
 
                 const resultTrans: AutoTestResultSummaryTransport = {
                     repoId:       repoId,
@@ -479,6 +477,23 @@ export class AdminController {
         }
         Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
+    }
+
+    /**
+     * Takes a result, and if the VM was successful picks the state of the report.
+     *     else returns the state of the VM
+     * @param result
+     */
+    private selectState(result: Result): string {
+        // if the VM state is SUCCESS, return the report state
+        let state = "UNDEFINED";
+        if (typeof result.output !== 'undefined' && typeof result.output.state !== 'undefined') {
+            state = result.output.state.toString();
+        }
+        if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
+            state = result.output.report.result;
+        }
+        return state;
     }
 
     /**

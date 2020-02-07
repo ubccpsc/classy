@@ -1,6 +1,6 @@
 import Log from "../../../../../common/Log";
-import {AdminTabs, AdminView} from "../views/AdminView";
 import { Factory } from "../Factory";
+import {AdminTabs, AdminView} from "../views/AdminView";
 
 /**
  * CS 310 Admin view doesn't really differ at all from the stock Classy view.
@@ -26,7 +26,7 @@ export class ClassyAdminView extends AdminView {
                 button.style.marginLeft = "100px";
                 button.innerHTML = "Viz (beta)";
                 const path = Factory.getInstance().getHTMLPrefix() + "/Viz/public/index.html";
-                button.addEventListener("click", () => {window.open(path);});
+                button.addEventListener("click", () => window.open(path));
                 UIRow.append(button);
                 return res;
             }
