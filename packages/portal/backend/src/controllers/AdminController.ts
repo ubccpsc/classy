@@ -270,13 +270,7 @@ export class AdminController {
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
-
-                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-
-                let scoreOverall = null;
-                let scoreCover = null;
-                let scoreTest = null;
+                const resultSummary = this.clipAutoTestResult(result);
 
                 let testPass: string[] = [];
                 let testFail: string[] = [];
@@ -287,16 +281,6 @@ export class AdminController {
 
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
                     const report = result.output.report;
-                    if (typeof report.scoreOverall !== 'undefined') {
-                        scoreOverall = Util.truncateNumber(report.scoreOverall, 0);
-                    }
-                    if (typeof report.scoreTest !== 'undefined') {
-                        scoreTest = Util.truncateNumber(report.scoreTest, 0);
-                    }
-                    if (typeof report.scoreCover !== 'undefined') {
-                        scoreCover = Util.truncateNumber(report.scoreCover, 0);
-                    }
-
                     if (typeof report.passNames !== 'undefined') {
                         testPass = report.passNames;
                     }
@@ -314,25 +298,12 @@ export class AdminController {
                     }
                 }
 
-                const state = this.selectState(result);
-
                 const resultTrans: AutoTestDashboardTransport = {
-                    repoId:       repoId,
-                    repoURL:      repoURL,
-                    delivId:      result.delivId,
-                    state:        state,
-                    timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.target.commitSHA,
-                    commitURL:    result.input.target.commitURL,
-                    scoreOverall: scoreOverall,
-                    scoreCover:   scoreCover,
-                    scoreTests:   scoreTest,
-
+                    ...resultSummary,
                     testPass:  testPass,
                     testFail:  testFail,
                     testError: testError,
                     testSkip:  testSkip,
-
                     cluster: cluster
                 };
 
@@ -434,42 +405,7 @@ export class AdminController {
 
             const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
-
-                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-
-                let scoreOverall = null;
-                let scoreCover = null;
-                let scoreTest = null;
-
-                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                    const report = result.output.report;
-                    if (typeof report.scoreOverall !== 'undefined') {
-                        scoreOverall = report.scoreOverall;
-                    }
-                    if (typeof report.scoreTest !== 'undefined') {
-                        scoreTest = report.scoreTest;
-                    }
-                    if (typeof report.scoreCover !== 'undefined') {
-                        scoreCover = report.scoreCover;
-                    }
-                }
-
-                const state = this.selectState(result);
-
-                const resultTrans: AutoTestResultSummaryTransport = {
-                    repoId:       repoId,
-                    repoURL:      repoURL,
-                    delivId:      result.delivId,
-                    state:        state,
-                    timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.target.commitSHA,
-                    commitURL:    result.input.target.commitURL,
-                    scoreOverall: scoreOverall,
-                    scoreCover:   scoreCover,
-                    scoreTests:   scoreTest
-                };
-
+                const resultTrans = this.clipAutoTestResult(result);
                 results.push(resultTrans);
             } else {
                 // result does not match filter
@@ -477,6 +413,48 @@ export class AdminController {
         }
         Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
+    }
+
+    /**
+     * Transforms a Result into an AutoTestResultSummaryTransport
+     */
+    private clipAutoTestResult(result: Result): AutoTestResultSummaryTransport {
+        const repoId = result.input.target.repoId;
+        const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+
+        let scoreOverall = null;
+        let scoreCover = null;
+        let scoreTest = null;
+
+        if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+            const report = result.output.report;
+            if (typeof report.scoreOverall !== 'undefined') {
+                scoreOverall = report.scoreOverall;
+            }
+            if (typeof report.scoreTest !== 'undefined') {
+                scoreTest = report.scoreTest;
+            }
+            if (typeof report.scoreCover !== 'undefined') {
+                scoreCover = report.scoreCover;
+            }
+        }
+
+        const state = this.selectState(result);
+
+        return  {
+            repoId: repoId,
+            repoURL: repoURL,
+            delivId: result.delivId,
+            state: state,
+            timestamp: result.output.timestamp,
+            commitSHA: result.input.target.commitSHA,
+            commitURL: result.input.target.commitURL,
+            scoreOverall: scoreOverall,
+            scoreCover: scoreCover,
+            scoreTests: scoreTest,
+            custom: {}
+        };
     }
 
     /**

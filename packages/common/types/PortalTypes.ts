@@ -313,6 +313,7 @@ export interface AutoTestResultSummaryTransport {
     scoreOverall: number | null; // null if result !== 'SUCCESS'
     scoreCover: number | null; // null if result !== 'SUCCESS'
     scoreTests: number | null; // null if result !== 'SUCCESS'
+    custom: any;
 }
 
 // extends the result summary data
