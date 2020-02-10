@@ -67,12 +67,24 @@
 					<div class="btn-group" id="team-selector" role="group">
 						<span class="align-vm ml-4 mr-2">Select team:</span>
 						<select id="teamSelectContainer">
-							<script id="teamOptions" type="text/x-handlebars-template"> <!--HB-->
-								{{#each this}}
-								<option value="{{teamName}}">{{teamName}}</option>
-								{{/each}}
-							</script>
 						</select>
+						<script id="teamOptions" type="text/x-handlebars-template"> <!--HB-->
+							{{#each this}}
+							<option value="{{teamName}}">{{teamName}}</option>
+							{{/each}}
+						</script>
+					</div>
+				</div>
+				<div class="row nav-spacing d-none team-only">
+					<div class="btn-group" id="branch-selector" role="group">
+						<span class="align-vm ml-4 mr-2">Select branch:</span>
+						<select id="branchSelectContainer">
+						</select>
+						<script id="branchOptions" type="text/x-handlebars-template"> <!--HB-->
+							{{#each this}}
+							<option value="{{branchName}}">{{branchName}}</option>
+							{{/each}}
+						</script>
 					</div>
 				</div>
 				<div class="row nav-spacing class-only" id="deliverablesSummary">

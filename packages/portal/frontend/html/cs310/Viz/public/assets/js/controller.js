@@ -104,6 +104,7 @@ class UIController {
     }
 
     async renderTeamPage() {
+        await this.populateBranchDropdown();
         await this.renderTestHistory();
         this.renderClusters();
         this.renderTeamInfo();
@@ -232,11 +233,15 @@ class UIController {
 
     populateTeamDropdown() {
         const teams = this.DATA_HANDLER.getTeamList().map((x) => {return {teamName: x}});
-        const source = $("#teamOptions").html();
-        const template = Handlebars.compile(source);
-        const html = template(teams);
-        $('#teamSelectContainer').html(html);
-        //this.renderHandlebars(teams, "#teamOptions", "#teamSelectContainer")
+        this.renderHandlebars(teams, "#teamOptions", "#teamSelectContainer")
+    }
+
+    async populateBranchDropdown() {
+        const teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, this.getActiveTeam());
+        let branchNames = Array.from(new Set(teamData.map((x) => {return x.custom.ref.split("/").pop()})));
+        branchNames = branchNames.sort(this.branchSort);
+        const branchData = branchNames.map((x) => {return {branchName: x}})
+        this.renderHandlebars(branchData, "#branchOptions", "#branchSelectContainer")
     }
 
     getActiveTeam() {
@@ -245,6 +250,12 @@ class UIController {
             team = this.DATA_HANDLER.getTeamList()[0];
         }
         return team;
+    }
+
+    branchSort(a, b) {
+        if (a === "master") return -1;
+        if (b === "master") return 1;
+        return a < b ? -1 : 1;
     }
 
 }
