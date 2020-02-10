@@ -1,10 +1,11 @@
 import Log from "../../../../common/Log";
+import {TransportKind} from "../../../../common/types/PortalTypes";
 import {CourseController} from "../controllers/CourseController";
 import {DatabaseController} from "../controllers/DatabaseController";
 import {IGitHubController} from "../controllers/GitHubController";
 import {RepositoryController} from "../controllers/RepositoryController";
 import {TeamController} from "../controllers/TeamController";
-import {Deliverable, Grade, Person, PersonKind, Repository, Team} from "../Types";
+import {Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 
 /**
  *
@@ -216,5 +217,23 @@ export class CustomCourseController extends CourseController {
             Log.trace("CustomCourseController::finalizeProvisionedRepo( " + repo.id + " ) - Protecting master");
             return this.gh.updateBranchProtection(repo, [{name: "master", reviews: 1}]);
         }
+    }
+
+    /**
+     * Extends the default behaviour: forward viz logging fields
+     * @param record
+     * @param kind
+     */
+    public forwardCustomFields(record: any, kind: TransportKind): {[key: string]: any} {
+        // TODO move clusters into custom to be forwarded
+        const custom: any = {};
+        if (kind === TransportKind.AUTOTEST_RESULT_SUMMARY) {
+            const result: Result = record as Result;
+            if (result && result.output && result.output.report && result.output.report.custom) {
+                custom["loc"] = result.output.report.custom["loc"];
+                custom["studentTestCount"] = result.output.report.custom["studentTestCount"];
+            }
+        }
+        return custom;
     }
 }
