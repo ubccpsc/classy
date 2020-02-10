@@ -232,6 +232,7 @@ export class CustomCourseController extends CourseController {
             if (result && result.output && result.output.report && result.output.report.custom) {
                 custom["loc"] = result.output.report.custom["loc"];
                 custom["studentTestCount"] = result.output.report.custom["studentTestCount"];
+                custom["ref"] = result.input.target.ref;
             }
         }
         return custom;
