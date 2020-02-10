@@ -21,8 +21,21 @@ class DataHandler {
             const c2Data = await this.fetchFromClassyEndpoint("/portal/admin/bestResults/c2");
             this.teams = await this.fetchFromClassyEndpoint("/portal/admin/teams");
             this.teams = this.teams.map((x) => x.id).filter((x) => x.startsWith("project_"));
-            this.clusters["c1"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c1"))
-            this.clusters["c2"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c2"))
+            try {
+                this.clusters = JSON.parse(await this.fetchSimpleFile("/portal/resource/staff/clusters.json"));
+            } catch (e) {
+                console.log("WARN: Failed to get clusters from proper endpoint, was it deleted by IT?");
+                this.clusters["c1"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c1"))
+                this.clusters["c2"] = this.hijackClusterFromResult(await this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c2"))
+            }
+            let disharmonyCSV;
+            try {
+                disharmonyCSV = await this.fetchSimpleFile("/portal/resource/staff/disharmony.csv");
+            } catch (e) {
+                console.log("WARN: Failed to get disharmony from proper endpoint, was it deleted by IT?");
+            }
+            this.addDisharmonyScores(c1Data, disharmonyCSV);
+            this.addDisharmonyScores(c2Data, disharmonyCSV);
             this.inverseClusters = this.reverseIndexClusters(); // TODO move to constructor
             this.classData["c1"] = this.fixMissingData(c1Data.filter((x) => x.repoId.startsWith("project_")));
             this.classData["c2"] = this.fixMissingData(c2Data.filter((x) => x.repoId.startsWith("project_")));
@@ -36,6 +49,15 @@ class DataHandler {
     }
 
     async fetchFromClassyEndpoint(URI) {
+        const json = JSON.parse(await this.fetchSimpleFile(URI));
+        if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
+            return json.success;
+        } else {
+            throw json.failure; // Dunno why we do this but elsewhere in classy does it
+        }
+    }
+
+    async fetchSimpleFile(URI) {
         const url = "https://cs310.students.cs.ubc.ca" + URI;
         const options = {
             headers: {
@@ -46,27 +68,38 @@ class DataHandler {
         };
         const response = await fetch(url, options);
         if (response.status === 200) {
-            const json = await response.json();
-            if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                return json.success;
-            } else {
-                throw json.failure;
-            }
+            return await response.text();
         } else {
-            throw response.text();
+            throw "Not a 200";
+        }
+    }
+
+    addDisharmonyScores(classData, disharmonyCSV) {
+        const DHMap = {};
+        disharmonyCSV.split("\n").forEach((row) => {
+            const r = row.split(","); // ["teamname", score]
+            DHMap[r[0]] = r[1];
+        });
+        for (const team of classData) {
+            if (DHMap.hasOwnProperty(team.repoId)) {
+                team.disharmony = Number(DHMap[team.repoId]);
+            } else {
+                team.disharmony = 0;
+            }
         }
     }
 
     fixMissingData(classData) {
         for (const item of classData) {
+            item.num = Number(item.repoId.slice(-3));
             item.testPass = this.namesOnly(item.testPass);
             item.testFail = this.namesOnly(item.testFail);
             item.testSkip = this.namesOnly(item.testSkip);
             item.passCount = item.testPass.length;
             item.failCount = item.testFail.length;
             item.failCount = item.testSkip.length;
-            item.loc = 0;
-            item.numTests = 0;
+            item.loc = item.custom.hasOwnProperty("loc") ? item.custom.loc : -1;
+            item.numTests = item.custom.hasOwnProperty("studentTestCount") ? item.custom.studentTestCount : -1;
         }
         return classData;
     }
