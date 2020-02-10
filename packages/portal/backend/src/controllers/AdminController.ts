@@ -12,7 +12,7 @@ import {
     ProvisionTransport,
     RepositoryTransport,
     StudentTransport,
-    TeamTransport
+    TeamTransport, TransportKind
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
@@ -270,7 +270,7 @@ export class AdminController {
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
-                const resultSummary = this.clipAutoTestResult(result);
+                const resultSummary = await this.clipAutoTestResult(result);
 
                 let testPass: string[] = [];
                 let testFail: string[] = [];
@@ -405,7 +405,7 @@ export class AdminController {
 
             const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
-                const resultTrans = this.clipAutoTestResult(result);
+                const resultTrans = await this.clipAutoTestResult(result);
                 results.push(resultTrans);
             } else {
                 // result does not match filter
@@ -418,7 +418,8 @@ export class AdminController {
     /**
      * Transforms a Result into an AutoTestResultSummaryTransport
      */
-    private clipAutoTestResult(result: Result): AutoTestResultSummaryTransport {
+    private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
+        const cc = await Factory.getCourseController(this.gh);
         const repoId = result.input.target.repoId;
         const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -441,6 +442,7 @@ export class AdminController {
         }
 
         const state = this.selectState(result);
+        const custom = cc.forwardCustomFields(result, TransportKind.AUTOTEST_RESULT_SUMMARY);
 
         return  {
             repoId: repoId,
@@ -453,7 +455,7 @@ export class AdminController {
             scoreOverall: scoreOverall,
             scoreCover: scoreCover,
             scoreTests: scoreTest,
-            custom: {}
+            custom: custom
         };
     }
 

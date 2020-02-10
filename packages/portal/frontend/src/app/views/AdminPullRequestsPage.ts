@@ -92,6 +92,7 @@ export class AdminPullRequestsPage extends AdminPage {
         try {
             const repositorySelect = document.getElementById("repositoryPatchSelect") as HTMLSelectElement;
             this.repos = (await this.getAllRepos()).map((repo) => repo.id);
+            this.repos.sort();
             if (this.repos.length === 0) {
                 const option = document.createElement("option");
                 option.text = "No repos to patch";
