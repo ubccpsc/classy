@@ -78,7 +78,12 @@ class UIController {
             // Change team in team view
             $("select#teamSelectContainer").on("change", async function() {
                 await ctrl.renderTeamPage();
-            })
+            });
+    
+            // Change team in team view
+            $("select#branchSelectContainer").on("change", async function() {
+                await ctrl.renderTestHistory();
+            });
     
         }).catch((err) => { // Also catches errors thrown in .then() above
             if (window.confirm("Something failed, you're probably not logged in to Classy. Click OK to redirect. If that doens't work, probably tell Lucas.")) {
@@ -168,7 +173,8 @@ class UIController {
 
     async renderTestHistory() {
         let team = this.getActiveTeam();
-        const teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, team);
+        let teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, team);
+        teamData = this.filterTestData(teamData, this.getActiveBranch());
         const testHistories = BarChartUtils.testHistory(teamData, this.DATA_HANDLER.getAllTests(this.checkpoint));
         this.renderHandlebars(testHistories, "#teamTestOverview", "#teamTestContainer");
     }
@@ -233,15 +239,19 @@ class UIController {
 
     populateTeamDropdown() {
         const teams = this.DATA_HANDLER.getTeamList().map((x) => {return {teamName: x}});
-        this.renderHandlebars(teams, "#teamOptions", "#teamSelectContainer")
+        this.renderHandlebars(teams, "#teamOptions", "#teamSelectContainer");
     }
 
     async populateBranchDropdown() {
         const teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, this.getActiveTeam());
         let branchNames = Array.from(new Set(teamData.map((x) => {return x.custom.ref.split("/").pop()})));
-        branchNames = branchNames.sort(this.branchSort);
-        const branchData = branchNames.map((x) => {return {branchName: x}})
-        this.renderHandlebars(branchData, "#branchOptions", "#branchSelectContainer")
+        branchNames = branchNames.sort(this.branchSort); // unshift = prepend
+        branchNames.unshift("all");
+        console.log(branchNames);
+        const branchData = branchNames.map((x) => {return {branchName: x}});
+        console.log(branchData);
+        this.renderHandlebars(branchData, "#branchOptions", "#branchSelectContainer");
+        console.log("after");
     }
 
     getActiveTeam() {
@@ -252,10 +262,29 @@ class UIController {
         return team;
     }
 
+    getActiveBranch() {
+        let branch = $("#branchSelectContainer").find('option:selected').text();
+        if (!branch) {
+            branch = "all";
+        }
+        return branch;
+
+    }
+
     branchSort(a, b) {
         if (a === "master") return -1;
         if (b === "master") return 1;
         return a < b ? -1 : 1;
+    }
+
+    filterTestData(data, branch) {
+        let filtered;
+        if (branch === "all") {
+            filtered = data;
+        } else {
+            filtered = data.filter((x) => {return x.custom.ref.split("/").pop() === branch});
+        }
+        return filtered.sort((a,b) => {return a.timestamp < b.timestamp? -1 : 1});
     }
 
 }
