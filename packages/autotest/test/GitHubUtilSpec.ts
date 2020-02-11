@@ -71,6 +71,22 @@ describe("GitHubUtil", () => {
         expect(actual).to.be.true;
     });
 
+    it("Should be able to find extra commands from a commit comment.", () => {
+        let actual;
+
+        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #d1 #verbose");
+        expect(actual).to.deep.equal(["#d1", "#verbose"]);
+
+        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot d1 verbose ## # ###");
+        expect(actual).to.deep.equal([]);
+
+        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #d101 #silent #force #verbose");
+        expect(actual).to.deep.equal(["#d101", "#silent", "#force", "#verbose"]);
+
+        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #force. #verbose. #force #silent\n");
+        expect(actual).to.deep.equal(["#force", "#verbose", "#silent"]);
+    });
+
     it("Should be able to correctly create human durations", () => {
         const now = Date.now();
         const oneSecond = now - 1000;

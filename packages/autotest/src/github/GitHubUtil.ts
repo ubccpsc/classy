@@ -73,13 +73,23 @@ export class GitHubUtil {
         return parsedDelivId;
     }
 
-    public static parseCommandFromComment(message: any, cmd: string): boolean {
+    public static parseCommandFromComment(message: string, cmd: string): boolean {
         if (message.indexOf(`#${cmd}`) >= 0) {
             Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: true`);
             return true;
         }
         Log.trace(`GitHubUtil::parseCommandFromComment() - input: ${message}; ${cmd}: false`);
         return false;
+    }
+
+    public static parseAllCommandsFromComment(message: string): string[] {
+        const flags = new Set(message.match(/#[a-zA-Z0-9]+/g) || []);
+        for (const command of ['force', 'silent', 'check', 'schedule', 'unschedule']) {
+            if (GitHubUtil.parseCommandFromComment(message, command)) {
+                flags.add(`#${command}`);
+            }
+        }
+        return [...flags];
     }
 
     /**
@@ -115,12 +125,7 @@ export class GitHubUtil {
 
             Log.info("GitHubUtil::processComment(..) - 2");
 
-            const flags: string[] = [];
-            for (const command of ['force', 'silent', 'check', 'schedule', 'unschedule']) {
-                if (GitHubUtil.parseCommandFromComment(message, command)) {
-                    flags.push(`#${command}`);
-                }
-            }
+            const flags: string[] = GitHubUtil.parseAllCommandsFromComment(message);
 
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
