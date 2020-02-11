@@ -9,7 +9,7 @@ class DataHandler {
             "c1": {},
             "c2": {}
         };
-        this.teamData = [];
+        this.teamsRaw = [];
         this.teams = [];
         this.teamInfo = {};
         this.clusters = {};
@@ -21,8 +21,8 @@ class DataHandler {
         try {
             const c1Data = await this.fetchFromClassyEndpoint("/portal/admin/bestResults/c1");
             const c2Data = await this.fetchFromClassyEndpoint("/portal/admin/bestResults/c2");
-            this.teamData = await this.fetchFromClassyEndpoint("/portal/admin/teams");
-            this.teams = this.teamData.map((x) => x.id).filter((x) => x.startsWith("project_"));
+            this.teamsRaw = await this.fetchFromClassyEndpoint("/portal/admin/teams");
+            this.teams = this.teamsRaw.map((x) => x.id).filter((x) => x.startsWith("project_"));
             this.students = await this.fetchFromClassyEndpoint("/portal/admin/students");
             this.teamInfo = this.makeTeamMap();
             try {
@@ -84,13 +84,13 @@ class DataHandler {
             CSIDToInfo[student.id] = student;
         }
         const teamToMembers = {};
-        for (const team of this.teamData) {
+        for (const team of this.teamsRaw) {
             if (!team.id.startsWith("project_")) {
                 continue;
             }
             teamToMembers[team.id] = team.people.map(x => CSIDToInfo[x]);
         };
-        return teamToMembers
+        return teamToMembers;
     }
 
     addDisharmonyScores(classData, disharmonyCSV) {
@@ -133,6 +133,10 @@ class DataHandler {
 
     getAllTests(delivId) {
         return this.allTests[delivId];
+    }
+
+    getTeamMemberInfo(teamId) {
+        return this.teamInfo[teamId];
     }
 
     async getTeamData(checkpoint, team) {

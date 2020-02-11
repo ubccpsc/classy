@@ -116,11 +116,10 @@ class UIController {
     }
 
     renderTeamInfo() {
-        const teamId = this.getActiveTeam();
-        const team   = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
-        // const split  = teamId.split("_");
-        // $("#member1").text(`Member Name (${split[1]})`);
-        // $("#member2").text(`Member Name (${split[2]})`);
+        const teamId  = this.getActiveTeam();
+        const team    = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
+        const members = this.DATA_HANDLER.getTeamMemberInfo(teamId);
+        this.renderHandlebars(members, "#memberInfo", "#memberContainer");
         $("#repoLink > a").attr("href", `${this.ORG_URL}/${teamId}`);
         const overall = team.scoreOverall  === null ? 0 : team.scoreOverall;
         const test    = team.scoreTests    === null ? 0 : team.scoreTests;
@@ -247,11 +246,8 @@ class UIController {
         let branchNames = Array.from(new Set(teamData.map((x) => {return x.custom.ref.split("/").pop()})));
         branchNames = branchNames.sort(this.branchSort); // unshift = prepend
         branchNames.unshift("all");
-        console.log(branchNames);
         const branchData = branchNames.map((x) => {return {branchName: x}});
-        console.log(branchData);
         this.renderHandlebars(branchData, "#branchOptions", "#branchSelectContainer");
-        console.log("after");
     }
 
     getActiveTeam() {

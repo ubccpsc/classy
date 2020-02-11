@@ -95,8 +95,12 @@
 				--->
 				</div>
 				<div class="row nav-spacing d-none team-only" style="font-size: 20px">
-					<div class="col-12" id="member1">[Team Member One (CSID)]</div>
-					<div class="col-12" id="member2">[Team Member Two (CSID)]</div>
+					<div id="memberContainer"></div>
+					<script id="memberInfo" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="col-12">{{firstName}} {{lastName}} ({{githubId}})</div>
+						{{/each}}
+					</script>
 					<div class="col-12" id="repoLink"><a target="_blank">Repo link</a></div>
 					<div class="col-12" id="overallScore">[Overall score]</div>
 					<div class="col-12" id="testScore">[Test score]</div>
