@@ -2,6 +2,8 @@
     font: 10px sans-serif;
 }
 
+
+
 .axis path,
 .axis line {
     fill: none;
@@ -101,9 +103,16 @@ div.progress {
     font-size: 18px;
     top: -5px;
 }
-.legend .fail-color { background-color: #fc8d62; }
-.legend .skip-color { background-color: #8da0cb; }
-.legend .pass-color { background-color: #66c2a5; }
+
+.fail-color-cb { background-color: #fc8d62; }
+.skip-color-cb { background-color: #8da0cb; }
+.pass-color-cb { background-color: #66c2a5; }
+.non-color-cb  { background-color: #dddddd; }
+
+.fail-color { background-color: #f50808; }
+.skip-color { background-color: #cccccc; }
+.pass-color { background-color: #20e705; }
+.non-color  { background-color: #eeeeee; }
 
 .test-vis-wrapper {
     position: relative;

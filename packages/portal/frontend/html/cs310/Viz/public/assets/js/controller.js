@@ -2,9 +2,21 @@ class UIController {
 
     constructor() {
         // I wish these were constants
+        this.colorblindColorConfig = {
+            failColor: "fail-color-cb", 
+            passColor: "pass-color-cb", 
+            skipColor: "skip-color-cb",
+            nonColor: "non-color-cb"}; 
+        this.classyColorConfig = {
+            failColor: "fail-color", 
+            passColor: "pass-color", 
+            skipColor: "skip-color",
+            nonColor: "non-color"};
+        this.currentColorConfig = this.colorblindColorConfig;
         this.DATA_HANDLER = new DataHandler();
         this.SCATTERPLOT = new Scatterplot();
         this.BOX_PLOT = new BoxPlot();
+        this.BAR_CHART_UTILS = new BarChartUtils(this.currentColorConfig);
         this.TOP_N_FAIL = 15;
         this.X_DEFAULT = "Coverage";
         this.Y_DEFAULT = "Pass Count";
@@ -74,6 +86,10 @@ class UIController {
                     $(this).removeClass("d-none");
                 });
             });
+
+            $("button#colorToggle").on('click', function () {
+                ctrl.toggleColors();
+            })
     
             // Change team in team view
             $("select#teamSelectContainer").on("change", async function() {
@@ -159,14 +175,17 @@ class UIController {
 
     renderTopTest() {
         const data = this.DATA_HANDLER.getTestData(this.checkpoint);
-        const top5Test = BarChartUtils.getTopFailedTests(this.TOP_N_FAIL, data);
-        this.renderHandlebars(top5Test, "#classTestOverview", "#classTestContainer");
+        console.log(data);
+        console.log(this.TOP_N_FAIL);
+        const topNTest = this.BAR_CHART_UTILS.getTopFailedTests(this.TOP_N_FAIL, data);
+        console.log(topNTest);
+        this.renderHandlebars(topNTest, "#classTestOverview", "#classTestContainer");
     }
 
     renderClusterStatus() {
         const data = this.DATA_HANDLER.getTestData(this.checkpoint);
         const clusters = this.DATA_HANDLER.getClusters(this.checkpoint);
-        const clusterStatus = BarChartUtils.getClusterStatusData(data, clusters);
+        const clusterStatus = this.BAR_CHART_UTILS.getClusterStatusData(data, clusters);
         this.renderHandlebars(clusterStatus, "#classClusterOverview", "#classClusterContainer");
     }
 
@@ -174,7 +193,7 @@ class UIController {
         let team = this.getActiveTeam();
         let teamData = await this.DATA_HANDLER.getTeamData(this.checkpoint, team);
         teamData = this.filterTestData(teamData, this.getActiveBranch());
-        const testHistories = BarChartUtils.testHistory(teamData, this.DATA_HANDLER.getAllTests(this.checkpoint));
+        const testHistories = this.BAR_CHART_UTILS.testHistory(teamData, this.DATA_HANDLER.getAllTests(this.checkpoint));
         this.renderHandlebars(testHistories, "#teamTestOverview", "#teamTestContainer");
     }
 
@@ -182,7 +201,7 @@ class UIController {
         let teamId = this.getActiveTeam();
         const team = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
         const clusters = this.DATA_HANDLER.getClusters(this.checkpoint);
-        const clusterStatuses = BarChartUtils.getClusterData(clusters, team);
+        const clusterStatuses = this.BAR_CHART_UTILS.getClusterData(clusters, team);
         this.renderHandlebars(clusterStatuses, "#teamClusterStatus", "#teamClusterContainer");
         this.setClusterHovers();
     }
@@ -281,6 +300,22 @@ class UIController {
             filtered = data.filter((x) => {return x.custom.ref.split("/").pop() === branch});
         }
         return filtered.sort((a,b) => {return a.timestamp < b.timestamp? -1 : 1});
+    }
+
+    toggleColors() {
+        if (this.currentColorConfig === this.classyColorConfig) {
+            this.BAR_CHART_UTILS.updateColors(this.colorblindColorConfig);
+            this.currentColorConfig = this.colorblindColorConfig;
+        } else {
+            this.BAR_CHART_UTILS.updateColors(this.classyColorConfig);
+            this.currentColorConfig = this.classyColorConfig;
+        }
+        for (const col of Object.values(this.classyColorConfig)) {
+            $(`.${col}, .${col}-cb`).each(function() {
+                $(this).toggleClass(col);
+                $(this).toggleClass(`${col}-cb`);
+            })
+        }
     }
 
 }

@@ -1,10 +1,12 @@
 class BarChartUtils {
 
-    constructor() {}
+    constructor(colorConfig) {
+        this.colors = colorConfig;
+    }
 
-    static get MAGIC_SCALING_NUMBER() {return 85;}
+    get MAGIC_SCALING_NUMBER() {return 85;}
 
-    static getTopFailedTests(num, data) {
+    getTopFailedTests(num, data) {
         const failed = Object.entries(data.failCount).sort((a,b) => (b[1] - a[1]));
         const results = [];
         num = num <= failed.length ? num : failed.length;
@@ -15,18 +17,18 @@ class BarChartUtils {
             const pass = typeof data.passCount[name] === 'undefined'? 0 : data.passCount[name];
             const skip = typeof data.skipCount[name] === 'undefined'? 0 : data.skipCount[name];
             const total = fail + pass + skip;
-             results.push({
+             results.push($.extend({
                testName: name,
-               failed: BarChartUtils.scale(fail, total),
-               passed: BarChartUtils.scale(pass, total),
-               skipped: BarChartUtils.scale(skip, total),
+               failed: this.scale(fail, total),
+               passed: this.scale(pass, total),
+               skipped: this.scale(skip, total),
                total: total
-             });
+             }, this.colors));
         }
         return results;
     }
     
-    static getClusterStatusData(data, clusters) {
+    getClusterStatusData(data, clusters) {
         const results = [];
         for (const cluster in clusters) {
             const tmp = {
@@ -37,28 +39,28 @@ class BarChartUtils {
                 total: 0
             };
             for (const test of clusters[cluster]) {
-                tmp.failed += BarChartUtils.getClusterAddition('failCount', test, data);
-                tmp.passed += BarChartUtils.getClusterAddition('passCount', test, data);
-                tmp.skipped += BarChartUtils.getClusterAddition('skipCount', test, data);
+                tmp.failed += this.getClusterAddition('failCount', test, data);
+                tmp.passed += this.getClusterAddition('passCount', test, data);
+                tmp.skipped += this.getClusterAddition('skipCount', test, data);
             }
             tmp.total = tmp.failed + tmp.passed + tmp.skipped;
-            tmp.failed = BarChartUtils.scale(tmp.failed, tmp.total); 
-            tmp.passed = BarChartUtils.scale(tmp.passed, tmp.total);  
-            tmp.skipped= BarChartUtils.scale(tmp.skipped, tmp.total); 
-            results.push(tmp);
+            tmp.failed = this.scale(tmp.failed, tmp.total); 
+            tmp.passed = this.scale(tmp.passed, tmp.total);  
+            tmp.skipped= this.scale(tmp.skipped, tmp.total); 
+            results.push($.extend(tmp, this.colors));
         }
         return results.sort((a,b) => {return a.failed < b.failed});
     }
     
-    static scale(num, total) {
+    scale(num, total) {
         if (total === 0 || typeof num === 'undefined') {
             return 0;
         } else {
-            return BarChartUtils.MAGIC_SCALING_NUMBER * num / total;
+            return this.MAGIC_SCALING_NUMBER * num / total;
         }
     }
     
-    static getClusterAddition(key, testName, testResults) {
+    getClusterAddition(key, testName, testResults) {
         if (typeof testResults[key][testName] === 'undefined') {
             return 0;
         } else {
@@ -67,11 +69,11 @@ class BarChartUtils {
     }
     
     // Make handlebars input for all commits for the team test history vis
-    static testHistory(teamHistory, allTests) {
-        const comFail = {status: "commit failed", color:"#dddddd"};
-        const fail = {status: "failed", color:"#fc8d62"};
-        const pass = {status: "passed", color:"#66c2a5"};
-        const skip = {status: "skipped", color:"#8da0cb"};
+    testHistory(teamHistory, allTests) {
+        const comFail = {status: "commit failed", color:this.colors["nonColor"]};
+        const fail = {status: "failed", color: this.colors["failColor"]};
+        const pass = {status: "passed", color: this.colors["passColor"]};
+        const skip = {status: "skipped", color: this.colors["skipColor"]};
         const testObjs = [];
         for (const test of allTests) {
             const testObj = {"testName": test, "entries": []}
@@ -98,7 +100,7 @@ class BarChartUtils {
         return testObjs;   
     }
     
-    static getClusterData(clusters, teamData) {
+    getClusterData(clusters, teamData) {
         const toReturn = [];
         for (const [cName, cTests] of Object.entries(clusters)) {
             const failSkip = teamData.testFail.concat(teamData.testSkip);
@@ -106,15 +108,21 @@ class BarChartUtils {
             const total = cTests.length;
             const passNum = cTests.filter(x => pass.includes(x)).length;
             const failNum = cTests.filter(x => failSkip.includes(x)).length;
-            const passPctScaled = BarChartUtils.scale(passNum, total);
-            const failPctScaled = BarChartUtils.scale(failNum, total);
-            if (passPctScaled + failPctScaled !== 0) {
-                toReturn.push({"clusterName": cName,  "passed": passPctScaled, "failed": failPctScaled, "total": total});
-            } else { // Build failed, no tests ran, treat as failed
-                toReturn.push({"clusterName": cName,  "passed": passPctScaled, "failed": BarChartUtils.scale(1,1), "total": total});
-            }
-            
+            const passPctScaled = this.scale(passNum, total);
+            const failPctScaled = this.scale(failNum, total);
+            toReturn.push(
+                {"clusterName": cName,
+                "passed": passPctScaled,
+                "failed": failPctScaled,
+                "total": total,
+                "passColor": this.colors["passColor"],
+                "failColor": this.colors["failColor"]}
+            );
         }
         return toReturn;
+    }
+
+    updateColors(newColors) {
+        this.colors = newColors;
     }
 }

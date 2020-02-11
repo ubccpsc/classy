@@ -59,9 +59,12 @@
 					</div>
 				</div>
 				<div class="row legend nav-spacing">
-						<div class="legend-pad"><span class="color-square fail-color"></span><span class="label">Failed</span></div>
-						<div class="legend-pad"><span class="color-square skip-color"></span><span class="label">Skipped</span></div>
-						<div class="legend-pad"><span class="color-square pass-color"></span><span class="label">Passed</span></div>
+						<div class="legend-pad"><span class="color-square fail-color-cb"></span><span class="label">Failed</span></div>
+						<div class="legend-pad"><span class="color-square skip-color-cb"></span><span class="label">Skipped</span></div>
+						<div class="legend-pad"><span class="color-square pass-color-cb"></span><span class="label">Passed</span></div>
+				</div>
+				<div class="row nav-spacing container text-center">
+					<button id="colorToggle" type="button">Toggle color scheme</button>
 				</div>
 				<div class="row nav-spacing d-none team-only">
 					<div class="btn-group" id="team-selector" role="group">
@@ -174,9 +177,9 @@
 							<div class="col-9 align-vm">
 								<div class="progress">
 									<span class="test-name"></span>
-									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar" role="progressbar" style="width: {{failed}}%; background: #fc8d62;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
-									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar" role="progressbar" style="width: {{skipped}}%; background: #8da0cb;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
-									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar" role="progressbar" style="width: {{passed}}%; background: #66c2a5;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" style="width: {{failed}}%;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar {{skipColor}}" role="progressbar" style="width: {{skipped}}%;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
 								</div>
 							</div>
 						</div>
@@ -194,9 +197,9 @@
 							<div class="col-9 align-vm">
 								<div class="progress">
 									<span class="test-name"></span>
-									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar" role="progressbar" style="width: {{failed}}%; background: #fc8d62;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
-									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar" role="progressbar" style="width: {{skipped}}%; background: #8da0cb;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
-									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar" role="progressbar" style="width: {{passed}}%; background: #66c2a5;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" style="width: {{failed}}%" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar {{skipColor}}" role="progressbar" style="width: {{skipped}}%;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
 								</div>
 							</div>
 						</div>
@@ -217,7 +220,7 @@
 								<div class="progress">
 									<span class="test-name"></span>
 									{{#each entries}}
-									<div data-toggle="tooltip" data-placement="top" data-index="{{index}}" title="{{status}}" class="progress-bar" role="progressbar" style="width: 10px; background: {{color}};" aria-valuenow={{status}} aria-valuemin="0" aria-valuemax={{this.length}}>
+									<div data-toggle="tooltip" data-placement="top" data-index="{{index}}" title="{{status}}" class="progress-bar {{color}}" role="progressbar" style="width: 10px;" aria-valuenow={{status}} aria-valuemin="0" aria-valuemax={{this.length}}>
 										<a href="{{href}}" target="_blank" style="display:inline-block; width:100%; height:100%;"></a>
 									</div>
 									{{/each}}
@@ -237,8 +240,8 @@
 							<div class="col-9 align-vm">
 								<div class="progress">
 									<span class="test-name"></span>
-									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar" role="progressbar" data-name="{{clusterName}}" style="width: {{passed}}%; background: #66c2a5;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
-									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar" role="progressbar" data-name="{{clusterName}}" style="width: {{failed}}%; background: #fc8d62;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" data-name="{{clusterName}}" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" data-name="{{clusterName}}" style="width: {{failed}}%;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
 								</div>
 							</div>
 						</div>
