@@ -43,7 +43,7 @@ export class GitHubCleaner {
         Log.info("GitHubCleaner::cleanTeams() - start");
 
         const TEAMS_TO_KEEP = ['admin', 'staff', 'testrunners', 'students'];
-
+        TEAMS_TO_KEEP.push(TeamController.ADMIN_NAME, TeamController.STAFF_NAME);
         const teams = await this.gha.listTeams();
         const teamsToRemove = [];
         for (const team of teams) {
