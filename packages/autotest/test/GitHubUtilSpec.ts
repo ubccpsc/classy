@@ -85,6 +85,10 @@ describe("GitHubUtil", () => {
 
         actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #force. #verbose. #force #silent\n");
         expect(actual).to.deep.equal(["#force", "#verbose", "#silent"]);
+
+        // This assumes that silent is one of the base required commands
+        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #silentbutwithmoreattheend");
+        expect(actual).to.deep.equal(["#silentbutwithmoreattheend", "#silent"]);
     });
 
     it("Should be able to correctly create human durations", () => {
