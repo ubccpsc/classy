@@ -313,6 +313,7 @@ export interface AutoTestResultSummaryTransport {
     scoreOverall: number | null; // null if result !== 'SUCCESS'
     scoreCover: number | null; // null if result !== 'SUCCESS'
     scoreTests: number | null; // null if result !== 'SUCCESS'
+    custom: any;
 }
 
 // extends the result summary data
@@ -334,4 +335,21 @@ export interface ClasslistTransport {
     CWL: string;
     SEC: string;
     LAB: string;
+}
+
+// This list is not exhaustive at all
+export enum TransportKind {
+    CLASSLIST_CHANGES,
+    CONFIG,
+    COURSE,
+    PROVISION,
+    AUTH,
+    STUDENT,
+    DELIVERABLE,
+    TEAM,
+    TEAM_FORMATION,
+    GRADE,
+    AUTOTEST_DASHBOARD,
+    AUTOTEST_RESULT_SUMMARY,
+    CLASSLIST,
 }

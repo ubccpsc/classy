@@ -1,0 +1,256 @@
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<title>InsightVis</title>
+	<!-- Twitter Bootstrap for layout-->
+	<link rel="stylesheet" href="assets/css/lib/bootstrap.min.css">
+	<link rel="stylesheet" href="assets/css/insightVis.css">
+	<!-- jQuery for DOM manipulation -->
+	<script src="assets/js/lib/jquery-3.4.1.min.js"></script>
+	<!-- Twitter Bootstrap js	-->
+	<script src="assets/js/lib/bootstrap.bundle.min.js"></script>
+	<!-- Handlebars is our templating engine -->
+	<script src="assets/js/lib/handlebars-v4.4.3.js"></script>
+	<!-- Moment for date formatting -->
+	<script src="assets/js/lib/moment.min.js"></script>
+	<!-- D3 as our core chart library -->
+	<script src="assets/js/lib/d3.v3.min.js"></script>
+	<script src="https://cdn.plot.ly/plotly-latest.min.js" ></script>
+	<script src="assets/js/dataHandler.js"></script>
+	<script src="assets/js/barChartUtils.js"></script>
+	<script src="assets/js/boxPlot.js"></script>
+	<script src="assets/js/scatterplot.js"></script>
+	<script src="assets/js/controller.js"></script>
+
+</head>
+<body>
+<!--	
+<nav class="navbar navbar-light bg-light">
+	<a href="/"><span class="navbar-brand mb-0 h1">InsightVis</span></a>
+</nav>
+-->
+<!-- Scatterplot overlapping plot solution: Modal for overlapping teams popup-->
+
+<div class="modal fade" id="teamPopUp" tabindex="-1" role="dialog" aria-labelledby="Team options" aria-hidden="true">
+	<div class="modal-dialog">
+		<div class="modal-content" id="overlappingTeams"></div>
+	</div>
+</div>
+
+<!-- Our main wrapper that for InsightViz layout -->
+<div id="insight-viz">
+	<div class="container-fluid">
+		<div class="row">
+			<!--Left hand nav bar-->
+			<div class="col-2" id="mainNav">
+				<div class="row text-center navbar navbar-light bg-light">
+					<a href="/"><span class="navbar-brand mb-0 h1">InsightVis</span></a>
+				</div>
+				<div class="row nav-spacing">
+					<div class="container text-center">
+						<div class="btn-group" role="group" aria-label="Basic example">
+							<button type="button" data-deliverable="c1" id="c1-btn" class="deliverables btn btn-secondary active">C1</button>
+							<button type="button" data-deliverable="c2" id="c2-btn" class="deliverables btn btn-secondary">C2</button>
+						</div>
+						<div class="btn-group" role="group">
+							<button type="button" id="class-btn" class="tabButton btn btn-secondary active">Class</button>
+							<button type="button" id="team-btn" class="tabButton btn btn-secondary">Team</button>
+						</div>
+					</div>
+				</div>
+				<div class="row legend nav-spacing">
+						<div class="legend-pad"><span class="color-square fail-color-cb"></span><span class="label">Failed</span></div>
+						<div class="legend-pad"><span class="color-square skip-color-cb"></span><span class="label">Skipped</span></div>
+						<div class="legend-pad"><span class="color-square pass-color-cb"></span><span class="label">Passed</span></div>
+				</div>
+				<div class="row nav-spacing container text-center">
+					<button id="colorToggle" type="button">Toggle color scheme</button>
+				</div>
+				<div class="row nav-spacing d-none team-only">
+					<div class="btn-group" id="team-selector" role="group">
+						<span class="align-vm ml-4 mr-2">Select team:</span>
+						<select id="teamSelectContainer">
+						</select>
+						<script id="teamOptions" type="text/x-handlebars-template"> <!--HB-->
+							{{#each this}}
+							<option value="{{teamName}}">{{teamName}}</option>
+							{{/each}}
+						</script>
+					</div>
+				</div>
+				<div class="row nav-spacing d-none team-only">
+					<div class="btn-group" id="branch-selector" role="group">
+						<span class="align-vm ml-4 mr-2">Select branch:</span>
+						<select id="branchSelectContainer">
+						</select>
+						<script id="branchOptions" type="text/x-handlebars-template"> <!--HB-->
+							{{#each this}}
+							<option value="{{branchName}}">{{branchName}}</option>
+							{{/each}}
+						</script>
+					</div>
+				</div>
+				<div class="row nav-spacing class-only" id="deliverablesSummary">
+				<!--
+				<div class="col-12 nav-spacing class-only" style="font-size: 20px">
+					Scroll down for custom scatterplot
+				</div>
+				--->
+				</div>
+				<div class="row nav-spacing d-none team-only" style="font-size: 20px">
+					<div id="memberContainer"></div>
+					<script id="memberInfo" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="col-12">{{firstName}} {{lastName}} ({{githubId}})</div>
+						{{/each}}
+					</script>
+					<div class="col-12" id="repoLink"><a target="_blank">Repo link</a></div>
+					<div class="col-12" id="overallScore">[Overall score]</div>
+					<div class="col-12" id="testScore">[Test score]</div>
+					<div class="col-12" id="coverageScore">[Coverage score]</div>
+				</div>
+			</div>
+			<!--CLASS TAB-->
+			<div class="col-10 class-only" id="classTab">
+				<div class="col-7">
+					<!--
+					<div class="fig-tests col-12 text-center">Preconfigured Scatterplots</div>
+					<div class="row">
+						<div class="col-6" id="sm00"></div>
+						<div class="col-6" id="sm01"></div>
+					</div>
+					<div class="row">
+						<div class="col-6" id="sm10"></div>
+						<div class="col-6" id="sm11"></div>
+					</div>
+					<div class="row">
+						<div class="col-6" id="sm20"></div>
+						<div class="col-6" id="sm21"></div>
+					</div>
+				-->
+					<div class="row" id="overview-container">
+						<div class="fig-tests col-12 text-center">User Configurable Scatterplot</div>
+						<div class="col-12 text-center dropdown-container" id="axesSelector">
+							<!-- Small button groups (default and split) -->
+							<div class="btn-group">
+								<span class="align-vm ml-4 mr-2">Select X:</span>
+								<select class="deliv-attr" id="xAttr" data-id="x">
+									<option value="passCount">Pass Count</option>
+									<option value="numTests">Student Tests</option>
+									<option value="scoreCover">Coverage</option>
+									<option value="regressionScore">Regression</option>
+									<option value="loc">Loc</option>
+									<option value="num">Team Number</option>
+									<option value="disharmony">Team disharmony</option>
+								</select>
+							</div>
+							<div class="btn-group">
+								<span class="align-vm ml-4 mr-2">Select Y:</span>
+								<select class="deliv-attr" id="yAttr" data-id="y">
+									<option value="passCount">Pass Count</option>
+									<option value="numTests">Student Tests</option>
+									<option value="scoreCover">Coverage</option>
+									<option value="regressionScore">Regression</option>
+									<option value="loc">Loc</option>
+									<option value="num">Team Number</option>
+									<option value="disharmony">Team disharmony</option>
+								</select>
+							</div>
+
+						</div>
+						<div class="col-12" id="overview">
+					</div>
+				</div>
+			</div>
+				<div class="col-5">
+					<div class="col-12" id="deliverablesSummary">
+					</div>
+					<div class="fig-tests col-12 text-center"> Top 15 failed tests</div>
+					<div class="row test-vis-wrapper">
+						<div class="col-12 hStackedBar" id="classTestContainer"></div>
+					</div>
+
+					<script id="classTestOverview" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="row">
+							<div class="col-3">{{testName}}</div>
+							<div class="col-9 align-vm">
+								<div class="progress">
+									<span class="test-name"></span>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" style="width: {{failed}}%;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar {{skipColor}}" role="progressbar" style="width: {{skipped}}%;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+								</div>
+							</div>
+						</div>
+						{{/each}}
+					</script>
+					<div class="fig-tests col-12 text-center"> Feature status</div>
+					<div class="row test-vis-wrapper">
+						<div class="col-12 hStackedBar" id="classClusterContainer"></div>
+					</div>
+
+					<script id="classClusterOverview" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="row">
+							<div class="col-3">{{clusterName}}</div>
+							<div class="col-9 align-vm">
+								<div class="progress">
+									<span class="test-name"></span>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" style="width: {{failed}}%" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Skipped" class="progress-bar {{skipColor}}" role="progressbar" style="width: {{skipped}}%;" aria-valuenow={{skipped}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+								</div>
+							</div>
+						</div>
+						{{/each}}
+					</script>
+				</div>
+			</div>
+			<!--INDIVIDUAL TEAM TAB-->
+			<div class="col-10 d-none team-only" id="teamTab">
+				<div class="col-8">
+					<div class="fig-tests col-12 text-center">Test History</div>
+					<div class="col-12 hStackedBar" id="teamTestContainer"></div>
+					<script id="teamTestOverview" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="row testHistory">
+							<div class="col-2 name">{{testName}}</div>
+							<div class="col-10 align-vm">
+								<div class="progress">
+									<span class="test-name"></span>
+									{{#each entries}}
+									<div data-toggle="tooltip" data-placement="top" data-index="{{index}}" title="{{status}}" class="progress-bar {{color}}" role="progressbar" style="width: 10px;" aria-valuenow={{status}} aria-valuemin="0" aria-valuemax={{this.length}}>
+										<a href="{{href}}" target="_blank" style="display:inline-block; width:100%; height:100%;"></a>
+									</div>
+									{{/each}}
+								</div>
+							</div>
+						</div>
+						{{/each}}
+					</script>
+				</div>
+				<div class="col-4 fix-pos">
+					<div class="fig-tests col-12 text-center">Feature status</div>
+					<div class="col-12 hStackedBar" id="teamClusterContainer"></div>
+					<script id="teamClusterStatus" type="text/x-handlebars-template"> <!--HB-->
+						{{#each this}}
+						<div class="row cluster">
+							<div class="col-3 name">{{clusterName}}</div>
+							<div class="col-9 align-vm">
+								<div class="progress">
+									<span class="test-name"></span>
+									<div data-toggle="tooltip" data-placement="top" title="Passed" class="progress-bar {{passColor}}" role="progressbar" data-name="{{clusterName}}" style="width: {{passed}}%;" aria-valuenow={{passed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+									<div data-toggle="tooltip" data-placement="top" title="Failed" class="progress-bar {{failColor}}" role="progressbar" data-name="{{clusterName}}" style="width: {{failed}}%;" aria-valuenow={{failed}} aria-valuemin="0" aria-valuemax={{total}}></div>
+								</div>
+							</div>
+						</div>
+						{{/each}}
+					</script>
+				</div>
+			</div>
+		</div>
+	</div>
+</div>
+</body>
+</html>

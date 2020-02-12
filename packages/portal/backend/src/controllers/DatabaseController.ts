@@ -77,7 +77,7 @@ export class DatabaseController {
     }
 
     public async getRepositories(): Promise<Repository[]> {
-        const repos = await this.readRecords(this.REPOCOLL, 'fast', false, {}) as Repository[];
+        const repos = await this.readRecords(this.REPOCOLL, QueryKind.FAST, false, {}) as Repository[];
         Log.trace("DatabaseController::getRepositories() - #: " + repos.length);
         return repos;
     }
@@ -89,7 +89,7 @@ export class DatabaseController {
     }
 
     public async getTeams(): Promise<Team[]> {
-        const teams = await this.readRecords(this.TEAMCOLL, 'fast', false, {}) as Team[];
+        const teams = await this.readRecords(this.TEAMCOLL, QueryKind.FAST, false, {}) as Team[];
         Log.trace("DatabaseController::getTeams() - #: " + teams.length);
         return teams;
     }
@@ -100,7 +100,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getAllResults() - start");
         // const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, 'slow', false, query, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, query, latestFirst) as Result[];
 
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
@@ -112,9 +112,66 @@ export class DatabaseController {
         return results;
     }
 
+    public async getGradedResults(deliv: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getGradedResults() - start");
+        const pipeline = [
+            { $match : { delivId : deliv } },
+            { $group: { _id: '$URL' } },
+            { $lookup:
+                {
+                    from: this.RESULTCOLL,
+                    localField: '_id',
+                    foreignField: 'commitURL',
+                    as: 'results'
+                }
+            },
+            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
+        ];
+        const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
+        results.forEach((r) => delete r._id);
+        Log.trace("DatabaseController::getGradedResults() - done; #: " + results.length + "; took: " + Util.took(start));
+        return results;
+    }
+
+    public async getBestResults(deliv: string): Promise<Result[]> {
+        const start = Date.now();
+        Log.trace("DatabaseController::getBestResults() - start");
+        const pipeline = [
+            { $match : { delivId : deliv } },
+            { $group: { _id: '$repoId', maxScore: { $max: "$output.report.scoreOverall" } } },
+            { $lookup:
+                {
+                    from: this.RESULTCOLL,
+                    let: { srcRepo: "$_id", score: "$maxScore" },
+                    pipeline: [
+                        { $match:
+                            { $expr:
+                                { $and:
+                                    [
+                                        { $eq: [ "$repoId",  "$$srcRepo" ] },
+                                        { $eq: [ "$output.report.scoreOverall", "$$score" ] }
+                                    ]
+                                }
+                            }
+                        }
+                    ],
+                    as: 'results'
+                }
+            },
+            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
+        ];
+        const collection = await this.getCollection(this.RESULTCOLL, QueryKind.SLOW);
+        const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
+        results.forEach((r) => delete r._id);
+        Log.trace("DatabaseController::getBestResults() - done; #: " + results.length + "; took: " + Util.took(start));
+        return results;
+    }
+
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
         Log.info("DatabaseController::getTeamsForPerson() - start");
-        const teams = await this.readRecords(this.TEAMCOLL, 'fast', false, {});
+        const teams = await this.readRecords(this.TEAMCOLL, QueryKind.FAST, false, {});
         const myTeams = [];
         for (const t of teams as Team[]) {
             if (t.personIds.indexOf(personId) >= 0) {
@@ -127,30 +184,29 @@ export class DatabaseController {
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
         Log.info("DatabaseController::getRepositoriesForPerson() - start");
 
-        // tslint:disable
-        const query = [{
-            "$lookup": {
-                "from":         "teams",
-                "localField":   "teamIds",
-                "foreignField": "id",
-                "as":           "teams"
-            }
-        },
+        const query = [
             {
-                "$lookup": {
-                    "from":         "people",
-                    "localField":   "teams.personIds",
-                    "foreignField": "id",
-                    "as":           "teammembers"
+                $lookup: {
+                    from:         "teams",
+                    localField:   "teamIds",
+                    foreignField: "id",
+                    as:           "teams"
                 }
             },
             {
-                "$match": {"teammembers.id": personId}
+                $lookup: {
+                    from:         "people",
+                    localField:   "teams.personIds",
+                    foreignField: "id",
+                    as:           "teammembers"
+                }
+            },
+            {
+                $match: {"teammembers.id": personId}
             }
         ];
-        // tslint:enable
 
-        const collection = await this.getCollection(this.REPOCOLL, 'fast');
+        const collection = await this.getCollection(this.REPOCOLL, QueryKind.FAST);
         const records: any[] = await collection.aggregate(query).toArray();
 
         return records;
@@ -166,13 +222,13 @@ export class DatabaseController {
     // }
 
     public async getPeople(): Promise<Person[]> {
-        const people = await this.readRecords(this.PERSONCOLL, 'fast', false, {}) as Person[];
+        const people = await this.readRecords(this.PERSONCOLL, QueryKind.FAST, false, {}) as Person[];
         Log.trace("DatabaseController::getPeople() - #: " + people.length);
         return people;
     }
 
     public async getDeliverables(): Promise<Deliverable[]> {
-        const delivs = await this.readRecords(this.DELIVCOLL, 'fast', false, {}) as Deliverable[];
+        const delivs = await this.readRecords(this.DELIVCOLL, QueryKind.FAST, false, {}) as Deliverable[];
         Log.trace("DatabaseController::getDeliverables() - #: " + delivs.length);
         return delivs;
     }
@@ -186,7 +242,7 @@ export class DatabaseController {
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
-        const grades = await this.readRecords(this.GRADECOLL, 'slow', false, {}) as Grade[];
+        const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
@@ -412,7 +468,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::writeRecord( " + colName + ", ...) - writing");
         // Log.trace("DatabaseController::writeRecord(..) - col: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName, 'write');
+            const collection = await this.getCollection(colName, QueryKind.WRITE);
             const copy = Object.assign({}, record);
             await collection.insertOne(copy);
             // Log.trace("DatabaseController::writeRecord(..) - write complete");
@@ -427,7 +483,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::updateRecord( " + colName + ", ...) - start");
         Log.trace("DatabaseController::updateRecord(..) - colName: " + colName + "; record: " + JSON.stringify(record));
         try {
-            const collection = await this.getCollection(colName, 'write');
+            const collection = await this.getCollection(colName, QueryKind.WRITE);
             const copy = Object.assign({}, record);
             const res = await collection.replaceOne(query, copy); // copy was record
             Log.trace("DatabaseController::updateRecord(..) - write complete; res: " + JSON.stringify(res));
@@ -445,15 +501,15 @@ export class DatabaseController {
      *
      *   (await getCollection('users')).find().toArray().then( ... )
      */
-    public async getCollection(collectionName: string, queryKind?: string): Promise<Collection> {
+    public async getCollection(collectionName: string, queryKind?: QueryKind): Promise<Collection> {
         try {
             let db;
             if (typeof queryKind === 'undefined' || queryKind === null) {
-                db = await this.open('fast');
-            } else if (queryKind === 'slow') {
-                db = await this.open('slow');
+                db = await this.open(QueryKind.FAST);
+            } else if (queryKind === QueryKind.SLOW) {
+                db = await this.open(QueryKind.SLOW);
             } else {
-                db = await this.open('fast');
+                db = await this.open(QueryKind.FAST);
             }
 
             return db.collection(collectionName);
@@ -502,7 +558,7 @@ export class DatabaseController {
         try {
             // Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
             const start = Date.now();
-            const col = await this.getCollection(column, 'fast');
+            const col = await this.getCollection(column, QueryKind.FAST);
 
             const records: any[] = await (col as any).find(query).toArray();
             if (records === null || records.length === 0) {
@@ -524,13 +580,13 @@ export class DatabaseController {
     /**
      *
      * @param {string} column
-     * @param {string} kind this is the kind of query ('slow', 'write', or null)
+     * @param {QueryKind} kind this is the kind of query ('slow', 'write', or null)
      * * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
      * * @param {{}} sort? send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
-    public async readRecords(column: string, kind: string, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
+    public async readRecords(column: string, kind: QueryKind, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
         try {
             if (typeof sort === 'undefined') {
                 Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
@@ -576,7 +632,7 @@ export class DatabaseController {
     private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
         try {
             const start = Date.now();
-            const col = await this.getCollection(column, 'write');
+            const col = await this.getCollection(column, QueryKind.WRITE);
 
             const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
 
@@ -601,9 +657,9 @@ export class DatabaseController {
         try {
             // Log.trace("DatabaseController::open() - start");
             let db = null;
-            if (kind === 'slow') {
+            if (kind === QueryKind.SLOW) {
                 db = this.slowDb;
-            } else if (kind === 'write') {
+            } else if (kind === QueryKind.WRITE) {
                 db = this.writeDb;
             } else {
                 db = this.db;
@@ -627,7 +683,7 @@ export class DatabaseController {
                     Log.info("DatabaseController::open() - creating slowDb");
                     this.slowDb = await client.db(dbName);
                     db = this.slowDb;
-                } else if (kind === 'write') {
+                } else if (kind === QueryKind.WRITE) {
                     Log.info("DatabaseController::open() - creating writeDb");
                     this.writeDb = await client.db(dbName);
                     db = this.writeDb;
@@ -747,7 +803,7 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getResults( " + delivId + ", " + repoId + " ) - start");
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, 'slow', false,
+        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false,
             {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
@@ -774,7 +830,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - start");
 
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, 'slow', false, {repoId: repoId}, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, {repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -800,7 +856,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
 
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, 'slow', true, {delivId: delivId}, latestFirst) as Result[];
+        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, true, {delivId: delivId}, latestFirst) as Result[];
         for (const result of results) {
             if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -860,9 +916,15 @@ export class DatabaseController {
         const start = Date.now();
         const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
         const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreTest": {$gt: minScore}};
-        const results = await this.readRecords(this.RESULTCOLL, 'fast', true, query);
+        const results = await this.readRecords(this.RESULTCOLL, QueryKind.FAST, true, query);
         const took = Util.took(start);
         Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - # results: ${results.length}; took: ${took}`);
         return results;
     }
+}
+
+export enum QueryKind {
+    FAST = 'fast',
+    SLOW = 'slow',
+    WRITE = 'write'
 }

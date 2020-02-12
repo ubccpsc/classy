@@ -12,7 +12,7 @@ import {
     ProvisionTransport,
     RepositoryTransport,
     StudentTransport,
-    TeamTransport
+    TeamTransport, TransportKind
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
@@ -24,7 +24,7 @@ import {GitHubController, IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
 import {PersonController} from "./PersonController";
 import {RepositoryController} from "./RepositoryController";
-import {ResultsController} from "./ResultsController";
+import {ResultsController, ResultsKind} from "./ResultsController";
 import {TeamController} from "./TeamController";
 
 export class AdminController {
@@ -252,26 +252,25 @@ export class AdminController {
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
      * @param maxNumResults (optional, default 500)
+     * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getDashboard(reqDelivId: string, reqRepoId: string, maxNumResults?: number): Promise<AutoTestDashboardTransport[]> {
+    public async getDashboard(
+        reqDelivId: string,
+        reqRepoId: string,
+        maxNumResults?: number,
+        kind: ResultsKind = ResultsKind.ALL): Promise<AutoTestDashboardTransport[]> {
         Log.info("AdminController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = maxNumResults ? maxNumResults : 500; // max # of records
 
         const repoIds: string[] = [];
         const results: AutoTestDashboardTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
-
-                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-
-                let scoreOverall = null;
-                let scoreCover = null;
-                let scoreTest = null;
+                const resultSummary = await this.clipAutoTestResult(result);
 
                 let testPass: string[] = [];
                 let testFail: string[] = [];
@@ -282,16 +281,6 @@ export class AdminController {
 
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
                     const report = result.output.report;
-                    if (typeof report.scoreOverall !== 'undefined') {
-                        scoreOverall = Util.truncateNumber(report.scoreOverall, 0);
-                    }
-                    if (typeof report.scoreTest !== 'undefined') {
-                        scoreTest = Util.truncateNumber(report.scoreTest, 0);
-                    }
-                    if (typeof report.scoreCover !== 'undefined') {
-                        scoreCover = Util.truncateNumber(report.scoreCover, 0);
-                    }
-
                     if (typeof report.passNames !== 'undefined') {
                         testPass = report.passNames;
                     }
@@ -310,22 +299,11 @@ export class AdminController {
                 }
 
                 const resultTrans: AutoTestDashboardTransport = {
-                    repoId:       repoId,
-                    repoURL:      repoURL,
-                    delivId:      result.delivId,
-                    state:        result.output.state,
-                    timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.target.commitSHA,
-                    commitURL:    result.input.target.commitURL,
-                    scoreOverall: scoreOverall,
-                    scoreCover:   scoreCover,
-                    scoreTests:   scoreTest,
-
+                    ...resultSummary,
                     testPass:  testPass,
                     testFail:  testFail,
                     testError: testError,
                     testSkip:  testSkip,
-
                     cluster: cluster
                 };
 
@@ -342,7 +320,7 @@ export class AdminController {
         return results;
     }
 
-    public async matchResults(reqDelivId: string, reqRepoId: string): Promise<Result[]> {
+    public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
         const WILDCARD = 'any';
@@ -350,10 +328,12 @@ export class AdminController {
         let allResults: Result[] = [];
         if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
+            // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
-            allResults = await this.resC.getResultsForDeliverable(reqDelivId);
+            allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind);
         } else {
+            // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getAllResults();
         }
         Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
@@ -409,60 +389,25 @@ export class AdminController {
      * Gets the results associated with the course.
      * @param reqDelivId ('any' for *)
      * @param reqRepoId ('any' for *)
+     * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
-    public async getResults(reqDelivId: string, reqRepoId: string): Promise<AutoTestResultSummaryTransport[]> {
+    public async getResults(
+        reqDelivId: string,
+        reqRepoId: string,
+        kind: ResultsKind = ResultsKind.ALL): Promise<AutoTestResultSummaryTransport[]> {
         Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
         const results: AutoTestResultSummaryTransport[] = [];
-        const allResults = await this.matchResults(reqDelivId, reqRepoId);
+        const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 
             const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
-
-                const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-                    Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-
-                let scoreOverall = null;
-                let scoreCover = null;
-                let scoreTest = null;
-
-                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                    const report = result.output.report;
-                    if (typeof report.scoreOverall !== 'undefined') {
-                        scoreOverall = report.scoreOverall;
-                    }
-                    if (typeof report.scoreTest !== 'undefined') {
-                        scoreTest = report.scoreTest;
-                    }
-                    if (typeof report.scoreCover !== 'undefined') {
-                        scoreCover = report.scoreCover;
-                    }
-                }
-
-                // if the VM state is SUCCESS, return the report state
-                let state = result.output.state.toString();
-                if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
-                    state = result.output.report.result;
-                }
-
-                const resultTrans: AutoTestResultSummaryTransport = {
-                    repoId:       repoId,
-                    repoURL:      repoURL,
-                    delivId:      result.delivId,
-                    state:        state,
-                    timestamp:    result.output.timestamp,
-                    commitSHA:    result.input.target.commitSHA,
-                    commitURL:    result.input.target.commitURL,
-                    scoreOverall: scoreOverall,
-                    scoreCover:   scoreCover,
-                    scoreTests:   scoreTest
-                };
-
+                const resultTrans = await this.clipAutoTestResult(result);
                 results.push(resultTrans);
             } else {
                 // result does not match filter
@@ -470,6 +415,67 @@ export class AdminController {
         }
         Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
+    }
+
+    /**
+     * Transforms a Result into an AutoTestResultSummaryTransport
+     */
+    private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
+        const cc = await Factory.getCourseController(this.gh);
+        const repoId = result.input.target.repoId;
+        const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+
+        let scoreOverall = null;
+        let scoreCover = null;
+        let scoreTest = null;
+
+        if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+            const report = result.output.report;
+            if (typeof report.scoreOverall !== 'undefined') {
+                scoreOverall = report.scoreOverall;
+            }
+            if (typeof report.scoreTest !== 'undefined') {
+                scoreTest = report.scoreTest;
+            }
+            if (typeof report.scoreCover !== 'undefined') {
+                scoreCover = report.scoreCover;
+            }
+        }
+
+        const state = this.selectState(result);
+        const custom = cc.forwardCustomFields(result, TransportKind.AUTOTEST_RESULT_SUMMARY);
+
+        return  {
+            repoId: repoId,
+            repoURL: repoURL,
+            delivId: result.delivId,
+            state: state,
+            timestamp: result.output.timestamp,
+            commitSHA: result.input.target.commitSHA,
+            commitURL: result.input.target.commitURL,
+            scoreOverall: scoreOverall,
+            scoreCover: scoreCover,
+            scoreTests: scoreTest,
+            custom: custom
+        };
+    }
+
+    /**
+     * Takes a result, and if the VM was successful picks the state of the report.
+     *     else returns the state of the VM
+     * @param result
+     */
+    private selectState(result: Result): string {
+        // if the VM state is SUCCESS, return the report state
+        let state = "UNDEFINED";
+        if (typeof result.output !== 'undefined' && typeof result.output.state !== 'undefined') {
+            state = result.output.state.toString();
+        }
+        if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
+            state = result.output.report.result;
+        }
+        return state;
     }
 
     /**

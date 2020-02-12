@@ -1,0 +1,161 @@
+.axis {
+    font: 10px sans-serif;
+}
+
+
+
+.axis path,
+.axis line {
+    fill: none;
+    stroke: #000;
+    shape-rendering: crispEdges;
+    stroke-width: 1px;
+}
+body {
+    background: white;
+}
+
+#deliverablesSummary .plotly, #deliverablesSummary .plotly div {
+    margin: 0 auto !important;
+}
+
+#overview .plotly, #overview .plotly div {
+    margin: 0 auto !important;
+}
+#overview-container {
+    background-color: #FFFFFF;
+    margin-top: 50px;
+}
+
+#testContainer, #deliverablesSummary {
+    background-color: #FFFFFF;
+}
+.progress{
+    background-color: white;
+}
+.fig-tests, .title {
+    padding: 15px;
+    font-weight: bold;
+    text-transform: capitalize;
+    font-size: 18px;
+}
+.dropdown-container {
+    padding: 10px 0;
+}
+
+.hStackedBar {
+    font-size: 0.85rem;
+    text-align: right;
+}
+
+.highlighted {
+    /*border: 2px solid darkgrey;*/
+    /* Tried making highlighting stylish but does not look nice*/
+    background-image: linear-gradient(-100deg, rgba(255, 255, 255, 0), #e6dbdb 85%, rgba(255, 255, 255, 0));
+    z-index: 100;
+}
+
+.class-only { /*Not sure why this is needed but it is*/
+    display: flex;
+}
+
+.team-only { /*Not sure why this is needed but it is*/
+    display: flex;
+}
+
+div.progress {
+    background: rgba(0, 0, 0, 0);
+}
+
+.fix-pos {
+    position: fixed;
+    right: 0;
+}
+
+.align-vm {
+    margin: auto 0;
+}
+
+.legend {
+    list-style: none;
+    width: 100%;
+    padding-left: 0;
+    margin-left: 0;
+    font-size: 0.85rem;
+}
+.legend li {
+    margin-right: 10px;
+}
+.legend .color-square {
+    border: 1px solid #ccc;
+    float: left;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
+}
+
+.legend-pad {
+    padding: 0px 8px;
+}
+
+.legend .label {
+    position: relative;
+    font-size: 18px;
+    top: -5px;
+}
+
+.fail-color-cb { background-color: #fc8d62; }
+.skip-color-cb { background-color: #8da0cb; }
+.pass-color-cb { background-color: #66c2a5; }
+.non-color-cb  { background-color: #dddddd; }
+
+.fail-color { background-color: #f50808; }
+.skip-color { background-color: #cccccc; }
+.pass-color { background-color: #20e705; }
+.non-color  { background-color: #eeeeee; }
+
+.test-vis-wrapper {
+    position: relative;
+}
+.test-legend {
+    position: absolute;
+    right: 98px;
+}
+
+.deliverables, .tabButton{
+    color: #000000;
+    background-color: #ffffff;
+}
+
+ul.teams-overlap {
+    list-style-type: none;
+    padding: 20px 30px;
+    border: 1px solid #ccc;
+    max-height: 160px;
+    overflow-y: scroll;
+}
+
+ul.teams-overlap li{
+    cursor: pointer;
+}
+
+ul.teams-overlap li:hover {
+    background-color: #E6DBDB;
+}
+
+.overlap-team-titlebar {
+    margin: 10px 0;
+    padding: 0 15px;
+}
+.totalOverlapTeams {
+    float: right;
+}
+
+.nav-spacing {
+    margin-top: 20;
+}
+
+.commit-hover {
+    border-left: 2px solid rgba(0, 0, 0, 0.3);
+    border-right: 2px solid rgba(0, 0, 0, 0.3);
+}
