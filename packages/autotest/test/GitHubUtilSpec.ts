@@ -39,56 +39,23 @@ describe("GitHubUtil", () => {
         expect(actual).to.equal("a1");
     });
 
-    it("Should be able to correctly parse #silent from a commit comment.", () => {
-        let actual;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d1", 'silent');
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot d1", 'silent');
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d101 #silent", 'silent');
-        expect(actual).to.be.true;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #silent.", 'silent');
-        expect(actual).to.be.true;
-    });
-
-    it("Should be able to correctly parse #force from a commit comment.", () => {
-        let actual;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d1", 'force');
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot d1", 'force');
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #d101 #silent #force", 'force');
-        expect(actual).to.be.true;
-
-        actual = GitHubUtil.parseCommandFromComment("@ubcbot #force.", 'force');
-        expect(actual).to.be.true;
-    });
-
     it("Should be able to find extra commands from a commit comment.", () => {
         let actual;
 
-        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #d1 #verbose");
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #d1 #verbose");
         expect(actual).to.deep.equal(["#d1", "#verbose"]);
 
-        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot d1 verbose ## # ###");
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot d1 verbose ## # ###");
         expect(actual).to.deep.equal([]);
 
-        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #d101 #silent #force #verbose");
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #d101 #silent #force #verbose");
         expect(actual).to.deep.equal(["#d101", "#silent", "#force", "#verbose"]);
 
-        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #force. #verbose. #force #silent\n");
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #force. #verbose. #force #silent\n");
         expect(actual).to.deep.equal(["#force", "#verbose", "#silent"]);
 
-        // This assumes that silent is one of the base required commands
-        actual = GitHubUtil.parseAllCommandsFromComment("@ubcbot #silentbutwithmoreattheend");
-        expect(actual).to.deep.equal(["#silentbutwithmoreattheend", "#silent"]);
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #forcefoo");
+        expect(actual).to.deep.equal(["#forcefoo"]);
     });
 
     it("Should be able to correctly create human durations", () => {
