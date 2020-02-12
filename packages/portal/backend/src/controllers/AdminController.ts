@@ -328,10 +328,12 @@ export class AdminController {
         let allResults: Result[] = [];
         if (reqRepoId !== WILDCARD) {
             // if both aren't 'any' just use this one too
+            // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
             allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind);
-        } else { // TODO make the kind work for all results as well
+        } else {
+            // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getAllResults();
         }
         Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
