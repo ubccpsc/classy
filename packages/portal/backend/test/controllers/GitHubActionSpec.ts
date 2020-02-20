@@ -164,7 +164,7 @@ describe("GitHubActions", () => {
         let hooks = await gh.listWebhooks(REPONAME); // REPONAME
         expect(hooks).to.be.empty;
 
-        const hookName = 'https://localhost/test/' + Date.now();
+        const hookName = 'https://cs.ubc.ca/test/' + Date.now();
         const createHook = await gh.addWebhook(REPONAME, hookName);
         expect(createHook).to.be.true;
 
@@ -178,7 +178,7 @@ describe("GitHubActions", () => {
         expect(hooks).to.have.lengthOf(1);
 
         const oldHook = (hooks[0] as any).config.url;
-        const NEWHOOK = 'https://localhost/testNEWHOOK/' + Date.now();
+        const NEWHOOK = 'https://cs.ubc.ca/testNEWHOOK/' + Date.now();
         expect(oldHook).to.not.equal(NEWHOOK);
 
         // update the hook
