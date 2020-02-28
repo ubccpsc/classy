@@ -37,6 +37,8 @@ class UIController {
             this.populateTeamDropdown(this.checkpoint);
             $(`#xAttr option:contains(${this.X_DEFAULT})`).prop("selected", true);
             $(`#yAttr option:contains(${this.Y_DEFAULT})`).prop("selected", true);
+            this.renderCheckpointButtons();
+            $(`#${this.checkpoint}-btn`).addClass("active");
             await this.renderAllElements();
 
             // Change scatterplot axes
@@ -109,7 +111,6 @@ class UIController {
     }
 
     async renderAllElements() {
-        this.renderCheckpointButtons();
         const xDefault = $("#xAttr").find('option:selected').val();
         const yDefault = $("#yAttr").find('option:selected').val();
         const xTitle   = $("#xAttr").find('option:selected').text();
@@ -121,7 +122,7 @@ class UIController {
         this.SCATTERPLOT.render('overview', 2, data, xDefault, yDefault, axesLabels);
         //this.renderSmallMult();
         this.renderTopTest();
-        this.renderClusterStatus();
+        await this.renderClusterStatus();
         await this.renderTeamPage();
     }
 
@@ -129,12 +130,12 @@ class UIController {
         await this.populateBranchDropdown();
         await this.renderTestHistory();
         this.renderClusters();
-        this.renderTeamInfo();
+        await this.renderTeamInfo();
     }
 
-    renderTeamInfo() {
+    async renderTeamInfo() {
         const teamId  = this.getActiveTeam();
-        const team    = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
+        const team    = await this.DATA_HANDLER.getBestFromTeam(this.checkpoint, teamId);
         const members = this.DATA_HANDLER.getTeamMemberInfo(teamId);
         this.renderHandlebars(members, "#memberInfo", "#memberContainer");
         $("#repoLink > a").attr("href", `${this.ORG_URL}/${teamId}`);
@@ -181,10 +182,7 @@ class UIController {
 
     renderTopTest() {
         const data = this.DATA_HANDLER.getTestData(this.checkpoint);
-        console.log(data);
-        console.log(this.TOP_N_FAIL);
         const topNTest = this.BAR_CHART_UTILS.getTopFailedTests(this.TOP_N_FAIL, data);
-        console.log(topNTest);
         this.renderHandlebars(topNTest, "#classTestOverview", "#classTestContainer");
     }
 
@@ -203,9 +201,9 @@ class UIController {
         this.renderHandlebars(testHistories, "#teamTestOverview", "#teamTestContainer");
     }
 
-    renderClusters() {
+    async renderClusters() {
         let teamId = this.getActiveTeam();
-        const team = this.DATA_HANDLER.getClassData(this.checkpoint).filter(x => x.repoId === teamId)[0];
+        const team = await this.DATA_HANDLER.getBestFromTeam(this.checkpoint, teamId);
         const clusters = this.DATA_HANDLER.getClusters(this.checkpoint);
         const clusterStatuses = this.BAR_CHART_UTILS.getClusterData(clusters, team);
         this.renderHandlebars(clusterStatuses, "#teamClusterStatus", "#teamClusterContainer");

@@ -32,10 +32,13 @@ class DataHandler {
             this.teams = this.teamsRaw.map((x) => x.id).filter((x) => x.startsWith("project_"));
             this.teamInfo = this.makeTeamMap();
             this.inverseClusters = this.reverseIndexClusters();
-            this.addDisharmonyScores(this.c1DataRaw, this.disharmonyCSV);
-            this.addDisharmonyScores(this.c2DataRaw, this.disharmonyCSV);
             this.makeAllTests();
             for (const check of this.checkpoints) {
+                try {
+                    this.addDisharmonyScores(this.rawClassData[check], this.disharmonyCSV);
+                } catch (e) {
+                    console.log("WARN: Adding disharmony scores failed, ignoring since it's not crucial")
+                }
                 this.classData[check] = this.fixMissingData(this.rawClassData[check].filter((x) => x.repoId.startsWith("project_")));
                 this.testData[check] = this.makeTestData(check);
             }
@@ -93,8 +96,8 @@ class DataHandler {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'user':         localStorage.user, // May need to replace if running locally
-                'token':        localStorage.token // May need to replace if running locally
+                'user':         "lucasaz", // May need to replace if running locally
+                'token':        "b14c2ef41f28a451d8cf22c21658bc9bdd8269bc" // May need to replace if running locally
             }
         };
         const response = await fetch(url, options);
@@ -173,6 +176,24 @@ class DataHandler {
             this.teamData[checkpoint][team] = this.fixMissingData(data);
         }
         return this.teamData[checkpoint][team];
+    }
+
+    async getBestFromTeam(checkpoint, team) {
+        let best = this.getClassData(checkpoint).filter(x => x.repoId === team)[0];
+        if (!best) {
+            const data = await this.getTeamData(checkpoint, team);
+            if (!!data && data.length !== 0) {
+                best = data[0];
+                for (const entry of data) {
+                    if (entry.scoreOverall > best.scoreOverall) {
+                        best = entry;
+                    }
+                }
+            } else {
+                return null;
+            }
+        }
+        return best;
     }
 
     getTeamList() {
