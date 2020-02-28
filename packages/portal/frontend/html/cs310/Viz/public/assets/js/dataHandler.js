@@ -1,15 +1,21 @@
 class DataHandler {
     constructor() {
-        this.c1DataRaw = {};
-        this.c2DataRaw = {};
+        this.checkpoints = ["c1", "c2", "c3"];
+        this.rawClassData = {
+            "c1": {},
+            "c2": {},
+            "c3": {}
+        };
         this.classData = {
             "c1": {},
-            "c2": {}
+            "c2": {},
+            "c3": {}
         };
         this.testData = {};
         this.teamData = {
             "c1": {},
-            "c2": {}
+            "c2": {},
+            "c3": {}
         };
         this.teamsRaw = [];
         this.teams = [];
@@ -19,7 +25,7 @@ class DataHandler {
         this.allTests = {};
         this.inverseClusters = {};
     }
-    
+
     async init() {
         try {
             await this.makeAllRequests();
@@ -28,11 +34,11 @@ class DataHandler {
             this.inverseClusters = this.reverseIndexClusters();
             this.addDisharmonyScores(this.c1DataRaw, this.disharmonyCSV);
             this.addDisharmonyScores(this.c2DataRaw, this.disharmonyCSV);
-            this.classData["c1"] = this.fixMissingData(this.c1DataRaw.filter((x) => x.repoId.startsWith("project_")));
-            this.classData["c2"] = this.fixMissingData(this.c2DataRaw.filter((x) => x.repoId.startsWith("project_")));
             this.makeAllTests();
-            this.testData["c1"] = this.makeTestData("c1");
-            this.testData["c2"] = this.makeTestData("c2");
+            for (const check of this.checkpoints) {
+                this.classData[check] = this.fixMissingData(this.rawClassData[check].filter((x) => x.repoId.startsWith("project_")));
+                this.testData[check] = this.makeTestData(check);
+            }
         } catch(e) {
             Promise.reject(e);
         }
@@ -40,31 +46,37 @@ class DataHandler {
     }
 
     async makeAllRequests() {
-        const p1 = this.fetchFromClassyEndpoint("/portal/admin/bestResults/c1").then((res) => {
-            this.c1DataRaw = res;
-        });
-        const p2 = this.fetchFromClassyEndpoint("/portal/admin/bestResults/c2").then((res) => {
-            this.c2DataRaw = res;
-        });
-        const p3 = this.fetchFromClassyEndpoint("/portal/admin/teams").then((res) => {
+        const promises = [];
+        for (const check of this.checkpoints) {
+            const p = this.fetchFromClassyEndpoint(`/portal/admin/bestResults/${check}`).then((res) => {
+                this.rawClassData[check] = res;
+            });
+            promises.push(p);
+        }
+        promises.push(this.fetchFromClassyEndpoint("/portal/admin/teams").then((res) => {
             this.teamsRaw = res;
-        });
-        const p4 = this.fetchFromClassyEndpoint("/portal/admin/students").then((res) => {
-            this.students = res
-        });
-        const p5 = this.fetchSimpleFile("/portal/resource/staff/clusters.json").then((res) => {
+        }));
+        promises.push(this.fetchFromClassyEndpoint("/portal/admin/students").then((res) => {
+            this.students = res;
+        }));
+        promises.push(this.fetchSimpleFile("/portal/resource/staff/clusters.json").then((res) => {
             this.clusters = JSON.parse(res);
         }).catch((err) => {
             console.log("WARN: Failed to get clusters from proper endpoint, was it deleted by IT?");
-            const p5_1 = this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c1").then((res) => {
-                this.students = this.clusters["c1"] = this.hijackClusterFromResult(res);
+            const subPromises = []
+            const p = this.fetchFromClassyEndpoint(`/portal/admin/gradedResults/${check}`).then((res) => {
+                this.clusters[check] = this.hijackClusterFromResult(res);
             });
-            const p5_2 = this.fetchFromClassyEndpoint("/portal/admin/gradedResults/c2").then((res) => {
-                this.students = this.clusters["c2"] = this.hijackClusterFromResult(res);
-            });
-            return Promise.all([p5_1, p5_2]);
-        });
-        return Promise.all([p1, p2, p3, p4, p5]);
+            subPromises.push(p);
+            return Promise.all(subPromises);
+        }));
+        promises.push(this.fetchSimpleFile("/portal/resource/staff/disharmony.csv").then((res) => {
+            this.disharmonyCSV = res;
+        }).catch((err) => {
+            console.log("WARN: Failed to get disharmony CSV, was it deleted by IT?");
+            return Promise.resolve("Ignoring");
+        }));
+        return Promise.all(promises);
     }
 
     async fetchFromClassyEndpoint(URI) {
@@ -197,16 +209,13 @@ class DataHandler {
     }
 
     makeAllTests() {
-        let c1All = [];
-        for (const cluster of Object.values(this.clusters["c1"])) {
-            c1All = c1All.concat(cluster);
+        for (const check of this.checkpoints) {
+            let all = [];
+            for (const cluster of Object.values(this.clusters[check])) {
+                all = all.concat(cluster);
+            }
+            this.allTests[check] = Array.from(new Set(all));
         }
-        this.allTests["c1"] = Array.from(new Set(c1All));
-        let c2All = [];
-        for (const cluster of Object.values(this.clusters["c2"])) {
-            c2All = c2All.concat(cluster);
-        }
-        this.allTests["c2"] = Array.from(new Set(c2All));
     }
 
     hijackClusterFromResult(data) {
@@ -223,10 +232,11 @@ class DataHandler {
     }
 
     reverseIndexClusters() {
-        return {
-            "c1": this.reverseIndexCluster("c1"),
-            "c2": this.reverseIndexCluster("c2")
+        const obj = {};
+        for (const check of this.checkpoints) {
+            obj[check] = this.reverseIndexCluster(check);
         }
+        return obj;
     }
 
     // Makes a map from test name to all clusters it falls under
