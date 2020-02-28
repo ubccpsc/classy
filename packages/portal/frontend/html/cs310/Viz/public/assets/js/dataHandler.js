@@ -186,6 +186,10 @@ class DataHandler {
         return this.inverseClusters[delivId];
     }
 
+    getCheckpoints() {
+        return this.checkpoints;
+    }
+
     makeTestData(delivId) {
         const data = this.classData[delivId];
         const testRes = {"passCount": {}, "failCount": {}, "skipCount": {}};

@@ -3,13 +3,13 @@ class UIController {
     constructor() {
         // I wish these were constants
         this.colorblindColorConfig = {
-            failColor: "fail-color-cb", 
-            passColor: "pass-color-cb", 
+            failColor: "fail-color-cb",
+            passColor: "pass-color-cb",
             skipColor: "skip-color-cb",
-            nonColor: "non-color-cb"}; 
+            nonColor: "non-color-cb"};
         this.classyColorConfig = {
-            failColor: "fail-color", 
-            passColor: "pass-color", 
+            failColor: "fail-color",
+            passColor: "pass-color",
             skipColor: "skip-color",
             nonColor: "non-color"};
         this.currentColorConfig = this.colorblindColorConfig;
@@ -38,7 +38,7 @@ class UIController {
             $(`#xAttr option:contains(${this.X_DEFAULT})`).prop("selected", true);
             $(`#yAttr option:contains(${this.Y_DEFAULT})`).prop("selected", true);
             await this.renderAllElements();
-    
+
             // Change scatterplot axes
             $('div#classTab select.deliv-attr').on('change', function() {
                 let attr, newX, newY;
@@ -55,7 +55,7 @@ class UIController {
                     ctrl.SCATTERPLOT.updateY(newY, axesLabels);
                 }
             });
-    
+
             // Switch deliverables
             $("button.deliverables").on('click', async function () {
                 $("button.deliverables.active").removeClass("active");
@@ -63,7 +63,7 @@ class UIController {
                 ctrl.checkpoint = $("button.deliverables.active").data('deliverable');
                 await ctrl.renderAllElements();
             });
-    
+
             // Switch tabs
             $("button#class-btn").on('click', function () {
                 $("button#team-btn").removeClass("active");
@@ -75,7 +75,7 @@ class UIController {
                     $(this).removeClass("d-none");
                 });
             });
-    
+
             $("button#team-btn").on('click', function () {
                 $("button#class-btn").removeClass("active");
                 $(this).addClass("active");
@@ -90,17 +90,17 @@ class UIController {
             $("button#colorToggle").on('click', function () {
                 ctrl.toggleColors();
             })
-    
+
             // Change team in team view
             $("select#teamSelectContainer").on("change", async function() {
                 await ctrl.renderTeamPage();
             });
-    
+
             // Change team in team view
             $("select#branchSelectContainer").on("change", async function() {
                 await ctrl.renderTestHistory();
             });
-    
+
         }).catch((err) => { // Also catches errors thrown in .then() above
             if (window.confirm("Something failed, you're probably not logged in to Classy. Click OK to redirect. If that doens't work, probably tell Lucas.")) {
                 window.location.href = "https://cs310.students.cs.ubc.ca";
@@ -109,11 +109,12 @@ class UIController {
     }
 
     async renderAllElements() {
+        this.renderCheckpointButtons();
         const xDefault = $("#xAttr").find('option:selected').val();
         const yDefault = $("#yAttr").find('option:selected').val();
         const xTitle   = $("#xAttr").find('option:selected').text();
         const yTitle   = $("#yAttr").find('option:selected').text();
-        
+
         const axesLabels = {xTitle: xTitle, yTitle: yTitle};
         const data = this.DATA_HANDLER.getClassData(this.checkpoint);
         this.BOX_PLOT.render(data, "deliverablesSummary");
@@ -151,8 +152,8 @@ class UIController {
             for (let col = 0; col < this.SMALL_MULT_CONFIG[row].length; col++) {
                 const sm_scatterplot = new Scatterplot();
                 sm_scatterplot.render(
-                    `sm${row}${col}`, 
-                    1, 
+                    `sm${row}${col}`,
+                    1,
                     this.DATA_HANDLER.getClassData(this.checkpoint),
                     this.SMALL_MULT_CONFIG[row][col].xData,
                     this.SMALL_MULT_CONFIG[row][col].yData,
@@ -171,6 +172,11 @@ class UIController {
         const template = Handlebars.compile(source);
         const html = template(data);
         $(dest).html(html);
+    }
+
+    renderCheckpointButtons() {
+        const data = this.DATA_HANDLER.getCheckpoints().map(x => {return {"checkpoint": x}});
+        this.renderHandlebars(data, "#checkpointButtons", "#checkpointButtonContainer");
     }
 
     renderTopTest() {
