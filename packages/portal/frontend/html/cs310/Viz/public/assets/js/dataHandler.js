@@ -96,8 +96,8 @@ class DataHandler {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'user':         "lucasaz", // May need to replace if running locally
-                'token':        "b14c2ef41f28a451d8cf22c21658bc9bdd8269bc" // May need to replace if running locally
+                'user':         localStorage.user, // May need to replace if running locally
+                'token':        localStorage.token // May need to replace if running locally
             }
         };
         const response = await fetch(url, options);
