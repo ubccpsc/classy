@@ -41,7 +41,9 @@ This checklist ensures that you have implemented key technical and business logi
 
 ### [Container Output](#container-output-details)
 
-- [ ] Your container logic places any output data in the `/output` path following this convention:
+Container output is data produced by a grading run that a course decides to retain. Output data can be accessed by the URL convention: `https://{course}.students.cs.ubc.ca/portal/resource/{container exec ID}/{admin, staff, or admin}/{filename.xyz}`. The URL is a protected route accessible by authorized users.
+
+- [ ] Your container logic places any output data, if it needs to persist, in the `/output` path following this convention:
   `/output/admin/`
   `/output/staff/`
   `/output/student/`
@@ -64,7 +66,7 @@ This checklist ensures that you have implemented key technical and business logi
 
 - [ ] Dockerfile is named `Dockerfile` and placed in root directory of repository by default or customized with [Build Syntax Suffix](https://docs.docker.com/engine/reference/commandline/build/)
 - [ ] Your Dockerfile and assets are stored in Git repository:
-  - Git repository is publicly accessible to be cloned by Classy
+  - Git repository is publicly accessible to be cloned by Classy OR
   - Git repository is privately accessible and a Github token has been given to technical staff to be added to the Classy environmental configuration file.
 - [ ] If sharing a Classy instance with instructors, the other instructors can also use the same Github token to setup their AutoGrade containers**.
 
