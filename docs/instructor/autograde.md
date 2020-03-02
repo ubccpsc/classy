@@ -41,8 +41,6 @@ This checklist ensures that you have implemented key technical and business logi
 
 ### [Container Output](#container-output-details)
 
-Container output is data produced by a grading run that a course decides to retain. Output data can be accessed by the URL convention: `https://{course}.students.cs.ubc.ca/portal/resource/{container exec ID}/{admin, staff, or admin}/{filename.xyz}`. The URL is a protected route accessible by authorized users.
-
 - [ ] Your container logic places any output data, if it needs to persist, in the `/output` path following this convention:
   `/output/admin/`
   `/output/staff/`
@@ -141,11 +139,11 @@ Only Linux distributions have been tested with Classy. While Windows distributio
 
 ### Steps to build a Docker image
 
-Declare **FROM** to select an operating system distribution that the container environment can run. (**REQUIRED**)
-Declare **WORKDIR** to set a working path that your Docker directives will be run from. (**OPTIONAL**)
-Declare **RUN** to invoke any commands to update or install packages, just as you would on any Linux or Windows command line. (**OPTIONAL**)
-Declare **COPY** to move files into your AutoGrade container, where they will be available to your grading logic, when you start the container. (**OPTIONAL**)
-Declare **CMD** to declare what file should be executed each time AutoTest starts your container. You can assume that the student assignment has been mounted into the container at this point. (**REQUIRED**)
+- [ ] Declare **FROM** to select an operating system distribution that the container environment can run. (**REQUIRED**)
+- [ ] Declare **WORKDIR** to set a working path that your Docker directives will be run from. (**OPTIONAL**)
+- [ ] Declare **RUN** to invoke any commands to update or install packages, just as you would on any Linux or Windows command line. (**OPTIONAL**)
+- [ ] Declare **COPY** to move files into your AutoGrade container, where they will be available to your grading logic, when you start the container. (**OPTIONAL**)
+- [ ] Declare **CMD** to declare what file should be executed each time AutoTest starts your container. You can assume that the student assignment has been mounted into the container at this point. (**REQUIRED**)
 
 Example of a Dockerfile that builds a basic AutoGrade container to produce hardcoded output (MVP full boilerplate source-code: [https://github.com/ubccpsctech/autograder_io_basic_example](https://github.com/ubccpsctech/autograder_io_basic_example))
 
@@ -181,10 +179,17 @@ AutoTest also inputs two environment variables that you can use to customize or 
 - Input Environment Variables
   - **ASSIGNMENT**: string = The name of the deliverable
   - **EXEC_ID**: string = The Docker container execution ID (long random SHA)
+  - ****: string = JSON stringified input data: 
 
 ### Container Output Details
 
-While AutoTest provides input for your AutoGrade container, it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A `stdio.txt` file will be produced automatically by AutoTest. If good log information is output to the console, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the /output/admin or /output/staff directories.
+Container output is data produced by a grading run that a course decides to retain. Output data can be accessed by the URL convention: `https://{course}.students.cs.ubc.ca/portal/resource/{$EXEC_ID}/{admin, staff, or admin}/{filename.xyz}`.
+
+ie. `https://cs999.students.cs.ubc.ca/portal/resource/{08dcb3a38c6aa3ccc556385b87cc13c8d3e0baf5-lab2}/student/additional_feedback.txt`.
+
+The URL is a protected route accessible by authorized users. A student may only access files from the `student` folder, while admins may access all folders, etc.
+
+AutoTest provides input for your AutoGrade container, but it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A `stdio.txt` file will be produced automatically by AutoTest. If good log information is output to the console, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the /output/admin or /output/staff directories.
 
 #### Output Filesystem Paths
 
