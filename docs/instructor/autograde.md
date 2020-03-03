@@ -38,6 +38,7 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] If necessary for your course logic, you implement the following environment variables:
   - ASSIGNMENT: the deliverable name of the assignment that is running.
   - EXEC_ID: an always unique execution SHA produced each time a container runs.
+  - INPUT: Stringified JSON that contains lots of non-necessary but potentially useful fields.
 
 ### [Container Output](#container-output-details)
 
