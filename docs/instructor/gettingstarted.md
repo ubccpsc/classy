@@ -29,25 +29,25 @@ Classy comes with default views that are available for any instructor to use. Th
 
 ### Admin Students Panel
 
-*The Admin Students panel displays basic student information.*
+*Displays basic student information.*
 
 <img src="../assets/admin-view-students.png/">
 
 ### Admin Results Panel
 
-*The Admin Results panel displays basic the result recordd with the highest scores per single or team repository.*
+*Displays basic the result recordd with the highest scores per single or team repository.*
 
 <img src="../assets/admin-view-results.png/">
 
 ### Admin Dashboard Panel
 
-*The Admin Dashboard panel displays the spread of grade, test coverage, and test score percentages per deliverable.*
+*Displays the spread of grade, test coverage, and test score percentages per deliverable.*
 
 <img src="../assets/admin-view-dashboard.png/">
 
 ### Admin Grades Panel
 
-*The Admin Grades panel displays student grades per deliverable with a summary of grade averages.*
+*Displays student grades per deliverable with a summary of grade averages.*
 
 <img src="../assets/admin-view-grades.png/">
 
