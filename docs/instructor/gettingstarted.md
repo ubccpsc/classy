@@ -23,7 +23,23 @@ You must formally request Classy by notifying *CPSC Technical Staff*. Classy tak
 
 Please start a discussion with CPSC Technical Staff as soon as you develop an interest in using Classy.
 
-## Quick Front-end and Back-end Bootstrapping
+## Default Classy Views
+
+Classy comes with default views that are available for any instructor to use. The default views use generic logic that meet the requirements of most courses. The default views may also act as boilerplate that can be modified to meet custom requirements in a course.
+
+<img src="../assets/admin-view-students.png/">
+*The Admin Students panel displays basic student information*
+
+<img src="../assets/admin-view-results.png/">
+*The Admin Results panel displays basic the result recordd with the highest scores per single or team repository.*
+
+<img src="../assets/admin-view-dashboard.png/">
+**The Admin Dashboard panel displays the spread of grade, test coverage, and test score percentages per deliverable.**
+
+<img src="../assets/admin-view-grades.png/">
+**The Admin Grades panel displays student grades per deliverable with a summary of grade averages.**
+
+## Quick-start Standard Views
 
 Classy requires that you implement a front-end and back-end. These files can be produced automatically by the `/helper-scripts/default-file-setup.sh` if you are happy with default views and behaviour.
 

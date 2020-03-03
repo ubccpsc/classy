@@ -113,16 +113,16 @@ Follow the steps from Staging in Production on your course Classy server (ie. cs
 
 ## Dockerfile Explained
 
-As an AutoGrade container is a Docker image, A Dockerfile MUST be written to create a Docker image.A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that is ready to execute a command without loading time.
+A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that is ready to perform a task during execution time. As an AutoGrade container is a Docker image, and a Dockerfile must be written to create a Docker image, a Dockerfile must be written to create an AutoGrade image.
 
-We leverage the Docker build logic above to build our grading container. As the data from these build steps is saved into a pre-compiled and runnable Docker image, AutoTest now listens for Github notification web-hooks that tell it if a student has pushed code to their Github repository. If a Deliverable in Classy is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest triggers the Docker container to run. The CMD directive in your Dockerfile will run each time that a student pushes code to their Github repository with the assignment mounted inside the container. Any output that must be archived MUST be put in the Container Output filesystem path to ensure that it is not lost after the container finishes executing its script.
+AutoTest listens for Github web-hooks that notify if a student has pushed code to their Github repository. If a Deliverable in Classy is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest triggers the Docker container to run. The `CMD` directive in your Dockerfile will run each time that a student pushes code to their Github repository with the assignment mounted inside the container. Any output that must be archived MUST be put in the Container Output filesystem path to ensure that it is not lost after the container finishes executing its script.
 
-The original AutoGrade image data will NOT be modified during each AutoGrade run. The data produced when the AutoGrade container is run will NOT persist after the container completes its grading run. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
+The original AutoGrade image data will NOT be modified during each AutoGrade run. The data produced during the container runtime will also NOT persist after the container completes its grading run, unless data to be persisted is moved to the correct filesystem path. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
 
 **NOTE:**
 - A container must be **BUILT** to create an image of your AutoGrade logic that it can repeatedly **RUN**.
-- When a Docker image runs in AutoTest, it executes the file to the right of the **CMD** directive to run your container.
-- The **CMD** directive should result in the output of a report.json file each time your container is run (unless it encounters an error).
+- When a Docker image runs in AutoTest, it executes the file declared with the **CMD** directive in your Dockerfile.
+- The **CMD** directive must create a `report.json` file output of a report.json file each time your container is run (unless it encounters an error).
 
 <img src="../assets/autograde-image-run.svg"/>
 
@@ -169,7 +169,7 @@ Example of a Dockerfile that builds a basic AutoGrade container to produce hardc
 
 ### Container Input Details
 
-AutoTest mounts and checks out student code that was pushed to Github. The assignment can be found in the the `/assn` directory of the container every time AutoTest starts a container. Therefore, your programming logic should assume that the `/assn` directory always contain the student assignment. The `.git` folder is included in the assignment directory, which allows the instructor to use additional Git commands to access Git history. Remember to install Git in your container before using Git commands.
+AutoTest mounts and checks out student code to the latest commit, at the time when the code was pushed to Github, inside an AutoGrade container to make it accessible for marking. The assignment can be found in the `/assn` directory of the container every grading run. Therefore, your programming logic should assume that the `/assn` directory contains the student assignment. The `.git` folder is included in the assignment directory, which allows the instructor to use additional Git commands to access Git history. Remember to install Git in your container before using Git commands.
 
 AutoTest also inputs two environment variables that you can use to customize or automate features of your grading logic. These are optional environment variables that are not necessary to implement in your container.
 
@@ -179,7 +179,10 @@ AutoTest also inputs two environment variables that you can use to customize or 
 - Input Environment Variables
   - **ASSIGNMENT**: string = The name of the deliverable
   - **EXEC_ID**: string = The Docker container execution ID (long random SHA)
-  - ****: string = JSON stringified input data: 
+  - **INPUT**: string = JSON stringified input data
+    - **ContainerInput** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L14-L21)
+      - **CommitTarget** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L36-L59)
+      - **AutoTestConfigTransport** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/PortalTypes.ts#L183-L230)
 
 ### Container Output Details
 
