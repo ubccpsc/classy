@@ -27,17 +27,29 @@ Please start a discussion with CPSC Technical Staff as soon as you develop an in
 
 Classy comes with default views that are available for any instructor to use. The default views use generic logic that meet the requirements of most courses. The default views may also act as boilerplate that can be modified to meet custom requirements in a course.
 
-<img src="../assets/admin-view-students.png/">
-*The Admin Students panel displays basic student information*
+### Admin Students Panel
 
-<img src="../assets/admin-view-results.png/">
+*The Admin Students panel displays basic student information.*
+
+<img src="../assets/admin-view-students.png/">
+
+### Admin Results Panel
+
 *The Admin Results panel displays basic the result recordd with the highest scores per single or team repository.*
 
+<img src="../assets/admin-view-results.png/">
+
+### Admin Dashboard Panel
+
+*The Admin Dashboard panel displays the spread of grade, test coverage, and test score percentages per deliverable.*
+
 <img src="../assets/admin-view-dashboard.png/">
-**The Admin Dashboard panel displays the spread of grade, test coverage, and test score percentages per deliverable.**
+
+### Admin Grades Panel
+
+*The Admin Grades panel displays student grades per deliverable with a summary of grade averages.*
 
 <img src="../assets/admin-view-grades.png/">
-**The Admin Grades panel displays student grades per deliverable with a summary of grade averages.**
 
 ## Quick-start Standard Views
 
