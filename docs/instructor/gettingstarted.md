@@ -51,7 +51,7 @@ Classy comes with default views that are available for any instructor to use. Th
 
 <img src="../assets/admin-view-grades.png/">
 
-## Quick-start Standard Views
+## Bootstrapping Default Views & Logic
 
 Classy requires that you implement a front-end and back-end. These files can be produced automatically by the `/helper-scripts/default-file-setup.sh` if you are happy with default views and behaviour.
 
