@@ -3,7 +3,7 @@
 <!-- TOC depthfrom:2 -->
 - [Instructor: Build and Integrate an AutoGrade Container](#instructor-build-and-integrate-an-autograde-container)
   - [Overview](#overview)
-  - [Build a Container Checklist](#build-a-container-checklist)
+  - [Development Checklist](#development-checklist)
     - [Container Input](#container-input)
     - [Container Output](#container-output)
     - [Dockerfile](#dockerfile)
@@ -27,7 +27,7 @@
 
 <img src="../assets/autograde-flow.svg"/>
 
-## Build a Container Checklist
+## Development Checklist
 
 This checklist ensures that you have implemented key technical and business logic requirements that ensure your AutoGrade container is functional once integrated with AutoTest:
 
@@ -115,11 +115,11 @@ Follow the steps from Staging in Production on your course Classy server (ie. cs
 
 ## Dockerfile Explained
 
-A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that is ready to perform a task during execution time. As an AutoGrade container is a Docker image, and a Dockerfile must be written to create a Docker image, a Dockerfile must be written to create an AutoGrade image.
+A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that a built image is ready to perform a task during execution time. As an AutoGrade container is a Docker image, and a Dockerfile must be written to create a Docker image, a Dockerfile must be written to create an AutoGrade image.
 
-AutoTest listens for Github web-hooks that notify if a student has pushed code to their Github repository. If a Deliverable in Classy is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest triggers the Docker container to run. The `CMD` directive in your Dockerfile will run each time that a student pushes code to their Github repository with the assignment mounted inside the container. Any output that must be archived MUST be put in the Container Output filesystem path to ensure that it is not lost after the container finishes executing its script.
+AutoTest listens for Github web-hooks to detect if a student has pushed code to their Github repository. If a deliverable, in Classy, is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest executes the Docker container. The `CMD` directive in your Dockerfile is the command that executes, in the pre-built image, each time that student code is ready to be graded.
 
-The original AutoGrade image data will NOT be modified during each AutoGrade run. The data produced during the container runtime will also NOT persist after the container completes its grading run, unless data to be persisted is moved to the correct filesystem path. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
+The AutoGrade image that is built will NOT be modified during each grading run. The data produced during the container runtime will also NOT persist after the container completes its grading run, unless data to be persisted is moved to the correct filesystem path. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
 
 **NOTE:**
 - A container must be **BUILT** to create an image of your AutoGrade logic that it can repeatedly **RUN**.
