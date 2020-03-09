@@ -195,6 +195,8 @@ ie. `https://cs999.students.cs.ubc.ca/portal/resource/08dcb3a38c6aa3ccc556385b87
 
 The URL is a protected route accessible by authorized users. A student may only access files from the `student` folder, while admins may access all folders, etc.
 
+Output files that are created by your container should be documented in the JSON `report.json` `attachments` attribute. This is an optional but recommended field that explicitly details the location of files that are produced inside the container that an instructor would like to persist. The attribute also allows one to access who has access to particular files in the `visitbleToX` fields.
+
 AutoTest provides input for your AutoGrade container, but it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A `stdio.txt` file will be produced automatically by AutoTest. If log information is output to the console in your container, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the `/output/admin` or `/output/staff` directories with a user role perspective in mind.
 
 #### Output Filesystem Paths
