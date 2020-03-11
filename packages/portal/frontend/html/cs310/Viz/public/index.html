@@ -24,7 +24,7 @@
 
 </head>
 <body>
-<!--	
+<!--
 <nav class="navbar navbar-light bg-light">
 	<a href="/"><span class="navbar-brand mb-0 h1">InsightVis</span></a>
 </nav>
@@ -48,10 +48,12 @@
 				</div>
 				<div class="row nav-spacing">
 					<div class="container text-center">
-						<div class="btn-group" role="group" aria-label="Basic example">
-							<button type="button" data-deliverable="c1" id="c1-btn" class="deliverables btn btn-secondary active">C1</button>
-							<button type="button" data-deliverable="c2" id="c2-btn" class="deliverables btn btn-secondary">C2</button>
-						</div>
+                        <div id="checkpointButtonContainer", class="btn-group" role="group" aria-label="Basic example"></div>
+                        <script id="checkpointButtons" type="text/x-handlebars-template"> <!--HB-->
+                            {{#each this}}
+                            <button type="button" data-deliverable="{{checkpoint}}" id="{{checkpoint}}-btn" class="deliverables btn btn-secondary">{{checkpoint}}</button>
+                            {{/each}}
+                        </script>
 						<div class="btn-group" role="group">
 							<button type="button" id="class-btn" class="tabButton btn btn-secondary active">Class</button>
 							<button type="button" id="team-btn" class="tabButton btn btn-secondary">Team</button>
