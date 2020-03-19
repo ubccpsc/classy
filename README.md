@@ -38,12 +38,13 @@ Instructions for getting started with Classy have been sorted into sections base
     - [1.4 Github & AutoTest Examples](/docs/instructor/features.md#github-and-autotest-examples)
 - [2. Getting Started](/docs/instructor/gettingstarted.md#overview)
     - [2.1 Requesting Classy for Your Course](/docs/instructor/gettingstarted.md#requesting-classy-for-your-course)
-    - [2.2 Default Front-end and Back-end Bootstrapping](/docs/instructor/gettingstarted.md#quick-front-end-and-back-end-bootstrapping)
-    - [2.3 Optional Front-end Customization](/docs/instructor/gettingstarted.md#front-end-setup)
-    - [2.4 Optional Back-end Customization](/docs/instructor/gettingstarted.md#back-end-setup)
+    - [2.2 Default Classy Views](/docs/instructor/gettingstarted.md#default-classy-views)
+    - [2.3 Bootstrapping Default Views & Logic](/docs/instructor/gettingstarted.md#bootstrapping-default-views-&-logic)
+    - [2.4 Optional Front-End Customization](/docs/instructor/gettingstarted.md#front-end-setup)
+    - [2.5 Optional Back-End Customization](/docs/instructor/gettingstarted.md#back-end-setup)
 - [3. AutoGrade Setup](/docs/instructor/autograde.md#overview)
     - [3.1 Build a Container Checklist](/docs/instructor/autograde.md#build-a-container-checklist)
-    - [3.2 Test a Container Checklist](/docs/instructor/autograde.md#test-a-container-checklist)
+    - [3.2 QA Container Checklist](/docs/instructor/autograde.md#qa-container-checklist)
 - [4. Portal Manual](/docs/instructor/portal.md#overview)
     - [4.1 Classlist Enrollment](/docs/instructor/portal.md#classlist-enrollment)
     - [4.2 Deliverable Configuration](/docs/instructor/portal.md#deliverable-configuration)
@@ -53,7 +54,7 @@ Instructions for getting started with Classy have been sorted into sections base
     - [5.2 Student AutoBot Commands](/docs/instructor/autotest.md#student-autobot-commands)
     - [5.3 Instructor AutoBot Commands](/docs/instructor/autotest.md#instructor-autobot-commands)
     - [5.4 Avoiding Queue Pile-ups](/docs/instructor/autotest.md#avoiding-queue-pile--ups)
-  
+
 <!-- /TOC -->
 
 ### Developers
