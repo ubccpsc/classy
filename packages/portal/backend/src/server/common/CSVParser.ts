@@ -29,7 +29,8 @@ export class CSVParser {
             const options = {
                 columns:          true,
                 skip_empty_lines: true,
-                trim:             true
+                trim:             true,
+                bom:              true // fixes CSV compatibility issue
             };
 
             const parser = parse(options, (err: Error, data: any[]) => {
