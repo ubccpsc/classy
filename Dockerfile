@@ -1,4 +1,4 @@
-FROM node:12.15.0-alpine
+FROM node:12-alpine
 
 WORKDIR /app
 COPY package.json tsconfig.json .env ./
