@@ -41,7 +41,9 @@ describe('ClasslistAgent', function() {
         const numChanges2 = classlistChanges2.updated.length + classlistChanges2.created.length;
         Log.test('# rows processed: ' + numChanges1);
         expect(numChanges1).to.equal(5);
+        expect(numChanges1).to.equal(classlistChanges1.classlist.length);
         expect(numChanges2).to.equal(5);
+        expect(numChanges2).to.equal(classlistChanges2.classlist.length);
     });
 
     it('Should reject a classlist if both FIRST and PREF_NAME are empty', async () => {
