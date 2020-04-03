@@ -32,14 +32,15 @@ describe('ClasslistAgent', function() {
         expect(classlistChanges.updated.length + classlistChanges.created.length).to.equal(0);
     });
 
-    it('Should be able to process a vaild classlist', async function() {
+    it('Should be able to process a valid classlist', async function() {
         const path1 = __dirname + '/data/classlistValidPrefName.csv';
         const path2 = __dirname + '/data/classlistValidFirst.csv';
         const classlistChanges1 = await ca.processClasslist(Test.ADMIN1.id, path1, null);
         const classlistChanges2 = await ca.processClasslist(Test.ADMIN1.id, path2, null);
         const numChanges1 = classlistChanges1.updated.length + classlistChanges1.created.length;
-        const numChanges2 = classlistChanges2.updated.length + classlistChanges2.created.length;
         Log.test('# rows processed: ' + numChanges1);
+        const numChanges2 = classlistChanges2.updated.length + classlistChanges2.created.length;
+        Log.test('# rows processed: ' + numChanges2);
         expect(numChanges1).to.equal(5);
         expect(numChanges1).to.equal(classlistChanges1.classlist.length);
         expect(numChanges2).to.equal(5);
