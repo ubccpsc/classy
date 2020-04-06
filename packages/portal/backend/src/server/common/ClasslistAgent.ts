@@ -122,7 +122,7 @@ export class ClasslistAgent {
                     // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
                     githubId:      row.CWL.toLowerCase(),
                     studentNumber: row.SNUM,
-                    fName:         row.FIRST || row.PREF,
+                    fName:         row.PREF || row.FIRST,
                     lName:         row.LAST,
                     kind:   PersonKind.STUDENT,
                     URL:    null,
