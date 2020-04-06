@@ -48,6 +48,18 @@ export class PersonController {
             }
             existingPerson.URL = personPrototype.URL; // can update (along with githubId)
 
+            if (existingPerson.fName !== personPrototype.fName) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - fName change: " + existingPerson.fName + " -> " + personPrototype.fName);
+            }
+            existingPerson.fName = personPrototype.fName; // can update (along with githubId)
+
+            if (existingPerson.lName !== personPrototype.lName) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - lName change: " + existingPerson.lName + " -> " + personPrototype.lName);
+            }
+            existingPerson.lName = personPrototype.lName; // can update (along with githubId)
+
             // NOTE: existingPerson.custom is _not_ deleted ; unsure if this is the right thing
             // existingPerson.custom = {};
 
