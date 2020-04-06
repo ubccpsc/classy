@@ -47,7 +47,7 @@ describe('ClasslistAgent', function() {
         expect(numChanges2).to.equal(classlistChanges2.classlist.length);
     });
 
-    it('Should reject a classlist if both FIRST and PREF_NAME are empty', async () => {
+    it('Should reject a classlist if both FIRST and PREF are empty', async () => {
         const path = __dirname + '/data/classlistEmptyNamePrefName.csv';
         let ex = null;
         try {

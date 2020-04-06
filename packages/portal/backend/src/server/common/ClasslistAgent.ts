@@ -115,14 +115,14 @@ export class ClasslistAgent {
             if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
                 typeof row.SNUM !== 'undefined' && typeof row.LAST !== 'undefined' &&
                 typeof row.LAB !== 'undefined' &&
-                (typeof row.FIRST !== 'undefined' || typeof row.PREF_NAME !== 'undefined')) {
+                (typeof row.FIRST !== 'undefined' || typeof row.PREF !== 'undefined')) {
                 const p: Person = {
                     id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
                     csId:          row.ACCT.toLowerCase(),
                     // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
                     githubId:      row.CWL.toLowerCase(),
                     studentNumber: row.SNUM,
-                    fName:         row.FIRST || row.PREF_NAME,
+                    fName:         row.FIRST || row.PREF,
                     lName:         row.LAST,
                     kind:   PersonKind.STUDENT,
                     URL:    null,
