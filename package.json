@@ -32,6 +32,7 @@
         "@types/mocha": "2.2.44",
         "@types/mongodb": "^3.0.5",
         "@types/node": "~8.10.53",
+        "@types/node-fetch": "^2.5.5",
         "@types/request": "~2.48.1",
         "@types/request-promise-native": "^1.0.11",
         "@types/restify": "^8.4.1",
@@ -47,13 +48,16 @@
     "dependencies": {
         "@types/mongodb": "^3.0.5",
         "@types/node-schedule": "^1.2.2",
+        "@types/superagent": "^4.1.7",
         "dotenv": "4.0.0",
         "fs-extra": "5.0.0",
         "jszip": "3.2.1",
         "mongodb": "^3.0.2",
+        "node-fetch": "^2.6.0",
         "request": "^2.83.0",
         "request-promise-native": "^1.0.5",
-        "restify": "^8.4.0"
+        "restify": "^8.4.0",
+        "superagent": "^5.2.2"
     },
     "resolutions": {
         "**/mem": "^4.0.0"

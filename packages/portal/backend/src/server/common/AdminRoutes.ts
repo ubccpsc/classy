@@ -1,7 +1,11 @@
 import * as cookie from 'cookie';
-
+import * as http from 'http';
+import * as https from 'https';
 import * as rp from "request-promise-native";
 import * as restify from 'restify';
+import * as sa from 'superagent';
+
+import fetch, {RequestInit} from "node-fetch";
 import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
@@ -1187,19 +1191,30 @@ export default class AdminRoutes implements IREST {
         const start = Date.now();
 
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
-        const opts: rp.RequestPromiseOptions = {
-            rejectUnauthorized: false,
-            strictSSL:          false,
-            method:             'post'
+        const opts2: RequestInit = {
+            method:             'post',
+            agent:              new https.Agent({ rejectUnauthorized: false })
         };
-
-        rp(url, opts).then((result) => {
+        // const opts: rp.RequestPromiseOptions = {
+        //     rejectUnauthorized: false,
+        //     strictSSL:          false,
+        //     method:             'post'
+        // };
+        fetch(url)
+            .then((result) => {
             Log.info('AdminRoutes::updatePatches(..) - done; took: ' + Util.took(start));
             res.send({success: "patches updated"});
             return next();
         }).catch((err) => {
             return AdminRoutes.handleError(400, 'Unable to update patches. Error: ' + err.message, res, next);
         });
+        // rp(url, opts).then((result) => {
+        //     Log.info('AdminRoutes::updatePatches(..) - done; took: ' + Util.took(start));
+        //     res.send({success: "patches updated"});
+        //     return next();
+        // }).catch((err) => {
+        //     return AdminRoutes.handleError(400, 'Unable to update patches. Error: ' + err.message, res, next);
+        // });
     }
 
     private static listPatches(req: any, res: any, next: any) {
