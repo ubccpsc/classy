@@ -116,7 +116,7 @@ export class ClassPortal implements IClassPortal {
 
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res + "; took: " + Util.took(start));
-            const json: AutoTestAuthPayload = res.json() as AutoTestAuthPayload;
+            const json: AutoTestAuthPayload = await res.json() as AutoTestAuthPayload;
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
@@ -146,7 +146,7 @@ export class ClassPortal implements IClassPortal {
 
             const res = await fetch(url, opts);
             Log.info("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
-            const json: Payload = res.json() as Payload;
+            const json: Payload = await res.json() as Payload;
             if (typeof json.success !== 'undefined') {
                 return json.success; // AutoTestPersonIdTransport
             } else {
@@ -174,7 +174,7 @@ export class ClassPortal implements IClassPortal {
             const res = await fetch(url, opts);
             Log.info("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
             Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
-            const json: ClassyConfigurationPayload = res.json() as ClassyConfigurationPayload;
+            const json: ClassyConfigurationPayload = await res.json() as ClassyConfigurationPayload;
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
@@ -206,7 +206,7 @@ export class ClassPortal implements IClassPortal {
                 const res = await fetch(url, opts);
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; took: " + Util.took(start));
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
-                const json: AutoTestConfigPayload = res.json() as AutoTestConfigPayload;
+                const json: AutoTestConfigPayload = await res.json() as AutoTestConfigPayload;
                 if (typeof json.success !== 'undefined') {
                     return json.success;
                 } else {
@@ -239,8 +239,8 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
-            const json = res.ok && res.json();
-            if (typeof json !== 'undefined') {
+            const json = await res.json();
+            if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
                     "; url: " + grade.URL + "; took: " + Util.took(start));
                 return json;
@@ -337,8 +337,8 @@ export class ClassPortal implements IClassPortal {
                 '; repoId: ' + result.repoId + '; SHA: ' + result.input.target.commitSHA);
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
-            const json = res.ok && res.json();
-            if (typeof json !== 'undefined') {
+            const json = await res.json();
+            if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " +
                     result.input.target.commitSHA + "; took: " + Util.took(start));
                 return json;
@@ -368,7 +368,7 @@ export class ClassPortal implements IClassPortal {
             Log.info("ClassPortal::getResult(..) - requesting from: " + url);
             const res = await fetch(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
-            const json: AutoTestResultPayload = res.json() as AutoTestResultPayload;
+            const json: AutoTestResultPayload = await res.json() as AutoTestResultPayload;
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length + "; took: " + Util.took(start));
                 const success = json.success as AutoTestResultTransport[];
@@ -430,7 +430,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const res = await fetch(url, opts);
             Log.info("ClassPortal::getMedianTime( " + delivId + " ) - success; took: " + Util.took(start));
-            const json: any = res.json() as any;
+            const json: any = await res.json() as any;
             if (typeof json.success !== 'undefined') {
                 return "\n\nThe median time for successful projects in this deliverable in the last 24 hours is " +
                     Util.tookHuman(0, json.success);
