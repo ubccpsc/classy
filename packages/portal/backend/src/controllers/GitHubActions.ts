@@ -1,5 +1,6 @@
+
 import * as crypto from "crypto";
-import * as rp from "request-promise-native";
+import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
@@ -310,15 +311,14 @@ export class GitHubActions implements IGitHubActions {
             await GitHubActions.checkDatabase(repoId, null);
 
             const uri = this.apiPath + '/orgs/' + this.org + '/repos';
-            const options = {
+            const options: RequestInit = {
                 method:  'POST',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                 },
-                body:    {
+                body:    JSON.stringify({
                     name:          repoId,
                     // In Dev and Test, Github free Org Repos cannot be private.
                     private:       true,
@@ -326,12 +326,12 @@ export class GitHubActions implements IGitHubActions {
                     has_wiki:      false,
                     has_downloads: false,
                     auto_init:     false
-                },
-                json:    true
+                })
             };
 
             Log.info("GitHubAction::createRepo( " + repoId + " ) - making request");
-            const body = await rp(options);
+            const response = await fetch(uri, options);
+            const body = await response.json();
             Log.info("GitHubAction::createRepo( " + repoId + " ) - request complete");
             const url = body.html_url;
 
@@ -370,9 +370,8 @@ export class GitHubActions implements IGitHubActions {
             if (repoExists === true) {
                 const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
                 Log.trace("GitHubAction::deleteRepo( " + repoName + " ) - URI: " + uri);
-                const options = {
+                const options: RequestInit = {
                     method:  'DELETE',
-                    uri:     uri,
                     headers: {
                         'Authorization': this.gitHubAuthToken,
                         'User-Agent':    this.gitHubUserName,
@@ -380,7 +379,7 @@ export class GitHubActions implements IGitHubActions {
                     }
                 };
 
-                await rp(options);
+                await fetch(uri, options);
                 Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted; took: " + Util.took(start));
                 return true;
             } else {
@@ -405,9 +404,8 @@ export class GitHubActions implements IGitHubActions {
 
         const start = Date.now();
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName;
-        const options = {
+        const options: RequestInit = {
             method:  'GET',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
@@ -416,7 +414,7 @@ export class GitHubActions implements IGitHubActions {
         };
 
         try {
-            await rp(options);
+            await fetch(uri, options);
             Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
             return true;
         } catch (err) {
@@ -457,27 +455,24 @@ export class GitHubActions implements IGitHubActions {
             }
 
             const uri = this.apiPath + '/teams/' + teamId;
-            const options = {
+            const options: RequestInit = {
                 method:                  'DELETE',
-                uri:                     uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept':        'application/vnd.github.hellcat-preview+json'
-                },
-                resolveWithFullResponse: true,
-                json:                    true
+                }
             };
 
-            const response = await rp(options);
+            const response = await fetch(uri, options);
             // Log.info("GitHubAction::deleteTeam(..) - response: " + response);
 
-            if (response.statusCode === 204) {
+            if (response.status === 204) {
                 Log.info("GitHubAction::deleteTeam(..) - success; took: " + Util.took(start));
                 return true;
             } else {
-                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.statusCode + "; took: " + Util.took(start));
+                Log.info("GitHubAction::deleteTeam(..) - not deleted; code: " + response.status + "; took: " + Util.took(start));
                 return false;
             }
 
@@ -501,19 +496,16 @@ export class GitHubActions implements IGitHubActions {
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = this.apiPath + '/orgs/' + this.org + '/repos?per_page=' + this.pageSize;
         Log.trace("GitHubActions::listRepos(..) - URI: " + uri);
-        const options = {
+        const options: RequestInit = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
-        const raw: any = await this.handlePagination(options);
+        const raw: any = await this.handlePagination(uri, options);
 
         const rows: Array<{repoName: string, repoNumber: number, url: string}> = [];
         for (const entry of raw) {
@@ -540,19 +532,16 @@ export class GitHubActions implements IGitHubActions {
 
         // GET /orgs/:org/members
         const uri = this.apiPath + '/orgs/' + this.org + '/members?per_page=' + this.pageSize;
-        const options = {
+        const options: RequestInit = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
-        const raw: any = await this.handlePagination(options);
+        const raw: any = await this.handlePagination(uri, options);
 
         const rows: Array<{githubId: string, personNumber: number, url: string}> = [];
         for (const entry of raw) {
@@ -566,27 +555,25 @@ export class GitHubActions implements IGitHubActions {
         return rows;
     }
 
-    private async handlePagination(rpOptions: rp.RequestPromiseOptions): Promise<object[]> {
+    private async handlePagination(uri: string, rpOptions: RequestInit): Promise<object[]> {
         Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
 
         const start = Date.now();
 
         try {
-            rpOptions.resolveWithFullResponse = true; // in case clients forget
-            rpOptions.json = true; // in case clients forget
+            const response = await fetch(uri, rpOptions);
+            const body = await response.json();
 
-            const fullResponse = await rp(rpOptions as any); // rpOptions is the right type already
-
-            // Log.trace("GitHubActions::handlePagination(..) - after initial request");
+            Log.trace("GitHubActions::handlePagination(..) - after initial request");
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
-            if (typeof fullResponse.headers.link !== 'undefined') {
+            if (typeof (response.headers as any).link !== 'undefined') {
                 // first save the responses from the first page:
-                raw = fullResponse.body;
+                raw = body;
 
                 let lastPage: number = -1;
-                const linkText = fullResponse.headers.link;
+                const linkText = (response.headers as any).link;
                 // Log.trace('GitHubActions::handlePagination(..) - linkText: ' + linkText);
                 const linkParts = linkText.split(',');
                 for (const p of linkParts) {
@@ -616,14 +603,14 @@ export class GitHubActions implements IGitHubActions {
                 for (let i = 2; i <= lastPage; i++) {
                     const pageUri = pageBase + i;
                     // Log.trace('GitHubActions::handlePagination(..) - page to request: ' + pageUri);
-                    (rpOptions as any).uri = pageUri; // not sure why this is needed
+                    uri = pageUri; // not sure why this is needed
                     // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
                     await Util.delay(100);
-                    paginationPromises.push(rp(rpOptions as any));
+                    paginationPromises.push(fetch(uri, rpOptions as any));
                 }
             } else {
                 // Log.trace("GitHubActions::handlePagination(..) - single page");
-                raw = fullResponse.body;
+                raw = body;
                 // don't put anything on the paginationPromise if it isn't paginated
             }
 
@@ -632,8 +619,8 @@ export class GitHubActions implements IGitHubActions {
             const bodies: any[] = await Promise.all(paginationPromises);
             // Log.trace("GitHubActions::handlePagination(..) - requests complete");
 
-            for (const body of bodies) {
-                raw = raw.concat(body.body);
+            for (const bod of bodies) {
+                raw = raw.concat(bod.body);
             }
             Log.trace("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
 
@@ -660,7 +647,6 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
         const options = {
             method:                  'GET',
-            uri:                     uri,
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
@@ -671,7 +657,7 @@ export class GitHubActions implements IGitHubActions {
             json:                    true
         };
 
-        const teamsRaw: any = await this.handlePagination(options);
+        const teamsRaw: any = await this.handlePagination(uri, options);
 
         const teams: Array<{teamName: string, teamNumber: number}> = [];
         for (const team of teamsRaw) {
@@ -689,19 +675,17 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
-        const opts = {
+        const opts: RequestInit = {
             method:  'GET',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName
-            },
-            json:    true
+            }
         };
 
-        const results = await rp(opts);
+        const response = await fetch(uri, opts);
         Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
-        return results;
+        return response.json();
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
@@ -717,14 +701,13 @@ export class GitHubActions implements IGitHubActions {
         // https://developer.github.com/v3/repos/hooks/#create-a-hook
         // POST /repos/:owner/:repo/hooks
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks';
-        const opts = {
+        const opts: RequestInit = {
             method:  'POST',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName
             },
-            body:    {
+            body:    JSON.stringify({
                 name:   "web",
                 active: true,
                 events: ["commit_comment", "push"],
@@ -733,11 +716,10 @@ export class GitHubActions implements IGitHubActions {
                     secret:       secret,
                     content_type: "json"
                 }
-            },
-            json:    true
+            })
         };
 
-        const results = await rp(opts);
+        const results = await fetch(uri, opts);
         Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
     }
@@ -760,14 +742,13 @@ export class GitHubActions implements IGitHubActions {
             // https://developer.github.com/v3/repos/hooks/#edit-a-hook
             // PATCH /repos/:owner/:repo/hooks/:hook_id
             const uri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/hooks/' + hookId;
-            const opts = {
+            const opts: RequestInit = {
                 method:  'PATCH',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName
                 },
-                body:    {
+                body:    JSON.stringify({
                     name:   "web",
                     active: true,
                     events: ["commit_comment", "push"],
@@ -776,11 +757,10 @@ export class GitHubActions implements IGitHubActions {
                         secret:       secret,
                         content_type: "json"
                     }
-                },
-                json:    true
+                })
             };
 
-            await rp(opts);
+            await fetch(uri, opts);
             Log.info("GitHubAction::updateWebhook(..) - success; took: " + Util.took(start));
             return true;
         } else {
@@ -815,22 +795,20 @@ export class GitHubActions implements IGitHubActions {
             } else {
                 Log.info('GitHubAction::teamCreate( ' + teamName + ', ... ) - does not exist; creating');
                 const uri = this.apiPath + '/orgs/' + this.org + '/teams';
-                const options = {
+                const options: RequestInit = {
                     method:  'POST',
-                    uri:     uri,
                     headers: {
                         'Authorization': this.gitHubAuthToken,
                         'User-Agent':    this.gitHubUserName,
                         'Accept':        'application/json'
                     },
-                    body:    {
+                    body:    JSON.stringify({
                         name:       teamName,
                         permission: permission
-                    },
-                    json:    true
+                    })
                 };
-                const body = await rp(options);
-                const id = body.id;
+                const response = await fetch(uri, options);
+                const id = (await response.json()).id;
                 const config = Config.getInstance();
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
@@ -883,17 +861,15 @@ export class GitHubActions implements IGitHubActions {
             // PUT /teams/:id/memberships/:username
             const uri = this.apiPath + '/teams/' + teamNumber + '/memberships/' + member;
             Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
-            const opts = {
+            const opts: RequestInit = {
                 method:  'PUT',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                },
-                json:    true
+                }
             };
-            promises.push(rp(opts));
+            promises.push(fetch(uri, opts));
         }
 
         const results = await Promise.all(promises);
@@ -936,17 +912,15 @@ export class GitHubActions implements IGitHubActions {
             // DELETE /teams/:id/memberships/:username
             const uri = this.apiPath + '/teams/' + teamNumber + '/memberships/' + member;
             Log.info("GitHubAction::removeMembersFromTeam(..) - uri: " + uri);
-            const opts = {
+            const opts: RequestInit = {
                 method:  'DELETE',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                },
-                json:    true
+                }
             };
-            promises.push(rp(opts));
+            promises.push(fetch(uri, opts));
         }
 
         const results = await Promise.all(promises);
@@ -970,22 +944,20 @@ export class GitHubActions implements IGitHubActions {
         try {
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
             // Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
-            const options = {
+            const options: RequestInit = {
                 method:  'PUT',
-                uri:     uri,
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
                     // 'Accept':        'application/vnd.github.hellcat-preview+json'
                 },
-                body:    {
+                body:    JSON.stringify({
                     permission: permission
-                },
-                json:    true
+                })
             };
 
-            await rp(options);
+            await fetch(uri, options);
             Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId +
                 "; repo: " + repoName + "; took: " + Util.took(start));
             return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
@@ -1053,19 +1025,16 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
-            const options = {
+            const options: RequestInit = {
                 method:                  'GET',
-                uri:                     uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                },
-                resolveWithFullResponse: true,
-                json:                    true
+                }
             };
 
-            const teamMembersRaw: any = await this.handlePagination(options);
+            const teamMembersRaw: any = await this.handlePagination(uri, options);
 
             const ids: string[] = [];
             for (const teamMember of teamMembersRaw) {
@@ -1110,21 +1079,19 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamNumber;
-            const options = {
+            const options: RequestInit = {
                 method:                  'GET',
-                uri:                     uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
                     'Accept':        'application/json'
-                },
-                json:                    true,
-                resolveWithFullResponse: true
+                }
             };
 
-            const response = await rp(options);
+            const response = await fetch(uri, options);
+            const body = await response.json();
 
-            const ret = {githubTeamNumber: response.body.id, teamName: response.body.name};
+            const ret = {githubTeamNumber: body.id, teamName: body.name};
             Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
             return ret;
 
@@ -1545,42 +1512,39 @@ export class GitHubActions implements IGitHubActions {
                 Log.info("GitHubAction::setRepoPermission(..) - getting teams associated with repo");
                 const teamsUri = this.apiPath + '/repos/' + this.org + '/' + repoName + '/teams';
                 Log.trace("GitHubAction::setRepoPermission(..) - URI: " + teamsUri);
-                const teamOptions = {
+                const teamOptions: RequestInit = {
                     method:  'GET',
-                    uri:     teamsUri,
                     headers: {
                         'Authorization': this.gitHubAuthToken,
                         'User-Agent':    this.gitHubUserName,
                         'Accept':        'application/json'
-                    },
-                    json:    true
+                    }
                 };
 
                 // Change each team's permission
                 // tslint:disable-next-line:no-floating-promises
-                const responseData = await rp(teamOptions); // .then(function(responseData: any) {
+                const response = await fetch(teamsUri, teamOptions); // .then(function(responseData: any) {
+                const body = await response.json();
                 Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
-                for (const team of responseData) {
+                for (const team of body) {
                     // Don't change teams that have admin permission
                     if (team.permission !== "admin") {
                         Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
                         const permissionUri = this.apiPath + '/teams/' + team.id + '/repos/' + this.org + '/' + repoName;
                         Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
-                        const permissionOptions = {
+                        const permissionOptions: RequestInit = {
                             method:  'PUT',
-                            uri:     permissionUri,
                             headers: {
                                 'Authorization': this.gitHubAuthToken,
                                 'User-Agent':    this.gitHubUserName,
                                 'Accept':        'application/json'
                             },
-                            body:    {
+                            body:    JSON.stringify({
                                 permission: permissionLevel
-                            },
-                            json:    true
+                            })
                         };
 
-                        await rp(permissionOptions); // TODO: evaluate statusCode from this call
+                        await fetch(permissionUri, permissionOptions); // TODO: evaluate statusCode from this call
                         Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
                     }
                 }
@@ -1705,7 +1669,7 @@ export class GitHubActions implements IGitHubActions {
             const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
             Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
 
-            const options: any = {
+            const options: RequestInit = {
                 method:  "POST",
                 headers: {
                     "Content-Type":   "application/json",
@@ -1713,8 +1677,7 @@ export class GitHubActions implements IGitHubActions {
                     "X-GitHub-Event": "commit_comment",
                     "Authorization":  Config.getInstance().getProp(ConfigKey.githubBotToken) // TODO: support auth from github
                 },
-                json:    true,
-                body:    body
+                body:    JSON.stringify(body)
             };
 
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
@@ -1722,7 +1685,7 @@ export class GitHubActions implements IGitHubActions {
                 // Log.trace("GitHubService::postMarkdownToGithub(..) - request: " + JSON.stringify(options, null, 2));
                 // const url = url; // this url comes from postbackURL which uses the right API format
                 try {
-                    const res = await rp(urlToSend, options); // .then(function(res) {
+                    const res = await fetch(urlToSend, options); // .then(function(res) {
                     Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
                     return Promise.resolve(true);
                 } catch (err) {
@@ -1765,28 +1728,26 @@ export class GitHubActions implements IGitHubActions {
                 url + "; message: " + messageToPrint);
 
             const body = {body: message};
-            const options: any = {
+            const options: RequestInit = {
                 method:                  "POST",
                 headers:                 {
                     "Content-Type":  "application/json",
                     "User-Agent":    "UBC-AutoTest",
                     "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
                 },
-                body:                    body,
-                resolveWithFullResponse: true,
-                json:                    true
+                body:                    JSON.stringify(body)
             };
 
             Log.trace("GitHubService::makeComment(..) - url: " + url);
 
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
-                    const res = await rp(url, options);
-                    if (res.statusCode === 201) {
+                    const res = await fetch(url, options);
+                    if (res.status === 201) {
                         Log.trace("GitHubService::makeComment(..) - success");
                         return Promise.resolve(true);
                     } else {
-                        Log.trace("GitHubService::makeComment(..) - failed; code: " + res.statusCode);
+                        Log.trace("GitHubService::makeComment(..) - failed; code: " + res.status);
                         return Promise.resolve(false);
                     }
                 } catch (err) {
@@ -1809,19 +1770,18 @@ export class GitHubActions implements IGitHubActions {
         Log.trace('GitHubActions::getTeamsOnRepo( ' + repoId + ' ) - start');
         const start = Date.now();
         const uri = this.apiPath + '/repos/' + this.org + '/' + repoId + '/teams';
-        const options = {
+        const options: RequestInit = {
             method:  'GET',
-            uri:     uri,
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 'Accept':        'application/json'
-            },
-            json:    true
+            }
         };
 
         try {
-            const results = await rp(options);
+            const response = await fetch(uri, options);
+            const results = await response.json();
             Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
 
             const toReturn: GitTeamTuple[] = [];
