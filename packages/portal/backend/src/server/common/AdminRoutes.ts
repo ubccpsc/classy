@@ -1211,9 +1211,9 @@ export default class AdminRoutes implements IREST {
             agent:              new https.Agent({ rejectUnauthorized: false })
         };
 
-        fetch(url, opts).then((result) => {
+        fetch(url, opts).then(async (result) => {
             try {
-                const patches = (result.json() as any).message;
+                const patches = (await result.json() as any).message;
                 Log.info('AdminRoutes::listPatches(..) - done; ' + patches.length + ' patch' +
                     (patches.length === 1 ? '' : 'es') + ' found; took: ' + Util.took(start));
                 res.send({success: patches});
