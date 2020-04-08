@@ -48,7 +48,6 @@
     "dependencies": {
         "@types/mongodb": "^3.0.5",
         "@types/node-schedule": "^1.2.2",
-        "@types/superagent": "^4.1.7",
         "dotenv": "4.0.0",
         "fs-extra": "5.0.0",
         "jszip": "3.2.1",
@@ -56,8 +55,7 @@
         "node-fetch": "^2.6.0",
         "request": "^2.83.0",
         "request-promise-native": "^1.0.5",
-        "restify": "^8.4.0",
-        "superagent": "^5.2.2"
+        "restify": "^8.4.0"
     },
     "resolutions": {
         "**/mem": "^4.0.0"
