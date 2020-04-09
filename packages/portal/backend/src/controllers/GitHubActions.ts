@@ -643,16 +643,14 @@ export class GitHubActions implements IGitHubActions {
         // per_page max is 100; 10 is useful for testing pagination though
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
         Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
-        const options = {
+        const options: RequestInit = {
             method:                  'GET',
             headers:                 {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent':    this.gitHubUserName,
                 // 'Accept':        'application/json',
                 'Accept':        'application/vnd.github.hellcat-preview+json'
-            },
-            resolveWithFullResponse: true,
-            json:                    true
+            }
         };
 
         const teamsRaw: any = await this.handlePagination(uri, options);
@@ -806,17 +804,18 @@ export class GitHubActions implements IGitHubActions {
                     })
                 };
                 const response = await fetch(uri, options);
-                const id = (await response.json()).id;
+                const body = await response.json();
+
                 const config = Config.getInstance();
                 const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
                 // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
-                Log.info("GitHubAction::teamCreate(..) - success; new: " + id + "; took: " + Util.took(start));
+                Log.info("GitHubAction::teamCreate(..) - success; new: " + body.id + "; took: " + Util.took(start));
 
                 // remove default token provider/maintainer from team
                 await this.removeMembersFromTeam(teamName,
                     [Config.getInstance().getProp(ConfigKey.githubBotName)]);
 
-                return {teamName: teamName, githubTeamNumber: id, URL: url};
+                return {teamName: teamName, githubTeamNumber: body.id, URL: url};
             }
         } catch (err) {
             // explicitly log this failure
@@ -1075,28 +1074,27 @@ export class GitHubActions implements IGitHubActions {
         }
 
         const start = Date.now();
-        try {
-            const uri = this.apiPath + '/teams/' + teamNumber;
-            const options: RequestInit = {
-                method:                  'GET',
-                headers:                 {
-                    'Authorization': this.gitHubAuthToken,
-                    'User-Agent':    this.gitHubUserName,
-                    'Accept':        'application/json'
-                }
-            };
+        const uri = this.apiPath + '/teams/' + teamNumber;
+        const options: RequestInit = {
+            method:                  'GET',
+            headers:                 {
+                'Authorization': this.gitHubAuthToken,
+                'User-Agent':    this.gitHubUserName,
+                'Accept':        'application/json'
+            }
+        };
 
-            const response = await fetch(uri, options);
-            const body = await response.json();
+        const response = await fetch(uri, options);
 
-            const ret = {githubTeamNumber: body.id, teamName: body.name};
-            Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
-            return ret;
-
-        } catch (err) {
-            Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: " + err.message);
+        if (response.status === 404) {
+            Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: Github Team " + response.status);
+            return null;
         }
-        return null;
+
+        const body = await response.json();
+        const ret = {githubTeamNumber: body.id, teamName: body.name};
+        Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+        return ret;
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
