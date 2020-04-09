@@ -1,4 +1,3 @@
-
 import * as crypto from "crypto";
 import fetch, {RequestInit} from "node-fetch";
 
@@ -413,14 +412,13 @@ export class GitHubActions implements IGitHubActions {
             }
         };
 
-        try {
-            await fetch(uri, options);
-            Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
-            return true;
-        } catch (err) {
+        const res = await fetch(uri, options);
+        if (res.status === 404) {
             Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
             return false;
         }
+        Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
+        return true;
     }
 
     public async deleteTeamByName(teamName: string): Promise<boolean> {
@@ -555,13 +553,13 @@ export class GitHubActions implements IGitHubActions {
         return rows;
     }
 
-    private async handlePagination(uri: string, rpOptions: RequestInit): Promise<object[]> {
+    private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
         Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
 
         const start = Date.now();
 
         try {
-            const response = await fetch(uri, rpOptions);
+            const response = await fetch(uri, options);
             const body = await response.json();
 
             Log.trace("GitHubActions::handlePagination(..) - after initial request");
@@ -606,7 +604,7 @@ export class GitHubActions implements IGitHubActions {
                     uri = pageUri; // not sure why this is needed
                     // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
                     await Util.delay(100);
-                    paginationPromises.push(fetch(uri, rpOptions as any));
+                    paginationPromises.push(fetch(uri, options as any));
                 }
             } else {
                 // Log.trace("GitHubActions::handlePagination(..) - single page");
