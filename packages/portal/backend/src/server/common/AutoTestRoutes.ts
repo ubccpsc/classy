@@ -458,17 +458,14 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
             if (privileges.isAdmin) {
-                const atResponse = await fetch(url, options);
-                if (atResponse.ok) {
-                    res.send(200, atResponse);
-                    return;
-                } else {
-                    const err = await atResponse.json();
-                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err.message);
+                try {
+                    const atResponse = await fetch(url, options);
+                    const body = await atResponse.json();
+                    res.send(200, body);
+                } catch (err) {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
                     res.send(500);
                 }
-
-                return;
             } else {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
