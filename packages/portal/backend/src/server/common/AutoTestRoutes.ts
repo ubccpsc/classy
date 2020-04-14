@@ -498,15 +498,12 @@ export class AutoTestRoutes implements IREST {
                 // Use native request library. See https://github.com/request/request-promise#api-in-detail.
                 return fetch(url, options)
                     .then((response) => {
-                        res.on("error", (err: any) => {
-                            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                            res.send(500);
-                        });
                         response.body.pipe(res);
                         return next();
                     })
                     .catch((err) => {
                         Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
+                        res.send(500);
                     });
             } else {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
