@@ -566,12 +566,12 @@ export class GitHubActions implements IGitHubActions {
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
-            if (typeof (response.headers as any).link !== 'undefined') {
+            if (response.headers.has('link')) {
                 // first save the responses from the first page:
                 raw = body;
 
                 let lastPage: number = -1;
-                const linkText = (response.headers as any).link;
+                const linkText =  response.headers.get('link');
                 // Log.trace('GitHubActions::handlePagination(..) - linkText: ' + linkText);
                 const linkParts = linkText.split(',');
                 for (const p of linkParts) {
@@ -579,7 +579,7 @@ export class GitHubActions implements IGitHubActions {
                     if (pparts[1].indexOf('last')) {
                         const pText = pparts[0].split('&page=')[1];
                         // Log.trace('GitHubActions::handlePagination(..) - last page pText:_' + pText + '_; p: ' + p);
-                        lastPage = pText.match(/\d+/)[0];
+                        lastPage = Number(pText.match(/\d+/)[0]);
                         // Log.trace('GitHubActions::handlePagination(..) - last page: ' + lastPage);
                     }
                 }
