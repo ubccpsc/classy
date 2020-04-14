@@ -1,5 +1,5 @@
 import * as ClientOAuth2 from "client-oauth2";
-import * as rp from "request-promise-native";
+import fetch, {RequestInit} from "node-fetch";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../../../common/Config";
@@ -247,14 +247,13 @@ export class AuthRoutes implements IREST {
         const githubAuth = new ClientOAuth2(opts);
         let token: string | null;
         let username: string | null;
-
+        const uri: string = config.getProp(ConfigKey.githubAPI) + '/user';
         const user = await githubAuth.code.getToken(url);
 
         Log.trace("AuthRoutes::performAuthCallback(..) - token acquired");
 
         token = user.accessToken;
-        const options = {
-            uri:     config.getProp(ConfigKey.githubAPI) + '/user',
+        const options: RequestInit = {
             method:  'GET',
             headers: {
                 'Content-Type':  'application/json',
@@ -267,11 +266,11 @@ export class AuthRoutes implements IREST {
 
         // this extra check isn't strictly required, but means we can
         // associate a GitHub username with a token on the backend
-        const ans = await rp(options);
+        const ans = await fetch(uri, options);
 
         // we now have a github username
         Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username received");
-        const body = JSON.parse(ans);
+        const body = await ans.json();
         username = body.login;
         Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username: " + username);
 

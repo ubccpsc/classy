@@ -1,8 +1,8 @@
 import * as cookie from 'cookie';
 import * as https from 'https';
+import fetch, {RequestInit} from "node-fetch";
 import * as restify from 'restify';
 
-import fetch, {RequestInit} from "node-fetch";
 import Config, {ConfigKey} from "../../../../../common/Config";
 
 import Log from "../../../../../common/Log";
