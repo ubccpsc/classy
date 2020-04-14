@@ -618,7 +618,7 @@ export class GitHubActions implements IGitHubActions {
             // Log.trace("GitHubActions::handlePagination(..) - requests complete");
 
             for (const bod of bodies) {
-                raw = raw.concat(bod.body);
+                raw = raw.concat(await bod.json());
             }
             Log.trace("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
 
