@@ -614,11 +614,11 @@ export class GitHubActions implements IGitHubActions {
 
             // Log.trace("GitHubActions::handlePagination(..) - requesting all");
             // this block won't do anything if we just did the raw thing above (aka no pagination)
-            const bodies: any[] = await Promise.all(paginationPromises);
+            const responses: any[] = await Promise.all(paginationPromises);
             // Log.trace("GitHubActions::handlePagination(..) - requests complete");
 
-            for (const bod of bodies) {
-                raw = raw.concat(await bod.json());
+            for (const res of responses) {
+                raw = raw.concat(await res.json());
             }
             Log.trace("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
 
