@@ -377,7 +377,7 @@ export class GitHubController implements IGitHubController {
         let result;
 
         try {
-            await fetch(patchUrl + new URLSearchParams(qs), options);
+            await fetch(patchUrl + qs, options);
             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
             return true;
         } catch (err) {
