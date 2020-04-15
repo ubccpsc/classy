@@ -481,15 +481,16 @@ export class AutoTestRoutes implements IREST {
             const config = Config.getInstance();
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
-            const options: RequestInit = {
-                method: 'POST',
-                body:   req.body,
-                headers: req.headers
-            };
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
+            const headers = JSON.stringify(req.headers);
+            const options: RequestInit = {
+                method: 'POST',
+                body:   JSON.stringify(req.body),
+                headers: JSON.parse(headers)
+            };
 
             if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
@@ -498,9 +499,9 @@ export class AutoTestRoutes implements IREST {
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options)
-                .then((response) => {
+                .then(async (response) => {
                     if (!response.ok) {
-                        throw Error('AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code:'
+                        throw Error('AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: '
                             + response.status);
                     }
                     response.body.pipe(res);
@@ -509,7 +510,6 @@ export class AutoTestRoutes implements IREST {
                     Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
                     res.send(500);
                 });
-
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
