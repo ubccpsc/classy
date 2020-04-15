@@ -365,9 +365,9 @@ export class GitHubController implements IGitHubController {
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
-        const qs: {[key: string]: string} = {
+        const qs: URLSearchParams = Util.getQueryStr({
             patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
-        };
+        });
 
         const options: RequestInit = {
             method:             'POST',
@@ -377,7 +377,7 @@ export class GitHubController implements IGitHubController {
         let result;
 
         try {
-            await fetch(patchUrl + new URLSearchParams(qs), {...options});
+            await fetch(patchUrl + new URLSearchParams(qs), options);
             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
             return true;
         } catch (err) {
@@ -390,7 +390,7 @@ export class GitHubController implements IGitHubController {
                 try {
                     await fetch(updateUrl, options);
                     Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
-                    await fetch(patchUrl + new URLSearchParams(qs), {...options});
+                    await fetch(patchUrl + qs, {...options});
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
                     return true;
                 } catch (err) {
