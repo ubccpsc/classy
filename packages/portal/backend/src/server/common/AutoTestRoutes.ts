@@ -1,5 +1,4 @@
 import fetch, {RequestInit} from "node-fetch";
-import * as request from "request";
 import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
@@ -493,7 +492,7 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
             if (privileges.isAdmin) {
-                // Use native request library. See https://github.com/request/request-promise#api-in-detail.
+                // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
                 return fetch(url, options)
                     .then((response) => {
                         response.body.pipe(res);
