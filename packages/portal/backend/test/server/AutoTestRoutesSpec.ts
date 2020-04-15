@@ -563,7 +563,7 @@ describe('AutoTest Routes', function() {
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 500 if forwarding the request to AutoTest fails.', async function() {
+        it('Should respond 500 if forwarding the request to AutoTest fails with body.', async function() {
             this.timeout(15000);
             let res: any;
 
