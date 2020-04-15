@@ -485,7 +485,8 @@ export class AutoTestRoutes implements IREST {
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
             const options: RequestInit = {
                 method: 'POST',
-                body:   req.body
+                body:   req.body,
+                headers: req.headers
             };
             const githubId = req.headers.user;
             const pc = new PersonController();
