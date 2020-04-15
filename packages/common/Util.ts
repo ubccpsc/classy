@@ -92,7 +92,7 @@ export default class Util {
         let qs = '?';
         for (const key in obj) {
             if (obj.hasOwnProperty(key)) {
-                qs += (new URLSearchParams(key + '=' + obj[key]));
+                qs += (key + '=' + obj[key]);
             }
         }
         return new URLSearchParams(qs);
