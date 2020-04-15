@@ -479,7 +479,6 @@ export class AutoTestRoutes implements IREST {
     public static async postDockerImage(req: any, res: any, next: any) {
         try {
             const config = Config.getInstance();
-
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
             const options: RequestInit = {
@@ -491,21 +490,26 @@ export class AutoTestRoutes implements IREST {
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
-            if (privileges.isAdmin) {
-                // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
-                return fetch(url, options)
-                    .then((response) => {
-                        response.body.pipe(res);
-                        return next();
-                    })
-                    .catch((err) => {
-                        Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
-                        res.send(500);
-                    });
-            } else {
+
+            if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 res.send(401);
             }
+
+            // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
+            fetch(url, options)
+                .then((response) => {
+                    if (!response.ok) {
+                        throw Error('AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code:'
+                            + response.status);
+                    }
+                    response.body.pipe(res);
+                })
+                .catch((err) => {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
+                    res.send(500);
+                });
+
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
