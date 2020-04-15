@@ -494,7 +494,7 @@ export class AutoTestRoutes implements IREST {
 
             if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-                res.send(401);
+                return res.send(401);
             }
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
