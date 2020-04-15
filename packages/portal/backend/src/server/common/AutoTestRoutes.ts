@@ -426,13 +426,13 @@ export class AutoTestRoutes implements IREST {
      */
     private static async handleWebhook(req: any): Promise<{}> {
         const config = Config.getInstance();
-
+        const headers = JSON.stringify(req.headers);
         const atHost = config.getProp(ConfigKey.autotestUrl);
         const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options: RequestInit = {
             method:  'POST',
-            headers: req.headers, // use GitHub's headers
-            body:    req.body
+            headers: JSON.parse(headers), // use GitHub's headers
+            body:    JSON.stringify(req.body)
         };
         const res = await fetch(url, options);
         if (res.ok) {
