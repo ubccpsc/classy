@@ -365,7 +365,7 @@ export class GitHubController implements IGitHubController {
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
-        const qs: URLSearchParams = Util.getQueryStr({
+        const qs: string = Util.getQueryStr({
             patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
         });
 
