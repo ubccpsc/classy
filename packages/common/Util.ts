@@ -84,6 +84,21 @@ export default class Util {
     }
 
     /**
+     * Creates a query string for fetch requests
+     * @param obj: [key: string]: string type.
+     * @return qs: UrlSearchParams
+     */
+    public static getQueryStr(obj: {[key: string]: string}): URLSearchParams {
+        let qs = '?';
+        for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+                qs += (key + '=' + obj[key]);
+            }
+        }
+        return new URLSearchParams(qs);
+    }
+
+    /**
      * Makes a copy of an object.
      *
      * @param {{}} obj

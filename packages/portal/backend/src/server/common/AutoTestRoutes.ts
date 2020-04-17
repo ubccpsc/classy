@@ -1,5 +1,4 @@
-import * as request from "request";
-import * as rp from "request-promise-native";
+import fetch, {RequestInit} from "node-fetch";
 import * as restify from 'restify';
 
 import Config, {ConfigKey} from "../../../../../common/Config";
@@ -427,19 +426,21 @@ export class AutoTestRoutes implements IREST {
      */
     private static async handleWebhook(req: any): Promise<{}> {
         const config = Config.getInstance();
-
+        const headers = JSON.stringify(req.headers);
         const atHost = config.getProp(ConfigKey.autotestUrl);
         const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
-        const options = {
-            uri:     url,
+        const options: RequestInit = {
             method:  'POST',
-            json:    true,
-            headers: req.headers, // use GitHub's headers
-            body:    req.body
+            headers: JSON.parse(headers), // use GitHub's headers
+            body:    JSON.stringify(req.body)
         };
-        const success = await rp(options);
-        Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(success));
-        return success;
+        const res = await fetch(url, options);
+        if (res.ok) {
+            Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(res.ok));
+            return res.ok;
+        }
+        const err = await res.json();
+        throw new Error('AutoTestRouteHandler::handleWebhook(..) - ERROR: ' + JSON.stringify(err.message));
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {
@@ -448,26 +449,30 @@ export class AutoTestRoutes implements IREST {
 
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
-            const options = {
-                uri:    url,
-                method: 'GET',
-                json:   true
+            const options: RequestInit = {
+                method: 'GET'
             };
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
-            if (privileges.isAdmin) {
-                try {
-                    const atResponse = await rp(options);
-                    res.send(200, atResponse);
-                } catch (err) {
-                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                    res.send(500);
-                }
-            } else {
+
+            if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-                res.send(401);
+                return res.send(401);
+            }
+
+            try {
+                const atResponse = await fetch(url, options);
+                const body = await atResponse.json();
+                if (atResponse.ok) {
+                    return res.send(200, body);
+                }
+                throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service, status: "
+                    + res.status);
+            } catch (err) {
+                Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                res.send(500);
             }
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
@@ -479,31 +484,37 @@ export class AutoTestRoutes implements IREST {
     public static async postDockerImage(req: any, res: any, next: any) {
         try {
             const config = Config.getInstance();
-
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/docker/image';
-            const options = {
-                uri:    url,
-                method: 'POST',
-                json:   true,
-                body:   req.body
-            };
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
-            if (privileges.isAdmin) {
-                // Use native request library. See https://github.com/request/request-promise#api-in-detail.
-                request(options)
-                    .on("error", (err) => {
-                        Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                        return res.send(500);
-                    })
-                    .pipe(res);
-            } else {
+            const headers = JSON.stringify(req.headers);
+            const options: RequestInit = {
+                method: 'POST',
+                body:   JSON.stringify(req.body),
+                headers: JSON.parse(headers)
+            };
+
+            if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-                res.send(401);
+                return res.send(401);
             }
+
+            // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
+            fetch(url, options)
+                .then(async (response) => {
+                    if (!response.ok) {
+                        throw Error('AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: '
+                            + response.status);
+                    }
+                    response.body.pipe(res);
+                })
+                .catch((err) => {
+                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
+                    res.send(500);
+                });
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);

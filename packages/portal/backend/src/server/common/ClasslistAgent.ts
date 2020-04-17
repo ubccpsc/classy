@@ -1,6 +1,8 @@
 import * as parse from 'csv-parse';
 import * as fs from 'fs';
-import * as rp from "request-promise-native";
+import * as https from 'https';
+import fetch, { RequestInit } from "node-fetch";
+
 import Config, {ConfigKey} from "../../../../../common/Config";
 import Log from '../../../../../common/Log';
 
@@ -27,10 +29,10 @@ export class ClasslistAgent {
                 headers: {
                     'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0' // for testing
                 },
-                uri,
-                rejectUnauthorized: false
+                agent:              new https.Agent({ rejectUnauthorized: false })
             };
-            return JSON.parse(await rp(options));
+            const res = await fetch(uri, options);
+            return res.json();
         } catch (err) {
             Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
             throw new Error("Could not fetch Classlist " + err.message);

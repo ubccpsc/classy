@@ -1,4 +1,6 @@
-import * as rp from "request-promise-native";
+import * as https from "https";
+import fetch, {RequestInit} from "node-fetch";
+
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
@@ -363,20 +365,19 @@ export class GitHubController implements IGitHubController {
         const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
         const patchUrl: string = `${baseUrl}/autopatch`;
         const updateUrl: string = `${baseUrl}/update`;
-        const qs: {[key: string]: string | boolean} = {
-            patch_id: prName, github_url: `${repo.URL}.git`, dryrun: dryrun, from_beginning: root
-        };
+        const qs: URLSearchParams = Util.getQueryStr({
+            patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
+        });
 
-        const options = {
+        const options: RequestInit = {
             method:             'POST',
-            rejectUnauthorized: false,
-            strictSSL:          false
+            agent:              new https.Agent({ rejectUnauthorized: false })
         };
 
         let result;
 
         try {
-            await rp(patchUrl, {qs, ...options});
+            await fetch(patchUrl + qs, options);
             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
             return true;
         } catch (err) {
@@ -387,9 +388,9 @@ export class GitHubController implements IGitHubController {
             case 424:
                 Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
                 try {
-                    await rp(updateUrl, options);
+                    await fetch(updateUrl, options);
                     Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
-                    await rp(patchUrl, {qs, ...options});
+                    await fetch(patchUrl + qs, {...options});
                     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
                     return true;
                 } catch (err) {
