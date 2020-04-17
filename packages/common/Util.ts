@@ -88,15 +88,14 @@ export default class Util {
      * @param obj: [key: string]: string type.
      * @return qs: UrlSearchParams
      */
-    public static getQueryStr(obj: {[key: string]: string}): URLSearchParams {
-        let qs = '?';
-        for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-                qs += (key + '=' + obj[key]);
-            }
-        }
-        return new URLSearchParams(qs);
-    }
+    public static getQueryStr(obj: {[key: string]: string}): string {
+        const qs = '?';
+        const params = Object.keys(obj).map((key) => {
+            return encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]);
+        })
+        .join('&');
+        return qs + params;
+}
 
     /**
      * Makes a copy of an object.
