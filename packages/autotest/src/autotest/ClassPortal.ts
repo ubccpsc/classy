@@ -1,4 +1,5 @@
-import * as rp from "request-promise-native";
+import * as https from "https";
+import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
@@ -107,16 +108,16 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
             Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
-            const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false,
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
                 headers:            {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
             };
 
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res + "; took: " + Util.took(start));
-            const json: AutoTestAuthPayload = JSON.parse(res);
+            const json: AutoTestAuthPayload = await res.json() as AutoTestAuthPayload;
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
@@ -137,16 +138,16 @@ export class ClassPortal implements IClassPortal {
 
         try {
             Log.info("ClassPortal::personId(..) - requesting from: " + url);
-            const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false,
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
                 headers:            {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
             };
 
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             Log.info("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
-            const json: Payload = JSON.parse(res);
+            const json: Payload = await res.json() as Payload;
             if (typeof json.success !== 'undefined') {
                 return json.success; // AutoTestPersonIdTransport
             } else {
@@ -164,17 +165,17 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at";
         const start = Date.now();
 
-        const opts: rp.RequestPromiseOptions = {
-            rejectUnauthorized: false, headers: {
+        const opts: RequestInit = {
+            agent: new https.Agent({ rejectUnauthorized: false }), headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
         Log.info("ClassPortal::getConfiguration(..) - requesting from: " + url);
         try {
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             Log.info("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
             Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
-            const json: ClassyConfigurationPayload = JSON.parse(res);
+            const json: ClassyConfigurationPayload = await res.json() as ClassyConfigurationPayload;
             if (typeof json.success !== 'undefined') {
                 return json.success;
             } else {
@@ -191,8 +192,8 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/container/" + delivId;
         const start = Date.now();
 
-        const opts: rp.RequestPromiseOptions = {
-            rejectUnauthorized: false, headers: {
+        const opts: RequestInit = {
+            agent: new https.Agent({ rejectUnauthorized: false }), headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
@@ -203,10 +204,10 @@ export class ClassPortal implements IClassPortal {
             return null;
         } else {
             try {
-                const res = await rp(url, opts);
+                const res = await fetch(url, opts);
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; took: " + Util.took(start));
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
-                const json: AutoTestConfigPayload = JSON.parse(res);
+                const json: AutoTestConfigPayload = await res.json() as AutoTestConfigPayload;
                 if (typeof json.success !== 'undefined') {
                     return json.success;
                 } else {
@@ -224,23 +225,22 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/grade";
         const start = Date.now();
         try {
-            const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false,
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
                 method:             'POST',
                 headers:            {
                     "Content-Type": "application/json",
                     "token":        Config.getInstance().getProp(ConfigKey.autotestSecret)
                 },
-                body:               grade,
-                json:               true
+                body:               JSON.stringify(grade)
             };
 
             Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + '; delivId: ' + grade.delivId +
                 '; repo: ' + grade.repoId + '; url: ' + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
 
-            const json = res;
+            const json = await res.json();
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
                     "; url: " + grade.URL + "; took: " + Util.took(start));
@@ -324,22 +324,21 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/result";
 
         try {
-            const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false,
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
                 method:             'post',
                 headers:            {
                     "Content-Type": "application/json",
                     "token":        Config.getInstance().getProp(ConfigKey.autotestSecret)
                 },
-                body:               result,
-                json:               true
+                body:               JSON.stringify(result)
             };
 
             Log.trace("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
                 '; repoId: ' + result.repoId + '; SHA: ' + result.input.target.commitSHA);
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
-            const json = res;
+            const json = await res.json();
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " +
                     result.input.target.commitSHA + "; took: " + Util.took(start));
@@ -361,16 +360,16 @@ export class ClassPortal implements IClassPortal {
         const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
 
         try {
-            const opts: rp.RequestPromiseOptions = {
-                rejectUnauthorized: false,
+            const opts: RequestInit = {
+                agent: new https.Agent({ rejectUnauthorized: false }),
                 method:             'get',
                 headers:            {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
 
             Log.info("ClassPortal::getResult(..) - requesting from: " + url);
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
-            const json: AutoTestResultPayload = JSON.parse(res);
+            const json: AutoTestResultPayload = await res.json() as AutoTestResultPayload;
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length + "; took: " + Util.took(start));
                 const success = json.success as AutoTestResultTransport[];
@@ -423,16 +422,16 @@ export class ClassPortal implements IClassPortal {
 
         Log.info("ClassPortal::getMedianTime(..) - requesting from: " + url);
 
-        const opts: rp.RequestPromiseOptions = {
-            rejectUnauthorized: false, headers: {
+        const opts: RequestInit = {
+            agent: new https.Agent({ rejectUnauthorized: false }), headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
 
         try {
-            const res = await rp(url, opts);
+            const res = await fetch(url, opts);
             Log.info("ClassPortal::getMedianTime( " + delivId + " ) - success; took: " + Util.took(start));
-            const json: any = JSON.parse(res);
+            const json: any = await res.json() as any;
             if (typeof json.success !== 'undefined') {
                 return "\n\nThe median time for successful projects in this deliverable in the last 24 hours is " +
                     Util.tookHuman(0, json.success);

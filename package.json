@@ -32,8 +32,7 @@
         "@types/mocha": "2.2.44",
         "@types/mongodb": "^3.0.5",
         "@types/node": "~8.10.53",
-        "@types/request": "~2.48.1",
-        "@types/request-promise-native": "^1.0.11",
+        "@types/node-fetch": "^2.5.5",
         "@types/restify": "^8.4.1",
         "chai": "4.1.2",
         "jsonschema": "1.2.2",
@@ -51,8 +50,7 @@
         "fs-extra": "5.0.0",
         "jszip": "3.2.1",
         "mongodb": "^3.0.2",
-        "request": "^2.83.0",
-        "request-promise-native": "^1.0.5",
+        "node-fetch": "^2.6.0",
         "restify": "^8.4.0"
     },
     "resolutions": {
