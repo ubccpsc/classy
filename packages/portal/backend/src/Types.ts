@@ -50,8 +50,8 @@ export interface Person {
     readonly studentNumber: number | null;
     githubId: string; // warning: this can change (e.g., if student updates their CWL)
 
-    readonly fName: string;
-    readonly lName: string;
+    fName: string;
+    lName: string;
     kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
     URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
 
