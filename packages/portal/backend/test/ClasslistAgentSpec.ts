@@ -32,12 +32,33 @@ describe('ClasslistAgent', function() {
         expect(classlistChanges.updated.length + classlistChanges.created.length).to.equal(0);
     });
 
-    it('Should be able to process a vaild classlist', async function() {
-        const path = __dirname + '/data/classlistValid.csv';
+    it('Should be able to process a valid classlist using first name', async function() {
+        const path = __dirname + '/data/classlistValidFirst.csv';
         const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
         const numChanges = classlistChanges.updated.length + classlistChanges.created.length;
-        Log.test('# rows processed: ' + classlistChanges.updated.length + classlistChanges.created.length);
-        expect(classlistChanges.updated.length + classlistChanges.created.length).to.equal(5);
+        Log.test('# rows processed: ' + numChanges);
+        expect(numChanges).to.equal(5);
+        expect(numChanges).to.equal(classlistChanges.classlist.length);
+    });
+
+    it('Should be able to process a valid classlist using pref name', async function() {
+        const path = __dirname + '/data/classlistValidPrefName.csv';
+        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
+        const numChanges = classlistChanges.updated.length + classlistChanges.created.length;
+        Log.test('# rows processed: ' + numChanges);
+        expect(numChanges).to.equal(5);
+        expect(numChanges).to.equal(classlistChanges.classlist.length);
+    });
+
+    it('Should reject a classlist if both FIRST and PREF are empty', async () => {
+        const path = __dirname + '/data/classlistEmptyNamePrefName.csv';
+        let ex = null;
+        try {
+            await ca.processClasslist(Test.ADMIN1.id, path, null);
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
     });
 
     it('Should reject a classlist with empty field in fields: CWL, ACCT', async function() {
