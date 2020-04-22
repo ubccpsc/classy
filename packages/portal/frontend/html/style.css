@@ -139,16 +139,6 @@ stdio viewer Page
     width: 80%;
 }
 
-#adminClasslistConfirmHeader ons-list {
-    overflow-y: auto;
-    height: 80vh;
-}
-
-#adminClasslistConfirmHeader ons-button {
-    text-align: center;
-    width: 100%;
-}
-
 #adminDockerBuildDialog-footer-container ons-bottom-toolbar {
     justify-content: center;
     align-items: center;
