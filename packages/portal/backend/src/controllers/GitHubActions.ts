@@ -1579,9 +1579,8 @@ export class GitHubActions implements IGitHubActions {
                 },
                 restrictions: null
             };
-            const options = {
+            const options: RequestInit = {
                 method:                  'PUT',
-                uri,
                 headers:                 {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent':    this.gitHubUserName,
@@ -1589,10 +1588,9 @@ export class GitHubActions implements IGitHubActions {
                     // https://developer.github.com/enterprise/2.19/v3/repos/branches/#update-branch-protection
                     'Accept':        'application/vnd.github.luke-cage-preview+json'
                 },
-                body,
-                json:                    true
+                body
             };
-            const response = await rp(options);
+            const response = await fetch(uri, options);
             Log.info("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - Success! took: ", Util.took(start));
             return true;
         } catch (err) {
