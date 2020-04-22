@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
-import {Deliverable, Grade, Person} from "../Types";
+import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 
+import {TransportKind} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
@@ -57,6 +58,21 @@ export interface ICourseController {
      */
     computeNames(deliv: Deliverable, people: Person[], adminOverride?: boolean):
         Promise<{teamName: string | null; repoName: string | null}>;
+
+    /**
+     * For adding any finishing touches to a newly made repo
+     * e.g.: add branch protection to the master branch in 310
+     * @param repo
+     * @param teams
+     */
+    finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean>;
+
+    /**
+     * For forwarding custom fields from a record to its respective transport
+     * @param record
+     * @param kind
+     */
+    forwardCustomFields(record: any, kind: TransportKind): any;
 }
 
 /**
@@ -180,6 +196,15 @@ export class CourseController implements ICourseController {
             return {teamName: tName, repoName: rName};
             // return tName;
         }
+    }
+
+    public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
+        Log.warn("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
+        return true;
+    }
+
+    public forwardCustomFields(record: any, kind: TransportKind): any {
+        return {};
     }
 
     // NOTE: the default implementation is currently broken; do not use it.

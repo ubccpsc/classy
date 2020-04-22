@@ -41,17 +41,7 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd2';
-
-    /**
-     * To make this request we are actually transforming a commit URL into an API request URL.
-     * Having to hard-code these is not pretty, but it makes the code much simpler. The format
-     * you need should be pretty easy to infer from what is present here.
-     *
-     * @type {string}
-     */
-    // private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
-    // private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
+    private readonly DELIVID: string = 'd3';
 
     constructor() {
         Log.info("TransformGrades::<init> - start");

@@ -371,7 +371,7 @@ export abstract class AutoTest implements IAutoTest {
             const start = Date.now();
 
             if (typeof data === "undefined" || data === null) {
-                Log.warn("AutoTest::handleExecutionComplete(..) - null data; skipping");
+                Log.error("AutoTest::handleExecutionComplete(..) - null data; skipping");
                 return;
             }
 
@@ -424,6 +424,7 @@ export abstract class AutoTest implements IAutoTest {
         const start = Date.now();
         const input = job.input;
         let record = job.record;
+        let gradePayload: AutoTestGradeTransport;
 
         Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
         Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
@@ -439,7 +440,7 @@ export abstract class AutoTest implements IAutoTest {
             const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
             const org = Config.getInstance().getProp(ConfigKey.org);
             const repoId = input.target.repoId;
-            const gradePayload: AutoTestGradeTransport = {
+            gradePayload = {
                 delivId:   input.delivId,
                 repoId,
                 repoURL:   `${githubHost}/${org}/${repoId}`,
@@ -450,14 +451,20 @@ export abstract class AutoTest implements IAutoTest {
                 timestamp: input.target.timestamp,
                 custom:    {}
             };
-
-            await this.classPortal.sendGrade(gradePayload);
         } catch (err) {
-            Log.error("AutoTest::handleTick(..) - ERROR for SHA: " + input.target.commitSHA + "; ERROR: " + err);
+            Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
                 "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
+        }
+
+        if (gradePayload) {
+            try {
+                await this.classPortal.sendGrade(gradePayload);
+            } catch (err) {
+                Log.error("AutoTest::handleTick(..) - ERROR sending grade for SHA: " + input.target.commitSHA + "; ERROR: " + err);
+            }
         }
     }
 }

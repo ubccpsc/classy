@@ -200,7 +200,7 @@ describe("GitHub Event Parser", () => {
             personId:     PERSONID,
             kind:         'standard',
             cloneURL:     'https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git',
-            flags:        []
+            flags:        ["#d4"]
         };
 
         delete expected.timestamp;
@@ -226,7 +226,7 @@ describe("GitHub Event Parser", () => {
             delivId:      "d4",
             timestamp:    1516324833000,
             cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-            flags:        []
+            flags:        ["#d7", "#d4"]
         };
 
         delete expected.timestamp;
@@ -276,7 +276,7 @@ describe("GitHub Event Parser", () => {
             delivId:      "d4",
             timestamp:    1516324931000,
             cloneURL:     "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999.git",
-            flags:        []
+            flags:        ["#d4"]
         };
 
         delete expected.timestamp;
