@@ -226,17 +226,6 @@ export default class RouteHandler {
             };
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
-//             Log.info("RouteHandler::getDockerImage(..) - Preparing to build image");
-//             const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
-//             // New experimental code because I think the stuff lower doesn't work
-//             await new Promise((resolve, reject) => {
-//                 docker.modem.followProgress(stream, (err: any, result: any) => err ? reject(err) : resolve(result));
-//             }).then((_: any) => {
-//                 Log.info("RouteHandler::getDockerImage(..) - Finished building image.");
-//             }).catch((err: any) => {
-//                 Log.error("RouteHandler::getDockerImage(..) - Error building image. " + err.message);
-//                 res.send(500, "Error building image. " + err.message);
-//             });
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             res.send(err.statusCode, err.message);
