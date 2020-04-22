@@ -34,21 +34,22 @@ export class InvokeAutoTest {
      * NOTE: this is ignored for the TEST_USER user.
      * @type {boolean}
      */
-    private DRY_RUN = false;
+    private DRY_RUN = true;
 
     /**
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
      * @type {string}
      */
-    private readonly TEST_USERS: string[] = ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
+    private readonly TEST_USERS: string[] = []; // ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
      *
      * @type {boolean}
      */
-    private INVISIBLE = false;
+    private INVISIBLE = true;
 
+    // for d4 we use the d3 grade to select the commit to run against
     private readonly DELIVID = 'd3';
 
     /**
@@ -58,12 +59,14 @@ export class InvokeAutoTest {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
-    private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
+    private readonly PREFIXOLD = 'https://github.students.cs.ubc.ca/orgs/CPSC310-2019W-T1/';
+    private readonly PREFIXNEW = 'https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T1/';
 
-    private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
+    // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
     // private readonly MSG  = "@autobot #d2 #force #silent.";
+    private readonly MSG = "@autobot #d3 #force #silent.";
+    // private readonly MSG = "@autobot #d4 #force #silent.";
     // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
     //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
     //     "by December 14 @ 0800; we will finalize all project grades that day.";
@@ -84,7 +87,10 @@ export class InvokeAutoTest {
         // You might use some other approach here; any commit URL
         // will work with the code below.
         const gradesC = new GradesController();
+        Log.info("InvokeAutoTest::process() - requesting grades");
         const allGrades = await gradesC.getAllGrades(false);
+        Log.info("InvokeAutoTest::process() - # grades retrieved: " + allGrades.length);
+
         const grades = [];
         for (const grade of allGrades as Grade[]) {
             if (grade.delivId === this.DELIVID) {
@@ -100,9 +106,15 @@ export class InvokeAutoTest {
             const url = grade.URL;
 
             if (alreadyProcessed.indexOf(url) >= 0) {
-                Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
+                // Log.info("InvokeAutoTest::process() - skipping result; already handled: " + url);
                 continue;
             }
+
+            // useful if you just want to run on a subset of grades (e.g., the ones that might have timed out)
+            // if (grade.score > 25) {
+            //     Log.info("InvokeAutoTest::process() - skipping result; grade > 25: " + grade.score + "; URL: " + url);
+            //     continue;
+            // }
 
             Log.info("InvokeAutoTest::process() - processing result: " + url);
             alreadyProcessed.push(url);
@@ -114,7 +126,7 @@ export class InvokeAutoTest {
                         // this is brittle; should probably have a better way to extract this from a grade record
                         const projectId = url.substring(url.lastIndexOf(org) + org.length, url.lastIndexOf('/commit/'));
                         const sha = url.substring(url.lastIndexOf('/commit/') + 8);
-                        Log.info("project: " + projectId + '; sha: ' + sha + '; URL: ' + url);
+                        Log.info("Making invisible request for project: " + projectId + '; sha: ' + sha + '; URL: ' + url);
                         await gha.simulateWebookComment(projectId, sha, this.MSG);
                     } else {
                         let u = url;
@@ -125,13 +137,15 @@ export class InvokeAutoTest {
                         // specify endpoint; append /comments
                         u = u + '/comments';
 
+                        Log.info("Making comment request for url: " + u);
                         await gha.makeComment(u, this.MSG);
                     }
+                } else {
+                    Log.info("Null MSG; nothing done for: " + url);
                 }
             } else {
-                Log.info("Dry run for: " + url + "; msg: " + this.MSG);
+                // Log.info("Dry run for: " + url + "; msg: " + this.MSG);
             }
-
         }
         Log.info("InvokeAutoTest::process() - done");
     }

@@ -180,21 +180,38 @@ export default class GeneralRoutes implements IREST {
             const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
             Log.info("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
 
-            const rs = fs.createReadStream(filePath);
-            rs.on("error", (err: any) => {
-                if (err.code === "ENOENT") {
-                    Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-                    res.send(404, err.message);
+            try {
+                if (fs.lstatSync(filePath).isDirectory()) {
+                    Log.info("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
+                    const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
+                    res.writeHead(200, {
+                        'Content-Length': Buffer.byteLength(html),
+                        'Content-Type': 'text/html'
+                    });
+                    res.write(html);
+                    res.end();
                 } else {
-                    Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
-                    res.send(500, err.message);
+                    const rs = fs.createReadStream(filePath);
+                    rs.on("error", (err: any) => {
+                        if (err.code === "ENOENT") {
+                            Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist. " +
+                                "This really shouldn't have reached here: " + path);
+                            res.send(404, err.message);
+                        } else {
+                            Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
+                            res.send(500, err.message);
+                        }
+                    });
+                    rs.on("end", () => {
+                        Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+                        rs.close();
+                    });
+                    rs.pipe(res);
                 }
-            });
-            rs.on("end", () => {
-                Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
-                rs.close();
-            });
-            rs.pipe(res);
+            } catch (err) {
+                Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+                res.send(404, err.message);
+            }
 
             return next();
         }).catch(function(err) {
@@ -206,6 +223,15 @@ export default class GeneralRoutes implements IREST {
                 return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
             }
         });
+    }
+
+    public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
+        const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + baseUrl.replace(/\/$/, "");
+        let body = `<html><body><p><strong>${relativePath}</strong></p>`;
+        body += [".."].concat(fs.readdirSync(absolutePath))
+            .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join("");
+        body += "</body></html>";
+        return body;
     }
 
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
@@ -232,11 +258,11 @@ export default class GeneralRoutes implements IREST {
         try {
             const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
 
-            if (path.indexOf('/student/') >= 0) {
+            if (/\/student(\/|$)/.test(path)) {
                 Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
                 // works for everyone (performGetCredentials would have thrown exception if not a valid user)
                 proceed = true;
-            } else if (path.indexOf('/admin/') >= 0) {
+            } else if (/\/admin(\/|$)/.test(path)) {
 
                 // works for admin only
                 if (priv.isAdmin === true) {
@@ -245,7 +271,7 @@ export default class GeneralRoutes implements IREST {
                 } else {
                     Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
                 }
-            } else if (path.indexOf('/staff/') >= 0) {
+            } else if (/\/staff(\/|$)/.test(path)) {
                 Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
                 // works for admin and staff
                 if (priv.isAdmin === true || priv.isStaff === true) {
