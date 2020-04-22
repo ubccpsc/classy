@@ -204,20 +204,6 @@ export default class RouteHandler {
             const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
             const tag = body.tag;
             const file = body.file;
-
-            // Temporary: Work-around of 'dockerode' issue: https://github.com/apocas/dockerode/issues/536
-            // Uncomment when fixed:
-
-            // const stream = await docker.buildImage(null, {remote, t: tag, dockerfile: file});
-            // stream.on("error", (err: Error) => {
-            //     Log.error("Error building image. " + err.message);
-            //     res.send(500, "Error building image. " + err.message);
-            // });
-            // stream.on("end", () => {
-            //     Log.info("Finished building image.");
-            // });
-            // stream.pipe(res);
-
             const dockerOptions = {remote, t: tag, dockerfile: file};
             const reqParams = querystring.stringify(dockerOptions);
             const reqOptions = {
