@@ -9,6 +9,7 @@
         "lib": [
             "es7",
             "es2017.object",
+            "es2018.AsyncIterable",
             "dom"
         ],
         "typeRoots": [
