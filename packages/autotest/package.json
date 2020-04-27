@@ -26,7 +26,7 @@
     "fs-extra": "5.0.0",
     "jszip": "^3.2.1",
     "xunit-viewer": "^6.0.14",
-    "mocha": "^5.2.0",
+    "mocha": "^7.1.0",
     "mocha-junit-reporter": "^1.17.0",
     "mongodb": "^3.0.2",
     "nyc": "^12.0.2",
