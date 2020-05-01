@@ -1230,11 +1230,11 @@ export default class AdminRoutes implements IREST {
         Log.trace('AdminRoutes::updatePatches(..) - start');
         const start = Date.now();
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
-        const opts2: RequestInit = {
+        const opts: RequestInit = {
             method:             'post',
             agent:              new https.Agent({ rejectUnauthorized: false })
         };
-        fetch(url)
+        fetch(url, opts)
             .then((result) => {
                 Log.info('AdminRoutes::updatePatches(..) - done; took: ' + Util.took(start));
                 res.send({success: "patches updated"});
