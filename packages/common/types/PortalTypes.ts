@@ -8,6 +8,8 @@
 import {AutoTestResult} from "./AutoTestTypes";
 import {ClusteredResult} from "./ContainerTypes";
 
+import {Deliverable} from "../../portal/backend/src/Types";
+
 export interface FailurePayload {
     message: string;
     shouldLogout: boolean; // almost always false
@@ -46,6 +48,7 @@ export interface ConfigTransport {
     org: string;
     name: string;
     githubAPI: string;
+    deliverables: Deliverable[];
 }
 
 export interface CourseTransportPayload {

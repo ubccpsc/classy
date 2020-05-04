@@ -64,16 +64,17 @@ export default class GeneralRoutes implements IREST {
         server.put('/portal/classlist', GeneralRoutes.updateClasslist);
     }
 
-    public static getConfig(req: any, res: any, next: any) {
+    public static async getConfig(req: any, res: any, next: any) {
         Log.info('GeneralRoutes::getConfig(..) - start');
 
         const org = Config.getInstance().getProp(ConfigKey.org);
         const name = Config.getInstance().getProp(ConfigKey.name);
         const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
+        const deliverables = await new DeliverablesController().getAllDeliverables();
 
         let payload: ConfigTransportPayload;
         if (org !== null) {
-            payload = {success: {org: org, name: name, githubAPI: githubAPI}};
+            payload = {success: {org: org, name: name, githubAPI: githubAPI, deliverables}};
             Log.trace('GeneralRoutes::getConfig(..) - sending: ' + JSON.stringify(payload));
             res.send(200, payload);
             return next(false);
