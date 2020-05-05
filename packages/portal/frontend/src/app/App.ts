@@ -416,11 +416,11 @@ export class App {
                 return json.success;
             } else {
                 Log.error('App::retrieveConfig() - failed: ' + JSON.stringify(json) + ')');
-                return {org: 'ERROR', name: 'ERROR', githubAPI: null, deliverables: null};
+                return {org: 'ERROR', name: 'ERROR', githubAPI: null, teamDeliverableIds: null};
             }
         } else {
             Log.error('App::retrieveConfig() - ERROR');
-            return {org: 'ERROR', name: 'ERROR', githubAPI: null, deliverables: null};
+            return {org: 'ERROR', name: 'ERROR', githubAPI: null, teamDeliverableIds: null};
         }
     }
 

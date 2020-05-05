@@ -70,11 +70,11 @@ export default class GeneralRoutes implements IREST {
         const org = Config.getInstance().getProp(ConfigKey.org);
         const name = Config.getInstance().getProp(ConfigKey.name);
         const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
-        const deliverables = await new DeliverablesController().getAllDeliverables();
+        const teamDeliverableIds = (await new DeliverablesController().getAllDeliverables()).map((d) => d.id);
 
         let payload: ConfigTransportPayload;
         if (org !== null) {
-            payload = {success: {org: org, name: name, githubAPI: githubAPI, deliverables}};
+            payload = {success: {org: org, name: name, githubAPI: githubAPI, teamDeliverableIds}};
             Log.trace('GeneralRoutes::getConfig(..) - sending: ' + JSON.stringify(payload));
             res.send(200, payload);
             return next(false);

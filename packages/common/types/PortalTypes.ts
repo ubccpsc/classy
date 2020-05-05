@@ -48,7 +48,7 @@ export interface ConfigTransport {
     org: string;
     name: string;
     githubAPI: string;
-    deliverables: Deliverable[];
+    teamDeliverableIds: string[];
 }
 
 export interface CourseTransportPayload {
