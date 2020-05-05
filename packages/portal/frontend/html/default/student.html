@@ -36,6 +36,25 @@
                 </div>
             </ons-list-item>
         </div>
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon style="padding-right: 1em;" icon="fa-microchip"></ons-icon>
+                Specify deliverable:
+            </div>
+            <div>
+                <ons-select id="studentSelectDeliverable" onchange="editSelects(event)">
+                    <option value="basic">test</option>
+                    <option value="material">Material</option>
+                    <option value="underbar">Underbar</option>
+                  </ons-select>
+            </div>
+            <div class="expandable-content">
+                Select the deliverable that you would like to form a team for. Only deliverables configured for student team formation are listed.
+            </div>
+        </ons-list-item>
+        <ons-list-item expandable id="studentNoDeliverableTeamFormation">
+            No deliverables are configured for student team formation. Please contact TAs or instructor if you think this is a mistake.
+        </ons-list-item>
         <div id="studentPartnerDiv" style="display: none;">
             <ons-list-header>Project Partner</ons-list-header>
             <ons-list-item>
