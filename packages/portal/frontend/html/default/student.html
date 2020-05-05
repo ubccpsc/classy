@@ -42,11 +42,8 @@
                 Specify deliverable:
             </div>
             <div>
-                <ons-select id="studentSelectDeliverable" onchange="editSelects(event)">
-                    <option value="basic">test</option>
-                    <option value="material">Material</option>
-                    <option value="underbar">Underbar</option>
-                  </ons-select>
+                <ons-select id="studentSelectDeliverable" onchange="myApp.view.editDelivSelection(this.value)">
+                </ons-select>
             </div>
             <div class="expandable-content">
                 Select the deliverable that you would like to form a team for. Only deliverables configured for student team formation are listed.
