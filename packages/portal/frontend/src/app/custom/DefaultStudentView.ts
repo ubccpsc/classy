@@ -3,16 +3,27 @@
  *
  */
 
-import {OnsButtonElement} from "onsenui";
+import {OnsButtonElement, OnsSelectElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
-
+import {
+    ConfigTransport,
+    DeliverableTransport,
+    Payload,
+    TeamFormationTransport,
+    TeamTransport,
+} from "../../../../../common/types/PortalTypes";
 import {UI} from "../util/UI";
 import {AbstractStudentView} from "../views/AbstractStudentView";
+
+export interface TeamFormationDeliverable {
+    id: string;
+}
 
 export class DefaultStudentView extends AbstractStudentView {
 
     private teams: TeamTransport[];
+    private teamDeliverableIds: string[];
+    private teamDeliverableSelected: string;
 
     constructor(remoteUrl: string) {
         super();
@@ -52,12 +63,27 @@ export class DefaultStudentView extends AbstractStudentView {
             this.teams = teams;
             await this.renderTeams(teams);
 
+            // team deliverable selection rendered here
+            this.teamDeliverableIds = await this.fetchStudentFormTeamDelivs();
+            await this.renderDeliverableSelectMenu(this.teamDeliverableIds);
+
             Log.info('DefaultStudentView::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
         }
         UI.hideModal();
         return;
+    }
+
+    private async fetchStudentFormTeamDelivs(): Promise<string[]> {
+        try {
+            this.teamDeliverableIds = null;
+            const data: ConfigTransport = await this.fetchData('/portal/config');
+            Log.info('ClassyStudentView::fetchStudentFormTeamDelivs(..) - data', data);
+            return data.teamDeliverableIds;
+        } catch (err) {
+            Log.error('ClassyStudentView::fetchStudentFormTeamDelivs(..) - ERROR ', err);
+        }
     }
 
     private async fetchTeamData(): Promise<TeamTransport[]> {
@@ -157,6 +183,20 @@ export class DefaultStudentView extends AbstractStudentView {
         } else {
             Log.error("DefaultStudentView::formTeam() - else ERROR: " + JSON.stringify(body));
         }
+    }
+
+    private editDelivSelection(val: any) {
+        this.teamDeliverableSelected = val;
+    }
+
+    private async renderDeliverableSelectMenu(deliverableIds: string[]): Promise<void> {
+        Log.info('rendering deliverable select menu');
+        const delivSelect = document.querySelector('#studentSelectDeliverable') as OnsSelectElement;
+        deliverableIds.forEach((id) => {
+            const opt = UI.createOption(id, id);
+            delivSelect.firstChild.appendChild(opt);
+        });
+        Log.info(this.teamDeliverableIds);
     }
 
 }
