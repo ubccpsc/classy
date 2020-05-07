@@ -105,6 +105,7 @@ export class DefaultStudentView extends AbstractStudentView {
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
         Log.trace('DefaultStudentView::renderTeams(..) - start');
         const that = this;
+        const teamsListDiv = document.getElementById('studentPartnerDiv');
 
         // make sure these are hidden
         UI.hideSection('studentSelectPartnerDiv');
@@ -115,14 +116,7 @@ export class DefaultStudentView extends AbstractStudentView {
         //     return;
         // }
 
-        let projectTeam = null;
-        for (const team of teams) {
-            if (team.delivId === "project") {
-                projectTeam = team;
-            }
-        }
-
-        if (projectTeam === null) {
+        if (teams.length === 0) {
             // no team yet
 
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
@@ -146,8 +140,16 @@ export class DefaultStudentView extends AbstractStudentView {
 
             const teamElement = document.getElementById('studentPartnerTeamName');
             // const partnerElement = document.getElementById('studentPartnerTeammates');
-            const team = projectTeam;
-            teamElement.innerHTML = team.id;
+
+            if (teams.length) {
+                for (let i = 1; i < teamsListDiv.children.length; i++) {
+                    teamsListDiv.children[i].remove();
+                }
+                for (const team of teams) {
+                    const item = UI.createListItem(team.id);
+                    teamsListDiv.appendChild(item);
+                }
+            }
         }
     }
 
