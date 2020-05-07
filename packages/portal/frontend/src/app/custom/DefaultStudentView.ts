@@ -111,44 +111,35 @@ export class DefaultStudentView extends AbstractStudentView {
         UI.hideSection('studentSelectPartnerDiv');
         UI.hideSection('studentPartnerDiv');
 
-        // skip this all for now; we will redeploy when teams can be formed
-        // if (Date.now() > 0) {
-        //     return;
-        // }
-
-        if (teams.length === 0) {
-            // no team yet
-
-            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
-            button.onclick = function(evt: any) {
-                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick');
-                that.formTeam().then(function(team) {
-                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::then - team created');
-                    that.teams.push(team);
-                    if (team !== null) {
-                        that.renderPage({}); // simulating refresh
-                    }
-                }).catch(function(err) {
-                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
-                });
-            };
-
-            UI.showSection('studentSelectPartnerDiv');
-        } else {
-            // already on team
-            UI.showSection('studentPartnerDiv');
-
-            const teamElement = document.getElementById('studentPartnerTeamName');
-            // const partnerElement = document.getElementById('studentPartnerTeammates');
-
-            if (teams.length) {
-                for (let i = 1; i < teamsListDiv.children.length; i++) {
-                    teamsListDiv.children[i].remove();
+        // configure team creation menus
+        const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+        button.onclick = function(evt: any) {
+            Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick');
+            that.formTeam().then(function(team) {
+                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::then - team created');
+                that.teams.push(team);
+                if (team !== null) {
+                    that.renderPage({}); // simulating refresh
                 }
-                for (const team of teams) {
-                    const item = UI.createListItem(team.id);
-                    teamsListDiv.appendChild(item);
-                }
+            }).catch(function(err) {
+                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+            });
+        };
+
+        UI.showSection('studentSelectPartnerDiv');
+        // already on team
+        UI.showSection('studentPartnerDiv');
+
+        const teamElement = document.getElementById('studentPartnerTeamName');
+        // const partnerElement = document.getElementById('studentPartnerTeammates');
+
+        if (teams.length) {
+            for (let i = 1; i < teamsListDiv.children.length; i++) {
+                teamsListDiv.children[i].remove();
+            }
+            for (const team of teams) {
+                const item = UI.createListItem(team.id);
+                teamsListDiv.appendChild(item);
             }
         }
     }
