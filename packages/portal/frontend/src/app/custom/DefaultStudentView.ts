@@ -104,7 +104,6 @@ export class DefaultStudentView extends AbstractStudentView {
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
         Log.trace('DefaultStudentView::renderTeams(..) - start');
         const that = this;
-        const teamsListDiv = document.getElementById('studentPartnerDiv');
 
         // configure team creation menus
         const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
@@ -121,6 +120,7 @@ export class DefaultStudentView extends AbstractStudentView {
             });
         };
 
+        const teamsListDiv = document.getElementById('studentPartnerDiv');
         const teamElement = document.getElementById('studentPartnerTeamName');
 
         if (teams.length) {
@@ -143,12 +143,13 @@ export class DefaultStudentView extends AbstractStudentView {
 
     private async formTeam(): Promise<TeamTransport> {
         Log.info("DefaultStudentView::formTeam() - start");
-        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const studentSelectPartner = document.getElementById('studentSelectPartnerText') as HTMLInputElement;
+        const otherIds = studentSelectPartner.value.replace(' ', '').split(',');
         const delivMenu = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
             delivId:   delivMenu.options[delivMenu.selectedIndex].value,
-            githubIds: [myGithubId, otherId]
+            githubIds: [myGithubId, ...otherIds]
         };
         const url = this.remote + '/portal/team';
         const options: any = this.getOptions();
@@ -166,6 +167,8 @@ export class DefaultStudentView extends AbstractStudentView {
 
         if (typeof body.success !== 'undefined') {
             // worked
+            UI.notification('Team ' + body.success[0].id + ' created.');
+            studentSelectPartner.value = '';
             return body.success as TeamTransport;
         } else if (typeof body.failure !== 'undefined') {
             // failed
