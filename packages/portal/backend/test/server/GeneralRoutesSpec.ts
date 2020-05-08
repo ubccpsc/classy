@@ -86,7 +86,8 @@ describe('General Routes', function() {
         expect(body.success.org).to.not.be.undefined;
         expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org)); // valid .org usage
         expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
-        expect(body.success.teamDeliverableIds.length).to.equal(1);
+        expect(body.success.teamDeliverableIds.length).to.equal(5);
+        expect(body.success.teamDeliverableIds).to.eql(['d0', 'd1', 'd2', 'd3', 'project']);
     });
 
     it('Should be able to get a person.', async function() {
