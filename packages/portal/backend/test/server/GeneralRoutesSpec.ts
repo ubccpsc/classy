@@ -10,6 +10,7 @@ import Log from "../../../../common/Log";
 import {Test} from "../../../../common/TestHarness";
 import {ConfigTransportPayload, Payload, TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
 
@@ -70,7 +71,6 @@ describe('General Routes', function() {
     });
 
     it('Should be able to get config details', async function() {
-
         let response = null;
         let body: ConfigTransportPayload;
         const url = '/portal/config';
@@ -81,13 +81,17 @@ describe('General Routes', function() {
             Log.test('ERROR: ' + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
+        const dc = new DeliverablesController();
+        const studentsFormTeamDelivIds = (await dc.getAllDeliverables())
+            .filter((d) => d.teamStudentsForm === true)
+            .map((d) => d.id);
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.org).to.not.be.undefined;
         expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org)); // valid .org usage
         expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
         expect(body.success.studentsFormTeamDelivIds.length).to.equal(4);
-        expect(body.success.studentsFormTeamDelivIds).to.eql(['d0', 'd1', 'd2', 'project']);
+        expect(body.success.studentsFormTeamDelivIds).to.eql(studentsFormTeamDelivIds);
     });
 
     it('Should be able to get a person.', async function() {
