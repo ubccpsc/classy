@@ -23,7 +23,6 @@ export class DefaultStudentView extends AbstractStudentView {
 
     private teams: TeamTransport[];
     private teamDeliverableIds: string[];
-    private teamDeliverableSelected: string;
 
     constructor(remoteUrl: string) {
         super();
@@ -107,10 +106,6 @@ export class DefaultStudentView extends AbstractStudentView {
         const that = this;
         const teamsListDiv = document.getElementById('studentPartnerDiv');
 
-        // make sure these are hidden
-        UI.hideSection('studentSelectPartnerDiv');
-        UI.hideSection('studentPartnerDiv');
-
         // configure team creation menus
         const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
         button.onclick = function(evt: any) {
@@ -126,16 +121,18 @@ export class DefaultStudentView extends AbstractStudentView {
             });
         };
 
-        UI.showSection('studentSelectPartnerDiv');
-        // already on team
-        UI.showSection('studentPartnerDiv');
-
         const teamElement = document.getElementById('studentPartnerTeamName');
-        // const partnerElement = document.getElementById('studentPartnerTeammates');
 
         if (teams.length) {
-            for (let i = 1; i < teamsListDiv.children.length; i++) {
-                teamsListDiv.children[i].remove();
+            const studentNotOnTeamMsg = document.getElementById('studentNotOnTeamMsg');
+            if (studentNotOnTeamMsg) {
+                studentNotOnTeamMsg.remove();
+            }
+
+            const teamItems = teamsListDiv.querySelectorAll('ons-list-item');
+            // tslint:disable-next-line:prefer-for-of
+            for (let i = 0; i < teamItems.length; i++) {
+                teamItems[i].remove();
             }
             for (const team of teams) {
                 const item = UI.createListItem(team.id);
@@ -147,9 +144,10 @@ export class DefaultStudentView extends AbstractStudentView {
     private async formTeam(): Promise<TeamTransport> {
         Log.info("DefaultStudentView::formTeam() - start");
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const delivMenu = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
-            delivId:   'project', // only one team in cs310 (and it is always called project)
+            delivId:   delivMenu.options[delivMenu.selectedIndex].value,
             githubIds: [myGithubId, otherId]
         };
         const url = this.remote + '/portal/team';
@@ -178,17 +176,15 @@ export class DefaultStudentView extends AbstractStudentView {
         }
     }
 
-    private editDelivSelection(val: any) {
-        this.teamDeliverableSelected = val;
-    }
-
     private async renderDeliverableSelectMenu(deliverableIds: string[]): Promise<void> {
         Log.info('rendering deliverable select menu');
-        const delivSelect = document.querySelector('#studentSelectDeliverable') as OnsSelectElement;
-        deliverableIds.forEach((id) => {
-            const opt = UI.createOption(id, id);
-            delivSelect.firstChild.appendChild(opt);
-        });
+        const delivSelect = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
+        if (delivSelect.options.length === 0) {
+            deliverableIds.forEach((id) => {
+                const opt = UI.createOption(id, id);
+                delivSelect.firstChild.appendChild(opt);
+            });
+        }
         Log.info(this.teamDeliverableIds);
     }
 

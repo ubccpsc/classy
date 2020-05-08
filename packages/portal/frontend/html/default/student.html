@@ -18,7 +18,7 @@
         <ons-list-item>
             <div id="studentRepoTable" style="width:100%;"></div>
         </ons-list-item>
-        <div id="studentSelectPartnerDiv" style="display: none;"> <!-- -->
+        <div id="studentSelectPartnerDiv"> <!-- -->
             <ons-list-header>Select Project Partner</ons-list-header>
             <ons-list-item expandable>
                 <div class="left settingIcon">
@@ -42,7 +42,7 @@
                 Specify deliverable:
             </div>
             <div>
-                <ons-select id="studentSelectDeliverable" onchange="myApp.view.editDelivSelection(this.value)">
+                <ons-select id="studentSelectDeliverable">
                 </ons-select>
             </div>
             <div class="expandable-content">
@@ -52,10 +52,10 @@
         <ons-list-item expandable id="studentNoDeliverableTeamFormation">
             No deliverables are configured for student team formation. Please contact TAs or instructor if you think this is a mistake.
         </ons-list-item>
-        <div id="studentPartnerDiv" style="display: none;">
+        <div id="studentPartnerDiv">
             <ons-list-header>Current Teams</ons-list-header>
-            <ons-list-item>
-                You are not on any teams.
+            <ons-list-item id="studentNotOnTeamMsg">
+                You currently are not on any teams.
             </ons-list-item>
         </div>
     </ons-list>
