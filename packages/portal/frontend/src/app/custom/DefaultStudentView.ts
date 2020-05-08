@@ -22,7 +22,7 @@ export interface TeamFormationDeliverable {
 export class DefaultStudentView extends AbstractStudentView {
 
     private teams: TeamTransport[];
-    private teamDeliverableIds: string[];
+    private studentsFormTeamDelivIds: string[];
 
     constructor(remoteUrl: string) {
         super();
@@ -63,8 +63,8 @@ export class DefaultStudentView extends AbstractStudentView {
             await this.renderTeams(teams);
 
             // team deliverable selection rendered here
-            this.teamDeliverableIds = await this.fetchStudentFormTeamDelivs();
-            await this.renderDeliverableSelectMenu(this.teamDeliverableIds);
+            this.studentsFormTeamDelivIds = await this.fetchStudentFormTeamDelivs();
+            await this.renderDeliverableSelectMenu(this.studentsFormTeamDelivIds);
 
             Log.info('DefaultStudentView::renderStudentPage(..) - done');
         } catch (err) {
@@ -76,10 +76,10 @@ export class DefaultStudentView extends AbstractStudentView {
 
     private async fetchStudentFormTeamDelivs(): Promise<string[]> {
         try {
-            this.teamDeliverableIds = null;
+            this.studentsFormTeamDelivIds = null;
             const data: ConfigTransport = await this.fetchData('/portal/config');
             Log.info('ClassyStudentView::fetchStudentFormTeamDelivs(..) - data', data);
-            return data.teamDeliverableIds;
+            return data.studentsFormTeamDelivIds;
         } catch (err) {
             Log.error('ClassyStudentView::fetchStudentFormTeamDelivs(..) - ERROR ', err);
         }
@@ -188,7 +188,7 @@ export class DefaultStudentView extends AbstractStudentView {
                 delivSelect.firstChild.appendChild(opt);
             });
         }
-        Log.info(this.teamDeliverableIds);
+        Log.info(this.studentsFormTeamDelivIds);
     }
 
 }
