@@ -3,16 +3,26 @@
  *
  */
 
-import {OnsButtonElement} from "onsenui";
+import {OnsButtonElement, OnsSelectElement} from "onsenui";
 import Log from "../../../../../common/Log";
-import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
-
+import {
+    ConfigTransport,
+    DeliverableTransport,
+    Payload,
+    TeamFormationTransport,
+    TeamTransport,
+} from "../../../../../common/types/PortalTypes";
 import {UI} from "../util/UI";
 import {AbstractStudentView} from "../views/AbstractStudentView";
+
+export interface TeamFormationDeliverable {
+    id: string;
+}
 
 export class DefaultStudentView extends AbstractStudentView {
 
     private teams: TeamTransport[];
+    private studentsFormTeamDelivIds: string[];
 
     constructor(remoteUrl: string) {
         super();
@@ -52,12 +62,27 @@ export class DefaultStudentView extends AbstractStudentView {
             this.teams = teams;
             await this.renderTeams(teams);
 
+            // team deliverable selection rendered here
+            this.studentsFormTeamDelivIds = await this.fetchStudentFormTeamDelivs();
+            await this.renderDeliverableSelectMenu(this.studentsFormTeamDelivIds);
+
             Log.info('DefaultStudentView::renderStudentPage(..) - done');
         } catch (err) {
             Log.error('Error encountered: ' + err.message);
         }
         UI.hideModal();
         return;
+    }
+
+    private async fetchStudentFormTeamDelivs(): Promise<string[]> {
+        try {
+            this.studentsFormTeamDelivIds = null;
+            const data: ConfigTransport = await this.fetchData('/portal/config');
+            Log.info('ClassyStudentView::fetchStudentFormTeamDelivs(..) - data', data);
+            return data.studentsFormTeamDelivIds;
+        } catch (err) {
+            Log.error('ClassyStudentView::fetchStudentFormTeamDelivs(..) - ERROR ', err);
+        }
     }
 
     private async fetchTeamData(): Promise<TeamTransport[]> {
@@ -80,58 +105,51 @@ export class DefaultStudentView extends AbstractStudentView {
         Log.trace('DefaultStudentView::renderTeams(..) - start');
         const that = this;
 
-        // make sure these are hidden
-        UI.hideSection('studentSelectPartnerDiv');
-        UI.hideSection('studentPartnerDiv');
+        // configure team creation menus
+        const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+        button.onclick = function(evt: any) {
+            Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick');
+            that.formTeam().then(function(team) {
+                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::then - team created');
+                that.teams.push(team);
+                if (team !== null) {
+                    that.renderPage({}); // simulating refresh
+                }
+            }).catch(function(err) {
+                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+            });
+        };
 
-        // skip this all for now; we will redeploy when teams can be formed
-        // if (Date.now() > 0) {
-        //     return;
-        // }
+        const teamsListDiv = document.getElementById('studentPartnerDiv');
+        const teamElement = document.getElementById('studentPartnerTeamName');
 
-        let projectTeam = null;
-        for (const team of teams) {
-            if (team.delivId === "project") {
-                projectTeam = team;
+        if (teams.length) {
+            const studentNotOnTeamMsg = document.getElementById('studentNotOnTeamMsg');
+            if (studentNotOnTeamMsg) {
+                studentNotOnTeamMsg.remove();
             }
-        }
 
-        if (projectTeam === null) {
-            // no team yet
-
-            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
-            button.onclick = function(evt: any) {
-                Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick');
-                that.formTeam().then(function(team) {
-                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::then - team created');
-                    that.teams.push(team);
-                    if (team !== null) {
-                        that.renderPage({}); // simulating refresh
-                    }
-                }).catch(function(err) {
-                    Log.info('DefaultStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
-                });
-            };
-
-            UI.showSection('studentSelectPartnerDiv');
-        } else {
-            // already on team
-            UI.showSection('studentPartnerDiv');
-
-            const teamElement = document.getElementById('studentPartnerTeamName');
-            // const partnerElement = document.getElementById('studentPartnerTeammates');
-            const team = projectTeam;
-            teamElement.innerHTML = team.id;
+            const teamItems = teamsListDiv.querySelectorAll('ons-list-item');
+            // tslint:disable-next-line:prefer-for-of
+            for (let i = 0; i < teamItems.length; i++) {
+                teamItems[i].remove();
+            }
+            for (const team of teams) {
+                const item = UI.createListItem(team.id);
+                teamsListDiv.appendChild(item);
+            }
         }
     }
 
     private async formTeam(): Promise<TeamTransport> {
         Log.info("DefaultStudentView::formTeam() - start");
-        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const studentSelectPartner = document.getElementById('studentSelectPartnerText') as HTMLInputElement;
+        const otherIds = studentSelectPartner.value.replace(' ', '').split(',');
+        const delivMenu = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
-            delivId:   'project', // only one team in cs310 (and it is always called project)
-            githubIds: [myGithubId, otherId]
+            delivId:   delivMenu.options[delivMenu.selectedIndex].value,
+            githubIds: [myGithubId, ...otherIds]
         };
         const url = this.remote + '/portal/team';
         const options: any = this.getOptions();
@@ -149,6 +167,8 @@ export class DefaultStudentView extends AbstractStudentView {
 
         if (typeof body.success !== 'undefined') {
             // worked
+            UI.notification('Team ' + body.success[0].id + ' created.');
+            studentSelectPartner.value = '';
             return body.success as TeamTransport;
         } else if (typeof body.failure !== 'undefined') {
             // failed
@@ -157,6 +177,18 @@ export class DefaultStudentView extends AbstractStudentView {
         } else {
             Log.error("DefaultStudentView::formTeam() - else ERROR: " + JSON.stringify(body));
         }
+    }
+
+    private async renderDeliverableSelectMenu(deliverableIds: string[]): Promise<void> {
+        Log.info('rendering deliverable select menu');
+        const delivSelect = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
+        if (delivSelect.options.length === 0) {
+            deliverableIds.forEach((id) => {
+                const opt = UI.createOption(id, id);
+                delivSelect.firstChild.appendChild(opt);
+            });
+        }
+        Log.info(this.studentsFormTeamDelivIds);
     }
 
 }

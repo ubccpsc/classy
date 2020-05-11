@@ -102,6 +102,10 @@ export class UI {
         ons.notification.toast(opts);
     }
 
+    public static createOption(text: string, value: string): HTMLElement {
+        return ons.createElement('<option value=' + value + '>' + text + '</option>');
+    }
+
     public static createListItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {
 
         let prefix = '<ons-list-item style="display: table;">';
@@ -302,7 +306,7 @@ export class UI {
             classlistDialog.show();
         })
         .catch(function(err: Error) {
-            Log.error('UI::prompt(..) - ERROR: ' + err.message);
+            Log.error('UI::prompt(..) - ERROR: ' + err);
         });
     }
 
