@@ -153,3 +153,16 @@ stdio viewer Page
 #adminDockerBuildDialog .dialog {
     height: 80vh;
 }
+
+/**
+  CSS for Classlist API update change report
+*/
+#adminClasslistConfirmHeader ons-list {
+    overflow-y: auto;
+    height: 80vh;
+}
+
+#adminClasslistConfirmHeader ons-button {
+    text-align: center;
+    width: 100%;
+}
