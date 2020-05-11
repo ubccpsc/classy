@@ -66,6 +66,7 @@ export class ClasslistAgent {
         });
 
         const changeReport: ClasslistChangesTransport = {
+            message: 'Successfully uploaded classlist.',
             created: [], // new registrations
             updated: [], // only students whose CWL or lab has changed
             removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
