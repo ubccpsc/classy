@@ -364,7 +364,10 @@ export class AdminConfigTab extends AdminPage {
                 const data: Payload = await response.json();
                 UI.hideModal();
                 Log.info('AdminConfigTab::uploadClasslist(..) - RESPONSE: ' + JSON.stringify(data));
-                UI.notification(data.success.message);
+                if (typeof data.success !== 'undefined') {
+                    UI.notificationToast(data.success.message);
+                    this.showClasslistChanges(data.success);
+                }
             } else {
                 const reason = await response.json();
                 UI.hideModal();
@@ -561,15 +564,6 @@ export class AdminConfigTab extends AdminPage {
     private async updateClasslistPressed(): Promise<void> {
         Log.trace('AdminConfigTab::updateClasslistPressed(..) - start');
 
-        const mapToTextAndSubtext = function(people: StudentTransport[]) {
-            return people.map(function(person) {
-                return {
-                    text: person.id + '/' + person.studentNum + '/' + person.githubId + ': ' + person.firstName + ' ' + person.lastName,
-                    subtext: person.labId
-                };
-            });
-        };
-
         const url = this.remote + '/portal/admin/classlist';
         const options: any = AdminView.getOptions();
         options.method = 'put';
@@ -578,24 +572,36 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== 'undefined') {
-            UI.showErrorToast("Classlist successfully updated.");
-            if (body.success.created.length) {
-                const createdList = mapToTextAndSubtext(body.success.created);
-                UI.templateConfirm('classlistDialog.html', {header: 'Created: May need Repos Provisioned',
-                 listContent: createdList});
-            }
-            if (body.success.updated.length) {
-                const updatedList = mapToTextAndSubtext(body.success.updated);
-                UI.templateConfirm('classlistDialog.html', {header: 'Updated: Student data has been modified in new Classlist upload',
-                 listContent: updatedList});
-            }
-            if (body.success.removed.length) {
-                const removedList = mapToTextAndSubtext(body.success.removed);
-                UI.templateConfirm('classlistDialog.html', {header: 'Removed: NOT in latest Classlist upload. To Be Withdrawn',
-                 listContent: removedList});
-            }
+            UI.notificationToast("Classlist successfully updated.");
+            this.showClasslistChanges(body.success);
         } else {
             UI.showAlert(body.failure.message);
+        }
+    }
+
+    private showClasslistChanges(classlistChanges: any): void {
+        const mapToTextAndSubtext = function(people: StudentTransport[]) {
+            return people.map(function(person) {
+                return {
+                    text: person.id + '/' + person.studentNum + '/' + person.githubId + ': ' + person.firstName + ' ' + person.lastName,
+                    subtext: person.labId
+                };
+            });
+        };
+        if (classlistChanges.created.length) {
+            const createdList = mapToTextAndSubtext(classlistChanges.created);
+            UI.templateConfirm('classlistDialog.html', {header: 'Created: May need Repos Provisioned',
+             listContent: createdList});
+        }
+        if (classlistChanges.updated.length) {
+            const updatedList = mapToTextAndSubtext(classlistChanges.updated);
+            UI.templateConfirm('classlistDialog.html', {header: 'Updated: Student data has been modified in new Classlist upload',
+             listContent: updatedList});
+        }
+        if (classlistChanges.removed.length) {
+            const removedList = mapToTextAndSubtext(classlistChanges.removed);
+            UI.templateConfirm('classlistDialog.html', {header: 'Removed: NOT in latest Classlist upload. To Be Withdrawn',
+             listContent: removedList});
         }
     }
 

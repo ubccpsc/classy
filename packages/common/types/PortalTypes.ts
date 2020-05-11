@@ -32,6 +32,7 @@ export interface ClasslistChangesTransport {
     created: StudentTransport[];
     removed: StudentTransport[];
     classlist: StudentTransport[];
+    message: string;
 }
 
 export interface ClasslistChangesTransportPayload {

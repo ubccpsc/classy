@@ -165,6 +165,20 @@
         </ons-page>
     </template>
 
+    <template id="classlistDialog.html">
+        <ons-dialog id="adminClasslistConfirmHeader">
+            <ons-list-header style="text-align: center; font-weight: 700">
+            </ons-list-header>
+            <ons-scroller>
+                <ons-list>
+                </ons-list>
+            </ons-scroller>
+            <ons-button>
+                Close
+            </ons-button>
+        </ons-dialog>
+    </template>
+
     <template id="dockerBuildDialog.html">
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
@@ -949,7 +963,8 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
+                                E.g., 900 (15 minutes), 43200 (12 hours), 86400 (24 hours). Cannot be lower than
+                                15 minutes unless a minimum value is set in the environmental config.
                             </div>
                         </ons-list-item>
 

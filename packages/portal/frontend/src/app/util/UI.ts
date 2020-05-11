@@ -306,7 +306,7 @@ export class UI {
             classlistDialog.show();
         })
         .catch(function(err: Error) {
-            Log.error('UI::prompt(..) - ERROR: ' + err.message);
+            Log.error('UI::prompt(..) - ERROR: ' + err);
         });
     }
 
