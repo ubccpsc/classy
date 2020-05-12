@@ -18,7 +18,7 @@
         <ons-list-item>
             <div id="studentRepoTable" style="width:100%;"></div>
         </ons-list-item>
-        <div id="studentSelectPartnerDiv" style="display: none;"> <!-- -->
+        <div id="studentSelectPartnerDiv"> <!-- -->
             <ons-list-header>Select Project Partner</ons-list-header>
             <ons-list-item expandable>
                 <div class="left settingIcon">
@@ -36,11 +36,23 @@
                 </div>
             </ons-list-item>
         </div>
-        <div id="studentPartnerDiv" style="display: none;">
-            <ons-list-header>Project Partner</ons-list-header>
-            <ons-list-item>
-                Your team is&nbsp;<span id="studentPartnerTeamName"></span>.
-                <!--; your teammate is&nbsp;<span id="studentPartnerTeammates"></span>.-->
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon style="padding-right: 1em;" icon="fa-microchip"></ons-icon>
+                Specify deliverable:
+            </div>
+            <div>
+                <ons-select id="studentSelectDeliverable">
+                </ons-select>
+            </div>
+            <div class="expandable-content">
+                Select the deliverable that you would like to form a team for. Only deliverables configured for student team formation are listed.
+            </div>
+        </ons-list-item>
+        <div id="studentPartnerDiv">
+            <ons-list-header>Current Teams</ons-list-header>
+            <ons-list-item id="studentNotOnTeamMsg">
+                You currently are not on any teams.
             </ons-list-item>
         </div>
     </ons-list>
