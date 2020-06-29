@@ -320,6 +320,13 @@ export class AuthRoutes implements IREST {
             };
 
             await DatabaseController.getInstance().writeAuth(auth);
+
+            // updates user role on login. withdrawn students cannot login and therefore are not affected.
+            person.kind = null;
+            await new PersonController().writePerson(person);
+
+            Log.trace("AuthRoutes::performAuthCallback(..) - person kind reset on login: " + JSON.stringify(person));
+
             Log.trace("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
 
             Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
