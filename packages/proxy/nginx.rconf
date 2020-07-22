@@ -32,6 +32,8 @@ http {
         ssl_certificate        <%= ENV["SSL_CERT_PATH"] %>;
         ssl_certificate_key    <%= ENV["SSL_KEY_PATH"] %>;
 
+        resolver 127.0.0.1;
+
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
             proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
