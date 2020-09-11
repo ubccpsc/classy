@@ -50,7 +50,7 @@
         "fs-extra": "5.0.0",
         "jszip": "3.2.1",
         "mongodb": "^3.0.2",
-        "node-fetch": "^2.6.0",
+        "node-fetch": "^2.6.1",
         "restify": "^8.4.0"
     },
     "resolutions": {
