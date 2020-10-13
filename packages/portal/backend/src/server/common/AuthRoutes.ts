@@ -284,6 +284,10 @@ export class AuthRoutes implements IREST {
             person = await cc.handleUnknownUser(username);
         } else {
             Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username IS registered");
+            // updates user role on login. withdrawn students cannot login and therefore are not affected.
+            person.kind = null;
+            await new PersonController().writePerson(person);
+            Log.trace("AuthRoutes::performAuthCallback(..) - person kind reset for " + JSON.stringify(person));
         }
 
         // now we either have the person in the course or there will never be one
@@ -320,13 +324,6 @@ export class AuthRoutes implements IREST {
             };
 
             await DatabaseController.getInstance().writeAuth(auth);
-
-            // updates user role on login. withdrawn students cannot login and therefore are not affected.
-            person.kind = null;
-            await new PersonController().writePerson(person);
-
-            Log.trace("AuthRoutes::performAuthCallback(..) - person kind reset on login: " + JSON.stringify(person));
-
             Log.trace("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
 
             Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
