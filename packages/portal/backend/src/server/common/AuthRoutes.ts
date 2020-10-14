@@ -284,7 +284,7 @@ export class AuthRoutes implements IREST {
             person = await cc.handleUnknownUser(username);
         } else {
             Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username IS registered");
-            // updates user role on login. withdrawn students cannot login and therefore are not affected.
+            // forces update of user role on login.
             person.kind = null;
             await new PersonController().writePerson(person);
             Log.trace("AuthRoutes::performAuthCallback(..) - person kind reset for " + JSON.stringify(person));
