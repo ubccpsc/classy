@@ -21,49 +21,7 @@ import {Deliverable, Grade, Person, PersonKind, Repository, Team} from "../Types
  */
 export class CustomCourseController extends CourseController {
 
-    // /**
-    //  * Public static so tests can use them too.
-    //  *
-    //  * @returns {string}
-    //  */
-    // public static getProjectPrefix(): string {
-    //     const name = Config.getInstance().getProp(ConfigKey.name);
-    //     if (name === ConfigCourses.classytest) {
-    //         Log.info("CustomCourseController::getProjectPrefix(..) - returning test prefix");
-    //         return "TEST__X__p_";
-    //     } else if (name === 'sdmm') {
-    //         Log.trace("CustomCourseController::getProjectPrefix(..) - returning sdmm prefix");
-    //         return "secap_";
-    //     } else {
-    //         // NOTE: non-sdmm courses shouldn't use this...
-    //         Log.error("CustomCourseController::getProjectPrefix(..) - unhandled course: " + name);
-    //         return "project_";
-    //     }
-    // }
-
-    // /**
-    //  * Public static so tests can use them too.
-    //  *
-    //  * @returns {string}
-    //  */
-    // public static getTeamPrefix() {
-    //     const name = Config.getInstance().getProp(ConfigKey.name);
-    //
-    //     if (name === ConfigCourses.classytest) {
-    //         Log.info("CustomCourseController::getTeamPrefix(..) - returning test prefix");
-    //         return "TEST__X__t_";
-    //     } else if (name === 'sdmm') {
-    //         Log.trace("CustomCourseController::getTeamPrefix(..) - returning sdmm prefix");
-    //         // NOTE: was supposed to be "t_" but we made a mistake in initial deployment so we're stuck with no prefix
-    //         return "";
-    //     } else {
-    //         // NOTE: non-sdmm courses shouldn't use this...
-    //         Log.error("CustomCourseController::getTeamPrefix(..) - unhandled course: " + name);
-    //         return "t_";
-    //     }
-    // }
-
-    private GRADE_TO_ADVANCE = 80;
+    private GRADE_TO_ADVANCE = 60; // threshold to move between deliverables
 
     public static readonly D0 = 'd0';
     public static readonly D1 = 'd1';
@@ -812,7 +770,7 @@ export class CustomCourseController extends CourseController {
 
             // // seems complicated, but we need team names that are unique
             // // but with lots of people signing up at once we can't rely on a counter
-            // // especially since full provisioning will take a long time (e.g., GRADE_TO_ADVANCE+ seconds)
+            // // especially since full provisioning will take a long time
             // let teamName: string | null = null;
             // while (teamName === null) {
             //     let str = crypto.randomBytes(256).toString('hex');
