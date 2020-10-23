@@ -40,9 +40,9 @@ switch ((process.env["LOG_LEVEL"] || "").toUpperCase()) {
 export default class Log {
     public static Level: LogLevel = LOG_LEVEL;
 
-    public static trace(msg: string): void {
+    public static trace(...msg: any[]): void {
         if (Log.Level <= LogLevel.TRACE) {
-            console.log(`<T> ${new Date().toLocaleString()}: ${msg}`);
+            console.log(`<T> ${new Date().toLocaleString()}:`, ...msg);
         }
     }
 
@@ -52,31 +52,31 @@ export default class Log {
         }
     }
 
-    public static info(msg: string): void {
+    public static info(...msg: any[]): void {
         if (Log.Level <= LogLevel.INFO) {
-            console.info(`<I> ${new Date().toLocaleString()}: ${msg}`);
+            console.info(`<I> ${new Date().toLocaleString()}:`, ...msg);
         }
     }
 
-    public static warn(msg: string): void {
+    public static warn(...msg: any[]): void {
         if (Log.Level <= LogLevel.WARN) {
-            console.warn(`<W> ${new Date().toLocaleString()}: ${msg}`);
+            console.warn(`<W> ${new Date().toLocaleString()}:`, ...msg);
         }
     }
 
-    public static error(msg: string): void {
+    public static error(...msg: any[]): void {
         if (Log.Level <= LogLevel.ERROR) {
-            console.error(`<E> ${new Date().toLocaleString()}: ${msg}`);
+            console.error(`<E> ${new Date().toLocaleString()}:`, ...msg);
         }
     }
 
-    public static exception(err: Error): void {
-        console.error(`<E> ${new Date().toLocaleString()}: `, err);
+    public static exception(...err: any[]): void {
+        console.error(`<!> ${new Date().toLocaleString()}:`, ...err);
     }
 
-    public static test(msg: string): void {
+    public static test(...msg: any[]): void {
         if (Log.Level <= LogLevel.TEST) {
-            console.log(`<X> ${new Date().toLocaleString()}: ${msg}`);
+            console.log(`<X> ${new Date().toLocaleString()}:`, ...msg);
         }
     }
 }

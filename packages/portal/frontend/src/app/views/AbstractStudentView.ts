@@ -138,8 +138,12 @@ export abstract class AbstractStudentView implements IView {
             for (const grade of this.grades) {
 
                 let score: number | string = grade.score;
+                let scoreHTML = '';
                 if (score === null) {
                     score = 'Not Set';
+                    scoreHTML = score; // no link if the score is not set
+                } else {
+                    scoreHTML = '<a href="' + grade.URL + '">' + score + '</a>';
                 }
                 let comment = grade.comment;
                 if (comment === null) {
@@ -147,7 +151,7 @@ export abstract class AbstractStudentView implements IView {
                 }
                 const row: TableCell[] = [
                     {value: grade.delivId, html: grade.delivId},
-                    {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'},
+                    {value: score, html: scoreHTML},
                     {value: comment, html: comment}
                 ];
                 st.addRow(row);
@@ -162,7 +166,7 @@ export abstract class AbstractStudentView implements IView {
 
         if (this.repos === null || this.repos.length < 1) {
             const el = document.getElementById('studentRepoTable');
-            el.innerHTML = "No released repos.";
+            el.innerHTML = "None released.";
         } else {
             const headers: TableHeader[] = [
                 {

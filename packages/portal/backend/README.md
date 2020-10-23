@@ -10,7 +10,7 @@ Follow the one-time instructions below. Once those are done do the following:
 * Make sure the UI code is being regenerated `webpack -watch` in `packages/frontend`
 * In the browser, visit `https://localhost:3000/`
 
-### One-time setup:
+### One-time setup
 
 * Create `classy/ssl/XXX` and `classy/ssl/XXX`.
 	* Instructions for this are in `classy/README.md`.
@@ -24,7 +24,7 @@ Follow the one-time instructions below. Once those are done do the following:
 ## Further dev instructions
 
     * `webpack` description missing
-    
+
 ## Testing
 
 0) 	`yarn run install`

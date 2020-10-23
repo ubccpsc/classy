@@ -238,19 +238,19 @@ export class AdminProvisionPage extends AdminPage {
         // UI.showModal("Releasing repositories for " + delivId + ". Please be patient.");
         //
         // const start = Date.now();
-        // Log.trace('AdminProvisioningPage::handleReleasePressed(..) - GET from: ' + url);
+        // Log.trace('AdminProvisionPage::handleReleasePressed(..) - GET from: ' + url);
         // const response = await fetch(url, options);
         // const json: Payload = await response.json();
-        // Log.trace('AdminProvisioningPage::handleReleasePressed(..) - complete; took: ' + Util.took(start));
+        // Log.trace('AdminProvisionPage::handleReleasePressed(..) - complete; took: ' + Util.took(start));
         //
         // UI.hideModal();
         // UI.showSuccessToast('Repositories released.', {timeout: 10000, buttonLabel: 'Ok'});
         //
         // if (typeof json.success !== 'undefined') {
-        //     Log.info('AdminProvisioningPage::handleReleasePressed(..) - success'); // + json.success);
+        //     Log.info('AdminProvisionPage::handleReleasePressed(..) - success'); // + json.success);
         //     return json.success;
         // } else {
-        //     Log.error('AdminProvisioningPage::handleReleasePressed(..) - ERROR: ' + json.failure);
+        //     Log.error('AdminProvisionPage::handleReleasePressed(..) - ERROR: ' + json.failure);
         // }
         // return true;
 
@@ -267,7 +267,7 @@ export class AdminProvisionPage extends AdminPage {
             }
         }
 
-        Log.info('AdminDeletePage::handleReleasePressed(..) - start; # repos to provision: ' + selected.length);
+        Log.info('AdminProvisionPage::handleReleasePressed(..) - start; # repos to provision: ' + selected.length);
         if (selected.length > 0) {
             UI.showSuccessToast('Repo releasing in progress; this will take a while. Do not close this browser window.');
         } else {
@@ -280,17 +280,17 @@ export class AdminProvisionPage extends AdminPage {
             try {
                 const start = Date.now();
                 await this.releaseRepo(repoId);
-                Log.info('AdminDeletePage::handleReleasePressed(..) - releasing complete; repo: ' + repoId +
+                Log.info('AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: ' + repoId +
                     '; took: ' + Util.took(start));
                 UI.showSuccessToast('Repo released: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
                     {timeout: 1000, animation: 'none'});
             } catch (err) {
-                Log.error('AdminDeletePage::handleReleasePressed(..) - releasing error for: ' + repoId + '; ERROR: ' + err.message);
+                Log.error('AdminProvisionPage::handleReleasePressed(..) - releasing error for: ' + repoId + '; ERROR: ' + err.message);
                 UI.showErrorToast('Repo NOT released: ' + repoId + ' (see error console)');
             }
         }
 
-        Log.info('AdminDeletePage::handleReleasePressed(..) - done');
+        Log.info('AdminProvisionPage::handleReleasePressed(..) - done');
         if (selected.length > 0) {
             UI.showSuccessToast('Repository releasing complete.', {timeout: 20000, buttonLabel: 'Ok'});
         }
@@ -313,7 +313,7 @@ export class AdminProvisionPage extends AdminPage {
             }
         }
 
-        Log.info('AdminDeletePage::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
+        Log.info('AdminProvisionPage::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
         if (selected.length > 0) {
             UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.',
                 {timeout: 10000});
@@ -328,17 +328,17 @@ export class AdminProvisionPage extends AdminPage {
                 const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
                 const start = Date.now();
                 await this.provisionRepo(delivId, repoId);
-                Log.info('AdminDeletePage::handleProvision(..) - provisioning complete; repo: ' + repoId +
+                Log.info('AdminProvisionPage::handleProvision(..) - provisioning complete; repo: ' + repoId +
                     '; took: ' + Util.took(start));
                 UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {timeout: 10000});
+                    {timeout: 10000, force: true});
             } catch (err) {
-                Log.error('AdminDeletePage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
+                Log.error('AdminProvisionPage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
                 UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');
             }
         }
 
-        Log.info('AdminDeletePage::handleProvision(..) - done');
+        Log.info('AdminProvisionPage::handleProvision(..) - done');
         if (selected.length > 0) {
             UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000, buttonLabel: 'Ok'});
         }
@@ -354,17 +354,17 @@ export class AdminProvisionPage extends AdminPage {
 
         UI.showModal("Retrieving provisioning details for " + delivId);
 
-        Log.trace('AdminProvisioningPage::getProvisionDetails(..) - GET from: ' + url);
+        Log.trace('AdminProvisionPage::getProvisionDetails(..) - GET from: ' + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
         UI.hideModal();
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisioningPage::getProvisionDetails(..) - success; took: ' + Util.took(start));
+            Log.info('AdminProvisionPage::getProvisionDetails(..) - success; took: ' + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminProvisioningPage::getProvisionDetails(..) - ERROR: ' + json.failure);
+            Log.error('AdminProvisionPage::getProvisionDetails(..) - ERROR: ' + json.failure);
         }
         return [];
     }
@@ -376,17 +376,17 @@ export class AdminProvisionPage extends AdminPage {
 
         UI.showModal("Retrieving release details for " + delivId);
 
-        Log.trace('AdminProvisioningPage::getReleaseDetails(..) - GET from: ' + url);
+        Log.trace('AdminProvisionPage::getReleaseDetails(..) - GET from: ' + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
         UI.hideModal();
 
         if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisioningPage::getReleaseDetails(..) - success; took: ' + Util.took(start));
+            Log.info('AdminProvisionPage::getReleaseDetails(..) - success; took: ' + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminProvisioningPage::getReleaseDetails(..) - ERROR: ' + json.failure);
+            Log.error('AdminProvisionPage::getReleaseDetails(..) - ERROR: ' + json.failure);
         }
         return [];
     }
@@ -396,14 +396,14 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
-        Log.info("AdminDeletePage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
+        Log.info("AdminProvisionPage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
 
         const url = this.remote + '/portal/admin/provision/' + delivId + '/' + repoId;
         return await this.performAction(url);
     }
 
     private async releaseRepo(repoId: string): Promise<boolean> {
-        Log.info("AdminDeletePage::releaseRepo( " + repoId + " ) - start");
+        Log.info("AdminProvisionPage::releaseRepo( " + repoId + " ) - start");
 
         const url = this.remote + '/portal/admin/release/' + repoId;
         return await this.performAction(url);

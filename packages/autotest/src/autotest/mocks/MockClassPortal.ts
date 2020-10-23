@@ -45,18 +45,31 @@ export class MockClassPortal implements IClassPortal {
         Log.info("MockClassPortal::getContainerDetails(..) - start");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
-        if (name === testname) { // 310
-            const delay = 6 * 60 * 60; // 6 hours in seconds
-            return {
-                dockerImage:        "310container",
-                studentDelay:       delay,
-                maxExecTime:        300,
-                regressionDelivIds: [],
-                custom:             {},
-                openTimestamp:      new Date(2015, 1, 1).getTime(),
-                closeTimestamp:     new Date(2030, 6, 1).getTime(),
-                lateAutoTest:       true
-            };
+        const validDelivs = ['d0', 'd1'];
+        if (name === testname) { // test suites only
+            if (validDelivs.indexOf(delivId) >= 0) {
+                const delay = 6 * 60 * 60; // 6 hours in seconds
+
+                const ret: AutoTestConfigTransport = {
+                    dockerImage:        "310container",
+                    studentDelay:       delay,
+                    maxExecTime:        300,
+                    regressionDelivIds: [],
+                    custom:             {},
+                    openTimestamp:      new Date(2015, 1, 1).getTime(),
+                    closeTimestamp:     new Date(2030, 6, 1).getTime(),
+                    lateAutoTest:       true
+                };
+
+                if (delivId === 'd0') {
+                    ret.lateAutoTest = false;
+                }
+
+                return ret;
+            } else {
+                Log.warn("MockClassPortal::getContainerDetails(..) - unknown delivId: " + delivId);
+                return null;
+            }
         }
         Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
         return null;
@@ -94,13 +107,19 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
-        return Promise.resolve({personId: userName});
+        const VALID_PEOPLE = ['staff', 'myUser'];
+        if (VALID_PEOPLE.indexOf(userName) >= 0) {
+            Log.info("MockClassPortal::getPersonId(..) - valid person: " + userName);
+            return Promise.resolve({personId: userName});
+        }
+        Log.warn("MockClassPortal::getPersonId(..) - NOT valid person: " + userName);
+        return Promise.resolve({personId: null});
     }
 
-    public async formatFeedback(res: AutoTestResultTransport, feedbackMode?: string): Promise<string | null> {
+    public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         // const cp = new ClassPortal();
         // // using the real object here because CP isn't actually live for formatFeedback yet
-        // const msg = await cp.formatFeedback(res, feedbackMode);
+        // const msg = await cp.formatFeedback(res);
         // return msg;
         return Promise.resolve(res.output.report.feedback);
     }

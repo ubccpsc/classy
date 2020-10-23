@@ -6,12 +6,13 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {ConfigTransportPayload, Payload, TeamFormationTransport} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../TestHarness";
 
 describe('General Routes', function() {
 
@@ -29,6 +30,7 @@ describe('General Routes', function() {
         await Test.prepareAll();
 
         // add files for getResource
+        // NOTE: if this fails in local testing, ensure your HOST_DIR and PERSIST_DIR are set appropriately
         const pDir = Config.getInstance().getProp(ConfigKey.persistDir);
         fs.ensureDirSync(pDir);
 
@@ -68,16 +70,7 @@ describe('General Routes', function() {
         return server.stop();
     });
 
-    beforeEach(function() {
-        Test.testAfter("GeneralRoutesSpec", this);
-    });
-
-    afterEach(function() {
-        Test.testAfter("GeneralRoutesSpec", this);
-    });
-
     it('Should be able to get config details', async function() {
-
         let response = null;
         let body: ConfigTransportPayload;
         const url = '/portal/config';
@@ -88,11 +81,17 @@ describe('General Routes', function() {
             Log.test('ERROR: ' + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
+        const dc = new DeliverablesController();
+        const studentsFormTeamDelivIds = (await dc.getAllDeliverables())
+            .filter((d) => d.teamStudentsForm === true)
+            .map((d) => d.id);
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.org).to.not.be.undefined;
         expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org)); // valid .org usage
         expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
+        expect(body.success.studentsFormTeamDelivIds.length).to.equal(4);
+        expect(body.success.studentsFormTeamDelivIds).to.eql(studentsFormTeamDelivIds);
     });
 
     it('Should be able to get a person.', async function() {
@@ -119,6 +118,39 @@ describe('General Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.id).to.equal(Test.USER1.id);
         expect(body.success.githubId).to.equal(Test.USER1.github);
+    });
+
+    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('x-forwarded-for', '152.99.5.99')
+                .set('Host', 'www.google.ca');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
+    });
+
+    it('Should be able to update a classlist on restricted IP', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('test-include-xfwd', '')
+                .set('x-forwarded-for', '142.103.5.99');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('message');
+        expect(body.success.message).to.contain('Classlist upload successful');
     });
 
     it('Should not be able to get a person without the right token.', async function() {
@@ -532,7 +564,7 @@ describe('General Routes', function() {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.equal('User is already on a team for this deliverable ( user1id is on t_d0_user1id_user2id ).');
+        expect(body.failure.message).to.include('User is already on a team for this deliverable');
 
         try {
             Log.test('Making request');
@@ -650,9 +682,9 @@ describe('General Routes', function() {
 
         // create a team, but don't release it
         const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam('t_project_user1gh_user2gh');
+        const team = await dc.getTeam('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId);
         const rc = new RepositoryController();
-        const repo = await rc.createRepository('t_project_user1gh_user2gh', deliv, [team], {});
+        const repo = await rc.createRepository('t_project_' + Test.USER1.csId + '_' + Test.USER2.csId, deliv, [team], {});
 
         ex = null;
         try {

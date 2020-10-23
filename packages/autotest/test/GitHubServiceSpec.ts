@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 
 import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
 import "./GlobalSpec";
@@ -11,7 +12,8 @@ describe("GitHub Markdown Service", () => {
     Config.getInstance();
 
     // tslint:disable-next-line
-    const VALID_URL = "https://api.github.com/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+    const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
+    const VALID_URL = githubAPI + '/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments';
 
     const TIMEOUT = 5000;
 

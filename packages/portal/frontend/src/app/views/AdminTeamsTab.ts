@@ -1,23 +1,29 @@
 import Log from "../../../../../common/Log";
 
-import {CourseTransport, StudentTransport, TeamTransport, TeamTransportPayload} from "../../../../../common/types/PortalTypes";
+import {
+    CourseTransport,
+    RepositoryTransport,
+    StudentTransport,
+    TeamTransport,
+    TeamTransportPayload
+} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
+import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
 
 export class AdminTeamsTab extends AdminPage {
 
-    // private readonly remote: string; // url to backend
-    private teams: TeamTransport[];
-    private students: StudentTransport[];
-    private course: CourseTransport;
+    private teams: TeamTransport[] = [];
+    private students: StudentTransport[] = [];
+    private course: CourseTransport = null;
+    private repos: RepositoryTransport[] = [];
 
     constructor(remote: string) {
         super(remote);
-        // this.remote = remote;
     }
 
     // called by reflection in renderPage
@@ -28,8 +34,9 @@ export class AdminTeamsTab extends AdminPage {
         document.getElementById('teamsListTable').innerHTML = ''; // clear target
         document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
 
-        this.students = null;
-        this.teams = null;
+        this.students = [];
+        this.teams = [];
+        this.repos = [];
 
         UI.showModal('Retrieving teams.');
         this.course = await AdminView.getCourse(this.remote);
@@ -42,11 +49,13 @@ export class AdminTeamsTab extends AdminPage {
             }
         }
 
+        this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
-        this.renderTeams(this.teams, opts.delivId);
-
         this.students = await AdminStudentsTab.getStudents(this.remote);
+
+        this.renderTeams(this.teams, opts.delivId);
         this.renderIndividuals(this.teams, this.students, opts.delivId);
+
         UI.hideModal();
     }
 
@@ -58,11 +67,27 @@ export class AdminTeamsTab extends AdminPage {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
         const headers: TableHeader[] = [
             {
+                id:          'num',
+                text:        '#',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'id',
                 text:        'Team Id',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
+                id:          'repo',
+                text:        'Repository',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    false,
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
@@ -95,6 +120,7 @@ export class AdminTeamsTab extends AdminPage {
         const st = new SortableTable(headers, '#teamsListTable');
         let listContainsStudents = false;
 
+        let count = 1;
         for (const team of teams) {
             let p1 = '';
             let p2 = '';
@@ -102,17 +128,40 @@ export class AdminTeamsTab extends AdminPage {
             if (team.people.length === 0) {
                 // do nothing
             } else if (team.people.length === 1) {
-                p1 = team.people[0];
+                p1 = this.getPersonCell(team.people[0]);
             } else if (team.people.length === 2) {
-                p1 = team.people[0];
-                p2 = team.people[1];
+                p1 = this.getPersonCell(team.people[0]);
+                p2 = this.getPersonCell(team.people[1]);
             } else if (team.people.length === 3) {
-                p1 = team.people[0];
-                p2 = team.people[1];
-                p3 = team.people[2];
+                p1 = this.getPersonCell(team.people[0]);
+                p2 = this.getPersonCell(team.people[1]);
+                p3 = this.getPersonCell(team.people[2]);
             }
+
+            let repoName = null;
+            let repoURL = null;
+            for (const repo of this.repos) {
+                if (repo.id === team.id) {
+                    repoName = repo.id;
+                    repoURL = repo.URL;
+                }
+            }
+            let repoDisplay = '<a class="selectable" href="' + repoURL + '">' + repoName + '</a>';
+            if (repoURL === null) {
+                // repo not yet provisioned; don't show anything
+                repoDisplay = '';
+            }
+
+            let teamDisplay = '<a class="selectable" href="' + team.URL + '">' + team.id + '</a>';
+            if (team.URL === null) {
+                // team not yet provisioned, don't turn this into a link
+                teamDisplay = team.id;
+            }
+
             const row: TableCell[] = [
-                {value: team.id, html: '<a href="' + team.URL + '">' + team.id + '</a>'},
+                {value: count, html: count + ''},
+                {value: team.id, html: teamDisplay},
+                {value: repoName, html: repoDisplay},
                 {value: p1, html: p1},
                 {value: p2, html: p2},
                 {value: p3, html: p3}
@@ -121,6 +170,7 @@ export class AdminTeamsTab extends AdminPage {
                 delivOptions.push(team.delivId);
             }
             if (delivId === team.delivId && team.people.length > 0) {
+                count++;
                 st.addRow(row);
                 listContainsStudents = true;
             }
@@ -132,15 +182,6 @@ export class AdminTeamsTab extends AdminPage {
         UI.setDropdownOptions('teamsListSelect', delivOptions, delivId);
 
         const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
-        // delivSelector.innerHTML = '';
-        // for (const deliv of delivOptions) {
-        //     let selected = false;
-        //     if (deliv === delivId) {
-        //         selected = true;
-        //     }
-        //     const o: HTMLOptionElement = new Option(deliv, deliv, false, selected);
-        //     delivSelector.add(o);
-        // }
 
         const that = this;
         delivSelector.onchange = function(evt) {
@@ -161,13 +202,59 @@ export class AdminTeamsTab extends AdminPage {
             UI.hideSection('teamsListTable');
             UI.showSection('teamsListTableNone');
         }
+    }
 
+    /**
+     * Convert personId to a more useful representation for staff to understand.
+     *
+     * Also add links if available.
+     *
+     * @param {string} personId
+     * @returns {string}
+     */
+    private getPersonCell(personId: string): string {
+        let render = personId;
+
+        try {
+            for (const student of this.students) {
+                if (student.id === personId) {
+
+                    if (student.githubId === student.id) {
+                        // render staff (whose GitHub ids should match their CSIDs (according to the system)
+                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                            render = '<a class="selectable" href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
+                        } else {
+                            render = 'Staff: ' + student.githubId;
+                        }
+                    } else {
+                        // render students
+                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                            render = '<a class="selectable" href="' + student.userUrl + '">' +
+                                student.githubId + '</a> (' + student.id + ')';
+                        } else {
+                            render = student.githubId + " (" + student.id + ")";
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            Log.error("AdminTeamsTab::getPersonCell( " + personId + " ) - ERROR: " + err.message);
+        }
+        return render;
     }
 
     private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
 
         const headers: TableHeader[] = [
+            {
+                id:          'num',
+                text:        '#',
+                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+                sortDown:    false, // Whether the column should initially sort descending or ascending.
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
             {
                 id:          'id',
                 text:        'Student',
@@ -191,10 +278,21 @@ export class AdminTeamsTab extends AdminPage {
         }
 
         let listContainsStudents = false;
+        let count = 1;
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
+
+                let studentHTML = '';
+                if (student.firstName === student.lastName || student.githubId.startsWith('atest-')) {
+                    studentHTML = 'Staff: ' + ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>';
+                } else {
+                    studentHTML = student.firstName + ' ' + student.lastName +
+                        ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
+                }
+
                 const row: TableCell[] = [
-                    {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'}
+                    {value: count, html: count++ + ''},
+                    {value: student.id, html: studentHTML}
                 ];
                 if (delivId !== '-None-') {
                     st.addRow(row);

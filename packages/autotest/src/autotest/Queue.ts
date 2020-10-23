@@ -63,6 +63,13 @@ export class Queue {
         return null;
     }
 
+    public peek(): ContainerInput | null {
+        if (this.data.length > 0) {
+            return Object.assign({}, this.data[0]);
+        }
+        return null;
+    }
+
     /**
      * Removes an item from the queue;
      *
@@ -80,6 +87,35 @@ export class Queue {
             }
         }
         return null;
+    }
+
+    /**
+     * Removes an item from the queue given key values to match in info.target;
+     *
+     * @returns {ContainerInput | null}
+     * @param keys
+     */
+    public removeGivenKeys(keys: Array<{key: string, value: any}>): ContainerInput | null {
+        for (let i = this.data.length - 1; i >= 0; i--) {
+            const info: ContainerInput = this.data[i];
+            if (keys.every((kv) => (info.target as any)[kv.key] === kv.value)) {
+                this.data.splice(i, 1);
+                return info;
+            }
+        }
+        return null;
+    }
+
+    public sort(key: string) {
+        this.data.sort((a: ContainerInput, b: ContainerInput) => {
+            if ((a.target as any)[key] < (b.target as any)[key]) {
+                return -1;
+            } else if ((a.target as any)[key] > (b.target as any)[key]) {
+                return 1;
+            } else {
+                return 0;
+            }
+        });
     }
 
     public indexOf(commitURL: string): number {
@@ -153,34 +189,45 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
+            Log.trace("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
+                " # slots: " + this.slots.length + "; # data: " + this.data.length);
+
             // push current elements back onto the front of the stack
             const store = {slots: this.slots, data: this.data};
             await fs.writeJSON(this.persistDir, store);
-            Log.trace("[PTEST] Queue::persist() - done");
+
             return true;
         } catch (err) {
             Log.error("[PTEST] Queue::persist() - ERROR: " + err.message);
             return false;
         }
-
     }
 
     public load() {
         try {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir);
-            Log.info("[PTEST] Queue::load() - rehydrated store: " + JSON.stringify(store));
-            Log.info("[PTEST] Queue::load() - for testing only; not adding rehydrated elements to queue yet");
+            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
+            Log.info("[PTEST] Queue::load() - rehydrating: " +
+                this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);
 
-            // NOTE: this is disabled on purpose for now, but this is what we would do
-            // put queues back; add slots to head of queue so they can be run on next tick
-            // this.data = store.data;
-            // for (const slot of store.slots) {
-            //     this.data.unshift(slot); // add to head of array
-            // }
+            // put executions that were running but not done on the front of the queue
+            for (const slot of store.slots) {
+                Log.info("[PTEST] Queue::load() - queue: " + this.name +
+                    "; add executing to HEAD: " + slot.target.commitURL);
+                this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
+            }
+
+            // push all other planned executions to the end of the queue
+            for (const data of store.data) {
+                Log.info("[PTEST] Queue::load() - queue: " + this.name +
+                    "; add queued to TAIL: " + data.target.commitURL);
+                this.push(data); // add to the head of the queued list (if we are restarting this will always be true anyways)
+            }
+            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " - done");
         } catch (err) {
             // if anything happens just don't add to the queue
-            Log.info("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
+            Log.error("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
         }
     }
 }

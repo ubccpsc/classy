@@ -2,6 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import {Queue} from "../src/autotest/Queue";
 // const loadFirst = require('./GlobalSpec');
 import "./GlobalSpec";

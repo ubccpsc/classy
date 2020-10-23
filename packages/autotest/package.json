@@ -16,32 +16,31 @@
   "license": "MIT",
   "version": "0.4.0",
   "engines": {
-    "node": ">= 8.9 < 9"
+    "node": ">= 12.13 < 13"
   },
   "dependencies": {
+    "@babel/core": "^7.0.0-0",
     "coveralls": "^3.0.2",
     "dockerode": "^2.5.7",
     "dotenv": "4.0.0",
     "fs-extra": "5.0.0",
     "jszip": "^3.2.1",
-    "junit-viewer": "^4.11.1",
-    "mocha": "^5.2.0",
+    "xunit-viewer": "^6.0.14",
+    "mocha": "^7.1.0",
     "mocha-junit-reporter": "^1.17.0",
     "mongodb": "^3.0.2",
     "nyc": "^12.0.2",
-    "request": "^2.83.0",
-    "request-promise-native": "^1.0.5",
-    "restify": "^6.3.4",
+    "restify": "^8.4.0",
     "ts-node": "^7.0.0",
-    "typescript": "^2.9.2"
-  },
+    "typescript": "^3.7.2"
+},
   "scripts": {
     "build": "tsc",
     "build:prod": "tsc --outDir bin --sourceMap false",
     "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
     "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
     "testCI": "node ./node_modules/.bin/mocha --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/autotest/test/test-results.xml --timeout 10000 --recursive --exit",
-    "cover": "nyc --reporter text --reporter html yarn run test",
+    "cover": "nyc --reporter text --reporter html ./node_modules/mocha/bin/mocha --require=dotenv/config --require ts-node/register --timeout 10000 --exit",
     "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov yarn run testCI",
     "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
     "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",

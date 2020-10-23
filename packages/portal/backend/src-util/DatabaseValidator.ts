@@ -1,7 +1,7 @@
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 import Util from "../../../common/Util";
-import {DatabaseController} from "../src/controllers/DatabaseController";
+import {DatabaseController, QueryKind} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
 import {GradesController} from "../src/controllers/GradesController";
 import {PersonController} from "../src/controllers/PersonController";
@@ -441,7 +441,7 @@ export class DatabaseValidator {
         if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
             // preprocess sdmm results differently
 
-            const outputRecords = await this.dc.readRecords('output', {});
+            const outputRecords = await this.dc.readRecords('output', QueryKind.SLOW, false, {});
             for (const output of outputRecords as any) {
                 Log.trace('considering: output record: ' + output.commitSHA);
 
@@ -489,7 +489,7 @@ export class DatabaseValidator {
                             skipNames:    [],
                             failNames:    [],
                             errorNames:   [],
-                            result:        null,
+                            result:       null,
                             custom:       {},
                             attachments:  []
                         };

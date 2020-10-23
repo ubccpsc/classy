@@ -17,7 +17,7 @@
     "license": "MIT",
     "version": "0.4.0",
     "engines": {
-        "node": ">= 8.9 < 9"
+        "node": ">= 12.13 < 13"
     },
     "workspaces": [
         "packages/*",
@@ -31,18 +31,16 @@
         "@types/jszip": "3.1.6",
         "@types/mocha": "2.2.44",
         "@types/mongodb": "^3.0.5",
-        "@types/node": "8.0.56",
-        "@types/request": "2.48.1",
-        "@types/request-promise-native": "^1.0.11",
-        "@types/restify": "^5.0.7",
+        "@types/node": "~8.10.53",
+        "@types/node-fetch": "^2.5.5",
+        "@types/restify": "^8.4.1",
         "chai": "4.1.2",
         "jsonschema": "1.2.2",
         "lerna": "^2.0.0-rc.5",
-        "mocha": "4.0.1",
-        "nyc": "11.3.0",
+        "mocha": "^7.1.0",
         "ts-node": "4.1.0",
         "tslint": "^5.11.0",
-        "typescript": "^3.5.1",
+        "typescript": "^3.7.2",
         "webpack": "^3.11.0"
     },
     "dependencies": {
@@ -52,9 +50,11 @@
         "fs-extra": "5.0.0",
         "jszip": "3.2.1",
         "mongodb": "^3.0.2",
-        "request": "^2.83.0",
-        "request-promise-native": "^1.0.5",
-        "restify": "^6.3.4"
+        "node-fetch": "^2.6.0",
+        "restify": "^8.4.0"
+    },
+    "resolutions": {
+        "**/mem": "^4.0.0"
     },
     "scripts": {
         "postinstall": "git config core.hooksPath .githooks",

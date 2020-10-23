@@ -3,6 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
@@ -13,7 +14,6 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {PersonKind, Repository, Team} from "../../src/Types";
 
 import '../GlobalSpec';
-import {Test} from "../TestHarness";
 import './TeamControllerSpec';
 
 describe("GitHubController", () => {
@@ -46,17 +46,17 @@ describe("GitHubController", () => {
         // redo with real github people
         const dbc = DatabaseController.getInstance();
         const pc = new PersonController();
-        let p = Test.createPerson(Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB1, PersonKind.STUDENT);
+        let p = Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
         await pc.writePerson(p);
-        p = Test.createPerson(Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, Test.USERNAMEGITHUB2, PersonKind.STUDENT);
+        p = Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
         await pc.writePerson(p);
 
         // const tc = new TeamController();
-        const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const t1 = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t1);
-        const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        const t2 = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.GITHUB1.id, Test.GITHUB2.id]);
         await dbc.writeTeam(t2);
-        // const t3 = await Test.createTeam(Test.TEAMNAME3, Test.DELIVID2, [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]);
+        // const t3 = await Test.teamCreate(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
         // await dbc.writeTeam(t3);
 
         const dc = new DeliverablesController();
@@ -75,10 +75,6 @@ describe("GitHubController", () => {
     });
 
     beforeEach(function() {
-        Log.test('GitHubController::BeforeEach - ***');
-        Log.test('GitHubController::BeforeEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::BeforeEach - ***');
-
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
@@ -87,12 +83,6 @@ describe("GitHubController", () => {
             Log.test("GitHubController::BeforeEach() - skipping (not CI)");
             this.skip();
         }
-    });
-
-    afterEach(function() {
-        Log.test('GitHubController::AfterEach - ***');
-        Log.test('GitHubController::AfterEach - "' + (this as any).currentTest.title + '"');
-        Log.test('GitHubController::AfterEach - ***');
     });
 
     it("Should be able to clear out prior result", async function() {
@@ -132,27 +122,27 @@ describe("GitHubController", () => {
     });
 
     it("Should be able to provision a repo.", async function() {
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should fail to provision a repo that already exists.", async function() {
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
 
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        // const webhook = 'https://devnull.cs.ubc.ca/classyWebhook';
-        const importUrl = 'https://github.com/SECapstone/bootstrap';
+        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -180,9 +170,10 @@ describe("GitHubController", () => {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = 'https://github.com/SECapstone/capstone';
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -207,9 +198,10 @@ describe("GitHubController", () => {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = 'https://github.com/SECapstone/capstone';
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -248,13 +240,14 @@ describe("GitHubController", () => {
         // await Test.deleteStaleRepositories();
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2); // get repo object
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
 
         await gha.deleteRepo(repo.id); // delete repo from github
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
         Log.test("Custom setup done");
 
-        const importURL = 'https://github.com/SECapstone/capstone';
-        const success = await gc.createRepository(repo.id, importURL, "AutoTest.md");
+        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const success = await gc.createRepository(repo.id, importURL, "README.md");
         Log.test("Custom test done: " + success);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -307,7 +300,7 @@ describe("GitHubController", () => {
         res = null;
         ex = null;
         try {
-            const team: any = {id: Test.TEAMNAME3, personIds: [Test.USERNAMEGITHUB1, Test.USERNAMEGITHUB2]};
+            const team: any = {id: Test.TEAMNAME3, personIds: [Test.GITHUB1.id, Test.GITHUB2.id]};
             // try to release a repo with a team that doesn't exist
             res = await gc.releaseRepository(allRepos[1], [team], false);
             expect(res).to.be.false;
@@ -318,18 +311,20 @@ describe("GitHubController", () => {
         expect(ex).to.not.be.null;
     }).timeout(Test.TIMEOUT);
 
-    it("Should fail to create a pull request.", async function() {
-        let res = null;
-        let ex = null;
-        try {
-            // not implemented yet, should fail right away
-            const repos = await new RepositoryController().getAllRepos();
-            res = await gc.createPullRequest(repos[0], 'patch');
-        } catch (err) {
-            ex = err;
-        }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
-    }).timeout(Test.TIMEOUT);
+    // TODO: actually write tests for the PR feature
+    // xit("Should fail to create a pull request.", async function() {
+    //     let res = null;
+    //     let ex = null;
+    //     try {
+    //         // patchtool has not been integrated with tests yet,
+    //         // so should fail to contact patchtool and return false
+    //         const repos = await new RepositoryController().getAllRepos();
+    //         res = await gc.createPullRequest(repos[0], 'patch');
+    //     } catch (err) {
+    //         ex = err;
+    //     }
+    //     expect(res).to.be.false;
+    //     expect(ex).to.be.null;
+    // }).timeout(Test.TIMEOUT);
 
 });

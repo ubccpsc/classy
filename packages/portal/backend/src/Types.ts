@@ -50,8 +50,8 @@ export interface Person {
     readonly studentNumber: number | null;
     githubId: string; // warning: this can change (e.g., if student updates their CWL)
 
-    readonly fName: string;
-    readonly lName: string;
+    fName: string;
+    lName: string;
     kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
     URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
 
@@ -128,6 +128,8 @@ export interface Team {
     URL: string | null; // null when not yet created
     githubId: number | null; // null when not yet created
     personIds: string[]; // Person.id[] - foreign key
+    // repoName: string | null;
+    // repoUrl: string | null;
 
     // githubStatus: string; // NONE | CREATED | LINKED
     custom: {
@@ -225,7 +227,8 @@ export interface Grade {
     urlName: string | null; // name associated with URL (e.g., project name)
     URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+    /*
     custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
         sdmmStatus?: boolean
 
@@ -235,6 +238,7 @@ export interface Grade {
         // released?: any, // AssignmentController // TODO: make into assignment.released
         assignmentGrade?: AssignmentGrade
     };
+     */
 }
 
 export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!

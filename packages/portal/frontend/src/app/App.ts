@@ -164,7 +164,7 @@ export class App {
 
             (document.querySelector('#loginButton') as OnsButtonElement).onclick = function() {
                 // localStorage.setItem('org', org);
-                const url = that.backendURL + '/portal/auth/?name=' + name;
+                const url = that.backendURL + '/portal/auth?name=' + name;
                 Log.trace('App::performInit() - login pressed for: ' + name + '; url: ' + url);
                 window.location.replace(url);
             };
@@ -416,11 +416,11 @@ export class App {
                 return json.success;
             } else {
                 Log.error('App::retrieveConfig() - failed: ' + JSON.stringify(json) + ')');
-                return {org: 'ERROR', name: 'ERROR', githubAPI: null};
+                return {org: 'ERROR', name: 'ERROR', githubAPI: null, studentsFormTeamDelivIds: null};
             }
         } else {
             Log.error('App::retrieveConfig() - ERROR');
-            return {org: 'ERROR', name: 'ERROR', githubAPI: null};
+            return {org: 'ERROR', name: 'ERROR', githubAPI: null, studentsFormTeamDelivIds: null};
         }
     }
 

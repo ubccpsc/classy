@@ -5,6 +5,7 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
@@ -52,17 +53,12 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
 
         portal = new MockClassPortal();
-
         Config.getInstance().setProp(ConfigKey.postback, false);
 
         Log.test("AutoTest::before() - done");
     });
 
     beforeEach(async function() {
-        // Log.test("AutoTest::beforeEach() - start");
-        Log.test("*****");
-        Log.test("GitHubAutoTestSpec::beforeEach( " + this.currentTest.title + " ) - start");
-        Log.test("*****");
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
@@ -74,10 +70,6 @@ describe("GitHubAutoTest", () => {
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
-        // Log.test("AutoTest::afterEach() - done");
-        Log.test("*****");
-        Log.test("GitHubAutoTestSpec::afterEach( " + this.currentTest.title + " ) - done");
-        Log.test("*****");
     });
 
     it("Should be able to be instantiated.", () => {
@@ -180,11 +172,74 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.personId = 'validName';
 
+        Log.test('bot not mentioned');
+        info.botMentioned = false;
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.botMentioned = true;
+
         Log.test('null delivId');
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.delivId = 'd1';
+
+        Log.test('invalid delivId');
+        info.delivId = 'd_' + Date.now();
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.delivId = 'd1';
+
+        // This actually passes: we don't check if the person exists, just if they are staff (and unknown users are not staff)
+        // Log.test('invalid person');
+        // const person = info.personId;
+        // info.personId = 'person_' + Date.now();
+        // meetsPreconditions = await at["checkCommentPreconditions"](info);
+        // expect(meetsPreconditions).to.be.false;
+        // info.personId = person;
+
+        // This actually passes: we don't validate repo existence at this point (since these events should only come from valid repos anyways)
+        // Log.test('invalid repo');
+        // const repo = info.repoId;
+        // info.repoId = 'repo_' + Date.now();
+        // meetsPreconditions = await at["checkCommentPreconditions"](info);
+        // expect(meetsPreconditions).to.be.false;
+        // info.repoId = repo;
+
+        Log.test('force by student');
+        info.flags = ["#force"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
+
+        Log.test('silent by student');
+        info.flags = ["#silent"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
+
+        Log.test('force by autobot');
+        const student = info.personId;
+        info.personId = Config.getInstance().getProp(ConfigKey.botName);
+        info.flags = ["#force"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.personId = student;
+        delete info.flags;
+
+        Log.test('silent by staff');
+        info.personId = 'staff'; // Config.getInstance().getProp(ConfigKey.botName);
+        info.flags = ["#silent"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.true;
+        info.personId = student;
+        delete info.flags;
+
+        Log.test('schedule and unschedule');
+        info.flags = ["#schedule", "#unschedule"];
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        delete info.flags;
 
         Log.test('not open yet');
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
@@ -192,17 +247,18 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed');
+        Log.test('closed but with late autotest allowed');
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        // TODO: try an invalid delivId
-
-        // TODO: try an invalid repoId
-
-        // TODO: try an invalid personId
+        Log.test('closed but with late autotest disallowed');
+        info.delivId = 'd0';
+        info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.timestamp = new Date(2018, 2, 1).getTime();
 
         // valid case
         info.delivId = 'd1';
@@ -210,32 +266,97 @@ describe("GitHubAutoTest", () => {
         expect(meetsPreconditions).to.be.true;
     });
 
-    it("Should be able to receive a comment event.", async () => {
+    it("Should be able to receive a valid comment event from a student for an open deliverable.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
-            botMentioned: false,
+            botMentioned: true,
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
             personId:     "myUser",
             kind:         'standard',
             repoId:       "d1_project9999",
-            // org:           "310",
             delivId:      "d0",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:    1234567891,
+            postbackURL:  "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
+            timestamp:    TS_IN,
             cloneURL:     "https://cloneURL"
         };
 
+        Log.test('getting data');
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
+        Log.test('handling comment');
         await at.handleCommentEvent(ce);
+        Log.test('re-getting data');
         allData = await data.getAllData();
-        expect(allData.comments.length).to.equal(0);
+        expect(allData.comments.length).to.equal(1);
 
         // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
+
+    it("Should be able to receive a comment event that schedules right away due to no prior request.", async () => {
+        expect(at).not.to.equal(null);
+
+        const pe: CommitTarget = pushes[0];
+        const ce: CommitTarget = {
+            botMentioned: true,
+            commitSHA:    pe.commitSHA,
+            commitURL:    pe.commitURL,
+            personId:     "myUser",
+            kind:         'standard',
+            repoId:       "d1_project9999",
+            delivId:      "d0",
+            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp:    TS_IN,
+            cloneURL:     "https://cloneURL"
+        };
+        ce.flags = ["#schedule"];
+
+        Log.test('getting data');
+        let allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(0);
+
+        Log.test('handling schedule');
+        await at.handleCommentEvent(ce);
+
+        Log.test('re-getting data');
+        allData = await data.getAllData();
+        expect(allData.comments.length).to.equal(1);
+    });
+
+    // TODO: need to strengthen this with a new feedback record in
+    // it("Should be able to receive a comment event that schedules for the future due to prior requests.", async () => {
+    //     expect(at).not.to.equal(null);
+    //
+    //     const pe: CommitTarget = pushes[0];
+    //     const ce: CommitTarget = {
+    //         botMentioned: true,
+    //         commitSHA:    pe.commitSHA,
+    //         commitURL:    pe.commitURL,
+    //         personId:     "cs310test",
+    //         kind:         'standard',
+    //         repoId:       "d1_project9999",
+    //         delivId:      "d1",
+    //         postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+    //         timestamp:    TS_IN,
+    //         cloneURL:     "https://cloneURL"
+    //     };
+    //     ce.flags = ["#schedule"];
+    //
+    //     Log.test('getting data');
+    //     let allData = await data.getAllData();
+    //     expect(allData.comments.length).to.equal(0);
+    //     expect(allData.feedback.length).to.equal(1); // should be one record in there for this user
+    //
+    //     Log.test('handling schedule');
+    //     ce.timestamp = TS_IN + 1000;
+    //     await at.handleCommentEvent(ce);
+    //
+    //     Log.test('re-getting data');
+    //     allData = await data.getAllData();
+    //     expect(allData.comments.length).to.equal(1);
+    // });
 
     it("Should be able to use a comment event to start the express queue.", async () => {
         expect(at).not.to.equal(null);

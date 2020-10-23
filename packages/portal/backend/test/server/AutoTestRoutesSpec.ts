@@ -6,6 +6,8 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -16,8 +18,6 @@ import {
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../TestHarness";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
@@ -117,7 +117,7 @@ describe('AutoTest Routes', function() {
     it('Should reject an authorized result', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
 
         let body = null;
         try {
@@ -135,7 +135,7 @@ describe('AutoTest Routes', function() {
     it('Should accept a valid result payload', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
         const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
 
         try {
@@ -151,7 +151,7 @@ describe('AutoTest Routes', function() {
     it('Should reject an invalid result payload', async function() {
 
         let response = null;
-        const url = '/portal/at/result/';
+        const url = '/portal/at/result';
 
         const body = { // : IAutoTestResult
             delivId:   Test.DELIVID0,
@@ -231,7 +231,7 @@ describe('AutoTest Routes', function() {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/isStaff/' + Test.ADMIN1.github;
+        const url = '/portal/at/isStaff/' + Test.ADMINSTAFF1.github;
         try {
             response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -264,7 +264,7 @@ describe('AutoTest Routes', function() {
         expect(body.success.isAdmin).to.not.be.undefined;
         expect(body.success.isStaff).to.be.false;
         expect(body.success.isAdmin).to.be.false;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should reject an unauthorized personId request', async function() {
 
@@ -390,7 +390,7 @@ describe('AutoTest Routes', function() {
             custom:    {}
         };
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
@@ -424,7 +424,7 @@ describe('AutoTest Routes', function() {
 
         delete gradePayload.score; // remove field
 
-        const url = '/portal/at/grade/';
+        const url = '/portal/at/grade';
         try {
             response = await request(app)
                 .post(url)
@@ -445,6 +445,7 @@ describe('AutoTest Routes', function() {
         // NOTE: this is a terrible tests; without the service running we get nothing
         let response = null;
         const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
+        const autotestUrl = Config.getInstance().getProp(ConfigKey.autotestUrl);
 
         const url = '/portal/githubWebhook';
         try {
@@ -458,7 +459,11 @@ describe('AutoTest Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
         const text = response.text;
-        expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+        if (autotestUrl.indexOf('localhost') > -1) {
+            expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+        } else {
+            expect(text.indexOf('ENOTFOUND')).to.be.greaterThan(0); // non-localhost autotest hostname name results in different error
+        }
     });
 
     describe('GET /portal/at/docker/images', function() {
@@ -525,6 +530,7 @@ describe('AutoTest Routes', function() {
             let res: any;
 
             try {
+                // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
                 res = await request(app).post(url).set('user', Test.REALUSER1.github).send(body);
             } catch (err) {
                 res = err;
@@ -557,7 +563,7 @@ describe('AutoTest Routes', function() {
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 500 if forwarding the request to AutoTest fails.', async function() {
+        it('Should respond 500 if forwarding the request to AutoTest fails with body.', async function() {
             this.timeout(15000);
             let res: any;
 

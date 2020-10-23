@@ -84,6 +84,20 @@ export default class Util {
     }
 
     /**
+     * Creates a query string for fetch requests
+     * @param obj: [key: string]: string type.
+     * @return qs: UrlSearchParams
+     */
+    public static getQueryStr(obj: {[key: string]: string}): string {
+        const qs = '?';
+        const params = Object.keys(obj).map((key) => {
+            return encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]);
+        })
+        .join('&');
+        return qs + params;
+}
+
+    /**
      * Makes a copy of an object.
      *
      * @param {{}} obj

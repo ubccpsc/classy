@@ -6,8 +6,8 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {Auth} from "../../src/Types";
 
+import {Test} from "../../../../common/TestHarness";
 import '../GlobalSpec';
-import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
 describe("AuthController", () => {
@@ -73,7 +73,24 @@ describe("AuthController", () => {
     }).timeout(Test.TIMEOUTLONG);
 
     it("Should identify an adminstaff correctly.", async function() {
-        let isValid = await ac.isValid(Test.ADMIN1.id, Test.FAKETOKEN);
+        let isValid = await ac.isValid(Test.ADMINSTAFF1.id, Test.FAKETOKEN);
+        expect(isValid).to.be.false;
+
+        const auth: Auth = {
+            personId: Test.ADMINSTAFF1.id,
+            token:    Test.REALTOKEN
+        };
+        await DatabaseController.getInstance().writeAuth(auth);
+        isValid = await ac.isValid(Test.ADMINSTAFF1.id, Test.REALTOKEN);
+        expect(isValid).to.be.true;
+
+        const isPriv = await ac.isPrivileged(Test.ADMINSTAFF1.id, Test.REALTOKEN);
+        expect(isPriv.isAdmin).to.be.true;
+        expect(isPriv.isStaff).to.be.true;
+    }).timeout(Test.TIMEOUTLONG);
+
+    it("Should identify an admin (but not adminstaff) correctly.", async function() {
+        let isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
@@ -85,23 +102,6 @@ describe("AuthController", () => {
         expect(isValid).to.be.true;
 
         const isPriv = await ac.isPrivileged(Test.ADMIN1.id, Test.REALTOKEN);
-        expect(isPriv.isAdmin).to.be.true;
-        expect(isPriv.isStaff).to.be.true;
-    }).timeout(Test.TIMEOUTLONG);
-
-    it("Should identify an admin (but not adminstaff) correctly.", async function() {
-        let isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
-        expect(isValid).to.be.false;
-
-        const auth: Auth = {
-            personId: Test.REALUSER3.id,
-            token:    Test.REALTOKEN
-        };
-        await DatabaseController.getInstance().writeAuth(auth);
-        isValid = await ac.isValid(Test.REALUSER3.id, Test.REALTOKEN);
-        expect(isValid).to.be.true;
-
-        const isPriv = await ac.isPrivileged(Test.REALUSER3.id, Test.REALTOKEN);
         expect(isPriv.isAdmin).to.be.true;
         expect(isPriv.isStaff).to.be.false;
     }).timeout(Test.TIMEOUTLONG);

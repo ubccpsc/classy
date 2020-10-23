@@ -47,6 +47,14 @@ export class AdminGradesTab extends AdminPage {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id:          'id',
+                text:        'Internal Id',
+                sortable:    true,
+                defaultSort: true,
+                sortDown:    false,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'snum',
                 text:        'SNUM',
                 sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -99,7 +107,8 @@ export class AdminGradesTab extends AdminPage {
         // this loop couldn't possibly be less efficient
         for (const student of students) {
             const row: TableCell[] = [
-                {value: student.id, html: '<a href="' + student.userUrl + '">' + student.id + '</a>'},
+                {value: student.githubId, html: '<a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>'},
+                {value: student.id, html: student.id + ''},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
@@ -115,7 +124,7 @@ export class AdminGradesTab extends AdminPage {
                                 score = grade.score + '';
                             }
                             if (score !== '') {
-                                tableCell = {value: score, html: '<a href="' + grade.URL + '">' + score + '</a>'};
+                                tableCell = {value: score, html: '<a class="selectable" href="' + grade.URL + '">' + score + '</a>'};
                             } else {
                                 tableCell = {value: score, html: score};
                             }

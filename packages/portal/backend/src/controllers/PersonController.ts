@@ -17,21 +17,49 @@ export class PersonController {
      * @returns {Promise<Person | null>}
      */
     public async createPerson(personPrototype: Person): Promise<Person | null> {
-        Log.info("PersonController::createPerson( " + personPrototype.id + " ) - start");
+        Log.trace("PersonController::createPerson( " + personPrototype.id + " ) - start");
         const existingPerson = await this.db.getPerson(personPrototype.id);
 
         if (existingPerson === null) {
             await this.db.writePerson(personPrototype);
 
-            Log.trace("PersonController::createPerson( " + personPrototype.id + " ) - created");
+            Log.info("PersonController::createPerson( " + personPrototype.id + " ) - new person created");
             const person = await this.db.getPerson(personPrototype.id);
             return person;
 
         } else {
             // merge people
+
+            if (existingPerson.labId !== personPrototype.labId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - lab id change: " + existingPerson.labId + " -> " + personPrototype.labId);
+            }
             existingPerson.labId = personPrototype.labId; // can update
+
+            if (existingPerson.githubId !== personPrototype.githubId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - githubId change: " + existingPerson.githubId + " -> " + personPrototype.githubId);
+            }
             existingPerson.githubId = personPrototype.githubId; // can update
+
+            if (existingPerson.githubId !== personPrototype.githubId) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - URL change: " + existingPerson.URL + " -> " + personPrototype.URL);
+            }
             existingPerson.URL = personPrototype.URL; // can update (along with githubId)
+
+            if (existingPerson.fName !== personPrototype.fName) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - fName change: " + existingPerson.fName + " -> " + personPrototype.fName);
+            }
+            existingPerson.fName = personPrototype.fName; // can update (along with githubId)
+
+            if (existingPerson.lName !== personPrototype.lName) {
+                Log.info("PersonController::createPerson( " + personPrototype.id +
+                    " ) - lName change: " + existingPerson.lName + " -> " + personPrototype.lName);
+            }
+            existingPerson.lName = personPrototype.lName; // can update (along with githubId)
+
             // NOTE: existingPerson.custom is _not_ deleted ; unsure if this is the right thing
             // existingPerson.custom = {};
 
@@ -41,7 +69,6 @@ export class PersonController {
             const person = await this.db.getPerson(personPrototype.id);
             return person;
         }
-
     }
 
     /**
@@ -68,7 +95,7 @@ export class PersonController {
     public async getGitHubPerson(githubId: string): Promise<Person | null> {
         let person = await this.db.getGitHubPerson(githubId);
         if (person === null) {
-            Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
+            Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId not yet registered.");
 
             // user not registered but might be admin or staff
             const gh = GitHubActions.getInstance();
@@ -76,7 +103,7 @@ export class PersonController {
             const isStaff = await gh.isOnStaffTeam(githubId);
 
             if (isAdmin === true || isStaff === true) {
-                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");
+                Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId is admin or staff.");
                 person = {
                     id:            githubId,
                     githubId:      githubId,
@@ -92,7 +119,7 @@ export class PersonController {
                 person = await this.createPerson(person);
                 return person;
             } else {
-                Log.trace("PersonController::getgetGitHubPersonPerson( " + githubId + " ) - githubId is unknown and not admin/staff.");
+                Log.trace("PersonController::getGitHubPersonPerson( " + githubId + " ) - githubId is unknown and not admin/staff.");
                 return null;
             }
 
@@ -107,8 +134,9 @@ export class PersonController {
      * @returns {boolean}
      */
     public async getPerson(personId: string): Promise<Person | null> {
-        Log.trace("PersonController::getPerson( ... ) - start");
+        // Log.trace("PersonController::getPerson( ... ) - start");
         Log.trace("PersonController::getPerson( " + personId + " ) - start");
+        const start = Date.now();
 
         const person = await this.db.getPerson(personId);
         if (person === null) {
@@ -117,6 +145,7 @@ export class PersonController {
             //     Config.getInstance().getProp(ConfigKey.org));
             return null;
         }
+        Log.trace("PersonController::getPerson( " + personId + " ) - done; took: " + Util.took(start));
         return person;
     }
 
@@ -127,7 +156,10 @@ export class PersonController {
      */
     public async getAllPeople(): Promise<Person[]> {
         Log.trace("PersonController::getAllPeople() - start");
-        return await this.db.getPeople();
+        const start = Date.now();
+        const people = await this.db.getPeople();
+        Log.trace("PersonController::getAllPeople() - done; took: " + Util.took(start));
+        return people;
     }
 
     public async getRepos(personId: string): Promise<Repository[] | null> {

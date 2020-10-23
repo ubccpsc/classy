@@ -3,9 +3,9 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
+import {Test} from "../../../common/TestHarness";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
-import {Test} from "./TestHarness";
 
 if (typeof it === 'function') {
     // only if we're running in mocha
@@ -26,5 +26,13 @@ if (typeof it === 'function') {
         Log.info('GlobalSpec::after() - start');
         await Test.prepareAll();
         Log.info('GlobalSpec::after() - done');
+    });
+
+    beforeEach(function() {
+        Test.testBefore(this);
+    });
+
+    afterEach(function() {
+        Test.testAfter(this);
     });
 }

@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 import {Person, PersonKind} from "../Types";
 
+import Config, {ConfigKey} from "../../../../common/Config";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
 import {PersonController} from "./PersonController";
@@ -46,9 +47,9 @@ export class AuthController {
         const personId = person.id;
         if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them
-            const isStaff = await GitHubActions.getInstance().isOnStaffTeam(personId);
-            const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(personId);
-            Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
+            const isStaff = await GitHubActions.getInstance().isOnStaffTeam(person.githubId);
+            const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(person.githubId);
+            Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - github: " + person.githubId +
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
             const dc = DatabaseController.getInstance();
@@ -96,6 +97,8 @@ export class AuthController {
                 Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
                 return await this.personPriviliged(person);
             }
+        } else if (person === null && this.isLocalRequest(token)) {
+            return {isAdmin: false, isStaff: true};
         }
         return {isAdmin: false, isStaff: false};
     }
@@ -134,19 +137,23 @@ export class AuthController {
         return false; // if it doesn't throw an exception it must have worked enough
     }
 
+    private isLocalRequest(token: string): boolean {
+        return Config.getInstance().getProp(ConfigKey.autotestSecret) === token;
+    }
+
     private async verifyToken(personId: string, token: string): Promise<boolean> {
         Log.trace("AuthController::verifyToken( " + personId + " ) - start");
         const auth = await this.dc.getAuth(personId);
         if (auth !== null) {
             if (auth.token === token) {
-                Log.info("DatabaseController::verifyToken( " + personId + " ) - token verified");
+                Log.trace("AuthController::verifyToken( " + personId + " ) - token verified");
                 return true;
             } else {
-                Log.info("DatabaseController::verifyToken( " + personId + " ) - token !verified");
+                Log.trace("AuthController::verifyToken( " + personId + " ) - token !verified");
                 return false;
             }
         }
-        Log.info("DatabaseController::verifyToken( " + personId + " ) - no token stored");
+        Log.trace("AuthController::verifyToken( " + personId + " ) - no token stored");
         return false;
     }
 

@@ -1,5 +1,4 @@
 import Log from "../../../../common/Log";
-
 import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 
@@ -35,18 +34,43 @@ export class Factory {
         return Factory.instance;
     }
 
+    /**
+     * Checks for a custom controller. If one exists, there _must_ be custom html as well.
+     *
+     * @returns {boolean}
+     */
+    private customControllerExists(): boolean {
+        let customController = null;
+        try {
+            customController = require('./custom/CustomStudentView');
+        } catch (err) {
+            Log.info('Factory::customControllerExists() - Custom Controller found for course: ' + this.name);
+        }
+        return customController ? true : false;
+    }
+
     public async getView(backendUrl: string): Promise<IView> {
+        // Loads a custom view model if custom HTML code exists, default model for default html, etc.
+        const customViewsExist = this.customControllerExists();
+
         try {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not
+
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyStudentView'); // default for testing
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name +
+                        '; using test DefaultStudentView');
+                    plug = await require('./custom/DefaultStudentView'); // default for testing
+                } else if (customViewsExist) {
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using CustomStudentView');
+                    plug = await require('./custom/CustomStudentView'); // course-specific file;
                 } else {
-                    plug = await require('./custom/CustomStudentView'); // course-specific file; must be present in all forks
+                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using DefaultStudentView');
+                    plug = await require('./custom/DefaultStudentView');
                 }
 
                 Log.trace("Factory::getView() - view loaded");
@@ -79,6 +103,8 @@ export class Factory {
             config:       true
         };
 
+        const customViewsExist = this.customControllerExists();
+
         try {
             if (this.adminView === null) {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
@@ -87,11 +113,16 @@ export class Factory {
                 // import complains about this, but require does not.
                 let plug: any;
                 if (name === this.TESTNAME) {
-                    plug = await require('./views/classy/ClassyAdminView'); // default for testing
-                } else {
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
+                    plug = await require('./custom/DefaultAdminView'); // default for testing
+                } else if (customViewsExist) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    plug = await require('./custom/CustomAdminView');
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using CustomAdminView');
+                    plug = await require('./custom/CustomAdminView'); // course-specific file;
+                } else {
+                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
+                    plug = await require('./custom/DefaultAdminView');
                 }
 
                 Log.trace("Factory::getAdminView() - view loaded");
@@ -127,11 +158,13 @@ export class Factory {
     /**
      * Returns the prefix directory for the HTML files specific to the course.
      *
-     * The recommended approach is to just put your html files in the
-     * 'html/<courseName>' directory.
+     * The required approach is to just put your html files in the
+     * 'html/<courseName>' directory. You will also need to create a
+     * CustomCourseController (even just an empty one that extends
+     * DefaultCourseController).
      *
      * Examples of what these files can look like can be found in the test
-     * implementations found in 'html/classy/'.
+     * implementations found in 'html/custom/' by looking at Default files.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
@@ -141,13 +174,21 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
-        // FORK: You probably do not need to change this unless you want your course
-        // name to be different than the directory your html files are stored in.
+        // FORK: Gets the default html/default/landing.html page unless your course
+        // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
+
+        const customViewsExist = this.customControllerExists();
+
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
-        if (this.name === 'classytest') {
-            return 'classy';
-        } else {
+        if (this.name === this.TESTNAME) {
+            Log.info("Factory::getHTMLPrefix() - using default test prefix for: " + this.name);
+            return 'default';
+        } else if (customViewsExist === true) {
+            Log.info("Factory::getHTMLPrefix() - custom prefix for: " + this.name);
             return this.name;
+        } else {
+            Log.info("Factory::getHTMLPrefix() - using default prefix for: " + this.name);
+            return 'default';
         }
     }
 }

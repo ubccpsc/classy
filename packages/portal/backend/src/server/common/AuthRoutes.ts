@@ -1,5 +1,5 @@
 import * as ClientOAuth2 from "client-oauth2";
-import * as rp from "request-promise-native";
+import fetch, {RequestInit} from "node-fetch";
 import * as restify from "restify";
 
 import Config, {ConfigKey} from "../../../../../common/Config";
@@ -167,7 +167,7 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
-        Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
+        Log.info("AuthRoutes::getAuth(..) - /auth redirect start");
 
         const config = Config.getInstance();
         const setup = {
@@ -180,7 +180,7 @@ export class AuthRoutes implements IREST {
 
         const githubAuth = new ClientOAuth2(setup);
         const uri = githubAuth.code.getUri();
-        Log.info("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
+        Log.trace("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
         res.redirect(uri, next);
     }
 
@@ -247,14 +247,13 @@ export class AuthRoutes implements IREST {
         const githubAuth = new ClientOAuth2(opts);
         let token: string | null;
         let username: string | null;
-
+        const uri: string = config.getProp(ConfigKey.githubAPI) + '/user';
         const user = await githubAuth.code.getToken(url);
 
         Log.trace("AuthRoutes::performAuthCallback(..) - token acquired");
 
         token = user.accessToken;
-        const options = {
-            uri:     config.getProp(ConfigKey.githubAPI) + '/user',
+        const options: RequestInit = {
             method:  'GET',
             headers: {
                 'Content-Type':  'application/json',
@@ -267,24 +266,28 @@ export class AuthRoutes implements IREST {
 
         // this extra check isn't strictly required, but means we can
         // associate a GitHub username with a token on the backend
-        const ans = await rp(options);
+        const ans = await fetch(uri, options);
 
         // we now have a github username
-        Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username received");
-        const body = JSON.parse(ans);
+        Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username received");
+        const body = await ans.json();
         username = body.login;
-        Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username: " + username);
+        Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - GH username: " + username);
 
         let person = await personController.getGitHubPerson(username);
 
         // we now know if that github username is known for the course
 
         if (person === null) {
-            Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username not registered");
+            Log.warn("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username not registered: " + username);
             const cc = await Factory.getCourseController();
             person = await cc.handleUnknownUser(username);
         } else {
-            Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username IS registered");
+            Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - github username IS registered");
+            // forces update of user role on login.
+            person.kind = null;
+            await new PersonController().writePerson(person);
+            Log.trace("AuthRoutes::performAuthCallback(..) - person kind reset for " + JSON.stringify(person));
         }
 
         // now we either have the person in the course or there will never be one
@@ -304,7 +307,7 @@ export class AuthRoutes implements IREST {
         }
 
         if (person === null) {
-            Log.info("AuthRoutes::performAuthCallback(..) - /authCallback - person (GitHub id: " + username +
+            Log.warn("AuthRoutes::performAuthCallback(..) - /authCallback - person (GitHub id: " + username +
                 " ) not registered for course; redirecting to invalid user screen.");
             return {
                 cookie:   null,
@@ -314,14 +317,14 @@ export class AuthRoutes implements IREST {
             };
         } else {
 
-            Log.info("AuthRoutes::performAuthCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
+            Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
             const auth: Auth = {
                 personId: person.id, // use person.id, not username (aka githubId)
                 token:    token
             };
 
             await DatabaseController.getInstance().writeAuth(auth);
-            Log.info("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
+            Log.trace("AuthRoutes::performAuthCallback(..) - preparing redirect for: " + JSON.stringify(person));
 
             Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect hostname: " + feUrl + "; fePort: " + fePort);
 

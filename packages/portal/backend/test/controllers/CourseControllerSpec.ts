@@ -1,5 +1,7 @@
 import {expect} from "chai";
 import "mocha";
+import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 
 import {CourseController} from "../../src/controllers/CourseController";
@@ -10,7 +12,6 @@ import {PersonController} from "../../src/controllers/PersonController";
 import {Grade} from "../../src/Types";
 
 import '../GlobalSpec';
-import {Test} from "../TestHarness";
 import './PersonControllerSpec';
 
 describe("CourseController", () => {
@@ -46,9 +47,11 @@ describe("CourseController", () => {
         const p2 = await new PersonController().getPerson(Test.USER2.id);
         const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
         const names = await cc.computeNames(deliv, [p1, p2]);
+        Log.test("computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal('t_d1_user1gh_user2gh');
-        expect(names.repoName).to.equal('d1_user1gh_user2gh');
+        expect(names.teamName).to.equal('t_d1_' + Test.USER1.csId + '_' + Test.USER2.csId);
+        // expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
+        expect(names.repoName).to.equal('d1_user1CSID_user2CSID');
     });
 
     it("Should not be able to compute names if there are no people or no deliverable.", async () => {

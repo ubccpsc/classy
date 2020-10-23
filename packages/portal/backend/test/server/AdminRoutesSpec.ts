@@ -5,6 +5,8 @@ import * as request from 'supertest';
 
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
+
+import {Test} from "../../../../common/TestHarness";
 import {
     AutoTestConfigTransport,
     AutoTestResultPayload,
@@ -22,11 +24,9 @@ import Util from "../../../../common/Util";
 import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {DeliverablesController} from "../../src/controllers/DeliverablesController";
 import {GitHubActions} from "../../src/controllers/GitHubActions";
+import {PersonController} from "../../src/controllers/PersonController";
 import {TeamController} from "../../src/controllers/TeamController";
-
 import BackendServer from "../../src/server/BackendServer";
-
-import {Test} from "../TestHarness";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function() {
@@ -531,7 +531,7 @@ describe('Admin Routes', function() {
         let body: Payload;
         const url = '/portal/admin/classlist';
         try {
-            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValid.csv').set({
+            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidFirst.csv').set({
                 user:  userName,
                 token: userToken
             });
@@ -543,8 +543,8 @@ describe('Admin Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        expect(body.success.message).to.contain('5 students');
+        expect(body.success).to.be.an('object');
+        expect(body.success.classlist.length).to.equal(5);
     });
 
     it('Should fail to upload bad classlists', async function() {
@@ -600,8 +600,8 @@ describe('Admin Routes', function() {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        expect(body.success.message).to.contain('5 students processed'); // capture how many changed?
+        expect(body.success).to.be.an('object');
+        expect(body.success.classlist.length).to.equal(5); // capture how many changed?
 
         people = await dc.getPeople();
         expect(peopleLength).to.equal(people.length); // no new people should have been added
@@ -859,8 +859,10 @@ describe('Admin Routes', function() {
         // }).timeout(TIMEOUT * 30);
 
         it('Should be able to perform a withdraw task', async function() {
-
             // This is tricky because the live github data will have a different team id than we're using locally
+
+            const pc = new PersonController();
+            const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;
@@ -1125,7 +1127,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
 
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should be able to delete a deliverable', async function() {
         const url = '/portal/admin/deliverable/' + Test.DELIVID0;
@@ -1200,7 +1202,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
         expect(ex).to.be.null;
-    });
+    }).timeout(Test.TIMEOUT);
 
     it('Should fail to delete a repository if appropriate', async function() {
         const url = '/portal/admin/repository/';
@@ -1293,5 +1295,36 @@ describe('Admin Routes', function() {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
+    });
+
+    it('Should be able to update a classlist if authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('created');
+        expect(body.success).to.haveOwnProperty('updated');
+        expect(body.success).to.haveOwnProperty('removed');
+    });
+
+    it('Should NOT be able to update a classlist if not authorized as admin', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/admin/classlist';
+        try {
+            response = await request(app).put(url);
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
     });
 });

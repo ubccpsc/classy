@@ -6,6 +6,9 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
+import {ClusteredResult} from "./ContainerTypes";
+
+import {Deliverable} from "../../portal/backend/src/Types";
 
 export interface FailurePayload {
     message: string;
@@ -22,6 +25,21 @@ export interface Payload {
     failure?: FailurePayload; // only set if defined
 }
 
+// Introduced to produce Classlist Change data - helps with understanding future
+// manual/automatic repo provisioning after Classlist update
+export interface ClasslistChangesTransport {
+    updated: StudentTransport[];
+    created: StudentTransport[];
+    removed: StudentTransport[];
+    classlist: StudentTransport[];
+    message: string;
+}
+
+export interface ClasslistChangesTransportPayload {
+    success?: ClasslistChangesTransport; // only set if defined
+    failure?: FailurePayload; // only set if defined
+}
+
 export interface ConfigTransportPayload {
     success?: ConfigTransport; // only set if defined
     failure?: FailurePayload; // only set if defined
@@ -31,6 +49,7 @@ export interface ConfigTransport {
     org: string;
     name: string;
     githubAPI: string;
+    studentsFormTeamDelivIds: string[];
 }
 
 export interface CourseTransportPayload {
@@ -120,6 +139,8 @@ export interface TeamTransport {
     delivId: string;
     people: string[];
     URL: string | null;
+    // repoName: string | null;
+    // repoUrl: string | null;
 }
 
 export interface TeamFormationTransport {
@@ -193,7 +214,12 @@ export interface AutoTestConfigTransport {
     regressionDelivIds: string[];
 
     /**
+     * This field is a convenient place to add parameters to the UI that will be passed to
+     * AutoTest grading containers. This property is set in the AutoTest portion of the
+     * Deliverable UI.
+     *
      * A custom JSON object that will be passed to the container. Can be {}.
+     *
      */
     custom: object;
 
@@ -291,6 +317,7 @@ export interface AutoTestResultSummaryTransport {
     scoreOverall: number | null; // null if result !== 'SUCCESS'
     scoreCover: number | null; // null if result !== 'SUCCESS'
     scoreTests: number | null; // null if result !== 'SUCCESS'
+    custom: any;
 }
 
 // extends the result summary data
@@ -299,4 +326,34 @@ export interface AutoTestDashboardTransport extends AutoTestResultSummaryTranspo
     testFail: string[];
     testSkip: string[];
     testError: string[];
+    cluster?: ClusteredResult;
+}
+
+export interface ClasslistTransport {
+    SNUM: string;
+    FIRST: string;
+    LAST: string;
+    PREF: string;
+    ACCT: string;
+    CRS: string;
+    CWL: string;
+    SEC: string;
+    LAB: string;
+}
+
+// This list is not exhaustive at all
+export enum TransportKind {
+    CLASSLIST_CHANGES,
+    CONFIG,
+    COURSE,
+    PROVISION,
+    AUTH,
+    STUDENT,
+    DELIVERABLE,
+    TEAM,
+    TEAM_FORMATION,
+    GRADE,
+    AUTOTEST_DASHBOARD,
+    AUTOTEST_RESULT_SUMMARY,
+    CLASSLIST,
 }

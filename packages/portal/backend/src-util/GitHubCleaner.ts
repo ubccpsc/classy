@@ -43,7 +43,7 @@ export class GitHubCleaner {
         Log.info("GitHubCleaner::cleanTeams() - start");
 
         const TEAMS_TO_KEEP = ['admin', 'staff', 'testrunners', 'students'];
-
+        TEAMS_TO_KEEP.push(TeamController.ADMIN_NAME, TeamController.STAFF_NAME);
         const teams = await this.gha.listTeams();
         const teamsToRemove = [];
         for (const team of teams) {
@@ -71,7 +71,7 @@ export class GitHubCleaner {
     private async cleanRepositories(): Promise<void> {
         Log.info("GitHubCleaner::cleanRepositories() - start");
 
-        const REPOS_TO_KEEP = ['PostTestDoNotDelete'];
+        const REPOS_TO_KEEP = ['PostTestDoNotDelete', 'PostTestDoNotDelete1'];
 
         const reposToRemove = [];
         const repos = await this.gha.listRepos();

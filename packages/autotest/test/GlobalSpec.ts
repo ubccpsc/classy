@@ -2,6 +2,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 
 before(async () => {
     Log.info('GlobalSpec::before() - resetting Config.name and Config.org for test suite.');
@@ -13,4 +14,12 @@ before(async () => {
 after(() => {
     Log.info('GlobalSpec::after() - done.');
     // process.exit();
+});
+
+beforeEach(function() {
+    Test.testBefore(this);
+});
+
+afterEach(function() {
+    Test.testAfter(this);
 });

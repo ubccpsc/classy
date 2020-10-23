@@ -3,6 +3,7 @@ import "mocha";
 
 import Config from "../../common/Config";
 import Log from "../../common/Log";
+import {Test} from "../../common/TestHarness";
 import Util from "../../common/Util";
 import {GitHubUtil} from "../src/github/GitHubUtil";
 // const loadFirst = require('./GlobalSpec');
@@ -38,36 +39,23 @@ describe("GitHubUtil", () => {
         expect(actual).to.equal("a1");
     });
 
-    it("Should be able to correctly parse #silent from a commit comment.", () => {
+    it("Should be able to find extra commands from a commit comment.", () => {
         let actual;
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #d1");
-        expect(actual).to.be.false;
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #d1 #verbose");
+        expect(actual).to.deep.equal(["#d1", "#verbose"]);
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot d1");
-        expect(actual).to.be.false;
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot d1 verbose ## # ###");
+        expect(actual).to.deep.equal([]);
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #d101 #silent");
-        expect(actual).to.be.true;
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #d101 #silent #force #verbose");
+        expect(actual).to.deep.equal(["#d101", "#silent", "#force", "#verbose"]);
 
-        actual = GitHubUtil.parseSilentFromComment("@ubcbot #silent.");
-        expect(actual).to.be.true;
-    });
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #force. #verbose. #force #silent\n");
+        expect(actual).to.deep.equal(["#force", "#verbose", "#silent"]);
 
-    it("Should be able to correctly parse #force from a commit comment.", () => {
-        let actual;
-
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #d1");
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseForceFromComment("@ubcbot d1");
-        expect(actual).to.be.false;
-
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #d101 #silent #force");
-        expect(actual).to.be.true;
-
-        actual = GitHubUtil.parseForceFromComment("@ubcbot #force.");
-        expect(actual).to.be.true;
+        actual = GitHubUtil.parseCommandsFromComment("@ubcbot #forcefoo");
+        expect(actual).to.deep.equal(["#forcefoo"]);
     });
 
     it("Should be able to correctly create human durations", () => {

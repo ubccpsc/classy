@@ -94,6 +94,36 @@ Dashboard Page
     background-color: hsl(348, 100%, 61%);
 }
 
+.hidden {
+    display: none;
+}
+
+/**
+  Styles for all sortable tables.
+ */
+.sortableTable {
+    margin-left: auto;
+    margin-right: auto;
+    border-collapse: collapse;
+    user-select: text !important;
+}
+
+.sortableHeader {
+    user-select: text !important;
+}
+
+.sortableTableRow {
+    user-select: text !important;
+}
+
+.sortableTableCell {
+    user-select: text !important;
+}
+
+.selectable {
+    user-select: text !important;
+}
+
 /**
 stdio viewer Page
  */
@@ -103,4 +133,36 @@ stdio viewer Page
     right: 0;
     bottom: 0;
     left: 0;
+}
+
+.dialog {
+    width: 80%;
+}
+
+#adminDockerBuildDialog-footer-container ons-bottom-toolbar {
+    justify-content: center;
+    align-items: center;
+    display: flex;
+}
+
+#adminDockerBuildDialog-logs-text {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+#adminDockerBuildDialog .dialog {
+    height: 80vh;
+}
+
+/**
+  CSS for Classlist API update change report
+*/
+#adminClasslistConfirmHeader ons-list {
+    overflow-y: auto;
+    height: 80vh;
+}
+
+#adminClasslistConfirmHeader ons-button {
+    text-align: center;
+    width: 100%;
 }
