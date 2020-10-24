@@ -557,7 +557,6 @@ export class GitHubActions implements IGitHubActions {
 
     private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
         Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
-        Log.trace("GitHubActions::handlePagination(..) - start; uri: " + uri);
         const start = Date.now();
 
         try {
@@ -565,7 +564,6 @@ export class GitHubActions implements IGitHubActions {
             const body = await response.json();
 
             Log.trace("GitHubActions::handlePagination(..) - after initial request");
-            Log.trace("GitHubActions::handlePagination(..) - after initial request; body: " + JSON.stringify(body));
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
@@ -581,7 +579,7 @@ export class GitHubActions implements IGitHubActions {
                     const pparts = p.split(";");
                     if (pparts[1].indexOf("last")) {
                         const pText = pparts[0].split("&page=")[1];
-                        Log.trace("GitHubActions::handlePagination(..) - last page pText:_" + pText + "_; p: " + p);
+                        // Log.trace("GitHubActions::handlePagination(..) - last page pText:_" + pText + "_; p: " + p);
                         lastPage = Number(pText.match(/\d+/)[0]);
                         // Log.trace('GitHubActions::handlePagination(..) - last page: ' + lastPage);
                     }
