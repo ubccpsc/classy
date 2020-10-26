@@ -31,7 +31,6 @@
         "@types/jszip": "3.1.6",
         "@types/mocha": "2.2.44",
         "@types/mongodb": "^3.0.5",
-        "@types/node": "~8.10.53",
         "@types/node-fetch": "^2.5.5",
         "@types/restify": "^8.4.1",
         "chai": "4.1.2",
@@ -52,6 +51,9 @@
         "mongodb": "^3.0.2",
         "node-fetch": "^2.6.0",
         "restify": "^8.4.0"
+    },
+    "peerDependencies": {
+        "@types/node": "~8.10.53"
     },
     "resolutions": {
         "**/mem": "^4.0.0"

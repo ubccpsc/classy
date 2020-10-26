@@ -8,7 +8,7 @@
 import {AutoTestResult} from "./AutoTestTypes";
 import {ClusteredResult} from "./ContainerTypes";
 
-import {Deliverable} from "../../portal/backend/src/Types";
+// import {Deliverable} from "../../portal/backend/src/Types";
 
 export interface FailurePayload {
     message: string;
