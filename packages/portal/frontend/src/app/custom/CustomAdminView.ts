@@ -4,7 +4,7 @@ import {AdminTabs, AdminView} from "../views/AdminView";
 /**
  * Stock Default Admin view
  */
-export class DefaultAdminView extends AdminView {
+export class CustomAdminView extends AdminView {
     constructor(remoteUrl: string, tabs: AdminTabs) {
         Log.info("CustomAdminView::<init>(..)");
         super(remoteUrl, tabs);
