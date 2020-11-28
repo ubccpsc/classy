@@ -16,7 +16,7 @@ COPY ./classy/packages/common                     ./classy/packages/common
 COPY ./classy/packages/portal                     ./classy/packages/portal
 COPY ./plugin                                     ./plugin
 
-RUN PLUGIN_FULLPATH=/app/plugin cd classy \
+RUN PLUGIN_FULLPATH=../plugin cd classy \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && cd packages/portal/frontend && yarn webpack \
