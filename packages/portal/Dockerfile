@@ -3,7 +3,7 @@ FROM node:12-alpine
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
 
-ENV PLUGIN_FULLPATH=/app/plugin
+ENV PLUGIN_FULLPATH=../plugin
 
 RUN apk add --no-cache git
 
