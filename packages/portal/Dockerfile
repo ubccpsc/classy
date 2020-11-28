@@ -20,6 +20,8 @@ RUN PLUGIN_FULLPATH=/app/plugin cd classy \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && cd packages/portal/frontend && yarn webpack \
+ && cd /app/plugin && yarn install --pure-lockfile --non-interactive --ignore-scripts \
+ && yarn tsc --sourceMap false \
  && chmod -R a+r /app \
  && git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
