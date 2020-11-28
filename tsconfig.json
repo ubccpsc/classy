@@ -27,5 +27,8 @@
     },
     "exclude": [
         "node_modules"
+    ],
+    "include": [
+        "../plugin/src/**/*.ts"
     ]
 }
