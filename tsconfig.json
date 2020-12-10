@@ -29,6 +29,7 @@
         "node_modules"
     ],
     "include": [
-        "../plugin/src/plugin/backend/**/*.ts"
+        "../plugin/src/plugin/backend/**/*.ts",
+        "packages"
     ]
 }
