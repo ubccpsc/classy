@@ -35,13 +35,14 @@ export class Factory {
             // import complains about this, but require does not.
             let plug: any;
             const pluginPath = Config.getInstance().getProp(ConfigKey.plugin_fullpath);
+            Log.info("Factory::getCustomRouteHandler() - plugin path: " + pluginPath);
             if (name === Factory.TESTNAME || typeof pluginPath === "undefined") {
                 Log.info("Factory::getCustomRouteHandler() - instantiating DefaultCourseRoutes for: " + name);
                 plug = await require("./custom/DefaultCourseRoutes"); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                const fullPath = pluginPath + "/src/plugin/backend/CustomCourseRoutes";
+                const fullPath = pluginPath + "/plugin/src/backend/CustomCourseRoutes";
                 Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + fullPath);
                 plug = await require(fullPath);
             }
@@ -101,7 +102,7 @@ export class Factory {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
                     Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                    plug = await require(pluginPath + "/src/plugin/backend/CustomCourseController");
+                    plug = await require(pluginPath + "/plugin/src/backend/CustomCourseController");
                 }
             } catch (err) {
                 const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
@@ -119,7 +120,7 @@ export class Factory {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
                     Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                    plug = await require(pluginPath + "/src/plugin/backend/CustomCourseController");
+                    plug = await require(pluginPath + "/plugin/src/backend/CustomCourseController");
                 }
             }
 
