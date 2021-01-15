@@ -4,6 +4,7 @@ ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
 ARG PLUGIN_CLONE_URL
 ARG NAME
+ARG PLUGIN_BRANCH=master
 
 ENV PLUGIN_FULLPATH=/app/plugin
 
@@ -20,6 +21,7 @@ RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git clone $PLUGIN_CLONE_URL plugin
 
 RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd plugin \
+ && git checkout $PLUGIN_BRANCH
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && cd ../classy \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
