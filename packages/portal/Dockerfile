@@ -23,8 +23,6 @@ RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git checkout $PLUGIN_BRANCH \
   && cd ..
 
-RUN ls /app && ls /app/plugin && ls /app/plugin/src && ls /app/plugin/src/plugin && ls /app/plugin/src/plugin/frontend
-
 RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd plugin \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && cd ../classy \
