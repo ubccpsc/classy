@@ -9,8 +9,6 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# The common package requires the .env file directly so we have to pass it through
-COPY .env                                         ./classy/
 COPY ./classy/package.json ./classy/tsconfig.json ./classy/
 COPY ./classy/packages/common                     ./classy/packages/common
 COPY ./classy/packages/portal                     ./classy/packages/portal

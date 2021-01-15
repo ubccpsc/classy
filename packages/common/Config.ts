@@ -1,7 +1,6 @@
 import * as dotenv from "dotenv";
 import Log, {LogLevel} from "./Log";
-// const dotenv = require('dotenv');
-const result = dotenv.config({path: __dirname + '/../../.env'});
+const result = dotenv.config();
 
 if (result.error) {
     Log.error("Failed to parse .env " + result.error);
