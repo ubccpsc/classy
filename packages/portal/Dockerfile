@@ -21,6 +21,7 @@ RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git clone $PLUGIN_CLONE_URL plugin \
   && cd plugin \
   && git checkout $PLUGIN_BRANCH \
+  && cd ..
 
 RUN ls /app && ls /app/plugin && ls /app/plugin/src && ls /app/plugin/src/plugin && ls /app/plugin/src/plugin/frontend
 
