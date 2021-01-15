@@ -12,9 +12,9 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-COPY ./package.json ./classy/tsconfig.json ./classy/
-COPY ./packages/common                     ./classy/packages/common
-COPY ./packages/portal                     ./classy/packages/portal
+COPY ./package.json ./tsconfig.json ./classy/
+COPY ./packages/common              ./classy/packages/common
+COPY ./packages/portal              ./classy/packages/portal
 
 RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git config --system user.name "${GH_BOT_USERNAME}" \
