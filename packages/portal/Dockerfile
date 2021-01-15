@@ -18,12 +18,13 @@ COPY ./packages/portal              ./classy/packages/portal
 
 RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git config --system user.name "${GH_BOT_USERNAME}" \
-  && git clone $PLUGIN_CLONE_URL plugin
+  && git clone $PLUGIN_CLONE_URL plugin \
+  && cd /app/plugin \
+  && git checkout $PLUGIN_BRANCH \
 
 RUN ls /app && ls /app/plugin && ls /app/plugin/src && ls /app/plugin/src/plugin && ls /app/plugin/src/plugin/frontend
 
-RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd plugin \
- && git checkout $PLUGIN_BRANCH \
+RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd /app/plugin \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && cd ../classy \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
