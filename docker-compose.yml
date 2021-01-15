@@ -55,6 +55,7 @@ services:
                 - GH_BOT_USERNAME
                 - GH_BOT_EMAIL
                 - NAME
+                - PLUGIN_CLONE_URL
             context: ./
             dockerfile: ./packages/portal/Dockerfile
         container_name: portal
