@@ -20,6 +20,8 @@ RUN git config --system user.email "${GH_BOT_EMAIL}" \
   && git config --system user.name "${GH_BOT_USERNAME}" \
   && git clone $PLUGIN_CLONE_URL plugin
 
+RUN ls /app && ls /app/plugin && ls /app/plugin/src && ls /app/plugin/src/plugin && ls /app/plugin/src/plugin/frontend
+
 RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd plugin \
  && git checkout $PLUGIN_BRANCH \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
