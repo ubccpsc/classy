@@ -2,6 +2,7 @@ FROM node:12-alpine
 
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
+ARG NAME
 
 ENV PLUGIN_FULLPATH=/app/plugin
 
@@ -14,7 +15,7 @@ COPY ./classy/packages/common                     ./classy/packages/common
 COPY ./classy/packages/portal                     ./classy/packages/portal
 COPY ./plugin                                     ./plugin
 
-RUN PLUGIN_FULLPATH=/app/plugin cd plugin \
+RUN PLUGIN_FULLPATH=/app/plugin NAME=${NAME} cd plugin \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && cd ../classy \
  && yarn install --pure-lockfile --non-interactive --ignore-scripts \
