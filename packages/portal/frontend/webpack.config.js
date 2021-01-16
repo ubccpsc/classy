@@ -25,12 +25,12 @@ module.exports = {
                 // copy plugin frontend files frontend into a place where webpack can include them
                 // custom backend files can be accessed directly and do not need to be copied
                 {
-                    from: process.env.PLUGIN_FULLPATH + '/src/plugin/frontend/CustomStudentView.ts',
+                    from: process.env.PLUGIN_FULLPATH + '/plugin/src/frontend/CustomStudentView.ts',
                     to: '../../src/app/custom/CustomStudentView.ts',
                     noErrorOnMissing: false
                 },
                 {
-                    from: process.env.PLUGIN_FULLPATH + '/src/plugin/frontend/CustomAdminView.ts',
+                    from: process.env.PLUGIN_FULLPATH + '/plugin/src/frontend/CustomAdminView.ts',
                     to: '../../src/app/custom/CustomAdminView.ts',
                     noErrorOnMissing: false
                 },
