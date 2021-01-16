@@ -29,7 +29,7 @@
         "node_modules"
     ],
     "include": [
-        "../plugin/src/plugin/backend/**/*.ts",
+        "../plugin/src/backend/**/*.ts",
         "packages"
     ]
 }
