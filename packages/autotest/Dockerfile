@@ -4,8 +4,6 @@ RUN apk add --no-cache git
 
 WORKDIR /app
 
-# The common package requires the .env file directly so we have to pass it through
-COPY .env ./
 COPY package.json tsconfig.json ./
 COPY packages/common ./packages/common
 COPY packages/portal/backend ./packages/portal/backend
