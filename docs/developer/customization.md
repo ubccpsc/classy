@@ -4,7 +4,7 @@ Classy consists of two TypeScript applications: AutoTest and Portal. ONLY Portal
 
 Portal consists of a frontend and backend application.
 
-Note: Application and Docker Container/Supporting Services should ideally bt eh sa
+Note: Application and Docker Container/Supporting Services can be stored in the same Git repository.
 
 ## Application Customization
 
@@ -16,7 +16,7 @@ To customize Portal, add a PLUGIN_REPO_APP variable, with the classy-plugin repo
 PLUGIN_REPO_APP=https://githubtoken@github.com/some_organization/classy-portal-plugin.git
 ```
 
-If the repository is not public, it is necessary to add a token to the URL to ensure that is is accessible by the git utility that will clone the repository.
+If the repository is not public, accessibiity to the repository must be granted to the Git utility by adding a token to the URL, as in the former example.
 
 The repository MUST contain a `backend` and `frontend` directory with the included necessary customized files.
 
@@ -41,11 +41,11 @@ The repository MUST contain a `backend` and `frontend` directory with the includ
 
 The `html/` folder should contain HTML files that are used by the Custom Front-End files, as the view in the MVC pattern.
 
-NOTE: All default HTML files will be loaded even if custom front-end files are loaded. As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, the default logic will be available on the front-end application.
+NOTE: All default HTML files will be loaded even if custom front-end files are loaded. As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime.
 
-It is up to you to build from the default templates and namespace new files wisely to make it easy to update your TypeScript and HTML plugin code with upstream changes from the `ubccpsc/Classy` project.
+It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
 
-If PLUGIN_REPO_APP is not defined, Classy will default to standard ubccpsc/Classy project templates classes and HTML files:
+If PLUGIN_REPO_APP is not defined, Classy will default to standard ubccpsc/Classy project logic.
 
 ## Docker Container/Supporting Services
 
