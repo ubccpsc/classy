@@ -1,5 +1,7 @@
 # Customization of Classy
 
+Application customization is NOT necessary unless custom views and endpoints need to be created to support your unique class operations. Classy supports default views that do not require any customization work.
+
 Classy consists of two TypeScript applications: AutoTest and Portal. ONLY Portal is customizable at this time.
 
 Portal consists of a frontend and backend application.
@@ -7,8 +9,6 @@ Portal consists of a frontend and backend application.
 Note: Application and Docker Container/Supporting Services can be stored in the same Git repository.
 
 ## Application Customization
-
-Application customization is NOT necessary unless custom views and endpoints need to be created to support your unique class operations. Classy supports default views that do not require any customization work.
 
 To customize Portal, add a PLUGIN_REPO_APP variable, with the classy-plugin repository, to the .env file.
 
@@ -19,6 +19,27 @@ PLUGIN_REPO_APP=https://githubtoken@github.com/some_organization/classy-portal-p
 If the repository is not public, accessibiity to the repository must be granted to the Git utility by adding a token to the URL, as in the former example.
 
 The repository MUST contain a `backend` and `frontend` directory with the included necessary customized files.
+
+### Defaults
+
+```ascii
+                                      ------------
+                                      -           -
+                                      -  Default  -   <---- CustomAdminView.ts
+--------------------                  - Front-End -         CustomStudentView.ts
+-                  -       **----------   Files   -         html/*
+-                  -                  -------------
+-      Classy      -                  
+-                  -                  
+-                  -                  ------------
+-                  -       **----------          -
+--------------------                  -  Default -   <---- CustomCourseController.ts
+                                      - Back-End -         CustomCourseRoutes.ts
+                                      -   Files  -
+                                      ------------
+```
+
+### Customizations
 
 ```ascii
                                       ------------
@@ -63,6 +84,7 @@ The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token wit
 ```
 
 [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/)
+
 [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml)
 
 If PLUGIN_REPO_DOCKER is not defined, Classy will default to standard ubccpsc/Classy Docker-comopose.yml project template.
