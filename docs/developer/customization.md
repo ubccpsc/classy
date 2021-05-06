@@ -1,12 +1,12 @@
 # Customization of Classy
 
-Application customization is NOT necessary unless custom views and endpoints need to be created to support your unique class operations. Classy supports default views that do not require any customization work.
+Application customization is not necessary unless custom views and endpoints are needed to support your internal course operations. Classy has default behaviour that does not require any customization to make it operational for most courses.
 
-Classy consists of two TypeScript applications: AutoTest and Portal. ONLY Portal is customizable at this time.
+Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-Portal consists of a frontend and backend application.
+## Customization Options
 
-Note: Application and Docker Container/Supporting Services can be stored in the same Git repository.
+
 
 ## Application Customization
 
@@ -68,9 +68,24 @@ It is up to you to expand and build upon the default templates while naming new 
 
 If PLUGIN_REPO_APP is not defined, Classy will default to standard ubccpsc/Classy project logic.
 
-## Docker Container/Supporting Services
+## Docker Container / Supporting Services
 
 The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token with read access permissions if the repository is not public.
+
+### Defaults
+
+```ascii
+--------------------
+-                  -                  -------------
+-                  -                  -           -
+-      Classy      -       **----------  Default  -   <---- docker-compose.yml
+-                  -                  -   Docker  -
+-                  -                  -  Services -
+-                  -                  -------------
+--------------------
+```
+
+### Customizations
 
 ```ascii
 --------------------
@@ -91,4 +106,32 @@ If PLUGIN_REPO_DOCKER is not defined, Classy will default to standard ubccpsc/Cl
 
 ## Nginx / Services Routing
 
--- Still have to figure out this. Nginx.conf is declarative. It cannot be overridden, but references may be included.  include /path/*.conf etc.
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf) and [proxy.conf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/proxy.conf) files as templates.
+
+### Defaults
+
+```ascii
+--------------------                                     
+-                  -                  -----------------
+-                  -                  -               -
+-      Classy      -       **----------     Nginx     -  <---- nginx.rconf
+-                  -                  - Configuration -        proxy.conf 
+-                  -                  -               -
+-                  -                  -----------------
+--------------------            
+
+        
+```
+
+### Customizations
+
+```ascii
+--------------------                               NOTE: Must inherit boilerplate from ubccps/master/classy
+-                  -                  -----------------
+-                  -                  -               -
+-      Classy      -       **----------     Nginx     -  <---- nginx.override.rconf
+-                  -                  - Configuration -        proxy.override.conf 
+-                  -                  -               -
+-                  -                  -----------------
+--------------------
+```
