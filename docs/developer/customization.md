@@ -94,9 +94,9 @@ The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token wit
 --------------------
 ```
 
-[Override a docker-compose.yml File](https://docs.docker.com/compose/extends/)
+See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
 
-[Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml)
+See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
 If PLUGIN_REPO_DOCKER is not defined, Classy will default to standard ubccpsc/Classy Docker-comopose.yml project template.
 
