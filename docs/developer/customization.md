@@ -4,11 +4,7 @@ Application customization is not necessary unless custom views and endpoints are
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-## Customization Options
-
-
-
-## Application Customization
+## Application Layer
 
 To customize Portal, add a PLUGIN_REPO_APP variable, with the classy-plugin repository, to the .env file.
 
@@ -68,7 +64,7 @@ It is up to you to expand and build upon the default templates while naming new 
 
 If PLUGIN_REPO_APP is not defined, Classy will default to standard ubccpsc/Classy project logic.
 
-## Docker Container / Supporting Services
+## Docker Containers / Supporting Services
 
 The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token with read access permissions if the repository is not public.
 
@@ -119,8 +115,6 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 -                  -                  -               -
 -                  -                  -----------------
 --------------------            
-
-        
 ```
 
 ### Customizations
