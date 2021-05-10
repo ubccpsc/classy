@@ -92,11 +92,11 @@ NOTE: All default HTML files will be loaded even if custom front-end files are l
 
 It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
 
-If PLUGIN_REPO_APP is not defined, Classy will default to standard ubccpsc/Classy project logic.
+If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy project logic.
 
 ## Docker Containers / Supporting Services
 
-The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token with read access permissions if the repository is not public.
+The Classy .env file MUST contain a PLUGIN_PATH that includes a token with read access permissions if the repository is not public.
 
 ### Defaults
 
