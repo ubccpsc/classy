@@ -4,12 +4,34 @@ Application customization is not necessary unless custom views and endpoints are
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-## Application Layer
-
-To customize Portal, add a PLUGIN_REPO_APP variable, with the classy-plugin repository, to the .env file.
+PLUGIN_PATH should be added to the .env with the filesystem path. The required directory structure:
 
 ```ascii
-PLUGIN_REPO_APP=https://githubtoken@github.com/some_organization/classy-portal-plugin.git
+├── docker/
+    └── nginx.rconfdocker-compose.override.yml
+├── nginx/
+│   └── nginx.rconf
+├── application/
+│   ├── backend/
+│   │   ├── CustomCourseController.ts
+│   │   └── CustomCourseRoutes.ts
+│   └── frontend/
+│       ├── CustomAdminView.ts
+│       ├── CustomStudentView.ts
+│       └── html/
+│           ├── admin.html
+│           ├── landing.html
+│           └── ...
+```
+
+The `docker`, `nginx`, and `application` folders can be included respective to if you wish to utilize the particular plugin component.
+
+## Application Layer
+
+To customize Portal, add the plugin filesystem path to the .env file a PLUGIN_PATH.
+
+```ascii
+PLUGIN_PATH=/opt/classy-plugin/
 ```
 
 If the repository is not public, accessibiity to the repository must be granted to the Git utility by adding a token to the URL, as in the former example.
@@ -124,7 +146,7 @@ See how to override a Docker Compose file: [Override a docker-compose.yml File](
 
 See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
-If PLUGIN_REPO_DOCKER is not defined, Classy will default to standard ubccpsc/Classy Docker-comopose.yml project template.
+If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy Docker-comopose.yml project template.
 
 ## Nginx / Services Routing
 
