@@ -8,27 +8,27 @@ PLUGIN_PATH should be added to the .env with the filesystem path. The required d
 
 ```ascii
 ├── docker/
-    └── docker-compose.override.yml
+│   └── docker-compose.override.yml
 ├── nginx/
 │   └── nginx.rconf
-├── application/
-│   ├── backend/
-│   │   ├── CustomCourseController.ts
-│   │   └── CustomCourseRoutes.ts
-│   └── frontend/
-│       ├── CustomAdminView.ts
-│       ├── CustomStudentView.ts
-│       └── html/
-│           ├── admin.html
-│           ├── landing.html
-│           └── ...
+└── application/
+    ├── backend/
+    │   ├── CustomCourseController.ts
+    │   └── CustomCourseRoutes.ts
+    └── frontend/
+        ├── CustomAdminView.ts
+        ├── CustomStudentView.ts
+        └── html/
+            ├── admin.html
+            ├── landing.html
+            └── ...
 ```
 
 The `docker`, `nginx`, and `application` folders can be included respective to if you wish to utilize the particular plugin component.
 
 ## Application Layer
 
-To customize Portal, add the plugin filesystem path to the .env file a PLUGIN_PATH.
+To customize Portal, add the plugin filesystem path to the .env file as PLUGIN_PATH.
 
 ```ascii
 PLUGIN_PATH=/opt/classy-plugin/
