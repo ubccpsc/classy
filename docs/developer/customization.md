@@ -145,7 +145,7 @@ See how to override a Docker Compose file: [Override a docker-compose.yml File](
 
 See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
-If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy Docker-comopose.yml project template.
+If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy Docker-compose.yml project template.
 
 ## Nginx / Services Routing
 
