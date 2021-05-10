@@ -8,7 +8,7 @@ PLUGIN_PATH should be added to the .env with the filesystem path. The required d
 
 ```ascii
 ├── docker/
-    └── nginx.rconfdocker-compose.override.yml
+    └── docker-compose.override.yml
 ├── nginx/
 │   └── nginx.rconf
 ├── application/
@@ -168,7 +168,7 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 ### Customizations
 
 ```ascii
---------------------                               NOTE: Must inherit boilerplate from ubccps/master/classy
+--------------------                               NOTE: Must copy boilerplate from ubccps/master/classy
 -                  -                  -----------------
 -                  -                  -               -
 -      Classy      -       **----------     Nginx     -  <---- nginx.override.rconf
