@@ -19,9 +19,12 @@ The repository MUST contain a `backend` and `frontend` directory with the includ
 ### Defaults
 
 ```ascii
-                                      ------------
-                                      -           -
-                                      -  Default  -   <---- CustomAdminView.ts
+              IREST - registerRoutes() hook
+           |---------------------------------
+           |                                |
+           |                          ------------
+           |                          -           -
+           |                          -  Default  -   <---- CustomAdminView.ts
 --------------------                  - Front-End -         CustomStudentView.ts
 -                  -       **----------   Files   -         html/*
 -                  -                  -------------
@@ -37,10 +40,15 @@ The repository MUST contain a `backend` and `frontend` directory with the includ
 
 ### Customizations
 
+Extend IREST class to inherit registerRoutes() hook, which will register new routes in Classy.
+
 ```ascii
-                                      ------------
-                                      -           -
-                                      -  Custom   -   <---- CustomAdminView.ts
+              IREST - registerRoutes() hook
+           |---------------------------------
+           |                                |
+           |                          -------------
+           |                          -           -
+           |                          -  Custom   -   <---- CustomAdminView.ts
 --------------------                  - Front-End -         CustomStudentView.ts
 -                  -       **----------   Files   -         html/*
 -                  -                  -------------
@@ -71,27 +79,45 @@ The Classy .env file MUST contain a PLUGIN_REPO_DOCKER that includes a token wit
 ### Defaults
 
 ```ascii
---------------------
--                  -                  -------------
--                  -                  -           -
--      Classy      -       **----------  Default  -   <---- docker-compose.yml
+
+
+                 `docker-compose up`
+           |---------------------------------
+           |                                |
+           |                                |
+           |                          -------------
+--------------------                  -           -
+-                  -       **----------  Default  -   <---- docker-compose.yml
 -                  -                  -   Docker  -
--                  -                  -  Services -
+-      Classy      -                  -  Services -
 -                  -                  -------------
+-                  -
+-                  -
 --------------------
 ```
 
 ### Customizations
 
+If a docker-compose.override.yml file exists, it will be read on the `docker-compose build` and `docker-compose up` commands. Services will be overridden and/or extended from defaults.
+
 ```ascii
---------------------
+
+                 `docker-compose up`
+           |---------------------------------
+           |                                |
+           |                          -------------
+           |                          -           -
+           |                          -  Default  -
+--------------------                  -   Docker  - 
+-                  -       **----------  Services -  <---- docker-compose.yml
+-                  -                  -------------
+-      Classy      -          
 -                  -                  -------------
 -                  -                  -           -
--      Classy      -       **----------   Custom  -   <---- docker-compose.override.yml
--                  -                  -   Docker  -
--                  -                  -  Services -
--                  -                  -------------
---------------------
+-                  -       **----------   Custom  -  <---- docker-compose.override.yml
+--------------------                  -   Docker  -
+                                      -  Services -
+                                      -------------
 ```
 
 See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
