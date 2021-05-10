@@ -4,7 +4,14 @@ Out of the box, Classy's default behaviour should suit most courses; however, so
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-PLUGIN_PATH should be added to the .env with the filesystem path. The required directory structure:
+To customize Portal, add the plugin filesystem path to the .env file as PLUGIN_PATH.
+(If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy project logic.)
+
+```ascii
+PLUGIN_PATH=/opt/classy-plugin/
+```
+
+The directory structure under PLUGIN_PATH:
 
 ```ascii
 ├── docker/
@@ -24,19 +31,11 @@ PLUGIN_PATH should be added to the .env with the filesystem path. The required d
             └── ...
 ```
 
-The `docker`, `nginx`, and `application` folders can be included respective to if you wish to utilize the particular plugin component.
+The `docker`, `nginx`, and `application` folders are each optional and can be excluded. Include only the folders you wish to customize.
 
 ## Application Layer
 
-To customize Portal, add the plugin filesystem path to the .env file as PLUGIN_PATH.
-
-```ascii
-PLUGIN_PATH=/opt/classy-plugin/
-```
-
-If the repository is not public, accessibiity to the repository must be granted to the Git utility by adding a token to the URL, as in the former example.
-
-The repository MUST contain a `backend` and `frontend` directory with the included necessary customized files.
+The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files.
 
 ### Defaults
 
@@ -92,11 +91,11 @@ NOTE: All default HTML files will be loaded even if custom front-end files are l
 
 It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
 
-If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy project logic.
+
 
 ## Docker Containers / Supporting Services
 
-The Classy .env file MUST contain a PLUGIN_PATH that includes a token with read access permissions if the repository is not public.
+Configuration is contained within the `docker` folder.
 
 ### Defaults
 
