@@ -1,6 +1,6 @@
 # Customization of Classy
 
-Application customization is not necessary unless custom views and endpoints are needed to support your internal course operations. Classy has default behaviour that does not require any customization to make it operational for most courses.
+Out of the box, Classy's default behaviour should suit most courses; however, sometimes custom views and endpoints are necessary to support internal course operations.
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
