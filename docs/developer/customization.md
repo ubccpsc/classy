@@ -115,8 +115,6 @@ Configuration is contained within the `docker` folder.
 
 ### Defaults
 
-Docker services are build containers that communicate with Classy, likely, through HTTP requests. In some cases, services 
-
 ```ascii
 
 
