@@ -59,8 +59,8 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Default -   <---- DefaultCourseController.ts (extends CourseController)
-           |                          - Back-End -         DefaultCourseRoutes.ts (extends IREST)
+--------------------                  -  Default -   <---- DefaultCourseController.ts
+           |                          - Back-End -         DefaultCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                 |
@@ -95,8 +95,8 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
            |                                |
            |---------------------------------
                             |
-                - CustomCourseController.ts should extend CourseController. See CourseController file documentation  for default functionality comments and override insight. One should inherit and override methods where necessary.
-                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker services.
+                - CustomCourseController.ts should extend CourseController. See CourseController documentation for default functionality and override insight.
+                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker service integrations.
 ```
 
 ### HTML Files
