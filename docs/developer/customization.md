@@ -37,34 +37,44 @@ The `docker`, `nginx`, and `application` folders are each optional and can be ex
 
 The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files.
 
+Classes with core default Classy logic are mentioned. It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic.
+
 ### Defaults
 
 ```ascii
-              IREST - registerRoutes() hook
-           |---------------------------------
-           |                                |
-           |                          ------------
+                
+                DefaultAdminView.ts extends AdminView. AdminView contains default functionality for Admin Panel
+                DefaultStudentView extends ClassyStudentView. ClassyStudentView contains default functionality for Student Panel
+                html/* contains all default view templates
+                           |
+           |----------------------------------
+           |                                 |
+           |                          -------------
            |                          -           -
-           |                          -  Default  -   <---- CustomAdminView.ts
---------------------                  - Front-End -         CustomStudentView.ts
+           |                          -  Default  -   <---- DefaultAdminView.ts
+--------------------                  - Front-End -         DefaultStudentView.ts
 -                  -       **----------   Files   -         html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Default -   <---- CustomCourseController.ts
-                                      - Back-End -         CustomCourseRoutes.ts
-                                      -   Files  -
-                                      ------------
+--------------------                  -  Default -   <---- DefaultCourseController.ts (extends CourseController)
+           |                          - Back-End -         DefaultCourseRoutes.ts (extends IREST)
+           |                          -   Files  -
+           |                          ------------
+           |                                 |
+           |---------------------------------- 
+                            |
+                DefaultCourseController.ts extends CourseController for defaults.
+                DefaultCourseRoutes.ts extends IREST. No default routes actually imeplemented here. Actual default routes loaded in BackendServer.ts file. This plug does not do anything.
 ```
 
 ### Customizations
 
-Extend IREST class to inherit registerRoutes() hook, which will register new routes in Classy.
-
 ```ascii
-              IREST - registerRoutes() hook
+                CustomAdminView.ts should extend AdminView to inherit default logic. Overrides are optional.
+                CustomStudentView.ts should extend ClassyStudentView to inherit default logic. Overrides are optional.
            |---------------------------------
            |                                |
            |                          -------------
@@ -78,9 +88,14 @@ Extend IREST class to inherit registerRoutes() hook, which will register new rou
 -                  -                  ------------
 -                  -       **----------          -
 --------------------                  -  Custom  -   <---- CustomCourseController.ts
-                                      - Back-End -         CustomCourseRoutes.ts
-                                      -   Files  -
-                                      ------------
+           |                          - Back-End -         CustomCourseRoutes.ts
+           |                          -   Files  -
+           |                          ------------
+           |                                |
+           |---------------------------------
+                            |
+                CustomCourseController.ts should extend CourseController. See CourseController file documentation  for default functionality comments and override insight. One should inherit and override methods where necessary.
+                CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker services.
 ```
 
 ### HTML Files
@@ -98,6 +113,8 @@ It is up to you to expand and build upon the default templates while naming new 
 Configuration is contained within the `docker` folder.
 
 ### Defaults
+
+Docker services are build containers that communicate with Classy, likely, through HTTP requests. In some cases, services 
 
 ```ascii
 
