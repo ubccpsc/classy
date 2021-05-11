@@ -1,4 +1,4 @@
-import * as dotenv from 'dotenv';
+import * as dotenv from "dotenv";
 import Log, {LogLevel} from "./Log";
 // const dotenv = require('dotenv');
 const result = dotenv.config({path: __dirname + '/../../.env'});
@@ -26,6 +26,7 @@ export enum ConfigKey {
     org = "org",
     testorg = "testorg",
     testname = "testname",
+    plugin_fullpath = "plugin_fullpath",
 
     classlist_uri = "classlist_uri",
     classlist_username = "classlist_username",
@@ -102,6 +103,7 @@ export default class Config {
                 org:      process.env.ORG,
                 testorg:  process.env.ORGTEST,
                 testname: process.env.NAMETEST,
+                plugin_fullpath: process.env.PLUGIN_FULLPATH,
 
                 classlist_uri:      process.env.CLASSLIST_URI,
                 classlist_username: process.env.CLASSLIST_USERNAME,
