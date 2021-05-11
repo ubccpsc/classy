@@ -43,9 +43,9 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
 
 ```ascii
                 
-                DefaultAdminView.ts extends AdminView. AdminView contains default functionality for Admin Panel
-                DefaultStudentView extends ClassyStudentView. ClassyStudentView contains default functionality for Student Panel
-                html/* contains all default view templates
+                - DefaultAdminView.ts extends AdminView. AdminView contains default functionality for Admin Panel.
+                - DefaultStudentView extends ClassyStudentView. ClassyStudentView contains default functionality for Student Panel.
+                - html/* contains all default view templates
                            |
            |----------------------------------
            |                                 |
@@ -66,15 +66,16 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
            |                                 |
            |---------------------------------- 
                             |
-                DefaultCourseController.ts extends CourseController for defaults.
-                DefaultCourseRoutes.ts extends IREST. No default routes actually imeplemented here. Actual default routes loaded in BackendServer.ts file. This plug does not do anything.
+                - DefaultCourseController.ts extends CourseController for defaults.
+                - DefaultCourseRoutes.ts extends IREST. No default routes actually imeplemented here. Actual default routes loaded in BackendServer.ts file. This plug does not do anything.
 ```
 
 ### Customizations
 
 ```ascii
-                CustomAdminView.ts should extend AdminView to inherit default logic. Overrides are optional.
-                CustomStudentView.ts should extend ClassyStudentView to inherit default logic. Overrides are optional.
+                - CustomAdminView.ts should extend AdminView to inherit default logic. Overrides are optional.
+                - CustomStudentView.ts should extend ClassyStudentView to inherit default logic. Overrides are optional.
+                            |
            |---------------------------------
            |                                |
            |                          -------------
@@ -94,8 +95,8 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
            |                                |
            |---------------------------------
                             |
-                CustomCourseController.ts should extend CourseController. See CourseController file documentation  for default functionality comments and override insight. One should inherit and override methods where necessary.
-                CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker services.
+                - CustomCourseController.ts should extend CourseController. See CourseController file documentation  for default functionality comments and override insight. One should inherit and override methods where necessary.
+                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker services.
 ```
 
 ### HTML Files
