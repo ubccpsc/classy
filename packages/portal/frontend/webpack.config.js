@@ -12,7 +12,21 @@ const CopyPlugin = require('copy-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
 
 console.log('Preparing frontend for: ' + process.env.NAME);
-console.log('Frontend plugin path: ' + process.env.PLUGIN_FULLPATH);
+
+if (process.env.PLUGIN_FULLPATH) {
+    console.log('Frontend plugin path: ' + process.env.PLUGIN_FULLPATH);
+} else {
+    console.log('Frontend default path: ' + process.env.PLUGIN_FULLPATH);
+}
+
+/**
+ * Checks for a custom controller. If one exists, there _must_ be custom html as well.
+ *
+ * @returns {boolean}
+ */
+const pluginExists = () => {
+    return process.env.PLUGIN_FULLPATH ? true : false;
+}
 
 module.exports = {
 
@@ -25,21 +39,24 @@ module.exports = {
                 // copy plugin frontend files frontend into a place where webpack can include them
                 // custom backend files can be accessed directly and do not need to be copied
                 {
-                    from: process.env.PLUGIN_FULLPATH + '/plugin/src/frontend/CustomStudentView.ts',
-                    to: '../../src/app/custom/CustomStudentView.ts',
+                    from: pluginExists ? '/plugin/src/frontend/CustomStudentView.ts' : '../../src/app/custom/DefaultStudentView.ts',
+                    to: '../../src/app/plugs/PluggedStudentView.ts',
+                    force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: process.env.PLUGIN_FULLPATH + '/plugin/src/frontend/CustomAdminView.ts',
-                    to: '../../src/app/custom/CustomAdminView.ts',
+                    from: pluginExists ? '/plugin/src/frontend/CustomAdminView.ts' : '../../src/app/custom/DefaultAdminView.ts',
+                    to: '../../src/app/plugs/PluggedAdminView.ts',
+                    force: true,
                     noErrorOnMissing: false
                 },
-                {
-                    from: process.env.PLUGIN_FULLPATH + '/html',
+                {   //
+                    from: pluginExists ? '/plugin/html' : '../../html/default',
                     // to: '../html/' + process.env.NAME, // puts it in ./html/html/{name}
                     to: '../' + process.env.NAME,
                     toType: 'dir',
-                    noErrorOnMissing: false
+                    noErrorOnMissing: false,
+                    force: true
                 }
             ],
         }),

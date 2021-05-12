@@ -34,27 +34,8 @@ export class Factory {
         return Factory.instance;
     }
 
-    /**
-     * Checks for a custom controller. If one exists, there _must_ be custom html as well.
-     *
-     * @returns {boolean}
-     */
-    private customControllerExists(): boolean {
-        let customController = null;
-        try {
-            // NOTE: we can't reference Config here because this is run client side
-            // which does not have access to the .env file
-            // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
-            customController = require("./custom/CustomStudentView");
-        } catch (err) {
-            Log.info("Factory::customControllerExists() - Custom Controller NOT found for course: " + this.name);
-        }
-        return customController ? true : false;
-    }
-
     public async getView(backendUrl: string): Promise<IView> {
         // Loads a custom view model if custom HTML code exists, default model for default html, etc.
-        const customViewsExist = this.customControllerExists();
 
         try {
             if (this.studentView === null) {
@@ -64,15 +45,7 @@ export class Factory {
                 // which does not have access to the .env file
                 // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
 
-                let plug: any;
-                if (name !== this.TESTNAME && customViewsExist === true) {
-                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + "; using CustomStudentView");
-                    plug = await require("./custom/CustomStudentView"); // course-specific file;
-                } else {
-                    Log.info("Factory::getView() - instantiating new student view for: " + this.name +
-                        "; using test DefaultStudentView");
-                    plug = await require("./custom/DefaultStudentView"); // default for testing
-                }
+                const plug = await require("./plugs/PluggedStudentView");
                 Log.trace("Factory::getView() - view loaded");
 
                 const constructorName = Object.keys(plug)[0];
@@ -102,23 +75,14 @@ export class Factory {
             config: true
         };
 
-        const customViewsExist = this.customControllerExists();
-
         try {
             if (this.adminView === null) {
                 Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
-                let plug: any;
 
-                if (name !== this.TESTNAME && customViewsExist === true) {
-                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + "; using CustomAdminView");
-                    plug = await require("./custom/CustomAdminView"); // course-specific file;
-                } else {
-                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + "; using test DefaultAdminView");
-                    plug = await require("./custom/DefaultAdminView"); // default for testing
-                }
+                const plug = await require("./plugs/PluggedAdminView"); // course-specific file;
                 Log.trace("Factory::getAdminView() - view loaded");
 
                 // if this fails an error will be raised and the default view will be provided in the catch below
@@ -168,19 +132,10 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
-        // FORK: Gets the default html/default/landing.html page unless your course
-        // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
-
-        const customViewsExist = this.customControllerExists();
+        // Html pages are prefixed by course namespace to be excluded from git
+        // Webpack build tools manage moving default or plugin logic to this folder for runtime
 
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
-        if (this.name !== this.TESTNAME && customViewsExist === true) {
-            // webpack has to copy files from the plugin into this html/<this.name>
-            Log.info("Factory::getHTMLPrefix() - custom prefix for: " + this.name);
-            return this.name;
-        } else {
-            Log.info("Factory::getHTMLPrefix() - using default prefix for: " + this.name);
-            return "default";
-        }
+        return this.name;
     }
 }
