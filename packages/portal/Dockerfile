@@ -12,6 +12,7 @@ COPY .env ./
 COPY package.json tsconfig.json .env ./
 COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
+COPY plugin /plugin
 
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
