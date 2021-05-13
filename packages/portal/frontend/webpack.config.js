@@ -24,7 +24,7 @@ console.log('Preparing frontend for: ' + process.env.NAME);
 
 
 if (process.env.PLUGIN_FULLPATH) {
-    console.log('Frontend plugin path: ' + process.env.PLUGIN_FULLPATH);
+    console.log('Plugin path: ' + process.env.PLUGIN_FULLPATH);
 } else {
     console.log('Default Classy paths');
 }
@@ -37,23 +37,22 @@ module.exports = {
     plugins: [
         new CopyPlugin({
             patterns: [
-                // copy plugin frontend files frontend into a place where webpack can include them
-                // custom backend files can be accessed directly and do not need to be copied
+                // copy plugin frontend files if plugin enabled or copy default Classy logic into place
                 {
-                    from: pluginExists() ? './plugin/src/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
+                    from: pluginExists() ? './plugin/portal/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
                     to: '../../src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: pluginExists() ? './plugin/src/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
+                    from: pluginExists() ? './plugin/portal/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
                     to: '../../src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
-                {   //
-                    from: pluginExists() ? './plugin/html' : './html/default',
-                    // to: '../html/' + process.env.NAME, // puts it in ./html/html/{name}
+                {
+                    from: pluginExists() ? './plugin/portal/html' : './html/default',
+                    // to: '../html/' + process.env.NAME, // puts it in ./html/{name}
                     to: '../' + process.env.NAME,
                     toType: 'dir',
                     noErrorOnMissing: false,
