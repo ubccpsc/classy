@@ -27,24 +27,23 @@ export class Factory {
      * @returns {IREST}
      */
     public static async getCustomRouteHandler(name?: string): Promise<IREST> {
+        const pluginPath = Config.getInstance().getProp(ConfigKey.plugin_fullpath);
+
         if (typeof name === "undefined") {
             name = Factory.getName();
         }
+
         try {
-            // NOTE: using require instead of import because file might not be present in forks
-            // import complains about this, but require does not.
+            // NOTE: If plugin path is not defined, default logic loaded, which CI tests also use.
             let plug: any;
-            const pluginPath = Config.getInstance().getProp(ConfigKey.plugin_fullpath);
-            Log.info("Factory::getCustomRouteHandler() - plugin path: " + pluginPath);
-            if (name === Factory.TESTNAME || typeof pluginPath === "undefined") {
-                Log.info("Factory::getCustomRouteHandler() - instantiating DefaultCourseRoutes for: " + name);
-                plug = await require("./custom/DefaultCourseRoutes"); // default for testing
+            if (pluginPath) {
+                Log.info("Factory::getCustomRouteHandler() - instantiating DefaultCourseRoutes for: " + name + "; path: " + pluginPath);
+                plug = await require("../../../../plugin/src/backend/CustomCourseRoutes"); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                const fullPath = pluginPath + "/plugin/src/backend/CustomCourseRoutes";
-                Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + fullPath);
-                plug = await require(fullPath);
+                Log.info("Factory::getCustomRouteHandler() - instantiating DefaultCourseRoutes for: " + name + "; path: ./custom/DefaultCourseRoutes");
+                plug = await require("./custom/DefaultCourseRoutes");
             }
 
             Log.trace("Factory::getCustomRouteHandler() - handler loaded");
@@ -98,30 +97,20 @@ export class Factory {
             let plug: any = null;
 
             try {
-                if (name !== Factory.TESTNAME && typeof pluginPath !== "undefined") {
+                if (pluginPath) {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
                     Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                    plug = await require(pluginPath + "/plugin/src/backend/CustomCourseController");
+                    plug = await require("../../../../plugin/src/backend/CustomCourseController");
+                } else {
+                    Log.trace("Factory::getCourseController() - name: " + name + " - plug: DefaultCourseController");
+                    plug = await require("./custom/DefaultCourseController");
                 }
             } catch (err) {
                 const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
                 Log.error(msg);
                 Log.error(err);
                 plug = null;
-            }
-
-            if (plug === null) {
-                // either it's a test, or the previous step did not finish due to error or no defined CustomCourseController
-                if (name === Factory.TESTNAME || typeof pluginPath === "undefined") {
-                    Log.trace("Factory::getCourseController() - name: " + name + " - plug: DefaultCourseController");
-                    plug = await require("./custom/DefaultCourseController"); // default for testing
-                } else {
-                    // If a course wants to specialize the AdminView it should be in the file below.
-                    // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                    plug = await require(pluginPath + "/plugin/src/backend/CustomCourseController");
-                }
             }
 
             Log.trace("Factory::getCourseController() - handler loaded");
