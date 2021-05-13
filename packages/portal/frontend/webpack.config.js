@@ -1,4 +1,4 @@
-var path = require('path');
+const path = require('path');
 
 // read the env so we can copy custom resources (if needed)
 require('dotenv').config(
@@ -20,7 +20,6 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
     return process.env.PLUGIN_FULLPATH ? true : false;
 }
 
-
 console.log('Preparing frontend for: ' + process.env.NAME);
 
 
@@ -41,19 +40,19 @@ module.exports = {
                 // copy plugin frontend files frontend into a place where webpack can include them
                 // custom backend files can be accessed directly and do not need to be copied
                 {
-                    from: pluginExists() ? '/plugin/src/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
+                    from: pluginExists() ? './plugin/src/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
                     to: '../../src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: pluginExists() ? '/plugin/src/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
+                    from: pluginExists() ? './plugin/src/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
                     to: '../../src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {   //
-                    from: pluginExists() ? '/plugin/html' : './html/default',
+                    from: pluginExists() ? './plugin/html' : './html/default',
                     // to: '../html/' + process.env.NAME, // puts it in ./html/html/{name}
                     to: '../' + process.env.NAME,
                     toType: 'dir',
