@@ -18,7 +18,7 @@ The directory structure under PLUGIN_PATH:
 │   └── docker-compose.override.yml
 ├── nginx/
 │   └── nginx.rconf
-└── application/
+└── portal/
     ├── backend/
     │   ├── CustomCourseController.ts
     │   └── CustomCourseRoutes.ts
