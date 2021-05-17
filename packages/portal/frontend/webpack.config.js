@@ -38,20 +38,21 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 // copy plugin frontend files if plugin enabled or copy default Classy logic into place
+                // NOTE: Use relative paths to ensure this works in both development and docker production environments
                 {
-                    from: pluginExists() ? './plugin/portal/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
+                    from: pluginExists() ? '../../../plugin/portal/frontend/CustomStudentView.ts' : './src/app/custom/DefaultStudentView.ts',
                     to: '../../src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: pluginExists() ? './plugin/portal/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
+                    from: pluginExists() ? '../../../plugin/portal/frontend/CustomAdminView.ts' : './src/app/custom/DefaultAdminView.ts',
                     to: '../../src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: pluginExists() ? './plugin/portal/html' : './html/default',
+                    from: pluginExists() ? '../../../plugin/portal/frontend/html' : './html/default',
                     // to: '../html/' + process.env.NAME, // puts it in ./html/{name}
                     to: '../' + process.env.NAME,
                     toType: 'dir',
