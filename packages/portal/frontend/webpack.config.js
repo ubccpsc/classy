@@ -24,9 +24,9 @@ console.log('Preparing frontend for: ' + process.env.NAME);
 
 
 if (process.env.PLUGIN_FULLPATH) {
-    console.log('Plugin path: ' + process.env.PLUGIN_FULLPATH);
+    console.log('Loading plugin path: ' + process.env.PLUGIN_FULLPATH);
 } else {
-    console.log('Default Classy paths');
+    console.log('Loading Classy defaults...');
 }
 
 module.exports = {
