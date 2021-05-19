@@ -12,13 +12,17 @@ COPY .env ./
 COPY package.json tsconfig.json .env ./
 COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
-COPY plugin ./plugin
 
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
- && yarn tsc --sourceMap false \
- && cd packages/portal/frontend && yarn webpack \
- && chmod -R a+r /app \
+ && yarn tsc --sourceMap false
+
+COPY plugin/portal/frontend ./plugin/portal/frontend
+RUN cd packages/portal/frontend && yarn webpack
+RUN chmod -R a+r /app \
  && git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
+
+COPY plugin/portal/backend ./plugin/portal/backend
+RUN cd plugin && yarn install && yarn run build; exit 0
 
 CMD ["node", "/app/packages/portal/backend/src/Backend.js"]
