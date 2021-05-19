@@ -1,27 +1,26 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES6",
-    "noImplicitAny": true,
-    "removeComments": false,
-    "preserveConstEnums": true,
-    "sourceMap": true,
-    "lib": [
-      "es7",
-      "es2017.object",
-      "dom"
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES6",
+        "noImplicitAny": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        "lib": [
+            "es7",
+            "es2017.object",
+            "dom"
+        ],
+        "typeRoots": [
+            "../../../node_modules/@types"
+        ]
+    },
+    "include": [
+        "src/**/*.ts",
+        "src-util/**/*.ts",
+        "test/**/*.ts"
     ],
-    "typeRoots": [
-        "../../../node_modules/@types"
+    "exclude": [
+        "node_modules"
     ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "src-util/**/*.ts",
-    "test/**/*.ts",
-    "../common/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
 }
