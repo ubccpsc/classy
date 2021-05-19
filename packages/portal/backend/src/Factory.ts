@@ -40,7 +40,7 @@ export class Factory {
             let plug: any;
             if (pluginPath) {
                 Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + pluginPath);
-                plug = await require("../../../../plugin/portal/backend/src/CustomCourseRoutes"); // default for testing
+                plug = await require("../../../../plugin/portal/backend/CustomCourseRoutes"); // default for testing
             } else {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
@@ -103,7 +103,7 @@ export class Factory {
                     // If a course wants to specialize the AdminView it should be in the file below.
                     // This is not required. But if it is added, it should never be pushed back to 'classy/master'
                     Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                    plug = await require("../../../../plugin/portal/backend/src/CustomCourseController");
+                    plug = await require("../../../../plugin/portal/backend/CustomCourseController");
                 } else {
                     Log.trace("Factory::getCourseController() - name: " + name + " - plug: DefaultCourseController");
                     plug = await require("./custom/DefaultCourseController");
