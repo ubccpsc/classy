@@ -16,13 +16,15 @@ COPY packages/portal ./packages/portal
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false
 
+# Webpack will do the frontend build
 COPY plugin/portal/frontend ./plugin/portal/frontend
 RUN cd packages/portal/frontend && yarn webpack
 RUN chmod -R a+r /app \
  && git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
 
+# Typescript will build the backend
 COPY plugin/portal/backend ./plugin/portal/backend
-RUN cd plugin && yarn install && yarn run build; exit 0
+RUN cd plugin && yarn run build; exit 0
 
 CMD ["node", "/app/packages/portal/backend/src/Backend.js"]
