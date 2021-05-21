@@ -4,16 +4,17 @@ Out of the box, Classy's default behaviour should suit most courses; however, so
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-To customize Portal, add the plugin filesystem path to the .env file as PLUGIN_PATH.
-(If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy project logic.)
+To customize Portal, add the plugin to the classy/plugins directory. The plugin root directory will
+become the name of the plugin and must be specified in the .env PLUGIN variable before building Classy. The default Classy plugin, which includes Classy's standard behaviour, is loaded without any updates to the .env file.
 
 ```ascii
-PLUGIN_PATH=/opt/classy-plugin/
+PLUGIN=cs999
 ```
 
-The directory structure under PLUGIN_PATH:
+The directory structure of a plugin:
 
 ```ascii
+cs999/
 ├── docker/
 │   └── docker-compose.override.yml
 ├── nginx/
@@ -160,8 +161,6 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
 See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
 
 See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
-
-If PLUGIN_PATH is not defined, Classy will default to standard ubccpsc/Classy docker-compose.yml project template.
 
 ## Nginx / Services Routing
 

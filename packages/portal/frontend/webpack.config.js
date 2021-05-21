@@ -17,14 +17,14 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
  * @returns {boolean}
  */
  const pluginExists = () => {
-    return process.env.PLUGIN_FULLPATH ? true : false;
+    return process.env.plugin ? true : false;
 }
 
 console.log('Preparing frontend for: ' + process.env.NAME);
 
 
-if (process.env.PLUGIN_FULLPATH) {
-    console.log('Loading plugin path: ' + process.env.PLUGIN_FULLPATH);
+if (process.env.plugin) {
+    console.log('Loading plugin path: ' + process.env.plugin);
 } else {
     console.log('Loading Classy defaults...');
 }
@@ -40,19 +40,19 @@ module.exports = {
                 // copy plugin frontend files if plugin enabled or copy default Classy logic into place
                 // NOTE: Use relative paths to ensure this works in both development and docker production environments
                 {
-                    from: '../../../' + process.env.PLUGIN_FULLPATH + '/portal/frontend/CustomStudentView.ts',
+                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomStudentView.ts',
                     to: '../../src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: '../../../' + process.env.PLUGIN_FULLPATH + '/portal/frontend/CustomAdminView.ts',
+                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomAdminView.ts',
                     to: '../../src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
-                    from: '../../../' + process.env.PLUGIN_FULLPATH + '/portal/frontend/html',
+                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/html',
                     // to: '../html/' + process.env.NAME, // puts it in ./html/{name}
                     to: '../' + process.env.NAME,
                     toType: 'dir',

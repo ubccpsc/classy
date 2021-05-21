@@ -29,7 +29,7 @@ export class Factory {
      * @returns {IREST}
      */
     public static async getCustomRouteHandler(name?: string): Promise<IREST> {
-        const pluginPath = Config.getInstance().getProp(ConfigKey.plugin_fullpath);
+        const plugin = Config.getInstance().getProp(ConfigKey.plugin);
 
         if (typeof name === "undefined") {
             name = Factory.getName();
@@ -38,8 +38,8 @@ export class Factory {
         try {
             // plugin path can be substituted in .env for customization of routes
             let plug: any;
-            Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + pluginPath);
-            plug = await require('../../../../' + pluginPath + "/portal/backend/CustomCourseRoutes"); // default for testing
+            Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + plugin);
+            plug = await require('../../../../plugins/' + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
             Log.trace("Factory::getCustomRouteHandler() - handler loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
@@ -49,7 +49,7 @@ export class Factory {
             return handler;
         } catch (err) {
             Log.error(err);
-            const msg = "Factory::getCustomRouteHandler() - " + pluginPath + "/portal/backend/CustomCourseRoutes.ts must be defined";
+            const msg = "Factory::getCustomRouteHandler() - " + plugin + "/portal/backend/CustomCourseRoutes.ts must be defined";
             Log.error(msg);
             throw new Error(msg);
         }
@@ -82,9 +82,9 @@ export class Factory {
             Log.trace("Factory::getCourseController() - using provided controller");
         }
         try {
-            const pluginPath = Config.getInstance().getProp(ConfigKey.plugin_fullpath);
+            const plugin = Config.getInstance().getProp(ConfigKey.plugin);
 
-            Log.trace("Factory::getCourseController() - name: " + name + "; path: " + pluginPath);
+            Log.trace("Factory::getCourseController() - name: " + name + "; plugin: " + plugin);
 
             // NOTE: using require instead of import because file might not be present in forks
             // import complains about this, but require does not.
@@ -94,9 +94,9 @@ export class Factory {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to 'classy/master'
                 Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                plug = await require("../../../../" + pluginPath + "/portal/backend/CustomCourseController");
+                plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseController");
             } catch (err) {
-                const msg = "Factory::getCourseController() - " + pluginPath + "/src/custom/CustomCourseController.ts must be defined";
+                const msg = "Factory::getCourseController() - " + plugin + "/src/custom/CustomCourseController.ts must be defined";
                 Log.error(msg);
                 Log.error(err);
                 plug = null;
