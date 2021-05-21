@@ -54,6 +54,7 @@ services:
             args:
                 - GH_BOT_USERNAME
                 - GH_BOT_EMAIL
+                - PLUGIN_FULLPATH
             context: ./
             dockerfile: ./packages/portal/Dockerfile
         container_name: portal

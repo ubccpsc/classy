@@ -2,6 +2,7 @@ FROM node:12-alpine
 
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
+ARG PLUGIN_FULLPATH=/opt/classy/default-fullpath
 
 RUN apk add --no-cache git
 
@@ -17,14 +18,14 @@ RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false
 
 # Webpack will do the frontend build
-COPY plugin/portal/frontend ./plugin/portal/frontend
+COPY "${PLUGIN_FULLPATH}"/portal/frontend "${PLUGIN_FULLPATH}"/portal/frontend
 RUN cd packages/portal/frontend && yarn webpack
 RUN chmod -R a+r /app \
  && git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
 
 # Typescript will build the backend
-COPY plugin/portal/backend ./plugin/portal/backend
-RUN cd plugin && yarn run build; exit 0
+COPY "${PLUGIN_FULLPATH}"/portal/backend "${PLUGIN_FULLPATH}"/portal/backend
+RUN cd "${PLUGIN_FULLPATH}"/portal/backend && yarn run build
 
 CMD ["node", "/app/packages/portal/backend/src/Backend.js"]

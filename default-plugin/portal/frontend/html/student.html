@@ -1,0 +1,60 @@
+<ons-page id="StudentRoot">
+    <ons-toolbar>
+        <div class="center">Classy Student Portal</div>
+        <div id='indexLogin' class="right">
+            <ons-toolbar-button onclick="myApp.logout();">
+                <ons-icon icon="fa-sign-out"></ons-icon>
+                <span style="vertical-align: top; font-size: 80%;">Logout</span>
+            </ons-toolbar-button>
+        </div>
+    </ons-toolbar>
+
+    <ons-list>
+        <ons-list-header>Grades</ons-list-header>
+        <ons-list-item>
+            <div id="studentGradeTable" style="width:100%;"></div>
+        </ons-list-item>
+        <ons-list-header>Repositories</ons-list-header>
+        <ons-list-item>
+            <div id="studentRepoTable" style="width:100%;"></div>
+        </ons-list-item>
+        <div id="studentSelectPartnerDiv"> <!-- -->
+            <ons-list-header>Select Project Partner</ons-list-header>
+            <ons-list-item expandable>
+                <div class="left settingIcon">
+                    <ons-icon style="padding-right: 1em;" icon="fa-cogs"></ons-icon>
+                    Specify project partner CWL:
+                </div>
+                <div>
+                    <ons-input class="settingTextInput" id="studentSelectPartnerText"></ons-input>
+                    <ons-button id="studentSelectPartnerButton">Create Team</ons-button>
+                </div>
+                <div class="expandable-content">
+                    Specify your project partner here. They must be registered in your lab section and must not be on any other team. Please
+                    note: this will be your partner for the duration of the term and cannot be changed so make your choice carefully. Only
+                    one team member needs to do this.
+                </div>
+            </ons-list-item>
+        </div>
+        <ons-list-item expandable>
+            <div class="left settingIcon">
+                <ons-icon style="padding-right: 1em;" icon="fa-microchip"></ons-icon>
+                Specify deliverable:
+            </div>
+            <div>
+                <ons-select id="studentSelectDeliverable">
+                </ons-select>
+            </div>
+            <div class="expandable-content">
+                Select the deliverable that you would like to form a team for. Only deliverables configured for student team formation are listed.
+            </div>
+        </ons-list-item>
+        <div id="studentPartnerDiv">
+            <ons-list-header>Current Teams</ons-list-header>
+            <ons-list-item id="studentNotOnTeamMsg">
+                You currently are not on any teams.
+            </ons-list-item>
+        </div>
+    </ons-list>
+
+</ons-page>

@@ -6,6 +6,7 @@
         "removeComments": false,
         "preserveConstEnums": true,
         "sourceMap": true,
+        "baseUrl": "./",
         "lib": [
             "es7",
             "es2017.object",
