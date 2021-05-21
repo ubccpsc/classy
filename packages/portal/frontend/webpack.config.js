@@ -20,11 +20,11 @@ const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
     return process.env.PLUGIN ? true : false;
 }
 
-console.log('Prepa  ring frontend for: ' + process.env.NAME);
+console.log('Preparing frontend for: ' + process.env.NAME);
 
 
-if (process.env.PLUGIN) {
-    console.log('Loading plugin path: ' + process.env.PLUGIN);
+if (process.env.PLUGIN !== 'default') {
+    console.log('Loading plugin: ' + process.env.PLUGIN);
 } else {
     console.log('Loading Classy defaults...');
 }
