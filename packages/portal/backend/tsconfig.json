@@ -6,7 +6,12 @@
         "removeComments": false,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "baseUrl": "./",
+        "baseUrl": ".",
+        "paths": {
+            "@backend/*": [
+                "../../portal/backend/src/*"
+            ],
+        },
         "lib": [
             "es7",
             "es2017.object",
@@ -17,9 +22,7 @@
         ]
     },
     "include": [
-        "src/**/*.ts",
-        "src-util/**/*.ts",
-        "test/**/*.ts"
+        "src/**/*.ts"
     ],
     "exclude": [
         "node_modules"

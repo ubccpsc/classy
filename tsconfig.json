@@ -13,6 +13,9 @@
             ],
             "@common/*": [
                 "packages/common/*"
+            ],
+            "@backend/*": [
+                "packages/portal/backend/src/*"
             ]
         },
         "lib": [
