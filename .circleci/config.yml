@@ -70,6 +70,11 @@ jobs:
             when: always
 
       - run:
+            command: cd plugins/default && yarn run build
+            name: Building plugin
+            when: always
+
+      - run:
             command: cd packages/common && ../../node_modules/typescript/bin/tsc
             name: Building common
             when: always
