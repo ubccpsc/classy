@@ -4,8 +4,7 @@ Out of the box, Classy's default behaviour should suit most courses; however, so
 
 Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
 
-To customize Portal, add the plugin to the classy/plugins directory. The plugin root directory will
-become the name of the plugin and must be specified in the .env PLUGIN variable before building Classy. The default Classy plugin, which includes Classy's standard behaviour, is loaded without any updates to the .env file.
+To customize Portal, add the plugin to the classy/plugins directory. The plugin  directory name will become the name of the plugin where it should be specified in the .env PLUGIN variable before building Classy. The default Classy plugin, which includes Classy's standard behaviour, is loaded without any updates to the .env file.
 
 ```ascii
 PLUGIN=cs999
@@ -39,6 +38,16 @@ The `docker`, `nginx`, and `application` folders are each optional and can be ex
 The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files.
 
 Classes with core default Classy logic are mentioned. It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic.
+
+### Build Information
+
+The front-end and back-end applications use TypeScript, which must be compiled before the application is ready to run.
+
+The front-end and back-end both require valid TypeScript before they are compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
+
+WebPack compiles and transpiles the front-end TypeScript files into a single JavaScript file. The single file is served along with HTML template files by Nginx. WebPack uses `tsconfig-paths-webpack-plugin` to map the plugin namespace paths at runtime.
+
+TypeScript, on the other hand, compiles each back-end file into a counterpart JavaScript file. As plugin paths are, again, not known during compilation, paths must be mapped during runtime using `tsconfig-paths`. Hence, the back-end plugin is required when node starts to manage the path mapping.
 
 ### Defaults
 
@@ -102,13 +111,11 @@ Classes with core default Classy logic are mentioned. It is advisable that one d
 
 ### HTML Files
 
-The `html/` folder should contain HTML files that are used by the Custom Front-End files, as the view in the MVC pattern.
+The `html/` folder should contain HTML files that are used by the Custom Front-End view models.
 
-NOTE: All default HTML files will be loaded even if custom front-end files are loaded. As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime.
+NOTE: As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the insutrctor's discretion and experience.
 
 It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
-
-
 
 ## Docker Containers / Supporting Services
 
