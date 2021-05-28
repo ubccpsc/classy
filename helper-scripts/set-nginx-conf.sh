@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# PRE-script to `docker-compose build` when loading a plugin
+# Pre to `docker-compose build` when using a plugin
 # If docker-compose.override.yml file found, it will be copied to the root Classy folder to be
 # read by docker-compose at build time.
 
@@ -13,7 +13,7 @@ if [[ -f $file ]]; then
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         cp $file ./packages/proxy/nginx.rconf
-        echo "Overwriting default Classy/packages/proxy/nginx.conf file"
+        echo "\nOverwriting default Classy/packages/proxy/nginx.conf file"
     else
         echo "Aborting overwrite of nginx.conf. Default nginx.conf will remain."
     fi
