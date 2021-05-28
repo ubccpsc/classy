@@ -4,7 +4,7 @@
 [Starting Classy](#starting-classy)
 [Stopping Classy](#stopping-classy)
 
-Docker Compose is a Docker orchestration tool that is used to streamline basic operations tasks. Docker Compose commands can build, start, and stop Classy. Logs may also be compiled from multiple sources and vierwed. 
+Docker Compose is a Docker orchestration tool that is used to streamline basic operations tasks. Docker Compose commands can build, start, and stop Classy. Logs may also be compiled from multiple sources and viewed.
 
 ## Building Classy
 
@@ -14,11 +14,10 @@ cd /opt/classy
 # Create a subnet that the grading containers will attach to. This makes it easier to set up firewall rules (above).
 docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" grading_net
 
-# Copy default front-end and back-end templates to customizable files needed to run Classy:
-./helper-scripts/default-file-setup.sh
-# Or if you have yarn: (runs the same script, see package.json)
-yarn run pre-build
+# if plugin in .env file is not 'default', run the command to configure the new plugin
+./helper-scripts/load-plugin.sh
 
+# then build Classy with Docker
 docker-compose build
 ```
 

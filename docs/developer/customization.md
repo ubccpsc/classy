@@ -119,9 +119,19 @@ It is up to you to expand and build upon the default templates while naming new 
 
 ## Docker Containers / Supporting Services
 
-Configuration is contained within the `docker` folder.
+Docker-compose uses a `docker-compose.override.yml` file to inherit default `docker-compose.yml` configurations. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
+
+Do not override the .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
+
+See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
+
+See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
 ### Defaults
+
+The `classy/.env` file contains environmental variable dependencies used to build the Docker containers. References to the environmental variables can be seen in the [docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml) file.
+
+SSH access must be requested to modify the .env file manually. Alternatively, these variables can be provided to technical staff to ensure that any docker-compose.override.yml file can utilize environmental variables. The .env file path should not be overridden in the docker-compose.override.yml file, as it would not contain the default Classy environmental variable configurations.
 
 ```ascii
 
@@ -132,8 +142,8 @@ Configuration is contained within the `docker` folder.
            |                                |
            |                          -------------
 --------------------                  -           -
--                  -       **----------  Default  -   <---- docker-compose.yml
--                  -                  -   Docker  -
+-                  -       **----------  Default  -   <---- classy/docker-compose.yml
+-                  -                  -   Docker  -   <---- classy/.env
 -      Classy      -                  -  Services -
 -                  -                  -------------
 -                  -
@@ -154,21 +164,16 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
            |                          -           -
            |                          -  Default  -
 --------------------                  -   Docker  - 
--                  -       **----------  Services -  <---- docker-compose.yml
--                  -                  -------------
+-                  -       **----------  Services -  <---- classy/docker-compose.yml
+-                  -                  -------------  <---- classy/.env
 -      Classy      -          
 -                  -                  -------------
--                  -                  -           -
--                  -       **----------   Custom  -  <---- docker-compose.override.yml
---------------------                  -   Docker  -
+-                  -                  -           -  
+-                  -       **----------   Custom  -  
+--------------------                  -   Docker  -  <---- plugin/namespace/docker/docker-compose.override.yml (inherits Default Docker Services files)
                                       -  Services -
                                       -------------
 ```
-
-See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
-
-See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
-
 ## Nginx / Services Routing
 
 The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf) and [proxy.conf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/proxy.conf) files are used as scaffolding for your changes.

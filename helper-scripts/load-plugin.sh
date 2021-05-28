@@ -1,19 +1,11 @@
 #!/bin/sh
 
 # Pre-file to `docker-compose build` command when setting a plugin in Classy.
-# Docker-compose and Nginx files are OPTIONAL in the plugin and only copied if they exist.
+# This file needs to run on Linux boxes without Node dependencies. Node is introduced
+# during the Docker build, but not before, in a production environment.
 
-plugin=`awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' ./.env`
-rootDir=`pwd`
-pluginPath="./plugins/$plugin/docker/docker-compose.override.yml"
+# Run from root Classy project dir ie. /opt/classy/
 
-if [[ -f $pluginPath ]]; then
-    echo "Docker-compose.override.yml file found in $plugin plugin"
-    echo "Copying Docker override file to Classy root directory: $rootDir"
-    cp $pluginPath ./
-else
-    echo `pwd`
-    echo "No docker-compose.override.yml found in $plugin"
-fi
+./helper-scripts/set-docker-override.sh
 
-echo "${pwd}"
+./helper-scripts/set-nginx-conf.sh
