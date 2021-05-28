@@ -13,7 +13,7 @@ if [[ -f $file ]]; then
 
     if [[ $REPLY =~ ^[Yy]$ ]]; then
         cp $file ./packages/proxy/nginx.rconf
-        echo "\n" && echo "Overwriting default Classy/packages/proxy/nginx.conf file"
+        echo "" && echo "Overwriting default Classy/packages/proxy/nginx.conf file"
     else
         echo "Aborting overwrite of nginx.conf. Default nginx.conf will remain."
     fi
