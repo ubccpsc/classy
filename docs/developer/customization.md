@@ -46,7 +46,7 @@ It is advisable that one does not override or extend functionality until one has
 
 ### Front-End and Back-End Build Information
 
-The front-end and back-end use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that can efficiently be utilized on the front-end by the browser.
+The front-end and back-end use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that is optimized for the browser.
 
 The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
 
@@ -54,31 +54,30 @@ The front-end and back-end both require valid TypeScript before they can be comp
 
 ```ascii
                 
-                - DefaultAdminView.ts extends AdminView. AdminView contains default functionality for Admin Panel.
-                - DefaultStudentView extends ClassyStudentView. ClassyStudentView contains default functionality for Student Panel.
-                - html/* contains all default view templates
+                - The front-end inherits default functionality AdminView, AbstractStudentView.
+                - The default functionality is designed to work with the html/* folder file templates. 
                            |
            |----------------------------------
            |                                 |
            |                          -------------
            |                          -           -
-           |                          -  Default  -   <---- DefaultAdminView.ts
---------------------                  - Front-End -         DefaultStudentView.ts
--                  -       **----------   Files   -         html/*
+           |                          -  Default  -   <---- plugin/default/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         plugin/default/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         plugin/default/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Default -   <---- DefaultCourseController.ts
-           |                          - Back-End -         DefaultCourseRoutes.ts
+--------------------                  -  Default -   <---- plugin/default/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         plugin/default/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                 |
            |---------------------------------- 
                             |
-                - DefaultCourseController.ts extends CourseController for defaults.
-                - DefaultCourseRoutes.ts extends IREST. No default routes actually imeplemented here. Actual default routes loaded in BackendServer.ts file. This plug does not do anything.
+                - CustomCourseController extends CourseController for defaults.
+                - CustomCourseRoutes.ts extends IREST for additional implementations. No route overrides are available.
 ```
 
 ### Customizations
@@ -91,32 +90,32 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                                |
            |                          -------------
            |                          -           -
-           |                          -  Custom   -   <---- CustomAdminView.ts
---------------------                  - Front-End -         CustomStudentView.ts
--                  -       **----------   Files   -         html/*
+           |                          -  Custom   -   <---- yourPlugin/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         yourPlugin/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         yourPlugin/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Custom  -   <---- CustomCourseController.ts
-           |                          - Back-End -         CustomCourseRoutes.ts
+--------------------                  -  Custom  -   <---- yourPlugin/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         yourPlugin/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                |
            |---------------------------------
                             |
-                - CustomCourseController.ts should extend CourseController. See CourseController documentation for default functionality and override insight.
-                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker service integrations.
+                - CustomCourseController.ts should extend CourseController to inherit default functionality and/or override methods. See CourseController methods for default functionality documentation. 
+                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes when Classy starts at runtime.
 ```
 
 ### HTML Files
 
 The `html/` folder should contain HTML files that are used by the Custom Front-End view models.
 
-NOTE: As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the insutrctor's discretion and experience.
+As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the insutrctor's discretion and experience.
 
-It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
+It is up to you to expand and build upon the default templates while naming new files to allow easily pull-in updates from the upstream `ubccpsc/Classy` project.
 
 ## Docker Containers / Supporting Services
 
