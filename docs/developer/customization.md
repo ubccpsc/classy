@@ -152,8 +152,8 @@ SSH access must be requested to modify the .env file manually. Alternatively, th
            |                                |
            |                          -------------
 --------------------                  -           -
--                  -       **----------  Default  -   <---- classy/docker-compose.yml
--                  -                  -   Docker  -   <---- classy/.env
+-                  -       **----------  Default  -   <---- plugins/default/classy/docker-compose.override.yml
+-                  -                  -   Docker  -   <---- .env
 -      Classy      -                  -  Services -
 -                  -                  -------------
 -                  -
@@ -174,19 +174,19 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
            |                          -           -
            |                          -  Default  -
 --------------------                  -   Docker  - 
--                  -       **----------  Services -  <---- classy/docker-compose.yml
--                  -                  -------------  <---- classy/.env
+-                  -       **----------  Services -  <---- plugins/default/docker-compose.override.yml (inherits and overrides docker-compose.yml file)
+-                  -                  -------------  <---- .env
 -      Classy      -          
 -                  -                  -------------
 -                  -                  -           -  
 -                  -       **----------   Custom  -  
---------------------                  -   Docker  -  <---- plugin/namespace/docker/docker-compose.override.yml (inherits Default Docker Services files)
-                                      -  Services -
+--------------------                  -   Docker  -  <---- plugins/yourPlugin/docker-compose.override.yml (inherits and overrides docker-compose.yml file)
+                                      -  Services -  <---- .env
                                       -------------
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf) and [proxy.conf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/proxy.conf) files are used as scaffolding for your changes.
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) and
 
 ### Defaults
 
@@ -195,7 +195,7 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 -                  -                  -----------------
 -                  -                  -               -
 -      Classy      -       **----------     Nginx     -  <---- nginx.rconf
--                  -                  - Configuration -        proxy.conf 
+-                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
 --------------------            
@@ -204,11 +204,11 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 ### Customizations
 
 ```ascii
---------------------                               NOTE: Must copy boilerplate from ubccpsc/master/classy
+--------------------                               NOTE: Must implement boilerplate found in `classy-plugin` repository for security.
 -                  -                  -----------------
 -                  -                  -               -
--      Classy      -       **----------     Nginx     -  <---- nginx.override.rconf
--                  -                  - Configuration -        proxy.override.conf 
+-      Classy      -       **----------     Nginx     -  <---- nginx.rconf
+-                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
 --------------------
