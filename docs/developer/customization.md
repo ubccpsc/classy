@@ -2,9 +2,15 @@
 
 Out of the box, Classy's default behaviour should suit most courses; however, sometimes custom views and endpoints are necessary to support internal course operations.
 
-Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
+Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and a RESTful API backend application. Docker services and Nginx configuration can also be customized to provide new services on your Classy server that are accessible via HTTP (ie. https://cs999.students.cs.ubc.ca/my-new-docker-service).
 
-To customize Portal, add the plugin to the classy/plugins directory. The plugin  directory name will become the name of the plugin where it should be specified in the .env PLUGIN variable before building Classy. The default Classy plugin, which includes Classy's standard behaviour, is loaded without any updates to the .env file.
+Customization Options:
+
+ - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
+       This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
+ - [ ] Portal
+ - [ ] Docker
+ - [ ] Nginx
 
 ```ascii
 PLUGIN=cs999
