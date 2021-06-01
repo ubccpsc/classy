@@ -42,7 +42,7 @@ Customization Steps:
 
 The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files. It is not possible to delete these files, as the application requires the files to be plugged into the application at runtime. You can, however, add additional TypeScript and HTML files to support your customization.
 
-It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the (https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts)[https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts] file.
+It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts) file.
 
 ### Front-End and Back-End Build Information
 
