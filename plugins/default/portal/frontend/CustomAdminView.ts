@@ -1,5 +1,5 @@
-import Log from "../../../../../common/Log";
-import {AdminTabs, AdminView} from "../views/AdminView";
+import Log from "@common/Log";
+import {AdminTabs, AdminView} from "@frontend/views/AdminView";
 
 /**
  * Stock Default Admin view

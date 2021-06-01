@@ -4,16 +4,17 @@
  */
 
 import {OnsButtonElement, OnsSelectElement} from "onsenui";
-import Log from "../../../../../common/Log";
+
+import Log from "@common/Log";
 import {
     ConfigTransport,
     DeliverableTransport,
     Payload,
     TeamFormationTransport,
     TeamTransport,
-} from "../../../../../common/types/PortalTypes";
-import {UI} from "../util/UI";
-import {AbstractStudentView} from "../views/AbstractStudentView";
+} from "@common/types/PortalTypes";
+import {UI} from "@frontend/util/UI";
+import {AbstractStudentView} from "@frontend/views/AbstractStudentView";
 
 export interface TeamFormationDeliverable {
     id: string;

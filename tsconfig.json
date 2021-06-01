@@ -29,7 +29,6 @@
         ]
     },
     "exclude": [
-        "node_modules",
-        "plugins/**/portal/frontend"
+        "node_modules"
 ]
 }
