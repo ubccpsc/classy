@@ -61,16 +61,16 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                                 |
            |                          -------------
            |                          -           -
-           |                          -  Default  -   <---- plugin/default/portal/frontend/CustomAdminView.ts
---------------------                  - Front-End -         plugin/default/portal/frontend/CustomStudentView.ts
--                  -       **----------   Files   -         plugin/default/portal/frontend/html/*
+           |                          -  Default  -   <---- plugins/default/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         plugins/default/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         plugins/default/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Default -   <---- plugin/default/portal/backend/CustomCourseController.ts
-           |                          - Back-End -         plugin/default/portal/backend/CustomCourseRoutes.ts
+--------------------                  -  Default -   <---- plugins/default/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         plugins/default/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                 |
@@ -91,16 +91,16 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                                |
            |                          -------------
            |                          -           -
-           |                          -  Custom   -   <---- yourPlugin/portal/frontend/CustomAdminView.ts
---------------------                  - Front-End -         yourPlugin/portal/frontend/CustomStudentView.ts
--                  -       **----------   Files   -         yourPlugin/portal/frontend/html/*
+           |                          -  Custom   -   <---- plugins/yourPlugin/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         plugins/yourPlugin/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         plugins/yourPlugin/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Custom  -   <---- yourPlugin/portal/backend/CustomCourseController.ts
-           |                          - Back-End -         yourPlugin/portal/backend/CustomCourseRoutes.ts
+--------------------                  -  Custom  -   <---- plugins/yourPlugin/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         plugins/yourPlugin/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                |
@@ -112,21 +112,30 @@ The front-end and back-end both require valid TypeScript before they can be comp
 
 ### HTML Files
 
-The `html/` folder should contain HTML files that are used by the Custom Front-End view models.
+The `html/` folder should contain HTML files that are used by the Custom front-end `CustomAdminView.ts` and `CustomStudentView.ts` files.
 
 As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `AbstractStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the instructor's discretion and experience.
 
-It is up to you to expand and build upon the default templates while naming new files to allow easily pull-in updates from the upstream `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes into your project each new term to get the latest security patches and Classy feature releases.**
+It is up to you to expand and build upon the default templates, while naming new files, to allow for easily mergeable upstream updates from the `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes before the new term starts for security and new features.**
 
 ## Docker Containers / Supporting Services
 
-Docker-compose uses a `docker-compose.override.yml` file to inherit default `docker-compose.yml` configurations. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
+See Classy's default docker-compose.yml configuration: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
-Do not override the .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
+Docker-compose will look in the `docker-compose.override.yml` file to override the default `docker-compose.yml` configuration. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
 
 See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
 
-See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
+Never commit the .env to source control. Do not override .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
+
+Implementing Docker-compose.override.yml changes: 
+
+- [ ] Do not overrride the .env file location in the `docker-compose.override.yml` file, as it will break the default Classy build.
+- [ ] Do not override the default services unless you know exactly what you are doing. Classy relies on the default configuration.
+- [ ] If adding services that require new .env variables, add them to the server via SSH (or ask tech-staff to do it).
+- [ ] Ensure that Docker-compose can build and run the Classy project locally.
+- [ ] Ensure that your new services are secure (in the context of the new service and who is allowed to have access)
+- [ ] If new services are introduced, where HTTP proxy/routing changes are needed, update the Nginx.conf file as needed.
 
 ### Defaults
 
