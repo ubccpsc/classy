@@ -2,18 +2,12 @@
 
 Out of the box, Classy's default behaviour should suit most courses; however, sometimes custom views and endpoints are necessary to support internal course operations.
 
-Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and RESTful API backend application.
-
-To customize Portal, add the plugin to the classy/plugins directory. The plugin  directory name will become the name of the plugin where it should be specified in the .env PLUGIN variable before building Classy. The default Classy plugin, which includes Classy's standard behaviour, is loaded without any updates to the .env file.
-
-```ascii
-PLUGIN=cs999
-```
+Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and a RESTful API backend application. Docker services and Nginx configuration can also be customized to provide new services on your Classy server that are accessible via HTTP (ie. https://cs999.students.cs.ubc.ca/my-new-docker-service).
 
 The directory structure of a plugin:
 
 ```ascii
-cs999/
+myPlugin/
 ├── docker/
 │   └── docker-compose.override.yml
 ├── nginx/
@@ -31,23 +25,30 @@ cs999/
             └── ...
 ```
 
-The `docker`, `nginx`, and `application` folders are each optional and can be excluded. Include only the folders you wish to customize.
+Customization Steps:
 
-## Application Layer
+ - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
-The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files.
+       This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
 
-Classes with core default Classy logic are mentioned. It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic.
+ - [ ] Name the plugin folder the name of the plugin (ie. myPlugin).
+ - [ ] Update the PLUGIN variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
+ - [ ] Customize Portal Front-end (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
+ - [ ] Customize Portal Back-end (API Routes, Course Controller)
+ - [ ] Override/Add Docker services
+ - [ ] Modify Nginx configuration file to support Docker changes.
 
-### Build Information
+## Portal Customization
 
-The front-end and back-end applications use TypeScript, which must be compiled before the application is ready to run.
+The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files. It is not possible to delete these files, as the application requires the files to be plugged into the application at runtime. You can, however, add additional TypeScript and HTML files to support your customization.
 
-The front-end and back-end both require valid TypeScript before they are compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
+It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts) file.
 
-WebPack compiles and transpiles the front-end TypeScript files into a single JavaScript file. The single file is served along with HTML template files by Nginx. WebPack uses `tsconfig-paths-webpack-plugin` to map the plugin namespace paths at runtime.
+### Front-End and Back-End Build Information
 
-TypeScript, on the other hand, compiles each back-end file into a counterpart JavaScript file. As plugin paths are, again, not known during compilation, paths must be mapped during runtime using `tsconfig-paths`. Hence, the back-end plugin is required when node starts to manage the path mapping.
+The front-end and back-end use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that can efficiently be utilized on the front-end by the browser.
+
+The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
 
 ### Defaults
 
