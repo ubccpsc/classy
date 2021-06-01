@@ -84,7 +84,8 @@ The front-end and back-end both require valid TypeScript before they can be comp
 
 ```ascii
                 - CustomAdminView.ts should extend AdminView to inherit default logic. Overrides are optional.
-                - CustomStudentView.ts should extend ClassyStudentView to inherit default logic. Overrides are optional.
+                - CustomStudentView.ts should extend AbstractStudentView to inherit default logic. Overrides are optional.
+                - Default HTML files should be used with the logic above. How you change the HTML and the default behaviour is up to individual discretion.
                             |
            |---------------------------------
            |                                |
@@ -105,17 +106,17 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                                |
            |---------------------------------
                             |
-                - CustomCourseController.ts should extend CourseController to inherit default functionality and/or override methods. See CourseController methods for default functionality documentation. 
-                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes when Classy starts at runtime.
+                - CustomCourseController.ts should extend CourseController to inherit default functionality. Overrides are optional. 
+                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to add new routes at Classy start.
 ```
 
 ### HTML Files
 
 The `html/` folder should contain HTML files that are used by the Custom Front-End view models.
 
-As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the insutrctor's discretion and experience.
+As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `AbstractStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the instructor's discretion and experience.
 
-It is up to you to expand and build upon the default templates while naming new files to allow easily pull-in updates from the upstream `ubccpsc/Classy` project.
+It is up to you to expand and build upon the default templates while naming new files to allow easily pull-in updates from the upstream `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes into your project each new term to get the latest security patches and Classy feature releases.**
 
 ## Docker Containers / Supporting Services
 
