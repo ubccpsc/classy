@@ -27,6 +27,8 @@ myPlugin/
 
 Customization Steps:
 
+1. Development Work Local Environment
+
  - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
        This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
@@ -38,17 +40,33 @@ Customization Steps:
  - [ ] Override/Add Docker services
  - [ ] Modify Nginx configuration file to support Docker changes.
 
+2. Push Plugin Changes to Remote Git Environment
+
+- [ ] Create a Private or Public GitHub empty repository.
+- [ ] Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
+- [ ] Add and push your changes to GitHub repository
+
+3. Running Classy with Plugin in Production
+
+NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech-staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
+
+- [ ] SSH into Classy remote box.
+- [ ] Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
+- [ ] Run ./helper-scripts/load-plugin.sh from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
+- [ ] Type `docker-compose build` from root Classy directory to build Dockerized production project.
+- [ ] Type `docker-compose up -d` to run Classy project in detatched mode in production.
+
 ## Portal Customization
 
 The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files. It is not possible to delete these files, as the application requires the files to be plugged into the application at runtime. You can, however, add additional TypeScript and HTML files to support your customization.
 
 It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts) file.
 
-### Front-End and Back-End Build Information
+### Build Information
 
-The front-end and back-end use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that is optimized for the browser.
+The Portal front-end and back-end applications use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that is optimized for the browser.
 
-The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
+The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Dockerized production build paths may differ.
 
 ### Defaults
 
