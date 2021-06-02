@@ -35,6 +35,8 @@ myPlugin/
 
 #### Required
 
+Do NOT remove the default `portal` folder project scaffolding from your project, as when Classy is integrated with a plugin, these project files will always be required. One should extend or add additional files to the `portal` folder project.
+
 1. To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
        This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
@@ -45,6 +47,8 @@ myPlugin/
 5. [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
 
 #### Optional
+
+You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/load-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin.
 
 1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
 2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
