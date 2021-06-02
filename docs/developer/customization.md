@@ -48,7 +48,7 @@ Do NOT remove the default `portal` folder project scaffolding from your project,
 
 #### Optional
 
-You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/load-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin.
+You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/load-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin).
 
 1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
 2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
@@ -69,8 +69,8 @@ All prior essential Classy server configurations, installations, and operations 
 2. Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
 3. Run `./helper-scripts/load-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
 4. Run `./opt/classy-scripts/fix-permissions`
-5. Type `docker-compose build` from root Classy directory to build Dockerized production project.
-6. Type `docker-compose up -d` to run Classy project in detatched mode in production.
+5. Run `docker-compose build` from root Classy directory to build Dockerized production project.
+6. Run `docker-compose up -d` to run Classy project in detatched mode in production.
 
 ## Portal Customization
 
@@ -220,7 +220,7 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) is used as the basis for any customizations.
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
 
 ### Implementing Nginx.conf
 
