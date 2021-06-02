@@ -33,22 +33,27 @@ myPlugin/
 
 ### Plugin Development:
 
- - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
+#### Required
+
+1. To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
        This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
 
- - [ ] Name the plugin folder the name of the plugin (ie. myPlugin).
- - [ ] Update the `PLUGIN` variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
- - [ ] [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
- - [ ] [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
- - [ ] [Override/Add Docker services](#Docker-Containers-/-Supporting-Services)
- - [ ] [Modify Nginx Configuration](#Nginx / Services Routing) file to support Docker changes.
+2. Name the plugin folder the name of the plugin (ie. myPlugin).
+3. Update the `PLUGIN` variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
+4. [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
+5. [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
+
+#### Optional
+
+1. [Override/Add Docker services](#Docker-Containers-/-Supporting-Services)
+2. [Modify Nginx Configuration](#Nginx-/-Services-Routing) file to support Docker changes.
 
 ### Setup Remote Repository
 
-- [ ] Create a Private or Public GitHub empty repository.
-- [ ] Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
-- [ ] Add and push your changes to GitHub repository
+1. Create a Private or Public GitHub empty repository.
+2. Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
+3. Add and push your changes to GitHub repository
 
 ### Run Classy with Plugin in Production
 
@@ -56,11 +61,12 @@ NOTE: These steps can be bypassed if your Classy plugin repository is public and
 
 All prior essential Classy server configurations, installations, and operations are managed by tech staff. E-mail tech staff to get Classy setup for the first time.
 
-- [ ] SSH into Classy remote box.
-- [ ] Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
-- [ ] Run ./helper-scripts/load-plugin.sh from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
-- [ ] Type `docker-compose build` from root Classy directory to build Dockerized production project.
-- [ ] Type `docker-compose up -d` to run Classy project in detatched mode in production.
+1. SSH into Classy remote box.
+2. Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
+3. Run `./helper-scripts/load-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
+4. Run `./opt/classy-scripts/fix-permissions`
+5. Type `docker-compose build` from root Classy directory to build Dockerized production project.
+6. Type `docker-compose up -d` to run Classy project in detatched mode in production.
 
 ## Portal Customization
 
