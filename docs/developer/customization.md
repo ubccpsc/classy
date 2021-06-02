@@ -46,8 +46,8 @@ myPlugin/
 
 #### Optional
 
-1. [Override/Add Docker services](#Docker-Containers-/-Supporting-Services)
-2. [Modify Nginx Configuration](#Nginx-/-Services-Routing) file to support Docker changes.
+1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
+2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
 
 ### Setup Remote Repository
 
@@ -204,13 +204,13 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
            |                          -           -
            |                          -  Default  -
 --------------------                  -   Docker  - 
--                  -       **----------  Services -  <---- plugins/default/docker-compose.override.yml (inherits and overrides docker-compose.yml file)
+-                  -       **----------  Services -  <---- docker-compose.yml
 -                  -                  -------------  <---- .env
 -      Classy      -          
 -                  -                  -------------
 -                  -                  -           -  
--                  -       **----------   Custom  -  
---------------------                  -   Docker  -  <---- plugins/yourPlugin/docker-compose.override.yml (inherits and overrides docker-compose.yml file)
+-                  -       **----------   Custom  -  <---- docker-compose.yml (inherits Classy service configurations)
+--------------------                  -   Docker  -  <---- plugins/yourPlugin/docker-compose.override.yml (overrides docker-compose.yml and adds services)
                                       -  Services -  <---- .env
                                       -------------
 ```
