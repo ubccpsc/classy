@@ -25,32 +25,32 @@ myPlugin/
             └── ...
 ```
 
-Steps to Customize Plugin: 
+## Steps to Customize Plugin: 
 
-1. [Plugin Development](##Plugin-Development)
-2. [Setup Remote Repository](##Setup-Remote-Repository)
-3. [Run Classy with Plugin in Production](##Run-Classy-with-Plugin-in-Production)
+1. [Plugin Development](#Plugin-Development)
+2. [Setup Remote Repository](#Setup-Remote-Repository)
+3. [Run Classy with Plugin in Production](#Run-Classy-with-Plugin-in-Production)
 
-## Plugin Development:
+### Plugin Development:
 
  - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
        This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
 
  - [ ] Name the plugin folder the name of the plugin (ie. myPlugin).
- - [ ] Update the PLUGIN variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
- - [ ] Customize Portal Front-end (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
- - [ ] Customize Portal Back-end (API Routes, Course Controller)
- - [ ] Override/Add Docker services
- - [ ] Modify Nginx configuration file to support Docker changes.
+ - [ ] Update the `PLUGIN` variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
+ - [ ] [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
+ - [ ] [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
+ - [ ] [Override/Add Docker services](#Docker-Containers-/-Supporting-Services)
+ - [ ] [Modify Nginx configuration](#Nginx / Services Routing) file to support Docker changes.
 
-## Setup Remote Repository
+### Setup Remote Repository
 
 - [ ] Create a Private or Public GitHub empty repository.
 - [ ] Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
 - [ ] Add and push your changes to GitHub repository
 
-## Run Classy with Plugin in Production
+### Run Classy with Plugin in Production
 
 NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
 
