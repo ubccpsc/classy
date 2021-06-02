@@ -25,18 +25,52 @@ myPlugin/
             └── ...
 ```
 
-Customization Steps:
+## Steps to Customize Plugin: 
 
- - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
+1. [Plugin Development](#Plugin-Development)
+2. [Setup Remote Repository](#Setup-Remote-Repository)
+3. [Run Classy with Plugin in Production](#Run-Classy-with-Plugin-in-Production)
+
+### Plugin Development:
+
+#### Required
+
+Do NOT remove the default `portal` folder project scaffolding from your project, as when Classy is integrated with a plugin, these project files will always be required. One should extend or add additional files to the `portal` folder project.
+
+1. To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
        This plugin is the equivalent of the `default` plugin. It is scaffolding with a valid implementation that will build successfully.
 
- - [ ] Name the plugin folder the name of the plugin (ie. myPlugin).
- - [ ] Update the PLUGIN variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
- - [ ] Customize Portal Front-end (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
- - [ ] Customize Portal Back-end (API Routes, Course Controller)
- - [ ] Override/Add Docker services
- - [ ] Modify Nginx configuration file to support Docker changes.
+2. Name the plugin folder the name of the plugin (ie. myPlugin).
+3. Update the `PLUGIN` variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`)
+4. [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
+5. [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
+
+#### Optional
+
+You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/load-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin).
+
+1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
+2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
+
+### Setup Remote Repository
+
+1. Create a Private or Public GitHub empty repository.
+2. Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
+3. Add and push your changes to GitHub repository
+
+### Run Classy with Plugin in Production
+
+NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
+
+All prior essential Classy server configurations, installations, and operations are managed by tech staff. E-mail tech staff to get Classy setup for the first time.
+
+1. SSH into Classy remote box.
+2. Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
+3. Run `./helper-scripts/load-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
+4. Run `./opt/classy-scripts/fix-permissions`
+5. Run `docker-compose build` from root Classy directory to build Dockerized production project.
+6. Run `docker-compose up -d` to run Classy project in detatched mode in production.
 
 ## Portal Customization
 
@@ -44,89 +78,98 @@ The application folder MUST contain a `backend` and `frontend` directory with th
 
 It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts) file.
 
-### Front-End and Back-End Build Information
+### Build Information
 
-The front-end and back-end use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that can efficiently be utilized on the front-end by the browser.
+The Portal front-end and back-end applications use the classy/tsconfig.json file to compile TypeScript files into JavaScript files that can be run by Node JS. The front-end uses [Webpack](https://webpack.js.org/) to further transpile the JavaScript files into a single file that is optimized for the browser.
 
-The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Docker build locations may differ.
+The front-end and back-end both require valid TypeScript before they can be compiled. The root Classy `tsconfig.json` file maps referenced @frontend, @backend, and @common namespaces within the plugin files to the rest of the application dependency files during transpilation (front-end) or runtime (back-end). Avoid using relative location paths, as development and Dockerized production build paths may differ.
 
 ### Defaults
 
 ```ascii
                 
-                - DefaultAdminView.ts extends AdminView. AdminView contains default functionality for Admin Panel.
-                - DefaultStudentView extends ClassyStudentView. ClassyStudentView contains default functionality for Student Panel.
-                - html/* contains all default view templates
+                - The front-end inherits default functionality AdminView, AbstractStudentView.
+                - The default functionality is designed to work with the html/* folder file templates. 
                            |
            |----------------------------------
            |                                 |
            |                          -------------
            |                          -           -
-           |                          -  Default  -   <---- DefaultAdminView.ts
---------------------                  - Front-End -         DefaultStudentView.ts
--                  -       **----------   Files   -         html/*
+           |                          -  Default  -   <---- plugins/default/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         plugins/default/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         plugins/default/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Default -   <---- DefaultCourseController.ts
-           |                          - Back-End -         DefaultCourseRoutes.ts
+--------------------                  -  Default -   <---- plugins/default/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         plugins/default/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                 |
            |---------------------------------- 
                             |
-                - DefaultCourseController.ts extends CourseController for defaults.
-                - DefaultCourseRoutes.ts extends IREST. No default routes actually imeplemented here. Actual default routes loaded in BackendServer.ts file. This plug does not do anything.
+                - CustomCourseController extends CourseController for defaults.
+                - CustomCourseRoutes.ts extends IREST for additional implementations. No route overrides are available.
 ```
 
 ### Customizations
 
 ```ascii
                 - CustomAdminView.ts should extend AdminView to inherit default logic. Overrides are optional.
-                - CustomStudentView.ts should extend ClassyStudentView to inherit default logic. Overrides are optional.
+                - CustomStudentView.ts should extend AbstractStudentView to inherit default logic. Overrides are optional.
+                - Default HTML files should be used with the logic above. How you change the HTML and the default behaviour is up to individual discretion.
                             |
            |---------------------------------
            |                                |
            |                          -------------
            |                          -           -
-           |                          -  Custom   -   <---- CustomAdminView.ts
---------------------                  - Front-End -         CustomStudentView.ts
--                  -       **----------   Files   -         html/*
+           |                          -  Custom   -   <---- plugins/yourPlugin/portal/frontend/CustomAdminView.ts
+--------------------                  - Front-End -         plugins/yourPlugin/portal/frontend/CustomStudentView.ts
+-                  -       **----------   Files   -         plugins/yourPlugin/portal/frontend/html/*
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
 -                  -                  ------------
 -                  -       **----------          -
---------------------                  -  Custom  -   <---- CustomCourseController.ts
-           |                          - Back-End -         CustomCourseRoutes.ts
+--------------------                  -  Custom  -   <---- plugins/yourPlugin/portal/backend/CustomCourseController.ts
+           |                          - Back-End -         plugins/yourPlugin/portal/backend/CustomCourseRoutes.ts
            |                          -   Files  -
            |                          ------------
            |                                |
            |---------------------------------
                             |
-                - CustomCourseController.ts should extend CourseController. See CourseController documentation for default functionality and override insight.
-                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to help implement new routes specified in your CustomCourseRoutes.ts file. New routes can help support front-end extensions and/or new Docker service integrations.
+                - CustomCourseController.ts should extend CourseController to inherit default functionality. Overrides are optional. 
+                - CustomCourseRoutes.ts should extend IREST. IREST contains registerRoutes() hook to add new routes at Classy start.
 ```
 
 ### HTML Files
 
-The `html/` folder should contain HTML files that are used by the Custom Front-End view models.
+The `html/` folder should contain HTML files that are used by the Custom front-end `CustomAdminView.ts` and `CustomStudentView.ts` files.
 
-NOTE: As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `ClassyStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the insutrctor's discretion and experience.
+As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `AbstractStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the instructor's discretion and experience.
 
-It is up to you to expand and build upon the default templates while naming new files to allow easy upstream updates of your TypeScript and HTML plugin code from the `ubccpsc/Classy` project.
+It is up to you to expand and build upon the default templates, while naming new files, to allow for easily mergeable upstream updates from the `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes before the new term starts for security and new features.**
 
 ## Docker Containers / Supporting Services
 
-Docker-compose uses a `docker-compose.override.yml` file to inherit default `docker-compose.yml` configurations. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
+See Classy's default docker-compose.yml configuration: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
 
-Do not override the .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
+Docker-compose will look in the `docker-compose.override.yml` file to override the default `docker-compose.yml` configuration. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
 
 See how to override a Docker Compose file: [Override a docker-compose.yml File](https://docs.docker.com/compose/extends/).
 
-See Classy's default Docker Compose settings: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
+Never commit the .env to source control. Do not override .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
+
+### Implementing Docker-compose.override.yml Changes
+
+- [ ] Do not overrride the .env file location in the `docker-compose.override.yml` file, as it will break the default Classy build.
+- [ ] Do not override the default services unless you know exactly what you are doing. Classy relies on the default configuration.
+- [ ] If adding services that require new .env variables, add them to the server via SSH (or ask tech-staff to do it).
+- [ ] Ensure that Docker-compose can build and run the Classy project locally.
+- [ ] Ensure that your new services are secure (in the context of the new service and who is allowed to have access)
+- [ ] If new services are introduced, where HTTP proxy/routing changes are needed, update the Nginx.conf file as needed.
 
 ### Defaults
 
@@ -143,8 +186,8 @@ SSH access must be requested to modify the .env file manually. Alternatively, th
            |                                |
            |                          -------------
 --------------------                  -           -
--                  -       **----------  Default  -   <---- classy/docker-compose.yml
--                  -                  -   Docker  -   <---- classy/.env
+-                  -       **----------  Default  -   <---- plugins/default/classy/docker-compose.override.yml
+-                  -                  -   Docker  -   <---- .env
 -      Classy      -                  -  Services -
 -                  -                  -------------
 -                  -
@@ -165,19 +208,25 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
            |                          -           -
            |                          -  Default  -
 --------------------                  -   Docker  - 
--                  -       **----------  Services -  <---- classy/docker-compose.yml
--                  -                  -------------  <---- classy/.env
+-                  -       **----------  Services -  <---- docker-compose.yml (default services configuration)
+-                  -                  -------------  <---- .env
 -      Classy      -          
 -                  -                  -------------
 -                  -                  -           -  
--                  -       **----------   Custom  -  
---------------------                  -   Docker  -  <---- plugin/namespace/docker/docker-compose.override.yml (inherits Default Docker Services files)
-                                      -  Services -
+-                  -       **----------   Custom  -  <---- docker-compose.yml (inherits Classy default service configuration)
+--------------------                  -   Docker  -  <---- plugins/yourPlugin/docker-compose.override.yml (overrides docker-compose.yml and adds services)
+                                      -  Services -  <---- .env
                                       -------------
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf) and [proxy.conf](https://github.com/ubccpsc/classy/blob/master/packages/proxy/proxy.conf) files are used as scaffolding for your changes.
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
+
+### Implementing Nginx.conf
+
+- [ ] Used the default nginx.rconf configuration as a basis for any customizations.
+- [ ] Did NOT modify any of the SSL / Stapling rules without tech staff approval, which are required to ensure security.
+- [ ] Implemented your own changes.
 
 ### Defaults
 
@@ -185,8 +234,8 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 --------------------                                     
 -                  -                  -----------------
 -                  -                  -               -
--      Classy      -       **----------     Nginx     -  <---- nginx.rconf
--                  -                  - Configuration -        proxy.conf 
+-      Classy      -       **----------     Nginx     -  <---- nginx.rconf (default nginx.conf configuration file)
+-                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
 --------------------            
@@ -195,11 +244,11 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 ### Customizations
 
 ```ascii
---------------------                               NOTE: Must copy boilerplate from ubccpsc/master/classy
+--------------------                               NOTE: Cannot override. Must copy boilerplate from `classy-plugin` repository for security requirements.
 -                  -                  -----------------
 -                  -                  -               -
--      Classy      -       **----------     Nginx     -  <---- nginx.override.rconf
--                  -                  - Configuration -        proxy.override.conf 
+-      Classy      -       **----------     Nginx     -  <---- plugins/yourPlugin/nginx/nginx.rconf (overwrites default nginx.conf)
+-                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
 --------------------
