@@ -216,12 +216,12 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) and
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) is used as the basis for any customizations.
 
 ### Implementing Nginx.conf
 
-- [ ] Use default nginx.rconf configuration as scaffolding.
-- [ ] Did NOT elimiante any of the SSL / Stapling rules which are required to ensure security.
+- [ ] Used the default nginx.rconf configuration as a basis for any customizations.
+- [ ] Did NOT modify any of the SSL / Stapling rules without tech staff approval, which are required to ensure security.
 - [ ] Implemented your own changes.
 
 ### Defaults
