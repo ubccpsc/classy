@@ -42,7 +42,7 @@ myPlugin/
  - [ ] [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
  - [ ] [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
  - [ ] [Override/Add Docker services](#Docker-Containers-/-Supporting-Services)
- - [ ] [Modify Nginx configuration](#Nginx / Services Routing) file to support Docker changes.
+ - [ ] [Modify Nginx Configuration](#Nginx / Services Routing) file to support Docker changes.
 
 ### Setup Remote Repository
 
