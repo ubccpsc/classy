@@ -158,7 +158,7 @@ See how to override a Docker Compose file: [Override a docker-compose.yml File](
 
 Never commit the .env to source control. Do not override .env file in the custom `docker-compose.override.yml` file. Although it is possible to override the specified .env file in the default `docker-compose.yml` file, the original .env file is required to build and run Classy. SSH access can be requested from Tech-Staff to add additional environmental variable to the `classy/.env` file, rebuild, and launch Classy.
 
-Implementing Docker-compose.override.yml changes: 
+### Implementing Docker-compose.override.yml Changes
 
 - [ ] Do not overrride the .env file location in the `docker-compose.override.yml` file, as it will break the default Classy build.
 - [ ] Do not override the default services unless you know exactly what you are doing. Classy relies on the default configuration.
@@ -204,12 +204,12 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
            |                          -           -
            |                          -  Default  -
 --------------------                  -   Docker  - 
--                  -       **----------  Services -  <---- docker-compose.yml
+-                  -       **----------  Services -  <---- docker-compose.yml (default services configuration)
 -                  -                  -------------  <---- .env
 -      Classy      -          
 -                  -                  -------------
 -                  -                  -           -  
--                  -       **----------   Custom  -  <---- docker-compose.yml (inherits Classy service configurations)
+-                  -       **----------   Custom  -  <---- docker-compose.yml (inherits Classy default service configuration)
 --------------------                  -   Docker  -  <---- plugins/yourPlugin/docker-compose.override.yml (overrides docker-compose.yml and adds services)
                                       -  Services -  <---- .env
                                       -------------
@@ -218,13 +218,19 @@ If a docker-compose.override.yml file exists, it will be read on the `docker-com
 
 The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) and
 
+### Implementing Nginx.conf
+
+- [ ] Use default nginx.rconf configuration as scaffolding.
+- [ ] Did NOT elimiante any of the SSL / Stapling rules which are required to ensure security.
+- [ ] Implemented your own changes.
+
 ### Defaults
 
 ```ascii
 --------------------                                     
 -                  -                  -----------------
 -                  -                  -               -
--      Classy      -       **----------     Nginx     -  <---- nginx.rconf
+-      Classy      -       **----------     Nginx     -  <---- nginx.rconf (default nginx.conf configuration file)
 -                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
@@ -234,10 +240,10 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 ### Customizations
 
 ```ascii
---------------------                               NOTE: Must implement boilerplate found in `classy-plugin` repository for security.
+--------------------                               NOTE: Cannot override. Must copy boilerplate from `classy-plugin` repository for security requirements.
 -                  -                  -----------------
 -                  -                  -               -
--      Classy      -       **----------     Nginx     -  <---- nginx.rconf
+-      Classy      -       **----------     Nginx     -  <---- plugins/yourPlugin/nginx/nginx.rconf (overwrites default nginx.conf)
 -                  -                  - Configuration -
 -                  -                  -               -
 -                  -                  -----------------
