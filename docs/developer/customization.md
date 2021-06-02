@@ -25,9 +25,13 @@ myPlugin/
             └── ...
 ```
 
-Customization Steps:
+Steps to Customize Plugin: 
 
-1. Development Work Local Environment
+1. [Plugin Development](##Plugin-Development)
+2. [Setup Remote Repository](##Setup-Remote-Repository)
+3. [Run Classy with Plugin in Production](##Run-Classy-with-Plugin-in-Production)
+
+## Plugin Development:
 
  - [ ] To begin customizing Classy, clone the https://github.com/ubccpsctech/classy-plugin plugin project in the `plugins` folder.
 
@@ -40,15 +44,17 @@ Customization Steps:
  - [ ] Override/Add Docker services
  - [ ] Modify Nginx configuration file to support Docker changes.
 
-2. Push Plugin Changes to Remote Git Environment
+## Setup Remote Repository
 
 - [ ] Create a Private or Public GitHub empty repository.
 - [ ] Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
 - [ ] Add and push your changes to GitHub repository
 
-3. Running Classy with Plugin in Production
+## Run Classy with Plugin in Production
 
-NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech-staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
+NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
+
+All prior essential Classy server configurations, installations, and operations are managed by tech staff. E-mail tech staff to get Classy setup for the first time.
 
 - [ ] SSH into Classy remote box.
 - [ ] Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
