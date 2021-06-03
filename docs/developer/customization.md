@@ -25,13 +25,13 @@ myPlugin/
             └── ...
 ```
 
-## Steps to Customize Plugin:
+## Steps to Customize Plugin
 
 1. [Fork Remote Repository](#Fork-Remote-Repository)
 2. [Plugin Development](#Plugin-Development)
 3. [Run Classy with Plugin in Production](#Run-Classy-with-Plugin-in-Production)
 
-### Plugin Development:
+### Plugin Development
 
 ### Fork Remote Repository
 
