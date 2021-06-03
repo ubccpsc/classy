@@ -35,7 +35,7 @@ myPlugin/
 
 1. Go to [https://github.com/ubccpsctech/classy-plugin](https://github.com/ubccpsctech/classy-plugin) and click on "Fork".
 2. Create a Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
-3. Clone the forked repistory into your local development environment within the Classy/plugins/ directory. The folder in the ubccpsc/plugins/ location will become the name of the plugin for configuration purposes. `git clone https://github.address/yourRepository pluginName`
+3. Clone the forked repository into your local development environment within the Classy/plugins/ directory. The folder in the ubccpsc/plugins/ location will become the name of the plugin for configuration purposes. `git clone https://github.address/yourRepository pluginName`
 4. Continue to use this repository to store your plugin modifications. Give TAs permissions to read/write based on plugin development necessity.
 
 ### Plugin Development
