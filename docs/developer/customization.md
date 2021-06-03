@@ -25,13 +25,20 @@ myPlugin/
             └── ...
 ```
 
-## Steps to Customize Plugin: 
+## Steps to Customize Plugin:
 
-1. [Plugin Development](#Plugin-Development)
-2. [Setup Remote Repository](#Setup-Remote-Repository)
+1. [Fork Remote Repository](#Fork-Remote-Repository)
+2. [Plugin Development](#Plugin-Development)
 3. [Run Classy with Plugin in Production](#Run-Classy-with-Plugin-in-Production)
 
 ### Plugin Development:
+
+### Fork Remote Repository
+
+1. Go to [https://github.com/ubccpsctech/classy-plugin](https://github.com/ubccpsctech/classy-plugin) and click on "Fork".
+2. Create a Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
+3. Clone the forked repistory into your local development environment within the Classy/plugins/ directory. The folder in the ubccpsc/plugins/ location will become the name of the plugin for configuration purposes. `git clone https://github.address/yourRepository pluginName`
+4. Continue to use this repository to store your plugin modifications. Give TAs permissions to read/write based on plugin development necessity.
 
 #### Required
 
@@ -52,13 +59,6 @@ You may choose to remove the `nginx` and `docker` folder from the plugin project
 
 1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
 2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
-
-### Setup Remote Repository
-
-1. Create a Private or Public GitHub empty repository.
-2. Set old classy-plugin repository to new remote origin location `git remote set-url origin https://github.address/yourRepository`
-3. Add and push your changes to GitHub repository
-
 ### Run Classy with Plugin in Production
 
 NOTE: These steps can be bypassed if your Classy plugin repository is public and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token with a private repository to tech-staff.
@@ -244,7 +244,7 @@ The nginx.rconf has been modified to work with UBC operating requirements. Any c
 ### Customizations
 
 ```ascii
---------------------                               NOTE: Cannot override. Must copy boilerplate from `classy-plugin` repository for security requirements.
+--------------------                               NOTE: Cannot override. It overwrites the original default configuration file. Ensure that you copy boilerplate from `classy-plugin` repository for security requirements.
 -                  -                  -----------------
 -                  -                  -               -
 -      Classy      -       **----------     Nginx     -  <---- plugins/yourPlugin/nginx/nginx.rconf (overwrites default nginx.conf)
