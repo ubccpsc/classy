@@ -64,4 +64,5 @@ packages/autotest/test/data/
 # Excludes plugins aside default plugin
 plugins/*
 !plugins/default/
-
+plugins/default/**/*.js
+plugins/default/**/*.js.map
