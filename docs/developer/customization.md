@@ -1,4 +1,4 @@
-# Customization of Classy
+# Application Customization
 
 Out of the box, Classy's default behaviour should suit most courses; however, sometimes custom views and endpoints are necessary to support internal course operations.
 
