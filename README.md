@@ -40,8 +40,6 @@ Instructions for getting started with Classy have been sorted into sections base
     - [2.1 Requesting Classy for Your Course](/docs/instructor/gettingstarted.md#requesting-classy-for-your-course)
     - [2.2 Default Classy Views](/docs/instructor/gettingstarted.md#default-classy-views)
     - [2.3 Bootstrapping Default Views & Logic](/docs/instructor/gettingstarted.md#bootstrapping-default-views-&-logic)
-    - [2.4 Optional Front-End Customization](/docs/instructor/gettingstarted.md#front-end-setup)
-    - [2.5 Optional Back-End Customization](/docs/instructor/gettingstarted.md#back-end-setup)
 - [3. AutoGrade Setup](/docs/instructor/autograde.md#overview)
     - [3.1 Build a Container Checklist](/docs/instructor/autograde.md#build-a-container-checklist)
     - [3.2 QA Container Checklist](/docs/instructor/autograde.md#qa-container-checklist)
