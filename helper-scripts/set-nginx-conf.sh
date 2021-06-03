@@ -1,8 +1,7 @@
 #!/bin/sh
 
 # Pre to `docker-compose build` when using a plugin
-# If docker-compose.override.yml file found, it will be copied to the root Classy folder to be
-# read by docker-compose at build time.
+# If nginx.rconf file found, it will overwrite default Classy nginx.rconf
 
 plugin=`awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' ./.env`
 file="./plugins/$plugin/nginx/nginx.rconf"
