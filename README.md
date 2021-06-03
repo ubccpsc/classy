@@ -65,8 +65,8 @@ Instructions for getting started with Classy have been sorted into sections base
   - [1.3 Install/Build/Run](/docs/developer/bootstrap.md#install-build-run)
 - [2. Course Development/Customization](/docs/developer/customization.md)
   - [2.1 Application Customization](/docs/developer/customization.md#application-customization)
-  - [2.2 Docker Containers/Supporting Services](/docs/developer/customization.md#application-customization)
-  - [2.3 Nginx & Routing](/docs/developer/customization.md#nginx-/-services-routing)
+  - [2.2 Docker Containers/Supporting Services](/docs/developer/customization.md#docker-containers--supporting-services)
+  - [2.3 Nginx & Routing](/docs/developer/customization.md#nginx--services-routing)
 - [3. Contributing to Classy](#contributing-to-classy)
 - [4. Setup CircleCI & Coveralls](/docs/developer/continuousintegration.md)
 
