@@ -12,5 +12,5 @@ if [[ -f $file ]]; then
     cp $file ./packages/proxy/nginx.rconf
     echo "Default Classy/packages/proxy/nginx.rconf file overwritten"
 else
-    echo "No nginx.conf found in $plugin"
+    echo "No nginx.conf found in $plugin plugin"
 fi

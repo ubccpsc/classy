@@ -8,8 +8,6 @@ plugin=`awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}'
 rootDir=`pwd`
 file="./plugins/$plugin/docker/docker-compose.override.yml"
 
-echo "Working dir: $rootDir"
-
 if [[ -f $file ]]; then
     echo "Docker-compose.override.yml file found in $plugin plugin"
     echo "Copying Docker override file to Classy root directory: $rootDir"

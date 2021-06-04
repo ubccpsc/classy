@@ -5,7 +5,6 @@
 # during the Docker build, but not before, in a production environment.
 
 # Run from root Classy project dir ie. /opt/classy/
-awk --version
 
 ./helper-scripts/set-docker-override.sh
 
