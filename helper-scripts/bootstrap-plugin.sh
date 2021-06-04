@@ -5,6 +5,8 @@
 # during the Docker build, but not before, in a production environment.
 
 # Run from root Classy project dir ie. /opt/classy/
+workdir=`pwd`
+echo "Working Dir: $workdir"
 
 ./helper-scripts/set-docker-override.sh
 
