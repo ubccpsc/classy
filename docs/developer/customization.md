@@ -44,7 +44,7 @@ You are responsible for managing the new plugin code that you create. Be careful
 
 ### Plugin Development
 
-#### Required
+#### Required Steps
 
 Do NOT remove the default `portal` folder project scaffolding from your project, as when Classy is integrated with a plugin, these project files will always be required. One should extend or add additional files to the `portal` folder project.
 
@@ -57,7 +57,7 @@ Do NOT remove the default `portal` folder project scaffolding from your project,
 4. [Customize Portal Front-end](#Portal-Customization) (TypeScript View Models, HTML View Templates, and TypeScript Controllers)
 5. [Customize Portal Back-end](#Portal-Customization) (API Routes, Course Controller)
 
-#### Optional
+#### Optional Steps
 
 You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/bootstrap-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin).
 
