@@ -1,0 +1,79 @@
+# PLUGIN OVERRIDE NOTE:
+# This file is exactly the same as https://github.com/ubccpsc/classy/blob/master/docker-compose.yml
+
+# You can choose to override existing services in this file, by making changes to the service in this file,
+# or you can introduce new services here.
+
+version: "3.5"
+
+services:
+    autotest:
+        build:
+            context: ./
+            dockerfile: ./packages/autotest/Dockerfile
+        container_name: autotest
+        depends_on:
+            - db
+        env_file: .env
+        expose:
+            - ${AUTOTEST_PORT}
+        restart: always
+        user: "${UID}:${GID}"
+        volumes:
+            - "${HOST_DIR}:${PERSIST_DIR}"
+            - "/var/run/docker.sock:/var/run/docker.sock"
+    db:
+        command: --quiet --slowms 250
+        container_name: db
+        environment:
+          - MONGO_INITDB_ROOT_USERNAME
+          - MONGO_INITDB_ROOT_PASSWORD
+        ports:
+            - "27017:27017"
+        image: mongo:3-jessie
+        restart: always
+        user: "${UID}"
+        volumes:
+            - /Users/steca/Work/repos/mongodb_data:/data/db
+    portal:
+        build:
+            args:
+                - GH_BOT_USERNAME
+                - GH_BOT_EMAIL
+                - PLUGIN
+            context: ./
+            dockerfile: ./packages/portal/Dockerfile
+        container_name: portal
+        depends_on:
+            - db
+            - autotest
+        env_file: .env
+        expose:
+            - ${BACKEND_PORT}
+        restart: always
+        user: "${UID}"
+        volumes:
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+            - "${HOST_DIR}:${PERSIST_DIR}:ro"
+    proxy:
+        build:
+            args:
+                - UID
+                - SSL_CERT_PATH
+                - SSL_KEY_PATH
+                - BACKEND_PORT
+            context: ./
+            dockerfile: ./packages/proxy/Dockerfile
+        container_name: proxy
+        depends_on:
+            - portal
+        ports:
+            - "80:8080"
+            - "443:8443"
+        restart: always
+        user: "${UID}"
+        volumes:
+            - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
+            - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
+
