@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # Pre to `docker-compose build` when using a plugin
 # If nginx.rconf file found, it will overwrite default Classy nginx.rconf

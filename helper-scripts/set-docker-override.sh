@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # PRE-script to `docker-compose build` when loading a plugin
 # If docker-compose.override.yml file found, it will be copied to the root Classy folder to be
