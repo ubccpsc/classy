@@ -7,6 +7,8 @@
 # Run from root Classy project dir ie. /opt/classy/
 workdir=`pwd`
 echo "Working Dir: $workdir"
+ls -lh
+echo `awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' ./.env`
 
 ./helper-scripts/set-docker-override.sh
 
