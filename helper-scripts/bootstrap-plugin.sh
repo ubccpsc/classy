@@ -9,6 +9,7 @@ workdir=`pwd`
 echo "Working Dir: $workdir"
 ls -lh
 echo `awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' ./.env`
+tail .env
 
 ./helper-scripts/set-docker-override.sh
 
