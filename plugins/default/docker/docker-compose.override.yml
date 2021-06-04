@@ -34,7 +34,7 @@ services:
         restart: always
         user: "${UID}"
         volumes:
-            - /Users/steca/Work/repos/mongodb_data:/data/db
+            - /var/opt/classy/db:/data/db
     portal:
         build:
             args:
