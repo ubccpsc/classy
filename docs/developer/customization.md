@@ -37,7 +37,7 @@ You are responsible for managing the new plugin code that you create. Be careful
 
 1. Create a new Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
 2. Clone the empty GitHub repository onto your local filesystem: `git clone https://github.com/myUsername/myPlugin`.
-3. Copy the Classy `default` plugin contents to your local filesystem directory: `cp -r /path/to/Classy/plugins/default ./myPlugin.
+3. Copy the Classy `default` plugin contents to your local filesystem directory: `cp -r /path/to/Classy/plugins/default/* ./myPlugin.
 4. As files are untracked by new Git repository initially, add the copied files to the Git repository: `cd myPlugin && git add .`.
 5. Commit the files as the starter template code: `git commit -m "Starter plugin code; default scaffolding"`.
 6. Push the changes to your remote repository: `git push`.
