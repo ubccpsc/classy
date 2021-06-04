@@ -8,15 +8,9 @@ file="./plugins/$plugin/nginx/nginx.rconf"
 
 if [[ -f $file ]]; then
     echo "Nginx.conf file found in $plugin plugin"
-    read -p "Overwriting the default configuration could affect security. Has the new file inherited the original nginx.conf file configuration to maintain security standards? (y/n) " -n 1 -r
-
-    if [[ $REPLY =~ ^[Yy]$ ]]; then
-        cp $file ./packages/proxy/nginx.rconf
-        echo "" && echo "Overwriting default Classy/packages/proxy/nginx.conf file"
-    else
-        echo "Aborting overwrite of nginx.conf. Default nginx.conf will remain."
-    fi
-
+    echo "Overwriting default Classy/packages/proxy/nginx.conf file"
+    cp $file ./packages/proxy/nginx.rconf
+    echo "Default Classy/packages/proxy/nginx.conf file overwritten"
 else
     echo "No nginx.conf found in $plugin"
 fi
