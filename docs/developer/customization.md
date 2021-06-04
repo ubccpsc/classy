@@ -27,16 +27,20 @@ myPlugin/
 
 ## Steps to Customize Plugin
 
-1. [Fork Remote Repository](#Fork-Remote-Repository)
-2. [Plugin Development](#Plugin-Development)
-3. [Run Classy with Plugin in Production](#Run-Classy-with-Plugin-in-Production)
+1. [Setup Remote Repository for New Plugin](#setup-remote-repository-for-new-plugin)
+2. [Plugin Development](#plugin-development)
+3. [Run Classy with Plugin in Production](#run-classy-with-plugin-in-production)
 
-### Fork Remote Repository
+### Setup Remote Repository for New Plugin
 
-1. Go to [https://github.com/ubccpsctech/classy-plugin](https://github.com/ubccpsctech/classy-plugin) and click on "Fork".
-2. Create a Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
-3. Clone the forked repository into your local development environment within the Classy/plugins/ directory. The folder in the ubccpsc/plugins/ location will become the name of the plugin for configuration purposes. `git clone https://github.address/yourRepository pluginName`
-4. Continue to use this repository to store your plugin modifications. Give TAs permissions to read/write based on plugin development necessity.
+You are responsible for managing the new plugin code that you create. Be careful to namespace and develop your files to ensure that downstreaming changes from `ubccpsc/classy` is easy and effortless. You can assume that the same files in the `default` project will always continue exist.
+
+1. Create a new Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
+2. Clone the empty GitHub repository onto your local filesystem: `git clone https://github.com/myUsername/myPlugin`.
+3. Copy the Classy `default` plugin contents to your local filesystem directory: `cp -r /path/to/Classy/plugins/default ./myPlugin.
+4. As files are untracked by new Git repository initially, add the copied files to the Git repository: `cd myPlugin && git add .`.
+5. Commit the files as the starter template code: `git commit -m "Starter plugin code; default scaffolding"`.
+6. Push the changes to your remote repository: `git push`.
 
 ### Plugin Development
 
@@ -55,7 +59,7 @@ Do NOT remove the default `portal` folder project scaffolding from your project,
 
 #### Optional
 
-You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/load-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin).
+You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/bootstrap-plugin.sh` is run in [Step 3](#Steps-to-Customize-Plugin).
 
 1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
 2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
@@ -68,7 +72,7 @@ All prior essential Classy server configurations, installations, and operations 
 
 1. SSH into Classy remote box.
 2. Clone your plugin repository in the `classy/plugins` folder path with the name of the plugin as the directory.
-3. Run `./helper-scripts/load-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
+3. Run `./helper-scripts/bootstrap-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.conf` files into appropriate locations.
 4. Run `./opt/classy-scripts/fix-permissions`
 5. Run `docker-compose build` from root Classy directory to build Dockerized production project.
 6. Run `docker-compose up -d` to run Classy project in detatched mode in production.
