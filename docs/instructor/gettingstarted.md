@@ -6,8 +6,7 @@ Classy requires some implementation work and learning before it can be used in a
 
 - [ ] Shadow a course that uses Classy before you begin to use it
 - [ ] Request [Classy for your Course](#requesting-classy-for-your-course) at least three weeks in advance of course start date.
-- [ ] Implement [Back-end Setup](#back-end-setup) and [Front-end Setup](#front-end-setup)
-        or: [Quick Front-end and Back-end Bootstrapping](#quick-front-end-and-back-end-bootstrapping)
+- [ ] Read about [Default Classy Plugin](#default-classy-plugin) and customization option.
 - [ ] Give tech staff a Github token to access [AutoGrade Dockerfile Repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
 
 Nice-to-have's:
