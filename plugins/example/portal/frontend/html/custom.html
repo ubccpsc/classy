@@ -1,0 +1,78 @@
+<!--
+This is just a demo file for how we could imagine programmatically extending the UI with HTML imports.
+
+They should be imported with UI.injectCustomPage(PATH-to-CUSTOM.html)
+Then elements can be created with UI.cloneCustomElement(TEMPLATE-id-to-CLONE)
+This can then be appended anywhere in the UI
+-->
+
+<!--
+// this is close, but doesn't quite work for adding a new tab to the admin console:
+// the styling is nearly right, but it isn't clickable
+window.classportal.UI.injectCustomPage('cs310/custom.html')
+var el = window.classportal.UI.cloneCustomElement('customTab')
+var tb = document.getElementById('adminTabbar');
+tb.children[1].appendChild(el)
+-->
+<template id="customTab">
+    <ons-tab id="AdminDeliverableTab" page="students.html" label="Deliverables" icon="ion-home, material:md-home" active>
+    </ons-tab>
+</template>
+<template id="custom2foo1">
+    <h1>custom2FOO1 content</h1>
+</template>
+
+<template id="cbar2">
+        <ons-list>
+            <ons-list-header>EULA</ons-list-header>
+            <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up.</ons-list-item>
+            <ons-list-header>Delete Deliverable</ons-list-header>
+            <ons-list-item expandable>
+                <div class="left settingIcon">
+                    <ons-icon icon="fa-cogs"></ons-icon>
+                </div>
+                <div class="center">
+                    Deliverable Name:
+                    <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;"
+                               id="adminDeleteDeliverableText"></ons-input>
+                    <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
+                </div>
+                <div class="expandable-content">
+                    Will delete local object. Will not delete grades or results associated with deliverable.
+                </div>
+            </ons-list-item>
+
+            <ons-list-header>Delete Team</ons-list-header>
+            <ons-list-item expandable>
+                <div class="left settingIcon">
+                    <ons-icon icon="fa-cogs"></ons-icon>
+                </div>
+                <div class="center">
+                    Team Name:
+                    <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;" id="adminDeleteTeamText"></ons-input>
+                    <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
+                </div>
+                <div class="expandable-content">
+                    Will delete team object and associated GitHub team, if it exists. Will not delete grades or results associated
+                    with the team.
+                </div>
+            </ons-list-item>
+
+            <ons-list-header>Delete Repository</ons-list-header>
+            <ons-list-item expandable>
+                <div class="left settingIcon">
+                    <ons-icon icon="fa-cogs"></ons-icon>
+                </div>
+                <div class="center">
+                    Repository Name:
+                    <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;" id="adminDeleteRepositoryText"></ons-input>
+                    <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
+                </div>
+                <div class="expandable-content">
+                    Will delete repository object and associated GitHub repository, if it exists. Will not delete grades or
+                    results associated with the repository.
+                </div>
+            </ons-list-item>
+        </ons-list>
+
+</template>
