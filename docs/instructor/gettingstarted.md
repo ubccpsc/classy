@@ -50,12 +50,6 @@ Classy comes with default MVC, course controller, and route logic that is availa
 
 <img src="../assets/admin-view-grades.png/">
 
-## Bootstrapping Default Views & Logic
-
-Classy requires that you implement a front-end and back-end. These files can be produced automatically by the `/helper-scripts/default-file-setup.sh` if you are happy with default views and behaviour.
-
-Your `.env` file must have a `NAME` property before running the script. See [Configuring an .env file](/docs/tech-staff/envconfig.md) for more information.
-
 ## Front-end Setup
 
 The front-end uses Onsen UI, which is a lightweight JavaScript framework in a MVC pattern. UI components and instructions for writing MVC logic can be found in the [OnsenUI: Getting Started Guide](https://onsen.io/v2/guide/#getting-started).
