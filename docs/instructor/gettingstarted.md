@@ -49,11 +49,3 @@ Classy comes with default MVC, course controller, and route logic that is availa
 *Displays student grades per deliverable with a summary of grade averages.*
 
 <img src="../assets/admin-view-grades.png/">
-
-## Front-end Setup
-
-The front-end uses Onsen UI, which is a lightweight JavaScript framework in a MVC pattern. UI components and instructions for writing MVC logic can be found in the [OnsenUI: Getting Started Guide](https://onsen.io/v2/guide/#getting-started).
-
-## Back-end Setup
-
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded by Restify at start-up. These files are found in the `plugins/default/portal/backend` folder.
