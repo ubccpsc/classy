@@ -23,9 +23,9 @@ You must formally request Classy by notifying *CPSC Technical Staff*. Classy tak
 
 Please start a discussion with CPSC Technical Staff as soon as you develop an interest in using Classy.
 
-## Default Classy Views
+## Default Classy Plugin
 
-Classy comes with default views that are available for any instructor to use. The default views use generic logic that meet the requirements of most courses. The default views may also act as boilerplate that can be modified to meet custom requirements in a course.
+Classy comes with default MVC, course controller, and route logic that is available for any instructor to use. The default plugin is generic Classy logic that meet the requirements of most courses. The default plugin can be copied to a new folder and completely customized by your course. For more information, visit the [Customization](/docs/developer/customization.md) section of the table of contents.
 
 ### Admin Students Panel
 
@@ -59,35 +59,8 @@ Your `.env` file must have a `NAME` property before running the script. See [Con
 
 ## Front-end Setup
 
-The front-end uses Onsen UI, which is a lightweight JavaScript framework in a MVC pattern. UI components and instructions for writing MVC logic can be found in the [OnsenUI: Getting Started Guide](https://onsen.io/v2/guide/#getting-started). If you are not using the default front-end views, then you must build a custom front-end.
-
-Any custom logic may also be implemented in the `packages/portal/frontend/src/app/custom/` directory.
-
-Your view model files should continue to extend the  `AdminView` and `AbstractStudentView` classes. Any number of subclasses can also be contained in this folder. 
-
-These changes should ***NOT*** be pushed back to `classy/master`.
-
-### Implement HTML
-
-- packages/portal/frontend/html/{*name*}/custom.html
-- packages/portal/frontend/html/{*name*}/landing.html
-- packages/portal/frontend/html/{*name*}/login.html
-- packages/portal/frontend/html/{*name*}/student.html
-
-### Implement View Models
-
-- packages/portal/frontend/src/app/custom/CustomStudentView.ts
-- packages/portal/frontend/src/app/custom/CustomAdminView.ts
+The front-end uses Onsen UI, which is a lightweight JavaScript framework in a MVC pattern. UI components and instructions for writing MVC logic can be found in the [OnsenUI: Getting Started Guide](https://onsen.io/v2/guide/#getting-started).
 
 ## Back-end Setup
 
-The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded by Restify at start-up. These boilerplate files may also be modified:
-
-### Implement Back-end Files
-
-- Classy/packages/portal/backend/src/custom/CustomCourseRoutes.ts
-- Classy/packages/portal/backend/src/custom/CustomCourseController.ts
-
-The `CustomCourseController.ts` file should extend the `CourseController` class.
-
-`CustomCourseRoutes.ts` implements `IREST`, which allows you to define any custom REST routes required by the backend. Any number of subclasses can also be contained in this folder. These changes should ***NOT*** be pushed back to `classy/master`.
+The back-end uses Restify, a RESTful API server, to provide data to the front-end. Customized boilerplate files are loaded by Restify at start-up. These files are found in the `plugins/default/portal/backend` folder.
