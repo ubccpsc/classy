@@ -12,7 +12,7 @@ export class CustomCourseController extends CourseController {
     }
 
     /**
-     * Gets JSON data from your HelloWorld! Docker service.
+     * Relays JSON data from your HelloWorld! Docker service to be consumed by front-end.
      * @param req
      * @param res
      * @param next
