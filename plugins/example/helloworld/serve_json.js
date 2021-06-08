@@ -11,7 +11,7 @@ http.createServer(function (req, res) {
         'This data',
         'from the',
         'HelloWorld! service',
-        'should appear on the front-end'
+        'should appear on the front-end',
       ]
       ));
-}).listen(3000); //the server object listens on port 3000
+}).listen(3001); //the server object listens on port 3001
