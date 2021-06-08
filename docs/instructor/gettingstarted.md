@@ -24,7 +24,7 @@ Please start a discussion with CPSC Technical Staff as soon as you develop an in
 
 ## Default Classy Plugin
 
-Classy comes with default MVC, course controller, and route logic that is available for any instructor to use. The default plugin is generic Classy logic that meet the requirements of most courses. The default plugin can be copied to a new folder and completely customized by your course. For more information, visit the [Customization](/docs/developer/customization.md) section of the table of contents.
+Classy comes with default MVC, course controller, and route logic. The default plugin is generic Classy logic and should meet the requirements of most courses. The default plugin can be copied to a new folder and completely customized by your course. For more information, visit the [Customization](/docs/developer/customization.md) section of the table of contents.
 
 ### Admin Students Panel
 
