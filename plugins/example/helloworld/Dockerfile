@@ -10,6 +10,6 @@ COPY ./plugins/"${PLUGIN}"/helloworld ./packages/helloworld
 RUN cd ./packages/helloworld && npm install
 
 ## Port only discoverable by Docker services
-EXPOSE 3000
+EXPOSE 3001
 
 CMD ["node", "/app/packages/helloworld/serve_json.js"]

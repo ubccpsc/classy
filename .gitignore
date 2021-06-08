@@ -66,3 +66,6 @@ plugins/*
 !plugins/default/
 plugins/default/**/*.js
 plugins/default/**/*.js.map
+!plugins/example/
+plugins/example/**/*.js
+plugins/example/**/*.js.map
