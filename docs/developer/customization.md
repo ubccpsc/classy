@@ -25,7 +25,7 @@ myPlugin/
             └── ...
 ```
 
-## Steps to Customize Plugin
+## Plugin: Steps to Customize
 
 1. [Setup Remote Repository for New Plugin](#setup-remote-repository-for-new-plugin)
 2. [Plugin Development](#plugin-development)
@@ -35,12 +35,12 @@ myPlugin/
 
 You are responsible for managing the new plugin code that you create. Be careful to namespace and develop your files to ensure that downstreaming changes from `ubccpsc/classy` is easy and effortless. You can assume that the same files in the `default` project will always continue exist.
 
-1. Create a new Private or Public GitHub empty repository. You will have ownership and admin privileges of this repository, which you will have to manage.
-2. Clone the empty GitHub repository onto your local filesystem: `git clone https://github.com/myUsername/myPlugin`.
-3. Copy the Classy `default` plugin contents to your local filesystem directory: `cp -r /path/to/Classy/plugins/default/* ./myPlugin.
-4. As files are untracked by new Git repository initially, add the copied files to the Git repository: `cd myPlugin && git add .`.
-5. Commit the files as the starter template code: `git commit -m "Starter plugin code; default scaffolding"`.
-6. Push the changes to your remote repository: `git push`.
+1. Create a new (empty) GitHub repository.
+2. Clone the repository onto your local filesystem: `git clone https://github.com/myUsername/myPlugin`
+3. Copy the Classy `default` plugin contents to your local filesystem directory: `cp -r /path/to/Classy/plugins/default/* ./myPlugin`
+4. Add the files to your new git repository: `cd myPlugin && git add .`
+5. Commit the files as starter template code: `git commit -m "Starter plugin code; default scaffolding"`
+6. Push the changes to GitHub: `git push`
 
 ### Plugin Development
 
