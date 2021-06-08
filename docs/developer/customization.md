@@ -46,7 +46,7 @@ You are responsible for managing the new plugin code that you create. Be careful
 
 #### Required Steps
 
-Do NOT remove the default `portal` folder project scaffolding from your project, as when Classy is integrated with a plugin, these project files will always be required. One can modify or add files to the `portal` folder project.
+Do NOT remove the default `portal` folder project scaffolding from your project, as when Classy is integrated with a plugin, these project files will always be required. One can modify or add files to the `portal` folder.
 
 1. To begin customizing Classy, move your new plugin project in the Classy `plugins` folder.
 2. Ensure that the plugin folder is labelled the name of the plugin (ie. myPlugin).
