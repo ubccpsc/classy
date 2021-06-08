@@ -15,7 +15,7 @@ cd /opt/classy
 docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" grading_net
 
 # if plugin in .env file is not 'default', run the command to configure the new plugin
-./helper-scripts/load-plugin.sh
+./helper-scripts/bootstrap-plugin.sh
 
 # then build Classy with Docker
 docker-compose build
