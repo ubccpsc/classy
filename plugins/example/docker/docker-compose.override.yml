@@ -77,12 +77,13 @@ services:
             - "${HOST_SSL_CERT_PATH}:${SSL_CERT_PATH}"
             - "${HOST_SSL_KEY_PATH}:${SSL_KEY_PATH}"
     helloworld:
+        env_file: .env
         build:
             context: ./
-            dockerfile: ./packages/helloworld/Dockerfile
+            dockerfile: ./plugins/${PLUGIN}/helloworld/Dockerfile
         container_name: helloworld
         ports:
-            - "3000:3000"
+            - "3001:3001"
         depends_on:
                 - portal
         restart: always
