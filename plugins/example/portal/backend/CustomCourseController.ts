@@ -4,6 +4,8 @@ import {Deliverable, Person} from "@backend/Types";
 import Log from "@common/Log";
 
 import * as restify from "restify";
+
+import fetch from 'node-fetch';
 export class CustomCourseController extends CourseController {
 
     constructor(ghController: IGitHubController) {
