@@ -25,7 +25,7 @@ export class CustomCourseController extends CourseController {
             return response.json();
         })
         .then((data) => {
-            res.send({helloWorldData: data});
+            res.send({success: {helloWorldData: data}});
         })
         .catch((err) => {
             // Careful not to send sensitive data in error
