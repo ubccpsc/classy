@@ -1,7 +1,3 @@
-## PLUGIN NOTE: This file is the same as https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf
-
-## Any changes to this file will overwrite the default Classy configuration found here: https://github.com/ubccpsc/classy/blob/master/packages/proxy/nginx.rconf
-
 events {
   worker_connections  4096;  ## Default: 1024
 }
@@ -38,14 +34,6 @@ http {
 
         resolver 127.0.0.1;
 
-        location /ui {
-            port_in_redirect   off;  # Don't redirect to 8443 (https://serverfault.com/q/227742)
-            rewrite            ^/ui/?$ /ui/index.html permanent;
-            rewrite            /ui(/.+) $1 break;
-            proxy_read_timeout 240;
-            proxy_pass         http://refui:<%= ENV["UI_PORT"] %>/;
-        }
-
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
             proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
@@ -53,4 +41,3 @@ http {
 
     }
 }
-
