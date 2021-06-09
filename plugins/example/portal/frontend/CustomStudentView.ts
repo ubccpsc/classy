@@ -110,12 +110,21 @@ export class CustomStudentView extends AbstractStudentView {
         Log.trace('CustomStudentView::renderTeams(..) - start');
         const customFeatureDiv = document.getElementById('studentCustomFeature');
         const response = await this.fetchData('/portal/custom/helloWorld');
-        const {helloWorldData}: any = await response.json();
+        const {success, failure}: any = await response.json();
+        if (success) {
+            Log.trace('CustomStudentView::renderTeams(..) - success');
 
-        for (const str of helloWorldData) {
+            const {helloWorldData} = success;
+            for (const str of helloWorldData) {
                 const item = UI.createListItem(str);
                 customFeatureDiv.appendChild(item);
             }
+        }
+        if (failure) {
+            Log.trace('CustomStudentView::renderTeams(..) - failure');
+            Log.trace('CustomStudentView::renderTeams(..) - ' + failure);
+        }
+
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
