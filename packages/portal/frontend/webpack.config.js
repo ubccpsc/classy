@@ -41,13 +41,13 @@ module.exports = {
                 // Docker and native compilation working dir: /classy/packages/portal/frontend
                 {
                     from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomStudentView.ts',
-                    to: './src/app/plugs/PluggedStudentView.ts',
+                    to: '../../src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
                     from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomAdminView.ts',
-                    to: './src/app/plugs/PluggedAdminView.ts',
+                    to: '../../src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
