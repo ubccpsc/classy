@@ -109,10 +109,9 @@ export class CustomStudentView extends AbstractStudentView {
     private async renderCustomFeature(): Promise<void> {
         Log.trace('CustomStudentView::renderTeams(..) - start');
         const customFeatureDiv = document.getElementById('studentCustomFeature');
-        const response = await this.fetchData('/portal/custom/helloWorld');
-        const {success, failure}: any = await response.json();
+        const {success, failure} = await this.fetchData('/portal/custom/helloWorld');
         if (success) {
-            Log.trace('CustomStudentView::renderTeams(..) - success');
+            Log.trace('CustomStudentView::renderTeams(..) - success' + success);
 
             const {helloWorldData} = success;
             for (const str of helloWorldData) {
