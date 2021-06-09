@@ -38,16 +38,16 @@ module.exports = {
         new CopyPlugin({
             patterns: [
                 // copy plugin frontend files if plugin enabled or copy default Classy logic into place
-                // NOTE: Use relative paths to ensure this works in both development and docker production environments
+                // Docker and native compilation working dir: /classy/packages/portal/frontend
                 {
                     from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomStudentView.ts',
-                    to: '../../src/app/plugs/PluggedStudentView.ts',
+                    to: './src/app/plugs/PluggedStudentView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
                 {
                     from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomAdminView.ts',
-                    to: '../../src/app/plugs/PluggedAdminView.ts',
+                    to: './src/app/plugs/PluggedAdminView.ts',
                     force: true,
                     noErrorOnMissing: false
                 },
