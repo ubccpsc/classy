@@ -56,7 +56,7 @@ export class Factory {
         } catch (err) {
             Log.error("Factory::configureStudentView() - ERROR: " + err.message);
             Log.error("Factory::configureStudentView() - This likely means that your fork does not have a file called " +
-                "classy/packages/portal/frontend/src/views/course/StudentView.ts which should extend AbstractStudentView");
+                "classy/plugins/portal/frontend/CustomStudentView.ts which should extend AbstractStudentView");
 
             this.studentView = null;
         }
@@ -77,7 +77,7 @@ export class Factory {
 
         try {
             if (this.adminView === null) {
-                Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
+                Log.info("Factory::getAdminView() - instantiating new admin view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
