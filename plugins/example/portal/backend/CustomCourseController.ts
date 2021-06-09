@@ -20,7 +20,7 @@ export class CustomCourseController extends CourseController {
      * @param next
      */
     public static getHelloWorldData(req: restify.Request, res: restify.Response, next: restify.Next) {
-    fetch('https://helloworld:3001')
+    fetch('http://helloworld:3001')
         .then((response) => {
             return response.json();
         })

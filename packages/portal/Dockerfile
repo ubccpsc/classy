@@ -19,7 +19,7 @@ RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
 
 # Webpack will do the frontend build
 COPY ./plugins/"${PLUGIN}"/portal/frontend ./plugins/"${PLUGIN}"/portal/frontend
-RUN cd packages/portal/frontend && yarn webpack
+RUN cd packages/portal/frontend && yarn webpack && yarn webpack
 RUN chmod -R a+r /app \
  && git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
