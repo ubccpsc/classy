@@ -1,8 +1,7 @@
 import * as restify from "restify";
 
-import Log from "../../../../common/Log";
-
-import IREST from "../server/IREST";
+import IREST from "@backend/server/IREST";
+import Log from "@common/Log";
 
 /**
  * This class should add any custom routes a course might need.

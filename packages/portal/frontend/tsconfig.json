@@ -1,26 +1,38 @@
 {
-  "compilerOptions": {
-    "module": "commonjs",
-    "target": "ES6",
-    "noImplicitAny": true,
-    "removeComments": true,
-    "preserveConstEnums": true,
-    "sourceMap": true,
-    "lib": [
-      "es7",
-      "es2017.object",
-      "dom"
+    "compilerOptions": {
+        "module": "commonjs",
+        "target": "ES6",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "preserveConstEnums": true,
+        "sourceMap": true,
+        // only the frontend plugin code should use @frontend and @common
+        // unless we adopt tsconfig-paths (to resolve these references at runtime)
+        // the frontend does this with tsconfig-paths-webpack-plugin
+        "baseUrl": ".",
+        "paths": {
+            "@frontend/*": [
+                "../../portal/frontend/src/app/*"
+            ],
+            "@common/*": [
+                "../../common/*"
+            ]
+        },
+        "lib": [
+            "es7",
+            "es2017.object",
+            "dom"
+        ],
+        "typeRoots": [
+            "../../../node_modules/@types"
+        ]
+    },
+    "include": [
+        "src/**/*.ts",
+        "test/**/*.ts",
+        "../common/**/*.ts"
     ],
-    "typeRoots": [
-        "../../../node_modules/@types"
+    "exclude": [
+        "node_modules"
     ]
-  },
-  "include": [
-    "src/**/*.ts",
-    "test/**/*.ts",
-    "../common/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
 }

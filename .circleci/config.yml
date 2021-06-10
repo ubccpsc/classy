@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: circleci/node:12
+      - image: cimg/node:12.22.1
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -26,6 +26,21 @@ jobs:
           - v1-dependencies-{{ checksum "package.json" }}
           # fallback to using the latest cache if no exact match is found
           - v1-dependencies-
+
+      - run:
+          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
+          command: |
+            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
+
+     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+      - run:
+            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+            name: Configuring .env
+            when: always
+
+      - run:
+            command: ./helper-scripts/bootstrap-plugin.sh
+            name: Bootstraps default plugin for tests
 
       - run: yarn install --ignore-engines
 
@@ -49,17 +64,6 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run:
-          name: "Setup encrypted .env variable per Classy fork (chooses default env.enc when not set)"
-          command: |
-            echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
-
-     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
-      - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
-            name: Configuring .env
-            when: always
-
-      - run:
             command: cd .circleci && mkdir -p ../packages/portal-backend/ssl && openssl aes-256-cbc -d -md sha512 -in fullchain.enc -out ../packages/portal/backend/ssl/fullchain.pem -k $ENVKEY
             name: Configuring SSL-1
             when: always
@@ -67,6 +71,11 @@ jobs:
       - run:
             command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ../packages/portal/backend/ssl/privkey.pem -k $ENVKEY
             name: Configuring SSL-2
+            when: always
+
+      - run:
+            command: cd plugins/default && yarn run build
+            name: Building plugin
             when: always
 
       - run:

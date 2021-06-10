@@ -15,7 +15,7 @@ export class Factory {
     private studentView: IView | null = null;
     private adminView: IView | null = null;
 
-    private readonly TESTNAME = 'classytest';
+    private readonly TESTNAME = "classytest";
 
     /**
      * Use getInstance instead.
@@ -27,56 +27,28 @@ export class Factory {
         if (Factory.instance === null) {
             Factory.instance = new Factory();
         }
-        if (Factory.instance.name === null && typeof name !== 'undefined') { // only set this once (first guard)
+        if (Factory.instance.name === null && typeof name !== "undefined") { // only set this once (first guard)
             Log.info("Factory::getInstance(..) - setting name: " + name);
             Factory.instance.name = name;
         }
         return Factory.instance;
     }
 
-    /**
-     * Checks for a custom controller. If one exists, there _must_ be custom html as well.
-     *
-     * @returns {boolean}
-     */
-    private customControllerExists(): boolean {
-        let customController = null;
-        try {
-            customController = require('./custom/CustomStudentView');
-        } catch (err) {
-            Log.info('Factory::customControllerExists() - Custom Controller found for course: ' + this.name);
-        }
-        return customController ? true : false;
-    }
-
     public async getView(backendUrl: string): Promise<IView> {
         // Loads a custom view model if custom HTML code exists, default model for default html, etc.
-        const customViewsExist = this.customControllerExists();
 
         try {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
-                // NOTE: using require instead of import because file might not be present in forks
-                // import complains about this, but require does not
+                // NOTE: we can't reference Config here because this is run client side
+                // which does not have access to the .env file
+                // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
 
-                let plug: any;
-                if (name === this.TESTNAME) {
-                    Log.info("Factory::getView() - instantiating new student view for: " + this.name +
-                        '; using test DefaultStudentView');
-                    plug = await require('./custom/DefaultStudentView'); // default for testing
-                } else if (customViewsExist) {
-                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using CustomStudentView');
-                    plug = await require('./custom/CustomStudentView'); // course-specific file;
-                } else {
-                    Log.info("Factory::getView() - instantiating new student view for: " + this.name + '; using DefaultStudentView');
-                    plug = await require('./custom/DefaultStudentView');
-                }
-
+                const plug = await require("./plugs/CustomStudentView");
                 Log.trace("Factory::getView() - view loaded");
 
                 const constructorName = Object.keys(plug)[0];
-                // Log.info("Factory::getView()  - with constructor: " + constructorName);
 
                 this.studentView = new plug[constructorName](backendUrl);
                 Log.info("Factory::getView() - StudentView instantiated");
@@ -84,7 +56,7 @@ export class Factory {
         } catch (err) {
             Log.error("Factory::configureStudentView() - ERROR: " + err.message);
             Log.error("Factory::configureStudentView() - This likely means that your fork does not have a file called " +
-                "classy/packages/portal/frontend/src/views/course/StudentView.ts which should extend AbstractStudentView");
+                "classy/plugins/{plugin}/portal/frontend/CustomStudentView.ts which should extend AbstractStudentView");
 
             this.studentView = null;
         }
@@ -95,36 +67,22 @@ export class Factory {
     public async getAdminView(backendUrl: string): Promise<IView> {
         const tabs = {
             deliverables: true,
-            students:     true,
-            teams:        true,
-            results:      true,
-            grades:       true,
-            dashboard:    true,
-            config:       true
+            students: true,
+            teams: true,
+            results: true,
+            grades: true,
+            dashboard: true,
+            config: true
         };
-
-        const customViewsExist = this.customControllerExists();
 
         try {
             if (this.adminView === null) {
-                Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name);
+                Log.info("Factory::getAdminView() - instantiating new admin view for: " + this.name);
 
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
-                let plug: any;
-                if (name === this.TESTNAME) {
-                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
-                    plug = await require('./custom/DefaultAdminView'); // default for testing
-                } else if (customViewsExist) {
-                    // If a course wants to specialize the AdminView it should be in the file below.
-                    // This is not required. But if it is added, it should never be pushed back to 'classy/master'
-                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using CustomAdminView');
-                    plug = await require('./custom/CustomAdminView'); // course-specific file;
-                } else {
-                    Log.info("Factory::getAdminView() - instantating new admin view for: " + this.name + '; using test DefaultAdminView');
-                    plug = await require('./custom/DefaultAdminView');
-                }
 
+                const plug = await require("./plugs/CustomAdminView"); // course-specific file;
                 Log.trace("Factory::getAdminView() - view loaded");
 
                 // if this fails an error will be raised and the default view will be provided in the catch below
@@ -174,21 +132,10 @@ export class Factory {
      * @returns {string}
      */
     public getHTMLPrefix() {
-        // FORK: Gets the default html/default/landing.html page unless your course
-        // html pages are implemented in html/{name}/landing.html. ie. html/cs210/landing.html
-
-        const customViewsExist = this.customControllerExists();
+        // Html pages are prefixed by course namespace to be excluded from git
+        // Webpack build tools manage moving default or plugin logic to this folder for runtime
 
         Log.trace("Factory::getHTMLPrefix() - getting prefix for: " + this.name);
-        if (this.name === this.TESTNAME) {
-            Log.info("Factory::getHTMLPrefix() - using default test prefix for: " + this.name);
-            return 'default';
-        } else if (customViewsExist === true) {
-            Log.info("Factory::getHTMLPrefix() - custom prefix for: " + this.name);
-            return this.name;
-        } else {
-            Log.info("Factory::getHTMLPrefix() - using default prefix for: " + this.name);
-            return 'default';
-        }
+        return this.name;
     }
 }
