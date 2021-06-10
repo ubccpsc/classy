@@ -39,17 +39,15 @@ module.exports = {
             patterns: [
                 // copy plugin frontend files if plugin enabled or copy default Classy logic into place
                 // Docker and native compilation working dir: /classy/packages/portal/frontend
+                // frontend/CustomStudentView.ts, CustomAdminView.ts, with their supporting files,
+                // will be moved to their appropriate directories
                 {
-                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomStudentView.ts',
-                    to: '../../src/app/plugs/PluggedStudentView.ts',
+                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/',
+                    to: '../../src/app/plugs/',
+                    toType: 'dir',
                     force: true,
-                    noErrorOnMissing: false
-                },
-                {
-                    from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/CustomAdminView.ts',
-                    to: '../../src/app/plugs/PluggedAdminView.ts',
-                    force: true,
-                    noErrorOnMissing: false
+                    noErrorOnMissing: false,
+                    force: true
                 },
                 {
                     from: '../../../plugins/' + process.env.PLUGIN + '/portal/frontend/html',
