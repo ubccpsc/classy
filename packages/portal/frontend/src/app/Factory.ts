@@ -45,7 +45,7 @@ export class Factory {
                 // which does not have access to the .env file
                 // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
 
-                const plug = await require("./plugs/PluggedStudentView");
+                const plug = await require("./plugs/CustomStudentView");
                 Log.trace("Factory::getView() - view loaded");
 
                 const constructorName = Object.keys(plug)[0];
@@ -56,7 +56,7 @@ export class Factory {
         } catch (err) {
             Log.error("Factory::configureStudentView() - ERROR: " + err.message);
             Log.error("Factory::configureStudentView() - This likely means that your fork does not have a file called " +
-                "classy/plugins/portal/frontend/CustomStudentView.ts which should extend AbstractStudentView");
+                "classy/plugins/{plugin}/portal/frontend/CustomStudentView.ts which should extend AbstractStudentView");
 
             this.studentView = null;
         }
@@ -82,7 +82,7 @@ export class Factory {
                 // NOTE: using require instead of import because file might not be present in forks
                 // import complains about this, but require does not.
 
-                const plug = await require("./plugs/PluggedAdminView"); // course-specific file;
+                const plug = await require("./plugs/CustomAdminView"); // course-specific file;
                 Log.trace("Factory::getAdminView() - view loaded");
 
                 // if this fails an error will be raised and the default view will be provided in the catch below
