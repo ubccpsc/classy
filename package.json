@@ -36,12 +36,11 @@
         "@types/restify": "^8.4.1",
         "chai": "4.1.2",
         "jsonschema": "1.2.2",
-        "lerna": "^2.0.0-rc.5",
         "mocha": "^9.0.0",
         "ts-node": "4.1.0",
         "tslint": "^5.11.0",
         "typescript": "^3.7.2",
-        "webpack": "^3.11.0"
+        "webpack": "^5.38.1"
     },
     "dependencies": {
         "@types/mongodb": "^3.0.5",
