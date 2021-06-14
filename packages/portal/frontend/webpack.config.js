@@ -10,6 +10,7 @@ const CopyPlugin = require('copy-webpack-plugin');
 
 // handle @frontend and @common type import aliases from plugin
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin');
+const { webpack, DefinePlugin } = require('webpack');
 
 /**
  * Checks if plugin enabled in .env. Assume there _must_ be custom html as well.
@@ -35,6 +36,9 @@ module.exports = {
     mode: 'development',
 
     plugins: [
+        new DefinePlugin({
+            'process.env.LOG_LEVEL': JSON.stringify(process.env.LOG_LEVEL) || JSON.stringify('INFO')
+        }),
         new CopyPlugin({
             patterns: [
                 // copy plugin frontend files if plugin enabled or copy default Classy logic into place
