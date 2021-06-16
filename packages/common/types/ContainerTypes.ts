@@ -109,8 +109,6 @@ export interface GradeReport {
     // to persist.
     custom: any;
 
-    cluster?: ClusteredResult;
-
     studentTime?: number;
     publicTime?: number;
     privateTime?: number;
