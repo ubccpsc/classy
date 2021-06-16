@@ -1,6 +1,7 @@
 import Log from "../../../../common/Log";
 import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 
+import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import {TransportKind} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
@@ -73,6 +74,13 @@ export interface ICourseController {
      * @param kind
      */
     forwardCustomFields(record: any, kind: TransportKind): any;
+
+    /**
+     * For forcing certain push events to the express queue
+     * e.g.: Commits on master getting automatically graded
+     * @param info
+     */
+    shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean>;
 }
 
 /**
@@ -205,6 +213,11 @@ export class CourseController implements ICourseController {
 
     public forwardCustomFields(record: any, kind: TransportKind): any {
         return {};
+    }
+
+    public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {
+        Log.warn(`CourseController::shouldPrioritizePushEvent(${info.commitSHA}) - Default impl; returning false`);
+        return false;
     }
 
     // NOTE: the default implementation is currently broken; do not use it.
