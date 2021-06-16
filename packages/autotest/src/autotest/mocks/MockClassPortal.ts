@@ -1,6 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
+import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -122,6 +123,11 @@ export class MockClassPortal implements IClassPortal {
         // const msg = await cp.formatFeedback(res);
         // return msg;
         return Promise.resolve(res.output.report.feedback);
+    }
+
+    public async  shouldPromotePush(info: CommitTarget): Promise<boolean> {
+        Log.info("MockClassPortal::shouldPromotePush(..) - Start");
+        return false;
     }
 
 }
