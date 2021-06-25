@@ -100,7 +100,7 @@ export class GradingJob {
 
         const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
-        stream.pipe(stdio);
+        container.modem.demuxStream(stream, stdio, stdio);
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
 

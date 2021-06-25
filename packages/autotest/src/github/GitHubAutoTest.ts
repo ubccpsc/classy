@@ -96,6 +96,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     const input: ContainerInput = {delivId, target: info, containerConfig};
                     this.addToStandardQueue(input);
 
+                    const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
+                    if (shouldPromotePush) {
+                        Log.info(`GitHubAutoTest::handlePushEvent(${info.commitSHA}) - Promoting to express queue`);
+                        this.promoteIfNeeded(info);
+                    }
+
                     if (Array.isArray(deliv.regressionDelivIds) && deliv.regressionDelivIds.length > 0) {
                         for (const regressionId of deliv.regressionDelivIds) {
                             const regressionDetails = await this.classPortal.getContainerDetails(regressionId);

@@ -911,17 +911,6 @@ export class DatabaseController {
         const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
         return result;
     }
-
-    public async getRecentPassingResultsForDeliv(delivId: string): Promise<Result[]> {
-        const minScore = 50;
-        const start = Date.now();
-        const minDate = Date.now() - (24 * 60 * 60 * 1000); // The last 24 hours
-        const query = {delivId, "output.timestamp": {$gt: minDate}, "output.report.scoreTest": {$gt: minScore}};
-        const results = await this.readRecords(this.RESULTCOLL, QueryKind.FAST, true, query);
-        const took = Util.took(start);
-        Log.trace(`DatabaseController::getRecentPassingResultsForDeliv(..) - # results: ${results.length}; took: ${took}`);
-        return results;
-    }
 }
 
 export enum QueryKind {

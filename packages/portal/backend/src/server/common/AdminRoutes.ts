@@ -1,5 +1,5 @@
 import * as cookie from 'cookie';
-import * as https from 'https';
+import * as http from 'http';
 import fetch, {RequestInit} from "node-fetch";
 import * as restify from 'restify';
 
@@ -1232,7 +1232,7 @@ export default class AdminRoutes implements IREST {
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
         const opts: RequestInit = {
             method:             'post',
-            agent:              new https.Agent({ rejectUnauthorized: false })
+            agent:              new http.Agent()
         };
         fetch(url, opts)
             .then((result) => {
@@ -1251,7 +1251,7 @@ export default class AdminRoutes implements IREST {
         const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/patches";
         const opts: RequestInit = {
             method:             'get',
-            agent:              new https.Agent({ rejectUnauthorized: false })
+            agent:              new http.Agent()
         };
 
         fetch(url, opts).then(async (result) => {

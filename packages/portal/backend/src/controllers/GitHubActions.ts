@@ -1163,29 +1163,73 @@ export class GitHubActions implements IGitHubActions {
         }
 
         function addGithubAuthToken(url: string) {
-            const startAppend = url.indexOf('//') + 2;
-            const token = that.gitHubAuthToken;
-            const authKey = token.substr(token.indexOf('token ') + 6) + '@';
-            // creates "longokenstring@githuburi"
-            return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+            try {
+                [url] = url.split(".git");
+                const startAppend = url.indexOf('//') + 2;
+                const token = that.gitHubAuthToken;
+                const authKey = token.substr(token.indexOf('token ') + 6) + '@';
+                // creates "longokenstring@githuburi"
+                return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::addGithubAuthToken() - Unexpected error', err);
+                return '';
+            }
+        }
+
+        function getImportBranch(url: string): string {
+            try {
+                const [cloneUrl, specifiers] = url.split("#");
+                const [branch, path] = (specifiers || "").split(":");
+                return branch;
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::getImportBranch() - Unexpected error', err);
+                return '';
+            }
+        }
+
+        function getPath(url: string): string {
+            try {
+                const [cloneUrl, specifiers] = url.split(".git");
+                const [branch, pathSpecifier] = (specifiers || "").split(":");
+                let path = pathSpecifier || "";
+                path = path.startsWith("/") ? path.slice(1) : path;
+                path = path.endsWith("/") ? path.slice(0, -1) : path;
+                return path;
+            } catch (err) {
+                Log.error('GitHubActions::importRepoFS(..)::getPath() - Unexpected error', err);
+                return '';
+            }
+        }
+
+        function selectPath(dirPath: string, filePath: string): string {
+            let finalPath = filePath;
+            if (dirPath && filePath) {
+                finalPath = `${dirPath}/${filePath}`;
+            } else if (dirPath) {
+                finalPath = `${dirPath}/*`;
+            }
+            return finalPath;
         }
 
         const exec = require('child-process-promise').exec;
         const cloneTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
         const authedStudentRepo = addGithubAuthToken(studentRepo);
         const authedImportRepo = addGithubAuthToken(importRepo);
+        const importBranch = getImportBranch(importRepo);
+        const urlPath = getPath(importRepo);
+        const importPath = selectPath(urlPath, seedFilePath);
         // this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
         // if (importRepo === 'https://github.com/SECapstone/capstone' || importRepo === 'https://github.com/SECapstone/bootstrap') {
         //     authedImportRepo = importRepo; // HACK: for testing
         // }
 
-        if (seedFilePath) {
+        if (typeof importPath === "string" && importPath !== "") {
             const seedTempDir = await tmp.dir({dir: '/tmp', unsafeCleanup: true});
             // First clone to a temporary directory, then move only the required files
             return cloneRepo(seedTempDir.path).then(() => {
-                return moveFiles(seedTempDir.path, seedFilePath, cloneTempDir.path)
+                return checkout(seedTempDir.path, importBranch)
                     .then(() => {
-                        return enterRepoPath();
+                        return moveFiles(seedTempDir.path, importPath, cloneTempDir.path);
                     }).then(() => {
                         return removeGitDir();
                     }).then(() => {
@@ -1211,7 +1255,7 @@ export class GitHubActions implements IGitHubActions {
             });
         } else {
             return cloneRepo(cloneTempDir.path).then(() => {
-                return enterRepoPath()
+                return checkout(cloneTempDir.path, importBranch)
                     .then(() => {
                         return removeGitDir();
                     }).then(() => {
@@ -1256,14 +1300,19 @@ export class GitHubActions implements IGitHubActions {
                 });
         }
 
-        function enterRepoPath() {
-            Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - entering: ' + cloneTempDir.path);
-            return exec(`cd ${cloneTempDir.path}`)
-                .then(function(result: any) {
-                    Log.info('GitHubActions::importRepoFS(..)::enterRepoPath() - done');
-                    that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::enterRepoPath()');
-                    that.reportStdErr(result.stderr, 'importRepoFS(..)::enterRepoPath()');
-                });
+        function checkout(repoPath: string, branch: string) {
+            if (typeof branch === "string" && branch !== "") {
+                Log.info(`GitHubActions::importRepoFS(..)::checkout() - Checking out "${branch}"`);
+                return exec(`cd ${repoPath} && git checkout ${branch}`)
+                    .then(function(result: any) {
+                        Log.info('GitHubActions::importRepoFS(..)::checkout() - done');
+                        that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::checkout()');
+                        that.reportStdErr(result.stderr, 'importRepoFS(..)::checkout()');
+                    });
+            } else {
+                Log.info(`GitHubActions::importRepoFS(..)::checkout() - Using default branch`);
+                return Promise.resolve();
+            }
         }
 
         function removeGitDir() {
@@ -1564,11 +1613,12 @@ export class GitHubActions implements IGitHubActions {
      * @param rule
      */
     public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
+        // TODO this code has no unit tests
         Log.info("GitHubAction::addBranchProtectionRule(..) - start; repo:", repoId, "; branch:", rule.name);
         const start = Date.now();
         try {
             const uri = `${this.apiPath}/repos/${this.org}/${repoId}/branches/${rule.name}/protection`;
-            const body: any = {
+            const body = JSON.stringify({
                 required_status_checks: null,
                 enforce_admins: null,
                 required_pull_request_reviews: {
@@ -1578,7 +1628,7 @@ export class GitHubActions implements IGitHubActions {
                     required_approving_review_count: rule.reviews
                 },
                 restrictions: null
-            };
+            });
             const options: RequestInit = {
                 method:                  'PUT',
                 headers:                 {

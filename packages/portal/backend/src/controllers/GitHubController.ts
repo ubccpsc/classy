@@ -1,4 +1,4 @@
-import * as https from "https";
+import * as http from "http";
 import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "../../../../common/Config";
@@ -389,7 +389,7 @@ export class GitHubController implements IGitHubController {
 
         const options: RequestInit = {
             method:             'POST',
-            agent:              new https.Agent({ rejectUnauthorized: false })
+            agent:              new http.Agent()
         };
 
         let result;

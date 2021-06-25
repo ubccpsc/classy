@@ -489,6 +489,10 @@ export class Test {
 
     public static readonly REPONAMEREAL_POSTTEST = 'PostTestDoNotDelete';
     public static readonly REPONAMEREAL_TESTINGSAMPLE = 'TESTING_SAMPLE_REPO';
+    public static readonly REPOBRANCHREAL_TESTINGSAMPLE = 'test-branch';
+    public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = 'subdirectory';
+    public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = 'README.md';
+    public static readonly REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE = 'NESTED.txt';
 
     public static readonly REALTOKEN = 'realtoken';
     public static readonly FAKETOKEN = 'faketoken';

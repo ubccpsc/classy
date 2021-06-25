@@ -438,12 +438,59 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
         const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
-        const selectedFiles = 'README.md';
+        const selectedFiles = Test.REPOSEEDFILEREAL_TESTINGSAMPLE;
         const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;
 
         Log.test('Partial clone took: ' + Util.took(start));
     }).timeout(120 * 1000);
+
+    it("Should be able to clone a source repository given various import URLs", async function() {
+        const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+        const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
+            Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
+
+        const importTests: Array<[string, string]> = [
+            // Should support a trailing .git
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git", undefined],
+            // Should support importing from a subdirectory
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
+            // Should support a subdirectory with "/" on either side
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:/" + Test.REPOSUBDIRREAL_TESTINGSAMPLE + "/", undefined],
+            // Should support a subdirectory with a seedFile
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE,
+                Test.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
+            // Should support importing from a branch
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, undefined],
+            // Should support importing from a branch with a seedFile
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
+            // Should support importing from a subdir on a branch
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
+                Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
+            // Should support importing from a subdir on a branch with a seedFile
+            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
+                Test.REPOSUBDIRREAL_TESTINGSAMPLE, "BRANCH_NESTED.txt"],
+        ];
+
+        for (const importTest of importTests) {
+            // Delete existing repo
+            const deleted = await gh.deleteRepo(REPONAME3);
+            expect(deleted).to.be.true;
+            // Recreate repo
+            const created = await gh.createRepo(REPONAME3);
+            expect(created).to.equal(targetUrl);
+
+            // perform the import
+            const [importRepo, selectedFiles] = importTest;
+            const importUrl = `${githubHost}/classytest/${importRepo}`;
+
+            const start = Date.now();
+            const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
+            expect(output).to.be.true;
+
+            Log.test(`Clone of ${importRepo} took`, Util.took(start));
+        }
+    }).timeout(60 * 1000 * 10);
 
     it("Should be able to soft-write a file to a repo, where the file doesn't exist.", async function() {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
