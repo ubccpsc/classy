@@ -1,6 +1,11 @@
 import Log from "../../../../../common/Log";
 
-import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "../../../../../common/types/PortalTypes";
+import {
+    DeliverableTransport,
+    GradeTransport,
+    GradeTransportPayload,
+    StudentTransport
+} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 
 import {UI} from "../util/UI";
@@ -39,52 +44,52 @@ export class AdminGradesTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id:          'githubId',
-                text:        'GitHub Id',
-                sortable:    true,
+                id: 'githubId',
+                text: 'GitHub Id',
+                sortable: true,
                 defaultSort: true,
-                sortDown:    false,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'id',
-                text:        'Internal Id',
-                sortable:    true,
+                id: 'id',
+                text: 'Internal Id',
+                sortable: true,
                 defaultSort: true,
-                sortDown:    false,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'snum',
-                text:        'SNUM',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'snum',
+                text: 'SNUM',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'fName',
-                text:        'First Name',
-                sortable:    true,
+                id: 'fName',
+                text: 'First Name',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'lName',
-                text:        'Last Name',
-                sortable:    true,
+                id: 'lName',
+                text: 'Last Name',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'labId',
-                text:        'Lab',
-                sortable:    true,
+                id: 'labId',
+                text: 'Lab',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
 
             // more sections dynamically added
@@ -92,12 +97,12 @@ export class AdminGradesTab extends AdminPage {
 
         for (const deliv of delivs) {
             const col = {
-                id:          deliv.id,
-                text:        deliv.id,
-                sortable:    true,
+                id: deliv.id,
+                text: deliv.id,
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             };
             headers.push(col);
         }
@@ -107,7 +112,10 @@ export class AdminGradesTab extends AdminPage {
         // this loop couldn't possibly be less efficient
         for (const student of students) {
             const row: TableCell[] = [
-                {value: student.githubId, html: '<a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>'},
+                {
+                    value: student.githubId,
+                    html: '<a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>'
+                },
                 {value: student.id, html: student.id + ''},
                 {value: student.studentNum, html: student.studentNum + ''},
                 {value: student.firstName, html: student.firstName},
@@ -119,15 +127,20 @@ export class AdminGradesTab extends AdminPage {
                 for (const grade of grades) {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
+                            const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
                             let score = '';
                             if (grade.score !== null && grade.score >= 0) {
                                 score = grade.score + '';
                             }
-                            if (score !== '') {
-                                tableCell = {value: score, html: '<a class="selectable" href="' + grade.URL + '">' + score + '</a>'};
+                            let html;
+                            if (score !== '' && grade.URL !== null) {
+                                html = `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
+                            } else if (score !== '' && grade.URL === null) {
+                                html = `<div title="${hoverComment}">${score}</div>`;
                             } else {
-                                tableCell = {value: score, html: score};
+                                html = score;
                             }
+                            tableCell = {value: score, html};
                         }
                     }
                 }
@@ -160,116 +173,116 @@ export class AdminGradesTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id:          'delivId',
-                text:        'Deliv Id',
-                sortable:    true,
+                id: 'delivId',
+                text: 'Deliv Id',
+                sortable: true,
                 defaultSort: true,
-                sortDown:    false,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'avg',
-                text:        'Average',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'avg',
+                text: 'Average',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'median',
-                text:        'Median',
-                sortable:    true,
+                id: 'median',
+                text: 'Median',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '009',
-                text:        '0-9',
-                sortable:    true,
+                id: '009',
+                text: '0-9',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '1019',
-                text:        '10-19',
-                sortable:    true,
+                id: '1019',
+                text: '10-19',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '2029',
-                text:        '20-29',
-                sortable:    true,
+                id: '2029',
+                text: '20-29',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '3039',
-                text:        '30-39',
-                sortable:    true,
+                id: '3039',
+                text: '30-39',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '4049',
-                text:        '40-49',
-                sortable:    true,
+                id: '4049',
+                text: '40-49',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '5059',
-                text:        '50-59',
-                sortable:    true,
+                id: '5059',
+                text: '50-59',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '6069',
-                text:        '60-69',
-                sortable:    true,
+                id: '6069',
+                text: '60-69',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '7079',
-                text:        '70-79',
-                sortable:    true,
+                id: '7079',
+                text: '70-79',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '8089',
-                text:        '80-89',
-                sortable:    true,
+                id: '8089',
+                text: '80-89',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '9099',
-                text:        '90-99',
-                sortable:    true,
+                id: '9099',
+                text: '90-99',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          '100',
-                text:        '100',
-                sortable:    true,
+                id: '100',
+                text: '100',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
 
         ];
@@ -289,7 +302,7 @@ export class AdminGradesTab extends AdminPage {
         const st = new SortableTable(headers, '#gradesSummaryTable');
 
         // this loop couldn't possibly be less efficient
-        const gradeMap: {[delivId: string]: number[]} = {};
+        const gradeMap: { [delivId: string]: number[] } = {};
 
         for (const grade of grades) {
             if (grade !== null && typeof grade.score !== 'undefined' && typeof grade.score === 'number') {
@@ -309,8 +322,8 @@ export class AdminGradesTab extends AdminPage {
             }
         }
 
-        const inBin = function(list: number[], lower: number, upper: number): number {
-            const total = list.reduce(function(accumulator, currentValue) {
+        const inBin = function (list: number[], lower: number, upper: number): number {
+            const total = list.reduce(function (accumulator, currentValue) {
                 currentValue = Math.round(currentValue);
                 if (currentValue >= lower && currentValue <= upper) {
                     accumulator++;
@@ -326,7 +339,7 @@ export class AdminGradesTab extends AdminPage {
 
             const num = delivGrades.length;
             if (num > 0) {
-                const total = delivGrades.reduce(function(accumulator, currentValue) {
+                const total = delivGrades.reduce(function (accumulator, currentValue) {
                     return accumulator + currentValue;
                 });
                 const avg = Number((total / num).toFixed(2));
@@ -387,5 +400,14 @@ export class AdminGradesTab extends AdminPage {
             AdminView.showError("Getting grades failed: " + err.message);
         }
         return [];
+    }
+
+    private static makeHTMLSafe(text: string): string {
+        // https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html/14130005
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 }
