@@ -1,4 +1,4 @@
-import * as https from "https";
+import * as http from "http";
 import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "../../../../common/Config";
@@ -31,6 +31,8 @@ export interface IGitHubController {
     getRepositoryUrl(repo: Repository): Promise<string>;
 
     getTeamUrl(team: Team): Promise<string>;
+
+    releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
 }
 
 export interface GitTeamTuple {
@@ -389,7 +391,7 @@ export class GitHubController implements IGitHubController {
 
         const options: RequestInit = {
             method:             'POST',
-            agent:              new https.Agent({ rejectUnauthorized: false })
+            agent:              new http.Agent()
         };
 
         let result;
@@ -514,6 +516,13 @@ export class TestGitHubController implements IGitHubController {
 
     public async updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean> {
         Log.warn("TestGitHubController::updateBranchProtection(..) - TEST");
+        return true;
+    }
+
+    public async releaseRepository(repo: Repository,
+                                   teams: Team[],
+                                   asCollaborators: boolean = false): Promise<boolean> {
+        Log.warn("TestGitHubController::releaseRepository(..) - TEST");
         return true;
     }
 }

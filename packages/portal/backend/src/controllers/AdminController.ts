@@ -1,7 +1,7 @@
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
-import {ClusteredResult} from "../../../../common/types/ContainerTypes";
+import {GradeReport} from "../../../../common/types/ContainerTypes";
 import {
     AutoTestDashboardTransport,
     AutoTestGradeTransport,
@@ -277,10 +277,11 @@ export class AdminController {
                 let testSkip: string[] = [];
                 let testError: string[] = [];
 
-                let cluster: ClusteredResult;
+                const cc = await Factory.getCourseController(this.gh);
+                let custom = cc.forwardCustomFields(resultSummary, TransportKind.AUTOTEST_DASHBOARD);
 
                 if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                    const report = result.output.report;
+                    const report: GradeReport = result.output.report;
                     if (typeof report.passNames !== 'undefined') {
                         testPass = report.passNames;
                     }
@@ -293,8 +294,8 @@ export class AdminController {
                     if (typeof report.errorNames !== 'undefined') {
                         testError = report.errorNames;
                     }
-                    if (typeof report.cluster !== 'undefined') {
-                        cluster = report.cluster;
+                    if (typeof report.custom !== 'undefined') {
+                        custom = {...custom, ...cc.forwardCustomFields(report, TransportKind.GRADE_REPORT)};
                     }
                 }
 
@@ -304,7 +305,7 @@ export class AdminController {
                     testFail:  testFail,
                     testError: testError,
                     testSkip:  testSkip,
-                    cluster: cluster
+                    custom:    custom,
                 };
 
                 // just return the first result for a repo, unless they are specified
