@@ -43,7 +43,6 @@
         "webpack": "^5.38.1"
     },
     "dependencies": {
-        "@types/bson": "^4.2.0",
         "@types/mongodb": "^3.0.5",
         "@types/node-schedule": "^1.2.2",
         "dotenv": "4.0.0",
