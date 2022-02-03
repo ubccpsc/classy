@@ -2631,20 +2631,20 @@ jsprim@^1.2.2:
     json-schema "0.2.3"
     verror "1.10.0"
 
-jszip@3.2.1:
-  version "3.2.1"
-  resolved "https://registry.nlark.com/jszip/download/jszip-3.2.1.tgz#c5d32df7274042282b157efb16e522b43435e01a"
-  integrity sha1-xdMt9ydAQigrFX77FuUitDQ14Bo=
+jszip@3.7.0:
+  version "3.7.0"
+  resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.7.0.tgz#9b8b995a4e7c9024653ce743e902076a82fdf4e6"
+  integrity sha512-Y2OlFIzrDOPWUnpU0LORIcDn2xN7rC9yKffFM/7pGhQuhO+SUhfm2trkJ/S5amjFvem0Y+1EALz/MEPkvHXVNw==
   dependencies:
     lie "~3.3.0"
     pako "~1.0.2"
     readable-stream "~2.3.6"
     set-immediate-shim "~1.0.1"
 
-jszip@^3.2.1:
+jszip@^3.7.0:
   version "3.7.1"
-  resolved "https://registry.nlark.com/jszip/download/jszip-3.7.1.tgz#bd63401221c15625a1228c556ca8a68da6fda3d9"
-  integrity sha1-vWNAEiHBViWhIoxVbKimjab9o9k=
+  resolved "https://registry.yarnpkg.com/jszip/-/jszip-3.7.1.tgz#bd63401221c15625a1228c556ca8a68da6fda3d9"
+  integrity sha512-ghL0tz1XG9ZEmRMcEN2vt7xabrDdqHHeykgARpmZ0BiIctWxM47Vt63ZO2dnp4QYt/xJVLLy5Zv1l/xRdh2byg==
   dependencies:
     lie "~3.3.0"
     pako "~1.0.2"
@@ -2783,8 +2783,8 @@ make-error@^1.1.1, make-error@^1.3.5:
 
 map-age-cleaner@^0.1.1:
   version "0.1.3"
-  resolved "https://registry.npm.taobao.org/map-age-cleaner/download/map-age-cleaner-0.1.3.tgz#7d583a7306434c055fe474b0f45078e6e1b4b92a"
-  integrity sha1-fVg6cwZDTAVf5HSw9FB45uG0uSo=
+  resolved "https://registry.yarnpkg.com/map-age-cleaner/-/map-age-cleaner-0.1.3.tgz#7d583a7306434c055fe474b0f45078e6e1b4b92a"
+  integrity sha512-bJzx6nMoP6PDLPBFmg7+xRKeFZvFboMrGlxmNj9ClvX53KrmvM5bXFXEWjbz4cz1AFn+jWJ9z/DJSz7hrs0w3w==
   dependencies:
     p-defer "^1.0.0"
 
@@ -2809,8 +2809,8 @@ media-typer@0.3.0:
 
 mem@^4.0.0:
   version "4.3.0"
-  resolved "https://registry.nlark.com/mem/download/mem-4.3.0.tgz#461af497bc4ae09608cdb2e60eefb69bff744178"
-  integrity sha1-Rhr0l7xK4JYIzbLmDu+2m/90QXg=
+  resolved "https://registry.yarnpkg.com/mem/-/mem-4.3.0.tgz#461af497bc4ae09608cdb2e60eefb69bff744178"
+  integrity sha512-qX2bG48pTqYRVmDB37rn/6PT7LcR8T7oAX3bf99u1Tt1nzxYfxkgqDwUwolPlXweM0XzBOBFzSx4kfp7KP1s/w==
   dependencies:
     map-age-cleaner "^0.1.1"
     mimic-fn "^2.0.0"
@@ -2883,8 +2883,8 @@ mime@^2.4.3, mime@^2.4.4:
 
 mimic-fn@^2.0.0, mimic-fn@^2.1.0:
   version "2.1.0"
-  resolved "https://registry.npm.taobao.org/mimic-fn/download/mimic-fn-2.1.0.tgz?cache=0&sync_timestamp=1617823545101&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fmimic-fn%2Fdownload%2Fmimic-fn-2.1.0.tgz#7ed2c2ccccaf84d3ffcb7a69b57711fc2083401b"
-  integrity sha1-ftLCzMyvhNP/y3pptXcR/CCDQBs=
+  resolved "https://registry.yarnpkg.com/mimic-fn/-/mimic-fn-2.1.0.tgz#7ed2c2ccccaf84d3ffcb7a69b57711fc2083401b"
+  integrity sha512-OqbOk5oEQeAZ8WXWydlu9HJjz9WVdEIvamMCcXmuqUYjTknH/sqsWvhQ3vgwKFRR1HpjvNBKQ37nbJgYzGqGcg==
 
 minimalistic-assert@^1.0.0:
   version "1.0.1"
@@ -3218,13 +3218,13 @@ optional-require@^1.0.3:
 
 p-defer@^1.0.0:
   version "1.0.0"
-  resolved "https://registry.nlark.com/p-defer/download/p-defer-1.0.0.tgz#9f6eb182f6c9aa8cd743004a7d4f96b196b0fb0c"
+  resolved "https://registry.yarnpkg.com/p-defer/-/p-defer-1.0.0.tgz#9f6eb182f6c9aa8cd743004a7d4f96b196b0fb0c"
   integrity sha1-n26xgvbJqozXQwBKfU+WsZaw+ww=
 
 p-is-promise@^2.0.0:
   version "2.1.0"
-  resolved "https://registry.npm.taobao.org/p-is-promise/download/p-is-promise-2.1.0.tgz?cache=0&sync_timestamp=1618556918880&other_urls=https%3A%2F%2Fregistry.npm.taobao.org%2Fp-is-promise%2Fdownload%2Fp-is-promise-2.1.0.tgz#918cebaea248a62cf7ffab8e3bca8c5f882fc42e"
-  integrity sha1-kYzrrqJIpiz3/6uOO8qMX4gvxC4=
+  resolved "https://registry.yarnpkg.com/p-is-promise/-/p-is-promise-2.1.0.tgz#918cebaea248a62cf7ffab8e3bca8c5f882fc42e"
+  integrity sha512-Y3W0wlRPK8ZMRbNq97l4M5otioeA5lm1z7bkNkxCka8HSPjR0xRWmpCmc9utiaLP9Jb1eD8BgeIxTW4AIF45Pg==
 
 p-limit@^2.2.0:
   version "2.3.0"
