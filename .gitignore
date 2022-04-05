@@ -54,12 +54,17 @@ packages/portal/backend/src/custom/CustomCourseRoutes.ts
 **/.env*
 
 # Misc
-ssl/
 /data/
 .rsyncexclude
 testOutput/
 packages/autotest/testOutput/
 packages/autotest/test/data/
+
+# SSL
+ssl/
+copy-certs.sh.log
+start-classy.sh.log
+stop-classy.sh.log
 
 # Excludes plugins aside default plugin
 plugins/*
