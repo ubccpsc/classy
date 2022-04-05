@@ -74,3 +74,4 @@ plugins/default/**/*.js.map
 !plugins/example/
 plugins/example/**/*.js
 plugins/example/**/*.js.map
+docker-compose.override.yml
