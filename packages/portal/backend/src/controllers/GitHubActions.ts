@@ -1327,7 +1327,7 @@ export class GitHubActions implements IGitHubActions {
 
         function initGitDir() {
             Log.info('GitHubActions::importRepoFS(..)::initGitDir() - start');
-            return exec(`cd ${cloneTempDir.path} && git init -q`)
+            return exec(`cd ${cloneTempDir.path} && git init -q && git branch -m main`)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::initGitDir() - done');
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::initGitDir()');
