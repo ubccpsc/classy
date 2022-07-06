@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: cimg/node:12.22.1
+      - image: cimg/node:12.22.7
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
@@ -176,7 +176,7 @@ jobs:
 
   build_run_stop:
     machine:
-      image: ubuntu-1604:201903-01
+      image: ubuntu-2004:202201-02
     working_directory: ~/project
 
     environment:

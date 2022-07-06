@@ -35,9 +35,9 @@ RUN touch /var/run/nginx.pid && \
   chown -R ${UID} /var/cache/nginx
 
 WORKDIR /etc/nginx
-COPY packages/proxy/proxy.conf packages/proxy/nginx.rconf ./
-RUN erb nginx.rconf | tee nginx.conf \
- && rm nginx.rconf \
+COPY packages/proxy/proxy.conf packages/proxy/nginx.rconf* ./
+RUN if test -e nginx.rconf; then erb nginx.rconf; else erb nginx.rconf.default; fi | tee nginx.conf \
+ && rm nginx.rconf* \
  && apk del ruby
 
 USER ${UID}

@@ -31,6 +31,8 @@ export interface IGitHubController {
     getRepositoryUrl(repo: Repository): Promise<string>;
 
     getTeamUrl(team: Team): Promise<string>;
+
+    releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
 }
 
 export interface GitTeamTuple {
@@ -514,6 +516,13 @@ export class TestGitHubController implements IGitHubController {
 
     public async updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean> {
         Log.warn("TestGitHubController::updateBranchProtection(..) - TEST");
+        return true;
+    }
+
+    public async releaseRepository(repo: Repository,
+                                   teams: Team[],
+                                   asCollaborators: boolean = false): Promise<boolean> {
+        Log.warn("TestGitHubController::releaseRepository(..) - TEST");
         return true;
     }
 }

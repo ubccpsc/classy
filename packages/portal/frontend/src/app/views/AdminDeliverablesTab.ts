@@ -563,8 +563,8 @@ export class AdminDeliverablesTab extends AdminPage {
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
-                            .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("error"))
-                            .map((s) => s.stream || "\n\nError code: " + s.errorDetail.code + "\n\nError Message: " + s.error);
+                            .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("message") || s.hasOwnProperty("error"))
+                            .map((s) => s.stream || s.message || "\n\nError code: " + s.errorDetail.code + "\n\nError Message: " + s.error);
                         output.innerText += chunkLines.join("");
                         lines = lines.concat(chunkLines);
                     } catch (err) {

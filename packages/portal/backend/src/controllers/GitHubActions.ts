@@ -1327,7 +1327,7 @@ export class GitHubActions implements IGitHubActions {
 
         function initGitDir() {
             Log.info('GitHubActions::importRepoFS(..)::initGitDir() - start');
-            return exec(`cd ${cloneTempDir.path} && git init -q`)
+            return exec(`cd ${cloneTempDir.path} && git init -q && git branch -m main`)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::initGitDir() - done');
                     that.reportStdOut(result.stdout, 'GitHubActions::importRepoFS(..)::initGitDir()');
@@ -1361,7 +1361,7 @@ export class GitHubActions implements IGitHubActions {
         function pushToNewRepo() {
             const pushStart = Date.now();
             Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - start');
-            const command = `cd ${cloneTempDir.path} && git push -q origin master`;
+            const command = `cd ${cloneTempDir.path} && git push -q origin main`;
             return exec(command)
                 .then(function(result: any) {
                     Log.info('GitHubActions::importRepoFS(..)::pushToNewRepo() - done; took: ' + Util.took(pushStart));

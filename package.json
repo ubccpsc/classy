@@ -43,13 +43,14 @@
         "webpack": "^5.38.1"
     },
     "dependencies": {
+        "@types/bson": "^4.2.0",
         "@types/mongodb": "^3.0.5",
         "@types/node-schedule": "^1.2.2",
         "dotenv": "4.0.0",
         "fs-extra": "5.0.0",
-        "jszip": "3.2.1",
+        "jszip": "3.7.0",
         "mongodb": "^3.0.2",
-        "node-fetch": "^2.6.0",
+        "node-fetch": "^2.6.7",
         "restify": "^8.4.0"
     },
     "resolutions": {

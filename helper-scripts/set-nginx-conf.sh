@@ -8,9 +8,9 @@ file="./plugins/$plugin/nginx/nginx.rconf"
 
 if [[ -f $file ]]; then
     echo "Nginx.rconf file found in $plugin plugin"
-    echo "Overwriting default Classy/packages/proxy/nginx.rconf file"
+    echo "Overriding Classy/packages/proxy/nginx.rconf.default"
     cp $file ./packages/proxy/nginx.rconf
-    echo "Default Classy/packages/proxy/nginx.rconf file overwritten"
+    echo "Classy/packages/proxy/nginx.rconf file written"
 else
-    echo "No nginx.conf found in $plugin plugin"
+    echo "$file not found."
 fi

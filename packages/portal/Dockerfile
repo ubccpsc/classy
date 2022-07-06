@@ -10,6 +10,7 @@ WORKDIR /app
 
 # The common package requires the .env file directly so we have to pass it through
 COPY .env ./
+COPY yarn.lock ./
 COPY package.json tsconfig.json .env ./
 COPY packages/common ./packages/common
 COPY packages/portal ./packages/portal
