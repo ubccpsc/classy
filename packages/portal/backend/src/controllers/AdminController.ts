@@ -808,13 +808,11 @@ export class AdminController {
                 const start = Date.now();
                 Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
                 if (repo.URL === null) { // key check: repo.URL is only set if the repo has been provisioned
-                    const teams: Team[] = [];
-                    for (const teamId of repo.teamIds) {
-                        teams.push(await this.dbc.getTeam(teamId));
-                    }
+                    const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
+                    const teams: Team[] = await Promise.all(futureTeams);
                     Log.info("AdminController::performProvision( .. ) - about to provision: " + repo.id);
                     let success = await ghc.provisionRepository(repo.id, teams, importURL);
-                    success = success ? success && await cc.finalizeProvisionedRepo(repo, teams) : success;
+                    success = success && await cc.finalizeProvisionedRepo(repo, teams);
                     Log.info("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
