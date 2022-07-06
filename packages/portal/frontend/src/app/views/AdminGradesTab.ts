@@ -119,15 +119,20 @@ export class AdminGradesTab extends AdminPage {
                 for (const grade of grades) {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
+                            const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
                             let score = '';
                             if (grade.score !== null && grade.score >= 0) {
                                 score = grade.score + '';
                             }
-                            if (score !== '') {
-                                tableCell = {value: score, html: '<a class="selectable" href="' + grade.URL + '">' + score + '</a>'};
+                            let html;
+                            if (score !== '' && grade.URL !== null) {
+                                html = `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
+                            } else if (score !== '' && grade.URL === null) {
+                                html = `<div title="${hoverComment}">${score}</div>`;
                             } else {
-                                tableCell = {value: score, html: score};
+                                html = score;
                             }
+                            tableCell = {value: score, html};
                         }
                     }
                 }
@@ -387,5 +392,14 @@ export class AdminGradesTab extends AdminPage {
             AdminView.showError("Getting grades failed: " + err.message);
         }
         return [];
+    }
+
+    private static makeHTMLSafe(text: string): string {
+        // https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html/14130005
+        return text
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;');
     }
 }
