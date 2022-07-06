@@ -30,6 +30,8 @@ export interface IGitHubController {
 
     getRepositoryUrl(repo: Repository): Promise<string>;
 
+    createIssues(repo: Repository, issues: Issue[]): Promise<boolean>;
+
     getTeamUrl(team: Team): Promise<string>;
 
     releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
@@ -43,6 +45,12 @@ export interface GitTeamTuple {
 export interface BranchRule {
     name: string;
     reviews: number;
+}
+
+export interface Issue {
+    title: string;
+    body: string;
+    // assignees: string[];
 }
 
 export class GitHubController implements IGitHubController {
@@ -365,6 +373,17 @@ export class GitHubController implements IGitHubController {
         return allSuccess;
     }
 
+    public async createIssues(repo: Repository, issues: Issue[]): Promise<boolean> {
+        Log.info("GitHubController::createIssues(", repo.id, ", ...) - start");
+        if (!await this.gha.repoExists(repo.id)) {
+            throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
+        }
+        const successes = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));
+        const allSuccess = successes.every((success) => success === true);
+        Log.info("GitHubController::createIssues(", repo.id, ") - All issues created successfully:", allSuccess);
+        return allSuccess;
+    }
+
     /**
      * Calls the patchtool
      * @param {Repository} repo: Repo to be patched
@@ -516,6 +535,11 @@ export class TestGitHubController implements IGitHubController {
 
     public async updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean> {
         Log.warn("TestGitHubController::updateBranchProtection(..) - TEST");
+        return true;
+    }
+
+    public async createIssues(repo: Repository, issues: Issue[]): Promise<boolean> {
+        Log.warn("TestGitHubController::createIssues(..) - TEST");
         return true;
     }
 
