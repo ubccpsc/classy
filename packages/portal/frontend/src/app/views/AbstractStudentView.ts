@@ -142,6 +142,8 @@ export abstract class AbstractStudentView implements IView {
                 if (score === null) {
                     score = 'Not Set';
                     scoreHTML = score; // no link if the score is not set
+                } else if (grade.URL === null) {
+                    scoreHTML = String(score); // no link if the link is not set
                 } else {
                     scoreHTML = '<a href="' + grade.URL + '">' + score + '</a>';
                 }
