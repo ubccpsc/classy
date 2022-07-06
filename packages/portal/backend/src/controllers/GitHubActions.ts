@@ -8,7 +8,7 @@ import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
-import {BranchRule, GitTeamTuple} from "./GitHubController";
+import {BranchRule, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
 
 // tslint:disable-next-line
@@ -225,6 +225,8 @@ export interface IGitHubActions {
     getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
 
     addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
+
+    makeIssue(repoId: string, issue: Issue): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -1649,6 +1651,38 @@ export class GitHubActions implements IGitHubActions {
         return false;
     }
 
+    /**
+     * Creates a new issue on the specified repo
+     * @param repoId
+     * @param issue
+     */
+    public async makeIssue(repoId: string, issue: Issue): Promise<boolean> {
+        Log.info("GitHubAction::makeIssue(..) - start; repo:", repoId, "; issue:", issue.title);
+        const start = Date.now();
+        try {
+            const uri = `${this.apiPath}/repos/${this.org}/${repoId}/issues`;
+            const body = JSON.stringify({
+                title: issue.title,
+                body: issue.body,
+            });
+            const options: RequestInit = {
+                method:                  'POST',
+                headers:                 {
+                    'Authorization': this.gitHubAuthToken,
+                    'User-Agent':    this.gitHubUserName,
+                    'Accept':        'application/json'
+                },
+                body
+            };
+            const response = await fetch(uri, options); // TODO check status code of this response
+            Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
+            return true;
+        } catch (err) {
+            Log.warn("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - ERROR:", err.message);
+        }
+        return false;
+    }
+
     /* istanbul ignore next */
     /**
      * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
@@ -2201,6 +2235,10 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
+        return true;
+    }
+
+    public async makeIssue(repoId: string, issue: Issue): Promise<boolean> {
         return true;
     }
 
