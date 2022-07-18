@@ -12,7 +12,7 @@ import {
     ProvisionTransport,
     RepositoryTransport,
     StudentTransport,
-    TeamTransport, TransportKind
+    TeamTransport,
 } from '../../../../common/types/PortalTypes';
 import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
@@ -270,44 +270,7 @@ export class AdminController {
         for (const result of allResults) {
             const repoId = result.input.target.repoId;
             if (results.length < NUM_RESULTS) {
-                const resultSummary = await this.clipAutoTestResult(result);
-
-                let testPass: string[] = [];
-                let testFail: string[] = [];
-                let testSkip: string[] = [];
-                let testError: string[] = [];
-
-                const cc = await Factory.getCourseController(this.gh);
-                let custom = cc.forwardCustomFields(resultSummary, TransportKind.AUTOTEST_DASHBOARD);
-
-                if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
-                    const report: GradeReport = result.output.report;
-                    if (typeof report.passNames !== 'undefined') {
-                        testPass = report.passNames;
-                    }
-                    if (typeof report.failNames !== 'undefined') {
-                        testFail = report.failNames;
-                    }
-                    if (typeof report.skipNames !== 'undefined') {
-                        testSkip = report.skipNames;
-                    }
-                    if (typeof report.errorNames !== 'undefined') {
-                        testError = report.errorNames;
-                    }
-                    if (typeof report.custom !== 'undefined') {
-                        custom = {...custom, ...cc.forwardCustomFields(report, TransportKind.GRADE_REPORT)};
-                    }
-                }
-
-                const resultTrans: AutoTestDashboardTransport = {
-                    ...resultSummary,
-                    testPass:  testPass,
-                    testFail:  testFail,
-                    testError: testError,
-                    testSkip:  testSkip,
-                    custom:    custom,
-                };
-
+                const resultTrans = await this.createDashboardTransport(result);
                 // just return the first result for a repo, unless they are specified
                 if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);
@@ -319,6 +282,40 @@ export class AdminController {
         }
         Log.info("AdminController::getDashboard(..) - # results: " + results.length + "; took: " + Util.took(start));
         return results;
+    }
+
+    private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
+        const resultSummary = await this.clipAutoTestResult(result);
+
+        let testPass: string[] = [];
+        let testFail: string[] = [];
+        let testSkip: string[] = [];
+        let testError: string[] = [];
+
+        if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+            const report: GradeReport = result.output.report;
+            if (typeof report.passNames !== 'undefined') {
+                testPass = report.passNames;
+            }
+            if (typeof report.failNames !== 'undefined') {
+                testFail = report.failNames;
+            }
+            if (typeof report.skipNames !== 'undefined') {
+                testSkip = report.skipNames;
+            }
+            if (typeof report.errorNames !== 'undefined') {
+                testError = report.errorNames;
+            }
+        }
+
+        return {
+            ...resultSummary,
+            testPass:  testPass,
+            testFail:  testFail,
+            testError: testError,
+            testSkip:  testSkip,
+            custom:    {},
+        };
     }
 
     public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
@@ -445,7 +442,6 @@ export class AdminController {
         }
 
         const state = this.selectState(result);
-        const custom = cc.forwardCustomFields(result, TransportKind.AUTOTEST_RESULT_SUMMARY);
 
         return  {
             repoId: repoId,
@@ -458,7 +454,7 @@ export class AdminController {
             scoreOverall: scoreOverall,
             scoreCover: scoreCover,
             scoreTests: scoreTest,
-            custom: custom
+            custom: {}
         };
     }
 
