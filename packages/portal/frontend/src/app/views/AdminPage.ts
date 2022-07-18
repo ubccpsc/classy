@@ -17,7 +17,7 @@ export abstract class AdminPage implements IView {
      * @param opts
      * @returns {Promise<void>}
      */
-    public abstract async init(opts: any): Promise<void>;
+    public abstract init(opts: any): Promise<void>;
 
     public renderPage(pageName: string, opts: {}): void {
         Log.info("AdminPage::renderPage( " + pageName + ", ... ) - default implementation");
