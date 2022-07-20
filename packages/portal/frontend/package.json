@@ -28,7 +28,7 @@
         "dotenv": "^8.2.0",
         "flatpickr": "^4.5.1",
         "fs-extra": "^5.0.0",
-        "moment": "^2.29.2",
+        "moment": "^2.29.4",
         "mongodb": "^3.0.2",
         "onsenui": "^2.9.2",
         "restify": "^8.4.0",
