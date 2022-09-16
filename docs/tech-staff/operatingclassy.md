@@ -64,3 +64,40 @@ To shut down everything:
 ```bash
 docker-compose down
 ```
+## Restarting Classy
+
+To restart Classy:
+
+```bash
+docker-compose restart
+```
+
+## Viewing Classy Runtime Logs
+
+To view the logs while Classy is running:
+
+```bash
+docker-compose logs
+```
+
+To watch the logs stream as Classy is executing:
+
+```bash
+docker-compose logs --tail 1000 -f
+```
+
+To see only what the most recent logs say:
+
+```bash
+docker-compose logs --tail 1000
+```
+
+## Reclaiming disk space
+
+Docker is conservative about disk space and will not delete old containers when new ones are created. If your course is building many grading containers (in particular) these can add up and cause disk pressure on the system. If the host ever run out of disk, stale images can be pruned with:
+
+```bash
+docker image prune
+```
+
+This is an alarming operation, and unfortunately there is no `--dry-run` option, but has been reliably used in the past and only seems to delete the 'excess' containers.
