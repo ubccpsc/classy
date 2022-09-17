@@ -9,7 +9,9 @@ Primary contributors:
 
 * [Reid Holmes](https://www.cs.ubc.ca/~rtholmes/)
 * [Nick Bradley](https://nickbradley.github.io/)
-
+* [Andrew Stec](https://github.com/andrewstec/)
+* [Braxton Hall](https://http://braxtonhall.ca/)
+  
 ## Contributing to Classy
 
 Features that add value to Classy should be merged back into the Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value and be accepted as core code. Features, on the other hand, that are only useful to a single course will likely not be accepted as core code. A feature needs to have adequate code coverage (> 90%) and have been tested for a semester in a downstream fork to be eligible as core code. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
