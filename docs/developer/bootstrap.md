@@ -6,8 +6,8 @@ Although Classy is containerized, configuring your development instance does not
 
 The software dependencies that are currently used in production and recommended to work in development:
 
-- Node JS > v12.13.0 [Download](https://nodejs.org/en/download/)
-- Yarn v1.19.1 [Installation](https://yarnpkg.com/lang/en/docs/install)
+- Node JS > v12.13.0 < v13 [Download](https://nodejs.org/en/download/) (or use `nvm`)
+- Yarn v1.19.1+ [Installation](https://yarnpkg.com/lang/en/docs/install)
 - Docker v19.03.4, build 9013bf583a [Install](https://docs.docker.com/install/)
 - IDE: JetBrain's Webstorm is recommended; VSCode is supported
 - MongoDB > 3.6.7 (Docker: `docker run -p 27017:27017 mongo`, or [Install](https://docs.mongodb.com/manual/installation/))
@@ -24,18 +24,30 @@ The sample configuration file includes a lot of documentation inline so [take a 
 
 Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. GitHub users on the `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
 
-## Install/Build/Run
+## Install/Build
 
 To install Classy for development:
 
 1. Type `git clone https://github.com/ORGNAME/classy`
-2. `cd Classy` to navigate inside the directory.
+2. `cd classy` to navigate inside the directory.
 3. Inside the directory, type `yarn install` to fetch library dependencies.
 4. Then type `yarn run build` to build the project.
 
    During the build step, a source-map was produced with the built code, which allows you to set breakpoints and debug in your IDE.
 
 5. You are ready to run any of the applications (commands found in `package.json` files under respective application package directories).
+
+## Running for dev
+
+There are a variety of services you may want to run independently while developing.
+Most will require configuring mongo to run in dev mode (see `DB_URL` in `.env`). 
+The most common of these services can be invoked from the `classy/` directory through either the terminal or IDE:
+
+* Classy backend: `node -r tsconfig-paths/register packages/portal/backend/src/Backend.js`
+* Classy frontend: Instructions in `packages/portal/frontend/README.md`
+* Autotest backend: `node packages/autotest/src/AutoTestDaemon.js`
+ 
+Some handy dev scripts also exist; these can be found in `portal/backend/src-util/`; use these with care, many modify the database or GitHub repos in unrecoverable ways. 
 
 ## QA Checklist
 
