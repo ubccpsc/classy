@@ -2,7 +2,6 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
 import {Queue} from "../src/autotest/Queue";
 // const loadFirst = require('./GlobalSpec');
 import "./GlobalSpec";
@@ -12,12 +11,12 @@ describe("Queue", () => {
 
     let q: Queue;
 
-    before(function() {
+    before(function () {
         Log.test("QueueSpec::before");
         q = new Queue('test', 1);
     });
 
-    after(function() {
+    after(function () {
         Log.test("QueueSpec::after");
         q = new Queue('test', 1);
     });

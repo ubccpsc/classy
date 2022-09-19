@@ -15,7 +15,7 @@ export interface IAutoTest {
     /**
      * Adds a new job to be processed by the standard queue.
      *
-     * @param {IContainerInput} element
+     * @param {ContainerInput} element
      */
     addToStandardQueue(element: ContainerInput): void;
 
@@ -85,7 +85,7 @@ export abstract class AutoTest implements IAutoTest {
         return;
     }
 
-    public removeFromScheduleQueue(keys: Array<{key: string, value: string}>): ContainerInput | null {
+    public removeFromScheduleQueue(keys: Array<{ key: string, value: string }>): ContainerInput | null {
         Log.info("AutoTest::removeFromScheduleQueue(..) - start");
         try {
             return this.scheduleQueue.removeGivenKeys(keys);
@@ -112,7 +112,7 @@ export abstract class AutoTest implements IAutoTest {
             let updated = false;
             const that = this;
 
-            const schedule = function(queue: Queue): boolean {
+            const schedule = function (queue: Queue): boolean {
                 const info: ContainerInput = queue.scheduleNext();
                 Log.info("AutoTest::tick(..) - starting job on: " + queue.getName() + "; deliv: " +
                     info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
@@ -133,14 +133,14 @@ export abstract class AutoTest implements IAutoTest {
                 return true;
             };
 
-            const tickQueue = function(queue: Queue): boolean {
+            const tickQueue = function (queue: Queue): boolean {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
                     return schedule(queue);
                 }
                 return false;
             };
 
-            const promoteQueue = function(fromQueue: Queue, toQueue: Queue): boolean {
+            const promoteQueue = function (fromQueue: Queue, toQueue: Queue): boolean {
                 if (fromQueue.length() > 0 && toQueue.hasCapacity()) {
                     Log.info("AutoTest::tick(..) - promoting: " + fromQueue.getName() + " -> " + toQueue.getName());
                     const info: ContainerInput = fromQueue.pop();
@@ -181,10 +181,10 @@ export abstract class AutoTest implements IAutoTest {
                     "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
             }
 
-            this.persistQueues().then(function(success: boolean) {
-                Log.trace("[PTEST] AutoTest::tick() - persist complete: " + success);
-            }).catch(function(err) {
-                Log.error("[PTEST] AutoTest::tick() - persist queue ERROR: " + err.message);
+            this.persistQueues().then(function (success: boolean) {
+                Log.trace("AutoTest::tick() - persist complete: " + success);
+            }).catch(function (err) {
+                Log.error("AutoTest::tick() - persist queue ERROR: " + err.message);
             });
         } catch (err) {
             Log.error("AutoTest::tick() - ERROR: " + err.message);
@@ -208,34 +208,34 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     private async persistQueues(): Promise<boolean> {
-        Log.trace("[PTEST] AutoTest::persistQueues() - start");
+        Log.trace("AutoTest::persistQueues() - start");
         try {
             const start = Date.now();
             const writing = [
-                this.standardQueue.persist(),
-                this.regressionQueue.persist(),
-                this.expressQueue.persist(),
-                this.scheduleQueue.persist()
+                this.standardQueue.persist(), // await in Promise.all
+                this.regressionQueue.persist(), // await in Promise.all
+                this.expressQueue.persist(), // await in Promise.all
+                this.scheduleQueue.persist() // await in Promise.all
             ];
             await Promise.all(writing);
-            Log.trace("[PTEST] AutoTest::persistQueues() - done; took: " + Util.took(start));
+            Log.trace("AutoTest::persistQueues() - done; took: " + Util.took(start));
             return true;
         } catch (err) {
-            Log.error("[PTEST] AutoTest::persistQueues() - ERROR: " + err.message);
+            Log.error("AutoTest::persistQueues() - ERROR: " + err.message);
         }
         return false;
     }
 
     private loadQueues() {
         try {
-            Log.info("[PTEST] AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
+            Log.info("AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
             this.standardQueue.load();
             this.regressionQueue.load();
             this.expressQueue.load();
             this.scheduleQueue.load();
-            Log.info("[PTEST] AutoTest::loadQueues() - done; queues loaded");
+            Log.info("AutoTest::loadQueues() - done; queues loaded");
         } catch (err) {
-            Log.error("[PTEST] AutoTest::loadQueues() - ERROR: " + err.message);
+            Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
         }
         this.tick();
     }
@@ -248,7 +248,7 @@ export abstract class AutoTest implements IAutoTest {
      * If subclasses do not want to do anything, they can just `return Promise.resolve();`
      * in their implementation.
      *
-     * @param {IAutoTestResult} data
+     * @param {AutoTestResult} data
      * @returns {Promise<void>}
      */
     protected abstract processExecution(data: AutoTestResult): Promise<void>;
@@ -308,10 +308,10 @@ export abstract class AutoTest implements IAutoTest {
      * Promotes a job to the express queue if it will help it to complete faster.
      *
      * This seems more complicated than it should because we want to recognize being
-     * next in line on an non-express queue may be faster than last in line after being
+     * next in line on a non-express queue may be faster than last in line after being
      * promoted to the express queue.
      *
-     * @param {ICommentEvent} info
+     * @param {CommitTarget} info
      */
     protected promoteIfNeeded(info: CommitTarget): void {
         try {
@@ -441,15 +441,15 @@ export abstract class AutoTest implements IAutoTest {
             const org = Config.getInstance().getProp(ConfigKey.org);
             const repoId = input.target.repoId;
             gradePayload = {
-                delivId:   input.delivId,
+                delivId: input.delivId,
                 repoId,
-                repoURL:   `${githubHost}/${org}/${repoId}`,
+                repoURL: `${githubHost}/${org}/${repoId}`,
                 score,
-                urlName:   repoId,
-                URL:       input.target.commitURL,
-                comment:   '',
+                urlName: repoId,
+                URL: input.target.commitURL,
+                comment: '',
                 timestamp: input.target.timestamp,
-                custom:    {}
+                custom: {}
             };
         } catch (err) {
             Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);

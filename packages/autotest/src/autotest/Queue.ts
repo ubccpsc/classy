@@ -13,7 +13,7 @@ export class Queue {
     private readonly persistDir: string;
 
     constructor(name: string, numSlots: number) {
-        Log.info("[PTEST] Queue::<init>( " + name + ", " + numSlots + " )");
+        Log.info("Queue::<init>( " + name + ", " + numSlots + " )");
         this.name = name;
         this.numSlots = numSlots;
 
@@ -34,7 +34,7 @@ export class Queue {
      *
      * returns the length of the array after the push.
      *
-     * @param {IContainerInput} info
+     * @param {ContainerInput} info
      * @returns {number}
      */
     public push(info: ContainerInput): number {
@@ -44,7 +44,7 @@ export class Queue {
     /**
      * Forces an item on the front of the queue.
      *
-     * @param {IContainerInput} info
+     * @param {ContainerInput} info
      * @returns {number}
      */
     public pushFirst(info: ContainerInput): number {
@@ -54,7 +54,7 @@ export class Queue {
     /**
      * Returns the first element from the queue.
      *
-     * @returns {IContainerInput | null}
+     * @returns {ContainerInput | null}
      */
     public pop(): ContainerInput | null {
         if (this.data.length > 0) {
@@ -74,7 +74,7 @@ export class Queue {
      * Removes an item from the queue;
      *
      * @param {string} commitURL
-     * @returns {IContainerInput | null}
+     * @returns {ContainerInput | null}
      */
     public remove(commitURL: string): ContainerInput | null {
         // for (let i = 0; i < this.data.length; i++) {
@@ -95,7 +95,7 @@ export class Queue {
      * @returns {ContainerInput | null}
      * @param keys
      */
-    public removeGivenKeys(keys: Array<{key: string, value: any}>): ContainerInput | null {
+    public removeGivenKeys(keys: Array<{ key: string, value: any }>): ContainerInput | null {
         for (let i = this.data.length - 1; i >= 0; i--) {
             const info: ContainerInput = this.data[i];
             if (keys.every((kv) => (info.target as any)[kv.key] === kv.value)) {
@@ -189,7 +189,7 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
-            Log.trace("[PTEST] Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
+            Log.trace("Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
                 " # slots: " + this.slots.length + "; # data: " + this.data.length);
 
             // push current elements back onto the front of the stack
@@ -198,7 +198,7 @@ export class Queue {
 
             return true;
         } catch (err) {
-            Log.error("[PTEST] Queue::persist() - ERROR: " + err.message);
+            Log.error("Queue::persist() - ERROR: " + err.message);
             return false;
         }
     }
@@ -207,27 +207,27 @@ export class Queue {
         try {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir);
-            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
-            Log.info("[PTEST] Queue::load() - rehydrating: " +
+            Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
+            Log.info("Queue::load() - rehydrating: " +
                 this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);
 
             // put executions that were running but not done on the front of the queue
             for (const slot of store.slots) {
-                Log.info("[PTEST] Queue::load() - queue: " + this.name +
+                Log.info("Queue::load() - queue: " + this.name +
                     "; add executing to HEAD: " + slot.target.commitURL);
                 this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
             }
 
             // push all other planned executions to the end of the queue
             for (const data of store.data) {
-                Log.info("[PTEST] Queue::load() - queue: " + this.name +
+                Log.info("Queue::load() - queue: " + this.name +
                     "; add queued to TAIL: " + data.target.commitURL);
                 this.push(data); // add to the head of the queued list (if we are restarting this will always be true anyways)
             }
-            Log.info("[PTEST] Queue::load() - rehydrating: " + this.name + " - done");
+            Log.info("Queue::load() - rehydrating: " + this.name + " - done");
         } catch (err) {
             // if anything happens just don't add to the queue
-            Log.error("[PTEST] Queue::load() - ERROR rehydrating queue: " + err.message);
+            Log.error("Queue::load() - ERROR rehydrating queue: " + err.message);
         }
     }
 }
