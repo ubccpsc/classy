@@ -8,7 +8,7 @@ import Util from "../../../../common/Util";
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
-import {BranchRule, GitTeamTuple, Issue} from "./GitHubController";
+import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
 
 // tslint:disable-next-line
@@ -73,7 +73,7 @@ export interface IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    listRepos(): Promise<Array<{ repoName: string, repoNumber: number, url: string }>>;
+    listRepos(): Promise<GitRepoTuple[]>;
 
     /**
      * Gets all people in an org.
@@ -81,19 +81,19 @@ export interface IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    listPeople(): Promise<Array<{ githubId: string, personNumber: number, url: string }>>;
+    listPeople(): Promise<GitPersonTuple[]>;
 
     /**
      * Lists the teams for the current org.
      *
      * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
      *
-     * @returns {Promise<{id: number, name: string}[]>}
+     * @returns {Promise<{GitTeamTuple[]>}
      */
-    listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>>;
+    listTeams(): Promise<GitTeamTuple[]>;
 
     /**
-     * Lists the Github IDs of members for a teamName (e.g. students).
+     * Lists the GitHub IDs of members for a teamName (e.g. students).
      *
      * @param {string} teamName
      * @returns {Promise<string[]>} // list of githubIds
@@ -109,26 +109,23 @@ export interface IGitHubActions {
     /**
      * Creates a team for a groupName (e.g., cpsc310_team1).
      *
-     * Returns the teamId (used by many other Github calls).
-     *
      * @param teamName
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
-     * @returns {Promise<number>} team id
+     * @returns {Promise<GitTeamTuple>}
      */
-    createTeam(teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number, URL: string }>;
+    createTeam(teamName: string, permission: string): Promise<GitTeamTuple>;
 
     /**
-     * Add a list of Github members (their usernames) to a given team.
+     * Add a list of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param githubTeamId
      * @param memberGithubIds: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
     addMembersToTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
 
     /**
-     * Removes a list of Github members (their usernames) from a given team.
+     * Removes a list of GitHub members (their usernames) from a given team.
      *
      * @param teamName
      * @param memberGithubIds: string[] // github usernames
@@ -137,7 +134,7 @@ export interface IGitHubActions {
     removeMembersFromTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
 
     /**
-     * NOTE: needs the team Id (number), not the team name (string)!
+     * NOTE: needs the team ID (number), not the team name (string)!
      *
      * @param teamId
      * @param repoName
@@ -446,7 +443,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * NOTE: if you're deleting the 'admin', 'staff', or 'students' teams, you're doing something terribly wrong.
      *
-     * @param teamId
+     * @param teamName: string
      */
     public async deleteTeam(teamName: string): Promise<boolean> {
 
@@ -500,7 +497,7 @@ export class GitHubActions implements IGitHubActions {
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<{ id: number, name: string, url: string }[]>}
      */
-    public async listRepos(): Promise<Array<{ repoName: string, repoNumber: number, url: string }>> {
+    public async listRepos(): Promise<GitRepoTuple[]> {
         Log.info("GitHubActions::listRepos(..) - start");
         const start = Date.now();
 
@@ -518,12 +515,13 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(uri, options);
 
-        const rows: Array<{ repoName: string, repoNumber: number, url: string }> = [];
+        // const rows: Array<{ repoName: string, repoNumber: number, url: string }> = [];
+        const rows: GitRepoTuple[] = []; // Array<{ repoName: string, repoNumber: number, url: string }> = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
             const url = entry.html_url;
-            rows.push({repoName: name, repoNumber: id, url: url});
+            rows.push({repoName: name, githubRepoNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listRepos(..) - done; # repos: " + rows.length + "; took: " + Util.took(start));
@@ -537,7 +535,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
-    public async listPeople(): Promise<Array<{ githubId: string, personNumber: number, url: string }>> {
+    public async listPeople(): Promise<GitPersonTuple[]> {
         Log.info("GitHubActions::listPeople(..) - start");
         const start = Date.now();
 
@@ -554,12 +552,12 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(uri, options);
 
-        const rows: Array<{ githubId: string, personNumber: number, url: string }> = [];
+        const rows: GitPersonTuple[] = [];
         for (const entry of raw) {
             const id = entry.id;
             const url = entry.html_url;
             const githubId = entry.login;
-            rows.push({githubId: githubId, personNumber: id, url: url});
+            rows.push({githubId: githubId, githubPersonNumber: id, url: url});
         }
 
         Log.info("GitHubActions::listPeople(..) - done; # people: " + rows.length + "; took: " + Util.took(start));
@@ -649,7 +647,8 @@ export class GitHubActions implements IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
+    // public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
+    public async listTeams(): Promise<GitTeamTuple[]> {
         // Log.info("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
@@ -668,11 +667,11 @@ export class GitHubActions implements IGitHubActions {
 
         const teamsRaw: any = await this.handlePagination(uri, options);
 
-        const teams: Array<{ teamName: string, teamNumber: number }> = [];
+        const teams: GitTeamTuple[] = [];
         for (const team of teamsRaw) {
             const teamNumber = team.id;
             const teamName = team.name;
-            teams.push({teamNumber: teamNumber, teamName: teamName});
+            teams.push({githubTeamNumber: teamNumber, teamName: teamName});
         }
 
         Log.info("GitHubActions::listTeams(..) - done; # teams: " + teams.length + "; took: " + Util.took(start));
@@ -782,11 +781,11 @@ export class GitHubActions implements IGitHubActions {
     /**
      * Creates a team for a groupName (e.g., cpsc310_team1).
      *
-     * Returns the teamId (used by many other Github calls).
+     * Returns a team tuple.
      *
      * @param teamName
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
-     * @returns {Promise<number>} team id
+     * @returns {Promise<team>} team tuple
      */
     public async createTeam(teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number, URL: string }> {
 
@@ -838,10 +837,9 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * Add a set of Github members (their usernames) to a given team.
+     * Add a set of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param githubTeamId
      * @param members: string[] // github usernames
      * @returns {Promise<GitTeamTuple>}
      */
@@ -889,11 +887,10 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * Remove a set of Github members (their usernames) from a given team.
+     * Remove a set of GitHub members (their usernames) from a given team.
      *
      * @param teamName
-     * @param githubTeamId
-     * @param members: string[] // github usernames
+     * @param members: string[] // GitHub usernames to remove from the team
      * @returns {Promise<GitTeamTuple>}
      */
     public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -940,7 +937,7 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     * NOTE: needs the team Id (number), not the team name (string)!
+     * NOTE: needs the team teamId (number), not the team name (string)!
      *
      * @param teamId
      * @param repoName
@@ -999,7 +996,7 @@ export class GitHubActions implements IGitHubActions {
             const teamList = await this.listTeams();
             for (const team of teamList) {
                 if (team.teamName === teamName) {
-                    teamId = team.teamNumber;
+                    teamId = team.githubTeamNumber;
                 }
             }
 
@@ -1937,8 +1934,12 @@ export class GitHubActions implements IGitHubActions {
 // tslint:disable-next-line
 export class TestGitHubActions implements IGitHubActions {
 
+    private teams: Map<string, GitTeamTuple> = new Map();
+
     public constructor() {
         Log.info("TestGitHubActions::<init> - start");
+        this.teams.set(TeamController.STAFF_NAME, {teamName: TeamController.STAFF_NAME, githubTeamNumber: 1000});
+        this.teams.set(TeamController.ADMIN_NAME, {teamName: TeamController.ADMIN_NAME, githubTeamNumber: 1001});
     }
 
     public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -1980,16 +1981,19 @@ export class TestGitHubActions implements IGitHubActions {
         return this.repos[repoId];
     }
 
-    public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
-        if (typeof this.teams[teamName] === 'undefined') {
+    // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
+    public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
+        // if (typeof this.teams[teamName] === 'undefined') {
+        if (this.teams.has(teamName) === false) {
             const c = Config.getInstance();
             const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
-            this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: 'teamURL'};
+            // this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: url};
+            this.teams.set(teamName, {teamName: teamName, githubTeamNumber: Date.now()});
         }
         Log.info("TestGitHubActions::teamCreate( " + teamName + " ) - created; exists: " +
-            (typeof this.teams[teamName] !== 'undefined') + "; records: " + JSON.stringify(this.teams));
+            (this.teams.has(teamName)) + "; records: " + JSON.stringify(this.teams));
 
-        return this.teams[teamName];
+        return this.teams.get(teamName);
     }
 
     public async deleteRepo(repoName: string): Promise<boolean> {
@@ -2016,7 +2020,8 @@ export class TestGitHubActions implements IGitHubActions {
     public async deleteTeamByName(teamName: string): Promise<boolean> {
         for (const name of Object.keys(this.teams)) {
             if (name === teamName) {
-                delete this.teams[teamName];
+                // delete this.teams[teamName];
+                this.teams.delete(teamName);
                 return true;
             }
         }
@@ -2026,11 +2031,12 @@ export class TestGitHubActions implements IGitHubActions {
     public async deleteTeam(teamNameToDelete: string): Promise<boolean> {
         Log.info("TestGitHubActions::deleteTeam( " + teamNameToDelete + " )");
         for (const teamName of Object.keys(this.teams)) {
-            const team = this.teams[teamName];
-            // if (team.githubTeamNumber === teamId) {
-            if (team.name === teamNameToDelete) {
-                Log.info("TestGitHubActions::deleteTeam( " + teamNameToDelete + " ) - deleting team name: " + team.name);
-                delete this.teams[teamName];
+            // const team = this.teams[teamName];
+            const team = this.teams.get(teamName);
+            if (team.teamName === teamNameToDelete) {
+                Log.info("TestGitHubActions::deleteTeam( " + teamNameToDelete + " ) - deleting team name: " + team.teamName);
+                // delete this.teams[teamName];
+                this.teams.delete(teamName);
                 return true;
             }
         }
@@ -2053,8 +2059,9 @@ export class TestGitHubActions implements IGitHubActions {
             // this is the team number for the students team in the classytest org on github.com
             return 2941733;
         }
-        if (typeof this.teams[teamName] !== 'undefined') {
-            const num = this.teams[teamName].githubTeamNumber;
+        // if (typeof this.teams[teamName] !== 'undefined') {
+        if (this.teams.has(teamName) === true) {
+            const num = this.teams.get(teamName).githubTeamNumber;
             Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);
             return Number(num);
         }
@@ -2063,9 +2070,10 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
-        for (const team of this.teams) {
+        for (const teamName of this.teams.keys()) {
+            const team = this.teams.get(teamName);
             if (team.githubTeamNumber === teamNumber) {
-                return {githubTeamNumber: teamNumber, teamName: team.id};
+                return {githubTeamNumber: teamNumber, teamName: team.teamName};
             }
         }
         return null;
@@ -2120,51 +2128,49 @@ export class TestGitHubActions implements IGitHubActions {
         }
     }
 
-    public async listPeople(): Promise<Array<{ githubId: string, personNumber: number, url: string }>> {
+    public async listPeople(): Promise<GitPersonTuple[]> {
         Log.info("TestGitHubActions::listPeople(..)");
-        const people = [];
+        const people: GitPersonTuple[] = [];
 
         const start = Date.now();
-        people.push({personNumber: start, url: 'URL', githubId: Test.REALBOTNAME1});
-        people.push({personNumber: start - 5, url: 'URL', githubId: Test.REALUSERNAME});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALBOTNAME1});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER1.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.REALUSER2.github});
-        people.push({personNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
-        people.push({personNumber: start - 25, url: 'URL', githubId: Test.USER1.github});
-        people.push({personNumber: start - 35, url: 'URL', githubId: Test.USER2.github});
-        people.push({personNumber: start - 45, url: 'URL', githubId: Test.USER3.github});
-        people.push({personNumber: start - 55, url: 'URL', githubId: Test.USER4.github});
+        people.push({githubPersonNumber: start, url: 'URL', githubId: Test.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 5, url: 'URL', githubId: Test.REALUSERNAME});
+        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALUSER1.github});
+        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALUSER2.github});
+        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
+        people.push({githubPersonNumber: start - 25, url: 'URL', githubId: Test.USER1.github});
+        people.push({githubPersonNumber: start - 35, url: 'URL', githubId: Test.USER2.github});
+        people.push({githubPersonNumber: start - 45, url: 'URL', githubId: Test.USER3.github});
+        people.push({githubPersonNumber: start - 55, url: 'URL', githubId: Test.USER4.github});
 
         return people;
     }
 
-    public async listRepos(): Promise<Array<{ repoName: string, repoNumber: number, url: string }>> {
+    public async listRepos(): Promise<GitRepoTuple[]> {
         Log.info("TestGitHubActions::listRepos(..)");
         const ret = [];
         for (const name of Object.keys(this.repos)) {
             const repo = this.repos[name];
-            ret.push({repoNumber: Date.now(), repoName: name, url: repo});
+            ret.push({githubRepoNumber: Date.now(), repoName: name, url: repo});
         }
         Log.info("TestGitHubActions::listRepos(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
         return ret;
     }
 
-    // Map teamName: {teamObject}
-    private teams: any = {
-        staff: {id: TeamController.STAFF_NAME, teamName: TeamController.STAFF_NAME, githubTeamNumber: '1000'},
-        admin: {id: TeamController.ADMIN_NAME, teamName: TeamController.ADMIN_NAME, githubTeamNumber: '1001'}
-    };
-
-    // TODO: use a private teams map to keep track of teams
-    public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
+    /**
+     * Returns the team tuples from the cache.
+     *
+     */
+    public async listTeams(): Promise<GitTeamTuple[]> {
         Log.info("TestGitHubActions::listTeams(..)");
         // return [{teamNumber: Date.now(), teamName: Test.TEAMNAME1}];
         const ret = [];
         for (const name of Object.keys(this.teams)) {
-            const teamNum = this.teams[name].githubTeamNumber;
-            const teamName = this.teams[name].teamName;
-            ret.push({teamNumber: teamNum, teamName: teamName});
+            const t = this.teams.get(name);
+            // const teamNum = this.teams[name].githubTeamNumber;
+            // const teamName = this.teams[name].teamName;
+            ret.push({githubTeamNumber: t.githubTeamNumber, teamName: t.teamName});
         }
         Log.info("TestGitHubActions::listTeams(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
         return ret;
