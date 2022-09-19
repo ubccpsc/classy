@@ -1,6 +1,3 @@
-import * as http from "http";
-import fetch, {RequestInit} from "node-fetch";
-
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
@@ -423,58 +420,60 @@ export class GitHubController implements IGitHubController {
      */
     public async createPullRequest(repo: Repository, prName: string, dryrun: boolean = false, root: boolean = false): Promise<boolean> {
         Log.info(`GitHubController::createPullRequest(..) - Repo: (${repo.id}) start`);
-        // if (repo.cloneURL === null || repo.cloneURL === undefined) {
-        //     Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
-        //     return false;
+        throw new Error("Not implemented"); // code below used to work but depended on service that no longer exists
+        // // if (repo.cloneURL === null || repo.cloneURL === undefined) {
+        // //     Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
+        // //     return false;
+        // // }
+        //
+        // const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
+        // const patchUrl: string = `${baseUrl}/autopatch`;
+        // const updateUrl: string = `${baseUrl}/update`;
+        // const qs: string = Util.getQueryStr({
+        //     patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
+        // });
+        //
+        // const options: RequestInit = {
+        //     method: 'POST',
+        //     agent: new http.Agent()
+        // };
+        //
+        // let result;
+        //
+        // try {
+        //     await fetch(patchUrl + qs, options);
+        //     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
+        //     return true;
+        // } catch (err) {
+        //     result = err;
         // }
-
-        const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
-        const patchUrl: string = `${baseUrl}/autopatch`;
-        const updateUrl: string = `${baseUrl}/update`;
-        const qs: string = Util.getQueryStr({
-            patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
-        });
-
-        const options: RequestInit = {
-            method: 'POST',
-            agent: new http.Agent()
-        };
-
-        let result;
-
-        try {
-            await fetch(patchUrl + qs, options);
-            Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
-            return true;
-        } catch (err) {
-            result = err;
-        }
-
-        switch (result.statusCode) {
-            case 424:
-                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
-                try {
-                    await fetch(updateUrl, options);
-                    Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
-                    await fetch(patchUrl + qs, {...options});
-                    Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
-                    return true;
-                } catch (err) {
-                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server:" +
-                        result.message);
-                    return false;
-                }
-            case 500:
-                Log.error(
-                    `GitHubController::createPullRequest(..) - patchtool internal error. Message from patchtool server: ${result.message}`
-                );
-                return false;
-            default:
-                Log.error(
-                    `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
-                );
-                return false;
-        }
+        //
+        // switch (result.statusCode) {
+        //     case 424:
+        //         Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
+        //         try {
+        //             await fetch(updateUrl, options);
+        //             Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
+        //             await fetch(patchUrl + qs, {...options});
+        //             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
+        //             return true;
+        //         } catch (err) {
+        //             Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. "+
+        //                 "Message from patchtool server:" + result.message);
+        //             return false;
+        //         }
+        //     case 500:
+        //         Log.error(
+        //             `GitHubController::createPullRequest(..) - patchtool internal error. " +
+        //             "Message from patchtool server: ${result.message}`
+        //         );
+        //         return false;
+        //     default:
+        //         Log.error(
+        //             `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
+        //         );
+        //         return false;
+        // }
     }
 
     /**
