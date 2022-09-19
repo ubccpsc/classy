@@ -7,8 +7,6 @@ import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import IREST from "./server/IREST";
 
-import * as path from 'path';
-
 export class Factory {
 
     /**

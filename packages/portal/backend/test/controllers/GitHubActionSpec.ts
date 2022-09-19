@@ -733,30 +733,30 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should not be possible to simulate a webhook with the wrong params.", async function () {
-        let worked = await gh.simulateWebookComment(null, "SHA", "message");
+        let worked = await gh.simulateWebhookComment(null, "SHA", "message");
         expect(worked).to.be.false;
 
-        worked = await gh.simulateWebookComment(REPONAME, null, "message");
+        worked = await gh.simulateWebhookComment(REPONAME, null, "message");
         expect(worked).to.be.false;
 
-        worked = await gh.simulateWebookComment(REPONAME, "SHA", null);
+        worked = await gh.simulateWebhookComment(REPONAME, "SHA", null);
         expect(worked).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be possible to simulate a webhook.", async function () {
-        let worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "SHA", "message");
+        let worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "SHA", "message");
         expect(worked).to.be.false; // SHA is not right
 
         let ex = null;
         try {
             let msg = "message";
-            worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             for (let i = 0; i < 10; i++) {
                 msg = msg + msg; // make a long message
             }
             msg = msg + '\n' + msg;
-            worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             // NOTE: worked not checked because githubWebhook needs to be active for this to work
             // expect(worked).to.be.true;

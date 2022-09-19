@@ -29,10 +29,10 @@ export interface IGitHubActions {
      *
      * Also updates the Repository object in the datastore with the URL and cloneURL.
      *
-     * @param repoId The name of the repo. Must be unique within the organization.
-     * @returns {Promise<string>} provisioned team URL
+     * @param repoName The name of the repo. Must be unique within the organization.
+     * @returns {Promise<string>} provisioned repo URL
      */
-    createRepo(repoId: string): Promise<string>;
+    createRepo(repoName: string): Promise<string>;
 
     /**
      * Deletes a repo from the organization.
@@ -43,8 +43,8 @@ export interface IGitHubActions {
     deleteRepo(repoName: string): Promise<boolean>;
 
     /**
-     * Checks if a repo exists or not. If the request fails for _ANY_ reason the failure will not
-     * be reported, only that the repo does not exist.
+     * Checks if a repo exists or not. If the request fails for _ANY_ reason
+     * the failure will not be reported, only that the repo does not exist.
      *
      * @param repoName
      * @returns {Promise<boolean>}
@@ -57,6 +57,7 @@ export interface IGitHubActions {
      * https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
      *
      * @param teamName: string
+     * @returns {Promise<boolean>}
      */
     deleteTeam(teamName: string): Promise<boolean>;
 
@@ -64,21 +65,21 @@ export interface IGitHubActions {
      * Deletes a team.
      *
      * @param teamName
+     * @returns {Promise<boolean>}
      */
     deleteTeamByName(teamName: string): Promise<boolean>;
 
     /**
-     *
      * Gets all repos in an org.
-     * This is just a subset of the return, but it is the subset we actually use:
-     * @returns {Promise<{ id: number, name: string, url: string }[]>}
+     *
+     * @returns {Promise<{GitRepoTuple[]>}
      */
     listRepos(): Promise<GitRepoTuple[]>;
 
     /**
      * Gets all people in an org.
      *
-     * @returns {Promise<{ id: number, type: string, url: string, name: string }[]>}
+     * @returns {Promise<GitPersonTuple[]>}
      * this is just a subset of the return, but it is the subset we actually use
      */
     listPeople(): Promise<GitPersonTuple[]>;
@@ -107,7 +108,7 @@ export interface IGitHubActions {
     addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
 
     /**
-     * Creates a team for a groupName (e.g., cpsc310_team1).
+     * Creates a GitHub team (e.g., cpsc310_team1).
      *
      * @param teamName
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
@@ -135,6 +136,7 @@ export interface IGitHubActions {
 
     /**
      * NOTE: needs the team ID (number), not the team name (string)!
+     * TODO: This is the only method that still needs a numeric GitHub ID; teamName would be better
      *
      * @param teamId
      * @param repoName
@@ -148,20 +150,21 @@ export interface IGitHubActions {
      *
      * Returns -1 if the team does not exist.
      *
-     * @param {string} teamName
+     * @param teamName
      * @returns {Promise<number>}
      */
     getTeamNumber(teamName: string): Promise<number>;
 
     /**
      * Gets the list of users on a team.
+     *
      * NOTE: this used to take a number, but GitHub changed the team API in 2020.
      * https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
      *
      * Returns [] if the team does not exist or nobody is on the team.
      *
      * @param {string} teamName
-     * @returns {Promise<number>}
+     * @returns {Promise<string[]>}
      */
     getTeamMembers(teamName: string): Promise<string[]>;
 
@@ -175,23 +178,23 @@ export interface IGitHubActions {
 
     addGithubAuthToken(url: string): string;
 
-    // reportStdErr(stderr: any, prefix: string): void;
-
     /**
      * Adds a file with the data given, to the specified repository.
-     * If force is set to true, will overwrite old files
-     * @param {string} repoURL - name of repository
-     * @param {string} fileName - name of file to write
-     * @param {string} fileContent - the content of the file to write to repo
-     * @param {boolean} force - allow for overwriting of old files
+     * If force is set to true, will overwrite old files.
+     *
+     * @param repoURL - name of repository
+     * @param fileName - name of file to write
+     * @param fileContent - the content of the file to write to repo
+     * @param force - allow for overwriting of old files
      * @returns {Promise<boolean>} - true if write was successful
      */
     writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean>;
 
     /**
-     * Changes permissions for all teams for the given repository
-     * @param {string} repoName
-     * @param {string} permissionLevel - one of: 'push' 'pull'
+     * Changes permissions for all teams for the given repository.
+     *
+     * @param repoName
+     * @param permissionLevel - one of: 'push' 'pull'
      * @returns {Promise<boolean>}
      */
     setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean>;
@@ -206,20 +209,20 @@ export interface IGitHubActions {
     makeComment(url: string, message: string): Promise<boolean>;
 
     /**
-     * Simulates a comment as if it were received by a webook (for silently invoking AutoTest)
+     * Simulates a comment as if it were received by a webhook (for silently invoking AutoTest).
      *
-     * @param {string} projectName
-     * @param {string} sha
-     * @param {string} message
+     * @param projectName
+     * @param sha
+     * @param message
      * @returns {Promise<boolean>}
      */
-    simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean>;
+    simulateWebhookComment(projectName: string, sha: string, message: string): Promise<boolean>;
 
     /**
-     * Returns a list of teamIds on a repo
+     * Returns a list of teams on a repo.
      *
-     * @param {string} repoId
-     * @returns {{teamId: string}[]}
+     * @param  repoId
+     * @returns {Promise<GitTeamTuple[]>}
      */
     getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
 
@@ -306,14 +309,14 @@ export class GitHubActions implements IGitHubActions {
      *
      * Also updates the Repository object in the datastore with the URL and cloneURL.
      *
-     * @param repoId The name of the repo. Must be unique within the organization.
+     * @param repoName The name of the repo. Must be unique within the organization.
      * @returns {Promise<string>} provisioned team URL
      */
-    public async createRepo(repoId: string): Promise<string> {
+    public async createRepo(repoName: string): Promise<string> {
         const start = Date.now();
         try {
-            Log.info("GitHubAction::createRepo( " + repoId + " ) - start");
-            await GitHubActions.checkDatabase(repoId, null);
+            Log.info("GitHubAction::createRepo( " + repoName + " ) - start");
+            await GitHubActions.checkDatabase(repoName, null);
 
             const uri = this.apiPath + '/orgs/' + this.org + '/repos';
             const options: RequestInit = {
@@ -324,7 +327,7 @@ export class GitHubActions implements IGitHubActions {
                     'Accept': 'application/json'
                 },
                 body: JSON.stringify({
-                    name: repoId,
+                    name: repoName,
                     // In Dev and Test, Github free Org Repos cannot be private.
                     private: true,
                     has_issues: true,
@@ -334,18 +337,18 @@ export class GitHubActions implements IGitHubActions {
                 })
             };
 
-            Log.info("GitHubAction::createRepo( " + repoId + " ) - making request");
+            Log.info("GitHubAction::createRepo( " + repoName + " ) - making request");
             const response = await fetch(uri, options);
             const body = await response.json();
-            Log.info("GitHubAction::createRepo( " + repoId + " ) - request complete");
+            Log.info("GitHubAction::createRepo( " + repoName + " ) - request complete");
             const url = body.html_url;
 
-            Log.info("GitHubAction::createRepo( " + repoId + " ) - db start");
-            const repo = await this.dc.getRepository(repoId);
+            Log.info("GitHubAction::createRepo( " + repoName + " ) - db start");
+            const repo = await this.dc.getRepository(repoName);
             repo.URL = url; // only update this field in the existing Repository record
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
-            Log.info("GitHubAction::createRepo( " + repoId + " ) - db done");
+            Log.info("GitHubAction::createRepo( " + repoName + " ) - db done");
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
             await Util.delay(this.PAUSE);
@@ -429,11 +432,7 @@ export class GitHubActions implements IGitHubActions {
 
     public async deleteTeamByName(teamName: string): Promise<boolean> {
         Log.info("GitHubAction::deleteTeamByName( " + this.org + ", " + teamName + " ) - start");
-        // const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
-        // if (teamNum >= 0) {
         return await this.deleteTeam(teamName);
-        // }
-        // return false;
     }
 
     /**
@@ -460,7 +459,6 @@ export class GitHubActions implements IGitHubActions {
                 return false;
             }
 
-            // const uri = this.apiPath + '/teams/' + teamId;
             // DELETE /orgs/:org/teams/:team_slug
             const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName;
             const options: RequestInit = {
@@ -495,7 +493,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * Gets all repos in an org.
      * This is just a subset of the return, but it is the subset we actually use:
-     * @returns {Promise<{ id: number, name: string, url: string }[]>}
+     * @returns {Promise<GitRepoTuple[]}
      */
     public async listRepos(): Promise<GitRepoTuple[]> {
         Log.info("GitHubActions::listRepos(..) - start");
@@ -515,8 +513,7 @@ export class GitHubActions implements IGitHubActions {
 
         const raw: any = await this.handlePagination(uri, options);
 
-        // const rows: Array<{ repoName: string, repoNumber: number, url: string }> = [];
-        const rows: GitRepoTuple[] = []; // Array<{ repoName: string, repoNumber: number, url: string }> = [];
+        const rows: GitRepoTuple[] = [];
         for (const entry of raw) {
             const id = entry.id;
             const name = entry.name;
@@ -566,7 +563,6 @@ export class GitHubActions implements IGitHubActions {
 
     private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
         Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
-
         const start = Date.now();
 
         try {
@@ -647,9 +643,8 @@ export class GitHubActions implements IGitHubActions {
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
-    // public async listTeams(): Promise<Array<{ teamName: string, teamNumber: number }>> {
     public async listTeams(): Promise<GitTeamTuple[]> {
-        // Log.info("GitHubActions::listTeams(..) - start");
+        // Log.trace("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
         // per_page max is 100; 10 is useful for testing pagination though
@@ -698,7 +693,6 @@ export class GitHubActions implements IGitHubActions {
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
         Log.info("GitHubAction::addWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
-        // Log.info("GitHubAction::addWebhook( .. ) - webhook: " + webhookEndpoint);
 
         let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
         secret = crypto.createHash('sha256').update(secret, 'utf8').digest('hex'); // webhook w/ sha256
@@ -736,9 +730,7 @@ export class GitHubActions implements IGitHubActions {
         Log.info("GitHubAction::updateWebhook( " + repoName + ", " + webhookEndpoint + " ) - start");
 
         const existingWebhooks = await this.listWebhooks(repoName);
-
         if (existingWebhooks.length === 1) {
-
             const hookId = (existingWebhooks[0] as any).id;
 
             let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
@@ -785,9 +777,9 @@ export class GitHubActions implements IGitHubActions {
      *
      * @param teamName
      * @param permission 'admin', 'pull', 'push' // admin for staff, push for students
-     * @returns {Promise<team>} team tuple
+     * @returns {Promise<GitTeamTuple>} team tuple
      */
-    public async createTeam(teamName: string, permission: string): Promise<{ teamName: string, githubTeamNumber: number, URL: string }> {
+    public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
 
         Log.info("GitHubAction::teamCreate( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
         const start = Date.now();
@@ -797,9 +789,7 @@ export class GitHubActions implements IGitHubActions {
             const teamNum = await this.getTeamNumber(teamName); // be conservative, don't use TeamController on purpose
             if (teamNum > 0) {
                 Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - success; exists: " + teamNum);
-                const config = Config.getInstance();
-                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
-                return {teamName: teamName, githubTeamNumber: teamNum, URL: url};
+                return {teamName: teamName, githubTeamNumber: teamNum};
             } else {
                 Log.info('GitHubAction::teamCreate( ' + teamName + ', ... ) - does not exist; creating');
                 const uri = this.apiPath + '/orgs/' + this.org + '/teams';
@@ -817,17 +807,13 @@ export class GitHubActions implements IGitHubActions {
                 };
                 const response = await fetch(uri, options);
                 const body = await response.json();
-
-                const config = Config.getInstance();
-                const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + teamName;
-                // TODO: simplify callees by setting Team.URL here and persisting it (like we do with createRepo)
                 Log.info("GitHubAction::teamCreate(..) - success; new: " + body.id + "; took: " + Util.took(start));
 
                 // remove default token provider/maintainer from team
                 await this.removeMembersFromTeam(teamName,
                     [Config.getInstance().getProp(ConfigKey.githubBotName)]);
 
-                return {teamName: teamName, githubTeamNumber: body.id, URL: url};
+                return {teamName: teamName, githubTeamNumber: body.id};
             }
         } catch (err) {
             // explicitly log this failure
@@ -950,7 +936,6 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         try {
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
-            // Log.info("GitHubAction::addTeamToRepo(..) - URI: " + uri);
             const options: RequestInit = {
                 method: 'PUT',
                 headers: {
@@ -1023,7 +1008,6 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<string[]>}
      */
     public async getTeamMembers(teamName: string): Promise<string[]> {
-        // public async getTeamMembers(teamNumber: number): Promise<string[]> {
         Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - start");
 
         if (teamName === null) {
@@ -1032,8 +1016,6 @@ export class GitHubActions implements IGitHubActions {
 
         const start = Date.now();
         try {
-            // deprecated: https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
-            // const uri = this.apiPath + '/teams/' + teamNumber + '/members?per_page=' + this.pageSize;
             // /orgs/:org/teams/:team_slug
             const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/members";
             const options: RequestInit = {
@@ -1080,7 +1062,6 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<number>}
      */
     public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
-
         Log.info("GitHubAction::getTeam( " + teamNumber + " ) - start");
 
         if (teamNumber === null) {
@@ -1132,9 +1113,6 @@ export class GitHubActions implements IGitHubActions {
             await GitHubActions.checkDatabase(null, teamName);
         }
 
-        const tc = new TeamController();
-        // const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
-        // const teamNumber = await gh.getTeamNumber(teamName);
         const teamMembers = await gh.getTeamMembers(teamName);
         for (const member of teamMembers) {
             if (member === userName) {
@@ -1153,8 +1131,6 @@ export class GitHubActions implements IGitHubActions {
         Log.info('GitHubAction::listTeamMembers( ' + teamName + ' ) - start');
 
         const gh = this;
-        // const teamNumber = await new TeamController().getTeamNumber(teamName);
-        // const teamMembers = await gh.getTeamMembers(teamNumber);
         const teamMembers = await gh.getTeamMembers(teamName);
 
         return teamMembers;
@@ -1745,20 +1721,20 @@ export class GitHubActions implements IGitHubActions {
         return true;
     }
 
-    public async simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+    public async simulateWebhookComment(projectName: string, sha: string, message: string): Promise<boolean> {
         try {
             if (typeof projectName === "undefined" || projectName === null) {
-                Log.error("GitHubActions::simulateWebookComment(..)  - url is required");
+                Log.error("GitHubActions::simulateWebhookComment(..)  - url is required");
                 return Promise.resolve(false);
             }
 
             if (typeof sha === "undefined" || sha === null) {
-                Log.error("GitHubActions::simulateWebookComment(..)  - sha is required");
+                Log.error("GitHubActions::simulateWebhookComment(..)  - sha is required");
                 return Promise.resolve(false);
             }
 
             if (typeof message === "undefined" || message === null) {
-                Log.error("GitHubActions::simulateWebookComment(..)  - message is required");
+                Log.error("GitHubActions::simulateWebhookComment(..)  - message is required");
                 return Promise.resolve(false);
             }
 
@@ -1771,7 +1747,7 @@ export class GitHubActions implements IGitHubActions {
                 messageToPrint = messageToPrint.substr(0, 80) + "...";
             }
 
-            Log.info("GitHubActions::simulateWebookComment(..) - Simulating comment to project: " +
+            Log.info("GitHubActions::simulateWebhookComment(..) - Simulating comment to project: " +
                 projectName + "; sha: " + sha + "; message: " + messageToPrint);
 
             const c = Config.getInstance();
@@ -1799,7 +1775,7 @@ export class GitHubActions implements IGitHubActions {
             };
 
             const urlToSend = Config.getInstance().getProp(ConfigKey.publichostname) + '/portal/githubWebhook';
-            Log.info("GitHubService::simulateWebookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
+            Log.info("GitHubService::simulateWebhookComment(..) - url: " + urlToSend + "; body: " + JSON.stringify(body));
 
             const options: RequestInit = {
                 method: "POST",
@@ -1818,19 +1794,19 @@ export class GitHubActions implements IGitHubActions {
                 // const url = url; // this url comes from postbackURL which uses the right API format
                 try {
                     const res = await fetch(urlToSend, options); // .then(function(res) {
-                    Log.trace("GitHubService::simulateWebookComment(..) - success"); // : " + res);
+                    Log.trace("GitHubService::simulateWebhookComment(..) - success"); // : " + res);
                     return Promise.resolve(true);
                 } catch (err) {
-                    Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+                    Log.error("GitHubService::simulateWebhookComment(..) - ERROR: " + err);
                     return Promise.resolve(false);
                 }
 
             } else {
-                Log.trace("GitHubService::simulateWebookComment(..) - send skipped (config.postback === false)");
+                Log.trace("GitHubService::simulateWebhookComment(..) - send skipped (config.postback === false)");
                 return Promise.resolve(true);
             }
         } catch (err) {
-            Log.error("GitHubService::simulateWebookComment(..) - ERROR: " + err);
+            Log.error("GitHubService::simulateWebhookComment(..) - ERROR: " + err);
             return Promise.resolve(false);
         }
     }
@@ -1968,17 +1944,17 @@ export class TestGitHubActions implements IGitHubActions {
 
     private repos: any = {};
 
-    public async createRepo(repoId: string): Promise<string> {
-        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - start");
-        await GitHubActions.checkDatabase(repoId, null);
+    public async createRepo(repoName: string): Promise<string> {
+        Log.info("TestGitHubActions::createRepo( " + repoName + " ) - start");
+        await GitHubActions.checkDatabase(repoName, null);
 
-        if (typeof this.repos[repoId] === 'undefined') {
-            Log.info("TestGitHubActions::createRepo( " + repoId + " ) - created");
+        if (typeof this.repos[repoName] === 'undefined') {
+            Log.info("TestGitHubActions::createRepo( " + repoName + " ) - created");
             const c = Config.getInstance();
-            this.repos[repoId] = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoId;
+            this.repos[repoName] = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName;
         }
-        Log.info("TestGitHubActions::createRepo( " + repoId + " ) - repos: " + JSON.stringify(this.repos));
-        return this.repos[repoId];
+        Log.info("TestGitHubActions::createRepo( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
+        return this.repos[repoName];
     }
 
     // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
@@ -2149,7 +2125,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async listRepos(): Promise<GitRepoTuple[]> {
         Log.info("TestGitHubActions::listRepos(..)");
-        const ret = [];
+        const ret: GitRepoTuple[] = [];
         for (const name of Object.keys(this.repos)) {
             const repo = this.repos[name];
             ret.push({githubRepoNumber: Date.now(), repoName: name, url: repo});
@@ -2164,12 +2140,9 @@ export class TestGitHubActions implements IGitHubActions {
      */
     public async listTeams(): Promise<GitTeamTuple[]> {
         Log.info("TestGitHubActions::listTeams(..)");
-        // return [{teamNumber: Date.now(), teamName: Test.TEAMNAME1}];
         const ret = [];
         for (const name of Object.keys(this.teams)) {
             const t = this.teams.get(name);
-            // const teamNum = this.teams[name].githubTeamNumber;
-            // const teamName = this.teams[name].teamName;
             ret.push({githubTeamNumber: t.githubTeamNumber, teamName: t.teamName});
         }
         Log.info("TestGitHubActions::listTeams(..) - #: " + ret.length + "; content: " + JSON.stringify(ret));
@@ -2245,8 +2218,8 @@ export class TestGitHubActions implements IGitHubActions {
         return;
     }
 
-    public simulateWebookComment(projectName: string, sha: string, message: string): Promise<boolean> {
-        Log.info("TestGitHubActions::simulateWebookComment(..)");
+    public simulateWebhookComment(projectName: string, sha: string, message: string): Promise<boolean> {
+        Log.info("TestGitHubActions::simulateWebhookComment(..)");
         return;
     }
 
