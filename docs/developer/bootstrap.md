@@ -49,6 +49,13 @@ The most common of these services can be invoked from the `classy/` directory th
  
 Some handy dev scripts also exist; these can be found in `portal/backend/src-util/`; use these with care, many modify the database or GitHub repos in unrecoverable ways. 
 
+The automated test suite is stored in:
+* `packages/autotest/test/`
+* `packages/portal/backend/test/`
+
+To run these in the IDE create a Mocha target in Webstorm with `-r tsconfig-paths/register` as the node options and `--exit` as the mocha options.
+To run these on the terminal, execute `yarn run test` in `packages/autotest/` or `packages/portal/backend/`
+
 ## QA Checklist
 
 More checks may need to be made depending on the nature of your work, but these are the recommended checks:

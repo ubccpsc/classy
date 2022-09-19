@@ -611,6 +611,46 @@ describe('Admin Routes', function () {
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
     });
 
+    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function() {
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('x-forwarded-for', '152.99.5.99')
+                .set('Host', 'www.google.ca');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+
+        expect(body).to.haveOwnProperty('failure');
+    });
+
+    it('Should be able to update a classlist on restricted IP', async function() {
+
+        if (Test.isCI() === false) {
+            // skip locally; requires credentials devs shouldn't have (but are encrypted for CI)
+            Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
+            return;
+        }
+
+        let response = null;
+        let body: Payload;
+        const url = '/portal/classlist';
+        try {
+            response = await request(app).put(url)
+                .set('test-include-xfwd', '')
+                .set('x-forwarded-for', '142.103.5.99');
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        expect(body).to.haveOwnProperty('success');
+        expect(body.success).to.haveOwnProperty('message');
+        expect(body.success.message).to.contain('Classlist upload successful');
+    });
+
     it('Should be able to upload a new grades', async function () {
 
         let response = null;
@@ -1300,6 +1340,12 @@ describe('Admin Routes', function () {
     });
 
     it('Should be able to update a classlist if authorized as admin', async function () {
+        if (Test.isCI() === false) {
+            // skip locally; requires credentials devs shouldn't have (but are encrypted for CI)
+            Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
+            return;
+        }
+
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';

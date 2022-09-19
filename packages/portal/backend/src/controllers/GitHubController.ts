@@ -382,6 +382,10 @@ export class GitHubController implements IGitHubController {
     }
 
     public async updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean> {
+        if (repo === null) {
+            throw new Error("GitHubController::updateBranchProtection(..) - null repo");
+        }
+
         Log.info("GitHubController::updateBranchProtection(", repo.id, ", ...) - start");
         if (!await this.gha.repoExists(repo.id)) {
             throw new Error("GitHubController::updateBranchProtection() - " + repo.id + " did not exist");
@@ -393,6 +397,10 @@ export class GitHubController implements IGitHubController {
     }
 
     public async createIssues(repo: Repository, issues: Issue[]): Promise<boolean> {
+        if (repo === null) {
+            throw new Error("GitHubController::createIssues(..) - null repo");
+        }
+
         Log.info("GitHubController::createIssues(", repo.id, ", ...) - start");
         if (!await this.gha.repoExists(repo.id)) {
             throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
