@@ -373,8 +373,9 @@ export class AdminController {
         Log.info("AdminController::performStudentWithdraw() - start");
         const gha = GitHubActions.getInstance(true);
         const tc = new TeamController();
-        const teamNum = await tc.getTeamNumber('students'); // await gha.getTeamNumber('students');
-        const registeredGithubIds = await gha.getTeamMembers(teamNum);
+        // const teamNum = await tc.getTeamNumber('students'); // await gha.getTeamNumber('students');
+        // const registeredGithubIds = await gha.getTeamMembers(teamNum);
+        const registeredGithubIds = await gha.getTeamMembers('students');
 
         if (registeredGithubIds.length > 0) {
             const pc = new PersonController();

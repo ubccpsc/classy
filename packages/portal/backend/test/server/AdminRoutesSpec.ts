@@ -29,7 +29,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import BackendServer from "../../src/server/BackendServer";
 import './AuthRoutesSpec';
 
-describe('Admin Routes', function() {
+describe('Admin Routes', function () {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -71,7 +71,7 @@ describe('Admin Routes', function() {
         await Test.suiteAfter('Admin Routes');
     });
 
-    it('Should be able to get a list of students', async function() {
+    it('Should be able to get a list of students', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -89,7 +89,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to get a list of students with cookies for authentication', async function() {
+    it('Should be able to get a list of students with cookies for authentication', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -107,7 +107,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of students if the requestor is not privileged', async function() {
+    it('Should not be able to get a list of students if the requestor is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -124,7 +124,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should not be able to get a list of students with bad cookies for auth', async function() {
+    it('Should not be able to get a list of students with bad cookies for auth', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -141,7 +141,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should not be able to get a list of students without any auth data', async function() {
+    it('Should not be able to get a list of students without any auth data', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -158,7 +158,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of teams', async function() {
+    it('Should be able to get a list of teams', async function () {
 
         let response = null;
         let body: TeamTransportPayload;
@@ -177,7 +177,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of teams if the requestor is not privileged', async function() {
+    it('Should not be able to get a list of teams if the requestor is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -194,7 +194,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of students', async function() {
+    it('Should be able to get a list of students', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -213,7 +213,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of grades if the requestor is not privileged', async function() {
+    it('Should not be able to get a list of grades if the requestor is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -230,7 +230,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of results', async function() {
+    it('Should be able to get a list of results', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -250,7 +250,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of results if the requestor is not privileged', async function() {
+    it('Should not be able to get a list of results if the requestor is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -267,7 +267,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of dashboard results', async function() {
+    it('Should be able to get a list of dashboard results', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -287,7 +287,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of dashboard results if the requestor is not privileged', async function() {
+    it('Should not be able to get a list of dashboard results if the requestor is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -304,7 +304,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to export the list of dashboard results', async function() {
+    it('Should be able to export the list of dashboard results', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -324,7 +324,7 @@ describe('Admin Routes', function() {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to export the list of dashboard results if the requestor is not privileged', async function() {
+    it('Should not be able to export the list of dashboard results if the requestor is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -341,7 +341,7 @@ describe('Admin Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of repositories', async function() {
+    it('Should be able to get a list of repositories', async function () {
 
         let response = null;
         let body: RepositoryPayload;
@@ -364,7 +364,7 @@ describe('Admin Routes', function() {
         expect(entry.URL).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of deliverables', async function() {
+    it('Should be able to get a list of deliverables', async function () {
 
         let response = null;
         let body: DeliverableTransportPayload;
@@ -386,7 +386,7 @@ describe('Admin Routes', function() {
         expect(actual).to.be.null; // make sure at least one of the deliverables validates
     });
 
-    it('Should be able to create a new deliverable', async function() {
+    it('Should be able to create a new deliverable', async function () {
 
         let response = null;
         let body: Payload;
@@ -405,7 +405,7 @@ describe('Admin Routes', function() {
         expect(body.success.message).to.be.an('string');
     });
 
-    it('Should fail to create a new deliverable if the object is invalid', async function() {
+    it('Should fail to create a new deliverable if the object is invalid', async function () {
 
         let response = null;
         let body: Payload;
@@ -426,7 +426,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.be.an('string');
     });
 
-    it('Should fail to create a new deliverable if the user is not an admin', async function() {
+    it('Should fail to create a new deliverable if the user is not an admin', async function () {
 
         // this test looks like overkill
         // but we want to have
@@ -457,7 +457,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.be.an('string');
     });
 
-    it('Should be able to update a deliverable', async function() {
+    it('Should be able to update a deliverable', async function () {
 
         let response = null;
         let body: Payload;
@@ -472,27 +472,27 @@ describe('Admin Routes', function() {
             at.closeTimestamp = d0.closeTimestamp;
 
             const deliv: DeliverableTransport = {
-                id:                d0.id,
-                openTimestamp:     d0.openTimestamp,
-                closeTimestamp:    d0.closeTimestamp,
-                shouldProvision:   d0.shouldProvision,
-                importURL:         d0.importURL,
-                minTeamSize:       d0.teamMinSize,
-                maxTeamSize:       d0.teamMaxSize,
-                teamsSameLab:      d0.teamSameLab,
+                id: d0.id,
+                openTimestamp: d0.openTimestamp,
+                closeTimestamp: d0.closeTimestamp,
+                shouldProvision: d0.shouldProvision,
+                importURL: d0.importURL,
+                minTeamSize: d0.teamMinSize,
+                maxTeamSize: d0.teamMaxSize,
+                teamsSameLab: d0.teamSameLab,
                 studentsFormTeams: d0.teamStudentsForm,
-                onOpenAction:      '',
-                onCloseAction:     '',
-                repoPrefix:        d0.repoPrefix,
-                teamPrefix:        d0.teamPrefix,
+                onOpenAction: '',
+                onCloseAction: '',
+                repoPrefix: d0.repoPrefix,
+                teamPrefix: d0.teamPrefix,
                 visibleToStudents: d0.visibleToStudents,
-                URL:               d0.URL,
-                gradesReleased:    d0.gradesReleased,
-                lateAutoTest:      d0.lateAutoTest,
-                shouldAutoTest:    d0.shouldAutoTest,
-                autoTest:          at,
-                rubric:            d0.rubric,
-                custom:            d0.custom
+                URL: d0.URL,
+                gradesReleased: d0.gradesReleased,
+                lateAutoTest: d0.lateAutoTest,
+                shouldAutoTest: d0.shouldAutoTest,
+                autoTest: at,
+                rubric: d0.rubric,
+                custom: d0.custom
             };
 
             // make sure the times were not already the new time
@@ -525,14 +525,14 @@ describe('Admin Routes', function() {
         Log.test('update did update the value');
     });
 
-    it('Should be able to upload a new classlist', async function() {
+    it('Should be able to upload a new classlist', async function () {
 
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';
         try {
             response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidFirst.csv').set({
-                user:  userName,
+                user: userName,
                 token: userToken
             });
             body = response.body;
@@ -547,14 +547,14 @@ describe('Admin Routes', function() {
         expect(body.success.classlist.length).to.equal(5);
     });
 
-    it('Should fail to upload bad classlists', async function() {
+    it('Should fail to upload bad classlists', async function () {
 
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';
 
         response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistInvalid.csv').set({
-            user:  userName,
+            user: userName,
             token: userToken
         });
         body = response.body;
@@ -564,7 +564,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.be.an('string'); // test column missing
 
         response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
-            user:  userName,
+            user: userName,
             token: userToken
         });
         body = response.body;
@@ -575,7 +575,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.contain('no students');
     });
 
-    it('Should be able to upload an updated classlist', async function() {
+    it('Should be able to upload an updated classlist', async function () {
 
         const dc = DatabaseController.getInstance();
         let people = await dc.getPeople();
@@ -589,7 +589,7 @@ describe('Admin Routes', function() {
         const url = '/portal/admin/classlist';
         try {
             response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidUpdate.csv').set({
-                user:  userName,
+                user: userName,
                 token: userToken
             });
             body = response.body;
@@ -611,14 +611,14 @@ describe('Admin Routes', function() {
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
     });
 
-    it('Should be able to upload a new grades', async function() {
+    it('Should be able to upload a new grades', async function () {
 
         let response = null;
         let body: Payload;
         const url = '/portal/admin/grades/' + Test.DELIVID1;
         try {
             response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesValid.csv').set({
-                user:  userName,
+                user: userName,
                 token: userToken
             });
             body = response.body;
@@ -633,14 +633,14 @@ describe('Admin Routes', function() {
         expect(body.success.message).to.contain('3 grades');
     });
 
-    it('Should fail to upload a bad grades list', async function() {
+    it('Should fail to upload a bad grades list', async function () {
 
         let response = null;
         let body: Payload;
         const url = '/portal/admin/grades/' + Test.DELIVID1;
 
         response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesInvalid.csv').set({
-            user:  userName,
+            user: userName,
             token: userToken
         });
         body = response.body;
@@ -651,7 +651,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.contain('column missing');
 
         response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesEmpty.csv').set({
-            user:  userName,
+            user: userName,
             token: userToken
         });
         body = response.body;
@@ -662,7 +662,7 @@ describe('Admin Routes', function() {
         expect(body.failure.message).to.contain('no grades');
     });
 
-    it('Should be able to get the course object', async function() {
+    it('Should be able to get the course object', async function () {
 
         let response = null;
         let body: CourseTransportPayload;
@@ -681,7 +681,7 @@ describe('Admin Routes', function() {
         // TODO: check response properties
     });
 
-    it('Should be able to update the course object', async function() {
+    it('Should be able to update the course object', async function () {
 
         let response = null;
         let body: Payload;
@@ -690,9 +690,9 @@ describe('Admin Routes', function() {
         const newId = Date.now() + 'id';
 
         const course: CourseTransport = {
-            id:                   Config.getInstance().getProp(ConfigKey.testname),
+            id: Config.getInstance().getProp(ConfigKey.testname),
             defaultDeliverableId: newId,
-            custom:               {}
+            custom: {}
         };
         response = await request(app).post(url).send(course).set({user: userName, token: userToken});
         body = response.body;
@@ -709,7 +709,7 @@ describe('Admin Routes', function() {
         expect(response.status).to.equal(200);
     });
 
-    it('Should not be able to update the course object with invalid settings', async function() {
+    it('Should not be able to update the course object with invalid settings', async function () {
 
         let response = null;
         let body: Payload;
@@ -720,7 +720,7 @@ describe('Admin Routes', function() {
         const course: any = {
             // id: 'some id', // THIS IS A REQUIRED FIELD
             defaultDeliverableId: newId,
-            custom:               {}
+            custom: {}
         };
         response = await request(app).post(url).send(course).set({user: userName, token: userToken});
         body = response.body;
@@ -733,7 +733,7 @@ describe('Admin Routes', function() {
 
     describe("Slow AdminRoute Tests", () => {
 
-        beforeEach(function() {
+        beforeEach(function () {
             const exec = Test.runSlowTest();
 
             if (exec) {
@@ -768,17 +768,19 @@ describe('Admin Routes', function() {
             }
 
             for (const teamName of teamNames) {
-                const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
-                await ghCache.deleteTeam(cacheNum);
+                // const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
+                // await ghCache.deleteTeam(cacheNum);
+                await ghCache.deleteTeam(teamName);
 
-                const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
-                await ghReal.deleteTeam(realNum);
+                // const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
+                // await ghReal.deleteTeam(realNum);
+                await ghReal.deleteTeam(teamName);
             }
 
             Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
         }
 
-        it('Should be able to get a provision plan for a deliverable', async function() {
+        it('Should be able to get a provision plan for a deliverable', async function () {
 
             let response = null;
             let body: RepositoryPayload;
@@ -818,7 +820,7 @@ describe('Admin Routes', function() {
         //     expect(body.success[0].id).to.equal(Test.REPONAME1);
         // }).timeout(TIMEOUT * 30);
 
-        it('Should be able to get a release plan for a deliverable', async function() {
+        it('Should be able to get a release plan for a deliverable', async function () {
 
             let response = null;
             let body: RepositoryPayload;
@@ -858,7 +860,7 @@ describe('Admin Routes', function() {
         //     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
         // }).timeout(TIMEOUT * 30);
 
-        it('Should be able to perform a withdraw task', async function() {
+        it('Should be able to perform a withdraw task', async function () {
             // This is tricky because the live github data will have a different team id than we're using locally
 
             const pc = new PersonController();
@@ -879,7 +881,7 @@ describe('Admin Routes', function() {
             expect(body.success.message).to.be.an('string');
         }).timeout(TIMEOUT * 10);
 
-        it('Should be able to sanity check a database', async function() {
+        it('Should be able to sanity check a database', async function () {
 
             let response = null;
             let body: Payload;
@@ -896,7 +898,7 @@ describe('Admin Routes', function() {
             expect(body.success.message).to.be.an('string');
         }).timeout(TIMEOUT * 10);
 
-        it('Should be able to provision a deliverable', async function() {
+        it('Should be able to provision a deliverable', async function () {
 
             const dbc = DatabaseController.getInstance();
             await dbc.clearData();
@@ -949,7 +951,7 @@ describe('Admin Routes', function() {
 
         }).timeout(Test.TIMEOUTLONG);
 
-        it('Should fail to provision a deliverable if invalid options are given', async function() {
+        it('Should fail to provision a deliverable if invalid options are given', async function () {
 
             let response = null;
             let body: Payload;
@@ -986,7 +988,7 @@ describe('Admin Routes', function() {
             expect(body.failure).to.not.be.undefined;
         });
 
-        it('Should be able to release a deliverable', async function() {
+        it('Should be able to release a deliverable', async function () {
 
             let response = null;
             let body: Payload;
@@ -1013,7 +1015,7 @@ describe('Admin Routes', function() {
             // expect(body.success.length).to.equal(0);
         }).timeout(Test.TIMEOUTLONG);
 
-        it('Should fail to release a deliverable if invalid options are given', async function() {
+        it('Should fail to release a deliverable if invalid options are given', async function () {
 
             let response = null;
             let body: Payload;
@@ -1045,7 +1047,7 @@ describe('Admin Routes', function() {
         });
     });
 
-    it('Should be able to create a team for a deliverable.', async function() {
+    it('Should be able to create a team for a deliverable.', async function () {
 
         let response = null;
         let body: Payload;
@@ -1054,7 +1056,7 @@ describe('Admin Routes', function() {
         try {
             // create 2 people in an individual deliverable (should be allowed for admin)
             const team: TeamFormationTransport = {
-                delivId:   Test.DELIVID0,
+                delivId: Test.DELIVID0,
                 githubIds: [Test.USER5.github, Test.USER6.github]
             };
 
@@ -1072,14 +1074,14 @@ describe('Admin Routes', function() {
         expect(body.success.length).to.equal(1);
     });
 
-    it('Should fail to create a team for a deliverable if something is invalid', async function() {
+    it('Should fail to create a team for a deliverable if something is invalid', async function () {
 
         let response = null;
         let body: Payload;
         const url = '/portal/admin/team';
         let ex = null;
         const team: TeamFormationTransport = {
-            delivId:   Test.DELIVID0,
+            delivId: Test.DELIVID0,
             githubIds: [Test.USER5.github, Test.USER6.github]
         };
         try {
@@ -1129,7 +1131,7 @@ describe('Admin Routes', function() {
 
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to delete a deliverable', async function() {
+    it('Should be able to delete a deliverable', async function () {
         const url = '/portal/admin/deliverable/' + Test.DELIVID0;
         let response = null;
         let body: Payload;
@@ -1148,7 +1150,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     });
 
-    it('Should fail to delete a deliverable if appropriate', async function() {
+    it('Should fail to delete a deliverable if appropriate', async function () {
         const url = '/portal/admin/deliverable/';
         let response = null;
         let body: Payload;
@@ -1185,7 +1187,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to delete a repository', async function() {
+    it('Should be able to delete a repository', async function () {
         const url = '/portal/admin/repository/' + Test.REPONAME1;
         let response = null;
         let body: Payload;
@@ -1204,7 +1206,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     }).timeout(Test.TIMEOUT);
 
-    it('Should fail to delete a repository if appropriate', async function() {
+    it('Should fail to delete a repository if appropriate', async function () {
         const url = '/portal/admin/repository/';
         let response = null;
         let body: Payload;
@@ -1241,7 +1243,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to delete a team', async function() {
+    it('Should be able to delete a team', async function () {
         const url = '/portal/admin/team/' + Test.TEAMNAME1;
         let response = null;
         let body: Payload;
@@ -1260,7 +1262,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     });
 
-    it('Should fail to delete a team if appropriate', async function() {
+    it('Should fail to delete a team if appropriate', async function () {
         const url = '/portal/admin/team/';
         let response = null;
         let body: Payload;
@@ -1297,7 +1299,7 @@ describe('Admin Routes', function() {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to update a classlist if authorized as admin', async function() {
+    it('Should be able to update a classlist if authorized as admin', async function () {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';
@@ -1314,7 +1316,7 @@ describe('Admin Routes', function() {
         expect(body.success).to.haveOwnProperty('removed');
     });
 
-    it('Should NOT be able to update a classlist if not authorized as admin', async function() {
+    it('Should NOT be able to update a classlist if not authorized as admin', async function () {
         let response = null;
         let body: Payload;
         const url = '/portal/admin/classlist';
