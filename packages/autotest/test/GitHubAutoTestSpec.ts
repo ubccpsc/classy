@@ -5,7 +5,6 @@ import "mocha";
 import Config, {ConfigKey} from "../../common/Config";
 
 import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
 import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
 import {CommitTarget} from "../../common/types/ContainerTypes";
 import Util from "../../common/Util";
@@ -30,8 +29,8 @@ describe("GitHubAutoTest", () => {
     let at: GitHubAutoTest;
 
     const TS_IN = new Date(2018, 3, 3).getTime();
-    const TS_BEFORE = new Date(2017, 12, 12).getTime();
-    const TS_AFTER = new Date(2018, 12, 12).getTime();
+    // const TS_BEFORE = new Date(2017, 12, 12).getTime();
+    // const TS_AFTER = new Date(2018, 12, 12).getTime();
 
     const WAIT = 1000;
 
@@ -39,7 +38,7 @@ describe("GitHubAutoTest", () => {
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
 
-    before(async function() {
+    before(async function () {
         Log.test("AutoTest::before() - start");
 
         pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
@@ -58,14 +57,14 @@ describe("GitHubAutoTest", () => {
         Log.test("AutoTest::before() - done");
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
         at = new GitHubAutoTest(data, portal, null); // , gh);
     });
 
-    afterEach(async function() {
+    afterEach(async function () {
         // pause after each test so async issues don't persist
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
@@ -89,7 +88,6 @@ describe("GitHubAutoTest", () => {
     it("Should be able to receive multiple pushes.", async () => {
         expect(at).to.not.be.null;
 
-        // const pe: CommitTarget = pushes[0];
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pushes[0]);
@@ -102,30 +100,72 @@ describe("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(6);
     });
 
-    it("Should be able to receive multiple concurrent pushes.", async () => {
-        try {
-            expect(at).not.to.equal(null);
+    // this works, but with the filesystem-backed mock data store, race conditions
+    // keep happening
+    // it("Admin requests should go to the front of the queue.", async () => {
+    //     expect(at).to.not.be.null;
+    //
+    //     let allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(0);
+    //     await at.handlePushEvent(pushes[0]);
+    //     await at.handlePushEvent(pushes[1]);
+    //     await at.handlePushEvent(pushes[2]);
+    //     await at.handlePushEvent(pushes[3]);
+    //     await at.handlePushEvent(pushes[4]);
+    //     const push = Object.assign({}, pushes[5]);
+    //     push.commitSHA = "admin_" + push.commitSHA;
+    //     push.adminRequest = true;
+    //     push.personId = "admin1";
+    //     await at.handlePushEvent(push);
+    //     allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(6);
+    //
+    //     await Util.delay(WAIT * 5);
+    //     allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(6); // unchanged
+    //     expect(allData.records.length).to.equal(6);
+    //     // as long as the last record isn't the admin record it must have been bumped up
+    //     expect(allData.records[5].input.target.adminRequest).to.be.undefined;
+    //     // need to wait longer really, but
+    //
+    //     // TODO, check all data to make sure the admin push processed first
+    // }).timeout(WAIT * 6);
 
-            // const pe: IPushEvent = pushes[0];
-            const arr = [];
-            arr.push(at.handlePushEvent(pushes[0]));
-            arr.push(at.handlePushEvent(pushes[1]));
-            arr.push(at.handlePushEvent(pushes[2]));
-            arr.push(at.handlePushEvent(pushes[3]));
-            arr.push(at.handlePushEvent(pushes[4]));
-            arr.push(at.handlePushEvent(pushes[5]));
+    it("Rapid requests should go to the regression queue.", async () => {
+        expect(at).to.not.be.null;
 
-            Log.test('multiple concurrent pushes - before promise.all');
-            await Promise.all(arr);
-            Log.test('multiple concurrent pushes - after promise.all');
-            // const allData = await data.getAllData();
-            // Log.test('after getAllData');
-            // expect(allData.pushes.length).to.equal(6);
-        } catch (err) {
-            Log.error('multiple concurrent pushes - should never happen: ' + err);
-            expect.fail('multiple concurrent pushes - should never happen', err);
-        }
-    });
+        let allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(0);
+        await at.handlePushEvent(pushes[0]);
+        await at.handlePushEvent(pushes[1]);
+        await at.handlePushEvent(pushes[2]);
+        await at.handlePushEvent(pushes[3]);
+        await at.handlePushEvent(pushes[4]);
+        await at.handlePushEvent(pushes[5]);
+
+        // to see at what admin pushes look like
+        // const push = Object.assign({}, pushes[5]);
+        // push.commitSHA = "admin_" + push.commitSHA;
+        // push.adminRequest = true;
+        // push.personId = "admin1";
+        // await at.handlePushEvent(push);
+
+        allData = await data.getAllData();
+
+        await Util.delay(10);
+
+        // all pushes should be here
+        expect(allData.pushes.length).to.equal(6);
+        const eq = (at["expressQueue"] as any);
+        const sq = (at["standardQueue"] as any);
+        const rq = (at["regressionQueue"] as any);
+        expect(eq.slots).to.have.length(0); // nothing should be running on express
+        expect(eq.data).to.have.length(0); // nothing should be queued on express
+        expect(sq.slots).to.have.length(2); // two should be running on standard
+        expect(sq.data).to.have.length(2); // two should be waiting on standard
+        expect(rq.slots).to.have.length(1); // one should be running on regression
+        expect(rq.data).to.have.length(1); // one should be queued on regression
+    }).timeout(WAIT * 2);
 
     it("Should gracefully fail with bad comments.", async () => {
         expect(at).not.to.equal(null);
@@ -158,16 +198,16 @@ describe("GitHubAutoTest", () => {
         Log.test('???');
         info = {
             adminRequest: false,
-            personId:     Config.getInstance().getProp(ConfigKey.botName),
+            personId: Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
-            delivId:      'd1',
-            kind:         'standard',
-            repoId:       'repoId',
-            commitSHA:    'SHA',
-            commitURL:    'https://URL',
-            postbackURL:  'https://postback',
-            timestamp:    new Date(2018, 2, 1).getTime(),
-            cloneURL:     "https://cloneURL"
+            delivId: 'd1',
+            kind: 'standard',
+            repoId: 'repoId',
+            commitSHA: 'SHA',
+            commitURL: 'https://URL',
+            postbackURL: 'https://postback',
+            timestamp: new Date(2018, 2, 1).getTime(),
+            cloneURL: "https://cloneURL"
         };
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
@@ -236,13 +276,6 @@ describe("GitHubAutoTest", () => {
         info.personId = student;
         delete info.flags;
 
-        // scheduling removed
-        // Log.test('schedule and unschedule');
-        // info.flags = ["#schedule", "#unschedule"];
-        // meetsPreconditions = await at["checkCommentPreconditions"](info);
-        // expect(meetsPreconditions).to.be.false;
-        // delete info.flags;
-
         Log.test('not open yet');
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
         meetsPreconditions = await at["checkCommentPreconditions"](info);
@@ -274,16 +307,16 @@ describe("GitHubAutoTest", () => {
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pe.commitSHA,
-            commitURL:    pe.commitURL,
+            commitSHA: pe.commitSHA,
+            commitURL: pe.commitURL,
             adminRequest: false,
-            personId:     "myUser",
-            kind:         'standard',
-            repoId:       "d1_project9999",
-            delivId:      "d0",
-            postbackURL:  "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            personId: "myUser",
+            kind: 'standard',
+            repoId: "d1_project9999",
+            delivId: "d0",
+            postbackURL: "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
 
         Log.test('getting data');
@@ -304,18 +337,18 @@ describe("GitHubAutoTest", () => {
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pe.commitSHA,
-            commitURL:    pe.commitURL,
+            commitSHA: pe.commitSHA,
+            commitURL: pe.commitURL,
             adminRequest: false,
-            personId:     "myUser",
-            kind:         'standard',
-            repoId:       "d1_project9999",
-            delivId:      "d0",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            personId: "myUser",
+            kind: 'standard',
+            repoId: "d1_project9999",
+            delivId: "d0",
+            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
-        ce.flags = []; // ["#schedule"];
+        ce.flags = [];
 
         Log.test('getting data');
         let allData = await data.getAllData();
@@ -329,39 +362,6 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1);
     });
 
-    // TODO: need to strengthen this with a new feedback record in
-    // it("Should be able to receive a comment event that schedules for the future due to prior requests.", async () => {
-    //     expect(at).not.to.equal(null);
-    //
-    //     const pe: CommitTarget = pushes[0];
-    //     const ce: CommitTarget = {
-    //         botMentioned: true,
-    //         commitSHA:    pe.commitSHA,
-    //         commitURL:    pe.commitURL,
-    //         personId:     "cs310test",
-    //         kind:         'standard',
-    //         repoId:       "d1_project9999",
-    //         delivId:      "d1",
-    //         postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-    //         timestamp:    TS_IN,
-    //         cloneURL:     "https://cloneURL"
-    //     };
-    //     ce.flags = ["#schedule"];
-    //
-    //     Log.test('getting data');
-    //     let allData = await data.getAllData();
-    //     expect(allData.comments.length).to.equal(0);
-    //     expect(allData.feedback.length).to.equal(1); // should be one record in there for this user
-    //
-    //     Log.test('handling schedule');
-    //     ce.timestamp = TS_IN + 1000;
-    //     await at.handleCommentEvent(ce);
-    //
-    //     Log.test('re-getting data');
-    //     allData = await data.getAllData();
-    //     expect(allData.comments.length).to.equal(1);
-    // });
-
     it("Should be able to use a comment event to start the express queue.", async () => {
         expect(at).not.to.equal(null);
 
@@ -374,16 +374,16 @@ describe("GitHubAutoTest", () => {
 
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pushes[2].commitSHA,
-            commitURL:    pushes[2].commitURL,
+            commitSHA: pushes[2].commitSHA,
+            commitURL: pushes[2].commitURL,
             adminRequest: false,
-            personId:     "myUser",
-            kind:         'standard',
-            delivId:      "d0",
-            repoId:       "d1_project9999",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            personId: "myUser",
+            kind: 'standard',
+            delivId: "d0",
+            repoId: "d1_project9999",
+            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
 
         await Util.delay(WAIT);
@@ -400,7 +400,7 @@ describe("GitHubAutoTest", () => {
 
     function stubDependencies() {
         gitHubMessages = [];
-        at["postToGitHub"] = function(info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
+        at["postToGitHub"] = function (info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
             Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
             Log.test(gitHubMessages.length + '');
             if (typeof info.flags === 'undefined' || info.flags.indexOf("#silent") < 0) {
@@ -662,10 +662,10 @@ describe("GitHubAutoTest", () => {
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
-            delivId:   "d1", // same deliverable
+            delivId: "d1", // same deliverable
             timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
-            personId:  "cs310test",
-            kind:      'standard'
+            personId: "cs310test",
+            kind: 'standard'
         };
 
         await data.savePush(TestData.inputRecordA.target);

@@ -170,7 +170,12 @@ export class Queue {
         for (const job of this.data) {
             if (input.target.repoId !== null && typeof input.target.repoId !== "undefined" &&
                 job.target.repoId === input.target.repoId) {
-                count++;
+                if (typeof input.target.adminRequest !== "undefined" && input.target.adminRequest !== null &&
+                    input.target.adminRequest === true) {
+                    // admin requests shouldn't count towards repo totals
+                } else {
+                    count++;
+                }
             }
         }
         for (const job of this.slots) {

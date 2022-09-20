@@ -184,8 +184,8 @@ export abstract class AutoTest implements IAutoTest {
                     // if job is on any other queue, remove it
                     this.regressionQueue.remove(input);
                 } else {
-                    Log.warn("AutoTest::addToStandardQueue(..) - user: " +
-                        input.target.personId + "; has #" + standardJobCount +
+                    Log.warn("AutoTest::addToStandardQueue(..) - repo: " +
+                        input.target.repoId + "; has #" + standardJobCount +
                         " standard jobs queued and #" + regressionJobCount +
                         " regression jobs queued");
                     this.addToRegressionQueue(input);
