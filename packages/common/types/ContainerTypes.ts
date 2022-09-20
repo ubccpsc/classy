@@ -43,8 +43,9 @@ export interface CommitTarget {
     delivId: string;
     repoId: string;
 
+    adminRequest: boolean; // true if requested by admin or staff
     botMentioned: boolean; // true if explicitly mentioned
-    personId: string | null; // string is Person.id if explicily invoked, null otherwise
+    personId: string | null; // string is Person.id if explicitly invoked, null otherwise
     kind: string; // kind of request (currently just 'push', 'standard' or 'check')
 
     cloneURL: string;

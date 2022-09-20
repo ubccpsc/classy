@@ -87,12 +87,12 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should be able to receive multiple pushes.", async () => {
-        expect(at).not.to.equal(null);
+        expect(at).to.not.be.null;
 
-        const pe: CommitTarget = pushes[0];
+        // const pe: CommitTarget = pushes[0];
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
-        await at.handlePushEvent(pe);
+        await at.handlePushEvent(pushes[0]);
         await at.handlePushEvent(pushes[1]);
         await at.handlePushEvent(pushes[2]);
         await at.handlePushEvent(pushes[3]);
@@ -157,6 +157,7 @@ describe("GitHubAutoTest", () => {
 
         Log.test('???');
         info = {
+            adminRequest: false,
             personId:     Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
             delivId:      'd1',
@@ -235,11 +236,12 @@ describe("GitHubAutoTest", () => {
         info.personId = student;
         delete info.flags;
 
-        Log.test('schedule and unschedule');
-        info.flags = ["#schedule", "#unschedule"];
-        meetsPreconditions = await at["checkCommentPreconditions"](info);
-        expect(meetsPreconditions).to.be.false;
-        delete info.flags;
+        // scheduling removed
+        // Log.test('schedule and unschedule');
+        // info.flags = ["#schedule", "#unschedule"];
+        // meetsPreconditions = await at["checkCommentPreconditions"](info);
+        // expect(meetsPreconditions).to.be.false;
+        // delete info.flags;
 
         Log.test('not open yet');
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
@@ -274,6 +276,7 @@ describe("GitHubAutoTest", () => {
             botMentioned: true,
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
+            adminRequest: false,
             personId:     "myUser",
             kind:         'standard',
             repoId:       "d1_project9999",
@@ -295,7 +298,7 @@ describe("GitHubAutoTest", () => {
         // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
     });
 
-    it("Should be able to receive a comment event that schedules right away due to no prior request.", async () => {
+    it("Should be able to receive a comment event that queues right away due to no prior request.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
@@ -303,6 +306,7 @@ describe("GitHubAutoTest", () => {
             botMentioned: true,
             commitSHA:    pe.commitSHA,
             commitURL:    pe.commitURL,
+            adminRequest: false,
             personId:     "myUser",
             kind:         'standard',
             repoId:       "d1_project9999",
@@ -311,7 +315,7 @@ describe("GitHubAutoTest", () => {
             timestamp:    TS_IN,
             cloneURL:     "https://cloneURL"
         };
-        ce.flags = ["#schedule"];
+        ce.flags = []; // ["#schedule"];
 
         Log.test('getting data');
         let allData = await data.getAllData();
@@ -372,6 +376,7 @@ describe("GitHubAutoTest", () => {
             botMentioned: true,
             commitSHA:    pushes[2].commitSHA,
             commitURL:    pushes[2].commitURL,
+            adminRequest: false,
             personId:     "myUser",
             kind:         'standard',
             delivId:      "d0",
@@ -510,18 +515,20 @@ describe("GitHubAutoTest", () => {
 
         // SETUP: add a push with no output records
         await at.handlePushEvent(TestData.pushEventA);
+        Log.test("Setup push complete");
         let allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
         // don't wait; want to catch this push in flight
-        Log.test("Setup complete");
+        Log.test("Setup validated");
 
         // TEST: send a comment (this is the previous test)
         const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
         req.flags = ["#check"];
         req.kind = 'check';
         await at.handleCommentEvent(req);
+        Log.test("Test comment complete");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
@@ -531,6 +538,7 @@ describe("GitHubAutoTest", () => {
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
+        Log.trace(JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(2); // should generate a warning
         expect(gitHubMessages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);

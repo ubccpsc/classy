@@ -22,15 +22,15 @@ describe("Queue", () => {
     });
 
     it("Should work when empty.", () => {
-        let res: any = q.indexOf('foo');
+        let res: any = q.indexOf(TestData.inputRecordA);
         expect(res).to.equal(-1);
         res = q.pop();
         expect(res).to.be.null;
         res = q.length();
         expect(res).to.equal(0);
-        res = q.remove('bar');
+        res = q.remove(TestData.inputRecordB);
         expect(res).to.equal(null);
-        res = q.indexOf('baz');
+        res = q.indexOf(TestData.inputRecordB);
         expect(res).to.equal(-1);
     });
 
@@ -46,10 +46,10 @@ describe("Queue", () => {
         res = q.push(TestData.inputRecordA);
         expect(res).to.equal(1);
 
-        res = q.indexOf(TestData.inputRecordA.target.commitURL);
+        res = q.indexOf(TestData.inputRecordA);
         expect(res).to.equal(0);
 
-        res = q.remove(TestData.inputRecordA.target.commitURL);
+        res = q.remove(TestData.inputRecordA);
         expect(res).to.not.be.null;
         expect(q.length()).to.equal(0);
     });

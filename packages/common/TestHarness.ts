@@ -693,6 +693,7 @@ export class Test {
                 commitURL: commitURL,
 
                 botMentioned: false,
+                adminRequest: false,
                 personId: null,
                 kind: 'push',
 
