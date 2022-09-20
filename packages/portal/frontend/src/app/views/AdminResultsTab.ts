@@ -48,14 +48,14 @@ export class AdminResultsTab extends AdminPage {
         UI.hideModal();
 
         const fab = document.querySelector('#resultsUpdateButton') as OnsButtonElement;
-        fab.onclick = function(evt: any) {
+        fab.onclick = function (evt: any) {
             Log.info('AdminResultsTab::init(..)::updateButton::onClick');
             UI.showModal('Retrieving results.');
-            that.performQueries().then(function(newResults) {
+            that.performQueries().then(function (newResults) {
                 // TODO: need to track and update the current value of deliv and repo
                 that.render(delivs, repos, newResults);
                 UI.hideModal();
-            }).catch(function(err) {
+            }).catch(function (err) {
                 UI.showError(err);
             });
         };
@@ -105,52 +105,52 @@ export class AdminResultsTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id:          '?',
-                text:        '?',
-                sortable:    false,
+                id: '?',
+                text: '?',
+                sortable: false,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'repoId',
-                text:        'Repository',
-                sortable:    true,
+                id: 'repoId',
+                text: 'Repository',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
-                id:          'delivId',
-                text:        'Deliv',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'delivId',
+                text: 'Deliv',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'score',
-                text:        'Score',
-                sortable:    true,
+                id: 'score',
+                text: 'Score',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'state',
-                text:        'State',
-                sortable:    true,
+                id: 'state',
+                text: 'State',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'timstamp',
-                text:        'Timestamp',
-                sortable:    true,
+                id: 'timstamp',
+                text: 'Timestamp',
+                sortable: true,
                 defaultSort: true,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             }
         ];
 
@@ -179,16 +179,34 @@ export class AdminResultsTab extends AdminPage {
 
             const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
 
+            let score: number | string = '';
+            score = result.scoreOverall;
+            if (score === 100) {
+                score = "100.00";
+            } else {
+                // two decimal places
+                score = score.toFixed(2);
+                // prepend space (not 100)
+                score = "&#8199;" + score;
+                if (result.scoreOverall < 10) {
+                    // prepend with extra space if < 10
+                    score = "&#8199;" + score;
+                }
+            }
+
             const row: TableCell[] = [
                 {
                     value: '',
-                    html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                               stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                    html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
+                        stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
-                {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
+                {
+                    value: result.repoId,
+                    html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'
+                },
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
-                {value: result.scoreOverall, html: result.scoreOverall + ''},
+                {value: result.scoreOverall, html: score},
                 {value: result.state, html: result.state},
                 {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'}
             ];
