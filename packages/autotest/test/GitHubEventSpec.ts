@@ -294,7 +294,9 @@ describe("GitHub Event Parser", () => {
     function readFile(fName: string): string {
         // NOTE: not sure if this should start with ./packages/... or ./test/...
         // ./packages/... works on dev machine
-        return fs.readFileSync("./packages/autotest/test/githubEvents/" + fName, "utf8");
+        // return fs.readFileSync("./packages/autotest/test/githubEvents/" + fName, "utf8");
+        // ./test/... works on CI
+        return fs.readFileSync("./test/githubEvents/" + fName, "utf8");
     }
 
 });
