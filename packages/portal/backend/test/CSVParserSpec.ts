@@ -76,4 +76,33 @@ describe('CSVParser', function() {
         expect(rows).to.be.null;
         expect(ex).to.not.be.null;
     });
+
+    it('Handle CSVs with inconsistent person IDs (GitHub)', async function() {
+        let rows = null;
+        let ex = null;
+        try {
+            const path = __dirname + '/data/gradesInconsistent.csv';
+            const csv = new CSVParser();
+            rows = await csv.processGrades(Test.ADMIN1.id, Test.DELIVID1, path);
+        } catch (err) {
+            ex = err;
+        }
+        expect(rows).to.be.null;
+        expect(ex).to.not.be.null;
+    });
+
+    it('Handle CSVs with inconsistent person IDs (CWL)', async function() {
+        let rows = null;
+        let ex = null;
+        try {
+            const path = __dirname + '/data/gradesInconsistent2.csv';
+            const csv = new CSVParser();
+            rows = await csv.processGrades(Test.ADMIN1.id, Test.DELIVID1, path);
+        } catch (err) {
+            ex = err;
+        }
+        expect(rows).to.be.null;
+        expect(ex).to.not.be.null;
+    });
+
 });

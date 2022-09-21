@@ -3,10 +3,10 @@ import "mocha";
 import * as restify from 'restify';
 import * as request from 'supertest';
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/TestHarness";
 import {
     AutoTestConfigTransport,
     AutoTestResultPayload,
@@ -19,14 +19,14 @@ import {
     StudentTransportPayload,
     TeamFormationTransport,
     TeamTransportPayload
-} from "../../../../common/types/PortalTypes";
-import Util from "../../../../common/Util";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../src/controllers/GitHubActions";
-import {PersonController} from "../../src/controllers/PersonController";
-import {TeamController} from "../../src/controllers/TeamController";
-import BackendServer from "../../src/server/BackendServer";
+} from "@common/types/PortalTypes";
+import Util from "@common/Util";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions} from "@backend/controllers/GitHubActions";
+import {PersonController} from "@backend/controllers/PersonController";
+import {TeamController} from "@backend/controllers/TeamController";
+import BackendServer from "@backend/server/BackendServer";
 import './AuthRoutesSpec';
 
 describe('Admin Routes', function () {
@@ -107,7 +107,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of students if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of students if the requester is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -177,7 +177,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of teams if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of teams if the requester is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -194,8 +194,7 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of students', async function () {
-
+    it('Should be able to get a list of grades', async function () {
         let response = null;
         let body: StudentTransportPayload;
         const url = '/portal/admin/grades';
@@ -213,7 +212,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of grades if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of grades if the requester is not privileged', async function () {
 
         let response = null;
         let body: StudentTransportPayload;
@@ -229,6 +228,44 @@ describe('Admin Routes', function () {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
+
+    it('Should be able to get a list of graded results for a deliverable', async function () {
+        let response = null;
+        let body: StudentTransportPayload;
+
+        const url = '/portal/admin/gradedResults/d0';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+
+        // should confirm body.success objects (at least one)
+    }).timeout(Test.TIMEOUT);
+
+    it('Should be able to get a list of the best graded results for a deliverable', async function () {
+        let response = null;
+        let body: StudentTransportPayload;
+
+        const url = '/portal/admin/bestResults/d0';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+
+        // should confirm body.success objects (at least one)
+    }).timeout(Test.TIMEOUT);
 
     it('Should be able to get a list of results', async function () {
 
@@ -250,7 +287,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of results if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of results if the requester is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -287,7 +324,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of dashboard results if the requestor is not privileged', async function () {
+    it('Should not be able to get a list of dashboard results if the requester is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
@@ -324,7 +361,7 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to export the list of dashboard results if the requestor is not privileged', async function () {
+    it('Should not be able to export the list of dashboard results if the requester is not privileged', async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
