@@ -320,7 +320,7 @@ export class DatabaseController {
      * @returns {Promise<boolean>}
      */
     public async writeResult(record: Result): Promise<boolean> {
-        Log.info("DatabaseController::writeResult(..) - start");
+        Log.trace("DatabaseController::writeResult(..) - start");
 
         const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA);
         if (resultExists === null) {

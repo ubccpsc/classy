@@ -59,12 +59,12 @@ export class AdminController {
      * @returns {Promise<boolean>} Whether the new grade was saved
      */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
-        Log.info("AdminController::processNewAutoTestGrade( .. ) - start");
+        Log.trace("AdminController::processNewAutoTestGrade( .. ) - start");
 
         const cc = await Factory.getCourseController(this.gh);
 
         try {
-            Log.info("AdminController::processNewAutoTestGrade( .. ) - payload: " + JSON.stringify(grade));
+            Log.trace("AdminController::processNewAutoTestGrade( .. ) - payload: " + JSON.stringify(grade));
             const repo = await this.rc.getRepository(grade.repoId);
             if (repo === null) {
                 // sanity check
@@ -79,7 +79,7 @@ export class AdminController {
                 return false;
             }
 
-            Log.info("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
+            Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
 
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
@@ -98,12 +98,12 @@ export class AdminController {
                     custom:    grade.custom
                 };
 
-                Log.info("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
+                Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
-                Log.info("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
                     "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-                Log.info("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
                     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {

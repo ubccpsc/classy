@@ -1,11 +1,11 @@
 import * as dotenv from "dotenv";
 import Log, {LogLevel} from "./Log";
-// const dotenv = require('dotenv');
-const result = dotenv.config({path: __dirname + '/../../.env'});
 
-if (result.error) {
-    Log.error("Failed to parse .env " + result.error);
-    throw result.error;
+const envLoadResult = dotenv.config({path: __dirname + '/../../.env'});
+
+if (envLoadResult.error) {
+    Log.error("Failed to parse .env " + envLoadResult.error);
+    throw envLoadResult.error;
 }
 
 /**
@@ -79,9 +79,13 @@ export enum ConfigKey {
     adminTeamName = "adminTeamName",
     // STAFF_TEAM_NAME
     staffTeamName = "staffTeamName",
+
+    logLevel = "logLevel",
 }
 
 export default class Config {
+    protected static instance: Config = null;
+    private config: any;
 
     public static getInstance(): Config {
         if (Config.instance === null) {
@@ -91,29 +95,25 @@ export default class Config {
         return Config.instance;
     }
 
-    protected static instance: Config = null;
-
-    private config: any;
-
     private constructor() {
         // should not be called by clients but typescript does not allow private constructors
         try {
             this.config = {
-                name:     process.env.NAME,
-                org:      process.env.ORG,
-                testorg:  process.env.ORGTEST,
+                name: process.env.NAME,
+                org: process.env.ORG,
+                testorg: process.env.ORGTEST,
                 testname: process.env.NAMETEST,
                 plugin: process.env.PLUGIN,
 
-                classlist_uri:      process.env.CLASSLIST_URI,
+                classlist_uri: process.env.CLASSLIST_URI,
                 classlist_username: process.env.CLASSLIST_USERNAME,
                 classlist_password: process.env.CLASSLIST_PASSWORD,
 
                 minimum_student_delay: process.env.MINIMUM_STUDENT_DELAY,
                 publichostname: process.env.PUBLICHOSTNAME,
 
-                hostDir:  process.env.HOST_DIR,
-                postback:   Boolean(process.env.AUTOTEST_POSTBACK),
+                hostDir: process.env.HOST_DIR,
+                postback: Boolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
                 dockerUid: process.env.UID,
                 hostsAllow: process.env.HOSTS_ALLOW,
@@ -121,50 +121,60 @@ export default class Config {
                 timeout: Number(process.env.GRADER_TIMEOUT),
                 botName: process.env.GH_BOT_USERNAME,
 
-                sslCertPath:     process.env.SSL_CERT_PATH,
-                sslKeyPath:      process.env.SSL_KEY_PATH,
+                sslCertPath: process.env.SSL_CERT_PATH,
+                sslKeyPath: process.env.SSL_KEY_PATH,
 
                 mongoUrl: process.env.DB_URL,
 
-                backendPort:  process.env.BACKEND_PORT,
-                backendUrl:   process.env.BACKEND_URL,
+                backendPort: process.env.BACKEND_PORT,
+                backendUrl: process.env.BACKEND_URL,
 
-                githubHost:         process.env.GH_HOST,
-                githubAPI:          process.env.GH_API,
-                githubBotName:      process.env.GH_BOT_USERNAME,
-                githubBotToken:     process.env.GH_BOT_TOKEN,
-                githubClientId:     process.env.GH_CLIENT_ID,
+                githubHost: process.env.GH_HOST,
+                githubAPI: process.env.GH_API,
+                githubBotName: process.env.GH_BOT_USERNAME,
+                githubBotToken: process.env.GH_BOT_TOKEN,
+                githubClientId: process.env.GH_CLIENT_ID,
                 githubClientSecret: process.env.GH_CLIENT_SECRET,
-                githubDockerToken:  process.env.GH_DOCKER_TOKEN,
+                githubDockerToken: process.env.GH_DOCKER_TOKEN,
 
-                githubAdmin:        process.env.GH_ADMIN,
-                githubAdminStaff:   process.env.GH_ADMIN_STAFF,
-                githubStaff:        process.env.GH_STAFF,
-                githubBot01:        process.env.GH_BOT_01,
-                githubBot02:        process.env.GH_BOT_02,
-                githubTestUsers:    process.env.GH_TEST_USERS,
+                githubAdmin: process.env.GH_ADMIN,
+                githubAdminStaff: process.env.GH_ADMIN_STAFF,
+                githubStaff: process.env.GH_STAFF,
+                githubBot01: process.env.GH_BOT_01,
+                githubBot02: process.env.GH_BOT_02,
+                githubTestUsers: process.env.GH_TEST_USERS,
 
-                autotestUrl:    process.env.AUTOTEST_URL,
-                autotestPort:   process.env.AUTOTEST_PORT,
+                autotestUrl: process.env.AUTOTEST_URL,
+                autotestPort: process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
 
-                patchId:         process.env.PATCH_ID,
-                patchToolUrl:    process.env.PATCH_TOOL_URL,
+                patchId: process.env.PATCH_ID,
+                patchToolUrl: process.env.PATCH_TOOL_URL,
                 patchSourceRepo: process.env.PATCH_SOURCE_REPO,
 
-                adminTeamName:  process.env.ADMIN_TEAM_NAME,
-                staffTeamName:  process.env.STAFF_TEAM_NAME,
+                adminTeamName: process.env.ADMIN_TEAM_NAME,
+                staffTeamName: process.env.STAFF_TEAM_NAME,
+
+                logLevel: process.env.LOG_LEVEL
             };
 
-            // this is not a great place for this
-            // but at least it should happen near the start of any execution
             Log.info("Config - Log::<init>");
+
+            // This is not a great place to sniff for the CI environment
+            // but at least it should happen near the start of any execution.
             const ci = process.env.CI;
             if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+                // CI instances should be INFO always
+                // trace emits too much text so the CI buffer does not save it all
                 Log.info("Config - Log::<init> - CI detected; changing to INFO");
-                Log.Level = LogLevel.INFO; // change to INFO from TRACE if on CI
+                Log.Level = LogLevel.INFO; // force INFO
             } else {
-                Log.info("Config - Log::<init> - CI NOT detected");
+                const level = this.getProp(ConfigKey.logLevel);
+                if (typeof this.config.logLevel !== "undefined" && level !== null) {
+                    Log.info("Config - Log::<init> - updating log level to: " + level);
+                    Log.Level = level;
+                    Log.parseLogLevel();
+                }
             }
 
         } catch (err) {

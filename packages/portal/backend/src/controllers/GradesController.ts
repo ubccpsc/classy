@@ -45,16 +45,16 @@ export class GradesController {
     }
 
     public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
-        Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
+        Log.trace("GradesController::getGrade( " + personId + ", " + delivId + " ) - start");
         const start = Date.now();
         const grade = await this.db.getGrade(personId, delivId);
 
-        Log.info("GradesController::getGrade( " + personId + ", " + delivId + " ) - done; took: " + Util.took(start));
+        Log.trace("GradesController::getGrade( " + personId + ", " + delivId + " ) - done; took: " + Util.took(start));
         return grade;
     }
 
     public async getReleasedGradesForPerson(personId: string): Promise<Grade[]> {
-        Log.info("GradesController::getReleasedGradesForPerson( " + personId + " ) - start");
+        Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - start");
         const start = Date.now();
 
         const delivc = new DeliverablesController();
@@ -91,7 +91,7 @@ export class GradesController {
             return g1.delivId.localeCompare(g2.delivId);
         });
 
-        Log.info("GradesController::getReleasedGradesForPerson( " + personId + " ) - # grades: " +
+        Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - # grades: " +
             grades.length + "; took: " + Util.took(start));
         return grades;
     }
@@ -194,7 +194,7 @@ export class GradesController {
      */
     public validateAutoTestGrade(record: AutoTestGradeTransport): string | null {
         // multiple returns is poor, but at least it's quick
-        Log.info('GradesController::validateAutoTestGrade(..) - start');
+        Log.trace('GradesController::validateAutoTestGrade(..) - start');
 
         if (typeof record === 'undefined') {
             const msg = 'object undefined';
@@ -253,7 +253,7 @@ export class GradesController {
             return msg;
         }
 
-        Log.info('GradesController::validateAutoTestGrade(..) - done; object is valid');
+        Log.trace('GradesController::validateAutoTestGrade(..) - done; object is valid');
 
         return null;
     }
