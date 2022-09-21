@@ -77,7 +77,7 @@ export default class Util {
                 const actual = Date.now();
                 const took = actual - start;
                 const delta = actual - fire.getTime();
-                Log.info("Util::delay( " + ms + " ms ) - fired; took: " + took + " ms; jitter: " + delta + " ms");
+                Log.trace("Util::delay( " + ms + " ms ) - fired; took: " + took + " ms; jitter: " + delta + " ms");
                 resolve();
             }, ms);
         });

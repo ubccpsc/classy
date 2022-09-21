@@ -133,6 +133,11 @@ describe("GitHubAutoTest", () => {
 
     it("Rapid requests should go to the regression queue.", async () => {
         expect(at).to.not.be.null;
+        await Util.delay(WAIT); // let old tests expire before starting
+
+        // start fresh
+        await data.clearData();
+        stubDependencies();
 
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
@@ -142,6 +147,7 @@ describe("GitHubAutoTest", () => {
         await at.handlePushEvent(pushes[3]);
         await at.handlePushEvent(pushes[4]);
         await at.handlePushEvent(pushes[5]);
+        Log.test("all pushes sent");
 
         // to see at what admin pushes look like
         // const push = Object.assign({}, pushes[5]);
@@ -159,13 +165,15 @@ describe("GitHubAutoTest", () => {
         const eq = (at["expressQueue"] as any);
         const sq = (at["standardQueue"] as any);
         const rq = (at["regressionQueue"] as any);
+        Log.test("about to check values");
         expect(eq.slots).to.have.length(0); // nothing should be running on express
         expect(eq.data).to.have.length(0); // nothing should be queued on express
         expect(sq.slots).to.have.length(2); // two should be running on standard
         expect(sq.data).to.have.length(2); // two should be waiting on standard
         expect(rq.slots).to.have.length(1); // one should be running on regression
         expect(rq.data).to.have.length(1); // one should be queued on regression
-    }).timeout(WAIT * 2);
+        Log.test("values checked");
+    }).timeout(WAIT * 3);
 
     it("Should gracefully fail with bad comments.", async () => {
         expect(at).not.to.equal(null);
