@@ -336,21 +336,3 @@ export interface ClasslistTransport {
     SEC: string;
     LAB: string;
 }
-
-// This list is not exhaustive at all
-export enum TransportKind {
-    CLASSLIST_CHANGES,
-    CONFIG,
-    COURSE,
-    PROVISION,
-    AUTH,
-    STUDENT,
-    DELIVERABLE,
-    TEAM,
-    TEAM_FORMATION,
-    GRADE,
-    GRADE_REPORT, // TODO Should this be here? GradeReport is a ContainerType
-    AUTOTEST_DASHBOARD,
-    AUTOTEST_RESULT_SUMMARY,
-    CLASSLIST,
-}

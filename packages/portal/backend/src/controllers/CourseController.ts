@@ -2,7 +2,6 @@ import Log from "../../../../common/Log";
 import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 import {CommitTarget} from "../../../../common/types/ContainerTypes";
-import {TransportKind} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
@@ -67,13 +66,6 @@ export interface ICourseController {
      * @param teams
      */
     finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean>;
-
-    /**
-     * For forwarding custom fields from a record to its respective transport
-     * @param record
-     * @param kind
-     */
-    forwardCustomFields(record: any, kind: TransportKind): any;
 
     /**
      * For forcing certain push events to the express queue
@@ -209,10 +201,6 @@ export class CourseController implements ICourseController {
     public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
         Log.warn("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
         return true;
-    }
-
-    public forwardCustomFields(record: any, kind: TransportKind): any {
-        return {};
     }
 
     public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {
