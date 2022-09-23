@@ -187,6 +187,7 @@ export class GitHubUtil {
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
+            const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
             Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
@@ -227,7 +228,7 @@ export class GitHubUtil {
                 delivId:      backendConfig.defaultDeliverable,
                 repoId:       repo,
                 botMentioned: false, // not explicitly invoked
-                personId:     null, // not explicitly requested
+                personId:     pusher?.personId ?? null,
                 kind:         'push',
                 cloneURL,
                 commitSHA,
