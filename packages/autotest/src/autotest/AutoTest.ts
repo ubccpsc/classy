@@ -144,8 +144,8 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            if (this.expressQueue.hasWaitingJobForRequester(input) === false) {
-                // add to express queue
+            if (this.expressQueue.numberJobsForPerson(input) < 1) {
+                // add to express queue since they are not already on it
                 this.expressQueue.push(input);
 
                 // if job is on any other queue, remove it
@@ -176,8 +176,8 @@ export abstract class AutoTest implements IAutoTest {
             // only add job if it is not already on express
             if (this.expressQueue.indexOf(input) < 0) {
 
-                const standardJobCount = this.standardQueue.numberJobsForRepo(input);
-                const regressionJobCount = this.regressionQueue.numberJobsForRepo(input);
+                const standardJobCount = this.standardQueue.numberJobsForPerson(input);
+                const regressionJobCount = this.regressionQueue.numberJobsForPerson(input);
                 if (standardJobCount < this.MAX_STANDARD_JOBS) {
                     this.standardQueue.push(input);
 

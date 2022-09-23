@@ -136,54 +136,55 @@ export class Queue {
         return this.data.length > 0;
     }
 
-    /**
-     * Returns true if a job is already waiting for a requester on this queue.
-     *
-     * @param input
-     */
-    public hasWaitingJobForRequester(input: ContainerInput): boolean {
-        for (const job of this.data) {
-            if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
-                job.target.personId === input.target.personId) {
-                return true;
-            }
-        }
-        for (const job of this.slots) {
-            if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
-                job.target.personId === input.target.personId) {
-                return true;
-            }
-        }
-        return false;
-    }
+    // /**
+    //  * Returns true if a job is already waiting for a requester on this queue.
+    //  *
+    //  * @param input
+    //  */
+    // public hasWaitingJobForRequester(input: ContainerInput): boolean {
+    //     for (const job of this.data) {
+    //         if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
+    //             job.target.personId === input.target.personId) {
+    //             return true;
+    //         }
+    //     }
+    //     for (const job of this.slots) {
+    //         if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
+    //             job.target.personId === input.target.personId) {
+    //             return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     /**
-     * Returns the number of queued or executing jobs for a repo.
+     * Returns the number of queued jobs for a person.
      *
-     * NOTE: it would be better for this to be per requester, but
-     * often push events do not have this info.
+     * Does _NOT_ include executing jobs, as these could be placed
+     * there by the scheduler, not by the requester (e.g., a standard
+     * job could be placed on the express queue because there is a free
+     * slot, this placement should not stop the requester from having
+     * a future request be put on the express queue while the non-requested
+     * one is evaluated).
      *
      * @param input
      */
-    public numberJobsForRepo(input: ContainerInput): number {
+    public numberJobsForPerson(input: ContainerInput): number {
         let count = 0;
         for (const job of this.data) {
-            if (input.target.repoId !== null && typeof input.target.repoId !== "undefined" &&
-                job.target.repoId === input.target.repoId) {
-                if (typeof input.target.adminRequest !== "undefined" && input.target.adminRequest !== null &&
-                    input.target.adminRequest === true) {
+            if (job.target?.personId === input.target?.personId) {
+                if (input.target?.adminRequest === true) {
                     // admin requests shouldn't count towards repo totals
                 } else {
                     count++;
                 }
             }
         }
-        for (const job of this.slots) {
-            if (input.target.repoId !== null && typeof input.target.repoId !== "undefined" &&
-                job.target.repoId === input.target.repoId) {
-                count++;
-            }
-        }
+        // for (const job of this.slots) {
+        //     if (job.target?.personId === input.target?.personId) {
+        //         count++;
+        //     }
+        // }
         return count;
     }
 
