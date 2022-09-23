@@ -104,7 +104,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atConfiguration(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - start');
+        Log.trace('AutoTestRouteHandler::atConfiguration(..) - /at - start');
         const start = Date.now();
 
         let payload: ClassyConfigurationPayload;
@@ -114,15 +114,15 @@ export class AutoTestRoutes implements IREST {
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.info('AutoTestRouteHandler::atConfiguration(..) - name: ' + name + '; took: ' + Util.took(start));
+            Log.trace('AutoTestRouteHandler::atConfiguration(..) - name: ' + name + '; took: ' + Util.took(start));
 
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             let defaultDeliverable: string | null = null;
-            Log.info('AutoTestRouteHandler::atConfiguration(..) - cc; took: ' + Util.took(start));
+            Log.trace('AutoTestRouteHandler::atConfiguration(..) - cc; took: ' + Util.took(start));
 
             cc.getCourse().then(function(course) {
                 defaultDeliverable = course.defaultDeliverableId;
-                Log.info('AutoTestRouteHandler::atConfiguration(..) - default: ' + defaultDeliverable + '; took: ' + Util.took(start));
+                Log.trace('AutoTestRouteHandler::atConfiguration(..) - default: ' + defaultDeliverable + '; took: ' + Util.took(start));
                 return cc.getDeliverables();
             }).then(function(deliverables) {
                 const delivIds = [];
@@ -131,7 +131,7 @@ export class AutoTestRoutes implements IREST {
                 }
                 payload = {success: {defaultDeliverable: defaultDeliverable, deliverableIds: delivIds}};
 
-                Log.info('AutoTestRouteHandler::atConfiguration(..) - /at - done; took: ' + Util.took(start));
+                Log.trace('AutoTestRouteHandler::atConfiguration(..) - /at - done; took: ' + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             }).catch(function(err) {
@@ -301,7 +301,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atPersonId(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atPersonId(..) - /isStaff/:githubId - start GET');
+        Log.trace('AutoTestRouteHandler::atPersonId(..) - /isStaff/:githubId - start GET');
         const start = Date.now();
 
         let payload: Payload;
@@ -330,7 +330,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atGetResult(req: any, res: any, next: any) {
-        Log.info('AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET');
+        Log.trace('AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET');
 
         let payload: AutoTestResultPayload;
 

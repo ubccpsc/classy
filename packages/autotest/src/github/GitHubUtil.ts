@@ -103,13 +103,13 @@ export class GitHubUtil {
             const requestor = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
-            Log.info("GitHubUtil::processComment(..) - 1");
+            Log.trace("GitHubUtil::processComment(..) - 1");
 
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
-            Log.info("GitHubUtil::processComment(..) - 2");
+            Log.trace("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = GitHubUtil.parseCommandsFromComment(message);
 
@@ -118,7 +118,7 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
-            Log.info("GitHubUtil::processComment(..) - 3");
+            Log.trace("GitHubUtil::processComment(..) - 3");
 
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
@@ -138,7 +138,7 @@ export class GitHubUtil {
                 kind = 'check';
             }
 
-            Log.info("GitHubUtil::processComment(..) - 4");
+            Log.trace("GitHubUtil::processComment(..) - 4");
 
             const commentEvent: CommitTarget = {
                 delivId,

@@ -420,7 +420,7 @@ export class DatabaseController {
     public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
         try {
             // Log.info("DatabaseController::writeAudit(..) - start");
-            Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
+            Log.trace("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
                 !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
 
             let finalLabel = label + '_';
