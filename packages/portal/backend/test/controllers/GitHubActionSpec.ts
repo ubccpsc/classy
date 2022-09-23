@@ -42,7 +42,7 @@ describe("GitHubActions", () => {
         await Test.prepareAll();
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         gh.setPageSize(2); // force a small page size for testing
 
         const exec = Test.runSlowTest();
@@ -55,7 +55,7 @@ describe("GitHubActions", () => {
         }
     });
 
-    afterEach(function() {
+    afterEach(function () {
         gh.setPageSize(100);
     });
 
@@ -97,24 +97,24 @@ describe("GitHubActions", () => {
         Test.TEAMNAMEREAL
     ];
 
-    it("Clear stale repos and teams.", async function() {
+    it("Clear stale repos and teams.", async function () {
         // this shouldn't be a test, but the before times out if we don't do it here
         const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 100);
 
-    it("Should not be possible to find a repo that does not exist.", async function() {
+    it("Should not be possible to find a repo that does not exist.", async function () {
         const val = await gh.repoExists(Test.INVALIDREPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to delete a repo that does not exist.", async function() {
+    it("Should not be possible to delete a repo that does not exist.", async function () {
         // and it should do so without crashing
         const val = await gh.deleteRepo(Test.INVALIDREPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a repo.", async function() {
+    it("Should be able to create a repo.", async function () {
         const rc = new RepositoryController();
         const dc = new DeliverablesController();
         const deliv = await dc.getDeliverable(Test.DELIVID0);
@@ -126,7 +126,7 @@ describe("GitHubActions", () => {
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should fail to create a repo if there is no corresponding Repository object.", async function() {
+    it("Should fail to create a repo if there is no corresponding Repository object.", async function () {
         let res = null;
         let ex = null;
         try {
@@ -138,29 +138,29 @@ describe("GitHubActions", () => {
         expect(ex).to.not.be.null;
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find a repo that does exist.", async function() {
+    it("Should be possible to find a repo that does exist.", async function () {
         const val = await gh.repoExists(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should be able to remove a repo that does exist.", async function() {
+    it("Should be able to remove a repo that does exist.", async function () {
         const val = await gh.deleteRepo(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create the repo again.", async function() {
+    it("Should be able to create the repo again.", async function () {
         const val = await gh.createRepo(REPONAME);
         const name = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should be able to list a webhook.", async function() {
+    it("Should be able to list a webhook.", async function () {
         const val = await gh.listWebhooks(REPONAME);
         expect(val).to.be.empty;
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a webhook.", async function() {
+    it("Should be able to create a webhook.", async function () {
         let hooks = await gh.listWebhooks(REPONAME); // REPONAME
         expect(hooks).to.be.empty;
 
@@ -173,7 +173,7 @@ describe("GitHubActions", () => {
         expect((hooks[0] as any).config.url).to.equal(hookName);
     }).timeout(TIMEOUT);
 
-    it("Should be able to edit a webhook.", async function() {
+    it("Should be able to edit a webhook.", async function () {
         let hooks = await gh.listWebhooks(REPONAME);
         expect(hooks).to.have.lengthOf(1);
 
@@ -190,14 +190,14 @@ describe("GitHubActions", () => {
         expect(newHook).to.equal(NEWHOOK);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to list the repos in an org.", async function() {
+    it("Should be possible to list the repos in an org.", async function () {
         const res = await gh.listRepos();
         Log.test('# repos ' + res.length);
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to list people in an org.", async function() {
+    it("Should be possible to list people in an org.", async function () {
         // gh.setPageSize(100);
         const res = await gh.listPeople();
         Log.test('# people ' + res.length);
@@ -205,14 +205,14 @@ describe("GitHubActions", () => {
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to list the teams in an org.", async function() {
+    it("Should be possible to list the teams in an org.", async function () {
         const res = await gh.listTeams();
         Log.test('# teams ' + res.length);
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to identify an admin from the admin team.", async function() {
+    it("Should be possible to identify an admin from the admin team.", async function () {
         let res = await gh.isOnAdminTeam(Test.ADMIN1.github);
         Log.test('res: ' + res);
         expect(res).to.be.an('boolean');
@@ -232,7 +232,7 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to identify a staff from the staff team.", async function() {
+    it("Should be possible to identify a staff from the staff team.", async function () {
         let res = await gh.isOnStaffTeam(Test.STAFF1.github);
         Log.test('res: ' + res);
         expect(res).to.be.an('boolean');
@@ -251,13 +251,13 @@ describe("GitHubActions", () => {
         expect(res).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to get a team number for a team that does not exist.", async function() {
+    it("Should not be possible to get a team number for a team that does not exist.", async function () {
         const val = await gh.getTeamNumber(Test.INVALIDTEAMNAME);
         Log.test('Team # ' + val);
         expect(val).to.be.lessThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a team, add users to it, and add it to the repo.", async function() {
+    it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
         const val = await gh.createTeam(TEAMNAME, 'push');
         Log.test("Team created; details: " + JSON.stringify(val));
         expect(val.teamName).to.equal(TEAMNAME);
@@ -281,7 +281,7 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to get a team number for a team that does exist.", async function() {
+    it("Should be possible to get a team number for a team that does exist.", async function () {
         const val = await gh.getTeamNumber(Test.TEAMNAME1);
         Log.test('Team # ' + val);
         expect(val).to.be.greaterThan(0);
@@ -290,7 +290,7 @@ describe("GitHubActions", () => {
         // expect(bool).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should fail to get team members for an invalid team number argument.", async function() {
+    it("Should fail to get team members for an invalid team number argument.", async function () {
         let val = null;
         let ex = null;
         try {
@@ -302,24 +302,26 @@ describe("GitHubActions", () => {
         expect(ex).to.not.be.null;
     }).timeout(TIMEOUT);
 
-    it("Should get an empty array of team members for a team that does not exist.", async function() {
-        const val = await gh.getTeamMembers(-1337);
+    it("Should get an empty array of team members for a team that does not exist.", async function () {
+        // const val = await gh.getTeamMembers(-1337);
+        const val = await gh.getTeamMembers("team_" + Date.now());
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.equal(0);
     }).timeout(TIMEOUT);
 
-    it("Should be able to get member names for a valid team.", async function() {
-        const teamnum = await gh.getTeamNumber('staff');
-        Log.test("staff team #: " + teamnum);
-        expect(teamnum).to.be.an('number');
-        expect(teamnum > 0).to.be.true;
-        const val = await gh.getTeamMembers(teamnum);
+    it("Should be able to get member names for a valid team.", async function () {
+        // const teamnum = await gh.getTeamNumber('staff');
+        // Log.test("staff team #: " + teamnum);
+        // expect(teamnum).to.be.an('number');
+        // expect(teamnum > 0).to.be.true;
+        // const val = await gh.getTeamMembers(teamnum);
+        const val = await gh.getTeamMembers('staff');
         Log.test('# Team members: ' + val.length);
         expect(val.length).to.be.greaterThan(0);
         expect(val).to.contain(Test.ADMINSTAFF1.github);
     }).timeout(TIMEOUT);
 
-    it("Should be able to create many teams and get their numbers (tests team paging).", async function() {
+    it("Should be able to create many teams and get their numbers (tests team paging).", async function () {
 
         gh.setPageSize(2); // force a small page size for testing
         const NUM_TEAMS = 4; // could do 100 for a special test, but this is really slow
@@ -351,7 +353,7 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT * 20);
 
-    it("Should be able to create many repos and get them back (tests repo paging).", async function() {
+    it("Should be able to create many repos and get them back (tests repo paging).", async function () {
 
         const NUM_REPOS = 4;
         const rc = new RepositoryController();
@@ -391,7 +393,7 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT * 1000);
 
-    it("Should be able to clone a source repo into a newly created repository.", async function() {
+    it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME;
@@ -404,7 +406,7 @@ describe("GitHubActions", () => {
         Log.test('Full clone took: ' + Util.took(start));
     }).timeout(120 * 1000); // 2 minutes
 
-    it("Should be able to clone a source repository, and select files to create a new repository.", async function() {
+    it("Should be able to clone a source repository, and select files to create a new repository.", async function () {
         const tc: TeamController = new TeamController();
         const rc: RepositoryController = new RepositoryController();
         const dc: DeliverablesController = new DeliverablesController();
@@ -445,7 +447,7 @@ describe("GitHubActions", () => {
         Log.test('Partial clone took: ' + Util.took(start));
     }).timeout(120 * 1000);
 
-    it("Should be able to clone a source repository given various import URLs", async function() {
+    it("Should be able to clone a source repository given various import URLs", async function () {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
@@ -466,10 +468,10 @@ describe("GitHubActions", () => {
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
             // Should support importing from a subdir on a branch
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
-                Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
+            Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
             // Should support importing from a subdir on a branch with a seedFile
             [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
-                Test.REPOSUBDIRREAL_TESTINGSAMPLE, "BRANCH_NESTED.txt"],
+            Test.REPOSUBDIRREAL_TESTINGSAMPLE, "BRANCH_NESTED.txt"],
         ];
 
         for (const importTest of importTests) {
@@ -492,7 +494,7 @@ describe("GitHubActions", () => {
         }
     }).timeout(60 * 1000 * 10);
 
-    it("Should be able to soft-write a file to a repo, where the file doesn't exist.", async function() {
+    it("Should be able to soft-write a file to a repo, where the file doesn't exist.", async function () {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
@@ -500,7 +502,7 @@ describe("GitHubActions", () => {
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
-    it("Should be able to hard-write a file to a repo, where the file doesn't exist.", async function() {
+    it("Should be able to hard-write a file to a repo, where the file doesn't exist.", async function () {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
@@ -508,7 +510,7 @@ describe("GitHubActions", () => {
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
-    it("Should be able to hard-write a file to a repo, where the file does exist.", async function() {
+    it("Should be able to hard-write a file to a repo, where the file does exist.", async function () {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + REPONAME3;
 
@@ -516,12 +518,12 @@ describe("GitHubActions", () => {
         expect(success).to.be.true;
     }).timeout(2 * TIMEOUT);
 
-    it("Should not be able to soft-write a file to a repo that doesn't exist.", async function() {
+    it("Should not be able to soft-write a file to a repo that doesn't exist.", async function () {
         const success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!");
         expect(success).to.be.false;
     }).timeout(2 * TIMEOUT);
 
-    it("Should not be able to hard-write a file to a repo that doesn't exist.", async function() {
+    it("Should not be able to hard-write a file to a repo that doesn't exist.", async function () {
         const success = await gh.writeFileToRepo("invalidurl.com", "test_file2.txt", "hello world!", true);
         expect(success).to.be.false;
     }).timeout(2 * TIMEOUT);
@@ -529,7 +531,7 @@ describe("GitHubActions", () => {
     /**
      * This test is terrible, but gets the coverage tools to stop complaining.
      */
-    it("Should make sure that actions can actually fail.", async function() {
+    it("Should make sure that actions can actually fail.", async function () {
         if (1 > 0) {
             // terrible skip
             return;
@@ -568,7 +570,7 @@ describe("GitHubActions", () => {
         }
 
         try {
-            await gh.deleteTeam(-1);
+            await gh.deleteTeam("team_" + Date.now());
         } catch (err) {
             // expected
         }
@@ -615,7 +617,7 @@ describe("GitHubActions", () => {
 
     it("Should be able to create a repo, " +
         "create a team, add users to it, add it to the repo, " +
-        "and change their permissions", async function() {
+        "and change their permissions", async function () {
         const githubTeam = await gh.createTeam(TEAMNAME, 'push');
         expect(githubTeam.teamName).to.be.equal(TEAMNAME);
         expect(githubTeam.githubTeamNumber).to.be.an('number');
@@ -636,13 +638,13 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should not be able to change permissions of a repo that does not exist.", async function() {
+    it("Should not be able to change permissions of a repo that does not exist.", async function () {
         const permissionEdit = await gh.setRepoPermission(Test.INVALIDREPONAME, "pull");
         expect(permissionEdit).to.be.false;
 
     }).timeout(TIMEOUT);
 
-    it("Should not be able to change permissions of a repo to an invalid value.", async function() {
+    it("Should not be able to change permissions of a repo to an invalid value.", async function () {
         let permissionEdit = null;
         let ex = null;
         try {
@@ -681,13 +683,13 @@ describe("GitHubActions", () => {
     //
     // }).timeout(TIMEOUT);
 
-    it("Should be possible to find the teams on a repo.", async function() {
+    it("Should be possible to find the teams on a repo.", async function () {
         const val = await gh.getTeamsOnRepo(Test.REPONAMEREAL);
         expect(val).to.be.an('array');
         expect(val.length).to.equal(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to get the team from a number.", async function() {
+    it("Should be possible to get the team from a number.", async function () {
         const teamNumber = await gh.getTeamNumber(TEAMNAME);
         expect(teamNumber).to.be.greaterThan(0);
 
@@ -697,7 +699,7 @@ describe("GitHubActions", () => {
         expect(val.teamName).to.equal(TEAMNAME);
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to get the team that does not exist.", async function() {
+    it("Should not be possible to get the team that does not exist.", async function () {
         let res: any = "exists";
         let ex = null;
         try {
@@ -709,7 +711,7 @@ describe("GitHubActions", () => {
         expect(ex).to.be.null;
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to get the team with an invalid param.", async function() {
+    it("Should not be possible to get the team with an invalid param.", async function () {
         let res = null;
         let ex = null;
         try {
@@ -721,7 +723,7 @@ describe("GitHubActions", () => {
         expect(ex).to.not.be.null;
     }).timeout(TIMEOUT);
 
-    it("Should be possible to check the database.", async function() {
+    it("Should be possible to check the database.", async function () {
         let res = await GitHubActions.checkDatabase(null, null);
         expect(res).to.be.true;
 
@@ -730,31 +732,31 @@ describe("GitHubActions", () => {
         expect(res).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to simulate a webhook with the wrong params.", async function() {
-        let worked = await gh.simulateWebookComment(null, "SHA", "message");
+    it("Should not be possible to simulate a webhook with the wrong params.", async function () {
+        let worked = await gh.simulateWebhookComment(null, "SHA", "message");
         expect(worked).to.be.false;
 
-        worked = await gh.simulateWebookComment(REPONAME, null, "message");
+        worked = await gh.simulateWebhookComment(REPONAME, null, "message");
         expect(worked).to.be.false;
 
-        worked = await gh.simulateWebookComment(REPONAME, "SHA", null);
+        worked = await gh.simulateWebhookComment(REPONAME, "SHA", null);
         expect(worked).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be possible to simulate a webhook.", async function() {
-        let worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "SHA", "message");
+    it("Should be possible to simulate a webhook.", async function () {
+        let worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "SHA", "message");
         expect(worked).to.be.false; // SHA is not right
 
         let ex = null;
         try {
             let msg = "message";
-            worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             for (let i = 0; i < 10; i++) {
                 msg = msg + msg; // make a long message
             }
             msg = msg + '\n' + msg;
-            worked = await gh.simulateWebookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             // NOTE: worked not checked because githubWebhook needs to be active for this to work
             // expect(worked).to.be.true;
@@ -765,7 +767,7 @@ describe("GitHubActions", () => {
         expect(ex).to.be.null; // at least don't throw an exception
     }).timeout(TIMEOUT);
 
-    it("Should not be possible to make a comment with invalid params.", async function() {
+    it("Should not be possible to make a comment with invalid params.", async function () {
         let worked = await gh.makeComment(null, "message");
         expect(worked).to.be.false;
 
@@ -773,7 +775,7 @@ describe("GitHubActions", () => {
         expect(worked).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be possible to make a comment.", async function() {
+    it("Should be possible to make a comment.", async function () {
         const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
         let msg = "message";
         let url = githubAPI + '/repos/classytest/' + Test.REPONAMEREAL_POSTTEST + '/commits/INVALIDSHA/comments';
@@ -791,7 +793,7 @@ describe("GitHubActions", () => {
         expect(worked).to.be.true; // should have worked
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find the teams on a repo.", async function() {
+    it("Should be possible to find the teams on a repo.", async function () {
         const val = await gh.getTeamsOnRepo(REPONAME);
         Log.test("listed teams: " + JSON.stringify(val));
         expect(val).to.be.an('array');
@@ -815,7 +817,7 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find the members of a team.", async function() {
+    it("Should be possible to find the members of a team.", async function () {
         const val = await gh.listTeamMembers(TEAMNAME);
         Log.test("listed members: " + JSON.stringify(val));
         expect(val).to.be.an('array');
@@ -824,7 +826,7 @@ describe("GitHubActions", () => {
         expect(val).to.include(Test.GITHUB2.github);
     }).timeout(TIMEOUT);
 
-    it("Clear stale repos and teams.", async function() {
+    it("Clear stale repos and teams.", async function () {
         const del = await deleteStale();
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
@@ -883,7 +885,8 @@ describe("GitHubActions", () => {
             for (const t of TESTTEAMNAMES) {
                 if (team.teamName === t) {
                     Log.test("Removing stale team: " + team.teamName);
-                    await gh.deleteTeam(team.teamNumber);
+                    // await gh.deleteTeam(team.teamNumber);
+                    await gh.deleteTeam(team.teamName);
                     await Util.delay(DELAY_SHORT);
                     done = true;
                 }
@@ -891,7 +894,8 @@ describe("GitHubActions", () => {
             if (done === false) {
                 if (team.teamName.startsWith(TEAMNAME) === true) {
                     Log.test("Removing stale team: " + team.teamName);
-                    await gh.deleteTeam(team.teamNumber);
+                    // await gh.deleteTeam(team.teamNumber);
+                    await gh.deleteTeam(team.teamName);
                     await Util.delay(DELAY_SHORT);
                 }
             }

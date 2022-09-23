@@ -91,7 +91,7 @@ export default class GeneralRoutes implements IREST {
 
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info('GeneralRoutes::getPerson(..) - start; user: ' + user);
+        Log.trace('GeneralRoutes::getPerson(..) - start; user: ' + user);
 
         GeneralRoutes.performGetPerson(user, token).then(function(personTrans) {
             const payload: Payload = {success: personTrans};
@@ -127,7 +127,7 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
-        Log.info('GeneralRoutes::getGrades(..) - start; user: ' + user);
+        Log.trace('GeneralRoutes::getGrades(..) - start; user: ' + user);
 
         GeneralRoutes.performGetGrades(user, token).then(function(grades) {
             const payload: GradeTransportPayload = {success: grades};
@@ -159,7 +159,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getResource(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getResource(..) - start; user: ' + req.headers.user);
+        Log.trace('GeneralRoutes::getResource(..) - start; user: ' + req.headers.user);
 
         const auth = AdminRoutes.processAuth(req);
         // const user = req.headers.user;
@@ -181,11 +181,11 @@ export default class GeneralRoutes implements IREST {
         GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
 
             const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
-            Log.info("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+            Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
 
             try {
                 if (fs.lstatSync(filePath).isDirectory()) {
-                    Log.info("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
+                    Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
                     const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
                     res.writeHead(200, {
                         'Content-Length': Buffer.byteLength(html),
@@ -206,7 +206,7 @@ export default class GeneralRoutes implements IREST {
                         }
                     });
                     rs.on("end", () => {
-                        Log.info("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+                        Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
                         rs.close();
                     });
                     rs.pipe(res);
@@ -238,7 +238,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
-        Log.info("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
+        Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
 
         const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
         const port = Config.getInstance().getProp(ConfigKey.autotestPort);
@@ -300,7 +300,7 @@ export default class GeneralRoutes implements IREST {
     public static getRepos(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info('GeneralRoutes::getRepos(..) - start; user: ' + user);
+        Log.trace('GeneralRoutes::getRepos(..) - start; user: ' + user);
 
         GeneralRoutes.performGetRepos(user, token).then(function(repos) {
             const payload: RepositoryPayload = {success: repos};

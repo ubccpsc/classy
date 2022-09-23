@@ -22,7 +22,7 @@ describe("RepositoryController", () => {
     before(async () => {
         await Test.suiteBefore('RepositoryController');
 
-        // clear stale data (removed; happens in suitebefore)
+        // clear stale data (removed; happens in suiteBefore)
         // const dbc = DatabaseController.getInstance();
         // await dbc.clearData();
 

@@ -51,7 +51,7 @@ export interface IDataStore {
     /**
      * Debugging / testing only, should not be commonly used.
      *
-     * @returns {Promise<{records: ICommitRecord[]; comments: ICommentEvent[]; pushes: IPushEvent[]; feedback: IFeedbackGiven[]}>}
+     * @returns {Promise<{records: AutoTestResult[]; comments: CommitTarget[]; pushes: CommitTarget[]; feedback: IFeedbackGiven[]}>}
      */
     getAllData(): Promise<{records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
 

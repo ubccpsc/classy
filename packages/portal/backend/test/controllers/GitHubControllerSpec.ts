@@ -25,7 +25,7 @@ describe("GitHubController", () => {
 
     let gha: IGitHubActions;
 
-    before(async function() {
+    before(async function () {
         this.timeout(Test.TIMEOUTLONG);
 
         Log.test("GitHubControllerSpec::before() - start; forcing testorg");
@@ -74,7 +74,7 @@ describe("GitHubController", () => {
         Test.suiteAfter('GitHubController');
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         const exec = Test.runSlowTest();
         if (exec === true) {
             Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
@@ -85,7 +85,7 @@ describe("GitHubController", () => {
         }
     });
 
-    it("Should be able to clear out prior result", async function() {
+    it("Should be able to clear out prior result", async function () {
         // not really a test, we just want something to run first we can set timeout on (cannot add timeout to before)
         Log.test("Clearing prior result");
         try {
@@ -121,7 +121,7 @@ describe("GitHubController", () => {
         expect(repoUrl).to.equal(url);
     });
 
-    it("Should be able to provision a repo.", async function() {
+    it("Should be able to provision a repo.", async function () {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
@@ -134,7 +134,7 @@ describe("GitHubController", () => {
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should fail to provision a repo that already exists.", async function() {
+    it("Should fail to provision a repo that already exists.", async function () {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         const repos = await new RepositoryController().getAllRepos();
         expect(repos.length).to.be.greaterThan(0);
@@ -166,7 +166,7 @@ describe("GitHubController", () => {
 
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should be able to create a repo.", async function() {
+    it("Should be able to create a repo.", async function () {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
@@ -194,7 +194,7 @@ describe("GitHubController", () => {
     //     expect(ex).to.not.be.null;
     // }).timeout(Test.TIMEOUTLONG);
 
-    it("Should not be able to create a repo when preconditions are not met.", async function() {
+    it("Should not be able to create a repo when preconditions are not met.", async function () {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const repo = await rc.getRepository(Test.REPONAME2);
@@ -228,7 +228,7 @@ describe("GitHubController", () => {
 
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should be able to create a repo with a custom path.", async function() {
+    it("Should be able to create a repo with a custom path.", async function () {
         // NOTE: this test is unreliable and needs to be fundamentally fixed
         this.skip();
 
@@ -252,7 +252,7 @@ describe("GitHubController", () => {
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should be able to release a repo.", async function() {
+    it("Should be able to release a repo.", async function () {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const allRepos: Repository[] = await rc.getAllRepos();
@@ -273,7 +273,7 @@ describe("GitHubController", () => {
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUT);
 
-    it("Should fail to release a repo if preconditions are not met.", async function() {
+    it("Should fail to release a repo if preconditions are not met.", async function () {
         // setup
         const rc: RepositoryController = new RepositoryController();
         const allRepos: Repository[] = await rc.getAllRepos();
@@ -309,6 +309,78 @@ describe("GitHubController", () => {
         }
         expect(res).to.be.null;
         expect(ex).to.not.be.null;
+    }).timeout(Test.TIMEOUT);
+
+    it("Should be update branch protection.", async function () {
+        await Test.prepareRepositories();
+
+        const rc: RepositoryController = new RepositoryController();
+        const repo = await rc.getRepository(Test.REPONAME1);
+        expect(repo).to.not.be.null;
+
+        if (await gha.repoExists(Test.REPONAME1) === false) {
+            // create repo
+            const url = await gha.createRepo(Test.REPONAME1);
+            expect(url).to.have.length.greaterThan(0);
+        }
+        const success = await gc.updateBranchProtection(repo, [{name: Test.USER1.github, reviews: 1}]);
+        expect(success).to.be.true;
+    }).timeout(Test.TIMEOUT);
+
+    it("Should not update branch protection for a repo that does not exist.", async function () {
+        await Test.prepareRepositories();
+
+        const rc: RepositoryController = new RepositoryController();
+        const repo = await rc.getRepository("repo_" + Date.now());
+        expect(repo).to.be.null;
+
+        let res = null;
+        let ex = null;
+        try {
+            // should throw
+            res = await gc.updateBranchProtection(repo, [{name: Test.USER1.github, reviews: 1}]);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.equal("GitHubController::updateBranchProtection(..) - null repo");
+    }).timeout(Test.TIMEOUT);
+
+    it("Should be create an issue.", async function () {
+        await Test.prepareRepositories();
+
+        const rc: RepositoryController = new RepositoryController();
+        const repo = await rc.getRepository(Test.REPONAME1);
+        expect(repo).to.not.be.null;
+
+        if (await gha.repoExists(Test.REPONAME1) === false) {
+            // create repo
+            const url = await gha.createRepo(Test.REPONAME1);
+            expect(url).to.have.length.greaterThan(0);
+        }
+        const success = await gc.createIssues(repo, [{title: "Issue Title", body: "Issue Body"}]);
+        expect(success).to.be.true;
+    }).timeout(Test.TIMEOUT);
+
+    it("Should not create an issue for a repo that does not exist.", async function () {
+        await Test.prepareRepositories();
+
+        const rc: RepositoryController = new RepositoryController();
+        const repo = await rc.getRepository("repo_" + Date.now());
+        expect(repo).to.be.null;
+
+        let res = null;
+        let ex = null;
+        try {
+            // should throw
+            res = await gc.createIssues(repo, [{title: "Issue Title", body: "Should not exist"}]);
+        } catch (err) {
+            ex = err;
+        }
+        expect(res).to.be.null;
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.equal("GitHubController::createIssues(..) - null repo");
     }).timeout(Test.TIMEOUT);
 
     // TODO: actually write tests for the PR feature

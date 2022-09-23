@@ -3,8 +3,9 @@ import fetch, {RequestInit} from 'node-fetch';
 import Config, {ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
 
-import {CommitTarget} from "../../../common/types/ContainerTypes";
+import {AutoTestAuthTransport} from "../../../common/types/PortalTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
+import {CommitTarget} from "../../../common/types/ContainerTypes";
 
 export interface IGitHubMessage {
     /**
@@ -125,6 +126,13 @@ export class GitHubUtil {
             // need to get this from portal backend (this is a gitHubId, not a personId)
             const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
+
+            let adminRequest = false;
+            const authLevel: AutoTestAuthTransport = await cp.isStaff(personId);
+            if (authLevel.isStaff === true || authLevel.isAdmin === true) {
+                adminRequest = true;
+            }
+
             let kind = 'standard'; // if #check, set that here
             if (flags.indexOf("#check") >= 0) {
                 kind = 'check';
@@ -140,6 +148,7 @@ export class GitHubUtil {
                 commitURL,
                 postbackURL,
                 cloneURL,
+                adminRequest,
                 personId,
                 kind,
                 timestamp,
@@ -225,9 +234,10 @@ export class GitHubUtil {
             }
 
             const pushEvent: CommitTarget = {
-                delivId:      backendConfig.defaultDeliverable,
-                repoId:       repo,
+                delivId: backendConfig.defaultDeliverable,
+                repoId: repo,
                 botMentioned: false, // not explicitly invoked
+                adminRequest: false, // all pushes are treated equally
                 personId:     pusher?.personId ?? null,
                 kind:         'push',
                 cloneURL,
@@ -278,13 +288,13 @@ export class GitHubUtil {
 
             const body: string = JSON.stringify({body: message.message});
             const options: RequestInit = {
-                method:  "POST",
+                method: "POST",
                 headers: {
-                    "Content-Type":  "application/json",
-                    "User-Agent":    "UBC-AutoTest",
+                    "Content-Type": "application/json",
+                    "User-Agent": "UBC-AutoTest",
                     "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
                 },
-                body:    body
+                body: body
             };
 
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {

@@ -85,10 +85,10 @@ export class AuthRoutes implements IREST {
             token = null;
         }
 
-        Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; token: ' + token);
+        Log.trace('AuthRoutes::getLogout(..) - user: ' + user + '; token: ' + token);
         let payload: Payload;
 
-        const handleError = function(msg: string) {
+        const handleError = function (msg: string) {
             Log.error('AuthRoutes::getLogout(..) - ERROR: ' + msg);
             payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
             res.send(400, payload);
@@ -100,9 +100,9 @@ export class AuthRoutes implements IREST {
             handleError("unknown user.");
         }
 
-        AuthRoutes.ac.isValid(user, token).then(function(isValid) {
+        AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             if (isValid === true) {
-                Log.info('AuthRoutes::getLogout(..) - user: ' + user + '; valid user');
+                Log.trace('AuthRoutes::getLogout(..) - user: ' + user + '; valid user');
             } else {
                 // logout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
@@ -111,14 +111,15 @@ export class AuthRoutes implements IREST {
             // logout
             const ac = new AuthController();
             return ac.removeAuthentication(user);
-        }).then(function(success) {
+        }).then(function (success) {
             if (success) {
+                Log.info('AuthRoutes::getLogout(..) - logged out; user: ' + user);
                 payload = {success: {message: "Logout successful"}};
                 res.send(200, payload);
             } else {
                 handleError("Logout unsuccessful.");
             }
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error('AuthRoutes::getLogout(..) - unexpected ERROR: ' + err.message);
             handleError(err.message);
         });
@@ -128,15 +129,22 @@ export class AuthRoutes implements IREST {
         Log.trace('AuthRoutes::getCredentials(..) - start');
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
+        Log.trace('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
 
         let payload: AuthTransportPayload;
-        AuthRoutes.performGetCredentials(user, token).then(function(isPrivileged) {
-            payload = {success: {personId: user, token: token, isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff}};
-            Log.info('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+        AuthRoutes.performGetCredentials(user, token).then(function (isPrivileged) {
+            payload = {
+                success: {
+                    personId: user,
+                    token: token,
+                    isAdmin: isPrivileged.isAdmin,
+                    isStaff: isPrivileged.isStaff
+                }
+            };
+            Log.trace('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
             return next(true);
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.warn("AuthRoutes::getCredentials(..) - ERROR: " + err.message);
             payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
@@ -144,7 +152,7 @@ export class AuthRoutes implements IREST {
         });
     }
 
-    public static async performGetCredentials(user: string, token: string): Promise<{isAdmin: boolean, isStaff: boolean}> {
+    public static async performGetCredentials(user: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
         Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
         if (isValid === false) {
@@ -167,15 +175,15 @@ export class AuthRoutes implements IREST {
 
     /* istanbul ignore next */
     public static getAuth(req: any, res: any, next: any) {
-        Log.info("AuthRoutes::getAuth(..) - /auth redirect start");
+        Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
         const config = Config.getInstance();
         const setup = {
-            clientId:         config.getProp(ConfigKey.githubClientId),
-            clientSecret:     config.getProp(ConfigKey.githubClientSecret),
-            accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
+            clientId: config.getProp(ConfigKey.githubClientId),
+            clientSecret: config.getProp(ConfigKey.githubClientSecret),
+            accessTokenUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
             authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            scopes:           ['']
+            scopes: ['']
         };
 
         const githubAuth = new ClientOAuth2(setup);
@@ -200,7 +208,7 @@ export class AuthRoutes implements IREST {
     public static authCallback(req: any, res: any, next: any) {
         Log.trace("AuthRoutes::authCallback(..) - /authCallback - start");
 
-        AuthRoutes.performAuthCallback(req.url, req.headers.host).then(function(redirectOptions) {
+        AuthRoutes.performAuthCallback(req.url, req.headers.host).then(function (redirectOptions) {
             const cookie = redirectOptions.cookie;
             delete redirectOptions.cookie;
             if (cookie !== null) {
@@ -214,7 +222,7 @@ export class AuthRoutes implements IREST {
 
             res.redirect(redirectOptions, next);
 
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
             // TODO: should this be returning 400 or something?
             return next(false);
@@ -235,11 +243,11 @@ export class AuthRoutes implements IREST {
         // Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
 
         const opts = {
-            clientId:         config.getProp(ConfigKey.githubClientId),
-            clientSecret:     config.getProp(ConfigKey.githubClientSecret),
-            accessTokenUri:   config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
+            clientId: config.getProp(ConfigKey.githubClientId),
+            clientSecret: config.getProp(ConfigKey.githubClientSecret),
+            accessTokenUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
             authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            scopes:           ['']
+            scopes: ['']
         };
 
         Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
@@ -254,10 +262,10 @@ export class AuthRoutes implements IREST {
 
         token = user.accessToken;
         const options: RequestInit = {
-            method:  'GET',
+            method: 'GET',
             headers: {
-                'Content-Type':  'application/json',
-                'User-Agent':    'Portal',
+                'Content-Type': 'application/json',
+                'User-Agent': 'Portal',
                 'Authorization': 'token ' + token
             }
             // rejectUnauthorized: false,
@@ -310,17 +318,17 @@ export class AuthRoutes implements IREST {
             Log.warn("AuthRoutes::performAuthCallback(..) - /authCallback - person (GitHub id: " + username +
                 " ) not registered for course; redirecting to invalid user screen.");
             return {
-                cookie:   null,
+                cookie: null,
                 hostname: feUrl,
                 pathname: 'invalid.html',
-                port:     fePort
+                port: fePort
             };
         } else {
 
             Log.trace("AuthRoutes::performAuthCallback(..) - /portal/authCallback - registering auth for person: " + person.githubId);
             const auth: Auth = {
                 personId: person.id, // use person.id, not username (aka githubId)
-                token:    token
+                token: token
             };
 
             await DatabaseController.getInstance().writeAuth(auth);
@@ -333,10 +341,10 @@ export class AuthRoutes implements IREST {
             const cookie = "token=" + token + '__' + person.id; // Firefox doesn't like multiple tokens (line above)
             Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
             return {
-                cookie:   cookie,
+                cookie: cookie,
                 hostname: feUrl,
                 pathname: 'index.html',
-                port:     fePort
+                port: fePort
             };
         }
     }

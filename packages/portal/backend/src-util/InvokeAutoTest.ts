@@ -127,7 +127,7 @@ export class InvokeAutoTest {
                         const projectId = url.substring(url.lastIndexOf(org) + org.length, url.lastIndexOf('/commit/'));
                         const sha = url.substring(url.lastIndexOf('/commit/') + 8);
                         Log.info("Making invisible request for project: " + projectId + '; sha: ' + sha + '; URL: ' + url);
-                        await gha.simulateWebookComment(projectId, sha, this.MSG);
+                        await gha.simulateWebhookComment(projectId, sha, this.MSG);
                     } else {
                         let u = url;
                         // update prefix from: https://HOST/CPSC310-2018W-T1/ --> https://HOST/api/v3/repos/CPSC310-2018W-T1/

@@ -30,7 +30,7 @@
         "fs-extra": "^5.0.0",
         "moment": "^2.29.4",
         "mongodb": "^3.0.2",
-        "onsenui": "^2.9.2",
+        "onsenui": "^2.12.2",
         "restify": "^8.4.0",
         "source-map-loader": "^0.2.4",
         "ts-loader": "^9.2.3",

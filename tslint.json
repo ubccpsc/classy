@@ -23,6 +23,7 @@
         "object-literal-sort-keys": false,
         "no-floating-promises": true,
         "no-string-literal": false,
+        "ordered-imports": false,
         "space-before-function-paren": [
             "error",
             {

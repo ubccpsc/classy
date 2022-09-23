@@ -4,7 +4,12 @@ import "mocha";
 import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {Test} from "../../../../common/TestHarness";
-import {AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport} from "../../../../common/types/PortalTypes";
+import {
+    AutoTestGradeTransport,
+    GradeTransport,
+    StudentTransport,
+    TeamTransport
+} from "../../../../common/types/PortalTypes";
 
 import {AdminController} from "../../src/controllers/AdminController";
 import {ICourseController} from "../../src/controllers/CourseController";
@@ -33,12 +38,12 @@ describe("AdminController", () => {
     let dc: DeliverablesController;
     let gha: IGitHubActions;
 
-    before(async function() {
+    before(async function () {
         await Test.suiteBefore('AdminController');
         await clearAndPrepareAll();
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         gha = GitHubActions.getInstance(true);
         const ghInstance = new GitHubController(gha);
 
@@ -52,7 +57,7 @@ describe("AdminController", () => {
         dc = new DeliverablesController();
     });
 
-    after(async function() {
+    after(async function () {
         Test.suiteAfter('AdminController');
     });
 
@@ -87,18 +92,24 @@ describe("AdminController", () => {
         // await gha.deleteTeam(teamNum);
 
         // NOTE: using GHA instead of TC because we really want to clear out GitHub
-        let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.csId);
-        await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.csId);
-        await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.csId);
-        await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
-        await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
-        await gha.deleteTeam(teamNum);
-        teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
-        await gha.deleteTeam(teamNum);
+        // let teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB1.csId);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam('t_d0_' + Test.GITHUB1.csId);
+        // teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB2.csId);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam('t_d0_' + Test.GITHUB2.csId);
+        // teamNum = await gha.getTeamNumber('t_d0_' + Test.GITHUB3.csId);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam('t_d0_' + Test.GITHUB3.csId);
+        // teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam('t_project_' + Test.GITHUB1.csId + '_' + Test.GITHUB2.csId);
+        // teamNum = await gha.getTeamNumber('t_project_' + Test.GITHUB3.csId);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam('t_project_' + Test.GITHUB3.csId);
+        // teamNum = await gha.getTeamNumber(Test.TEAMNAMEREAL);
+        // await gha.deleteTeam(teamNum);
+        await gha.deleteTeam(Test.TEAMNAMEREAL);
 
         await Test.prepareDeliverables();
 
@@ -117,12 +128,12 @@ describe("AdminController", () => {
         await dbc.writeTeam(t);
     }
 
-    it("Should be able to get the config name.", async function() {
+    it("Should be able to get the config name.", async function () {
         const res = await AdminController.getName();
         expect(res).to.equal(ConfigCourses.classytest);
     });
 
-    it("Should not be able to get a user that doesn't exist.", async function() {
+    it("Should not be able to get a user that doesn't exist.", async function () {
         const USERNAME = "UNKNOWNUSER" + new Date().getTime();
         const res = await cc.handleUnknownUser(USERNAME);
         expect(res).to.equal(null); // nothing should be returned
@@ -131,20 +142,20 @@ describe("AdminController", () => {
         expect(person).to.equal(null); // should not exist
     });
 
-    it("Should be able to get a list of students.", async function() {
+    it("Should be able to get a list of students.", async function () {
 
         const res = await ac.getStudents();
         expect(res).to.be.an('array');
         expect(res.length).to.be.greaterThan(0);
 
         const s: StudentTransport = {
-            firstName:  'first_' + Test.USER1.id,
-            lastName:   'last_' + Test.USER1.id,
-            id:         Test.USER1.id,
-            githubId:   Test.USER1.github,
-            userUrl:    Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER1.github,
+            firstName: 'first_' + Test.USER1.id,
+            lastName: 'last_' + Test.USER1.id,
+            id: Test.USER1.id,
+            githubId: Test.USER1.github,
+            userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER1.github,
             studentNum: null,
-            labId:      'l1a'
+            labId: 'l1a'
         };
 
         expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -157,10 +168,10 @@ describe("AdminController", () => {
         expect(actual.length).to.be.greaterThan(0);
 
         const t: TeamTransport = {
-            id:      Test.TEAMNAME1,
+            id: Test.TEAMNAME1,
             delivId: "d0",
-            people:  [Test.USER1.id, Test.USER2.id],
-            URL:     null
+            people: [Test.USER1.id, Test.USER2.id],
+            URL: null
             // repoName: null,
             // repoUrl:  null
         };
@@ -177,15 +188,15 @@ describe("AdminController", () => {
         const url = Config.getInstance().getProp(ConfigKey.githubHost) + '/' + Test.USER2.github;
         const id = Test.USER2.id;
         const t: GradeTransport = {
-            personId:  id,
+            personId: id,
             personURL: url,
-            delivId:   "d1",
-            score:     100,
-            comment:   "comment",
-            urlName:   "urlName",
-            URL:       "URL",
+            delivId: "d1",
+            score: 100,
+            comment: "comment",
+            urlName: "urlName",
+            URL: "URL",
             timestamp: 1517446860000,
-            custom:    {}
+            custom: {}
         };
         expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
     });
@@ -272,16 +283,16 @@ describe("AdminController", () => {
         const grade: AutoTestGradeTransport = {
             delivId: 'd0',
 
-            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            score: 100, // grade: < 0 will mean 'N/A' in the UI
             comment: '', // simple grades will just have a comment
 
             urlName: 'commitName', // description to go with the URL (repo if exists)
-            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+            URL: 'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
 
             timestamp: new Date(1400000000000 + 1000).getTime(), // shouldSave should be true
-            custom:    {},
+            custom: {},
 
-            repoId:  Test.REPONAME1,
+            repoId: Test.REPONAME1,
             repoURL: 'repoUrl'
         };
 
@@ -295,16 +306,16 @@ describe("AdminController", () => {
         const grade: AutoTestGradeTransport = {
             delivId: 'd0',
 
-            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            score: 100, // grade: < 0 will mean 'N/A' in the UI
             comment: '', // simple grades will just have a comment
 
             urlName: 'commitName', // description to go with the URL (repo if exists)
-            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+            URL: 'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
 
             timestamp: new Date(1500000000000 + 1000).getTime(), // too late: shouldSave should be false
-            custom:    {},
+            custom: {},
 
-            repoId:  Test.REPONAME1,
+            repoId: Test.REPONAME1,
             repoURL: 'repoUrl'
         };
 
@@ -318,16 +329,16 @@ describe("AdminController", () => {
         const grade: AutoTestGradeTransport = {
             delivId: 'd0',
 
-            score:   100, // grade: < 0 will mean 'N/A' in the UI
+            score: 100, // grade: < 0 will mean 'N/A' in the UI
             comment: '', // simple grades will just have a comment
 
             urlName: 'commitName', // description to go with the URL (repo if exists)
-            URL:     'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
+            URL: 'commitUrl', // commit URL if known, otherwise repo URL (commit / repo if exists)
 
             timestamp: Date.now(), // even if grade < 0 might as well return when the entry was made
-            custom:    {},
+            custom: {},
 
-            repoId:  'INVALIDID',
+            repoId: 'INVALIDID',
             repoURL: 'repoUrl'
         };
 
@@ -368,7 +379,7 @@ describe("AdminController", () => {
         await ac.saveCourse(res);
     });
 
-    it("Should not be able to validate an invalid course object.", function() {
+    it("Should not be able to validate an invalid course object.", function () {
         let res = null;
         try {
             AdminController.validateCourseTransport(null);
@@ -389,7 +400,7 @@ describe("AdminController", () => {
         expect(res).to.be.an('string');
     });
 
-    it("Should not be able to validate an invalid provision object.", function() {
+    it("Should not be able to validate an invalid provision object.", function () {
         let res = null;
         let ex = null;
         try {
@@ -461,7 +472,7 @@ describe("AdminController", () => {
         //     await clearAndPreparePartial();
         // });
 
-        beforeEach(function() {
+        beforeEach(function () {
             const exec = Test.runSlowTest();
             if (exec) {
                 Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);

@@ -6,7 +6,17 @@ import {PersonController} from "../portal/backend/src/controllers/PersonControll
 import {RepositoryController} from "../portal/backend/src/controllers/RepositoryController";
 import {TeamController} from "../portal/backend/src/controllers/TeamController";
 import {Factory} from "../portal/backend/src/Factory";
-import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../portal/backend/src/Types";
+import {
+    Auth,
+    Course,
+    Deliverable,
+    Grade,
+    Person,
+    PersonKind,
+    Repository,
+    Result,
+    Team
+} from "../portal/backend/src/Types";
 import Config, {ConfigKey} from "./Config";
 import Log from "./Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
@@ -267,12 +277,12 @@ export class Test {
 
         // NOTE: see FrontendDatasetGenerator for ideas
         const grade: GradePayload = {
-            score:     100,
-            comment:   'comment',
-            urlName:   'urlName',
-            URL:       'URL',
+            score: 100,
+            comment: 'comment',
+            urlName: 'urlName',
+            URL: 'URL',
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
-            custom:    {}
+            custom: {}
         };
 
         const gc = new GradesController();
@@ -313,25 +323,25 @@ export class Test {
 
         let auth: Auth = {
             personId: Test.USER1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
             personId: Test.GITHUB1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
             personId: Test.ADMIN1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
             personId: Test.ADMINSTAFF1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await dc.writeAuth(auth);
     }
@@ -340,29 +350,29 @@ export class Test {
         const d: Deliverable = {
             id: delivId,
 
-            URL:            'http://NOTSET',
-            openTimestamp:  new Date(1400000000000).getTime(),
+            URL: 'http://NOTSET',
+            openTimestamp: new Date(1400000000000).getTime(),
             closeTimestamp: new Date(1500000000000).getTime(),
             gradesReleased: false,
 
-            shouldProvision:  true,
-            importURL:        Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
-            teamMinSize:      2,
-            teamMaxSize:      2,
-            teamSameLab:      true,
+            shouldProvision: true,
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
+            teamMinSize: 2,
+            teamMaxSize: 2,
+            teamSameLab: true,
             teamStudentsForm: true,
-            teamPrefix:       't',
-            repoPrefix:       '',
+            teamPrefix: 't',
+            repoPrefix: '',
 
             visibleToStudents: true,
-            lateAutoTest:      false,
-            shouldAutoTest:    true,
-            autotest:          {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
+            lateAutoTest: false,
+            shouldAutoTest: true,
+            autotest: {
+                dockerImage: 'testImage',
+                studentDelay: 60 * 60 * 12, // 12h
+                maxExecTime: 300,
                 regressionDelivIds: [],
-                custom:             {}
+                custom: {}
             },
 
             rubric: {},
@@ -377,32 +387,47 @@ export class Test {
             personId,
             delivId,
             score,
-            comment:   'comment',
+            comment: 'comment',
             timestamp: Date.now(),
-            urlName:   'name',
-            URL:       'URL',
-            custom:    {}
+            urlName: 'name',
+            URL: 'URL',
+            custom: {}
         };
         return grade;
     }
 
     public static createPerson(id: string, csId: string, githubId: string, kind: PersonKind | null): Person {
         const p: Person = {
-            id:            id,
-            csId:          csId,
-            githubId:      githubId,
+            id: id,
+            csId: csId,
+            githubId: githubId,
             studentNumber: null,
 
             fName: 'first_' + id,
             lName: 'last_' + id,
-            kind:  kind,
-            URL:   Config.getInstance().getProp(ConfigKey.githubHost) + '/' + githubId,
+            kind: kind,
+            URL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + githubId,
 
             labId: null,
 
             custom: {}
         };
         return p;
+    }
+
+    /**
+     * Expose CI check. Some tests require infrastructure that will not
+     * be accessible from individual dev machines.
+     */
+    public static isCI(): boolean {
+        const ci = process.env.CI;
+        if (typeof ci !== "undefined" && Boolean(ci) === true) {
+            Log.test("Test::isCI() - running in CI");
+            return true;
+        } else {
+            Log.test("Test::isCI() - not running CI");
+            return false;
+        }
     }
 
     /**
@@ -414,9 +439,7 @@ export class Test {
      * @returns {boolean}
      */
     public static runSlowTest() {
-
-        const ci = process.env.CI;
-        if (Factory.OVERRIDE || typeof ci !== 'undefined' && Boolean(ci) === true) {
+        if (Factory.OVERRIDE || Test.isCI() === true) {
             Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
             return true;
         } else {
@@ -440,8 +463,8 @@ export class Test {
     public static getConfigUser(userKey: ConfigKey, num: number = null): any {
         const username = num ? Config.getInstance().getProp(userKey).split(',')[num - 1].trim() : Config.getInstance().getProp(userKey);
         return {
-            id:     username + 'ID',
-            csId:   username + 'CSID',
+            id: username + 'ID',
+            csId: username + 'CSID',
             github: username
         };
     }
@@ -504,47 +527,47 @@ export class Test {
         const deliv: Deliverable = {
             id: delivId,
 
-            URL:               'https://NOTSET',
-            openTimestamp:     -1,
-            closeTimestamp:    -1,
-            gradesReleased:    false,
+            URL: 'https://NOTSET',
+            openTimestamp: -1,
+            closeTimestamp: -1,
+            gradesReleased: false,
             // delay:            -1,
-            shouldProvision:   false,
-            importURL:         Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
-            teamMinSize:       1,
-            teamMaxSize:       1,
-            teamSameLab:       false,
-            teamStudentsForm:  false,
-            teamPrefix:        'team',
-            repoPrefix:        '',
+            shouldProvision: false,
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
+            teamMinSize: 1,
+            teamMaxSize: 1,
+            teamSameLab: false,
+            teamStudentsForm: false,
+            teamPrefix: 'team',
+            repoPrefix: '',
             // bootstrapUrl:     '',
-            lateAutoTest:      false,
-            shouldAutoTest:    true,
-            autotest:          {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
+            lateAutoTest: false,
+            shouldAutoTest: true,
+            autotest: {
+                dockerImage: 'testImage',
+                studentDelay: 60 * 60 * 12, // 12h
+                maxExecTime: 300,
                 regressionDelivIds: [],
-                custom:             {}
+                custom: {}
             },
             visibleToStudents: true,
-            rubric:            {},
-            custom:            {}
+            rubric: {},
+            custom: {}
         };
         return Util.clone(deliv) as Deliverable;
     }
 
     public static getPerson(id: string): Person {
         const p: Person = {
-            id:            id,
-            csId:          id,
-            githubId:      id,
+            id: id,
+            csId: id,
+            githubId: id,
             studentNumber: null,
 
             fName: 'f' + id,
             lName: 'l' + id,
-            kind:  null,
-            URL:   null,
+            kind: null,
+            URL: null,
 
             labId: null,
 
@@ -556,14 +579,14 @@ export class Test {
     public static getGrade(delivId: string, personId: string, score: number): Grade {
         const grade: Grade = {
             personId: personId,
-            delivId:  delivId,
+            delivId: delivId,
 
-            score:     score,
-            comment:   '',
+            score: score,
+            comment: '',
             timestamp: Date.now(),
 
             urlName: 'urlName',
-            URL:     'url',
+            URL: 'url',
 
             custom: {}
         };
@@ -572,28 +595,28 @@ export class Test {
 
     public static getTeam(teamId: string, delivId: string, people: string[]): Team {
         const team: Team = {
-            id:        teamId,
-            delivId:   delivId,
-            githubId:  null,
+            id: teamId,
+            delivId: delivId,
+            githubId: null,
             // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             //            Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
             // repoName:  null,
             // repoUrl:   null,
-            URL:       null,
+            URL: null,
             personIds: people,
-            custom:    {}
+            custom: {}
         };
         return Util.clone(team) as Team;
     }
 
     public static getRepository(id: string, delivId: string, teamId: string): Repository {
         const repo: Repository = {
-            id:       id,
-            delivId:  delivId,
-            URL:      Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
+            id: id,
+            delivId: delivId,
+            URL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
             cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id + '.git',
-            teamIds:  [teamId],
-            custom:   {}
+            teamIds: [teamId],
+            custom: {}
         };
         return Util.clone(repo) as Repository;
     }
@@ -601,9 +624,9 @@ export class Test {
     public static createCourseRecord(): Course {
         const courseId = Config.getInstance().getProp(ConfigKey.name);
         const out: Course = {
-            id:                   courseId,
+            id: courseId,
             defaultDeliverableId: null,
-            custom:               {}
+            custom: {}
         };
         return out;
     }
@@ -639,66 +662,67 @@ export class Test {
 
         const output: ContainerOutput = {
             // commitURL:          commitURL,
-            timestamp:          ts,
-            report:             {
+            timestamp: ts,
+            report: {
                 scoreOverall: score,
-                scoreTest:    Math.random() * 100,
-                scoreCover:   Math.random() * 100,
-                passNames:    passNames,
-                failNames:    failNames,
-                errorNames:   errorNames,
-                skipNames:    skipNames,
-                custom:       {},
-                feedback:     'feedback',
-                result:       'SUCCESS',
-                attachments:  []
+                scoreTest: Math.random() * 100,
+                scoreCover: Math.random() * 100,
+                passNames: passNames,
+                failNames: failNames,
+                errorNames: errorNames,
+                skipNames: skipNames,
+                custom: {},
+                feedback: 'feedback',
+                result: 'SUCCESS',
+                attachments: []
             },
             postbackOnComplete: true,
-            custom:             {},
-            state:              ContainerState.SUCCESS,
-            graderTaskId:       ""
+            custom: {},
+            state: ContainerState.SUCCESS,
+            graderTaskId: ""
         };
 
         const input: ContainerInput = {
-            target:          {
+            target: {
                 delivId: delivId,
-                repoId:  repoId,
+                repoId: repoId,
 
                 // branch:    'master',
-                cloneURL:  'cloneURL',
+                cloneURL: 'cloneURL',
                 commitSHA: sha,
                 commitURL: commitURL,
 
                 botMentioned: false,
-                personId:     null,
-                kind:         'push',
+                adminRequest: false,
+                personId: null,
+                kind: 'push',
 
                 // projectURL:  projectURL,
                 postbackURL: 'postbackURL',
-                timestamp:   ts
+                timestamp: ts
             },
             containerConfig: {
-                dockerImage:        "imageName",
-                studentDelay:       300,
-                maxExecTime:        6000,
+                dockerImage: "imageName",
+                studentDelay: 300,
+                maxExecTime: 6000,
                 regressionDelivIds: [],
-                custom:             {},
-                openTimestamp:      0,
-                closeTimestamp:     10000,
-                lateAutoTest:       true,
+                custom: {},
+                openTimestamp: 0,
+                closeTimestamp: 10000,
+                lateAutoTest: true,
             },
-            delivId:         delivId,
+            delivId: delivId,
         };
 
         const result: Result = {
-            delivId:   delivId,
-            repoId:    repoId,
+            delivId: delivId,
+            repoId: repoId,
             // timestamp: ts,
             commitURL: commitURL,
             commitSHA: sha,
-            input:     input,
-            output:    output,
-            people:    people
+            input: input,
+            output: output,
+            people: people
         };
 
         return Util.clone(result) as Result;
