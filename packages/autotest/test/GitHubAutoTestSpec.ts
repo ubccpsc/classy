@@ -147,6 +147,9 @@ describe("GitHubAutoTest", () => {
         await at.handlePushEvent(pushes[3]);
         await at.handlePushEvent(pushes[4]);
         await at.handlePushEvent(pushes[5]);
+        await at.handlePushEvent(pushes[6]);
+        await at.handlePushEvent(pushes[7]);
+        await at.handlePushEvent(pushes[8]);
         Log.test("all pushes sent");
 
         // to see at what admin pushes look like
@@ -161,16 +164,17 @@ describe("GitHubAutoTest", () => {
         await Util.delay(10);
 
         // all pushes should be here
-        expect(allData.pushes.length).to.equal(6);
+        expect(allData.pushes.length).to.equal(9);
         const eq = (at["expressQueue"] as any);
         const sq = (at["standardQueue"] as any);
         const rq = (at["regressionQueue"] as any);
         Log.test("about to check values");
-        expect(eq.slots).to.have.length(0); // nothing should be running on express
+        expect(eq.slots).to.have.length(2); // two jobs should have been backfilled to express
         expect(eq.data).to.have.length(0); // nothing should be queued on express
         expect(sq.slots).to.have.length(2); // two should be running on standard
-        expect(sq.data).to.have.length(2); // two should be waiting on standard
+        expect(sq.data).to.have.length(3); // one should be waiting on standard
         expect(rq.slots).to.have.length(1); // one should be running on regression
+        // this is the main check: if this all worked, a job should have been pushed onto the regression queue
         expect(rq.data).to.have.length(1); // one should be queued on regression
         Log.test("values checked");
     }).timeout(WAIT * 3);

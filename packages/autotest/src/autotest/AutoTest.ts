@@ -101,7 +101,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private
      */
-    private readonly MAX_STANDARD_JOBS: number = 4;
+    private readonly MAX_STANDARD_JOBS: number = 3;
 
     /**
      * The maximum number of jobs a single user can have on the regression queue
@@ -178,6 +178,8 @@ export abstract class AutoTest implements IAutoTest {
 
                 const standardJobCount = this.standardQueue.numberJobsForPerson(input);
                 const regressionJobCount = this.regressionQueue.numberJobsForPerson(input);
+
+                // this is fairly permissive; only queued jobs (not executing jobs) are counted
                 if (standardJobCount < this.MAX_STANDARD_JOBS) {
                     this.standardQueue.push(input);
 
@@ -188,6 +190,10 @@ export abstract class AutoTest implements IAutoTest {
                         input.target.repoId + "; has #" + standardJobCount +
                         " standard jobs queued and #" + regressionJobCount +
                         " regression jobs queued");
+
+                    // NOTE: this _could_ post a warning back to the user
+                    // that their priority is lowered due to excess jobs
+
                     this.addToRegressionQueue(input);
                 }
 
@@ -302,6 +308,10 @@ export abstract class AutoTest implements IAutoTest {
                 Log.trace("AutoTest::tick::switchQueues(..) - switched: " + input.target.commitSHA);
             };
 
+            //
+            // handle the queues in order: express -> standard -> regression
+            //
+
             // fill all express execution slots with express jobs
             while (this.expressQueue.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
                 tickQueue(this.expressQueue);
@@ -329,6 +339,12 @@ export abstract class AutoTest implements IAutoTest {
             while (this.regressionQueue.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
                 switchQueues(this.standardQueue.peek(), this.standardQueue, this.regressionQueue, true);
                 tickQueue(this.regressionQueue);
+            }
+
+            // backfill standard jobs to the express queue, if there is pace
+            while (this.expressQueue.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
+                switchQueues(this.standardQueue.peek(), this.standardQueue, this.expressQueue, true);
+                tickQueue(this.expressQueue);
             }
 
             // finally, run the regression queue with any of its jobs that are waiting

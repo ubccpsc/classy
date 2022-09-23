@@ -39,9 +39,7 @@ export class Queue {
      */
     public push(input: ContainerInput): number {
 
-        if (typeof input.target.adminRequest !== "undefined" &&
-            input.target.adminRequest !== null &&
-            input.target.adminRequest === true) {
+        if (input?.target?.adminRequest === true) {
             // put admin requests on the front of the queue
             Log.info("Queue:push(..) - admin request; pushing to head of queue");
             this.pushFirst(input);
@@ -135,27 +133,6 @@ export class Queue {
     public hasWaitingJobs(): boolean {
         return this.data.length > 0;
     }
-
-    // /**
-    //  * Returns true if a job is already waiting for a requester on this queue.
-    //  *
-    //  * @param input
-    //  */
-    // public hasWaitingJobForRequester(input: ContainerInput): boolean {
-    //     for (const job of this.data) {
-    //         if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
-    //             job.target.personId === input.target.personId) {
-    //             return true;
-    //         }
-    //     }
-    //     for (const job of this.slots) {
-    //         if (input.target.personId !== null && typeof input.target.personId !== "undefined" &&
-    //             job.target.personId === input.target.personId) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
 
     /**
      * Returns the number of queued jobs for a person.
