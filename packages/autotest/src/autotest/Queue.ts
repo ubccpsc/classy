@@ -234,7 +234,7 @@ export class Queue {
         this.slots.push(input);
 
         Log.info("Queue::scheduleNext() - " + this.getName() + " done; delivId: " +
-            input.delivId + "; commitURL: " + input.target.commitURL);
+            input.delivId + "; repo: " + input.target.repoId);
         return input;
     }
 

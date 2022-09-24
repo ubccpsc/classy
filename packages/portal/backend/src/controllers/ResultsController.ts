@@ -18,7 +18,7 @@ export class ResultsController {
         const results = await this.db.getAllResults();
 
         // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
-        results.sort(function(a: Result, b: Result) {
+        results.sort(function (a: Result, b: Result) {
             let tsA = 0;
             let tsB = 0;
             if (typeof a.input.target !== 'undefined') {
@@ -57,7 +57,8 @@ export class ResultsController {
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
-        Log.info("ResultsController::createResult(..) - start for commit: " + record.commitURL);
+        Log.info("ResultsController::createResult(..) - start; deliv: " + record.delivId + "; repo: "
+            + record.repoId + "; SHA: " + record.commitSHA);
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
         const start = Date.now();
 

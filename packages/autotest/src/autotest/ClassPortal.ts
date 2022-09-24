@@ -270,7 +270,7 @@ export class ClassPortal implements IClassPortal {
     public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         const start = Date.now();
 
-        Log.info("ClassPortal::formatFeedback(..) - start; delivId: " +
+        Log.trace("ClassPortal::formatFeedback(..) - start; delivId: " +
             res.delivId + "; URL: " + res.commitURL);
 
         let feedback: string = '';
@@ -302,9 +302,10 @@ export class ClassPortal implements IClassPortal {
             }
         }
 
-        Log.info("ClassPortal::formatFeedback(..) - feedback generated; URL: " +
+        Log.trace("ClassPortal::formatFeedback(..) - feedback generated; URL: " +
             res.commitURL + "; feedback: " + msg + "; took: " + Util.took(start));
-
+        Log.info("ClassPortal::formatFeedback(..) - feedback generated; deliv: " +
+            res.delivId + "; repo: " + res.repoId + "; feedback: " + msg + "; took: " + Util.took(start));
         return feedback;
     }
 
