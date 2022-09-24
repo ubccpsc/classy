@@ -154,16 +154,16 @@ export class AuthRoutes implements IREST {
 
     public static async performGetCredentials(user: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
-        Log.trace('AuthRoutes::getCredentials(..) - in isValid(..)');
+        Log.trace("AuthRoutes::getCredentials( " + user + " ) - in isValid(..)");
         if (isValid === false) {
-            Log.error('AuthRoutes::getCredentials(..) - isValid false');
-            throw new Error("Login error; user not valid.");
+            Log.error("AuthRoutes::getCredentials( " + user + " ) - isValid false");
+            throw new Error("Login error; user: " + user + " not valid.");
         }
-        Log.trace('AuthRoutes::getCredentials(..) - isValid true');
+        Log.trace("AuthRoutes::getCredentials( " + user + " ) - isValid true");
         let isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
 
-        if (typeof isPrivileged === 'undefined' || isPrivileged === null) {
-            Log.warn('AuthRoutes::getCredentials(..) - failsafe; DEBUG this case?');
+        if (typeof isPrivileged === "undefined" || isPrivileged === null) {
+            Log.warn("AuthRoutes::getCredentials( " + user + " ) - failsafe; DEBUG this case?");
             isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
         }
         return {isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff};
