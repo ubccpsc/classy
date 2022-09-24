@@ -109,6 +109,8 @@ export class GitHubUtil {
             const cloneURL = String(payload.repository.clone_url);
             const org = payload.repository.full_name.substr(0,
                 payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+            Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
+                "; name: " + payload.repository.name + "; org: " + org);
 
             const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
@@ -216,6 +218,8 @@ export class GitHubUtil {
             const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
             const org = payload.repository.full_name.substr(0,
                 payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+            Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
+                "; name: " + payload.repository.name + "; org: " + org);
 
             Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
