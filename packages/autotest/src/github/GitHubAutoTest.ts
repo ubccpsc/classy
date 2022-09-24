@@ -1,16 +1,16 @@
 import * as Docker from "dockerode";
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
-import {CommitTarget, ContainerInput} from "../../../common/types/ContainerTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget, ContainerInput} from "@common/types/ContainerTypes";
 
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
     AutoTestResultTransport,
     ClassyConfigurationTransport
-} from "../../../common/types/PortalTypes";
-import Util from "../../../common/Util";
+} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 import {AutoTest} from "../autotest/AutoTest";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";
@@ -21,7 +21,7 @@ export interface IGitHubTestManager {
     /**
      * Handles a push event from GitHub. Will place job on queue.
      *
-     * @param {IPushEvent} push
+     * @param {CommitTarget} push
      */
     handlePushEvent(push: CommitTarget): void;
 
@@ -30,7 +30,7 @@ export interface IGitHubTestManager {
      * express queue if appropriate. When job is complete, it will
      * comment back automatically for the user.
      *
-     * @param {ICommentEvent} comment
+     * @param {CommitTarget} comment
      */
     handleCommentEvent(comment: CommitTarget): void;
 }
@@ -150,7 +150,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     /**
      *
-     * @param {ICommentEvent} info
+     * @param {CommitTarget} info
      * @returns {boolean} true if the preconditions are met; false otherwise
      */
     private async checkCommentPreconditions(info: CommitTarget): Promise<boolean> {
@@ -163,7 +163,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId + "; commit: " + info.commitSHA);
 
-        // ignore messges made by the bot, unless they are #force
+        // ignore messages made by the bot, unless they are #force
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
 
             if (typeof info.flags !== 'undefined' && info.flags.indexOf("#force") >= 0) {
@@ -220,20 +220,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
-                // reject #silent requests by requestors that are not admins or staff
+                // reject #silent requests by requesters that are not admins or staff
                 if (info.flags.indexOf("#silent") >= 0) {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, student use of #silent");
                     const msg = "Only admins can use the #silent flag.";
                     delete info.flags;
-                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                    return false;
-                }
-
-                // reject requests that include schedule AND unschedule (as this doesn't make sense as a request)
-                if (info.flags.indexOf("#schedule") >= 0 && info.flags.indexOf("#unschedule") >= 0) {
-                    Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - " +
-                        "ignored, undefined behaviour: both #schedule AND #unschedule.");
-                    const msg = "Please choose either #schedule or #unschedule. Both commands cannot be used in the same request.";
                     await this.postToGitHub(info, {url: info.postbackURL, message: msg});
                     return false;
                 }
@@ -293,7 +284,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::processCommentExists(..) - handling request for: " +
             info.personId + "; delivId: " + info.delivId + "; commit: " + info.commitURL);
 
-        const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
+        // const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
 
         const msg = await this.classPortal.formatFeedback(res);
         await this.postToGitHub(info, {url: info.postbackURL, message: msg});
@@ -351,7 +342,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 if (pe === null) {
                     Log.warn("GitHubAutoTest::processCommentNew(..) - push event was not present; adding now. URL: " +
                         info.commitURL + "; for: " + info.personId + "; SHA: " + info.commitSHA);
-                    // store this pushevent for consistency in case we need it for anything else later
+                    // store this push event for consistency in case we need it for anything else later
                     await this.dataStore.savePush(info); // NEXT: add cloneURL to commentEvent (should be in github payload)
                 }
                 msg = "This commit has been queued for processing against " + info.delivId + ".";
@@ -461,7 +452,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * If build is finished:
      *  * post back results if previously requested
      *  * post back results if requested by TA
-     *  * post back results if rate limiting check passes (and record fedback given)
+     *  * post back results if rate limiting check passes (and record feedback given)
      *  * post back warning if rate limiting check fails
      */
     public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
@@ -573,7 +564,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             const standardFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, 'standard');
             const checkFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, 'check');
-            const containerConfig = await this.classPortal.getContainerDetails(delivId);
+            // const containerConfig = await this.classPortal.getContainerDetails(delivId);
 
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
@@ -634,7 +625,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Check to see if the current user is allowed to make a result request
      *
-     * Null means yes, string will contain how long (in a human readable format).
+     * Null means yes, string will contain how long (in a human-readable format).
      *
      * @param delivId
      * @param userName
@@ -693,7 +684,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Saves pushInfo in its own table in the database, in case we need to refer to it later
      *
-     * @param {IContainerInput} info
+     * @param {CommitTarget} info
      */
     private async savePushInfo(info: CommitTarget) {
         try {
@@ -743,6 +734,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param userName
      * @param timestamp
      * @param commitURL
+     * @param kind
      */
     private async saveFeedbackGiven(delivId: string, userName: string, timestamp: number, commitURL: string, kind: string): Promise<void> {
         try {
@@ -766,6 +758,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      *
      * @param commitURL
      * @param delivId
+     * @param kind
      */
     private async getRequester(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
         try {

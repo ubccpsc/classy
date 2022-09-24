@@ -117,7 +117,7 @@ export interface GradeReport {
 
 /**
  * Description of attachments that are saved in files on disk. This
- * helps minimize database size making it easier to backup and much
+ * helps minimize database size making it easier to back up and much
  * quicker to search and traverse (especially over the network).
  */
 export interface Attachment {

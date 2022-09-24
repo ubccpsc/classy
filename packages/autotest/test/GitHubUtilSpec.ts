@@ -1,10 +1,11 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config from "../../common/Config";
-import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
-import Util from "../../common/Util";
+import Config from "@common/Config";
+import Log from "@common/Log";
+// noinspection ES6UnusedImports
+import {Test} from "@common/TestHarness"; // included intentionally (loads TestHarness first)
+import Util from "@common/Util";
 import {GitHubUtil} from "../src/github/GitHubUtil";
 // const loadFirst = require('./GlobalSpec');
 import "./GlobalSpec";

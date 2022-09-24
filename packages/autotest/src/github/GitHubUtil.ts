@@ -1,11 +1,11 @@
 import fetch, {RequestInit} from 'node-fetch';
 
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Log from "@common/Log";
+import {AutoTestAuthTransport} from "@common/types/PortalTypes";
 
-import {AutoTestAuthTransport} from "../../../common/types/PortalTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
 
 export interface IGitHubMessage {
     /**
@@ -30,6 +30,7 @@ export class GitHubUtil {
      * The '#' is required, the 'd' is required, and a number is required.
      *
      * @param message
+     * @param {string[]} delivIds
      * @returns {string | null}
      */
     public static parseDeliverableFromComment(message: any, delivIds: string[]): string | null {
@@ -87,11 +88,17 @@ export class GitHubUtil {
      * Throws exception if something goes wrong.
      *
      * @param payload
-     * @returns {ICommentEvent}
+     * @returns {Promise<CommitTarget>}
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
             Log.info("GitHubUtil::processComment(..) - start");
+
+            // NOTE: this will be released once #363 is fixed
+            // need org name to be attached to CommitTarget to differentiate
+            // between repos in different terms
+            Log.info("GitHubUtil::processComment(..) - payload: " + JSON.stringify(payload));
+
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -100,7 +107,7 @@ export class GitHubUtil {
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
-            const requestor = String(payload.comment.user.login); // .toLowerCase();
+            const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
             Log.trace("GitHubUtil::processComment(..) - 1");
@@ -124,7 +131,7 @@ export class GitHubUtil {
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
-            const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
+            const personResponse = await cp.getPersonId(requester); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
 
             let adminRequest = false;
@@ -163,7 +170,7 @@ export class GitHubUtil {
                 }
             }
 
-            Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
+            Log.info("GitHubUtil.processComment(..) - who: " + requester + "; repoId: " +
                 repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
             Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
 
@@ -186,12 +193,19 @@ export class GitHubUtil {
      *
      * Returns null for push operations we do not need to handle (like branch deletion).
      *
-     * @param payload
-     * @returns {IPushEvent}
+     * @param {any} payload
+     * @param {IClassPortal} portal
+     * @returns {CommitTarget | null} null for pushes that should be ignored
      */
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
             Log.trace("GitHubUtil::processPush(..) - start");
+
+            // NOTE: this will be released once #363 is fixed
+            // need org name to be attached to CommitTarget to differentiate
+            // between repos in different terms
+            Log.info("GitHubUtil::processPush(..) - payload: " + JSON.stringify(payload));
+
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
@@ -238,8 +252,8 @@ export class GitHubUtil {
                 repoId: repo,
                 botMentioned: false, // not explicitly invoked
                 adminRequest: false, // all pushes are treated equally
-                personId:     pusher?.personId ?? null,
-                kind:         'push',
+                personId: pusher?.personId ?? null,
+                kind: 'push',
                 cloneURL,
                 commitSHA,
                 commitURL,
