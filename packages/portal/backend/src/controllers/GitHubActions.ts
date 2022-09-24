@@ -1008,7 +1008,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<string[]>}
      */
     public async getTeamMembers(teamName: string): Promise<string[]> {
-        Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - start");
+        Log.trace("GitHubAction::getTeamMembers( " + teamName + " ) - start");
 
         if (teamName === null) {
             throw new Error("GitHubAction::getTeamMembers( null ) - null team requested");
@@ -1043,7 +1043,8 @@ export class GitHubActions implements IGitHubActions {
             //     ids.push(result.login);
             // }
 
-            Log.info("GitHubAction::getTeamMembers(..) - success; # results: " + ids.length + "; took: " + Util.took(start));
+            Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - success; # results: " +
+                ids.length + "; took: " + Util.took(start));
 
             return ids;
         } catch (err) {

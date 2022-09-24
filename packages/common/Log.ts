@@ -19,7 +19,7 @@ export default class Log {
 
     public static parseLogLevel(): LogLevel {
         try {
-            console.log("Log::parseLogLevel() - start; currently: " + Log.Level);
+            // console.log("Log::parseLogLevel() - start; currently: " + Log.Level);
             let valToSwitch = null;
             if (typeof Log.Level === "undefined") {
                 // if undefined, use .env; otherwise re-parse value
@@ -30,7 +30,7 @@ export default class Log {
 
             if (typeof valToSwitch !== "string") {
                 LOG_LEVEL = Log.Level;
-                console.log("Log::parseLogLevel() - unchanged; current level: " + LOG_LEVEL);
+                // console.log("Log::parseLogLevel() - unchanged; current level: " + LOG_LEVEL);
                 return LOG_LEVEL;
             } else {
                 // if the value isn't a string, it must be a LogLevel already
@@ -57,7 +57,7 @@ export default class Log {
                     default:
                         LOG_LEVEL = LogLevel.TRACE;
                 }
-                console.log("Log::parseLogLevel() - log level: " + LOG_LEVEL);
+                // console.log("Log::parseLogLevel() - log level: " + LOG_LEVEL);
                 Log.Level = LOG_LEVEL;
                 return LOG_LEVEL;
             }

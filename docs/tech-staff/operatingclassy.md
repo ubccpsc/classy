@@ -21,6 +21,12 @@ docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.
 docker-compose build
 ```
 
+You can also build just a subset of classy, which can save time; the main modules that need rebuilding are:
+
+```bash
+docker-compose build portal autotest
+```
+
 ## Starting Classy
 
 Classy is a containerized application that requires containers are built before the application can be run. Building a container is necessary to make a copy of an image that Docker can run.
@@ -66,10 +72,16 @@ docker-compose down
 ```
 ## Restarting Classy
 
-To restart Classy:
+To restart Classy (this restarts the _current_ containers and is not sufficient if you are building new images):
 
 ```bash
 docker-compose restart
+```
+
+If you're restarting after updating images, use:
+
+```bash
+docker-compose up -d
 ```
 
 ## Viewing Classy Runtime Logs

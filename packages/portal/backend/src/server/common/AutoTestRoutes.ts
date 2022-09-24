@@ -193,6 +193,8 @@ export class AutoTestRoutes implements IREST {
             throw new Error('Invalid Grade Record: ' + validGradeRecord);
         } else {
             Log.info('AutoTestRouteHandler::atGrade(..) - repoId: ' + grade.repoId +
+                '; delivId: ' + grade.delivId + '; grade: ' + grade.score);
+            Log.trace('AutoTestRouteHandler::atGrade(..) - repoId: ' + grade.repoId +
                 '; delivId: ' + grade.delivId + '; body: ' + JSON.stringify(grade));
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             const success = await cc.processNewAutoTestGrade(grade);
@@ -286,13 +288,13 @@ export class AutoTestRoutes implements IREST {
                 const ac = new AuthController();
                 const priv = await ac.personPriviliged(person);
                 payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
-                Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - done: ' +
+                Log.trace('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - done: ' +
                     JSON.stringify(payload) + "; took: " + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             } else {
                 payload = {success: {personId: githubId, isStaff: false, isAdmin: false}};
-                Log.info('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - unknown person; result: ' +
+                Log.trace('AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - unknown person; result: ' +
                     JSON.stringify(payload));
                 res.send(200, payload);
                 return next(true);
