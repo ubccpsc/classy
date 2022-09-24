@@ -1,17 +1,17 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {Test} from "../../../../common/TestHarness";
-import Util from "../../../../common/Util";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {Test} from "@common/TestHarness";
+import Util from "@common/Util";
 
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
-import {PersonController} from "../../src/controllers/PersonController";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {TeamController} from "../../src/controllers/TeamController";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "@backend/controllers/GitHubActions";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
 
 import '../GlobalSpec';
 
@@ -831,13 +831,13 @@ describe("GitHubActions", () => {
         expect(del).to.be.true;
     }).timeout(TIMEOUT * 10);
 
-    function getProjectPrefix(): string {
-        return "TEST__X__secap_";
-    }
+    // function getProjectPrefix(): string {
+    //     return "TEST__X__secap_";
+    // }
 
-    function getTeamPrefix() {
-        return "TEST__X__t_";
-    }
+    // function getTeamPrefix() {
+    //     return "TEST__X__t_";
+    // }
 
     async function deleteStale(): Promise<true> {
         Log.test('GitHubActionSpec::deleteStale() - start');

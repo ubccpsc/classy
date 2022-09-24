@@ -1049,7 +1049,7 @@ export class GitHubActions implements IGitHubActions {
             return ids;
         } catch (err) {
             Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
-            // just return empy [] rather than failing
+            // just return empty [] rather than failing
             return [];
         }
     }
