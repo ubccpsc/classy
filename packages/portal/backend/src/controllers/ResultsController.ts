@@ -229,7 +229,7 @@ export class ResultsController {
             return reportMsg;
         }
 
-        Log.info('ResultsController::validateAutoTestResult(..) - done; object is valid');
+        Log.trace('ResultsController::validateAutoTestResult(..) - done; object is valid');
         return null;
     }
 
@@ -313,12 +313,13 @@ export class ResultsController {
             Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
             return msg;
         }
-        Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
+
+        Log.trace('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
     }
 
     public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
-        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
+        Log.trace("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
         const start = Date.now();
 
         let outcome: Result[] = [];
@@ -338,7 +339,7 @@ export class ResultsController {
     }
 
     public async getResultsForRepo(repoId: string) {
-        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - start");
+        Log.trace("ResultsController::getResultsForRepo( " + repoId + " ) - start");
         const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);

@@ -168,7 +168,7 @@ export class GradesController {
     }
 
     public async saveGrade(grade: Grade): Promise<boolean> {
-        Log.info("GradesController::saveGrade( .. ) - start; person: " +
+        Log.trace("GradesController::saveGrade( .. ) - start; person: " +
             grade.personId + "; deliv: " + grade.delivId + "; score: " + grade.score);
         const start = Date.now();
 

@@ -579,7 +579,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
 
-            Log.info(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
+            Log.trace(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
             if (data.output.postbackOnComplete === true) {
                 // handle 'free' feedback as specified by the grading container

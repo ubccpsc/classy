@@ -232,7 +232,7 @@ export abstract class AutoTest implements IAutoTest {
      */
     public tick(): void {
         try {
-            Log.info("AutoTest::tick(..) - start; " +
+            Log.trace("AutoTest::tick(..) - start; " +
                 "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
                 "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
                 "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");

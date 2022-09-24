@@ -89,7 +89,7 @@ export default class RouteHandler {
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
-                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
+                    Log.trace("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
                         "; took: " + Util.took(start));
                 } else {
                     Log.warn("RouteHandler::postGithubHook(..) - webhook secrets do not match");
