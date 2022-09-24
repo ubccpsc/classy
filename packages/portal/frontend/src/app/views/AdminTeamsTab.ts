@@ -91,6 +91,14 @@ export class AdminTeamsTab extends AdminPage {
                 style:       'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id:          'labs',
+                text:        'Labs',
+                sortable:    true,
+                defaultSort: false,
+                sortDown:    false,
+                style:       'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id:          'p1',
                 text:        'First Member',
                 sortable:    true,
@@ -158,10 +166,13 @@ export class AdminTeamsTab extends AdminPage {
                 teamDisplay = team.id;
             }
 
+            const labs = this.getLabsCell(team.people);
+
             const row: TableCell[] = [
                 {value: count, html: count + ''},
                 {value: team.id, html: teamDisplay},
                 {value: repoName, html: repoDisplay},
+                {value: labs, html: labs},
                 {value: p1, html: p1},
                 {value: p2, html: p2},
                 {value: p3, html: p3}
@@ -204,6 +215,17 @@ export class AdminTeamsTab extends AdminPage {
         }
     }
 
+    private getLabsCell(people: string[]): string {
+        const labs = people
+            .map((personId) => this.getPerson(personId)?.labId)
+            .filter((lab) => !!lab);
+        return [...new Set(labs)].sort().join(',');
+    }
+
+    private getPerson(personId: string): StudentTransport | null {
+        return this.students.find((student) => student.id === personId) ?? null;
+    }
+
     /**
      * Convert personId to a more useful representation for staff to understand.
      *
@@ -214,31 +236,26 @@ export class AdminTeamsTab extends AdminPage {
      */
     private getPersonCell(personId: string): string {
         let render = personId;
+        const student = this.getPerson(personId);
 
-        try {
-            for (const student of this.students) {
-                if (student.id === personId) {
+        if (student?.id === personId) {
 
-                    if (student.githubId === student.id) {
-                        // render staff (whose GitHub ids should match their CSIDs (according to the system)
-                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                            render = '<a class="selectable" href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
-                        } else {
-                            render = 'Staff: ' + student.githubId;
-                        }
-                    } else {
-                        // render students
-                        if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                            render = '<a class="selectable" href="' + student.userUrl + '">' +
-                                student.githubId + '</a> (' + student.id + ')';
-                        } else {
-                            render = student.githubId + " (" + student.id + ")";
-                        }
-                    }
+            if (student.githubId === student.id) {
+                // render staff (whose GitHub ids should match their CSIDs (according to the system)
+                if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                    render = '<a class="selectable" href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
+                } else {
+                    render = 'Staff: ' + student.githubId;
+                }
+            } else {
+                // render students
+                if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                    render = '<a class="selectable" href="' + student.userUrl + '">' +
+                        student.githubId + '</a> (' + student.id + ')';
+                } else {
+                    render = student.githubId + " (" + student.id + ")";
                 }
             }
-        } catch (err) {
-            Log.error("AdminTeamsTab::getPersonCell( " + personId + " ) - ERROR: " + err.message);
         }
         return render;
     }
