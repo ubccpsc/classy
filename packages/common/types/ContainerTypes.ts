@@ -42,6 +42,7 @@ export interface CommitTarget {
      */
     delivId: string;
     repoId: string;
+    orgId?: string;
 
     adminRequest: boolean; // true if requested by admin or staff
     botMentioned: boolean; // true if explicitly mentioned

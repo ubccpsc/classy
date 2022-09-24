@@ -107,6 +107,9 @@ export class GitHubUtil {
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
+            const org = payload.repository.full_name.substr(0,
+                payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+
             const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
@@ -211,6 +214,9 @@ export class GitHubUtil {
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
             const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
+            const org = payload.repository.full_name.substr(0,
+                payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+
             Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
@@ -250,6 +256,7 @@ export class GitHubUtil {
             const pushEvent: CommitTarget = {
                 delivId: backendConfig.defaultDeliverable,
                 repoId: repo,
+                orgId: org,
                 botMentioned: false, // not explicitly invoked
                 adminRequest: false, // all pushes are treated equally
                 personId: pusher?.personId ?? null,

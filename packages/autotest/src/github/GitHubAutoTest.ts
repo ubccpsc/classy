@@ -61,6 +61,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
 
+            const org = Config.getInstance().getProp(ConfigKey.org);
+            if (org !== info.orgId) {
+                Log.warn("GitHubAutoTest::handlePushEvent(..) - ignored, org: " + info.orgId +
+                    " does not match current course: " + org);
+                return false;
+            }
+
             Log.info("GitHubAutoTest::handlePushEvent(..) - start; commit: " + info.commitSHA);
             const start = Date.now();
             await this.savePushInfo(info);
@@ -196,6 +203,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown delivId: " + delivId);
             // no deliverable, give warning and abort
             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        if (org !== info.orgId) {
+            Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, org: " + info.orgId +
+                " does not match current course: " + org);
+
+            // no deliverable, give warning and abort
+            const msg = "This commit appears to be from a prior version of the course; AutoTest cancelled.";
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
             return false;
         }
