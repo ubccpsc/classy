@@ -94,11 +94,6 @@ export class GitHubUtil {
         try {
             Log.info("GitHubUtil::processComment(..) - start");
 
-            // NOTE: this will be released once #363 is fixed
-            // need org name to be attached to CommitTarget to differentiate
-            // between repos in different terms
-            Log.info("GitHubUtil::processComment(..) - payload: " + JSON.stringify(payload));
-
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -107,10 +102,10 @@ export class GitHubUtil {
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
-            const org = payload.repository.full_name.substr(0,
+            const orgId = payload.repository.full_name.substr(0,
                 payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
             Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
-                "; name: " + payload.repository.name + "; org: " + org);
+                "; name: " + payload.repository.name + "; org: " + orgId);
 
             const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
@@ -155,6 +150,7 @@ export class GitHubUtil {
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
+                orgId,
                 botMentioned,
                 commitSHA,
                 commitURL,
@@ -205,11 +201,6 @@ export class GitHubUtil {
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
             Log.trace("GitHubUtil::processPush(..) - start");
-
-            // NOTE: this will be released once #363 is fixed
-            // need org name to be attached to CommitTarget to differentiate
-            // between repos in different terms
-            Log.info("GitHubUtil::processPush(..) - payload: " + JSON.stringify(payload));
 
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
