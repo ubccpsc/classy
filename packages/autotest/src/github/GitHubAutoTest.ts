@@ -539,6 +539,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.adminRequest = false;
             await this.handleCommentStudent(info, res);
         }
+
+        this.tick(); // make sure the queues have ticked after the comment has been processed
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
     }
 
