@@ -451,7 +451,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
 
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit has been queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1); // comment event should not have been saved
     });
 
@@ -474,7 +474,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1);
 
         await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
@@ -501,7 +501,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         Log.test("1: - ghMessages: " + JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         Log.test("1: - allData: " + JSON.stringify(allData));
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
