@@ -66,8 +66,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - ignored, org: " + info.orgId +
                     " does not match current course: " + org);
-                // TODO: turn statement on to fix #363
-                // return false;
+                return false;
             }
 
             Log.info("GitHubAutoTest::handlePushEvent(..) - start; commit: " + info.commitSHA);
@@ -216,10 +215,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 " does not match current course: " + org);
 
             // no deliverable, give warning and abort
-            // TODO: turn statements below on to fix #363
-            // const msg = "This commit appears to be from a prior version of the course; AutoTest cancelled.";
-            // await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            // return false;
+            const msg = "This commit appears to be from a prior version of the course; AutoTest request cancelled.";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
         }
 
         // TODO: invalid personId

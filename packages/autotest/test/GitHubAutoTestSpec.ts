@@ -19,7 +19,7 @@ import "./GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe("GitHubAutoTest", () => {
+describe.only("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -236,6 +236,13 @@ describe("GitHubAutoTest", () => {
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.delivId = 'd1';
+
+        Log.test('wrong term');
+        const oldOrg = info.orgId;
+        info.orgId = 'INVALIDTERM';
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.orgId = oldOrg;
 
         Log.test('invalid delivId');
         info.delivId = 'd_' + Date.now();
@@ -624,6 +631,48 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
+    }).timeout(WAIT * 10);
+
+    it("Should ignore a request for a push from a prior version of the course.", async () => {
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        await data.clearData();
+        // gh.messages = [];
+        stubDependencies();
+
+        let allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0);
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(0);
+
+        // SETUP: add a push with no output records
+        const push = Object.assign({}, TestData.pushEventPostback);
+        push.orgId = "SOMERANDOMTERM";
+        await at.handlePushEvent(push);
+
+        allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(0); // push should not save as it was dropped
+
+        //
+        //
+        // // TEST: send a comment (this is the previous test)
+        // // await at.handleCommentEvent(commentRecordUserA);
+        // // allData = await data.getAllData();
+        // // expect(gh.messages.length).to.equal(1); // should generate a warning
+        // // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        // // expect(allData.comments.length).to.equal(1);
+        // // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        //
+        // // Wait for it!
+        // await Util.timeout(WAIT);
+        // allData = await data.getAllData();
+        // expect(gitHubMessages.length).to.equal(1); // should post response
+        // expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
+        // expect(allData.comments.length).to.equal(0);
+        // expect(allData.feedback.length).to.equal(0); // no charge
     }).timeout(WAIT * 10);
 
     it("Should give a user the results message on a commit that has been finished.", async () => {
