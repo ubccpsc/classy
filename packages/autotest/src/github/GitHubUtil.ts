@@ -235,12 +235,12 @@ export class GitHubUtil {
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
                 commitURL = payload.commits[payload.commits.length - 1].url;
-                Log.info("GitHubUtil::processPush(..) - regular push; # commits: " + payload.commits.length + "; URL: " + commitURL);
+                Log.info("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
             } else {
                 // use this one when creating a new branch (may not have any commits)
                 commitSHA = payload.head_commit.id;
                 commitURL = payload.head_commit.url;
-                Log.info("GitHubUtil::processPush(..) - branch added; URL: " + commitURL);
+                Log.info("GitHubUtil::processPush(..) - branch added; repo: " + repo);
             }
 
             Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);

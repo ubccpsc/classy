@@ -118,7 +118,7 @@ export class CourseController implements ICourseController {
      */
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         const LOGPRE = "CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
-            newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
+            newGrade.personId + ", " + newGrade.score + ", ... ) - start - ";
 
         Log.trace(LOGPRE + "start");
 

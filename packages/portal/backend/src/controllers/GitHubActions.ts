@@ -1008,7 +1008,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<string[]>}
      */
     public async getTeamMembers(teamName: string): Promise<string[]> {
-        Log.trace("GitHubAction::getTeamMembers( " + teamName + " ) - start");
+        Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - start");
 
         if (teamName === null) {
             throw new Error("GitHubAction::getTeamMembers( null ) - null team requested");
