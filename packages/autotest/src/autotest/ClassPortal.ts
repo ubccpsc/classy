@@ -157,7 +157,7 @@ export class ClassPortal implements IClassPortal {
             };
 
             const res = await fetch(url, opts);
-            Log.info("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
+            Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
             const json: Payload = await res.json() as Payload;
             if (typeof json.success !== 'undefined') {
                 return json.success; // AutoTestPersonIdTransport
@@ -254,7 +254,7 @@ export class ClassPortal implements IClassPortal {
             const json = await res.json();
             if (typeof json.success !== 'undefined') {
                 Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
-                    "; url: " + grade.URL + "; took: " + Util.took(start));
+                    "; repo: " + grade.repoId + "; took: " + Util.took(start));
                 return json;
             } else {
                 Log.error("ClassPortal::sendGrade(..) - ERROR; grade not accepted:  " + JSON.stringify(json));

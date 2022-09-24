@@ -221,7 +221,7 @@ export class GitHubUtil {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
             }
 
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
+            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -243,7 +243,7 @@ export class GitHubUtil {
                 Log.info("GitHubUtil::processPush(..) - branch added; URL: " + commitURL);
             }
 
-            Log.info("GitHubUtil::processPush(..) - sha: " + commitSHA + "; commitURL: " + commitURL);
+            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push

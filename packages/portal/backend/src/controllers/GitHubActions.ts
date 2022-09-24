@@ -343,12 +343,12 @@ export class GitHubActions implements IGitHubActions {
             Log.info("GitHubAction::createRepo( " + repoName + " ) - request complete");
             const url = body.html_url;
 
-            Log.info("GitHubAction::createRepo( " + repoName + " ) - db start");
+            Log.trace("GitHubAction::createRepo( " + repoName + " ) - db start");
             const repo = await this.dc.getRepository(repoName);
             repo.URL = url; // only update this field in the existing Repository record
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
-            Log.info("GitHubAction::createRepo( " + repoName + " ) - db done");
+            Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
             await Util.delay(this.PAUSE);

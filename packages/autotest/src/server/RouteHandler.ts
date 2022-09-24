@@ -66,7 +66,7 @@ export default class RouteHandler {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; signature: " + githubSecret);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent); // + "; signature: " + githubSecret);
         const body = req.body;
 
         const handleError = function(msg: string) {
@@ -125,6 +125,8 @@ export default class RouteHandler {
         } else {
             handleError("Invalid payload signature.");
         }
+
+        Log.info("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
         return next();
     }
 
