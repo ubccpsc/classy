@@ -102,11 +102,15 @@ export class GitHubUtil {
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
-            const orgId = payload.repository.full_name.substr(0,
-                payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-            Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
-                "; name: " + payload.repository.name + "; org: " + orgId);
-
+            let orgId;
+            try {
+                orgId = payload.repository.full_name.substr(0,
+                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+                Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
+                    "; name: " + payload.repository.name + "; org: " + orgId);
+            } catch (err) {
+                Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
+            }
             const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
@@ -207,10 +211,15 @@ export class GitHubUtil {
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
             const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
-            const org = payload.repository.full_name.substr(0,
-                payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-            Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
-                "; name: " + payload.repository.name + "; org: " + org);
+            let org;
+            try {
+                org = payload.repository.full_name.substr(0,
+                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+                Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
+                    "; name: " + payload.repository.name + "; org: " + org);
+            } catch (err) {
+                Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
+            }
 
             Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
 
