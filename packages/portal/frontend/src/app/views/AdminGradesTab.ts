@@ -130,6 +130,7 @@ export class AdminGradesTab extends AdminPage {
                             const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
                             // let score = '';
                             let score: number | string = '';
+                            let scorePrepend = '';
                             if (grade.score !== null && grade.score >= 0) {
                                 score = grade.score;
                                 if (score === 100) {
@@ -138,17 +139,17 @@ export class AdminGradesTab extends AdminPage {
                                     // two decimal places
                                     score = score.toFixed(2);
                                     // prepend space (not 100)
-                                    score = "&#8199;" + score;
+                                    scorePrepend = "&#8199;" + scorePrepend;
                                     if (grade.score < 10) {
                                         // prepend with extra space if < 10
-                                        score = "&#8199;" + score;
+                                        scorePrepend = "&#8199;" + scorePrepend;
                                     }
                                 }
                                 // score = grade.score + '';
                             }
                             let html;
                             if (score !== '' && grade.URL !== null) {
-                                html = `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
+                                html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
                             } else if (score !== '' && grade.URL === null) {
                                 html = `<div title="${hoverComment}">${score}</div>`;
                             } else {

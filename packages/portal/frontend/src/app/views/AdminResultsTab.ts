@@ -180,6 +180,7 @@ export class AdminResultsTab extends AdminPage {
             const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
 
             let score: number | string = '';
+            let scorePrepend = '';
             score = result.scoreOverall;
             if (score === 100) {
                 score = "100.00";
@@ -187,18 +188,19 @@ export class AdminResultsTab extends AdminPage {
                 // two decimal places
                 score = score.toFixed(2);
                 // prepend space (not 100)
-                score = "&#8199;" + score;
+                scorePrepend = "&#8199;" + scorePrepend;
                 if (result.scoreOverall < 10) {
                     // prepend with extra space if < 10
-                    score = "&#8199;" + score;
+                    scorePrepend = "&#8199;" + scorePrepend;
                 }
             }
 
+            // ion-ios-help-outline
             const row: TableCell[] = [
                 {
                     value: '',
                     html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                        stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                        stdioViewerURL + '"><ons-icon icon="md-info-outline"</ons-icon></a>'
                 },
                 {
                     value: result.repoId,
@@ -206,7 +208,7 @@ export class AdminResultsTab extends AdminPage {
                 },
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
-                {value: result.scoreOverall, html: score},
+                {value: result.scoreOverall, html: scorePrepend + score},
                 {value: result.state, html: result.state},
                 {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'}
             ];
