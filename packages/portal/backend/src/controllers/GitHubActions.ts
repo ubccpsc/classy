@@ -1,12 +1,11 @@
 import * as crypto from "crypto";
 import * as parseLinkHeader from "parse-link-header";
-
 import fetch, {RequestInit} from "node-fetch";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {Test} from "../../../../common/TestHarness";
-import Util from "../../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {Test} from "@common/TestHarness";
+import Util from "@common//Util";
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
@@ -478,8 +477,7 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    // 'Accept': 'application/json', // custom because this is a preview api
-                    'Accept': 'application/vnd.github.hellcat-preview+json'
+                    'Accept': 'application/vnd.github+json'
                 }
             };
 
@@ -578,6 +576,7 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
 
         try {
+            Log.info("GitHubActions::handlePagination(..) - requesting: " + uri);
             let response = await fetch(uri, options);
             let body = await response.json();
             let results: any[] = body; // save the first page of values
@@ -589,15 +588,15 @@ export class GitHubActions implements IGitHubActions {
                 Log.info("GitHubActions::handlePagination(..) - multiple pages");
 
                 let linkText = response.headers.get("link");
-                Log.info("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
+                Log.trace("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
                 let links = parseLinkHeader(linkText);
-                Log.info("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
+                Log.trace("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
 
                 // when on the last page links.last will not be present
                 while (typeof links.last !== "undefined") {
                     // process current body
                     uri = links.next.url;
-                    Log.info("GitHubActions::handlePagination(..) - inner requesting: " + uri);
+                    Log.info("GitHubActions::handlePagination(..) - requesting: " + uri);
 
                     // NOTE: this needs to be slowed down to prevent DNS problems
                     // (issuing 10+ concurrent dns requests can be problematic)
@@ -608,9 +607,9 @@ export class GitHubActions implements IGitHubActions {
                     results = results.concat(body); // append subsequent pages of values to the first page
 
                     linkText = response.headers.get("link");
-                    Log.info("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
+                    Log.trace("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
                     links = parseLinkHeader(linkText);
-                    Log.info("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
+                    Log.trace("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
                 }
             }
 
@@ -625,7 +624,8 @@ export class GitHubActions implements IGitHubActions {
     /**
      * Lists the teams for the current org.
      *
-     * NOTE: this is a slow operation (if there are many teams) so try not to do it too often!
+     * NOTE: this is a slow operation (if there are many teams)
+     * so try not to do it too often!
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
@@ -633,7 +633,7 @@ export class GitHubActions implements IGitHubActions {
         // Log.trace("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
-        // per_page max is 100; 10 is useful for testing pagination though
+        // per_page max is 100
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
         Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
         const options: RequestInit = {
@@ -641,8 +641,7 @@ export class GitHubActions implements IGitHubActions {
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent': this.gitHubUserName,
-                // 'Accept':        'application/json',
-                'Accept': 'application/vnd.github.hellcat-preview+json'
+                'Accept': 'application/application/vnd.github+json'
             }
         };
 
@@ -707,7 +706,7 @@ export class GitHubActions implements IGitHubActions {
             })
         };
 
-        const results = await fetch(uri, opts);
+        await fetch(uri, opts);
         Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
     }
@@ -827,10 +826,10 @@ export class GitHubActions implements IGitHubActions {
         for (const member of members) {
             const person = this.dc.getGitHubPerson(member);
             if (person === null) {
-                const emsg = "GitHubAction::addMembersToTeam( .. ) - githubId: " + member +
+                const errMsg = "GitHubAction::addMembersToTeam( .. ) - githubId: " + member +
                     " is unknown; is this actually an id instead of a githubId?";
-                Log.error(emsg);
-                throw new Error(emsg);
+                Log.error(errMsg);
+                throw new Error(errMsg);
             }
         }
 
@@ -927,8 +926,7 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/json'
-                    // 'Accept':        'application/vnd.github.hellcat-preview+json'
+                    'Accept': 'application/vnd.github+json'
                 },
                 body: JSON.stringify({
                     permission: permission
@@ -1614,7 +1612,7 @@ export class GitHubActions implements IGitHubActions {
                 },
                 body
             };
-            const response = await fetch(uri, options);
+            await fetch(uri, options);
             Log.info("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - Success! took: ", Util.took(start));
             return true;
         } catch (err) {
@@ -1646,7 +1644,7 @@ export class GitHubActions implements IGitHubActions {
                 },
                 body
             };
-            const response = await fetch(uri, options); // TODO check status code of this response
+            await fetch(uri, options);
             Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
             return true;
         } catch (err) {
@@ -1949,7 +1947,7 @@ export class TestGitHubActions implements IGitHubActions {
         // if (typeof this.teams[teamName] === 'undefined') {
         if (this.teams.has(teamName) === false) {
             const c = Config.getInstance();
-            const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
+            // const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
             // this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: url};
             this.teams.set(teamName, {teamName: teamName, githubTeamNumber: Date.now()});
         }
@@ -2184,7 +2182,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
         Log.info("TestGitHubActions::writeFileToRepo(..)");
-        if (repoURL === 'invalidurl.com') {
+        if (repoURL === "invalidurl.com") {
             return false;
         }
         return true;
