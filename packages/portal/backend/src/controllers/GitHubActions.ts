@@ -2,10 +2,12 @@ import * as crypto from "crypto";
 import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
-import Config, {ConfigKey} from "@common/Config";
-import Log from "@common/Log";
-import {Test} from "@common/TestHarness";
-import Util from "@common//Util";
+// can't use @common here as this is referenced from TestHarness and ends up being circular
+import Config, {ConfigKey} from "../../../../common/Config";
+import Log from "../../../../common/Log";
+import {Test} from "../../../../common/TestHarness";
+import Util from "../../../../common/Util";
+
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
