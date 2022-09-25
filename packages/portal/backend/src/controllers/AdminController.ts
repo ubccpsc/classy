@@ -369,7 +369,7 @@ export class AdminController {
     public async performStudentWithdraw(): Promise<string> {
         Log.info("AdminController::performStudentWithdraw() - start");
         const gha = GitHubActions.getInstance(true);
-        const tc = new TeamController();
+        // const tc = new TeamController();
         // const teamNum = await tc.getTeamNumber('students'); // await gha.getTeamNumber('students');
         // const registeredGithubIds = await gha.getTeamMembers(teamNum);
         const registeredGithubIds = await gha.getTeamMembers('students');

@@ -282,9 +282,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     protected async postToGitHub(target: CommitTarget, message: IGitHubMessage): Promise<boolean> {
         if (typeof target.flags !== 'undefined' && target.flags.indexOf("#silent") >= 0) {
-            Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message to: " + message.url);
+            Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message; repo: " + target.repoId);
         } else {
-            Log.info("GitHubAutoTest::postToGitHub(..) - posting message to: " + message.url);
+            Log.info("GitHubAutoTest::postToGitHub(..) - posting; repo: " + target.repoId + "; sha: " + target.commitSHA);
             Log.trace("GitHubAutoTest::postToGitHub(..) - target: " + JSON.stringify(target));
             Log.trace("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message));
             return await GitHubUtil.postMarkdownToGithub(message);

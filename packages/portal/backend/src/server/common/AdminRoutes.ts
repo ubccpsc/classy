@@ -228,7 +228,7 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AdminController(AdminRoutes.ghc);
         ac.getStudents().then(function(students) {
-            Log.trace('AdminRoutes::getStudents(..) - in then; # students: ' + students.length);
+            Log.info('AdminRoutes::getStudents(..) - done; # students: ' + students.length);
             const payload: StudentTransportPayload = {success: students};
             res.send(payload);
             return next();

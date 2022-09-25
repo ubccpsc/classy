@@ -573,41 +573,42 @@ export class GitHubActions implements IGitHubActions {
 
             let raw: any[] = [];
             const paginationPromises: any[] = [];
-            if (response.headers.has('link')) {
+            if (response.headers.has("link")) {
                 // first save the responses from the first page:
                 raw = body;
 
                 let lastPage: number = -1;
-                const linkText = response.headers.get('link');
-                Log.info('GitHubActions::handlePagination(..) - linkText: ' + linkText);
-                const linkParts = linkText.split(',');
+                const linkText = response.headers.get("link");
+                Log.info("GitHubActions::handlePagination(..) - linkText: " + linkText);
+                const linkParts = linkText.split(",");
                 for (const p of linkParts) {
-                    const pparts = p.split(';');
-                    if (pparts[1].indexOf('last')) {
-                        const pText = pparts[0].split('&page=')[1];
-                        Log.info('GitHubActions::handlePagination(..) - last page pText:_' + pText + '_; p: ' + p);
+                    Log.info("GitHubActions::handlePagination(..) - linkParts: " + p);
+                    const pparts = p.split(";");
+                    if (pparts[1].indexOf("last") >= 0) {
+                        const pText = pparts[0].split("&page=")[1];
+                        Log.info("GitHubActions::handlePagination(..) - last page pText:_" + pText + "_; p: " + p);
                         lastPage = Number(pText.match(/\d+/)[0]);
-                        Log.info('GitHubActions::handlePagination(..) - last page: ' + lastPage);
+                        Log.info("GitHubActions::handlePagination(..) - last page: " + lastPage);
                     }
                 }
 
-                let pageBase = '';
+                let pageBase = "";
                 for (const p of linkParts) {
-                    const pparts = p.split(';');
-                    if (pparts[1].indexOf('next')) {
-                        let pText = pparts[0].split('&page=')[0].trim();
-                        Log.info('GitHubActions::handlePagination(..) - pt: ' + pText);
+                    const pparts = p.split(";");
+                    if (pparts[1].indexOf("next") >= 0) {
+                        let pText = pparts[0].split("&page=")[0].trim();
+                        Log.info("GitHubActions::handlePagination(..) - pt: " + pText);
                         pText = pText.substring(1);
                         pText = pText + "&page=";
                         pageBase = pText;
-                        Log.info('GitHubActions::handlePagination(..) - page base: ' + pageBase);
+                        Log.info("GitHubActions::handlePagination(..) - page base: " + pageBase);
                     }
                 }
 
                 Log.info("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
                 for (let i = 2; i <= lastPage; i++) {
                     const pageUri = pageBase + i;
-                    Log.info('GitHubActions::handlePagination(..) - page to request: ' + pageUri);
+                    Log.info("GitHubActions::handlePagination(..) - page to request: " + pageUri);
                     uri = pageUri; // not sure why this is needed
                     // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
                     await Util.delay(100);
@@ -1016,14 +1017,14 @@ export class GitHubActions implements IGitHubActions {
 
         const start = Date.now();
         try {
-            // /orgs/:org/teams/:team_slug
+            // /orgs/{org}/teams/{team_slug}/members
             const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/members";
             const options: RequestInit = {
                 method: 'GET',
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/json'
+                    'Accept': 'application/vnd.github+json'
                 }
             };
 

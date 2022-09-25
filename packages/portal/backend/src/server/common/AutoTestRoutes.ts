@@ -408,15 +408,15 @@ export class AutoTestRoutes implements IREST {
     }
 
     /**
-     * Forwards Webhook to AutoTest if it is from a valid host. Returns the processed body to GitHub
-     * so we can debug the contents in GitHub's webhook view, if needed.
+     * Forwards Webhook to AutoTest if it is from a valid host. Returns the processed body
+     * to GitHub, so we can debug the contents in GitHub's webhook view, if needed.
      *
      * @param req
      * @returns {Promise<{}>}
      */
     private static async handleWebhook(req: any): Promise<{}> {
-        const config = Config.getInstance();
         const headers = JSON.stringify(req.headers);
+        const config = Config.getInstance();
         const atHost = config.getProp(ConfigKey.autotestUrl);
         const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
         const options: RequestInit = {
@@ -427,10 +427,14 @@ export class AutoTestRoutes implements IREST {
         const res = await fetch(url, options);
         if (res.ok) {
             Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(res.ok));
+            Log.info('AutoTestRouteHandler::handleWebhook(..) - success');
             return res.ok;
+        } else {
+            const err = await res.json();
+            const msg = 'AutoTestRouteHandler::handleWebhook(..) - ERROR: ' + JSON.stringify(err.message);
+            Log.error(msg);
+            throw new Error(msg);
         }
-        const err = await res.json();
-        throw new Error('AutoTestRouteHandler::handleWebhook(..) - ERROR: ' + JSON.stringify(err.message));
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {

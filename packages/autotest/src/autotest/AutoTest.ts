@@ -243,7 +243,7 @@ export abstract class AutoTest implements IAutoTest {
             const tickQueue = function (queue: Queue): void {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
                     const info: ContainerInput = queue.scheduleNext();
-                    Log.info("AutoTest::tick::tickQueue(..) - starting job on: " + queue.getName() + "; deliv: " +
+                    Log.info("AutoTest::tick::tickQueue(..) - starting: " + queue.getName() + "; deliv: " +
                         info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
 
                     let gradingJob: GradingJob;
