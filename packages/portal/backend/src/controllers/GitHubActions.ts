@@ -248,12 +248,12 @@ export class GitHubActions implements IGitHubActions {
      * Page size for requests. Should be a constant, but using a
      * variable is handy for testing pagination.
      *
-     * 100 is the GitHub maximum
-     * 10 or less is ignored, but this lower value is handy for testing
+     * 100 is the GitHub maximum, and is the best value for production.
+     * 10 or less is ignored, but this lower value is handy for testing.
      *
      * @private
      */
-    private pageSize = 10;
+    private pageSize = 100;
 
     private dc: DatabaseController = null;
 
@@ -580,96 +580,42 @@ export class GitHubActions implements IGitHubActions {
         try {
             let response = await fetch(uri, options);
             let body = await response.json();
+            let results: any[] = body; // save the first page of values
 
-            Log.trace("GitHubActions::handlePagination(..) - after initial request");
-
-            let raw: any[] = [];
-            // const paginationPromises: any[] = [];
-            if (response.headers.has("link")) {
-                // first save the responses from the first page:
-                raw = body;
+            if (response.headers.has("link") === false) {
+                // single page, save the results and keep going
+                Log.info("GitHubActions::handlePagination(..) - single page");
+            } else {
+                Log.info("GitHubActions::handlePagination(..) - multiple pages");
 
                 let linkText = response.headers.get("link");
                 Log.info("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
                 let links = parseLinkHeader(linkText);
                 Log.info("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
-                if (typeof links.last !== "undefined") {
-                    // more to parse
 
-                    while (typeof links.last !== "undefined") {
+                // when on the last page links.last will not be present
+                while (typeof links.last !== "undefined") {
+                    // process current body
+                    uri = links.next.url;
+                    Log.info("GitHubActions::handlePagination(..) - inner requesting: " + uri);
 
-                        // process current body
-                        uri = links.next.url;
-                        Log.info("GitHubActions::handlePagination(..) - inner requesting: " + uri);
+                    // NOTE: this needs to be slowed down to prevent DNS problems
+                    // (issuing 10+ concurrent dns requests can be problematic)
+                    await Util.delay(100);
 
-                        // NOTE: this needs to be slowed down to prevent DNS problems
-                        //     (issuing 10+ concurrent dns requests can be problematic)
-                        await Util.delay(100);
+                    response = await fetch(uri, options);
+                    body = await response.json();
+                    results = results.concat(body); // append subsequent pages of values to the first page
 
-                        response = await fetch(uri, options);
-                        body = await response.json();
-                        raw = raw.concat(body);
-
-                        linkText = response.headers.get("link");
-                        Log.info("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
-                        links = parseLinkHeader(linkText);
-                        Log.info("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
-                    }
+                    linkText = response.headers.get("link");
+                    Log.info("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
+                    links = parseLinkHeader(linkText);
+                    Log.info("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
                 }
-
-                //
-                // const linkParts = linkText.split(",");
-                // for (const p of linkParts) {
-                //     Log.info("GitHubActions::handlePagination(..) - linkParts: " + p);
-                //     const pparts = p.split(";");
-                //     if (pparts[1].indexOf("last") >= 0) {
-                //         const pText = pparts[0].split("&page=")[1];
-                //         Log.info("GitHubActions::handlePagination(..) - last page pText:_" + pText + "_; p: " + p);
-                //         lastPage = Number(pText.match(/\d+/)[0]);
-                //         Log.info("GitHubActions::handlePagination(..) - last page: " + lastPage);
-                //     }
-                // }
-                //
-                // let pageBase = "";
-                // for (const p of linkParts) {
-                //     const pparts = p.split(";");
-                //     if (pparts[1].indexOf("next") >= 0) {
-                //         let pText = pparts[0].split("&page=")[0].trim();
-                //         Log.info("GitHubActions::handlePagination(..) - pt: " + pText);
-                //         pText = pText.substring(1);
-                //         pText = pText + "&page=";
-                //         pageBase = pText;
-                //         Log.info("GitHubActions::handlePagination(..) - page base: " + pageBase);
-                //     }
-                // }
-                //
-                // Log.info("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
-                // for (let i = 2; i <= lastPage; i++) {
-                //     const pageUri = pageBase + i;
-                //     Log.info("GitHubActions::handlePagination(..) - page to request: " + pageUri);
-                //     uri = pageUri; // not sure why this is needed
-                //     // NOTE: this needs to be slowed down to prevent DNS problems
-                //     (issuing 10+ concurrent dns requests can be problematic)
-                //     await Util.delay(100);
-                //     paginationPromises.push(fetch(uri, options as any));
-                // }
-            } else {
-                Log.info("GitHubActions::handlePagination(..) - single page");
-                raw = body;
-                // don't put anything on the paginationPromise if it isn't paginated
             }
 
-            // Log.info("GitHubActions::handlePagination(..) - requesting all");
-            // this block won't do anything if we just did the raw thing above (aka no pagination)
-            // const responses: any[] = await Promise.all(paginationPromises);
-            // // Log.trace("GitHubActions::handlePagination(..) - requests complete");
-            //
-            // for (const res of responses) {
-            //     raw = raw.concat(await res.json());
-            // }
-            Log.info("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
-
-            return raw;
+            Log.info("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
+            return results;
         } catch (err) {
             Log.error("GitHubActions::handlePagination(..) - ERROR: " + err.message);
             return [];
