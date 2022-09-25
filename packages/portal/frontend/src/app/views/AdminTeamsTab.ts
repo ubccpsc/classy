@@ -43,14 +43,15 @@ export class AdminTeamsTab extends AdminPage {
         this.course = await AdminView.getCourse(this.remote);
 
         if (typeof opts.delivId === 'undefined') {
-            if (this.course.defaultDeliverableId !== null) {
-                opts.delivId = this.course.defaultDeliverableId;
-            } else {
-                opts.delivId = '-None-';
-            }
+            // if (this.course.defaultDeliverableId !== null) {
+            //     opts.delivId = this.course.defaultDeliverableId;
+            // } else {
+            opts.delivId = '-None-';
+            // }
         }
 
-        const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
+        const delivs = (await AdminDeliverablesTab.getDeliverables(this.remote))
+            .filter((deliv) => deliv.shouldProvision);
         this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.students = await AdminStudentsTab.getStudents(this.remote);
