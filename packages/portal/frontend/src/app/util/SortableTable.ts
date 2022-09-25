@@ -63,7 +63,7 @@ export class SortableTable {
     }
 
     /**
-     * Replaces all of the current rows.
+     * Replaces all the current rows.
      *
      * @param {TableCell[][]} rows
      */

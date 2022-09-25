@@ -14,6 +14,7 @@ import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
+import {AdminDeliverablesTab} from "@frontend/views/AdminDeliverablesTab";
 
 export class AdminTeamsTab extends AdminPage {
 
@@ -28,11 +29,11 @@ export class AdminTeamsTab extends AdminPage {
 
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
-        Log.info('AdminTeamsTab::init(..) - start');
+        Log.info('AdminTeamsTab::init(..) - start; opts: ' + JSON.stringify(opts));
         const start = Date.now();
 
         document.getElementById('teamsListTable').innerHTML = ''; // clear target
-        document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
+        // document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
 
         this.students = [];
         this.teams = [];
@@ -49,9 +50,60 @@ export class AdminTeamsTab extends AdminPage {
             }
         }
 
+        const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
         this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.students = await AdminStudentsTab.getStudents(this.remote);
+
+        const dStr = ['-None-'];
+        for (const deliv of delivs) {
+            dStr.push(deliv.id);
+        }
+        // opts = opts.sort();
+        UI.setDropdownOptions('teamsListSelect', dStr, opts.delivId);
+
+        const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
+        const statusSelector = document.querySelector('#teamsListStatusSelect') as HTMLSelectElement;
+
+        const that = this;
+
+        const updateTeamTable = function () {
+            const delivValue = delivSelector.value.valueOf();
+            const statusValue = statusSelector.value.valueOf();
+            Log.info("AdminTeamsTab::init(..)::updateTeamTable() - deliv: " +
+                delivValue + "; status: " + statusValue);
+
+            if (statusValue === "formed") {
+                Log.info("AdminTeamsTab::init(..)::updateTeamTable() - rendering formed");
+                that.renderTeams(that.teams, delivValue); // if cached data is ok
+            } else {
+                Log.info("AdminTeamsTab::init(..)::updateTeamTable() - rendering unformed");
+                that.renderIndividuals(that.teams, that.students, delivValue); // if cached data is ok
+            }
+        };
+
+        delivSelector.onchange = function (evt) {
+            Log.info('AdminTeamsTab::init(..) - deliv changed');
+            evt.stopPropagation(); // prevents list item expansion
+            updateTeamTable();
+            // const val = delivSelector.value.valueOf();
+            //
+            // // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
+            // that.renderTeams(that.teams, val); // if cached data is ok
+            // that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
+        };
+
+        statusSelector.onchange = function (evt) {
+            Log.info('AdminTeamsTab::init(..) - status changed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            updateTeamTable();
+            // const val = delivSelector.value.valueOf();
+            //
+            // // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
+            // that.renderTeams(that.teams, val); // if cached data is ok
+            // that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
+        };
 
         this.renderTeams(this.teams, opts.delivId);
         this.renderIndividuals(this.teams, this.students, opts.delivId);
@@ -67,64 +119,64 @@ export class AdminTeamsTab extends AdminPage {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
         const headers: TableHeader[] = [
             {
-                id:          'num',
-                text:        '#',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'num',
+                text: '#',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'id',
-                text:        'Team Id',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'id',
+                text: 'Team Id',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'repo',
-                text:        'Repository',
-                sortable:    true,
+                id: 'repo',
+                text: 'Repository',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    false,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'labs',
-                text:        'Labs',
-                sortable:    true,
+                id: 'labs',
+                text: 'Labs',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    false,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'p1',
-                text:        'First Member',
-                sortable:    true,
+                id: 'p1',
+                text: 'First Member',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'p2',
-                text:        'Second Member',
-                sortable:    true,
+                id: 'p2',
+                text: 'Second Member',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'p3',
-                text:        'Third Member',
-                sortable:    true,
+                id: 'p3',
+                text: 'Third Member',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
         ];
 
-        let delivOptions = ['-None-'];
+        // let delivOptions = ['-None-'];
         const st = new SortableTable(headers, '#teamsListTable');
         let listContainsStudents = false;
 
@@ -177,9 +229,9 @@ export class AdminTeamsTab extends AdminPage {
                 {value: p2, html: p2},
                 {value: p3, html: p3}
             ];
-            if (delivOptions.indexOf(team.delivId) < 0 && team.delivId !== '' && team.delivId !== null) {
-                delivOptions.push(team.delivId);
-            }
+            // if (delivOptions.indexOf(team.delivId) < 0 && team.delivId !== '' && team.delivId !== null) {
+            //     delivOptions.push(team.delivId);
+            // }
             if (delivId === team.delivId && team.people.length > 0) {
                 count++;
                 st.addRow(row);
@@ -189,30 +241,13 @@ export class AdminTeamsTab extends AdminPage {
 
         st.generate();
 
-        delivOptions = delivOptions.sort();
-        UI.setDropdownOptions('teamsListSelect', delivOptions, delivId);
-
-        const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
-
-        const that = this;
-        delivSelector.onchange = function(evt) {
-            Log.info('AdminTeamsTab::renderTeams(..) - upload pressed');
-            evt.stopPropagation(); // prevents list item expansion
-
-            const val = delivSelector.value.valueOf();
-
-            // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
-            that.renderTeams(that.teams, val); // if cached data is ok
-            that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
-        };
-
-        if (st.numRows() > 0) {
-            UI.showSection('teamsListTable');
-            UI.hideSection('teamsListTableNone');
-        } else {
-            UI.hideSection('teamsListTable');
-            UI.showSection('teamsListTableNone');
-        }
+        // if (st.numRows() > 0) {
+        //     UI.showSection('teamsListTable');
+        //     UI.hideSection('teamsListTableNone');
+        // } else {
+        //     UI.hideSection('teamsListTable');
+        //     UI.showSection('teamsListTableNone');
+        // }
     }
 
     private getLabsCell(people: string[]): string {
@@ -261,28 +296,29 @@ export class AdminTeamsTab extends AdminPage {
     }
 
     private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
-        Log.trace("AdminTeamsTab::renderTeams(..) - start");
+        Log.trace("AdminTeamsTab::renderIndividuals(..) - start");
 
         const headers: TableHeader[] = [
             {
-                id:          'num',
-                text:        '#',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'num',
+                text: '#',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'id',
-                text:        'Student',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'id',
+                text: 'Student',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
         ];
 
-        const st = new SortableTable(headers, '#teamsIndividualListTable');
+        // const st = new SortableTable(headers, '#teamsIndividualListTable');
+        const st = new SortableTable(headers, '#teamsListTable');
 
         const studentsOnTeams: string[] = [];
         for (const team of teams) {
@@ -320,13 +356,13 @@ export class AdminTeamsTab extends AdminPage {
 
         st.generate();
 
-        if (st.numRows() > 0) {
-            UI.showSection('teamsIndividualListTable');
-            UI.hideSection('teamsIndividualListTableNone');
-        } else {
-            UI.hideSection('teamsIndividualListTable');
-            UI.showSection('teamsIndividualListTableNone');
-        }
+        // if (st.numRows() > 0) {
+        //     UI.showSection('teamsIndividualListTable');
+        //     UI.hideSection('teamsIndividualListTableNone');
+        // } else {
+        //     UI.hideSection('teamsIndividualListTable');
+        //     UI.showSection('teamsIndividualListTableNone');
+        // }
 
     }
 
