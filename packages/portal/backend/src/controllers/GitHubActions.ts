@@ -479,7 +479,7 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/vnd.github+json'
+                    'Accept': 'application/vnd.github.hellcat-preview+json'
                 }
             };
 
@@ -643,7 +643,7 @@ export class GitHubActions implements IGitHubActions {
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent': this.gitHubUserName,
-                'Accept': 'application/application/vnd.github+json'
+                'Accept': 'application/vnd.github.hellcat-preview+json'
             }
         };
 
@@ -928,7 +928,7 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/vnd.github+json'
+                    'Accept': 'application/vnd.github.hellcat-preview+json'
                 },
                 body: JSON.stringify({
                     permission: permission
