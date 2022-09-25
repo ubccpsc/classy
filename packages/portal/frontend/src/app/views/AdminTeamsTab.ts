@@ -1,4 +1,4 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
 
 import {
     CourseTransport,
@@ -6,15 +6,16 @@ import {
     StudentTransport,
     TeamTransport,
     TeamTransportPayload
-} from "../../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+} from "@common/types/PortalTypes";
 
+import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
+
 import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminStudentsTab} from "./AdminStudentsTab";
 import {AdminView} from "./AdminView";
-import {AdminDeliverablesTab} from "@frontend/views/AdminDeliverablesTab";
+import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 
 export class AdminTeamsTab extends AdminPage {
 

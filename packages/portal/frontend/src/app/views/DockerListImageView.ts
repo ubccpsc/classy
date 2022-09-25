@@ -1,5 +1,7 @@
 import {OnsListItemElement, OnsRadioElement} from "onsenui";
-import Log from "../../../../../common/Log";
+
+import Log from "@common/Log";
+
 import {UI} from "../util/UI";
 
 export interface DockerImage {

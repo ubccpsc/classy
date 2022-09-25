@@ -7,10 +7,12 @@
  */
 
 import {OnsButtonElement} from "onsenui";
-import Log from "../../../../../../common/Log";
-import {Payload, TeamFormationTransport, TeamTransport} from "../../../../../../common/types/PortalTypes";
+
+import Log from "@common/Log";
+import {Payload, TeamFormationTransport, TeamTransport} from "@common/types/PortalTypes";
 
 import {UI} from "../../util/UI";
+
 import {AbstractStudentView} from "../AbstractStudentView";
 
 export class ClassyStudentView extends AbstractStudentView {
@@ -29,13 +31,13 @@ export class ClassyStudentView extends AbstractStudentView {
         const start = Date.now();
 
         UI.showModal("Fetching data.");
-        super.render().then(function() {
+        super.render().then(function () {
             // super render complete; do custom work
             return that.renderStudentPage();
-        }).then(function() {
+        }).then(function () {
             Log.info('ClassyStudentView::renderPage(..) - prep & render took: ' + UI.took(start));
             UI.hideModal();
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error('ClassyStudentView::renderPage() - ERROR: ' + err);
             UI.hideModal();
         });
@@ -103,15 +105,15 @@ export class ClassyStudentView extends AbstractStudentView {
             // no team yet
 
             const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
-            button.onclick = function(evt: any) {
+            button.onclick = function (evt: any) {
                 Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick');
-                that.formTeam().then(function(team) {
+                that.formTeam().then(function (team) {
                     Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick::then - team created');
                     that.teams.push(team);
                     if (team !== null) {
                         that.renderPage({}); // simulating refresh
                     }
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
                 });
             };
@@ -133,7 +135,7 @@ export class ClassyStudentView extends AbstractStudentView {
         const otherId = UI.getTextFieldValue('studentSelectPartnerText');
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
-            delivId:   'project', // only one team in cs310 (and it is always called project)
+            delivId: 'project', // only one team in cs310 (and it is always called project)
             githubIds: [myGithubId, otherId]
         };
         const url = this.remote + '/portal/team';

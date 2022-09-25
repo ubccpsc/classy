@@ -1,4 +1,5 @@
-import Log from "../../../../../../common/Log";
+import Log from "@common/Log";
+
 import {AdminTabs, AdminView} from "../AdminView";
 
 declare var ons: any;

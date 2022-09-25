@@ -1,7 +1,9 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
+
 import {Factory} from "../Factory";
-import {UI} from "../util/UI";
 import {IView} from "./IView";
+
+import {UI} from "../util/UI";
 
 export abstract class AdminPage implements IView {
 

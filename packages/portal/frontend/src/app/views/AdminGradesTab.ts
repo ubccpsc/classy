@@ -1,14 +1,9 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
+import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "@common/types/PortalTypes";
 
-import {
-    DeliverableTransport,
-    GradeTransport,
-    GradeTransportPayload,
-    StudentTransport
-} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-
 import {UI} from "../util/UI";
+
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminStudentsTab} from "./AdminStudentsTab";

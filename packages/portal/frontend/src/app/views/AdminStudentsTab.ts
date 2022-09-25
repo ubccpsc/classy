@@ -1,9 +1,9 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
+import {StudentTransport, StudentTransportPayload} from "@common/types/PortalTypes";
 
-import {StudentTransport, StudentTransportPayload} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-
 import {UI} from "../util/UI";
+
 import {AdminView} from "./AdminView";
 
 export class AdminStudentsTab {
@@ -36,52 +36,52 @@ export class AdminStudentsTab {
 
         const headers: TableHeader[] = [
             {
-                id:          'num',
-                text:        '#',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'num',
+                text: '#',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'githubId',
-                text:        'Github Id',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'githubId',
+                text: 'Github Id',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'id',
-                text:        'Internal Id',
-                sortable:    true,
+                id: 'id',
+                text: 'Internal Id',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'fName',
-                text:        'First Name',
-                sortable:    true,
+                id: 'fName',
+                text: 'First Name',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'lName',
-                text:        'Last Name',
-                sortable:    true,
+                id: 'lName',
+                text: 'Last Name',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
-                id:          'labId',
-                text:        'Lab Section',
-                sortable:    true,
+                id: 'labId',
+                text: 'Lab Section',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
         ];
 
@@ -98,7 +98,7 @@ export class AdminStudentsTab {
                 {value: count, html: count++ + ''},
                 {
                     value: student.githubId, html: '<a class="selectable" href="' + student.userUrl + '">' +
-                    student.githubId + '</a>' // Should be CWL
+                        student.githubId + '</a>' // Should be CWL
                 },
                 {value: student.id, html: student.id}, // Should be CSID
                 {value: student.firstName, html: student.firstName},
@@ -131,7 +131,7 @@ export class AdminStudentsTab {
         // }
 
         const that = this;
-        labSelector.onchange = function(evt) {
+        labSelector.onchange = function (evt) {
             Log.info('AdminStudentsTab::render(..) - upload pressed');
             evt.stopPropagation(); // prevents list item expansion
 

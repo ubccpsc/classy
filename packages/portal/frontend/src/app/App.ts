@@ -3,8 +3,10 @@
  */
 
 import {OnsButtonElement, OnsPageElement} from "onsenui";
-import Log, {LogLevel} from "../../../../common/Log";
-import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "../../../../common/types/PortalTypes";
+
+import Log, {LogLevel} from "@common/Log";
+import {AuthTransportPayload, ConfigTransport, ConfigTransportPayload} from "@common/types/PortalTypes";
+
 import {Factory} from "./Factory";
 import {Network} from "./util/Network";
 import {UI} from "./util/UI";
@@ -64,13 +66,13 @@ export class App {
             Log.trace('App::init() - validated: false');
         }
 
-        return new Promise(function(fulfill, reject) {
+        return new Promise(function (fulfill, reject) {
 
-            document.addEventListener('init', function(event) {
+            document.addEventListener('init', function (event) {
                 const page = event.target as OnsPageElement;
-                that.performInit(page.id).then(function() {
+                that.performInit(page.id).then(function () {
                     //
-                }).catch(function(err) {
+                }).catch(function (err) {
                     //
                 });
             });
@@ -80,7 +82,7 @@ export class App {
              *
              * Useful for student view since we populate all tabs at once.
              */
-            document.addEventListener('show', function(event) {
+            document.addEventListener('show', function (event) {
                 const page = event.target as OnsPageElement;
                 const pageName = page.id;
                 let options = (page as any).pushedOptions;
@@ -103,9 +105,9 @@ export class App {
             // TODO: Feels like this needs some kind of guard?
             // Loads the landing page, but I wouldn't want this to happen more than the first login
             Log.trace('App::init()::init - loading initial index');
-            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function() {
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function () {
                 // success
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("UI::pushPage(..) - ERROR: " + err);
             });
 
@@ -129,9 +131,9 @@ export class App {
         if (pageName === 'index') {
             Log.trace('App::performInit() - index detected; pushing real target');
             // TODO: make it so tthis 'pushPage is already running' error doesn't happen.
-            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function() {
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/landing.html').then(function () {
                 // success
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("App::performInit(..) - ERROR: " + err.message);
             });
 
@@ -162,7 +164,7 @@ export class App {
         if (pageName === 'loginPage') {
             Log.trace("App::performInit() - loginPage init; attaching login button");
 
-            (document.querySelector('#loginButton') as OnsButtonElement).onclick = function() {
+            (document.querySelector('#loginButton') as OnsButtonElement).onclick = function () {
                 // localStorage.setItem('org', org);
                 const url = that.backendURL + '/portal/auth?name=' + name;
                 Log.trace('App::performInit() - login pressed for: ' + name + '; url: ' + url);
@@ -177,9 +179,9 @@ export class App {
     }
 
     public pushPage(page: string, opts?: any) {
-        UI.pushPage(page, opts).then(function() {
+        UI.pushPage(page, opts).then(function () {
             // success
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error("UI::pushPage(..) - ERROR: " + err.message);
         });
     }
@@ -222,9 +224,9 @@ export class App {
 
         if (token === null || userId === null) {
             Log.info("App::validateCredentials() - user or token not set on cookie or localstorage; clearing for safety");
-            this.clearCredentials().then(function() {
+            this.clearCredentials().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
             });
         } else {
@@ -237,9 +239,9 @@ export class App {
                 const credentials = await this.getServerCredentials(userId, token); // send userId, not githubId
                 if (credentials === null || typeof credentials.failure !== 'undefined') {
                     Log.info("App::validateCredentials() - server validation failed");
-                    this.clearCredentials().then(function() {
+                    this.clearCredentials().then(function () {
                         // worked
-                    }).catch(function(err) {
+                    }).catch(function (err) {
                         Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
                     });
                 } else {
@@ -253,9 +255,9 @@ export class App {
                 }
             } else {
                 Log.info("App::validateCredentials() - invalid username; clearing for safety");
-                this.clearCredentials().then(function() {
+                this.clearCredentials().then(function () {
                     // worked
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.trace("App::validateCredentials(..) - clear credentials error: " + err.message);
                 });
             }
@@ -281,14 +283,14 @@ export class App {
             const options = {
                 headers: {
                     'Content-Type': 'application/json',
-                    'User-Agent':   'Portal',
-                    'user':         user,
-                    'token':        token,
-                    'name':         name
+                    'User-Agent': 'Portal',
+                    'user': user,
+                    'token': token,
+                    'name': name
                 }
             };
 
-            const finishLogout = function(): void {
+            const finishLogout = function (): void {
                 // invalid username; logout
                 that.validated = false;
                 localStorage.clear(); // erase cached info
@@ -297,10 +299,10 @@ export class App {
                 return;
             };
 
-            return fetch(url, options).then(function(resp: any) {
+            return fetch(url, options).then(function (resp: any) {
                 Log.info("App::clearCredentials() - status: " + resp.status);
                 return finishLogout();
-            }).catch(function(err: any) {
+            }).catch(function (err: any) {
                 Log.error("App::clearCredentials(..) - ERROR: " + err);
                 // finish local logout anyways
                 return finishLogout();
@@ -321,19 +323,19 @@ export class App {
 
         return fetch(this.config.githubAPI + '/user', {
             headers: {
-                'Content-Type':  'application/json',
+                'Content-Type': 'application/json',
                 'Authorization': 'token ' + token
             }
-        }).then(function(resp: any) {
+        }).then(function (resp: any) {
             Log.trace("App::getGithubCredentials(..) - resp status: " + resp.status);
             return resp.json();
-        }).then(function(data: any) {
+        }).then(function (data: any) {
             Log.trace("App::getGithubCredentials(..) - data then: " + data.login);
             if (typeof data.login !== 'undefined') {
                 return data.login;
             }
             return null;
-        }).catch(function(err: any) {
+        }).catch(function (err: any) {
             Log.error("App::getGithubCredentials(..) - ERROR: " + err);
             return null;
         });
@@ -358,13 +360,13 @@ export class App {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'User-Agent':   'Portal',
-                'user':         username,
-                'token':        token,
-                'name':         name
+                'User-Agent': 'Portal',
+                'user': username,
+                'token': token,
+                'name': name
             }
         };
-        return fetch(url, options).then(function(resp: any) {
+        return fetch(url, options).then(function (resp: any) {
             Log.trace("App::getServerCredentials(..) - resp status: " + resp.status);
             if (resp.status === 204) {
                 Log.trace("App::getServerCredentials(..) - fetching");
@@ -374,21 +376,21 @@ export class App {
                 Log.trace("App::getServerCredentials(..) - code returned: " + resp.status);
 
                 if (resp.status === 400) {
-                    that.clearCredentials().then(function() {
+                    that.clearCredentials().then(function () {
                         // worked
-                    }).catch(function(err) {
+                    }).catch(function (err) {
                         Log.trace("App::getServerCredentials(..) - clear credentials error: " + err.message);
                     });
                 }
                 return resp;
             }
-        }).then(function(resp: any) {
+        }).then(function (resp: any) {
             Log.trace("App::getServerCredentials(..) - data status: " + resp.status);
             return resp.json();
-        }).then(function(data: AuthTransportPayload) {
+        }).then(function (data: AuthTransportPayload) {
             Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
             return data;
-        }).catch(function(err: any) {
+        }).catch(function (err: any) {
             Log.error("App::getServerCredentials(..) - ERROR: " + err);
             return null;
         });
@@ -401,7 +403,7 @@ export class App {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'User-Agent':   'Portal'
+                'User-Agent': 'Portal'
             }
         };
 
@@ -439,26 +441,27 @@ export class App {
                 Log.trace("App::handleMainPageClick(..) - admin");
                 // if we're admin, keep the logging on
                 Log.Level = LogLevel.TRACE;
-                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params).then(function() { // NOTE: _without_ HTMLPrefix()
-                    // not using .getHTMLPrefix() above because all instances share a single admin page
-                    // success
-                }).catch(function(err) {
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/admin.html', params).then(
+                    function () { // NOTE: _without_ HTMLPrefix()
+                        // not using .getHTMLPrefix() above because all instances share a single admin page
+                        // success
+                    }).catch(function (err) {
                     Log.error("UI::pushPage(..) - ERROR: " + err.message);
                 });
             } else {
                 Log.trace("App::handleMainPageClick(..) - student");
-                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', params).then(function() {
+                UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/student.html', params).then(function () {
                     // success
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.error("UI::pushPage(..) - ERROR: " + err.message);
                 });
             }
         } else {
             // push to login page
             Log.info("App::handleMainPageClick(..) - not authorized");
-            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/login.html', params).then(function() {
+            UI.pushPage(Factory.getInstance().getHTMLPrefix() + '/login.html', params).then(function () {
                 // success
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("UI::pushPage(..) - ERROR: " + err.message);
             });
         }
@@ -509,9 +512,9 @@ export class App {
         Log.trace("App::logout() - start");
 
         await this.clearCredentials();
-        UI.pushPage("index.html").then(function() {
+        UI.pushPage("index.html").then(function () {
             // success
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error("UI::pushPage(..) - ERROR: " + err.message);
         });
     }
@@ -552,9 +555,9 @@ if (typeof classportal === 'undefined') {
 }
 
 (window as any).myApp = new classportal.App();
-(window as any).myApp.init().then(function(ret: any) {
+(window as any).myApp.init().then(function (ret: any) {
     Log.info("App.ts - Classy client prepared: " + JSON.stringify(ret));
-}).catch(function(err: any) {
+}).catch(function (err: any) {
     Log.error("App.ts - init ERROR: " + err);
 });
 // Log.info('App.ts - Classy client prepared');

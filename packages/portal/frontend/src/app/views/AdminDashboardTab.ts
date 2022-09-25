@@ -1,18 +1,19 @@
 import * as moment from "moment";
 import {OnsButtonElement} from "onsenui";
 
-import Log from "../../../../../common/Log";
-
-import {ClusteredResult} from "../../../../../common/types/ContainerTypes";
+import Log from "@common/Log";
+import {ClusteredResult} from "@common/types/ContainerTypes";
 import {
     AutoTestDashboardPayload,
     AutoTestDashboardTransport,
     DeliverableTransport,
     RepositoryTransport
-} from "../../../../../common/types/PortalTypes";
+} from "@common/types/PortalTypes";
+
 import {DashboardTable} from "../util/DashboardTable";
 import {TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
+
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
@@ -55,14 +56,14 @@ export class AdminDashboardTab extends AdminPage {
         UI.hideModal();
 
         const fab = document.querySelector('#dashboardUpdateButton') as OnsButtonElement;
-        fab.onclick = function(evt: any) {
+        fab.onclick = function (evt: any) {
             Log.info('AdminDashboardTab::init(..)::updateButton::onClick');
             UI.showModal('Retrieving results.');
-            that.performQueries().then(function(newResults) {
+            that.performQueries().then(function (newResults) {
                 // TODO: need to track and update the current value of deliv and repo
                 that.render(delivs, repos, newResults);
                 UI.hideModal();
-            }).catch(function(err) {
+            }).catch(function (err) {
                 UI.showError(err);
             });
         };
@@ -111,68 +112,68 @@ export class AdminDashboardTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id:          '?',
-                text:        '?',
-                sortable:    false,
+                id: '?',
+                text: '?',
+                sortable: false,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'repoId',
-                text:        'Repository',
-                sortable:    true,
+                id: 'repoId',
+                text: 'Repository',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: left;'
             },
             {
-                id:          'delivId',
-                text:        'Deliv',
-                sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                id: 'delivId',
+                text: 'Deliv',
+                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown:    false, // Whether the column should initially sort descending or ascending.
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: false, // Whether the column should initially sort descending or ascending.
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'score',
-                text:        'Score',
-                sortable:    true,
+                id: 'score',
+                text: 'Score',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'testScore',
-                text:        'Test %',
-                sortable:    true,
+                id: 'testScore',
+                text: 'Test %',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'coverScore',
-                text:        'Cover %',
-                sortable:    true,
+                id: 'coverScore',
+                text: 'Cover %',
+                sortable: true,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'timestamp',
-                text:        'Timestamp',
-                sortable:    true,
+                id: 'timestamp',
+                text: 'Timestamp',
+                sortable: true,
                 defaultSort: true,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
-                id:          'results',
-                text:        'Results',
-                sortable:    false,
+                id: 'results',
+                text: 'Results',
+                sortable: false,
                 defaultSort: false,
-                sortDown:    true,
-                style:       'padding-left: 1em; padding-right: 1em;'
+                sortDown: true,
+                style: 'padding-left: 1em; padding-right: 1em;'
             }
         ];
 
@@ -205,10 +206,13 @@ export class AdminDashboardTab extends AdminPage {
             const row: TableCell[] = [
                 {
                     value: '',
-                    html:  '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                               stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                    html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
+                        stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
                 },
-                {value: result.repoId, html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'},
+                {
+                    value: result.repoId,
+                    html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'
+                },
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: result.scoreOverall + ''},
                 {value: result.scoreTests, html: result.scoreTests + ''},
@@ -287,7 +291,7 @@ export class AdminDashboardTab extends AdminPage {
     }
 
     private generateClusteredTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {
-        const cellMap: {[key: string]: string} = {};
+        const cellMap: { [key: string]: string } = {};
         for (const cell of annotated) {
             const c = cell.colour;
             const n = cell.name;

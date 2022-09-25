@@ -1,8 +1,7 @@
 /**
  * Created by rtholmes on 2017-10-04.
  */
-import Log from "../../../../../common/Log";
-import {StudentTransport} from "../../../../../common/types/PortalTypes";
+import Log from "@common/Log";
 
 // const OPEN_DELIV_KEY = 'open';
 // const CLOSE_DELIV_KEY = 'close';

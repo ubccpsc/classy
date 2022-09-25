@@ -1,11 +1,11 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
+import {GradeTransport, RepositoryTransport, StudentTransport} from "@common/types/PortalTypes";
 
-import {GradeTransport, RepositoryTransport, StudentTransport} from "../../../../../common/types/PortalTypes";
+import {IView} from "./IView";
 import {Factory} from "../Factory";
 
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
-import {IView} from "./IView";
 
 export abstract class AbstractStudentView implements IView {
 
@@ -109,28 +109,28 @@ export abstract class AbstractStudentView implements IView {
         } else {
             const headers: TableHeader[] = [
                 {
-                    id:          'id',
-                    text:        'Deliv Id',
-                    sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                    id: 'id',
+                    text: 'Deliv Id',
+                    sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                     defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                    sortDown:    false, // Whether the column should initially sort descending or ascending.
-                    style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    sortDown: false, // Whether the column should initially sort descending or ascending.
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
                 },
                 {
-                    id:          'grade',
-                    text:        'Grade',
-                    sortable:    true,
+                    id: 'grade',
+                    text: 'Grade',
+                    sortable: true,
                     defaultSort: false,
-                    sortDown:    true,
-                    style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    sortDown: true,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
                 },
                 {
-                    id:          'comment',
-                    text:        'Comment',
-                    sortable:    false,
+                    id: 'comment',
+                    text: 'Comment',
+                    sortable: false,
                     defaultSort: false,
-                    sortDown:    true,
-                    style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
+                    sortDown: true,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: left;'
                 }
             ];
 
@@ -172,20 +172,20 @@ export abstract class AbstractStudentView implements IView {
         } else {
             const headers: TableHeader[] = [
                 {
-                    id:          'id',
-                    text:        'Repository',
-                    sortable:    true,
+                    id: 'id',
+                    text: 'Repository',
+                    sortable: true,
                     defaultSort: false,
-                    sortDown:    true,
-                    style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    sortDown: true,
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
                 },
                 {
-                    id:          'delivId',
-                    text:        'Deliverable',
-                    sortable:    true, // Whether the column is sortable (sometimes sorting does not make sense).
+                    id: 'delivId',
+                    text: 'Deliverable',
+                    sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                     defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
-                    sortDown:    false, // Whether the column should initially sort descending or ascending.
-                    style:       'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    sortDown: false, // Whether the column should initially sort descending or ascending.
+                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
                 }
                 // could be result in the future (provisioned | detached)
                 // {
@@ -213,13 +213,13 @@ export abstract class AbstractStudentView implements IView {
         }
     }
 
-    protected getOptions(): {headers: {[header: string]: string}} {
+    protected getOptions(): { headers: { [header: string]: string } } {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'user':         localStorage.user,
-                'token':        localStorage.token,
-                'org':          localStorage.org
+                'user': localStorage.user,
+                'token': localStorage.token,
+                'org': localStorage.org
             }
         };
         return options;
@@ -231,9 +231,9 @@ export abstract class AbstractStudentView implements IView {
             opts = {};
         }
         const prefix = Factory.getInstance().getHTMLPrefix();
-        UI.pushPage(prefix + '/' + pageName, opts).then(function() {
+        UI.pushPage(prefix + '/' + pageName, opts).then(function () {
             // success
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error("AbstractStudentView::pushPage(..) - ERROR: " + err.message);
         });
     }
