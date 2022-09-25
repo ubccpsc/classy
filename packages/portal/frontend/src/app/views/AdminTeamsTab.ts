@@ -308,6 +308,14 @@ export class AdminTeamsTab extends AdminPage {
                 style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id: 'lab',
+                text: 'Lab',
+                sortable: true,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id: 'id',
                 text: 'Student',
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -342,9 +350,11 @@ export class AdminTeamsTab extends AdminPage {
                     studentHTML = student.firstName + ' ' + student.lastName +
                         ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
                 }
+                const lab = student.labId ?? '';
 
                 const row: TableCell[] = [
                     {value: count, html: count++ + ''},
+                    {value: lab, html: lab},
                     {value: student.id, html: studentHTML}
                 ];
                 if (delivId !== '-None-') {
