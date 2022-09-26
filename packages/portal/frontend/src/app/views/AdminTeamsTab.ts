@@ -43,21 +43,24 @@ export class AdminTeamsTab extends AdminPage {
         UI.showModal('Retrieving teams.');
         this.course = await AdminView.getCourse(this.remote);
 
+        const provisionDelivs = (await AdminDeliverablesTab.getDeliverables(this.remote))
+            .filter((deliv) => deliv.shouldProvision);
+        this.repos = await AdminResultsTab.getRepositories(this.remote);
+        this.teams = await AdminTeamsTab.getTeams(this.remote);
+        this.students = await AdminStudentsTab.getStudents(this.remote);
+
         if (typeof opts.delivId === 'undefined') {
-            if (this.course.defaultDeliverableId !== null) {
+            const defaultDelivProvisions = provisionDelivs
+                .some((deliv) => deliv.id === this.course.defaultDeliverableId);
+            if (defaultDelivProvisions) {
                 opts.delivId = this.course.defaultDeliverableId;
             } else {
                 opts.delivId = '-None-';
             }
         }
 
-        const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
-        this.repos = await AdminResultsTab.getRepositories(this.remote);
-        this.teams = await AdminTeamsTab.getTeams(this.remote);
-        this.students = await AdminStudentsTab.getStudents(this.remote);
-
         const dStr = ['-None-'];
-        for (const deliv of delivs) {
+        for (const deliv of provisionDelivs) {
             dStr.push(deliv.id);
         }
         // opts = opts.sort();
@@ -291,6 +294,14 @@ export class AdminTeamsTab extends AdminPage {
                 style: 'padding-left: 1em; padding-right: 1em;'
             },
             {
+                id: 'lab',
+                text: 'Lab',
+                sortable: true,
+                defaultSort: false,
+                sortDown: false,
+                style: 'padding-left: 1em; padding-right: 1em;'
+            },
+            {
                 id: 'id',
                 text: 'Student',
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
@@ -318,14 +329,15 @@ export class AdminTeamsTab extends AdminPage {
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
 
-                let studentHTML = '';
-                studentHTML = student.firstName + ' ' + student.lastName +
+                const lab = student.labId ?? '';
+                const studentHTML = student.firstName + ' ' + student.lastName +
                     ' <a class="selectable" href="' + student.userUrl + '">' +
                     student.githubId + '</a> (' + student.firstName + ' ' +
                     student.lastName + ')';
 
                 const row: TableCell[] = [
                     {value: count, html: count++ + ''},
+                    {value: lab, html: lab},
                     {value: student.id, html: studentHTML}
                 ];
                 if (delivId !== '-None-') {

@@ -124,15 +124,12 @@ export class AdminGradesTab extends AdminPage {
                         if (grade.delivId === deliv.id) {
                             const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
                             // let score = '';
-                            let score: number | string = '';
+                            let scoreText: string = '';
                             let scorePrepend = '';
                             if (grade.score !== null && grade.score >= 0) {
-                                score = grade.score;
-                                if (score === 100) {
-                                    score = "100.00";
-                                } else {
+                                scoreText = grade.score.toFixed(2);
+                                if (grade.score < 100) {
                                     // two decimal places
-                                    score = score.toFixed(2);
                                     // prepend space (not 100)
                                     scorePrepend = "&#8199;" + scorePrepend;
                                     if (grade.score < 10) {
@@ -140,17 +137,16 @@ export class AdminGradesTab extends AdminPage {
                                         scorePrepend = "&#8199;" + scorePrepend;
                                     }
                                 }
-                                // score = grade.score + '';
                             }
                             let html;
-                            if (score !== '' && grade.URL !== null) {
-                                html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
-                            } else if (score !== '' && grade.URL === null) {
-                                html = `<div title="${hoverComment}">${score}</div>`;
+                            if (scoreText !== '' && grade.URL !== null) {
+                                html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${scoreText}</a>`;
+                            } else if (scoreText !== '' && grade.URL === null) {
+                                html = `<div title="${hoverComment}">${scoreText}</div>`;
                             } else {
-                                html = score;
+                                html = scoreText;
                             }
-                            tableCell = {value: score, html};
+                            tableCell = {value: scoreText, html};
                         }
                     }
                 }
