@@ -275,7 +275,8 @@ export class AdminTeamsTab extends AdminPage {
         if (student === null) {
             // user is either a staff or a withdrawn student
             const staff = this.getStaff(personId);
-            if (staff === null) {
+            // atest ids are often used for sample repos course staff can work with
+            if (staff === null && personId.startsWith("atest-") === false) {
                 // withdrawn student
                 render = 'Withdrawn: ' + personId;
             } else {
