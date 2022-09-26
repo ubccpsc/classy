@@ -45,7 +45,7 @@ export class AdminStudentsTab {
             },
             {
                 id: 'githubId',
-                text: 'Github Id',
+                text: 'GitHub Id',
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
@@ -77,7 +77,7 @@ export class AdminStudentsTab {
             },
             {
                 id: 'labId',
-                text: 'Lab Section',
+                text: 'Lab',
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
@@ -120,16 +120,6 @@ export class AdminStudentsTab {
         UI.setDropdownOptions('studentsListSelect', labSectionsOptions, labSection);
 
         const labSelector = document.querySelector('#studentsListSelect') as HTMLSelectElement;
-        // labSelector.innerHTML = '';
-        // for (const labId of labSectionsOptions) {
-        //     let selected = false;
-        //     if (labId === labSection) {
-        //         selected = true;
-        //     }
-        //     const o: HTMLOptionElement = new Option(labId, labId, false, selected);
-        //     labSelector.add(o);
-        // }
-
         const that = this;
         labSelector.onchange = function (evt) {
             Log.info('AdminStudentsTab::render(..) - upload pressed');

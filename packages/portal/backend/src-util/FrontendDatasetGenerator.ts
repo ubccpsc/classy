@@ -60,7 +60,13 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::createPeople() - start");
 
         let person = Test.getPerson(Test.ADMIN1.id);
-        person.kind = null;
+        person.kind = PersonKind.ADMIN;
+        (person as any).studentNumber = null;
+        await this.dc.writePerson(person);
+
+        person = Test.getPerson(Test.STAFF1.id);
+        person.kind = PersonKind.STAFF;
+        (person as any).studentNumber = null;
         await this.dc.writePerson(person);
 
         person = Test.getPerson(Test.USER1.id);

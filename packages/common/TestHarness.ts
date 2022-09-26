@@ -562,7 +562,7 @@ export class Test {
             id: id,
             csId: id,
             githubId: id,
-            studentNumber: null,
+            studentNumber: Number((Math.random() * 100000).toFixed(0)),
 
             fName: 'f' + id,
             lName: 'l' + id,

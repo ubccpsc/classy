@@ -87,11 +87,6 @@ export class AdminTeamsTab extends AdminPage {
             Log.info('AdminTeamsTab::init(..) - deliv changed');
             evt.stopPropagation(); // prevents list item expansion
             updateTeamTable();
-            // const val = delivSelector.value.valueOf();
-            //
-            // // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
-            // that.renderTeams(that.teams, val); // if cached data is ok
-            // that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
         };
 
         statusSelector.onchange = function (evt) {
@@ -99,11 +94,6 @@ export class AdminTeamsTab extends AdminPage {
             evt.stopPropagation(); // prevents list item expansion
 
             updateTeamTable();
-            // const val = delivSelector.value.valueOf();
-            //
-            // // that.renderPage('AdminTeams', {labSection: val}); // if we need to re-fetch
-            // that.renderTeams(that.teams, val); // if cached data is ok
-            // that.renderIndividuals(that.teams, that.students, val); // if cached data is ok
         };
 
         this.renderTeams(this.teams, opts.delivId);
@@ -230,9 +220,7 @@ export class AdminTeamsTab extends AdminPage {
                 {value: p2, html: p2},
                 {value: p3, html: p3}
             ];
-            // if (delivOptions.indexOf(team.delivId) < 0 && team.delivId !== '' && team.delivId !== null) {
-            //     delivOptions.push(team.delivId);
-            // }
+
             if (delivId === team.delivId && team.people.length > 0) {
                 count++;
                 st.addRow(row);
@@ -274,23 +262,17 @@ export class AdminTeamsTab extends AdminPage {
         let render = personId;
         const student = this.getPerson(personId);
 
-        if (student?.id === personId) {
+        if (student === null || student.studentNum === null) {
+            render = 'Staff: ' + student.githubId;
+            return render;
+        }
 
-            if (student.githubId === student.id) {
-                // render staff (whose GitHub ids should match their CSIDs (according to the system)
-                if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                    render = '<a class="selectable" href="' + student.userUrl + '">Staff: ' + student.githubId + '</a>';
-                } else {
-                    render = 'Staff: ' + student.githubId;
-                }
+        if (student?.id === personId) {
+            if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
+                render = '<a class="selectable" href="' + student.userUrl + '">' +
+                    student.githubId + '</a> (' + student.firstName + ' ' + student.lastName + ')';
             } else {
-                // render students
-                if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                    render = '<a class="selectable" href="' + student.userUrl + '">' +
-                        student.githubId + '</a> (' + student.id + ')';
-                } else {
-                    render = student.githubId + " (" + student.id + ")";
-                }
+                render = student.githubId + " (" + student.firstName + " " + student.lastName + ")";
             }
         }
         return render;
@@ -337,12 +319,10 @@ export class AdminTeamsTab extends AdminPage {
             if (studentsOnTeams.indexOf(student.id) < 0) {
 
                 let studentHTML = '';
-                if (student.firstName === student.lastName || student.githubId.startsWith('atest-')) {
-                    studentHTML = 'Staff: ' + ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>';
-                } else {
-                    studentHTML = student.firstName + ' ' + student.lastName +
-                        ' <a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a> (' + student.id + ')';
-                }
+                studentHTML = student.firstName + ' ' + student.lastName +
+                    ' <a class="selectable" href="' + student.userUrl + '">' +
+                    student.githubId + '</a> (' + student.firstName + ' ' +
+                    student.lastName + ')';
 
                 const row: TableCell[] = [
                     {value: count, html: count++ + ''},
