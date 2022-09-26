@@ -75,22 +75,21 @@
     <template id="teams.html">
         <ons-page id="AdminTeams">
             <ons-list id="AdminStudentsList">
-                <div style="text-align:center; padding: 1em;">
-                    Select Deliverable:
-                    <select id="teamsListSelect" style="margin-left: 1em;">
-                        <option value="''">-None-</option>
-                    </select></div>
-                <ons-list-header>Formed Teams</ons-list-header>
+                <div style="display:flex; flex-direction: row; justify-content: center;">
+                    <div style="text-align:center; padding: 1em;  display: flex;">
+                        Select Deliverable:
+                        <select id="teamsListSelect" style="margin-left: 1em;">
+                            <option value="''">-None-</option>
+                        </select></div>
+                    <div style="text-align:center; padding: 1em; display: flex;">
+                        Team status:
+                        <select id="teamsListStatusSelect" style="margin-left: 1em;">
+                            <option value="formed">Formed</option>
+                            <option value="unformed">Unformed</option>
+                        </select></div>
+                </div>
+                <ons-list-header>Team Results</ons-list-header>
                 <div id="teamsListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
-                <div id="teamsListTableNone" class="noResultsRow">
-                    No Results
-                </div>
-                <ons-list-header>Individuals</ons-list-header>
-                <div id="teamsIndividualListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;">
-                </div>
-                <div id="teamsIndividualListTableNone" class="noResultsRow">
-                    No Results
-                </div>
             </ons-list>
         </ons-page>
     </template>
@@ -165,20 +164,6 @@
         </ons-page>
     </template>
 
-    <template id="classlistDialog.html">
-        <ons-dialog id="adminClasslistConfirmHeader">
-            <ons-list-header style="text-align: center; font-weight: 700">
-            </ons-list-header>
-            <ons-scroller>
-                <ons-list>
-                </ons-list>
-            </ons-scroller>
-            <ons-button>
-                Close
-            </ons-button>
-        </ons-dialog>
-    </template>
-
     <template id="dockerBuildDialog.html">
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
@@ -195,7 +180,7 @@
                         <ons-button>
                             Close
                         </ons-button>
-                        </a>
+                    </a>
                     <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
                         <ons-button>
                             Save
@@ -392,10 +377,6 @@
                     </div>
                 </ons-list-item>
 
-                <!-- UNSUPPORTED FEATURE. A containerized patch tool exists that may be integrated with Portal back-end endpoints to implement this feature.
-
-                     Uncomment code and implement container as a service, found here: github.students.cs.ubc.ca/cpsc310/repoPatchTool.git, in docker-compose.yml.
-
                 <ons-list-header>Manage and Apply Pull Requests</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
@@ -404,7 +385,7 @@
                     <div class="center">
                         <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests</ons-button>
                     </div>
-                </ons-list-item> -->
+                </ons-list-item>
 
                 <div style="display:none;">
                     <ons-list-item expandable>
@@ -745,8 +726,11 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repos are provisioned for this deliverable, where should they be imported from (e.g., the boostrap clone
-                            URL).
+                            If any repos are provisioned for this deliverable, where should they be imported from
+                            (e.g., the boostrap clone URL).
+                            <br><br>
+                            You can optionally import from a branch or subdirectory using the syntax
+                            `https://bootstrap.git#branch:directory`
                         </div>
                     </ons-list-item>
 
@@ -963,8 +947,7 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 900 (15 minutes), 43200 (12 hours), 86400 (24 hours). Cannot be lower than
-                                15 minutes unless a minimum value is set in the environmental config.
+                                E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 

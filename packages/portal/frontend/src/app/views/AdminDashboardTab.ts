@@ -215,9 +215,9 @@ export class AdminDashboardTab extends AdminPage {
                     html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'
                 },
                 {value: result.delivId, html: result.delivId},
-                {value: result.scoreOverall, html: result.scoreOverall + ''},
-                {value: result.scoreTests, html: result.scoreTests + ''},
-                {value: result.scoreCover, html: result.scoreCover + ''},
+                {value: result.scoreOverall, html: this.alignValue(result.scoreOverall)},
+                {value: result.scoreTests, html: this.alignValue(result.scoreTests)},
+                {value: result.scoreCover, html: this.alignValue(result.scoreCover)},
                 {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'},
                 {value: '', html: dashRow}
             ];
@@ -337,5 +337,37 @@ export class AdminDashboardTab extends AdminPage {
         }
 
         return [];
+    }
+
+    private alignValue(value: number | string): string {
+        const SPACER = "&#8199;";
+
+        if (typeof value === "string") {
+            if (value === "N/A") {
+                return SPACER + SPACER + "N/A";
+            }
+            if (value === "") {
+                return "";
+            }
+            value = Number.parseFloat(value);
+        }
+
+        const origValue = value;
+        let score: number | string = '';
+        let scorePrepend = '';
+        score = value;
+        if (score === 100) {
+            score = "100.00";
+        } else {
+            // two decimal places
+            score = value.toFixed(2);
+            // prepend space (not 100)
+            scorePrepend = SPACER + scorePrepend;
+            if (origValue < 10) {
+                // prepend with extra space if < 10
+                scorePrepend = SPACER + scorePrepend;
+            }
+        }
+        return scorePrepend + score;
     }
 }
