@@ -360,7 +360,12 @@ export class AdminDashboardTab extends AdminPage {
             score = "100.00";
         } else {
             // two decimal places
-            score = value.toFixed(2);
+            if (typeof value.toFixed === "function") {
+                score = value.toFixed(2);
+            } else {
+                Log.trace("AdminDashboardTab::alignValue(..) - not a number: " + value);
+            }
+
             // prepend space (not 100)
             scorePrepend = SPACER + scorePrepend;
             if (origValue < 10) {
