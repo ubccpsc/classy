@@ -174,6 +174,41 @@ export class AdminController {
     }
 
     /**
+     * Gets the staff associated with the course.
+     *
+     * @returns {Promise<StudentTransport[]>}
+     */
+    public async getStaff(): Promise<StudentTransport[]> {
+        const people = await this.pc.getAllPeople();
+
+        const adminStaff: StudentTransport[] = [];
+        for (const person of people) {
+            if (person.kind === PersonKind.ADMIN ||
+                person.kind === PersonKind.STAFF ||
+                person.kind === PersonKind.ADMINSTAFF) {
+
+                const isAdmin = (person.kind === PersonKind.ADMIN || person.kind === PersonKind.ADMINSTAFF);
+                const isStaff = (person.kind === PersonKind.STAFF || person.kind === PersonKind.ADMINSTAFF);
+
+                const studentTransport = {
+                    id: person.id,
+                    firstName: person.fName,
+                    lastName: person.lName,
+                    githubId: person.githubId,
+                    userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
+                    studentNum: person.studentNumber,
+                    labId: person.labId,
+                    kind: person.kind,
+                    isAdmin,
+                    isStaff
+                };
+                adminStaff.push(studentTransport);
+            }
+        }
+        return adminStaff;
+    }
+
+    /**
      * Gets the teams associated with the course.
      *
      * @returns {Promise<TeamTransport[]>}

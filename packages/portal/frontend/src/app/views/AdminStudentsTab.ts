@@ -140,34 +140,52 @@ export class AdminStudentsTab {
         }
     }
 
+    public static async getStaff(remote: string): Promise<StudentTransport[]> {
+        Log.info("AdminStudentsTab::getStaff( .. ) - start");
+        try {
+            return await AdminStudentsTab.getPeople(remote + '/portal/admin/staff');
+        } catch (err) {
+            Log.error("AdminStudentsTab::getStaff( .. ) - ERROR: " + err.message);
+        }
+    }
+
     public static async getStudents(remote: string): Promise<StudentTransport[]> {
         Log.info("AdminStudentsTab::getStudents( .. ) - start");
+        try {
+            return await AdminStudentsTab.getPeople(remote + '/portal/admin/students');
+        } catch (err) {
+            Log.error("AdminStudentsTab::getStudents( .. ) - ERROR: " + err.message);
+        }
+    }
+
+    public static async getPeople(url: string): Promise<StudentTransport[]> {
+        Log.info("AdminStudentsTab::getPeople( .. ) - start; url: " + url);
 
         try {
             const start = Date.now();
-            const url = remote + '/portal/admin/students';
+            // const url = remote + '/portal/admin/students';
             const options = AdminView.getOptions();
             const response = await fetch(url, options);
 
             if (response.status === 200) {
-                Log.trace('AdminStudentsTab::getStudents(..) - 200 received');
+                Log.trace('AdminStudentsTab::getPeople(..) - 200 received');
                 const json: StudentTransportPayload = await response.json();
                 // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
                 if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminStudentsTab::getStudents(..)  - worked; # students: ' +
+                    Log.trace('AdminStudentsTab::getPeople(..)  - worked; # students: ' +
                         json.success.length + '; took: ' + UI.took(start));
                     return json.success;
                 } else {
-                    Log.trace('AdminStudentsTab::getStudents(..)  - ERROR: ' + json.failure.message);
+                    Log.trace('AdminStudentsTab::getPeople(..)  - ERROR: ' + json.failure.message);
                     AdminView.showError(json.failure); // FailurePayload
                 }
             } else {
-                Log.trace('AdminView::getStudents(..)  - !200 received: ' + response.status);
+                Log.trace('AdminView::getPeople(..)  - !200 received: ' + response.status);
                 const text = await response.text();
                 AdminView.showError(text);
             }
         } catch (err) {
-            AdminView.showError("Getting students failed: " + err.message);
+            AdminView.showError("Getting people failed: " + err.message);
         }
         return [];
     }

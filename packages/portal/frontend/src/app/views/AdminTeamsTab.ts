@@ -21,6 +21,7 @@ export class AdminTeamsTab extends AdminPage {
 
     private teams: TeamTransport[] = [];
     private students: StudentTransport[] = [];
+    private staff: StudentTransport[] = [];
     private course: CourseTransport = null;
     private repos: RepositoryTransport[] = [];
 
@@ -48,6 +49,8 @@ export class AdminTeamsTab extends AdminPage {
         this.repos = await AdminResultsTab.getRepositories(this.remote);
         this.teams = await AdminTeamsTab.getTeams(this.remote);
         this.students = await AdminStudentsTab.getStudents(this.remote);
+
+        this.staff = await AdminStudentsTab.getStaff(this.remote);
 
         if (typeof opts.delivId === 'undefined') {
             const defaultDelivProvisions = provisionDelivs
@@ -253,6 +256,10 @@ export class AdminTeamsTab extends AdminPage {
         return this.students.find((student) => student.id === personId) ?? null;
     }
 
+    private getStaff(personId: string): StudentTransport | null {
+        return this.staff.find((staff) => staff.id === personId) ?? null;
+    }
+
     /**
      * Convert personId to a more useful representation for staff to understand.
      *
@@ -263,10 +270,18 @@ export class AdminTeamsTab extends AdminPage {
      */
     private getPersonCell(personId: string): string {
         let render = personId;
-        const student = this.getPerson(personId);
 
-        if (student === null || student.studentNum === null) {
-            render = 'Staff: ' + personId;
+        const student = this.getPerson(personId);
+        if (student === null) {
+            // user is either a staff or a withdrawn student
+            const staff = this.getStaff(personId);
+            if (staff === null) {
+                // withdrawn student
+                render = 'Withdrawn: ' + personId;
+            } else {
+                // staff
+                render = 'Staff: ' + personId;
+            }
             return render;
         }
 

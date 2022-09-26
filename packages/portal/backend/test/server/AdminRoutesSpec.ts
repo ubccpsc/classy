@@ -89,6 +89,24 @@ describe('Admin Routes', function () {
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
+    it('Should be able to get a list of staff', async function () {
+
+        let response = null;
+        let body: StudentTransportPayload;
+        const url = '/portal/admin/staff';
+        try {
+            response = await request(app).get(url).set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test('ERROR: ' + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success).to.be.an('array');
+        // should confirm body.success objects (at least one)
+    }).timeout(Test.TIMEOUT);
+
     it('Should be able to get a list of students with cookies for authentication', async function () {
 
         let response = null;
@@ -648,7 +666,7 @@ describe('Admin Routes', function () {
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
     });
 
-    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function() {
+    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function () {
         let response = null;
         let body: Payload;
         const url = '/portal/classlist';
@@ -664,7 +682,7 @@ describe('Admin Routes', function () {
         expect(body).to.haveOwnProperty('failure');
     });
 
-    it('Should be able to update a classlist on restricted IP', async function() {
+    it('Should be able to update a classlist on restricted IP', async function () {
 
         if (Test.isCI() === false) {
             // skip locally; requires credentials devs shouldn't have (but are encrypted for CI)

@@ -6,6 +6,7 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
+import {PersonKind} from "portal-backend/src/Types";
 
 export interface FailurePayload {
     message: string;
@@ -91,6 +92,11 @@ export interface StudentTransport {
     userUrl: string;
     studentNum: number;
     labId: string;
+
+    // these were added later and need to be optional
+    isAdmin?: boolean;
+    isStaff?: boolean;
+    kind?: PersonKind;
 }
 
 export interface DeliverableTransportPayload {

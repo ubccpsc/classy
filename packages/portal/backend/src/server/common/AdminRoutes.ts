@@ -57,6 +57,7 @@ export default class AdminRoutes implements IREST {
         server.get('/portal/admin/course', AdminRoutes.isPrivileged, AdminRoutes.getCourse);
         server.get('/portal/admin/deliverables', AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
         server.get('/portal/admin/students', AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+        server.get('/portal/admin/staff', AdminRoutes.isPrivileged, AdminRoutes.getStaff);
         server.get('/portal/admin/teams', AdminRoutes.isPrivileged, AdminRoutes.getTeams);
         server.get('/portal/admin/repositories', AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
         server.get('/portal/admin/grades', AdminRoutes.isPrivileged, AdminRoutes.getGrades);
@@ -234,6 +235,27 @@ export default class AdminRoutes implements IREST {
             return next();
         }).catch(function(err) {
             return AdminRoutes.handleError(400, 'Unable to retrieve student list. ERROR: ' + err.message, res, next);
+        });
+    }
+
+    /**
+     * Returns a StudentTransportPayload.
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    private static getStaff(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::getStaff(..) - start');
+
+        const ac = new AdminController(AdminRoutes.ghc);
+        ac.getStaff().then(function(staff) {
+            Log.info('AdminRoutes::getStaff(..) - done; # staff: ' + staff.length);
+            const payload: StudentTransportPayload = {success: staff};
+            res.send(payload);
+            return next();
+        }).catch(function(err) {
+            return AdminRoutes.handleError(400, 'Unable to retrieve staff list. ERROR: ' + err.message, res, next);
         });
     }
 
