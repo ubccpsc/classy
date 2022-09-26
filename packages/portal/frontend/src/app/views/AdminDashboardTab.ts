@@ -352,10 +352,10 @@ export class AdminDashboardTab extends AdminPage {
             value = Number.parseFloat(value);
         }
 
-        const origValue = value;
+        const origValue = Number(value);
         let score: number | string = '';
         let scorePrepend = '';
-        score = value;
+        score = Number(value);
         if (score === 100) {
             score = "100.00";
         } else {

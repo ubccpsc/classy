@@ -263,7 +263,7 @@ export class AdminTeamsTab extends AdminPage {
         const student = this.getPerson(personId);
 
         if (student === null || student.studentNum === null) {
-            render = 'Staff: ' + student.githubId;
+            render = 'Staff: ' + personId;
             return render;
         }
 
