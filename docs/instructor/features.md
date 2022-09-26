@@ -9,7 +9,7 @@
       - [Feedback for an Assignment](#feedback-for-an-assignment)
       - [Feedback for an Assignment that Fails to Compile](#feedback-for-an-assignment-that-fails-to-compile)
       - [Feedback for an Assignment Before Allowed Time](#feedback-for-an-assignment-before-allowed-time)
-      - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature)
+       <!-- - [Feedback for an Assignment Using #schedule Feature](#feedback-for-an-assignment-using-schedule-feature) -->
     - [Admin Role Examples](#admin-role-examples)
       - [Request Feedback When Student Cannot](#request-feedback-when-student-cannot)
       - [Force a Re-Grade](#force-a-re-grade)
@@ -69,11 +69,11 @@ A student pushes code to a repository and requests feedback for the commit displ
 
 <img src="../assets/commit-comment-wait.png/">
 
-#### Feedback for an Assignment Using #schedule Feature
+[//]: # (#### Feedback for an Assignment Using #schedule Feature)
 
-A student pushes code to a repository but cannot request grade feedback because the student is within the configured delay period. The student schedules feedback by using the `#schedule` flag with the specified deliverable in a grade request to `AutoBot`.
+[//]: # (A student pushes code to a repository but cannot request grade feedback because the student is within the configured delay period. The student schedules feedback by using the `#schedule` flag with the specified deliverable in a grade request to `AutoBot`.)
 
-<img src="../assets/commit-comment-schedule.png/">
+[//]: # (<img src="../assets/commit-comment-schedule.png/">)
 
 ### Admin Role Examples
 
