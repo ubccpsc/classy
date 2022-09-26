@@ -203,11 +203,12 @@ export class AdminDashboardTab extends AdminPage {
 
             const stdioViewerURL = '/stdio.html?delivId=' + result.delivId + '&repoId=' + result.repoId + '&sha=' + result.commitSHA;
 
+            // ion-ios-help-outline
             const row: TableCell[] = [
                 {
                     value: '',
                     html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                        stdioViewerURL + '"><ons-icon icon="ion-ios-help-outline"</ons-icon></a>'
+                        stdioViewerURL + '"><ons-icon icon="md-info-outline"</ons-icon></a>'
                 },
                 {
                     value: result.repoId,
