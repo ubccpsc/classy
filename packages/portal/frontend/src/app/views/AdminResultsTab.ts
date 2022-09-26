@@ -1,17 +1,18 @@
 import * as moment from "moment";
 import {OnsButtonElement} from "onsenui";
 
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
 import {
     AutoTestResultSummaryPayload,
     AutoTestResultSummaryTransport,
     DeliverableTransport,
     RepositoryPayload,
     RepositoryTransport
-} from "../../../../../common/types/PortalTypes";
-import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
+} from "@common/types/PortalTypes";
 
+import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
+
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";

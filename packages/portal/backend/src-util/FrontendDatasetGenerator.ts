@@ -60,7 +60,13 @@ export class FrontendDatasetGenerator {
         Log.info("FrontendDatasetGenerator::createPeople() - start");
 
         let person = Test.getPerson(Test.ADMIN1.id);
-        person.kind = null;
+        person.kind = PersonKind.ADMIN;
+        (person as any).studentNumber = null;
+        await this.dc.writePerson(person);
+
+        person = Test.getPerson(Test.STAFF1.id);
+        person.kind = PersonKind.STAFF;
+        (person as any).studentNumber = null;
         await this.dc.writePerson(person);
 
         person = Test.getPerson(Test.USER1.id);
@@ -177,15 +183,49 @@ export class FrontendDatasetGenerator {
         // 100 random results
         const teams = await this.dc.getTeams();
 
+        let team;
+        let result;
         for (let i = 0; i < 100; i++) {
             const index = this.getRandomInt(teams.length);
-            const team = teams[index];
+            team = teams[index];
 
             const score = this.getRandomInt(100);
             // NOTE: THIS IS NOT RIGHT; team.id should be repo.id
-            const result = Test.createResult(team.delivId, team.id, team.personIds, score);
+            result = Test.createResult(team.delivId, team.id, team.personIds, score);
             await this.dc.writeResult(result);
         }
+
+        // one result with a 0
+        team = teams[2];
+        result = Test.createResult(team.delivId, team.id, team.personIds, 50);
+        result.output.report.scoreOverall = 0;
+        result.output.report.scoreCover = 0;
+        result.output.report.scoreTest = 0;
+        await this.dc.writeResult(result);
+
+        // one result with a N/A (have seen this in production, not sure how it happens)
+        team = teams[3];
+        result = Test.createResult(team.delivId, team.id, team.personIds, 50);
+        (result.output as any).report.scoreOverall = "N/A";
+        (result.output as any).report.scoreCover = "N/A";
+        (result.output as any).report.scoreTest = "N/A";
+        await this.dc.writeResult(result);
+
+        // one result with empty string (have seen this in production, not sure how it happens)
+        team = teams[4];
+        result = Test.createResult(team.delivId, team.id, team.personIds, 50);
+        (result.output as any).report.scoreOverall = "";
+        (result.output as any).report.scoreCover = "";
+        (result.output as any).report.scoreTest = "";
+        await this.dc.writeResult(result);
+
+        // one result with 100s
+        team = teams[5];
+        result = Test.createResult(team.delivId, team.id, team.personIds, 50);
+        result.output.report.scoreOverall = 100;
+        result.output.report.scoreCover = 100.0;
+        result.output.report.scoreTest = 100.000;
+        await this.dc.writeResult(result);
     }
 
     private getRandomInt(max: number) {
@@ -197,10 +237,10 @@ if (typeof it === 'function') {
     Log.warn("Frontend data not generated (test suite execution)");
 } else {
     const fedg = new FrontendDatasetGenerator();
-    fedg.create().then(function() { // done
+    fedg.create().then(function () { // done
         Log.info('create done');
         process.exit();
-    }).catch(function(err) {
+    }).catch(function (err) {
         Log.error('create ERROR: ' + err);
     });
 }

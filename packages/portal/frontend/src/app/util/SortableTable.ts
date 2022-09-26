@@ -1,4 +1,4 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
 
 /**
  * These correspond to the columns in the table.

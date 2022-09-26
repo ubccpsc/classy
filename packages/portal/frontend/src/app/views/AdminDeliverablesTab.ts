@@ -1,9 +1,10 @@
 import {OnsBackButtonElement, OnsButtonElement, OnsFabElement, OnsRadioElement, OnsSwitchElement} from "onsenui";
-import Log from "../../../../../common/Log";
 
-import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "../../../../../common/types/PortalTypes";
+import Log from "@common/Log";
+import {AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload} from "@common/types/PortalTypes";
 
 import {UI} from "../util/UI";
+
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 import {DockerListImageView} from "./DockerListImageView";
@@ -78,11 +79,11 @@ export class AdminDeliverablesTab extends AdminPage {
 
             const elem = UI.createListItem(main, sub, editable);
             elem.setAttribute('delivId', deliv.id);
-            elem.onclick = function(evt: any) {
+            elem.onclick = function (evt: any) {
                 const delivId = evt.currentTarget.getAttribute('delivId');
-                UI.pushPage('editDeliverable.html', {delivId: delivId}).then(function() {
+                UI.pushPage('editDeliverable.html', {delivId: delivId}).then(function () {
                     // success
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.error("UI::pushPage(..) - ERROR: " + err.message);
                 });
             };
@@ -97,10 +98,10 @@ export class AdminDeliverablesTab extends AdminPage {
         createDeliverable.setAttribute('modifier', 'large');
         createDeliverable.innerText = 'Create New Deliverable';
 
-        createDeliverable.onclick = function() {
-            UI.pushPage('editDeliverable.html', {delivId: null}).then(function() {
+        createDeliverable.onclick = function () {
+            UI.pushPage('editDeliverable.html', {delivId: null}).then(function () {
                 // success
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("UI::pushPage(..) - ERROR: " + err.message);
             });
         };
@@ -164,18 +165,18 @@ export class AdminDeliverablesTab extends AdminPage {
         if (this.isAdmin === false) {
             fab.style.display = 'none';
         } else {
-            fab.onclick = function(evt) {
+            fab.onclick = function (evt) {
                 Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick');
-                that.save().then(function() {
+                that.save().then(function () {
                     // worked
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: ' + err.message);
                 });
             };
         }
 
         const shouldProvision = document.querySelector('#adminEditDeliverablePage-shouldProvision') as OnsSwitchElement;
-        shouldProvision.onchange = function(evt) {
+        shouldProvision.onchange = function (evt) {
             const value = (evt as any).value;
             Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldProvision; change: ' + value);
             //
@@ -189,7 +190,7 @@ export class AdminDeliverablesTab extends AdminPage {
         };
 
         const shouldAutoTest = document.querySelector('#adminEditDeliverablePage-shouldAutoTest') as OnsSwitchElement;
-        shouldAutoTest.onchange = function(evt) {
+        shouldAutoTest.onchange = function (evt) {
             const value = (evt as any).value;
             Log.info('AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldAutoTest; change: ' + value);
             //
@@ -203,10 +204,10 @@ export class AdminDeliverablesTab extends AdminPage {
         };
 
         const flatpickrOptions = {
-            enableTime:  true,
-            time_24hr:   true,
-            utc:         true,
-            dateFormat:  "Y/m/d @ H:i",
+            enableTime: true,
+            time_24hr: true,
+            utc: true,
+            dateFormat: "Y/m/d @ H:i",
             defaultDate: new Date()
         };
 
@@ -288,24 +289,24 @@ export class AdminDeliverablesTab extends AdminPage {
         }
         const list = document.querySelector("#docker-image-list");
         const dataSource = {
-            url:     this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
+            url: this.remote + '/portal/at/docker/images?filters=' + JSON.stringify({reference: ['grader']}),
             options: AdminView.getOptions()
         };
         const state = {
             checkedItemTag: selectedDockerImage
         };
-        new DockerListImageView(list).bind(dataSource, state).catch(function(err: Error) {
+        new DockerListImageView(list).bind(dataSource, state).catch(function (err: Error) {
             UI.showErrorToast("Docker images: " + err);
         });
 
-        (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function() {
-            UI.pushPage('createDockerImage.html').then(function() {
+        (document.querySelector('#btnNewImage') as OnsButtonElement).onclick = function () {
+            UI.pushPage('createDockerImage.html').then(function () {
                 let imageSha: string;
-                (document.querySelector("#create-docker-image-back") as OnsBackButtonElement).onClick = function() {
+                (document.querySelector("#create-docker-image-back") as OnsBackButtonElement).onClick = function () {
                     UI.popPage({data: {sha: imageSha}});
                 };
 
-                (document.querySelector("#build-image-form") as HTMLFormElement).onsubmit = function() {
+                (document.querySelector("#build-image-form") as HTMLFormElement).onsubmit = function () {
                     const contextInput: HTMLInputElement = document.querySelector("#docker-image-context-input");
                     const tagInput: HTMLInputElement = document.querySelector("#docker-image-tag-input");
                     const fileInput: HTMLInputElement = document.querySelector("#docker-image-file-input");
@@ -322,10 +323,10 @@ export class AdminDeliverablesTab extends AdminPage {
 
                     UI.showModal();
 
-                    that.buildDockerImage(context, tag, file).then(function(sha: string) {
+                    that.buildDockerImage(context, tag, file).then(function (sha: string) {
                         imageSha = sha;
                         UI.hideModal();
-                    }).catch(async function(err: Error) {
+                    }).catch(async function (err: Error) {
                         await UI.showAlert(err.message);
                         contextInput.disabled = false;
                         tagInput.disabled = false;
@@ -335,7 +336,7 @@ export class AdminDeliverablesTab extends AdminPage {
                     });
                     return false;
                 };
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("UI::pushPage(..) - ERROR: " + err.message);
             });
         };
@@ -462,7 +463,7 @@ export class AdminDeliverablesTab extends AdminPage {
             visibleToStudents,
             openTimestamp,
             closeTimestamp,
-            onOpenAction:  '', // TODO: add this
+            onOpenAction: '', // TODO: add this
             onCloseAction: '', // TODO: add this
             lateAutoTest,
             shouldAutoTest,
@@ -473,7 +474,7 @@ export class AdminDeliverablesTab extends AdminPage {
             teamsSameLab,
             gradesReleased,
             shouldProvision,
-            autoTest:      at,
+            autoTest: at,
             repoPrefix,
             teamPrefix,
             rubric,
@@ -547,11 +548,11 @@ export class AdminDeliverablesTab extends AdminPage {
             const remote = this.remote;
             const output = await UI.templateDisplayText('dockerBuildDialog.html', 'Initializing Docker build. Please wait...\n\n');
 
-            return new Promise<string>(function(resolve, reject) {
+            return new Promise<string>(function (resolve, reject) {
                 const xhr = new XMLHttpRequest();
                 let lines: string[] = [];
                 let lastIndex = 0;
-                xhr.onprogress = function() {
+                xhr.onprogress = function () {
                     try {
                         const currIndex = xhr.responseText.length;
                         if (lastIndex === currIndex) {
@@ -571,7 +572,7 @@ export class AdminDeliverablesTab extends AdminPage {
                         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
                     }
                 };
-                xhr.onload = function() {
+                xhr.onload = function () {
                     if (xhr.status >= 400) {
                         return reject(new Error(xhr.responseText));
                     }
@@ -585,7 +586,7 @@ export class AdminDeliverablesTab extends AdminPage {
                             "If the image was built successfully, you can manually select it on the previous screen."));
                     }
                 };
-                xhr.onerror = function() {
+                xhr.onerror = function () {
                     reject(new Error(xhr.responseText));
                 };
 

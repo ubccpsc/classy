@@ -1,7 +1,8 @@
 import {OnsButtonElement} from "onsenui";
 
-import Log from "../../../../../common/Log";
-import {RepositoryTransport, TeamTransport} from "../../../../../common/types/PortalTypes";
+import Log from "@common/Log";
+import {RepositoryTransport, TeamTransport} from "@common/types/PortalTypes";
+
 import {UI} from "../util/UI";
 
 import {AdminPage} from "./AdminPage";
@@ -53,7 +54,7 @@ export class AdminDeletePage extends AdminPage {
 
         UI.hideModal();
 
-        (document.querySelector('#adminDeleteDeliverableButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeleteDeliverableButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminDeletePage::handleDeliverableDelete(..) - delete pressed');
             evt.stopPropagation(); // prevents list item expansion
 
@@ -61,40 +62,40 @@ export class AdminDeletePage extends AdminPage {
             if (typeof value === 'string') {
                 value = value.trim();
             }
-            that.deleteDeliverable(value).then(function() {
+            that.deleteDeliverable(value).then(function () {
                 // done
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error('AdminDeletePage::handleDeliverableDelete(..) - delete pressed ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminDeleteTeamButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeleteTeamButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminDeletePage::handleTeamDelete(..) - button pressed');
             evt.stopPropagation(); // prevents list item expansion
-            that.deleteTeamPressed().then(function() {
+            that.deleteTeamPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminDeleteRepositoryButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeleteRepositoryButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminDeletePage::handleRepositoryDelete(..) - button pressed');
             evt.stopPropagation(); // prevents list item expansion
 
-            that.deleteRepoPressed().then(function() {
+            that.deleteRepoPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminDeleteSanitizeDB') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeleteSanitizeDB') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminDeletePage::adminDeleteSanitizeDB(..) - button pressed');
             evt.stopPropagation(); // prevents list item expansion
-            that.sanitizeDBPressed().then(function() {
+            that.sanitizeDBPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };

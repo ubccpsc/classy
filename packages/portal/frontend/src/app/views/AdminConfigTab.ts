@@ -1,14 +1,21 @@
 import {OnsButtonElement} from "onsenui";
-import Log from "../../../../../common/Log";
-import {CourseTransport, Payload, ProvisionTransport,
-    StudentTransport, TeamFormationTransport} from "../../../../../common/types/PortalTypes";
+
+import Log from "@common/Log";
+import {
+    CourseTransport,
+    Payload,
+    ProvisionTransport,
+    StudentTransport,
+    TeamFormationTransport
+} from "@common/types/PortalTypes";
+
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
+
 import {AdminDeletePage} from "./AdminDeletePage";
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
-import {AdminPullRequestsPage} from "./AdminPullRequestsPage";
 import {AdminView} from "./AdminView";
 
 export class AdminConfigTab extends AdminPage {
@@ -21,7 +28,6 @@ export class AdminConfigTab extends AdminPage {
 
     constructor(remote: string, isAdmin: boolean) {
         super(remote);
-        // this.remote = remote;
         this.isAdmin = isAdmin;
         this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
     }
@@ -39,33 +45,33 @@ export class AdminConfigTab extends AdminPage {
 
         await this.deliverablesPage.init(opts);
 
-        (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminSubmitClasslist') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed');
             evt.stopPropagation(); // prevents list item expansion
 
             const fileInput = document.querySelector('#adminClasslistFile') as HTMLInputElement;
             const isValid: boolean = that.validateFileSpecified(fileInput);
             if (isValid === true) {
-                that.uploadClasslist(fileInput.files).then(function() {
+                that.uploadClasslist(fileInput.files).then(function () {
                     // done
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.error('AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: ' + err.message);
                 });
             }
         };
 
-        (document.querySelector('#adminUpdateClasslist') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminUpdateClasslist') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - update classlist pressed');
             evt.stopPropagation(); // prevents list item expansion
 
-            that.updateClasslistPressed().then(function() {
+            that.updateClasslistPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error('AdminConfigTab::handleAdminConfig(..) - update classlist pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminSubmitGradeCSV') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminSubmitGradeCSV') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - upload grades pressed');
             evt.stopPropagation(); // prevents list item expansion
 
@@ -75,76 +81,76 @@ export class AdminConfigTab extends AdminPage {
 
                 const delivDropdown = document.querySelector('#adminGradeDeliverableSelect') as HTMLSelectElement;
                 const delivId = delivDropdown.value;
-                that.uploadGrades(fileInput.files, delivId).then(function() {
+                that.uploadGrades(fileInput.files, delivId).then(function () {
                     // done
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.error('AdminConfigTab::handleAdminConfig(..) - upload grades pressed ERROR: ' + err.message);
                 });
             }
         };
 
-        (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed');
             evt.preventDefault();
 
-            that.defaultDeliverablePressed().then(function() {
+            that.defaultDeliverablePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminProvisionButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminProvisionButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed');
             evt.preventDefault();
 
-            that.provisionDeliverablePressed().then(function() {
+            that.provisionDeliverablePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminReleaseButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminReleaseButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed');
             evt.preventDefault();
 
-            that.releaseDeliverablePressed().then(function() {
+            that.releaseDeliverablePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - release deliverable pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminReadWriteButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminReadWriteButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed');
             evt.preventDefault();
 
-            that.repoEnableWritePressed().then(function() {
+            that.repoEnableWritePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminReadOnlyButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminReadOnlyButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed');
             evt.preventDefault();
 
-            that.repoDisableWritePressed().then(function() {
+            that.repoDisableWritePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminCreateTeamButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed');
             evt.preventDefault();
 
-            that.teamCreatePressed().then(function() {
+            that.teamCreatePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: ' + err.message);
             });
         };
@@ -162,71 +168,71 @@ export class AdminConfigTab extends AdminPage {
         //     });
         // };
 
-        (document.querySelector('#adminDeleteTeamManageButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeleteTeamManageButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed');
             evt.preventDefault();
 
-            that.teamDeletePressed().then(function() {
+            that.teamDeletePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminTeamAddMemberButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminTeamAddMemberButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - add member to team pressed');
             evt.preventDefault();
 
-            that.teamAddMemberPressed().then(function() {
+            that.teamAddMemberPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminTeamRemoveMemberButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminTeamRemoveMemberButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed');
             evt.preventDefault();
 
-            that.teamRemoveMemberPressed().then(function() {
+            that.teamRemoveMemberPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: ' + err.message);
             });
         };
 
-        (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminDeletePageButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - delete page pressed');
             evt.preventDefault();
 
-            that.pushPage('./adminDelete2.html', {}).then(function() {
+            that.pushPage('./adminDelete2.html', {}).then(function () {
                 const deletePage = new AdminDeletePage(that.remote);
-                deletePage.init({}).then(function() {
+                deletePage.init({}).then(function () {
                     // success
                     Log.info('AdminConfigTab::handleAdminConfig(..) - delete page init');
-                }).catch(function(err) {
+                }).catch(function (err) {
                     // error
                     Log.error('AdminConfigTab::handleAdminConfig(..) - delete page ERROR: ' + err);
                 });
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
             });
         };
 
-        (document.querySelector('#adminManageRepositoriesButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminManageRepositoriesButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - manage repo page pressed');
             evt.preventDefault();
 
-            that.pushPage('./adminProvision.html', {}).then(function() {
+            that.pushPage('./adminProvision.html', {}).then(function () {
                 const provisionPage = new AdminProvisionPage(that.remote);
-                provisionPage.init({}).then(function() {
+                provisionPage.init({}).then(function () {
                     // success
                     Log.info('AdminConfigTab::handleAdminConfig(..) - provision page init');
-                }).catch(function(err) {
+                }).catch(function (err) {
                     // error
                     Log.error('AdminConfigTab::handleAdminConfig(..) - provision page ERROR: ' + err);
                 });
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.error("AdminConfigTab - adminProvision ERROR: " + err.message);
             });
         };
@@ -249,13 +255,13 @@ export class AdminConfigTab extends AdminPage {
         //     });
         // };
 
-        (document.querySelector('#adminPerformWithdrawButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminPerformWithdrawButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed');
             evt.preventDefault();
 
-            that.performWithdraw().then(function() {
+            that.performWithdraw().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 Log.info('AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: ' + err.message);
             });
         };
@@ -355,7 +361,7 @@ export class AdminConfigTab extends AdminPage {
             const opts = {
                 headers: {
                     // 'Content-Type': 'application/json', // violates CORS; leave commented out
-                    user:  localStorage.user,
+                    user: localStorage.user,
                     token: localStorage.token
                 }
             };
@@ -401,7 +407,7 @@ export class AdminConfigTab extends AdminPage {
             const opts = {
                 headers: {
                     // 'Content-Type': 'application/json', // violates CORS; leave commented out
-                    user:  localStorage.user,
+                    user: localStorage.user,
                     token: localStorage.token
                 }
             };
@@ -445,7 +451,7 @@ export class AdminConfigTab extends AdminPage {
         options.method = 'post';
 
         const team: TeamFormationTransport = {
-            delivId:   delivId,
+            delivId: delivId,
             githubIds: nameList
         };
 
@@ -580,8 +586,8 @@ export class AdminConfigTab extends AdminPage {
     }
 
     private showClasslistChanges(classlistChanges: any): void {
-        const mapToTextAndSubtext = function(people: StudentTransport[]) {
-            return people.map(function(person) {
+        const mapToTextAndSubtext = function (people: StudentTransport[]) {
+            return people.map(function (person) {
                 return {
                     text: person.id + '/' + person.studentNum + '/' + person.githubId + ': ' + person.firstName + ' ' + person.lastName,
                     subtext: person.labId
@@ -590,18 +596,24 @@ export class AdminConfigTab extends AdminPage {
         };
         if (classlistChanges.created.length) {
             const createdList = mapToTextAndSubtext(classlistChanges.created);
-            UI.templateConfirm('classlistDialog.html', {header: 'Created: May need Repos Provisioned',
-             listContent: createdList});
+            UI.templateConfirm('classlistDialog.html', {
+                header: 'Created: May need Repos Provisioned',
+                listContent: createdList
+            });
         }
         if (classlistChanges.updated.length) {
             const updatedList = mapToTextAndSubtext(classlistChanges.updated);
-            UI.templateConfirm('classlistDialog.html', {header: 'Updated: Student data has been modified in new Classlist upload',
-             listContent: updatedList});
+            UI.templateConfirm('classlistDialog.html', {
+                header: 'Updated: Student data has been modified in new Classlist upload',
+                listContent: updatedList
+            });
         }
         if (classlistChanges.removed.length) {
             const removedList = mapToTextAndSubtext(classlistChanges.removed);
-            UI.templateConfirm('classlistDialog.html', {header: 'Removed: NOT in latest Classlist upload. To Be Withdrawn',
-             listContent: removedList});
+            UI.templateConfirm('classlistDialog.html', {
+                header: 'Removed: NOT in latest Classlist upload. To Be Withdrawn',
+                listContent: removedList
+            });
         }
     }
 

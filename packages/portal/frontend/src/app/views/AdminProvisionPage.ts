@@ -1,8 +1,8 @@
 import {OnsButtonElement} from "onsenui";
 
-import Log from "../../../../../common/Log";
-import {DeliverableTransport, Payload, RepositoryTransport} from "../../../../../common/types/PortalTypes";
-import Util from "../../../../../common/Util";
+import Log from "@common/Log";
+import {DeliverableTransport, Payload, RepositoryTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import {UI} from "../util/UI";
 
@@ -44,33 +44,33 @@ export class AdminProvisionPage extends AdminPage {
 
         this.clearLists();
 
-        (document.querySelector('#adminManageProvisionButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminManageProvisionButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminProvisionPage::manageProvisionButton(..) - button pressed');
             evt.stopPropagation(); // prevents list item expansion
-            that.handleProvisionPressed().then(function() {
+            that.handleProvisionPressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminManageReleaseButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminManageReleaseButton') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminProvisionPage::manageReleaseButton(..) - button pressed');
             evt.stopPropagation(); // prevents list item expansion
-            that.handleReleasePressed().then(function() {
+            that.handleReleasePressed().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
         const delivSelector = document.querySelector('#provisionRepoDeliverableSelect') as HTMLSelectElement;
-        delivSelector.onchange = function(evt) {
+        delivSelector.onchange = function (evt) {
             evt.stopPropagation(); // prevents list item expansion
 
-            that.handleDelivChanged().then(function() {
+            that.handleDelivChanged().then(function () {
                 //
-            }).catch(function(err) {
+            }).catch(function (err) {
                 //
             });
         };

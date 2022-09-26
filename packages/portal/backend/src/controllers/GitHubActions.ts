@@ -1,10 +1,13 @@
 import * as crypto from "crypto";
+import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
+// can't use @common here as this is referenced from TestHarness and ends up being circular
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
+
 import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
@@ -241,7 +244,17 @@ export class GitHubActions implements IGitHubActions {
     private readonly org: string | null = null;
 
     private PAUSE = 5000;
-    private pageSize = 100; // public for testing; 100 is the max; 10 is good for tests
+
+    /**
+     * Page size for requests. Should be a constant, but using a
+     * variable is handy for testing pagination.
+     *
+     * 100 is the GitHub maximum, and is the best value for production.
+     * 10 or less is ignored, but this lower value is handy for testing.
+     *
+     * @private
+     */
+    private pageSize = 100;
 
     private dc: DatabaseController = null;
 
@@ -466,7 +479,6 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    // 'Accept': 'application/json', // custom because this is a preview api
                     'Accept': 'application/vnd.github.hellcat-preview+json'
                 }
             };
@@ -566,71 +578,45 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
 
         try {
-            const response = await fetch(uri, options);
-            const body = await response.json();
+            Log.info("GitHubActions::handlePagination(..) - requesting: " + uri);
+            let response = await fetch(uri, options);
+            let body = await response.json();
+            let results: any[] = body; // save the first page of values
 
-            Log.trace("GitHubActions::handlePagination(..) - after initial request");
-
-            let raw: any[] = [];
-            const paginationPromises: any[] = [];
-            if (response.headers.has("link")) {
-                // first save the responses from the first page:
-                raw = body;
-
-                let lastPage: number = -1;
-                const linkText = response.headers.get("link");
-                Log.info("GitHubActions::handlePagination(..) - linkText: " + linkText);
-                const linkParts = linkText.split(",");
-                for (const p of linkParts) {
-                    Log.info("GitHubActions::handlePagination(..) - linkParts: " + p);
-                    const pparts = p.split(";");
-                    if (pparts[1].indexOf("last") >= 0) {
-                        const pText = pparts[0].split("&page=")[1];
-                        Log.info("GitHubActions::handlePagination(..) - last page pText:_" + pText + "_; p: " + p);
-                        lastPage = Number(pText.match(/\d+/)[0]);
-                        Log.info("GitHubActions::handlePagination(..) - last page: " + lastPage);
-                    }
-                }
-
-                let pageBase = "";
-                for (const p of linkParts) {
-                    const pparts = p.split(";");
-                    if (pparts[1].indexOf("next") >= 0) {
-                        let pText = pparts[0].split("&page=")[0].trim();
-                        Log.info("GitHubActions::handlePagination(..) - pt: " + pText);
-                        pText = pText.substring(1);
-                        pText = pText + "&page=";
-                        pageBase = pText;
-                        Log.info("GitHubActions::handlePagination(..) - page base: " + pageBase);
-                    }
-                }
-
-                Log.info("GitHubActions::handlePagination(..) - handling pagination; # pages: " + lastPage);
-                for (let i = 2; i <= lastPage; i++) {
-                    const pageUri = pageBase + i;
-                    Log.info("GitHubActions::handlePagination(..) - page to request: " + pageUri);
-                    uri = pageUri; // not sure why this is needed
-                    // NOTE: this needs to be slowed down to prevent DNS problems (issuing 10+ concurrent dns requests can be problematic)
-                    await Util.delay(100);
-                    paginationPromises.push(fetch(uri, options as any));
-                }
-            } else {
+            if (response.headers.has("link") === false) {
+                // single page, save the results and keep going
                 Log.info("GitHubActions::handlePagination(..) - single page");
-                raw = body;
-                // don't put anything on the paginationPromise if it isn't paginated
+            } else {
+                Log.info("GitHubActions::handlePagination(..) - multiple pages");
+
+                let linkText = response.headers.get("link");
+                Log.trace("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
+                let links = parseLinkHeader(linkText);
+                Log.trace("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
+
+                // when on the last page links.last will not be present
+                while (typeof links.last !== "undefined") {
+                    // process current body
+                    uri = links.next.url;
+                    Log.info("GitHubActions::handlePagination(..) - requesting: " + uri);
+
+                    // NOTE: this needs to be slowed down to prevent DNS problems
+                    // (issuing 10+ concurrent dns requests can be problematic)
+                    await Util.delay(100);
+
+                    response = await fetch(uri, options);
+                    body = await response.json();
+                    results = results.concat(body); // append subsequent pages of values to the first page
+
+                    linkText = response.headers.get("link");
+                    Log.trace("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
+                    links = parseLinkHeader(linkText);
+                    Log.trace("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
+                }
             }
 
-            Log.info("GitHubActions::handlePagination(..) - requesting all");
-            // this block won't do anything if we just did the raw thing above (aka no pagination)
-            const responses: any[] = await Promise.all(paginationPromises);
-            // Log.trace("GitHubActions::handlePagination(..) - requests complete");
-
-            for (const res of responses) {
-                raw = raw.concat(await res.json());
-            }
-            Log.info("GitHubActions::handlePagination(..) - total count: " + raw.length + "; took: " + Util.took(start));
-
-            return raw;
+            Log.info("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
+            return results;
         } catch (err) {
             Log.error("GitHubActions::handlePagination(..) - ERROR: " + err.message);
             return [];
@@ -640,7 +626,8 @@ export class GitHubActions implements IGitHubActions {
     /**
      * Lists the teams for the current org.
      *
-     * NOTE: this is a slow operation (if there are many teams) so try not to do it too often!
+     * NOTE: this is a slow operation (if there are many teams)
+     * so try not to do it too often!
      *
      * @returns {Promise<{id: number, name: string}[]>}
      */
@@ -648,7 +635,7 @@ export class GitHubActions implements IGitHubActions {
         // Log.trace("GitHubActions::listTeams(..) - start");
         const start = Date.now();
 
-        // per_page max is 100; 10 is useful for testing pagination though
+        // per_page max is 100
         const uri = this.apiPath + '/orgs/' + this.org + '/teams?per_page=' + this.pageSize;
         Log.info("GitHubActions::listTeams(..) - start"); // uri: " + uri);
         const options: RequestInit = {
@@ -656,7 +643,6 @@ export class GitHubActions implements IGitHubActions {
             headers: {
                 'Authorization': this.gitHubAuthToken,
                 'User-Agent': this.gitHubUserName,
-                // 'Accept':        'application/json',
                 'Accept': 'application/vnd.github.hellcat-preview+json'
             }
         };
@@ -722,7 +708,7 @@ export class GitHubActions implements IGitHubActions {
             })
         };
 
-        const results = await fetch(uri, opts);
+        await fetch(uri, opts);
         Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
         return true;
     }
@@ -842,10 +828,10 @@ export class GitHubActions implements IGitHubActions {
         for (const member of members) {
             const person = this.dc.getGitHubPerson(member);
             if (person === null) {
-                const emsg = "GitHubAction::addMembersToTeam( .. ) - githubId: " + member +
+                const errMsg = "GitHubAction::addMembersToTeam( .. ) - githubId: " + member +
                     " is unknown; is this actually an id instead of a githubId?";
-                Log.error(emsg);
-                throw new Error(emsg);
+                Log.error(errMsg);
+                throw new Error(errMsg);
             }
         }
 
@@ -942,8 +928,7 @@ export class GitHubActions implements IGitHubActions {
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/json'
-                    // 'Accept':        'application/vnd.github.hellcat-preview+json'
+                    'Accept': 'application/vnd.github.hellcat-preview+json'
                 },
                 body: JSON.stringify({
                     permission: permission
@@ -1629,7 +1614,7 @@ export class GitHubActions implements IGitHubActions {
                 },
                 body
             };
-            const response = await fetch(uri, options);
+            await fetch(uri, options);
             Log.info("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - Success! took: ", Util.took(start));
             return true;
         } catch (err) {
@@ -1661,7 +1646,7 @@ export class GitHubActions implements IGitHubActions {
                 },
                 body
             };
-            const response = await fetch(uri, options); // TODO check status code of this response
+            await fetch(uri, options);
             Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
             return true;
         } catch (err) {
@@ -1964,7 +1949,7 @@ export class TestGitHubActions implements IGitHubActions {
         // if (typeof this.teams[teamName] === 'undefined') {
         if (this.teams.has(teamName) === false) {
             const c = Config.getInstance();
-            const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
+            // const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
             // this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: url};
             this.teams.set(teamName, {teamName: teamName, githubTeamNumber: Date.now()});
         }
@@ -2199,7 +2184,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
         Log.info("TestGitHubActions::writeFileToRepo(..)");
-        if (repoURL === 'invalidurl.com') {
+        if (repoURL === "invalidurl.com") {
             return false;
         }
         return true;
