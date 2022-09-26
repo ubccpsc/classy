@@ -414,6 +414,13 @@ export default class AdminRoutes implements IREST {
         let worked = false;
         const repo = await dbc.getRepository(repoId);
         if (repo !== null) {
+            const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
+                const team = await dbc.getTeam(teamId);
+                const newTeam = {...team, custom: {...team.custom, githubAttached: false}};
+                await dbc.writeTeam(newTeam);
+                await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});
+            });
+            await Promise.all(futureTeamUpdates);
             worked = await dbc.deleteRepository(repo);
             await dbc.writeAudit(AuditLabel.REPOSITORY, personId, repo, null, {});
         } else {

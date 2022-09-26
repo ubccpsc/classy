@@ -1281,6 +1281,9 @@ describe('Admin Routes', function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an('string');
         expect(ex).to.be.null;
+
+        const team = await DatabaseController.getInstance().getTeam(Test.TEAMNAME1);
+        expect(team.custom.githubAttached).to.be.false;
     }).timeout(Test.TIMEOUT);
 
     it('Should fail to delete a repository if appropriate', async function () {
