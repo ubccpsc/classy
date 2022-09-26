@@ -342,6 +342,10 @@ export class AdminDashboardTab extends AdminPage {
     private alignValue(value: number | string): string {
         const SPACER = "&#8199;";
 
+        if (value === null) {
+            return SPACER + SPACER + "N/A";
+        }
+
         if (typeof value === "string") {
             if (value === "N/A") {
                 return SPACER + SPACER + "N/A";
