@@ -35,8 +35,8 @@ describe("GitHubController", () => {
         await Test.suiteBefore('GitHubController');
 
         gha = GitHubActions.getInstance(true);
-        await gha.deleteTeamByName(Test.TEAMNAME1);
-        await gha.deleteTeamByName(Test.TEAMNAME2);
+        await gha.deleteTeam(Test.TEAMNAME1);
+        await gha.deleteTeam(Test.TEAMNAME2);
         await gha.deleteRepo(Test.REPONAME1);
         await gha.deleteRepo(Test.REPONAME2);
 
@@ -92,9 +92,9 @@ describe("GitHubController", () => {
             await gha.deleteRepo(Test.REPONAME1);
             await gha.deleteRepo(Test.REPONAME2);
             await gha.deleteRepo(Test.REPONAME3);
-            await gha.deleteTeamByName(Test.TEAMNAME1);
-            await gha.deleteTeamByName(Test.TEAMNAME2);
-            await gha.deleteTeamByName(Test.TEAMNAME3);
+            await gha.deleteTeam(Test.TEAMNAME1);
+            await gha.deleteTeam(Test.TEAMNAME2);
+            await gha.deleteTeam(Test.TEAMNAME3);
         } catch (err) {
             Log.test("Could not clear result: " + err);
         }
@@ -234,7 +234,7 @@ describe("GitHubController", () => {
 
         Log.test("Custom setup start");
         // setup
-        await gha.deleteTeamByName(Test.TEAMNAME1); // delete team
+        await gha.deleteTeam(Test.TEAMNAME1); // delete team
         await Test.prepareTeams();
         await Test.prepareRepositories();
         // await Test.deleteStaleRepositories();

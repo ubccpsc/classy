@@ -815,7 +815,7 @@ export class Test {
                 if (team.teamName.startsWith(Test.ASSIGNID0 + "_")) {
                     Log.test("Removing stale team: " + team.teamName);
                     // const val = await gh.deleteTeam(team.teamNumber);
-                    await gh.deleteTeamByName(team.teamName);
+                    await gh.deleteTeam(team.teamName);
                     await Util.delay(DELAY_SHORT);
                     done = true;
                 }
@@ -824,7 +824,7 @@ export class Test {
                     if (team.teamName.startsWith(TEAMNAME) === true) {
                         Log.test("Removing stale team: " + team.teamName);
                         // await gh.deleteTeam(team.teamNumber);
-                        await gh.deleteTeamByName(team.teamName);
+                        await gh.deleteTeam(team.teamName);
                         await Util.delay(DELAY_SHORT);
                     }
                 }

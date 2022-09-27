@@ -1093,7 +1093,7 @@ export default class AdminRoutes implements IREST {
         if (team !== null) {
 
             if (team.URL !== null) {
-                deletedGithub = await GitHubActions.getInstance().deleteTeamByName(teamId);
+                deletedGithub = await GitHubActions.getInstance().deleteTeam(teamId);
                 Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from GitHub");
             }
 
