@@ -1,11 +1,12 @@
-// tslint:disable-next-line
-import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "@backend/controllers/GitHubController";
-import Log from "@common/Log";
-import {TeamController} from "@backend/controllers/TeamController";
-import Config, {ConfigKey} from "@common/Config";
-import {Test} from "@common/TestHarness";
-import {DatabaseController} from "@backend/controllers/DatabaseController";
-import {GitHubActions, IGitHubActions} from "@backend/controllers/GitHubActions";
+// do not use module imports (@common, @backend) in this file
+import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "../../../../common/Config";
+import {Test} from "../../../../common/TestHarness";
+
+import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "../../src/controllers/GitHubController";
+import {TeamController} from "../../src/controllers/TeamController";
+import {DatabaseController} from "../../src/controllers/DatabaseController";
+import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
 
 export class TestGitHubActions implements IGitHubActions {
 
