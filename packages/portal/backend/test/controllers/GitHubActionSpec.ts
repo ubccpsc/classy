@@ -15,7 +15,7 @@ import {TeamController} from "@backend/controllers/TeamController";
 
 import '../GlobalSpec';
 
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
@@ -114,6 +114,23 @@ describe("GitHubActions", () => {
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
+    it("Should not be possible to find a team that does not exist.", async function () {
+        const val = await gh.getTeamNumber(Test.INVALIDTEAMNAME);
+        expect(val).to.be.lessThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to get the members of a team that does not exist.", async function () {
+        const val = await gh.getTeamMembers(Test.INVALIDTEAMNAME);
+        expect(val).to.be.an('array');
+        expect(val).to.have.length(0);
+    }).timeout(TIMEOUT);
+
+    it("Should not be possible to delete a team that does not exist.", async function () {
+        // and it should do so without crashing
+        const val = await gh.deleteTeam(Test.INVALIDTEAMNAME);
+        expect(val).to.be.false;
+    }).timeout(TIMEOUT);
+
     it("Should be able to create a repo.", async function () {
         const rc = new RepositoryController();
         const dc = new DeliverablesController();
@@ -126,6 +143,77 @@ describe("GitHubActions", () => {
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
+    it("Should be able to create a team.", async function () {
+        const val = await gh.createTeam(TEAMNAME, "push");
+        Log.test("Team created; details: " + JSON.stringify(val));
+        expect(val.teamName).to.equal(TEAMNAME);
+        expect(val.githubTeamNumber).to.be.an('number');
+        expect(val.githubTeamNumber > 0).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to list the repos in an org.", async function () {
+        const res = await gh.listRepos();
+        Log.test('# repos ' + res.length);
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to list the teams in an org.", async function () {
+        const res = await gh.listTeams();
+        Log.test('# teams ' + res.length);
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to list people in an org.", async function () {
+        // gh.setPageSize(100);
+        const res = await gh.listPeople();
+        Log.test('# people ' + res.length);
+        expect(res).to.be.an('array');
+        expect(res.length).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find a repo that does exist.", async function () {
+        const val = await gh.repoExists(REPONAME);
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to find a team that does exist.", async function () {
+        const val = await gh.getTeamNumber(TEAMNAME);
+        expect(val).to.be.greaterThan(0);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to add members to a team that does exist.", async function () {
+        const addMembers = await gh.addMembersToTeam(TEAMNAME,
+            [Test.GITHUB1.github, Test.GITHUB2.github]);
+        expect(addMembers.teamName).to.equal(TEAMNAME);
+        Log.test("Members added");
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to add get the members from a team.", async function () {
+        const members = await gh.getTeamMembers(TEAMNAME);
+        expect(members).to.contain(Test.GITHUB1.github);
+        expect(members).to.contain(Test.GITHUB2.github);
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to add a team to a repo.", async function () {
+        let teamsOnRepo = await gh.getTeamsOnRepo(REPONAME);
+        // make sure there's no team on the repo before starting
+        expect(teamsOnRepo).to.be.an('array');
+        expect(teamsOnRepo).to.have.length(0);
+
+        const teamNum = await gh.getTeamNumber(TEAMNAME);
+        expect(teamNum).to.be.greaterThan(0);
+
+        const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, "push");
+        expect(teamAdd.githubTeamNumber).to.equal(teamNum);
+
+        teamsOnRepo = await gh.getTeamsOnRepo(REPONAME);
+        // make sure there's now a team on the repo
+        expect(teamsOnRepo).to.be.an('array');
+        expect(teamsOnRepo).to.have.length(1);
+    }).timeout(TIMEOUT);
+
     it("Should fail to create a repo if there is no corresponding Repository object.", async function () {
         let res = null;
         let ex = null;
@@ -136,11 +224,6 @@ describe("GitHubActions", () => {
         }
         expect(res).to.be.null;
         expect(ex).to.not.be.null;
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to find a repo that does exist.", async function () {
-        const val = await gh.repoExists(REPONAME);
-        expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should be able to remove a repo that does exist.", async function () {
@@ -188,28 +271,6 @@ describe("GitHubActions", () => {
         hooks = await gh.listWebhooks(REPONAME);
         const newHook = (hooks[0] as any).config.url;
         expect(newHook).to.equal(NEWHOOK);
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to list the repos in an org.", async function () {
-        const res = await gh.listRepos();
-        Log.test('# repos ' + res.length);
-        expect(res).to.be.an('array');
-        expect(res.length).to.be.greaterThan(0);
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to list people in an org.", async function () {
-        // gh.setPageSize(100);
-        const res = await gh.listPeople();
-        Log.test('# people ' + res.length);
-        expect(res).to.be.an('array');
-        expect(res.length).to.be.greaterThan(0);
-    }).timeout(TIMEOUT);
-
-    it("Should be possible to list the teams in an org.", async function () {
-        const res = await gh.listTeams();
-        Log.test('# teams ' + res.length);
-        expect(res).to.be.an('array');
-        expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
     it("Should be possible to identify an admin from the admin team.", async function () {

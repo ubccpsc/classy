@@ -56,6 +56,7 @@ export interface IGitHubActions {
 
     /**
      * Deletes a team.
+     *
      * NOTE: this used to take a number, but GitHub deprecated this API:
      * https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
      *
@@ -768,7 +769,7 @@ export class GitHubActions implements IGitHubActions {
      */
     public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
         Log.info("GitHubAction::teamCreate( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
-        if (permission !== "push" && permission !== "pull") {
+        if (permission !== "push" && permission !== "pull" && permission !== "admin") {
             throw new Error("GitHubAction::teamCreate(..) - invalid permission: " + permission);
         }
 
@@ -922,7 +923,7 @@ export class GitHubActions implements IGitHubActions {
      */
     public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
         Log.trace("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
-        if (permission !== "push" && permission !== "pull") {
+        if (permission !== "push" && permission !== "pull" && permission !== "admin") {
             throw new Error("GitHubAction::addTeamToRepo(..) - invalid permission: " + permission);
         }
 
@@ -930,19 +931,20 @@ export class GitHubActions implements IGitHubActions {
         try {
             // with teamId:
             // PUT /teams/:team_id/repos/:owner/:repo (OLD)
-            const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
+            // const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
 
             // with teamName: DOES NOT WORK in v3
             // PUT /orgs/:org/teams/:team_slug/repos/:owner/:repo (NEW)
-            // const uri = this.apiPath + '/orgs/' + this.org + '/teams/' + teamName + '/repos/' + this.org + '/' + repoName;
+            const teamName = await this.getTeam(teamId);
+            const uri = this.apiPath + '/orgs/' + this.org + '/teams/' + teamName.teamName + '/repos/' + this.org + '/' + repoName;
             Log.trace("GitHubAction::addTeamToRepo(..) - uri: " + uri);
             const options: RequestInit = {
                 method: 'PUT',
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/json'
-                    // 'Accept': 'application/vnd.github+json'
+                    // 'Accept': 'application/json'
+                    'Accept': 'application/vnd.github+json'
                 },
                 body: JSON.stringify({
                     permission: permission
@@ -1528,17 +1530,17 @@ export class GitHubActions implements IGitHubActions {
     /**
      * Changes permissions for all teams for the given repository
      * @param {string} repoName
-     * @param {string} permissionLevel - one of: 'push' 'pull'
+     * @param {string} permission - one of: 'push' 'pull'
      * @returns {Promise<boolean>}
      */
-    public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
-        Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permissionLevel + " ) - start");
+    public async setRepoPermission(repoName: string, permission: string): Promise<boolean> {
+        Log.info("GithubAction::setRepoPermission( " + repoName + ", " + permission + " ) - start");
 
         try {
-            // Check if permissionLevel is one of: {push, pull}
+            // Check if permission is one of: {push, pull}
             // We don't want to be able to grant a team admin access!
-            if (permissionLevel !== "pull" && permissionLevel !== "push") {
-                const msg = "GitHubAction::setRepoPermission(..) - ERROR, Invalid permissionLevel: " + permissionLevel;
+            if (permission !== "pull" && permission !== "push") {
+                const msg = "GitHubAction::setRepoPermission(..) - ERROR, Invalid permission: " + permission;
                 Log.error(msg);
                 throw new Error(msg);
             }
@@ -1568,7 +1570,7 @@ export class GitHubActions implements IGitHubActions {
                 for (const team of body) {
                     // Don't change teams that have admin permission
                     if (team.permission !== "admin") {
-                        Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permissionLevel);
+                        Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permission);
                         const permissionUri = this.apiPath + '/teams/' + team.id + '/repos/' + this.org + '/' + repoName;
                         Log.trace("GitHubAction::setRepoPermission(..) - URI: " + permissionUri);
                         const permissionOptions: RequestInit = {
@@ -1579,7 +1581,7 @@ export class GitHubActions implements IGitHubActions {
                                 'Accept': 'application/json'
                             },
                             body: JSON.stringify({
-                                permission: permissionLevel
+                                permission: permission
                             })
                         };
 
