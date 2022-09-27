@@ -205,7 +205,8 @@ describe.only("GitHubActions", () => {
         const teamNum = await gh.getTeamNumber(TEAMNAME);
         expect(teamNum).to.be.greaterThan(0);
 
-        const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, "push");
+        // const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, "push");
+        const teamAdd = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
         expect(teamAdd.githubTeamNumber).to.equal(teamNum);
 
         teamsOnRepo = await gh.getTeamsOnRepo(REPONAME);
@@ -337,13 +338,15 @@ describe.only("GitHubActions", () => {
         expect(getTeamMembers).to.include(Test.GITHUB1.github);
         expect(getTeamMembers).to.include(Test.GITHUB2.github);
 
-        const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
+        // const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
+        const teamAdd = await gh.addTeamToRepo(TEAMNAME, REPONAME, 'push');
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
         Log.test("Team added to repo");
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
-        Log.test("Team staff number: " + staffTeamNumber);
-        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
+        // Log.test("Team staff number: " + staffTeamNumber);
+        // const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
+        const staffAdd = await gh.addTeamToRepo("staff", REPONAME, 'push');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
         Log.test("Team staff added to repo");
 
@@ -498,7 +501,8 @@ describe.only("GitHubActions", () => {
         expect(teamNum).to.be.an('number');
         expect(teamNum).to.be.greaterThan(0);
 
-        const teamSuccess = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
+        // const teamSuccess = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
+        const teamSuccess = await gh.addTeamToRepo(TEAMNAME, REPONAME, 'push');
         Log.test("Added team to repo: " + JSON.stringify(teamSuccess));
         expect(teamSuccess.githubTeamNumber).to.equal(teamNum);
 
@@ -688,7 +692,8 @@ describe.only("GitHubActions", () => {
         }
 
         try {
-            await gh.addTeamToRepo(-1, 'INVALIDREPONAME', 'push');
+            // await gh.addTeamToRepo(-1, 'INVALIDREPONAME', 'push');
+            await gh.addTeamToRepo('INVALIDTEAMNAME', 'INVALIDREPONAME', 'push');
         } catch (err) {
             // expected
         }
@@ -738,12 +743,14 @@ describe.only("GitHubActions", () => {
             [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers).to.not.be.null;
 
-        const teamNum = await gh.getTeamNumber(githubTeam.teamName);
-        const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
+        // const teamNum = await gh.getTeamNumber(githubTeam.teamName);
+        // const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
+        const teamAdd = await gh.addTeamToRepo(TEAMNAME, REPONAME, 'push');
         expect(teamAdd).to.not.be.null;
 
-        const staffTeamNumber = await gh.getTeamNumber('staff');
-        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
+        // const staffTeamNumber = await gh.getTeamNumber('staff');
+        // const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
+        const staffAdd = await gh.addTeamToRepo('staff', REPONAME, 'push');
         expect(staffAdd).to.not.be.null;
         const permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
         expect(permissionEdit).to.be.true;

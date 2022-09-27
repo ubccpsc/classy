@@ -144,17 +144,17 @@ export class GitHubController implements IGitHubController {
         try {
             // still add staff team with push, just not students
             Log.trace("GitHubController::createRepository() - add staff team to repo");
-            const staffTeamNumber = await this.tc.getTeamNumber(TeamController.STAFF_NAME);
+            // const staffTeamNumber = await this.tc.getTeamNumber(TeamController.STAFF_NAME);
             // Log.trace('GitHubController::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
-            // const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
+            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
             Log.trace('GitHubController::createRepository(..) - team name: ' + staffAdd.teamName);
 
             Log.trace("GitHubController::createRepository() - add admin team to repo");
-            const adminTeamNumber = await this.tc.getTeamNumber(TeamController.ADMIN_NAME);
+            // const adminTeamNumber = await this.tc.getTeamNumber(TeamController.ADMIN_NAME);
             // Log.trace('GitHubController::createRepository(..) - adminTeamNumber: ' + adminTeamNumber);
-            const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
-            // const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
+            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
             Log.trace('GitHubController::createRepository(..) - team name: ' + adminAdd.teamName);
 
             // add webhooks
@@ -215,8 +215,9 @@ export class GitHubController implements IGitHubController {
 
                 await this.checkDatabase(null, team.id);
 
-                const teamNum = await this.tc.getTeamNumber(team.id);
-                const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
+                // const teamNum = await this.tc.getTeamNumber(team.id);
+                // const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
+                const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
                 // now, add the team to the repository
                 // const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
                 if (res.githubTeamNumber > 0) {
@@ -341,17 +342,17 @@ export class GitHubController implements IGitHubController {
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            const staffTeamNumber = await tc.getTeamNumber(TeamController.STAFF_NAME);
+            // const staffTeamNumber = await tc.getTeamNumber(TeamController.STAFF_NAME);
             // Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
-            // const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
+            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
             Log.trace("GitHubController::provisionRepository() - add admin team to repo");
-            const adminTeamNumber = await tc.getTeamNumber(TeamController.ADMIN_NAME);
+            // const adminTeamNumber = await tc.getTeamNumber(TeamController.ADMIN_NAME);
             // Log.trace('GitHubController::provisionRepository(..) - adminTeamNumber: ' + adminTeamNumber);
-            const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
-            // const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
+            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + adminAdd.teamName);
 
             // add webhooks

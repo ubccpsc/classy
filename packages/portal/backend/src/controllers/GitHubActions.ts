@@ -139,15 +139,14 @@ export interface IGitHubActions {
     removeMembersFromTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
 
     /**
-     * NOTE: needs the team ID (number), not the team name (string)!
-     * TODO: This is the only method that still needs a numeric GitHub ID; teamName would be better
+     * Add a team to a repo.
      *
-     * @param {number} teamId
+     * @param {string} teamName
      * @param {string} repoName
      * @param permission ('pull', 'push', 'admin')
      * @returns {Promise<GitTeamTuple>}
      */
-    addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple>;
+    addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple>;
 
     /**
      * Gets the internal number for a team.
@@ -916,13 +915,13 @@ export class GitHubActions implements IGitHubActions {
     /**
      * NOTE: needs the team teamId (number), not the team name (string)!
      *
-     * @param teamId
+     * @param {string} teamName
      * @param repoName
      * @param permission ('pull', 'push', 'admin')
      * @returns {Promise<GitTeamTuple>}
      */
-    public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
-        Log.trace("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+    public async addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple> {
+        Log.trace("GitHubAction::addTeamToRepo( " + teamName + ", " + repoName + " ) - start");
         if (permission !== "push" && permission !== "pull" && permission !== "admin") {
             throw new Error("GitHubAction::addTeamToRepo(..) - invalid permission: " + permission);
         }
@@ -935,8 +934,8 @@ export class GitHubActions implements IGitHubActions {
 
             // with teamName: DOES NOT WORK in v3
             // PUT /orgs/:org/teams/:team_slug/repos/:owner/:repo (NEW)
-            const teamName = await this.getTeam(teamId);
-            const uri = this.apiPath + '/orgs/' + this.org + '/teams/' + teamName.teamName + '/repos/' + this.org + '/' + repoName;
+            // const teamName = await this.getTeam(teamId);
+            const uri = this.apiPath + '/orgs/' + this.org + '/teams/' + teamName + '/repos/' + this.org + '/' + repoName;
             Log.trace("GitHubAction::addTeamToRepo(..) - uri: " + uri);
             const options: RequestInit = {
                 method: 'PUT',
@@ -956,9 +955,10 @@ export class GitHubActions implements IGitHubActions {
                 throw new Error(response.statusText);
             }
 
-            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId +
+            Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamName +
                 "; repo: " + repoName + "; took: " + Util.took(start));
 
+            const teamId = await this.getTeamNumber(teamName);
             return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
         } catch (err) {
             Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
@@ -1935,9 +1935,9 @@ export class TestGitHubActions implements IGitHubActions {
         return {teamName: teamName, githubTeamNumber: 1};
     }
 
-    public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
+    public async addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple> {
         Log.info("TestGitHubActions::addTeamToRepo(..)");
-        return {teamName: 'team_' + repoName, githubTeamNumber: teamId};
+        return {teamName: 'team_' + repoName, githubTeamNumber: 1};
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
