@@ -18,7 +18,7 @@ import {
     Team
 } from "../portal/backend/src/Types";
 import Config, {ConfigKey} from "./Config";
-import Log from "./Log";
+import Log, {LogLevel} from "./Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
 import {GradePayload} from "./types/SDMMTypes";
 import Util from "./Util";

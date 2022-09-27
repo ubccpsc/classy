@@ -141,8 +141,8 @@ export interface IGitHubActions {
      * NOTE: needs the team ID (number), not the team name (string)!
      * TODO: This is the only method that still needs a numeric GitHub ID; teamName would be better
      *
-     * @param teamId
-     * @param repoName
+     * @param {number} teamId
+     * @param {string} repoName
      * @param permission ('pull', 'push', 'admin')
      * @returns {Promise<GitTeamTuple>}
      */
@@ -767,8 +767,11 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<GitTeamTuple>} team tuple
      */
     public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
-
         Log.info("GitHubAction::teamCreate( " + this.org + ", " + teamName + ", " + permission + ", ... ) - start");
+        if (permission !== "push" && permission !== "pull") {
+            throw new Error("GitHubAction::teamCreate(..) - invalid permission: " + permission);
+        }
+
         const start = Date.now();
         try {
             await GitHubActions.checkDatabase(null, teamName);
@@ -918,28 +921,43 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<GitTeamTuple>}
      */
     public async addTeamToRepo(teamId: number, repoName: string, permission: string): Promise<GitTeamTuple> {
-
         Log.trace("GitHubAction::addTeamToRepo( " + teamId + ", " + repoName + " ) - start");
+        if (permission !== "push" && permission !== "pull") {
+            throw new Error("GitHubAction::addTeamToRepo(..) - invalid permission: " + permission);
+        }
+
         const start = Date.now();
         try {
+            // with teamId:
+            // PUT /teams/:team_id/repos/:owner/:repo (OLD)
             const uri = this.apiPath + '/teams/' + teamId + '/repos/' + this.org + '/' + repoName;
+
+            // with teamName: DOES NOT WORK in v3
+            // PUT /orgs/:org/teams/:team_slug/repos/:owner/:repo (NEW)
+            // const uri = this.apiPath + '/orgs/' + this.org + '/teams/' + teamName + '/repos/' + this.org + '/' + repoName;
+            Log.trace("GitHubAction::addTeamToRepo(..) - uri: " + uri);
             const options: RequestInit = {
                 method: 'PUT',
                 headers: {
                     'Authorization': this.gitHubAuthToken,
                     'User-Agent': this.gitHubUserName,
-                    'Accept': 'application/vnd.github.hellcat-preview+json'
+                    'Accept': 'application/json'
+                    // 'Accept': 'application/vnd.github+json'
                 },
                 body: JSON.stringify({
                     permission: permission
                 })
             };
 
-            await fetch(uri, options);
+            const response = await fetch(uri, options);
+            if (!response.ok) {
+                throw new Error(response.statusText);
+            }
+
             Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamId +
                 "; repo: " + repoName + "; took: " + Util.took(start));
-            return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
 
+            return {githubTeamNumber: teamId, teamName: 'NOTSETHERE'};
         } catch (err) {
             Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
             throw err;

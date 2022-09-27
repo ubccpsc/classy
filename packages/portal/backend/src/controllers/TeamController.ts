@@ -10,8 +10,8 @@ import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
-    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName);
-    public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName);
+    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName) as string;
+    public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName) as string;
 
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;

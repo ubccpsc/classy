@@ -258,7 +258,7 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
-        const val = await gh.createTeam(TEAMNAME, 'push');
+        const val = await gh.createTeam(TEAMNAME, "push");
         Log.test("Team created; details: " + JSON.stringify(val));
         expect(val.teamName).to.equal(TEAMNAME);
         expect(val.githubTeamNumber).to.be.an('number');
@@ -269,13 +269,20 @@ describe("GitHubActions", () => {
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
         Log.test("Members added");
 
+        const getTeamMembers = await gh.getTeamMembers(TEAMNAME);
+        Log.test("listed members: " + JSON.stringify(val));
+        expect(getTeamMembers).to.be.an('array');
+        expect(getTeamMembers.length).to.equal(2);
+        expect(getTeamMembers).to.include(Test.GITHUB1.github);
+        expect(getTeamMembers).to.include(Test.GITHUB2.github);
+
         const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, 'push');
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
         Log.test("Team added to repo");
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
         Log.test("Team staff number: " + staffTeamNumber);
-        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
         expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
         Log.test("Team staff added to repo");
 
@@ -392,6 +399,50 @@ describe("GitHubActions", () => {
         }
 
     }).timeout(TIMEOUT * 1000);
+
+    it("Should be able to add a team to a repo.", async function () {
+        // TODO: work on this more; does the new style work with this?
+        gh.setPageSize(100); // page size isn't important for this test
+        this.timeout(TIMEOUT * 1000);
+        const del = await deleteStale(); // cleanup
+
+        const rc = new RepositoryController();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(Test.DELIVID0);
+
+        Log.test("Setup complete");
+        // const repo = await rc.createRepository(REPONAME, deliv, [], {});
+        // expect(repo).to.not.be.null;
+        const repoStr = await gh.createRepo(REPONAME);
+        Log.test("Repo created; str: " + repoStr);
+        expect(repoStr).to.not.be.undefined;
+        expect(repoStr).to.contain("classytest/TESTrepo1"); // creation successful
+
+        Log.test("Checking teams on repo");
+        const teamsOnRepo = await gh.getTeamsOnRepo(REPONAME);
+        Log.test("Teams on repo: " + JSON.stringify(teamsOnRepo));
+        expect(teamsOnRepo).to.be.an('array');
+        expect(teamsOnRepo).to.have.length(0);
+
+        Log.test("Creating team");
+        const githubTeam = await gh.createTeam(TEAMNAME, 'push');
+        Log.test("Team created: " + JSON.stringify(githubTeam));
+        expect(githubTeam.teamName).to.be.equal(TEAMNAME);
+        expect(githubTeam.githubTeamNumber).to.be.an('number');
+        expect(githubTeam.githubTeamNumber > 0).to.be.true;
+
+        Log.test("Getting team number");
+        const teamNum = await gh.getTeamNumber(TEAMNAME);
+        Log.test("Team number: " + teamNum);
+        expect(teamNum).to.be.an('number');
+        expect(teamNum).to.be.greaterThan(0);
+
+        const teamSuccess = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
+        Log.test("Added team to repo: " + JSON.stringify(teamSuccess));
+        expect(teamSuccess.githubTeamNumber).to.equal(teamNum);
+
+        // TODO: need gh.removeTeamFromRepo
+    });
 
     it("Should be able to clone a source repo into a newly created repository.", async function () {
         const start = Date.now();
@@ -615,9 +666,7 @@ describe("GitHubActions", () => {
         (gh as any).gitHubAuthToken = old; // restore token
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a repo, " +
-        "create a team, add users to it, add it to the repo, " +
-        "and change their permissions", async function () {
+    it("Should be able to create a repo, a team, link, and set permissions", async function () {
         const githubTeam = await gh.createTeam(TEAMNAME, 'push');
         expect(githubTeam.teamName).to.be.equal(TEAMNAME);
         expect(githubTeam.githubTeamNumber).to.be.an('number');
@@ -627,11 +676,13 @@ describe("GitHubActions", () => {
         const addMembers = await gh.addMembersToTeam(githubTeam.teamName,
             [Test.GITHUB1.github, Test.GITHUB2.github]);
         expect(addMembers).to.not.be.null;
-        const teamAdd = await gh.addTeamToRepo(githubTeam.githubTeamNumber, REPONAME, 'push');
+
+        const teamNum = await gh.getTeamNumber(githubTeam.teamName);
+        const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, 'push');
         expect(teamAdd).to.not.be.null;
 
         const staffTeamNumber = await gh.getTeamNumber('staff');
-        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'admin');
+        const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, 'push');
         expect(staffAdd).to.not.be.null;
         const permissionEdit = await gh.setRepoPermission(REPONAME, "pull");
         expect(permissionEdit).to.be.true;
@@ -817,14 +868,14 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find the members of a team.", async function () {
-        const val = await gh.listTeamMembers(TEAMNAME);
-        Log.test("listed members: " + JSON.stringify(val));
-        expect(val).to.be.an('array');
-        expect(val.length).to.equal(2);
-        expect(val).to.include(Test.GITHUB1.github);
-        expect(val).to.include(Test.GITHUB2.github);
-    }).timeout(TIMEOUT);
+    // it("Should be possible to find the members of a team.", async function () {
+    //     const val = await gh.listTeamMembers(TEAMNAME);
+    //     Log.test("listed members: " + JSON.stringify(val));
+    //     expect(val).to.be.an('array');
+    //     expect(val.length).to.equal(2);
+    //     expect(val).to.include(Test.GITHUB1.github);
+    //     expect(val).to.include(Test.GITHUB2.github);
+    // }).timeout(TIMEOUT);
 
     it("Clear stale repos and teams.", async function () {
         const del = await deleteStale();
