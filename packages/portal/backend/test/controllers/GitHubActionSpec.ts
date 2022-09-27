@@ -15,7 +15,7 @@ import {TeamController} from "@backend/controllers/TeamController";
 
 import '../GlobalSpec';
 
-describe.only("GitHubActions", () => {
+describe("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
