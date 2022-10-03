@@ -19,6 +19,8 @@ import {AdminPage} from "./AdminPage";
 import {AdminResultsTab} from "./AdminResultsTab";
 import {AdminView} from "./AdminView";
 
+declare var TomSelect: any;
+
 export interface DetailRow {
     name: string;
     state: string;
@@ -227,6 +229,12 @@ export class AdminDashboardTab extends AdminPage {
 
         st.generate();
 
+        try {
+            new TomSelect("#dashboardRepoSelect", {maxOptions: null, maxItems: 1});
+        } catch (err) {
+            Log.trace("AdminDashboardTab::render(..) - updating select; MSG: " + err.message);
+        }
+
         if (st.numRows() > 0) {
             UI.showSection('dashboardListTable');
             UI.hideSection('dashboardListTableNone');
@@ -364,7 +372,7 @@ export class AdminDashboardTab extends AdminPage {
             score = "100.00";
         } else {
             // two decimal places
-            if (typeof value.toFixed === "function") {
+            if (typeof value === "number") {
                 score = value.toFixed(2);
             } else {
                 Log.trace("AdminDashboardTab::alignValue(..) - not a number: " + value);

@@ -17,6 +17,8 @@ import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
+declare var TomSelect: any;
+
 export class AdminResultsTab extends AdminPage {
 
     // private readonly remote: string; // url to backend
@@ -187,7 +189,9 @@ export class AdminResultsTab extends AdminPage {
                 score = "100.00";
             } else {
                 // two decimal places
-                score = score.toFixed(2);
+                if (typeof score === "number") {
+                    score = score.toFixed(2);
+                }
                 // prepend space (not 100)
                 scorePrepend = "&#8199;" + scorePrepend;
                 if (result.scoreOverall < 10) {
@@ -218,6 +222,12 @@ export class AdminResultsTab extends AdminPage {
         }
 
         st.generate();
+
+        try {
+            new TomSelect("#resultsRepoSelect", {maxOptions: null, maxItems: 1});
+        } catch (err) {
+            Log.trace("AdminResultsTab::render(..) - updating select; MSG: " + err.message);
+        }
 
         if (st.numRows() > 0) {
             UI.showSection('resultsListTable');

@@ -111,16 +111,16 @@
     <template id="results.html">
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
-                <div style="text-align:center; padding: 1em;">
-                    Deliverable:
-                    <select id="resultsDelivSelect" style="margin-left: 1em;">
+                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                    <span style="padding-right: 1em;">Deliverable:</span>
+                    <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    Repo:
-                    <select id="resultsRepoSelect" style="margin-left: 1em;">
+                    <span style="padding-left: 2em; padding-right: 1em;">Repo:</span>
+                    <select id="resultsRepoSelect" style="display: flex; width: 10em;">
                         <option value="any">-All-</option>
                     </select>
-                    <button id="resultsUpdateButton">Update</button>
+                    <button style="margin-left: 2em;" id="resultsUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
                 <div id="resultsListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
@@ -134,26 +134,16 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
-                <!--<div style="text-align:center; padding: 1em;">-->
-                <!--Select Deliverable:-->
-                <!--<select id="dashboardListSelect" style="margin-left: 1em;">-->
-                <!--<option value="''">-None-</option>-->
-                <!--</select></div>-->
-                <!--<ons-list-header>Dashboard</ons-list-header>-->
-                <!--<div id="dashboardListTable" style="width:100%;"></div>-->
-                <!--<div id="dashboardListTableNone" class="noResultsRow">-->
-                <!--No Results-->
-                <!--</div>-->
-                <div style="text-align:center; padding: 1em;">
-                    Deliverable:
-                    <select id="dashboardDelivSelect" style="margin-left: 1em;">
+                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                    <span style="padding-right: 1em">Deliverable:</span>
+                    <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    Repo:
-                    <select id="dashboardRepoSelect" style="margin-left: 1em;">
+                    <span style="padding-left: 2em; padding-right: 1em">Repo:</span>
+                    <select id="dashboardRepoSelect" style="width: 10em;">
                         <option value="any">-All-</option>
                     </select>
-                    <button id="dashboardUpdateButton">Update</button>
+                    <button style="margin-left: 2em;" id="dashboardUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
                 <div id="dashboardListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
