@@ -848,27 +848,22 @@ describe('Admin Routes', function () {
          * @returns {Promise<void>}
          */
         async function clearAll(repoNames: string[], teamNames: string[]): Promise<void> {
-            // somettimes we need to clear resources on both github and the cache
+            // sometimes we need to clear resources on both github and the cache
             Log.test("AdminRoutesSpec::clearAll() - start");
             const start = Date.now();
 
-            // const ghCache = GitHubActions.getInstance(false);
+            const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
-            // const tcCache = new TeamController(ghCache);
+            const tcCache = new TeamController(ghCache);
             const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
-                // await ghCache.deleteRepo(repoName);
+                await ghCache.deleteRepo(repoName);
                 await ghReal.deleteRepo(repoName);
             }
 
             for (const teamName of teamNames) {
-                // const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
-                // await ghCache.deleteTeam(cacheNum);
-                // await ghCache.deleteTeam(teamName);
-
-                // const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
-                // await ghReal.deleteTeam(realNum);
+                await ghCache.deleteTeam(teamName);
                 await ghReal.deleteTeam(teamName);
             }
 

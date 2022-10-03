@@ -298,13 +298,9 @@ export class GitHubActions implements IGitHubActions {
         }
 
         if (GitHubActions.instance === null) {
-            // const msg = "GitHubActions::getInstance( .. ) - SHOULD NOT GET HERE";
-            // Log.error(msg);
-            // throw new Error(msg);
-            // import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
+            // TODO: having this test dependency in prod code is poor
             const {TestGitHubActions} = require("../../test/controllers/TestGitHubActions");
             GitHubActions.instance = new TestGitHubActions();
-            //     GitHubActions.instance = new TestGitHubActions();
         }
 
         Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");

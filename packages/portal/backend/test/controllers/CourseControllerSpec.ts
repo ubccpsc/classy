@@ -27,7 +27,7 @@ describe("CourseController", () => {
     });
 
     beforeEach(() => {
-        const ghc = new GitHubController(GitHubActions.getInstance(true));
+        const ghc = new GitHubController(GitHubActions.getInstance());
         cc = new CourseController(ghc);
     });
 
