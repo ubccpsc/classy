@@ -5,7 +5,6 @@ import fetch, {RequestInit} from "node-fetch";
 // can't use @common here as this is referenced from TestHarness and ends up being circular
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
-import {Test} from "../../../../common/TestHarness";
 import Util from "../../../../common/Util";
 
 import {Factory} from "../Factory";
@@ -13,7 +12,7 @@ import {DatabaseController} from "./DatabaseController";
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
 
-import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
+// import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
 
 // tslint:disable-next-line
 const tmp = require('tmp-promise');
@@ -274,19 +273,19 @@ export class GitHubActions implements IGitHubActions {
             Log.trace("GitHubActions::getInstance(..) - forcing real (OVERRIDE == true)");
             forceReal = true;
         }
-        if (typeof forceReal === 'undefined') {
+        if (typeof forceReal === "undefined") {
             forceReal = false;
         }
 
         // if we're on CI, still run the whole thing
         const ci = process.env.CI;
-        if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+        if (typeof ci !== "undefined" && Boolean(ci) === true) {
             forceReal = true;
         }
 
         // NOTE: this is bad form, but we want to make sure we always return the real thing in production
         // this detects the mocha testing environment
-        const isInTest = typeof (global as any).it === 'function';
+        const isInTest = typeof (global as any).it === "function";
         if (isInTest === false) {
             // we're in prod, always return the real thing
             Log.trace("GitHubActions::getInstance(.. ) - prod; returning GitHubActions");
@@ -299,7 +298,13 @@ export class GitHubActions implements IGitHubActions {
         }
 
         if (GitHubActions.instance === null) {
+            // const msg = "GitHubActions::getInstance( .. ) - SHOULD NOT GET HERE";
+            // Log.error(msg);
+            // throw new Error(msg);
+            // import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
+            const {TestGitHubActions} = require("../../test/controllers/TestGitHubActions");
             GitHubActions.instance = new TestGitHubActions();
+            //     GitHubActions.instance = new TestGitHubActions();
         }
 
         Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");

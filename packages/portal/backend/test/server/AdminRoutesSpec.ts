@@ -852,20 +852,20 @@ describe('Admin Routes', function () {
             Log.test("AdminRoutesSpec::clearAll() - start");
             const start = Date.now();
 
-            const ghCache = GitHubActions.getInstance(false);
+            // const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
-            const tcCache = new TeamController(ghCache);
+            // const tcCache = new TeamController(ghCache);
             const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
-                await ghCache.deleteRepo(repoName);
+                // await ghCache.deleteRepo(repoName);
                 await ghReal.deleteRepo(repoName);
             }
 
             for (const teamName of teamNames) {
                 // const cacheNum = await tcCache.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 // await ghCache.deleteTeam(cacheNum);
-                await ghCache.deleteTeam(teamName);
+                // await ghCache.deleteTeam(teamName);
 
                 // const realNum = await tcReal.getTeamNumber(teamName); // ghCache.getTeamNumber(teamName);
                 // await ghReal.deleteTeam(realNum);
