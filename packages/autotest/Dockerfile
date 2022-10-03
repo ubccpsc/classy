@@ -12,6 +12,10 @@ COPY packages/common ./packages/common
 COPY packages/portal/backend ./packages/portal/backend
 COPY packages/autotest ./packages/autotest
 
+RUN ls -la /app
+
+RUN ls -la /app/packages/autotest
+
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && chmod -R a+rx /app
