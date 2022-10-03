@@ -89,7 +89,7 @@ export class AuthRoutes implements IREST {
         let payload: Payload;
 
         const handleError = function (msg: string) {
-            Log.error('AuthRoutes::getLogout(..) - ERROR: ' + msg);
+            Log.warn('AuthRoutes::getLogout(..) - ERROR: ' + msg);
             payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
             res.send(400, payload);
             return next();
@@ -156,7 +156,7 @@ export class AuthRoutes implements IREST {
         const isValid = await AuthRoutes.ac.isValid(user, token);
         Log.trace("AuthRoutes::getCredentials( " + user + " ) - in isValid(..)");
         if (isValid === false) {
-            Log.error("AuthRoutes::getCredentials( " + user + " ) - isValid false");
+            Log.warn("AuthRoutes::getCredentials( " + user + " ) - isValid false");
             throw new Error("Login error; user: " + user + " not valid.");
         }
         Log.trace("AuthRoutes::getCredentials( " + user + " ) - isValid true");
