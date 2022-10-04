@@ -60,7 +60,7 @@ export interface IAutoTest {
  *
  * NOTE: the schedule queue is its own thing and does not interact
  * with any of these other queues except that it puts jobs into
- * the express queue when they're ready.
+ * the express queue when they are ready.
  *
  */
 export abstract class AutoTest implements IAutoTest {
@@ -74,7 +74,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private expressQueue = new Queue('express', 2);
+    private expressQueue = new Queue("express", 2);
 
     /**
      * Standard jobs. Always execute after Express jobs, but also always
@@ -82,7 +82,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private standardQueue = new Queue('standard', 2);
+    private standardQueue = new Queue("standard", 2);
 
     /**
      * Regression jobs. These will happen whenever they can. Repos
@@ -91,7 +91,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private regressionQueue = new Queue('regression', 1);
+    private regressionQueue = new Queue("regression", 1);
 
     /**
      * The maximum number of jobs a single user can have on the standard queue
@@ -243,8 +243,8 @@ export abstract class AutoTest implements IAutoTest {
             const tickQueue = function (queue: Queue): void {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
                     const info: ContainerInput = queue.scheduleNext();
-                    Log.info("AutoTest::tick::tickQueue(..)         [JOB] starting: " + queue.getName() + "; deliv: " +
-                        info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
+                    Log.info("AutoTest::tick::tickQueue(..)         [JOB] - starting: " + queue.getName() + "; deliv: " +
+                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA);
 
                     let gradingJob: GradingJob;
                     // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
@@ -260,7 +260,7 @@ export abstract class AutoTest implements IAutoTest {
                     // tslint:disable-next-line
                     that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
                 } else {
-                    // no cap to tick (shouldn't happen)
+                    // no cap to tick (should not happen)
                     Log.trace("AutoTest::tick::tickQueue(..) - no capacity to tick");
                 }
             };
@@ -506,7 +506,7 @@ export abstract class AutoTest implements IAutoTest {
                 // NOTE: If the result was requested after the job was started, the request will not
                 // be reflected in the data.input.target fields.
                 const resultPayload = await this.classPortal.sendResult(data);
-                if (typeof resultPayload.failure !== 'undefined') {
+                if (typeof resultPayload.failure !== "undefined") {
                     Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " +
                         JSON.stringify(resultPayload));
                 } else {
@@ -561,7 +561,7 @@ export abstract class AutoTest implements IAutoTest {
                 score,
                 urlName: repoId,
                 URL: input.target.commitURL,
-                comment: '',
+                comment: "",
                 timestamp: input.target.timestamp,
                 custom: {}
             };
