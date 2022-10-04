@@ -57,7 +57,13 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
-        Log.error('AutoTestRoutes::handleError(..) - ERROR: ' + msg);
+        if (msg.indexOf("was deleted") > 0) {
+            // these are not errors
+            Log.info("AutoTestRoutes::handleError(..) - code: " + code + "; WARN: " + msg);
+        } else {
+            Log.error("AutoTestRoutes::handleError(..) - code: " + code + "; ERROR: " + msg);
+        }
+
         res.send(code, {failure: {message: msg, shouldLogout: false}});
         return next(false);
     }
@@ -390,19 +396,23 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static githubWebhook(req: any, res: any, next: any) {
-        Log.trace('AutoTestRouteHandler::githubWebhook(..) - start');
+        Log.trace("AutoTestRouteHandler::githubWebhook(..) - start");
         const start = Date.now();
 
         AutoTestRoutes.handleWebhook(req).then(function (succ) {
-            Log.info('AutoTestRouteHandler::githubWebhook(..) - success; took: ' + Util.took(start));
+            Log.info("AutoTestRouteHandler::githubWebhook(..) - success; took: " + Util.took(start));
             res.send(200, succ);
         }).catch(function (err) {
-            Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: ' + err.message + "; took: " + Util.took(start));
+            if (err.message.indexOf("was deleted") > 0) {
+                Log.info("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+            } else {
+                Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+            }
             if (err.message && err.message.indexOf("hang up") >= 0) {
-                Log.error('AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response');
+                Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response");
                 return res.end();
             } else {
-                return AutoTestRoutes.handleError(400, 'Error processing webhook: ' + err.message, res, next);
+                return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res, next);
             }
         });
     }
@@ -432,7 +442,7 @@ export class AutoTestRoutes implements IREST {
         } else {
             const err = await res.json();
             let msg = "";
-            if (err.indexOf("branch as deleted") > 0) {
+            if (err.indexOf("was deleted") > 0) {
                 // just warn for branch deletions
                 msg = "AutoTestRouteHandler::handleWebhook(..) - not handled: " + err;
                 Log.warn(msg);
