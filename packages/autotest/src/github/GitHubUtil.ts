@@ -6,6 +6,7 @@ import Log from "@common/Log";
 import {AutoTestAuthTransport} from "@common/types/PortalTypes";
 
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
+import Util from "@common/Util";
 
 export interface IGitHubMessage {
     /**
@@ -93,6 +94,7 @@ export class GitHubUtil {
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
             Log.info("GitHubUtil::processComment(..) - start");
+            const start = Date.now();
 
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
@@ -175,8 +177,8 @@ export class GitHubUtil {
                 }
             }
 
-            Log.info("GitHubUtil.processComment(..) - who: " + requester + "; repoId: " +
-                repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
+            Log.info("GitHubUtil.processComment(..) - done; who: " + requester + "; repoId: " +
+                repoId + "; botMentioned: " + botMentioned + "; message: " + msg + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
 
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
@@ -205,6 +207,7 @@ export class GitHubUtil {
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
             Log.trace("GitHubUtil::processPush(..) - start");
+            const start = Date.now();
 
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
@@ -221,7 +224,7 @@ export class GitHubUtil {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
             }
 
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; ref: " + ref);
+            Log.info("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -243,7 +246,7 @@ export class GitHubUtil {
                 Log.info("GitHubUtil::processPush(..) - branch added; repo: " + repo);
             }
 
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
+            Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push
@@ -273,7 +276,8 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done");
+            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo +
+                "; SHA: " + commitSHA + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {

@@ -563,7 +563,7 @@ export class GitHubActions implements IGitHubActions {
     }
 
     private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
-        Log.info("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
+        Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
         const start = Date.now();
 
         try {
@@ -574,9 +574,9 @@ export class GitHubActions implements IGitHubActions {
 
             if (response.headers.has("link") === false) {
                 // single page, save the results and keep going
-                Log.info("GitHubActions::handlePagination(..) - single page");
+                Log.trace("GitHubActions::handlePagination(..) - single page");
             } else {
-                Log.info("GitHubActions::handlePagination(..) - multiple pages");
+                Log.trace("GitHubActions::handlePagination(..) - multiple pages");
 
                 let linkText = response.headers.get("link");
                 Log.trace("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
@@ -587,7 +587,7 @@ export class GitHubActions implements IGitHubActions {
                 while (typeof links.last !== "undefined") {
                     // process current body
                     uri = links.next.url;
-                    Log.info("GitHubActions::handlePagination(..) - requesting: " + uri);
+                    Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
 
                     // NOTE: this needs to be slowed down to prevent DNS problems
                     // (issuing 10+ concurrent dns requests can be problematic)

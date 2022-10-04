@@ -272,7 +272,7 @@ export class Queue {
             // put executions that were running but not done on the front of the queue
             for (const slot of store.slots) {
                 Log.info("Queue::load() - queue: " + this.name +
-                    "; add executing to HEAD: " + slot.target.commitURL);
+                    "; add executing to HEAD; repo: " + slot.target.repoId + "; SHA: " + slot.target.commitSHA);
                 this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
             }
 

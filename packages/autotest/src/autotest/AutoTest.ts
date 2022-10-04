@@ -243,7 +243,7 @@ export abstract class AutoTest implements IAutoTest {
             const tickQueue = function (queue: Queue): void {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
                     const info: ContainerInput = queue.scheduleNext();
-                    Log.info("AutoTest::tick::tickQueue(..) - [JOB] starting: " + queue.getName() + "; deliv: " +
+                    Log.info("AutoTest::tick::tickQueue(..)         [JOB] starting: " + queue.getName() + "; deliv: " +
                         info.delivId + '; repo: ' + info.target.repoId + '; SHA: ' + info.target.commitSHA);
 
                     let gradingJob: GradingJob;
@@ -526,8 +526,9 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - done; deliv: " + data.delivId + "; repo: " +
-                data.repoId + "; SHA: " + data.commitSHA + "; final processing took: " + Util.took(start));
+            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - done; deliv: " +
+                data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
+                "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

@@ -167,9 +167,9 @@ export default class AdminRoutes implements IREST {
 
         const auth = AdminRoutes.processAuth(req);
 
-        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
-            Log.warn('AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.');
-            return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
+        if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
+            Log.warn("AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.");
+            return AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res, next);
         }
 
         const user = auth.user;
@@ -177,16 +177,16 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function (priv) {
-            Log.trace('AdminRoutes::isPrivileged(..) - in isPrivileged: ' + JSON.stringify(priv));
+            Log.trace("AdminRoutes::isPrivileged(..) - in isPrivileged: " + JSON.stringify(priv));
             if (priv.isStaff === true || priv.isAdmin === true) {
-                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - is priv');
+                Log.trace("AdminRoutes::isPrivileged( " + user + ", ... ) - is priv");
                 return next();
             } else {
-                Log.info('AdminRoutes::isPrivileged( ' + user + ', ... ) - NOT priv');
-                return AdminRoutes.handleError(401, 'Authorization error; user not privileged', res, next);
+                Log.info("AdminRoutes::isPrivileged( " + user + ", ... ) - NOT priv");
+                return AdminRoutes.handleError(401, "Authorization error; user not privileged", res, next);
             }
         }).catch(function (err) {
-            return AdminRoutes.handleError(401, 'Authorization error; user not privileged. ERROR: ' + err.message, res, next);
+            return AdminRoutes.handleError(401, "Authorization error; user not privileged. ERROR: " + err.message, res, next);
         });
     }
 
@@ -201,9 +201,9 @@ export default class AdminRoutes implements IREST {
         // Log.info('AdminRoutes::isAdmin(..) - start');
 
         const auth = AdminRoutes.processAuth(req);
-        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
-            Log.warn('AdminRoutes::isAdmin(..) - undefined user or token; user not admin.');
-            return AdminRoutes.handleError(401, 'Authorization credentials error; user not admin.', res, next);
+        if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
+            Log.warn("AdminRoutes::isAdmin(..) - undefined user or token; user not admin.");
+            return AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res, next);
         }
 
         const user = auth.user;
@@ -211,16 +211,16 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AuthController();
         ac.isPrivileged(user, token).then(function (priv) {
-            Log.trace('AdminRoutes::isAdmin(..) - in isAdmin: ' + JSON.stringify(priv));
+            Log.trace("AdminRoutes::isAdmin(..) - in isAdmin: " + JSON.stringify(priv));
             if (priv.isAdmin === true) {
-                Log.info('AdminRoutes::isAdmin(..) - isAdmin = true');
+                Log.trace("AdminRoutes::isAdmin(..) - isAdmin = true");
                 return next();
             } else {
-                Log.info('AdminRoutes::isAdmin(..) - isAdmin NOT true');
-                return AdminRoutes.handleError(401, 'Authorization error; user not admin.', res, next);
+                Log.info("AdminRoutes::isAdmin(..) - isAdmin NOT true");
+                return AdminRoutes.handleError(401, "Authorization error; user not admin.", res, next);
             }
         }).catch(function (err) {
-            return AdminRoutes.handleError(401, 'Authorization error; user not admin. ERROR: ' + err.message, res, next);
+            return AdminRoutes.handleError(401, "Authorization error; user not admin. ERROR: " + err.message, res, next);
         });
     }
 
@@ -551,12 +551,14 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getDeliverables(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getDeliverables(..) - start');
+        Log.trace('AdminRoutes::getDeliverables(..) - start');
+        const start = Date.now();
         const cc = new AdminController(AdminRoutes.ghc);
 
         // handled by preceeding action in chain above (see registerRoutes)
         cc.getDeliverables().then(function (delivs) {
-            Log.trace('AdminRoutes::getDeliverables(..) - in then; # deliverables: ' + delivs.length);
+            Log.info('AdminRoutes::getDeliverables(..) - done; # delivs: ' + delivs.length +
+                "; took: " + Util.took(start));
             const payload: DeliverableTransportPayload = {success: delivs};
             res.send(payload);
             return next();
@@ -702,11 +704,12 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getCourse(req: any, res: any, next: any) {
-        Log.info('AdminRoutes::getCourse(..) - start');
+        Log.trace("AdminRoutes::getCourse(..) - start");
+        const start = Date.now();
         const cc = new AdminController(AdminRoutes.ghc);
 
         cc.getCourse().then(function (course) {
-            Log.trace('AdminRoutes::getCourse(..) - in then');
+            Log.info("AdminRoutes::getCourse(..) - done; took: " + Util.took(start));
 
             const payload: CourseTransportPayload = {success: course};
             res.send(payload);
@@ -890,8 +893,8 @@ export default class AdminRoutes implements IREST {
             for (const repo of releasePlan) {
                 transportRepos.push(RepositoryController.repositoryToTransport(repo));
             }
-            Log.info('AdminRoutes::planRelease() - success; # results: ' + transportRepos.length +
-                '; took: ' + Util.took(start));
+            Log.info("AdminRoutes::planRelease() - success; # results: " + transportRepos.length +
+                "; took: " + Util.took(start));
             return transportRepos;
         } else {
             // should never get here unless something goes wrong
