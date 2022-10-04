@@ -418,21 +418,28 @@ export class AutoTestRoutes implements IREST {
         const headers = JSON.stringify(req.headers);
         const config = Config.getInstance();
         const atHost = config.getProp(ConfigKey.autotestUrl);
-        const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + '/githubWebhook';
+        const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/githubWebhook";
         const options: RequestInit = {
-            method: 'POST',
+            method: "POST",
             headers: JSON.parse(headers), // use GitHub's headers
             body: JSON.stringify(req.body)
         };
         const res = await fetch(url, options);
         if (res.ok) {
-            Log.trace('AutoTestRouteHandler::handleWebhook(..) - success: ' + JSON.stringify(res.ok));
-            Log.info('AutoTestRouteHandler::handleWebhook(..) - success');
+            Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
+            Log.info("AutoTestRouteHandler::handleWebhook(..) - success");
             return res.ok;
         } else {
             const err = await res.json();
-            const msg = 'AutoTestRouteHandler::handleWebhook(..) - ERROR: ' + JSON.stringify(err);
-            Log.error(msg);
+            let msg = "";
+            if (err.indexOf("branch as deleted") > 0) {
+                // just warn for branch deletions
+                msg = "AutoTestRouteHandler::handleWebhook(..) - not handled: " + err;
+                Log.warn(msg);
+            } else {
+                msg = "AutoTestRouteHandler::handleWebhook(..) - ERROR: " + err;
+                Log.error(msg);
+            }
             throw new Error(msg);
         }
     }
@@ -442,9 +449,9 @@ export class AutoTestRoutes implements IREST {
             const config = Config.getInstance();
 
             const atHost = config.getProp(ConfigKey.autotestUrl);
-            const url = atHost + ':' + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+            const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
             const options: RequestInit = {
-                method: 'GET'
+                method: "GET"
             };
             const githubId = req.headers.user;
             const pc = new PersonController();
