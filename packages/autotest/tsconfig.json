@@ -12,8 +12,7 @@
                 "../common/*"
             ],
             "@backend/*": [
-                "../portal/backend/src/*",
-                "../portal/backend/test/*"
+                "../portal/backend/src/*"
             ]
         },
         "lib": [

@@ -2,15 +2,15 @@ import {expect} from "chai";
 import "mocha";
 
 import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
+import Log from "@common/Log";
 
 import {Test} from "../../common/TestHarness";
 import {AutoTestResult} from "../../common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "../../common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "../../common/types/PortalTypes";
 import {DatabaseController} from "../../portal/backend/src/controllers/DatabaseController";
-import BackendServer from "../../portal/backend/src/server/BackendServer";
-import {Course} from "../../portal/backend/src/Types";
+import BackendServer from "@backend/server/BackendServer";
+import {Course} from "@backend/Types";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
 import "./GlobalSpec";
