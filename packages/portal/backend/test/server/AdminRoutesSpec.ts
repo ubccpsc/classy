@@ -711,7 +711,7 @@ describe("Admin Routes", function () {
 
         let response = null;
         let body: Payload;
-        const url = "/portal/admin/grades/" + TestHarness.DELIVID1;
+        const url = "/portal/admin/grades/csv/" + TestHarness.DELIVID1;
         try {
             response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesValid.csv").set({
                 user: userName,
@@ -733,7 +733,7 @@ describe("Admin Routes", function () {
 
         let response = null;
         let body: Payload;
-        const url = "/portal/admin/grades/" + TestHarness.DELIVID1;
+        const url = "/portal/admin/grades/csv/" + TestHarness.DELIVID1;
 
         response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesInvalid.csv").set({
             user: userName,
