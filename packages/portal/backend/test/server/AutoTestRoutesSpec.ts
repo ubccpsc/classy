@@ -4,26 +4,24 @@ import "mocha";
 import * as restify from "restify";
 import * as request from "supertest";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
     AutoTestGradeTransport,
     ClassyConfigurationPayload
-} from "../../../../common/types/PortalTypes";
+} from "@common/types/PortalTypes";
 
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-
-import BackendServer from "../../src/server/BackendServer";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import BackendServer from "@backend/server/BackendServer";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
-// const loadFirst = require('../GlobalSpec');
+// const loadFirst = require("../GlobalSpec");
 
-describe('AutoTest Routes', function() {
+describe("AutoTest Routes", function () {
 
     const TIMEOUT = 5000;
 
@@ -31,9 +29,9 @@ describe('AutoTest Routes', function() {
 
     let server: BackendServer = null;
     before(async () => {
-        Log.test('AutoTestRoutes::before - start');
+        Log.test("AutoTestRoutes::before - start");
 
-        await Test.suiteBefore('AutoTestRoutes');
+        await Test.suiteBefore("AutoTestRoutes");
         await Test.prepareAll();
 
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
@@ -47,31 +45,31 @@ describe('AutoTest Routes', function() {
 
         try {
             await server.start();
-            Log.test('AutoTestRoutes::before - server started');
-            // Log.test('orgName: ' + Test.ORGNAME);
+            Log.test("AutoTestRoutes::before - server started");
+            // Log.test("orgName: " + Test.ORGNAME);
             app = server.getServer();
         } catch (err) {
-            Log.test('AutoTestRoutes::before - server might already be started: ' + err);
+            Log.test("AutoTestRoutes::before - server might already be started: " + err);
         }
         expect(app).to.not.be.null; // this is a terrible assert but need some indication (other than log output) that this failed.
     });
 
-    after(async function() {
-        Log.test('AutoTestRoutes::after - start');
-        Test.suiteAfter('AutoTestRoutes');
+    after(async function () {
+        Log.test("AutoTestRoutes::after - start");
+        Test.suiteAfter("AutoTestRoutes");
         await server.stop();
     });
 
-    it('Should reject an unauthorized backend detail request', async function() {
+    it("Should reject an unauthorized backend detail request", async function () {
 
         let response = null;
-        const url = '/portal/at';
+        const url = "/portal/at";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', 'INVALID');
+            response = await request(app).get(url).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -79,16 +77,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should respond to a valid backend detail request', async function() {
+    it("Should respond to a valid backend detail request", async function () {
 
         let response = null;
         let body: ClassyConfigurationPayload;
-        const url = '/portal/at';
+        const url = "/portal/at";
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -103,10 +101,10 @@ describe('AutoTest Routes', function() {
         await dc.writeCourseRecord(cr);
 
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -114,17 +112,17 @@ describe('AutoTest Routes', function() {
         expect(body.success.defaultDeliverable).to.equal(Test.DELIVID0);
     }).timeout(TIMEOUT);
 
-    it('Should reject an authorized result', async function() {
+    it("Should reject an authorized result", async function () {
 
         let response = null;
-        const url = '/portal/at/result';
+        const url = "/portal/at/result";
 
         let body = null;
         try {
-            response = await request(app).post(url).send(body).set('token', 'INVALIDTOKEN');
+            response = await request(app).post(url).send(body).set("token", "INVALIDTOKEN");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
@@ -132,43 +130,43 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should accept a valid result payload', async function() {
+    it("Should accept a valid result payload", async function () {
 
         let response = null;
-        const url = '/portal/at/result';
+        const url = "/portal/at/result";
         const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
 
         try {
-            response = await request(app).post(url).send(body).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
     }).timeout(TIMEOUT);
 
-    it('Should reject an invalid result payload', async function() {
+    it("Should reject an invalid result payload", async function () {
 
         let response = null;
-        const url = '/portal/at/result';
+        const url = "/portal/at/result";
 
         const body = { // : IAutoTestResult
-            delivId:   Test.DELIVID0,
-            repoId:    Test.REPONAME1,
+            delivId: Test.DELIVID0,
+            repoId: Test.REPONAME1,
             timestamp: 0,
-            commitURL: 'url',
-            commitSHA: 'sha',
-            input:     {},
-            output:    {}
+            commitURL: "url",
+            commitSHA: "sha",
+            input: {},
+            output: {}
         };
 
         delete body.delivId; // remove required field
 
         try {
-            response = await request(app).post(url).send(body).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
@@ -176,16 +174,16 @@ describe('AutoTest Routes', function() {
         expect(response.body.failure).to.not.be.undefined;
     }).timeout(TIMEOUT);
 
-    it('Should respond to a valid result request', async function() {
+    it("Should respond to a valid result request", async function () {
 
         let response = null;
-        const url = '/portal/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1 + '/sha';
+        const url = "/portal/at/result/" + Test.DELIVID0 + "/" + Test.REPONAME1 + "/sha";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -193,16 +191,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.be.undefined;
     });
 
-    it('Should reject an unauthorized result request', async function() {
+    it("Should reject an unauthorized result request", async function () {
 
         let response = null;
-        const url = '/portal/at/result/' + Test.DELIVID0 + '/' + Test.REPONAME1 + '/sha';
+        const url = "/portal/at/result/" + Test.DELIVID0 + "/" + Test.REPONAME1 + "/sha";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', 'INVALID');
+            response = await request(app).get(url).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -210,16 +208,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should reject an unauthorized isStaff request', async function() {
+    it("Should reject an unauthorized isStaff request", async function () {
 
         let response = null;
-        const url = '/portal/at/isStaff/rtholmes';
+        const url = "/portal/at/isStaff/rtholmes";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', 'INVALID');
+            response = await request(app).get(url).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -227,16 +225,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should respond to a valid isStaff request for staff', async function() {
+    it("Should respond to a valid isStaff request for staff", async function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/isStaff/' + Test.ADMINSTAFF1.github;
+        const url = "/portal/at/isStaff/" + Test.ADMINSTAFF1.github;
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -246,16 +244,16 @@ describe('AutoTest Routes', function() {
         expect(body.success.isAdmin).to.be.true;
     });
 
-    it('Should respond to a valid isStaff request for non-staff', async function() {
+    it("Should respond to a valid isStaff request for non-staff", async function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/isStaff/INVALIDUSERNAME';
+        const url = "/portal/at/isStaff/INVALIDUSERNAME";
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -266,16 +264,16 @@ describe('AutoTest Routes', function() {
         expect(body.success.isAdmin).to.be.false;
     }).timeout(Test.TIMEOUT);
 
-    it('Should reject an unauthorized personId request', async function() {
+    it("Should reject an unauthorized personId request", async function () {
 
         let response = null;
-        const url = '/portal/at/personId/rtholmes';
+        const url = "/portal/at/personId/rtholmes";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', 'INVALID');
+            response = await request(app).get(url).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -283,34 +281,34 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should respond to a valid personId request', async function() {
+    it("Should respond to a valid personId request", async function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = '/portal/at/personId/' + Test.USER1.github; // AutoTest only knows about githubId not personId
+        const url = "/portal/at/personId/" + Test.USER1.github; // AutoTest only knows about githubId not personId
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.personId).to.not.be.undefined;
-        expect(body.success.personId).to.be.an('string'); // TODO: check what it is?
+        expect(body.success.personId).to.be.an("string"); // TODO: check what it is?
     });
 
-    it('Should reject an unauthorized container request', async function() {
+    it("Should reject an unauthorized container request", async function () {
 
         let response = null;
-        const url = '/portal/at/container/d0';
+        const url = "/portal/at/container/d0";
         let body = null;
         try {
-            response = await request(app).get(url).set('token', 'INVALID');
+            response = await request(app).get(url).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -318,16 +316,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should respond to a valid container request for a deliverable', async function() {
+    it("Should respond to a valid container request for a deliverable", async function () {
 
         let response = null;
-        const url = '/portal/at/container/d0';
+        const url = "/portal/at/container/d0";
         let body: AutoTestConfigPayload;
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
@@ -336,19 +334,19 @@ describe('AutoTest Routes', function() {
         expect(body.success.studentDelay).to.not.be.undefined;
         expect(body.success.maxExecTime).to.not.be.undefined;
         expect(body.success.regressionDelivIds).to.not.be.undefined;
-        expect(body.success.regressionDelivIds).to.be.an('array');
+        expect(body.success.regressionDelivIds).to.be.an("array");
     });
 
-    it('Should respond to an invalid container request', async function() {
+    it("Should respond to an invalid container request", async function () {
 
         let response = null;
-        const url = '/portal/at/container/d9997';
+        const url = "/portal/at/container/d9997";
         let body: AutoTestConfigPayload;
         try {
-            response = await request(app).get(url).set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -357,16 +355,16 @@ describe('AutoTest Routes', function() {
         expect(body.failure.message).to.not.be.undefined;
     });
 
-    it('Should reject an unauthorized grade request', async function() {
+    it("Should reject an unauthorized grade request", async function () {
 
         let response = null;
-        const url = '/portal/at/grade';
+        const url = "/portal/at/grade";
         let body = null;
         try {
-            response = await request(app).post(url).send({}).set('token', 'INVALID');
+            response = await request(app).post(url).send({}).set("token", "INVALID");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
@@ -374,31 +372,31 @@ describe('AutoTest Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to receive a grade event', async function() {
+    it("Should be able to receive a grade event", async function () {
 
         let response = null;
 
         const gradePayload: AutoTestGradeTransport = {
-            delivId:   Test.DELIVID0,
-            score:     51,
-            repoId:    Test.REPONAME1,
-            repoURL:   'repoURL',
-            urlName:   'urlName',
-            URL:       'test URL from grade record',
-            comment:   'test comment from grade record',
+            delivId: Test.DELIVID0,
+            score: 51,
+            repoId: Test.REPONAME1,
+            repoURL: "repoURL",
+            urlName: "urlName",
+            URL: "test URL from grade record",
+            comment: "test comment from grade record",
             timestamp: new Date(1400000000000 + 1000).getTime(), // within the open window
-            custom:    {}
+            custom: {}
         };
 
-        const url = '/portal/at/grade';
+        const url = "/portal/at/grade";
         try {
             response = await request(app)
                 .post(url)
                 .send(gradePayload)
-                .set('Accept', 'application/json')
-                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+                .set("Accept", "application/json")
+                .set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
@@ -406,82 +404,82 @@ describe('AutoTest Routes', function() {
         expect(response.body.success.success).to.be.true;
     });
 
-    it('Should reject an invalid grade event', async function() {
+    it("Should reject an invalid grade event", async function () {
 
         let response = null;
 
         const gradePayload: AutoTestGradeTransport = {
-            delivId:   Test.DELIVID0,
-            score:     51,
-            repoId:    Test.REPONAME1,
-            repoURL:   'repoURL',
-            urlName:   'urlName',
-            URL:       'test URL from grade record',
-            comment:   'test comment from grade record',
+            delivId: Test.DELIVID0,
+            score: 51,
+            repoId: Test.REPONAME1,
+            repoURL: "repoURL",
+            urlName: "urlName",
+            URL: "test URL from grade record",
+            comment: "test comment from grade record",
             timestamp: Date.now(),
-            custom:    {}
+            custom: {}
         };
 
         delete gradePayload.score; // remove field
 
-        const url = '/portal/at/grade';
+        const url = "/portal/at/grade";
         try {
             response = await request(app)
                 .post(url)
                 .send(gradePayload)
-                .set('Accept', 'application/json')
-                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+                .set("Accept", "application/json")
+                .set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
         expect(response.body.failure).to.not.be.undefined;
-        expect(response.body.failure.message).to.be.a('string');
+        expect(response.body.failure.message).to.be.a("string");
     });
 
     // this will always fail now that we check the IP of the host
-    it('Should be able to receive a Webhook event from GitHub, but fail gracefully.', async function() {
+    it("Should be able to receive a Webhook event from GitHub, but fail gracefully.", async function () {
         // NOTE: this is a terrible tests; without the service running we get nothing
         let response = null;
         const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
         const autotestUrl = Config.getInstance().getProp(ConfigKey.autotestUrl);
 
-        const url = '/portal/githubWebhook';
+        const url = "/portal/githubWebhook";
         try {
             response = await request(app)
                 .post(url).send(body)
-                .set('Accept', 'application/json')
-                .set('token', Config.getInstance().getProp(ConfigKey.autotestSecret));
+                .set("Accept", "application/json")
+                .set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400); // really should be 200, but AutoTest isn't running so it will return this error
+        expect(response.status).to.equal(400); // really should be 200, but AutoTest isn"t running so it will return this error
         const text = response.text;
-        if (autotestUrl.indexOf('localhost') > -1) {
-            expect(text.indexOf('ECONNREFUSED')).to.be.greaterThan(0); // at least make sure it fails for the right reason
+        if (autotestUrl.indexOf("localhost") > -1) {
+            expect(text.indexOf("ECONNREFUSED")).to.be.greaterThan(0); // at least make sure it fails for the right reason
         } else {
-            expect(text.indexOf('ENOTFOUND')).to.be.greaterThan(0); // non-localhost autotest hostname name results in different error
+            expect(text.indexOf("ENOTFOUND")).to.be.greaterThan(0); // non-localhost autotest hostname name results in different error
         }
     });
 
-    describe('GET /portal/at/docker/images', function() {
-        const url = '/portal/at/docker/images';
+    describe("GET /portal/at/docker/images", function () {
+        const url = "/portal/at/docker/images";
 
-        it('Should respond 401 if user is not an admin.', async function() {
+        it("Should respond 401 if user is not an admin.", async function () {
             let res: any;
 
             try {
-                res = await request(app).get(url).set('user', Test.REALUSER1.github);
+                res = await request(app).get(url).set("user", Test.REALUSER1.github);
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(401);
             }
         });
-        it('Should respond 400 if the user is not in the request header.', async function() {
+        it("Should respond 400 if the user is not in the request header.", async function () {
             let res: any;
 
             try {
@@ -489,57 +487,57 @@ describe('AutoTest Routes', function() {
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 400 if the user is not a GitHub person.', async function() {
+        it("Should respond 400 if the user is not a GitHub person.", async function () {
             let res: any;
 
             try {
-                res = await request(app).get(url).set('user', 'fakeUser123');
+                res = await request(app).get(url).set("user", "fakeUser123");
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 500 if forwarding the request to AutoTest fails.', async function() {
+        it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
             this.timeout(15000);
             let res: any;
 
             try {
-                res = await request(app).get(url).set('user', Test.ADMIN1.github);
+                res = await request(app).get(url).set("user", Test.ADMIN1.github);
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(500);
             }
         });
-        // it('Should respond 400 if the user privileges cannot be determined.');
-        // it('Should respond 400 if the AutoTest service is malformed.');
+        // it("Should respond 400 if the user privileges cannot be determined.");
+        // it("Should respond 400 if the AutoTest service is malformed.");
     });
 
-    describe('POST /portal/at/docker/image', function() {
-        const url = '/portal/at/docker/image';
+    describe("POST /portal/at/docker/image", function () {
+        const url = "/portal/at/docker/image";
         const body = {};
 
-        it('Should respond 401 if user is not an admin.', async function() {
+        it("Should respond 401 if user is not an admin.", async function () {
             let res: any;
 
             try {
                 // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
-                res = await request(app).post(url).set('user', Test.REALUSER1.github).send(body);
+                res = await request(app).post(url).set("user", Test.REALUSER1.github).send(body);
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(401);
             }
         });
-        it('Should respond 400 if the user is not in the request header.', async function() {
+        it("Should respond 400 if the user is not in the request header.", async function () {
             let res: any;
 
             try {
@@ -547,36 +545,36 @@ describe('AutoTest Routes', function() {
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 400 if the user is not a GitHub person.', async function() {
+        it("Should respond 400 if the user is not a GitHub person.", async function () {
             let res: any;
 
             try {
-                res = await request(app).post(url).set('user', 'fakeUser123').send(body);
+                res = await request(app).post(url).set("user", "fakeUser123").send(body);
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(400);
             }
         });
-        it('Should respond 500 if forwarding the request to AutoTest fails with body.', async function() {
+        it("Should respond 500 if forwarding the request to AutoTest fails with body.", async function () {
             this.timeout(15000);
             let res: any;
 
             try {
-                res = await request(app).post(url).set('user', Test.ADMIN1.github).send(body);
+                res = await request(app).post(url).set("user", Test.ADMIN1.github).send(body);
             } catch (err) {
                 res = err;
             } finally {
-                expect(res).to.haveOwnProperty('status');
+                expect(res).to.haveOwnProperty("status");
                 expect(res.status).to.eq(500);
             }
         });
-        // it('Should respond 400 if the AutoTest service is malformed.');
-        // it('Should respond 400 if the user privileges cannot be determined.');
+        // it("Should respond 400 if the AutoTest service is malformed.");
+        // it("Should respond 400 if the user privileges cannot be determined.");
     });
 });

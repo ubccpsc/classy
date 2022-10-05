@@ -11,18 +11,18 @@ import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 import {Auth, Course, Deliverable, Person, PersonKind} from "@backend/Types";
 
-describe('TestDatasetGenerator', function () {
+describe("TestDatasetGenerator", function () {
 
     before(async function () {
-        // await Test.suiteBefore('TestDatasetGenerator');
+        // await Test.suiteBefore("TestDatasetGenerator");
     });
 
-    it('Can generate the course object', async function () {
+    it("Can generate the course object", async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         const course: Course = {
             id: Config.getInstance().getProp(ConfigKey.testname),
-            defaultDeliverableId: 'd0',
+            defaultDeliverableId: "d0",
             custom: {}
         };
 
@@ -30,7 +30,7 @@ describe('TestDatasetGenerator', function () {
 
     });
 
-    it('Can generate some students', async function () {
+    it("Can generate some students", async function () {
         const pc: PersonController = new PersonController();
 
         // create an admin
@@ -40,8 +40,8 @@ describe('TestDatasetGenerator', function () {
             githubId: Test.ADMIN1.github,
             studentNumber: -1,
 
-            fName: 'adminFirst',
-            lName: 'adminLast',
+            fName: "adminFirst",
+            lName: "adminLast",
             kind: null,
             URL: null,
 
@@ -63,8 +63,8 @@ describe('TestDatasetGenerator', function () {
             githubId: Test.USER1.github,
             studentNumber: -1,
 
-            fName: 'adminFirst',
-            lName: 'adminLast',
+            fName: "adminFirst",
+            lName: "adminLast",
             kind: PersonKind.STUDENT,
             URL: null,
 
@@ -80,7 +80,7 @@ describe('TestDatasetGenerator', function () {
         }
 
         for (let i = 0; i < 40; i++) {
-            const pid = 'p' + i;
+            const pid = "p" + i;
 
             p = {
                 id: pid,
@@ -88,12 +88,12 @@ describe('TestDatasetGenerator', function () {
                 githubId: pid,
                 studentNumber: i,
 
-                fName: pid + 'first',
-                lName: pid + 'last',
+                fName: pid + "first",
+                lName: pid + "last",
                 kind: PersonKind.STUDENT,
                 URL: null,
 
-                labId: 'l1a',
+                labId: "l1a",
 
                 custom: {}
             };
@@ -106,44 +106,44 @@ describe('TestDatasetGenerator', function () {
         }
     });
 
-    it('Can generate some auth tokens', async function () {
+    it("Can generate some auth tokens", async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // create for an admin
-        let a: Auth = {personId: Test.ADMIN1.id, token: 'TEST_TOKENADMIN'};
+        let a: Auth = {personId: Test.ADMIN1.id, token: "TEST_TOKENADMIN"};
         await dc.writeAuth(a);
 
         // create for a student
-        a = {personId: Test.USER1.id, token: 'TEST_TOKENSTUDENT'};
+        a = {personId: Test.USER1.id, token: "TEST_TOKENSTUDENT"};
         await dc.writeAuth(a);
     });
 
-    it('Can generate some deliverables', async function () {
+    it("Can generate some deliverables", async function () {
         const dc: DeliverablesController = new DeliverablesController();
 
         const d: Deliverable = {
-            id: '',
+            id: "",
 
-            URL: 'http://NOTSET',
+            URL: "http://NOTSET",
             openTimestamp: -1,
             closeTimestamp: -1,
             gradesReleased: false,
             visibleToStudents: true,
 
             shouldProvision: true,
-            repoPrefix: '',
-            teamPrefix: 't',
+            repoPrefix: "",
+            teamPrefix: "t",
             importURL: null,
             teamMinSize: 1,
             teamMaxSize: 2,
             teamSameLab: true,
             teamStudentsForm: true,
-            // bootstrapUrl:     '',
+            // bootstrapUrl:     "",
 
             lateAutoTest: false,
             shouldAutoTest: true,
             autotest: {
-                dockerImage: 'testImage',
+                dockerImage: "testImage",
                 studentDelay: 60 * 60 * 12, // 12h
                 maxExecTime: 300,
                 regressionDelivIds: [],
@@ -156,43 +156,43 @@ describe('TestDatasetGenerator', function () {
 
         for (let i = 0; i < 5; i++) {
             const deliv = JSON.parse(JSON.stringify(d));
-            deliv.id = 'd' + i;
-            deliv.repoPrefix = ''; // 'd' + i + '_';
+            deliv.id = "d" + i;
+            deliv.repoPrefix = ""; // "d" + i + "_";
             deliv.openTimestamp = new Date().getTime();
             deliv.closeTimestamp = new Date().getTime();
             try {
                 await dc.saveDeliverable(deliv);
             } catch (err) {
-                // Fail silently, it's fine, the deliverable already exists
+                // Fail silently, it"s fine, the deliverable already exists
             }
         }
     });
 
-    it('Can generate some teams', async function () {
+    it("Can generate some teams", async function () {
         const tc: TeamController = new TeamController();
         const pc: PersonController = new PersonController();
         const dc = DatabaseController.getInstance();
 
-        let pA = await pc.getPerson('p1');
-        let pB = await pc.getPerson('p2');
-        const deliv = await dc.getDeliverable('d0');
+        let pA = await pc.getPerson("p1");
+        let pB = await pc.getPerson("p2");
+        const deliv = await dc.getDeliverable("d0");
         try {
             await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
         } catch (err) {
-            // Fail silently, it's fine, the team already exists
+            // Fail silently, it"s fine, the team already exists
         }
 
-        pA = await pc.getPerson('p3');
-        pB = await pc.getPerson('p4');
-        const pC = await pc.getPerson('p5');
+        pA = await pc.getPerson("p3");
+        pB = await pc.getPerson("p4");
+        const pC = await pc.getPerson("p5");
         try {
             await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
         } catch (err) {
-            // Fail silently, it's fine, the team already exists
+            // Fail silently, it"s fine, the team already exists
         }
     });
 
-    it('Can generate some repos', async function () {
+    it("Can generate some repos", async function () {
         const tc: TeamController = new TeamController();
 
         const teams = await tc.getAllTeams();
@@ -202,17 +202,17 @@ describe('TestDatasetGenerator', function () {
         try {
             await rc.createRepository(Test.REPONAME1, deliv, [teams[0]], {});
         } catch (err) {
-            // Fail silently, it's fine, the team already exists
+            // Fail silently, it"s fine, the team already exists
         }
 
         try {
             await rc.createRepository(Test.REPONAME2, deliv, [teams[1]], {});
         } catch (err) {
-            // Fail silently, it's fine, the team already exists
+            // Fail silently, it"s fine, the team already exists
         }
     });
 
-    it('Run prepareAll at the end', async function () {
+    it("Run prepareAll at the end", async function () {
         Log.test("Finishing by preparing all");
         await Test.prepareAll();
         Log.test("Finishing by preparing all - done");

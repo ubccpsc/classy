@@ -3,17 +3,16 @@ import "mocha";
 import * as restify from "restify";
 import * as request from "supertest";
 
-import Log from "../../../../common/Log";
-import {AuthTransportPayload} from "../../../../common/types/PortalTypes";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-
-import BackendServer from "../../src/server/BackendServer";
-
+import Log from "@common/Log";
+import {AuthTransportPayload} from "@common/types/PortalTypes";
 import {Test} from "@common/test/TestHarness";
+
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import BackendServer from "@backend/server/BackendServer";
 
 // const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
 
-describe('Auth Routes', function() {
+describe('Auth Routes', function () {
 
     // const TIMEOUT = 1000 * 10;
 
@@ -36,21 +35,21 @@ describe('Auth Routes', function() {
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
         server = new BackendServer(false);
 
-        return server.start().then(function() {
+        return server.start().then(function () {
             Log.test('AuthRoutes::before - server started');
             app = server.getServer();
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.test('AuthRoutes::before - server might already be started: ' + err);
         });
     });
 
-    after(async function() {
+    after(async function () {
         Log.test('AuthRoutes::after - start');
         await server.stop();
         await Test.suiteAfter('Auth Routes');
     });
 
-    it('Should be able to get some credentials for an admin.', async function() {
+    it('Should be able to get some credentials for an admin.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -77,7 +76,7 @@ describe('Auth Routes', function() {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(Test.TIMEOUTLONG);
 
-    it('Should be able to get some credentials for a student.', async function() {
+    it('Should be able to get some credentials for a student.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -104,7 +103,7 @@ describe('Auth Routes', function() {
         expect(body.success.token).to.equal(auth.token);
     }).timeout(Test.TIMEOUT);
 
-    it('Should fail to get credentials if the token is bad.', async function() {
+    it('Should fail to get credentials if the token is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
         const auth = await dc.getAuth(Test.ADMIN1.id);
@@ -124,7 +123,7 @@ describe('Auth Routes', function() {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to logout a student.', async function() {
+    it('Should be able to logout a student.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -156,7 +155,7 @@ describe('Auth Routes', function() {
      * don't get into states where people can't logout on their own. Better safe
      * than sorry in this dimension.
      */
-    it('Should be able to logout even if token is bad.', async function() {
+    it('Should be able to logout even if token is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 
@@ -208,7 +207,7 @@ describe('Auth Routes', function() {
      * don't get into states where people can't logout on their own. Better safe
      * than sorry in this dimension.
      */
-    it('Should fail to logout if user is bad.', async function() {
+    it('Should fail to logout if user is bad.', async function () {
 
         const dc: DatabaseController = DatabaseController.getInstance();
 

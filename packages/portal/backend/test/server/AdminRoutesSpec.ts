@@ -1,11 +1,10 @@
 import {expect} from "chai";
 import "mocha";
-import * as restify from 'restify';
-import * as request from 'supertest';
+import * as restify from "restify";
+import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-
 import {Test} from "@common/test/TestHarness";
 import {
     AutoTestConfigTransport,
@@ -21,15 +20,17 @@ import {
     TeamTransportPayload
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {GitHubActions} from "@backend/controllers/GitHubActions";
 import {PersonController} from "@backend/controllers/PersonController";
 import {TeamController} from "@backend/controllers/TeamController";
 import BackendServer from "@backend/server/BackendServer";
-import './AuthRoutesSpec';
 
-describe('Admin Routes', function () {
+import "./AuthRoutesSpec";
+
+describe("Admin Routes", function () {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -40,9 +41,9 @@ describe('Admin Routes', function () {
     const TIMEOUT = 1000;
 
     before(async () => {
-        Log.test('AdminRoutes::before - start');
+        Log.test("AdminRoutes::before - start");
 
-        await Test.suiteBefore('Admin Routes');
+        await Test.suiteBefore("Admin Routes");
 
         // get data ready
         await Test.prepareAll();
@@ -52,89 +53,89 @@ describe('Admin Routes', function () {
             server = new BackendServer(false);
 
             await server.start();
-            Log.test('AdminRoutes::before - server started');
+            Log.test("AdminRoutes::before - server started");
             app = server.getServer();
 
             const dc: DatabaseController = DatabaseController.getInstance();
             const auth = await dc.getAuth(userName);
 
-            Log.test('AdminRoutes::before - token set');
+            Log.test("AdminRoutes::before - token set");
             userToken = auth.token;
         } catch (err) {
-            Log.test('AdminRoutes::before - server might already be started: ' + err);
+            Log.test("AdminRoutes::before - server might already be started: " + err);
         }
     });
 
     after(async () => {
-        Log.test('AdminRoutes::after - start');
+        Log.test("AdminRoutes::after - start");
         await server.stop();
-        await Test.suiteAfter('Admin Routes');
+        await Test.suiteAfter("Admin Routes");
     });
 
-    it('Should be able to get a list of students', async function () {
+    it("Should be able to get a list of students", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/students';
+        const url = "/portal/admin/students";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to get a list of staff', async function () {
+    it("Should be able to get a list of staff", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/staff';
+        const url = "/portal/admin/staff";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to get a list of students with cookies for authentication', async function () {
+    it("Should be able to get a list of students with cookies for authentication", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/students';
+        const url = "/portal/admin/students";
         try {
-            response = await request(app).get(url).set('Cookie', 'token=' + userToken + '__' + userName);
+            response = await request(app).get(url).set("Cookie", "token=" + userToken + "__" + userName);
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of students if the requester is not privileged', async function () {
+    it("Should not be able to get a list of students if the requester is not privileged", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/students';
+        const url = "/portal/admin/students";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -142,16 +143,16 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should not be able to get a list of students with bad cookies for auth', async function () {
+    it("Should not be able to get a list of students with bad cookies for auth", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/students';
+        const url = "/portal/admin/students";
         try {
-            response = await request(app).get(url).set('Cookie', 'token=BADTOKEN' + Date.now() + '__' + userName);
+            response = await request(app).get(url).set("Cookie", "token=BADTOKEN" + Date.now() + "__" + userName);
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -159,16 +160,16 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should not be able to get a list of students without any auth data', async function () {
+    it("Should not be able to get a list of students without any auth data", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/students';
+        const url = "/portal/admin/students";
         try {
             response = await request(app).get(url);
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -176,35 +177,35 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of teams', async function () {
+    it("Should be able to get a list of teams", async function () {
 
         let response = null;
         let body: TeamTransportPayload;
-        const url = '/portal/admin/teams';
+        const url = "/portal/admin/teams";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of teams if the requester is not privileged', async function () {
+    it("Should not be able to get a list of teams if the requester is not privileged", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/teams';
+        const url = "/portal/admin/teams";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -212,34 +213,34 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of grades', async function () {
+    it("Should be able to get a list of grades", async function () {
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/grades';
+        const url = "/portal/admin/grades";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should not be able to get a list of grades if the requester is not privileged', async function () {
+    it("Should not be able to get a list of grades if the requester is not privileged", async function () {
 
         let response = null;
         let body: StudentTransportPayload;
-        const url = '/portal/admin/grades';
+        const url = "/portal/admin/grades";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -247,74 +248,74 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of graded results for a deliverable', async function () {
+    it("Should be able to get a list of graded results for a deliverable", async function () {
         let response = null;
         let body: StudentTransportPayload;
 
-        const url = '/portal/admin/gradedResults/d0';
+        const url = "/portal/admin/gradedResults/d0";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to get a list of the best graded results for a deliverable', async function () {
+    it("Should be able to get a list of the best graded results for a deliverable", async function () {
         let response = null;
         let body: StudentTransportPayload;
 
-        const url = '/portal/admin/bestResults/d0';
+        const url = "/portal/admin/bestResults/d0";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to get a list of results', async function () {
+    it("Should be able to get a list of results", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/results/any/any';
+        const url = "/portal/admin/results/any/any";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of results if the requester is not privileged', async function () {
+    it("Should not be able to get a list of results if the requester is not privileged", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/results/any/any';
+        const url = "/portal/admin/results/any/any";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -322,36 +323,36 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of dashboard results', async function () {
+    it("Should be able to get a list of dashboard results", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/dashboard/any/any';
+        const url = "/portal/admin/dashboard/any/any";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to get a list of dashboard results if the requester is not privileged', async function () {
+    it("Should not be able to get a list of dashboard results if the requester is not privileged", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/dashboard/any/any';
+        const url = "/portal/admin/dashboard/any/any";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -359,36 +360,36 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to export the list of dashboard results', async function () {
+    it("Should be able to export the list of dashboard results", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/export/dashboard/any/any';
+        const url = "/portal/admin/export/dashboard/any/any";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         // expect(body.success).to.have.lengthOf(101);
 
         // should confirm body.success objects (at least one)
     });
 
-    it('Should not be able to export the list of dashboard results if the requester is not privileged', async function () {
+    it("Should not be able to export the list of dashboard results if the requester is not privileged", async function () {
 
         let response = null;
         let body: AutoTestResultPayload;
-        const url = '/portal/admin/export/dashboard/any/any';
+        const url = "/portal/admin/export/dashboard/any/any";
         try {
             response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
@@ -396,21 +397,21 @@ describe('Admin Routes', function () {
         expect(body.failure).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of repositories', async function () {
+    it("Should be able to get a list of repositories", async function () {
 
         let response = null;
         let body: RepositoryPayload;
-        const url = '/portal/admin/repositories';
+        const url = "/portal/admin/repositories";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         expect(body.success).to.have.lengthOf(2);
 
         // check one entry
@@ -419,21 +420,21 @@ describe('Admin Routes', function () {
         expect(entry.URL).to.not.be.undefined;
     });
 
-    it('Should be able to get a list of deliverables', async function () {
+    it("Should be able to get a list of deliverables", async function () {
 
         let response = null;
         let body: DeliverableTransportPayload;
-        const url = '/portal/admin/deliverables';
+        const url = "/portal/admin/deliverables";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         expect(body.success).to.have.lengthOf(5);
 
         const dc = new DeliverablesController();
@@ -441,47 +442,47 @@ describe('Admin Routes', function () {
         expect(actual).to.be.null; // make sure at least one of the deliverables validates
     });
 
-    it('Should be able to create a new deliverable', async function () {
+    it("Should be able to create a new deliverable", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/deliverable';
+        const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable('d' + new Date().getTime()));
+                Test.createDeliverable("d" + new Date().getTime()));
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.be.an("string");
     });
 
-    it('Should fail to create a new deliverable if the object is invalid', async function () {
+    it("Should fail to create a new deliverable if the object is invalid", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/deliverable';
+        const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable('d' + new Date().getTime()));
+                Test.createDeliverable("d" + new Date().getTime()));
             deliv.id = null; // make invalid
 
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string');
+        expect(body.failure.message).to.be.an("string");
     });
 
-    it('Should fail to create a new deliverable if the user is not an admin', async function () {
+    it("Should fail to create a new deliverable if the user is not an admin", async function () {
 
         // this test looks like overkill
         // but we want to have
@@ -490,35 +491,35 @@ describe('Admin Routes', function () {
         // and we _still_ want it all to fail
 
         const dc: DatabaseController = DatabaseController.getInstance();
-        await dc.writeAuth({personId: Test.USER1.id, token: 'testtoken'}); // create an auth record
+        await dc.writeAuth({personId: Test.USER1.id, token: "testtoken"}); // create an auth record
         const auth = await dc.getAuth(Test.USER1.id);
         const token = auth.token;
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/deliverable';
+        const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable('d' + new Date().getTime()));
+                Test.createDeliverable("d" + new Date().getTime()));
 
             response = await request(app).post(url).send(deliv).set({user: Test.USER1.id, token: token});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string');
+        expect(body.failure.message).to.be.an("string");
     });
 
-    it('Should be able to update a deliverable', async function () {
+    it("Should be able to update a deliverable", async function () {
 
         let response = null;
         let body: Payload;
         const newTime = new Date().getTime();
         const dc = new DeliverablesController();
-        const url = '/portal/admin/deliverable';
+        const url = "/portal/admin/deliverable";
         try {
             const originalDelivs = await dc.getAllDeliverables();
             const d0 = originalDelivs[0];
@@ -536,8 +537,8 @@ describe('Admin Routes', function () {
                 maxTeamSize: d0.teamMaxSize,
                 teamsSameLab: d0.teamSameLab,
                 studentsFormTeams: d0.teamStudentsForm,
-                onOpenAction: '',
-                onCloseAction: '',
+                onOpenAction: "",
+                onCloseAction: "",
                 repoPrefix: d0.repoPrefix,
                 teamPrefix: d0.teamPrefix,
                 visibleToStudents: d0.visibleToStudents,
@@ -562,53 +563,53 @@ describe('Admin Routes', function () {
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
 
         // make sure the update did not fail
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        Log.test('update did not fail');
+        expect(body.success.message).to.be.an("string");
+        Log.test("update did not fail");
 
         // check that the newtime was updated
         const allDelivs = await dc.getAllDeliverables();
         const d0updated = allDelivs[0];
         expect(d0updated.openTimestamp).to.equal(newTime);
         expect(d0updated.closeTimestamp).to.equal(newTime);
-        Log.test('update did update the value');
+        Log.test("update did update the value");
     });
 
-    it('Should be able to upload a new classlist', async function () {
+    it("Should be able to upload a new classlist", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/classlist';
+        const url = "/portal/admin/classlist";
         try {
-            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidFirst.csv').set({
+            response = await request(app).post(url).attach("classlist", __dirname + "/../data/classlistValidFirst.csv").set({
                 user: userName,
                 token: userToken
             });
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
-            expect.fail('should not happen');
+            Log.test("ERROR: " + err);
+            expect.fail("should not happen");
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('object');
+        expect(body.success).to.be.an("object");
         expect(body.success.classlist.length).to.equal(5);
     });
 
-    it('Should fail to upload bad classlists', async function () {
+    it("Should fail to upload bad classlists", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/classlist';
+        const url = "/portal/admin/classlist";
 
-        response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistInvalid.csv').set({
+        response = await request(app).post(url).attach("classlist", __dirname + "/../data/classlistInvalid.csv").set({
             user: userName,
             token: userToken
         });
@@ -616,9 +617,9 @@ describe('Admin Routes', function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string'); // test column missing
+        expect(body.failure.message).to.be.an("string"); // test column missing
 
-        response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistEmpty.csv').set({
+        response = await request(app).post(url).attach("classlist", __dirname + "/../data/classlistEmpty.csv").set({
             user: userName,
             token: userToken
         });
@@ -626,115 +627,115 @@ describe('Admin Routes', function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string'); // test no records found
-        expect(body.failure.message).to.contain('no students');
+        expect(body.failure.message).to.be.an("string"); // test no records found
+        expect(body.failure.message).to.contain("no students");
     });
 
-    it('Should be able to upload an updated classlist', async function () {
+    it("Should be able to upload an updated classlist", async function () {
 
         const dc = DatabaseController.getInstance();
         let people = await dc.getPeople();
         const peopleLength = people.length;
-        const person = await dc.getPerson('rthse2');
-        person.githubId = 'oldGithub';
+        const person = await dc.getPerson("rthse2");
+        person.githubId = "oldGithub";
         await dc.writePerson(person); // change the github
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/classlist';
+        const url = "/portal/admin/classlist";
         try {
-            response = await request(app).post(url).attach('classlist', __dirname + '/../data/classlistValidUpdate.csv').set({
+            response = await request(app).post(url).attach("classlist", __dirname + "/../data/classlistValidUpdate.csv").set({
                 user: userName,
                 token: userToken
             });
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
-            expect.fail('should not happen');
+            Log.test("ERROR: " + err);
+            expect.fail("should not happen");
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('object');
+        expect(body.success).to.be.an("object");
         expect(body.success.classlist.length).to.equal(5); // capture how many changed?
 
         people = await dc.getPeople();
         expect(peopleLength).to.equal(people.length); // no new people should have been added
-        const newPerson = await dc.getPerson('rthse2');
+        const newPerson = await dc.getPerson("rthse2");
         expect(person.githubId).to.not.equal(newPerson.githubId); // should have been updated
         expect(person.labId).to.not.equal(newPerson.labId); // should have been updated
         expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
     });
 
-    it('Should NOT be able to update a classlist if NOT on a 143.103.*.* IP', async function () {
+    it("Should NOT be able to update a classlist if NOT on a 143.103.*.* IP", async function () {
         let response = null;
         let body: Payload;
-        const url = '/portal/classlist';
+        const url = "/portal/classlist";
         try {
             response = await request(app).put(url)
-                .set('x-forwarded-for', '152.99.5.99')
-                .set('Host', 'www.google.ca');
+                .set("x-forwarded-for", "152.99.5.99")
+                .set("Host", "www.google.ca");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
 
-        expect(body).to.haveOwnProperty('failure');
+        expect(body).to.haveOwnProperty("failure");
     });
 
-    it('Should be able to update a classlist on restricted IP', async function () {
+    it("Should be able to update a classlist on restricted IP", async function () {
 
         if (Test.isCI() === false) {
-            // skip locally; requires credentials devs shouldn't have (but are encrypted for CI)
+            // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
             return;
         }
 
         let response = null;
         let body: Payload;
-        const url = '/portal/classlist';
+        const url = "/portal/classlist";
         try {
             response = await request(app).put(url)
-                .set('test-include-xfwd', '')
-                .set('x-forwarded-for', '142.103.5.99');
+                .set("test-include-xfwd", "")
+                .set("x-forwarded-for", "142.103.5.99");
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
-        expect(body).to.haveOwnProperty('success');
-        expect(body.success).to.haveOwnProperty('message');
-        expect(body.success.message).to.contain('Classlist upload successful');
+        expect(body).to.haveOwnProperty("success");
+        expect(body.success).to.haveOwnProperty("message");
+        expect(body.success.message).to.contain("Classlist upload successful");
     });
 
-    it('Should be able to upload a new grades', async function () {
+    it("Should be able to upload a new grades", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/grades/' + Test.DELIVID1;
+        const url = "/portal/admin/grades/" + Test.DELIVID1;
         try {
-            response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesValid.csv').set({
+            response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesValid.csv").set({
                 user: userName,
                 token: userToken
             });
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
-            expect.fail('should not happen');
+            Log.test("ERROR: " + err);
+            expect.fail("should not happen");
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
-        expect(body.success.message).to.contain('3 grades');
+        expect(body.success.message).to.be.an("string");
+        expect(body.success.message).to.contain("3 grades");
     });
 
-    it('Should fail to upload a bad grades list', async function () {
+    it("Should fail to upload a bad grades list", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/grades/' + Test.DELIVID1;
+        const url = "/portal/admin/grades/" + Test.DELIVID1;
 
-        response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesInvalid.csv').set({
+        response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesInvalid.csv").set({
             user: userName,
             token: userToken
         });
@@ -742,10 +743,10 @@ describe('Admin Routes', function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string'); // test column missing
-        expect(body.failure.message).to.contain('column missing');
+        expect(body.failure.message).to.be.an("string"); // test column missing
+        expect(body.failure.message).to.contain("column missing");
 
-        response = await request(app).post(url).attach('gradelist', __dirname + '/../data/gradesEmpty.csv').set({
+        response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesEmpty.csv").set({
             user: userName,
             token: userToken
         });
@@ -753,36 +754,36 @@ describe('Admin Routes', function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string'); // test no records found
-        expect(body.failure.message).to.contain('no grades');
+        expect(body.failure.message).to.be.an("string"); // test no records found
+        expect(body.failure.message).to.contain("no grades");
     });
 
-    it('Should be able to get the course object', async function () {
+    it("Should be able to get the course object", async function () {
 
         let response = null;
         let body: CourseTransportPayload;
-        const url = '/portal/admin/course';
+        const url = "/portal/admin/course";
         try {
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('object');
+        expect(body.success).to.be.an("object");
 
         // TODO: check response properties
     });
 
-    it('Should be able to update the course object', async function () {
+    it("Should be able to update the course object", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/course';
+        const url = "/portal/admin/course";
 
-        const newId = Date.now() + 'id';
+        const newId = Date.now() + "id";
 
         const course: CourseTransport = {
             id: Config.getInstance().getProp(ConfigKey.testname),
@@ -794,26 +795,26 @@ describe('Admin Routes', function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.be.an("string");
 
         // replace the defaultDeliverableId
-        course.defaultDeliverableId = 'd0';
+        course.defaultDeliverableId = "d0";
         response = await request(app).post(url).send(course).set({user: userName, token: userToken});
         body = response.body;
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
     });
 
-    it('Should not be able to update the course object with invalid settings', async function () {
+    it("Should not be able to update the course object with invalid settings", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/course';
+        const url = "/portal/admin/course";
 
-        const newId = Date.now() + 'id';
+        const newId = Date.now() + "id";
 
         const course: any = {
-            // id: 'some id', // THIS IS A REQUIRED FIELD
+            // id: "some id", // THIS IS A REQUIRED FIELD
             defaultDeliverableId: newId,
             custom: {}
         };
@@ -823,7 +824,7 @@ describe('Admin Routes', function () {
         expect(response.status).to.equal(400);
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
-        expect(body.failure.message).to.be.an('string');
+        expect(body.failure.message).to.be.an("string");
     });
 
     describe("Slow AdminRoute Tests", () => {
@@ -870,21 +871,21 @@ describe('Admin Routes', function () {
             Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
         }
 
-        it('Should be able to get a provision plan for a deliverable', async function () {
+        it("Should be able to get a provision plan for a deliverable", async function () {
 
             let response = null;
             let body: RepositoryPayload;
-            const url = '/portal/admin/provision/' + Test.DELIVIDPROJ;
+            const url = "/portal/admin/provision/" + Test.DELIVIDPROJ;
             try {
                 response = await request(app).get(url).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
-                Log.test('ERROR: ' + err);
+                Log.test("ERROR: " + err);
             }
             Log.test(response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
+            expect(body.success).to.be.an("array");
             expect(body.success).to.have.lengthOf(0);
 
             // check one entry
@@ -893,38 +894,38 @@ describe('Admin Routes', function () {
             // expect(entry.URL).to.not.be.undefined;
         });
 
-        // it('Should be able to perform provision', async function() {
+        // it("Should be able to perform provision", async function() {
         //     let response = null;
         //     let body: Payload;
-        //     const url = '/portal/admin/provision/' + Test.DELIVIDPROJ + '/' + Test.REPONAME1;
+        //     const url = "/portal/admin/provision/" + Test.DELIVIDPROJ + "/" + Test.REPONAME1;
         //     try {
         //         response = await request(app).post(url).send({}).set({user: userName, token: userToken});
         //         body = response.body;
         //     } catch (err) {
-        //         Log.test('ERROR: ' + err);
+        //         Log.test("ERROR: " + err);
         //     }
         //     Log.test(response.status + " -> " + JSON.stringify(body));
         //     expect(response.status).to.equal(200);
         //     expect(body.success).to.not.be.undefined;
-        //     expect(body.success).to.be.an('array');
+        //     expect(body.success).to.be.an("array");
         //     expect(body.success[0].id).to.equal(Test.REPONAME1);
         // }).timeout(TIMEOUT * 30);
 
-        it('Should be able to get a release plan for a deliverable', async function () {
+        it("Should be able to get a release plan for a deliverable", async function () {
 
             let response = null;
             let body: RepositoryPayload;
-            const url = '/portal/admin/release/' + Test.DELIVIDPROJ;
+            const url = "/portal/admin/release/" + Test.DELIVIDPROJ;
             try {
                 response = await request(app).get(url).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
-                Log.test('ERROR: ' + err);
+                Log.test("ERROR: " + err);
             }
             Log.test(response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
+            expect(body.success).to.be.an("array");
             expect(body.success).to.have.lengthOf(0);
 
             // check one entry
@@ -933,62 +934,62 @@ describe('Admin Routes', function () {
             // expect(entry.URL).to.not.be.undefined;
         });
 
-        // it('Should be able to perform release', async function() {
+        // it("Should be able to perform release", async function() {
         //     let response = null;
         //     let body: Payload;
-        //     const url = '/portal/admin/release/' + Test.REPONAME1;
+        //     const url = "/portal/admin/release/" + Test.REPONAME1;
         //     try {
         //         response = await request(app).post(url).send({}).set({user: userName, token: userToken});
         //         body = response.body;
         //     } catch (err) {
-        //         Log.test('ERROR: ' + err);
+        //         Log.test("ERROR: " + err);
         //     }
         //     Log.test(response.status + " -> " + JSON.stringify(body));
         //     expect(response.status).to.equal(200);
         //     expect(body.success).to.not.be.undefined;
-        //     expect(body.success).to.be.an('array');
+        //     expect(body.success).to.be.an("array");
         //     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
         // }).timeout(TIMEOUT * 30);
 
-        it('Should be able to perform a withdraw task', async function () {
-            // This is tricky because the live github data will have a different team id than we're using locally
+        it("Should be able to perform a withdraw task", async function () {
+            // This is tricky because the live github data will have a different team id than we"re using locally
 
             const pc = new PersonController();
             const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;
-            const url = '/portal/admin/withdraw';
+            const url = "/portal/admin/withdraw";
             try {
                 response = await request(app).post(url).send({}).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
-                Log.test('ERROR: ' + err);
+                Log.test("ERROR: " + err);
             }
             Log.test(response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success.message).to.be.an('string');
+            expect(body.success.message).to.be.an("string");
         }).timeout(TIMEOUT * 10);
 
-        it('Should be able to sanity check a database', async function () {
+        it("Should be able to sanity check a database", async function () {
 
             let response = null;
             let body: Payload;
-            const url = '/portal/admin/checkDatabase/true';
+            const url = "/portal/admin/checkDatabase/true";
             try {
                 response = await request(app).post(url).send({}).set({user: userName, token: userToken});
                 body = response.body;
             } catch (err) {
-                Log.test('ERROR: ' + err);
+                Log.test("ERROR: " + err);
             }
             Log.test(response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success.message).to.be.an('string');
+            expect(body.success.message).to.be.an("string");
         }).timeout(TIMEOUT * 10);
 
-        it('Should be able to provision a deliverable', async function () {
+        it("Should be able to provision a deliverable", async function () {
 
             const dbc = DatabaseController.getInstance();
             await dbc.clearData();
@@ -1002,15 +1003,15 @@ describe('Admin Routes', function () {
 
             let response = null;
             let body: Payload;
-            let url = '/portal/admin/provision/' + Test.DELIVID0;
+            let url = "/portal/admin/provision/" + Test.DELIVID0;
 
-            Log.test('planning the provisioning');
+            Log.test("planning the provisioning");
             // first plan the url
             response = await request(app).get(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('plan: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("plan: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
-            expect(body.success).to.be.an('array');
+            expect(body.success).to.be.an("array");
             expect(body.success.length).to.be.greaterThan(0);
 
             // const provision: ProvisionTransport = {
@@ -1018,34 +1019,34 @@ describe('Admin Routes', function () {
             //     formSingle: false
             // };
 
-            Log.test('performing the provisioning');
-            url = '/portal/admin/provision/' + Test.DELIVID0 + '/' + Test.REPONAMEREAL;
+            Log.test("performing the provisioning");
+            url = "/portal/admin/provision/" + Test.DELIVID0 + "/" + Test.REPONAMEREAL;
             // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('first provision: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("first provision: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
+            expect(body.success).to.be.an("array");
             expect(body.success.length).to.be.greaterThan(0);
 
-            // Log.test('performing the provisioning a second time');
+            // Log.test("performing the provisioning a second time");
             // // provision again; should not make anything new
             // // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             // response = await request(app).post(url).set({user: userName, token: userToken});
             // body = response.body;
-            // Log.test('second provision: ' + response.status + " -> " + JSON.stringify(body));
+            // Log.test("second provision: " + response.status + " -> " + JSON.stringify(body));
             // expect(response.status).to.equal(200);
-            // expect(body.success).to.be.an('array');
+            // expect(body.success).to.be.an("array");
             // expect(body.success.length).to.equal(0);
 
         }).timeout(Test.TIMEOUTLONG);
 
-        it('Should fail to provision a deliverable if invalid options are given', async function () {
+        it("Should fail to provision a deliverable if invalid options are given", async function () {
 
             let response = null;
             let body: Payload;
-            let url = '/portal/admin/provision/' + Test.DELIVID0 + '/' + Test.REPONAMEREAL;
+            let url = "/portal/admin/provision/" + Test.DELIVID0 + "/" + Test.REPONAMEREAL;
 
             // const provision: ProvisionTransport = {
             //     delivId:    Test.DELIVID0,
@@ -1054,35 +1055,35 @@ describe('Admin Routes', function () {
             // bad token
             response = await request(app).post(url).set({user: userName, token: Test.FAKETOKEN});
             body = response.body;
-            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(401);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
 
             // invalid deliverable
-            url = '/portal/admin/provision/' + 'FAKEDELIVERABLE' + '/' + Test.REPONAMEREAL;
+            url = "/portal/admin/provision/" + "FAKEDELIVERABLE" + "/" + Test.REPONAMEREAL;
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("invalid deliverable: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(400);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
 
             // non-provisioning deliverable
-            url = '/portal/admin/provision/' + Test.DELIVID1 + '/' + Test.REPONAMEREAL;
+            url = "/portal/admin/provision/" + Test.DELIVID1 + "/" + Test.REPONAMEREAL;
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("non-provisioning deliverable: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(400);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
         });
 
-        it('Should be able to release a deliverable', async function () {
+        it("Should be able to release a deliverable", async function () {
 
             let response = null;
             let body: Payload;
-            const url = '/portal/admin/release/' + Test.REPONAMEREAL;
+            const url = "/portal/admin/release/" + Test.REPONAMEREAL;
 
             // const provision: ProvisionTransport = {
             //     delivId:    Test.DELIVID0,
@@ -1090,30 +1091,30 @@ describe('Admin Routes', function () {
             // };
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('first release: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("first release: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(200);
             expect(body.success).to.not.be.undefined;
-            expect(body.success).to.be.an('array');
+            expect(body.success).to.be.an("array");
             expect(body.success.length).to.be.greaterThan(0);
 
             // release again; should not release anything new
             // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             // body = response.body;
-            // Log.test('second release: ' + response.status + " -> " + JSON.stringify(body));
+            // Log.test("second release: " + response.status + " -> " + JSON.stringify(body));
             // expect(response.status).to.equal(200);
-            // expect(body.success).to.be.an('array');
+            // expect(body.success).to.be.an("array");
             // expect(body.success.length).to.equal(0);
         }).timeout(Test.TIMEOUTLONG);
 
-        it('Should fail to release a deliverable if invalid options are given', async function () {
+        it("Should fail to release a deliverable if invalid options are given", async function () {
 
             let response = null;
             let body: Payload;
-            const url = '/portal/admin/release/repoId';
+            const url = "/portal/admin/release/repoId";
 
             response = await request(app).post(url).set({user: userName, token: Test.FAKETOKEN});
             body = response.body;
-            Log.test('bad token: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(401);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
@@ -1121,7 +1122,7 @@ describe('Admin Routes', function () {
             // invalid deliverable
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
-            Log.test('invalid deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            Log.test("invalid deliverable: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(400);
             expect(body.success).to.be.undefined;
             expect(body.failure).to.not.be.undefined;
@@ -1130,18 +1131,18 @@ describe('Admin Routes', function () {
             // provision.delivId = Test.DELIVID1;
             // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             // body = response.body;
-            // Log.test('non-provisioning deliverable: ' + response.status + " -> " + JSON.stringify(body));
+            // Log.test("non-provisioning deliverable: " + response.status + " -> " + JSON.stringify(body));
             // expect(response.status).to.equal(400);
             // expect(body.success).to.be.undefined;
             // expect(body.failure).to.not.be.undefined;
         });
     });
 
-    it('Should be able to create a team for a deliverable.', async function () {
+    it("Should be able to create a team for a deliverable.", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/team';
+        const url = "/portal/admin/team";
         let ex = null;
         try {
             // create 2 people in an individual deliverable (should be allowed for admin)
@@ -1153,22 +1154,22 @@ describe('Admin Routes', function () {
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(ex).to.be.null;
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success).to.be.an('array');
+        expect(body.success).to.be.an("array");
         expect(body.success.length).to.equal(1);
     });
 
-    it('Should fail to create a team for a deliverable if something is invalid', async function () {
+    it("Should fail to create a team for a deliverable if something is invalid", async function () {
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/team';
+        const url = "/portal/admin/team";
         let ex = null;
         const team: TeamFormationTransport = {
             delivId: Test.DELIVID0,
@@ -1179,7 +1180,7 @@ describe('Admin Routes', function () {
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1190,11 +1191,11 @@ describe('Admin Routes', function () {
 
         try {
             // invalid deliv
-            team.delivId = 'INVALIDDELIVID' + Date.now();
+            team.delivId = "INVALIDDELIVID" + Date.now();
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1206,11 +1207,11 @@ describe('Admin Routes', function () {
         try {
             // invalid user
             team.delivId = Test.DELIVID0;
-            team.githubIds = ['INVALIDUSERNAME' + Date.now()];
+            team.githubIds = ["INVALIDUSERNAME" + Date.now()];
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1221,8 +1222,8 @@ describe('Admin Routes', function () {
 
     }).timeout(Test.TIMEOUT);
 
-    it('Should be able to delete a deliverable', async function () {
-        const url = '/portal/admin/deliverable/' + Test.DELIVID0;
+    it("Should be able to delete a deliverable", async function () {
+        const url = "/portal/admin/deliverable/" + Test.DELIVID0;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1230,27 +1231,27 @@ describe('Admin Routes', function () {
             response = await request(app).del(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.be.an("string");
         expect(ex).to.be.null;
     });
 
-    it('Should fail to delete a deliverable if appropriate', async function () {
-        const url = '/portal/admin/deliverable/';
+    it("Should fail to delete a deliverable if appropriate", async function () {
+        const url = "/portal/admin/deliverable/";
         let response = null;
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn't exist
+            // delivId doesn"t exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1267,7 +1268,7 @@ describe('Admin Routes', function () {
             response = await request(app).del(url + Test.DELIVIDPROJ).set({user: userName, token: Test.FAKETOKEN});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1277,8 +1278,8 @@ describe('Admin Routes', function () {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to delete a repository', async function () {
-        const url = '/portal/admin/repository/' + Test.REPONAME1;
+    it("Should be able to delete a repository", async function () {
+        const url = "/portal/admin/repository/" + Test.REPONAME1;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1286,30 +1287,30 @@ describe('Admin Routes', function () {
             response = await request(app).del(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.be.an("string");
         expect(ex).to.be.null;
 
         const team = await DatabaseController.getInstance().getTeam(Test.TEAMNAME1);
         expect(team.custom.githubAttached).to.be.false;
     }).timeout(Test.TIMEOUT);
 
-    it('Should fail to delete a repository if appropriate', async function () {
-        const url = '/portal/admin/repository/';
+    it("Should fail to delete a repository if appropriate", async function () {
+        const url = "/portal/admin/repository/";
         let response = null;
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn't exist
+            // delivId doesn"t exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1326,7 +1327,7 @@ describe('Admin Routes', function () {
             response = await request(app).del(url + Test.REPONAME1).set({user: userName, token: Test.FAKETOKEN});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1336,8 +1337,8 @@ describe('Admin Routes', function () {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to delete a team', async function () {
-        const url = '/portal/admin/team/' + Test.TEAMNAME1;
+    it("Should be able to delete a team", async function () {
+        const url = "/portal/admin/team/" + Test.TEAMNAME1;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1345,27 +1346,27 @@ describe('Admin Routes', function () {
             response = await request(app).del(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.message).to.be.an('string');
+        expect(body.success.message).to.be.an("string");
         expect(ex).to.be.null;
     });
 
-    it('Should fail to delete a team if appropriate', async function () {
-        const url = '/portal/admin/team/';
+    it("Should fail to delete a team if appropriate", async function () {
+        const url = "/portal/admin/team/";
         let response = null;
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn't exist
+            // delivId doesn"t exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1382,7 +1383,7 @@ describe('Admin Routes', function () {
             response = await request(app).del(url + Test.TEAMNAME1).set({user: userName, token: Test.FAKETOKEN});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
             ex = err;
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
@@ -1392,40 +1393,40 @@ describe('Admin Routes', function () {
         expect(ex).to.be.null;
     });
 
-    it('Should be able to update a classlist if authorized as admin', async function () {
+    it("Should be able to update a classlist if authorized as admin", async function () {
         if (Test.isCI() === false) {
-            // skip locally; requires credentials devs shouldn't have (but are encrypted for CI)
+            // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
             return;
         }
 
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/classlist';
+        const url = "/portal/admin/classlist";
         try {
             response = await request(app).put(url).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
 
-        expect(body).to.haveOwnProperty('success');
-        expect(body.success).to.haveOwnProperty('created');
-        expect(body.success).to.haveOwnProperty('updated');
-        expect(body.success).to.haveOwnProperty('removed');
+        expect(body).to.haveOwnProperty("success");
+        expect(body.success).to.haveOwnProperty("created");
+        expect(body.success).to.haveOwnProperty("updated");
+        expect(body.success).to.haveOwnProperty("removed");
     });
 
-    it('Should NOT be able to update a classlist if not authorized as admin', async function () {
+    it("Should NOT be able to update a classlist if not authorized as admin", async function () {
         let response = null;
         let body: Payload;
-        const url = '/portal/admin/classlist';
+        const url = "/portal/admin/classlist";
         try {
             response = await request(app).put(url);
             body = response.body;
         } catch (err) {
-            Log.test('ERROR: ' + err);
+            Log.test("ERROR: " + err);
         }
 
-        expect(body).to.haveOwnProperty('failure');
+        expect(body).to.haveOwnProperty("failure");
     });
 });
