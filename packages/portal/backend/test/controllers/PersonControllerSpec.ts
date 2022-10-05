@@ -2,11 +2,11 @@ import {expect} from "chai";
 import "mocha";
 
 import {Test} from "@common/test/TestHarness";
-import {PersonController} from "../../src/controllers/PersonController";
-import {Person, PersonKind} from "../../src/Types";
+import {PersonController} from "@backend/controllers/PersonController";
+import {Person, PersonKind} from "@backend//Types";
 
-import '../GlobalSpec';
-import './DeliverablesControllerSpec';
+import "../GlobalSpec";
+import "./DeliverablesControllerSpec";
 
 describe("PersonController", () => {
 
@@ -16,10 +16,8 @@ describe("PersonController", () => {
     let PERSON2: Person = null;
     let PERSON3: Person = null;
 
-    const TIMEOUT = 1000;
-
     before(async () => {
-        await Test.suiteBefore('PersonController');
+        await Test.suiteBefore("PersonController");
         PERSON1 = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
         PERSON2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
         PERSON3 = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
@@ -30,7 +28,7 @@ describe("PersonController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('PersonController');
+        Test.suiteAfter("PersonController");
     });
 
     it("Should be able to be validate a new user.", async () => {
@@ -83,14 +81,14 @@ describe("PersonController", () => {
         expect(person).to.not.be.null;
         expect(person.id).to.equal(PERSON1.id);
 
-        person = await pc.getPerson('randomIDthatDoesNotexist23232333');
+        person = await pc.getPerson("randomIDthatDoesNotexist23232333");
         expect(person).to.be.null;
 
         person = await pc.getGitHubPerson(PERSON1.githubId);
         expect(person).to.not.be.null;
         expect(person.id).to.equal(PERSON1.id);
 
-        person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
+        person = await pc.getGitHubPerson("randomIDthatDoesNotexist23232333");
         expect(person).to.be.null;
     }).timeout(Test.TIMEOUTLONG);
 
@@ -119,7 +117,7 @@ describe("PersonController", () => {
     it("Should be able to get the repos for a person.", async () => {
 
         const repos = await pc.getRepos(PERSON1.id);
-        expect(repos).to.be.an('array');
+        expect(repos).to.be.an("array");
         expect(repos).to.be.empty;
 
         // TODO: create a repo

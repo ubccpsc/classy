@@ -30,12 +30,12 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple> {
         Log.info("TestGitHubActions::addTeamToRepo(..)");
-        return {teamName: 'team_' + repoName, githubTeamNumber: 1};
+        return {teamName: "team_" + repoName, githubTeamNumber: 1};
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
         Log.info("TestGitHubActions::addWebhook(..)");
-        if (typeof this.webHookState[repoName] === 'undefined') {
+        if (typeof this.webHookState[repoName] === "undefined") {
             this.webHookState[repoName] = [];
         }
         this.webHookState[repoName] = webhookEndpoint;
@@ -48,10 +48,10 @@ export class TestGitHubActions implements IGitHubActions {
         Log.info("TestGitHubActions::createRepo( " + repoName + " ) - start");
         await GitHubActions.checkDatabase(repoName, null);
 
-        if (typeof this.repos[repoName] === 'undefined') {
+        if (typeof this.repos[repoName] === "undefined") {
             Log.info("TestGitHubActions::createRepo( " + repoName + " ) - created");
             const c = Config.getInstance();
-            this.repos[repoName] = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/' + repoName;
+            this.repos[repoName] = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
         }
         Log.info("TestGitHubActions::createRepo( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
         return this.repos[repoName];
@@ -59,10 +59,10 @@ export class TestGitHubActions implements IGitHubActions {
 
     // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
     public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
-        // if (typeof this.teams[teamName] === 'undefined') {
+        // if (typeof this.teams[teamName] === "undefined") {
         if (this.teams.has(teamName) === false) {
-            const c = Config.getInstance();
-            // const url = c.getProp(ConfigKey.githubHost) + '/' + c.getProp(ConfigKey.org) + '/teams/' + teamName;
+            // const c = Config.getInstance();
+            // const url = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/teams/" + teamName;
             // this.teams[teamName] = {teamName: teamName, githubTeamNumber: Date.now(), URL: url};
             this.teams.set(teamName, {teamName: teamName, githubTeamNumber: Date.now()});
         }
@@ -83,7 +83,7 @@ export class TestGitHubActions implements IGitHubActions {
         //     return false;
         // }
 
-        if (typeof this.repos[repoName] !== 'undefined') {
+        if (typeof this.repos[repoName] !== "undefined") {
             Log.info("TestGitHubActions::deleteRepo( " + repoName + " ) - true; deleted");
             delete this.repos[repoName];
             return true;
@@ -119,12 +119,12 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
-        if (teamName === 'students') {
+        if (teamName === "students") {
             // return a value that works for testing and for the live environment
             // this is the team number for the students team in the classytest org on github.com
             return 2941733;
         }
-        // if (typeof this.teams[teamName] !== 'undefined') {
+        // if (typeof this.teams[teamName] !== "undefined") {
         if (this.teams.has(teamName) === true) {
             const num = this.teams.get(teamName).githubTeamNumber;
             Log.info("TestGitHubActions::getTeamNumber( " + teamName + " ) - returning: " + num);
@@ -198,16 +198,16 @@ export class TestGitHubActions implements IGitHubActions {
         const people: GitPersonTuple[] = [];
 
         const start = Date.now();
-        people.push({githubPersonNumber: start, url: 'URL', githubId: Test.REALBOTNAME1});
-        people.push({githubPersonNumber: start - 5, url: 'URL', githubId: Test.REALUSERNAME});
-        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALBOTNAME1});
-        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALUSER1.github});
-        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.REALUSER2.github});
-        people.push({githubPersonNumber: start - 15, url: 'URL', githubId: Test.ADMIN1.github});
-        people.push({githubPersonNumber: start - 25, url: 'URL', githubId: Test.USER1.github});
-        people.push({githubPersonNumber: start - 35, url: 'URL', githubId: Test.USER2.github});
-        people.push({githubPersonNumber: start - 45, url: 'URL', githubId: Test.USER3.github});
-        people.push({githubPersonNumber: start - 55, url: 'URL', githubId: Test.USER4.github});
+        people.push({githubPersonNumber: start, url: "URL", githubId: Test.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 5, url: "URL", githubId: Test.REALUSERNAME});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALUSER1.github});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALUSER2.github});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.ADMIN1.github});
+        people.push({githubPersonNumber: start - 25, url: "URL", githubId: Test.USER1.github});
+        people.push({githubPersonNumber: start - 35, url: "URL", githubId: Test.USER2.github});
+        people.push({githubPersonNumber: start - 45, url: "URL", githubId: Test.USER3.github});
+        people.push({githubPersonNumber: start - 55, url: "URL", githubId: Test.USER4.github});
 
         return people;
     }
@@ -242,7 +242,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async listWebhooks(repoName: string): Promise<Array<{}>> {
         Log.info("TestGitHubActions::listWebhooks()");
-        if (typeof this.webHookState[repoName] === 'undefined') {
+        if (typeof this.webHookState[repoName] === "undefined") {
             return [];
         }
         return this.webHookState[repoName];
@@ -250,7 +250,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
         Log.info("TestGitHubActions::updateWebhook()");
-        if (typeof this.webHookState[repoName] === 'undefined') {
+        if (typeof this.webHookState[repoName] === "undefined") {
             return false;
         }
 
@@ -265,7 +265,7 @@ export class TestGitHubActions implements IGitHubActions {
         //     return false;
         // }
         // return true;
-        if (typeof this.repos[repoName] !== 'undefined') {
+        if (typeof this.repos[repoName] !== "undefined") {
             Log.info("TestGitHubActions::repoExists( " + repoName + " ) - exists");
             return true;
         }

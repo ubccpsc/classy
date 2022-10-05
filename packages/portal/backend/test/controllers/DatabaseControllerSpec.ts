@@ -1,13 +1,14 @@
 import {expect} from "chai";
 import "mocha";
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
 
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {PersonKind} from "../../src/Types";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {PersonKind} from "@backend/Types";
 
-import '../GlobalSpec';
+import "../GlobalSpec";
 
 /**
  * This suite seems like a lot of boilerplate, but is crucial to make sure the
@@ -23,7 +24,7 @@ describe("DatabaseController", () => {
     let dc: DatabaseController;
 
     before(async () => {
-        await Test.suiteBefore('DatabaseController');
+        await Test.suiteBefore("DatabaseController");
     });
 
     beforeEach(() => {
@@ -31,12 +32,12 @@ describe("DatabaseController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('DatabaseController');
+        Test.suiteAfter("DatabaseController");
     });
 
     function expectEmptyArray(records: any) {
         expect(records).to.not.be.null;
-        expect(records).to.be.an('array');
+        expect(records).to.be.an("array");
         expect(records).to.have.lengthOf(0);
     }
 
@@ -56,12 +57,12 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid deliverable by id.", async () => {
-        const deliv = await dc.getDeliverable('invalidDelivId');
+        const deliv = await dc.getDeliverable("invalidDelivId");
         expect(deliv).to.be.null;
     });
 
     it("Should not be able to get an invalid repo by id.", async () => {
-        const repo = await dc.getRepository('invalidRepoId');
+        const repo = await dc.getRepository("invalidRepoId");
         expect(repo).to.be.null;
     });
 
@@ -71,7 +72,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid team by id.", async () => {
-        const team = await dc.getTeam('invalidTeamId');
+        const team = await dc.getTeam("invalidTeamId");
         expect(team).to.be.null;
     });
 
@@ -91,21 +92,21 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid result.", async () => {
-        const result = await dc.getResult('invalidDeliv', 'invalidRepo', 'invalidSHA' + Date.now());
+        const result = await dc.getResult("invalidDeliv", "invalidRepo", "invalidSHA" + Date.now());
         expect(result).to.be.null;
     });
 
     it("Should not be able to get an invalid result URL.", async () => {
-        const result = await dc.getResultFromURL('invalidURL' + Date.now(), Test.DELIVID0);
+        const result = await dc.getResultFromURL("invalidURL" + Date.now(), Test.DELIVID0);
         expect(result).to.be.null;
     });
 
     it("Should not be able to get an invalid grade.", async () => {
-        const grade = await dc.getGrade(Test.INVALIDUSER1.id, 'invalidDeliv');
+        const grade = await dc.getGrade(Test.INVALIDUSER1.id, "invalidDeliv");
         expect(grade).to.be.null;
     });
 
-    it("Should not be able to get a course record when it hasn't been stored.", async () => {
+    it("Should not be able to get a course record when it has not been stored.", async () => {
         const cr = await dc.getCourseRecord();
         expect(cr).to.be.null;
     });
@@ -127,7 +128,7 @@ describe("DatabaseController", () => {
 
     it("Should be able to get a list of teams when there are none.", async () => {
         const teams = await dc.getTeams();
-        expect(teams).to.have.lengthOf(3); // default teams: 'admin', 'staff', 'students'
+        expect(teams).to.have.lengthOf(3); // default teams: "admin", "staff", "students"
         // expectEmptyArray(teams);
     });
 
@@ -265,14 +266,14 @@ describe("DatabaseController", () => {
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.githubId = 'newGHid';
+        res.githubId = "newGHid";
         const worked = await dc.writePerson(res);
         expect(worked).to.be.true;
 
         res = await dc.getPerson(Test.USER1.id);
         expect(res).to.not.be.null;
         expect(res.id).to.equal(Test.USER1.id);
-        expect(res.githubId).to.equal('newGHid');
+        expect(res.githubId).to.equal("newGHid");
         expect((res.custom as any).foo).to.be.true;
     });
 
@@ -323,21 +324,21 @@ describe("DatabaseController", () => {
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.URL = 'newURL';
+        res.URL = "newURL";
         const worked = await dc.writeTeam(res);
         expect(worked).to.be.true;
 
         res = await dc.getTeam(Test.TEAMNAME1);
         expect(res).to.not.be.null;
         expect(res.id).to.equal(Test.TEAMNAME1);
-        expect(res.URL).to.equal('newURL');
+        expect(res.URL).to.equal("newURL");
         expect((res.custom as any).foo).to.be.true;
     });
 
     // write new repo
     it("Should be able to write a repository.", async () => {
         // prep
-        // const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        // const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, "student");
         // let res = await dbc.writePerson(p2);
         // expect(res).to.be.true;
 
@@ -381,14 +382,14 @@ describe("DatabaseController", () => {
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.URL = 'newURL';
+        res.URL = "newURL";
         const worked = await dc.writeRepository(res);
         expect(worked).to.be.true;
 
         res = await dc.getRepository(Test.REPONAME1);
         expect(res).to.not.be.null;
         expect(res.id).to.equal(Test.REPONAME1);
-        expect(res.URL).to.equal('newURL');
+        expect(res.URL).to.equal("newURL");
         expect((res.custom as any).foo).to.be.true;
     });
 

@@ -2,15 +2,16 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {DeliverablesController} from "@backend/controllers/DeliverablesController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {TeamController} from "../../src/controllers/TeamController";
-import {Repository} from "../../src/Types";
-
 import {Test} from "@common/test/TestHarness";
-import '../GlobalSpec'; // load first
-import './TeamControllerSpec'; // load first
+
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {Repository} from "@backend/Types";
+
+import "../GlobalSpec"; // load first
+import "./TeamControllerSpec"; // load first
 
 describe("RepositoryController", () => {
 
@@ -20,7 +21,7 @@ describe("RepositoryController", () => {
     let dc: DeliverablesController;
 
     before(async () => {
-        await Test.suiteBefore('RepositoryController');
+        await Test.suiteBefore("RepositoryController");
 
         // clear stale data (removed; happens in suiteBefore)
         // const dbc = DatabaseController.getInstance();
@@ -39,7 +40,7 @@ describe("RepositoryController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('RepositoryController');
+        Test.suiteAfter("RepositoryController");
     });
 
     it("Should be able to get all repositories, even if there are none.", async () => {
@@ -111,28 +112,28 @@ describe("RepositoryController", () => {
 
         const repo = repos[0];
         expect(repo).to.not.be.null;
-        expect(repo.URL).to.not.equal('FOOURL');
+        expect(repo.URL).to.not.equal("FOOURL");
 
-        repo.URL = 'FOOURL';
+        repo.URL = "FOOURL";
         const res = await rc.updateRepository(repo);
         expect(res).to.not.be.null;
-        expect(res.URL).to.equal('FOOURL');
+        expect(res.URL).to.equal("FOOURL");
 
         repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(1); // should still only have one
     });
 
-    it("Should be able to update a repo, even if it doesn't exist (aka it should create it).", async () => {
+    it("Should be able to update a repo, even if it does not exist (aka it should create it).", async () => {
         let repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(1);
 
         const repo: Repository = {
-            id:       Date.now() + '_id',
-            delivId:  Test.DELIVID0,
-            URL:      null,
+            id: Date.now() + "_id",
+            delivId: Test.DELIVID0,
+            URL: null,
             cloneURL: null,
-            custom:   {},
-            teamIds:  []
+            custom: {},
+            teamIds: []
         };
 
         const res = await rc.updateRepository(repo);
@@ -150,12 +151,12 @@ describe("RepositoryController", () => {
 
     it("Should be able to create a RepositoryTransport.", async () => {
         const repo: Repository = {
-            id:       Date.now() + '_id',
-            delivId:  Test.DELIVID0,
-            URL:      null,
+            id: Date.now() + "_id",
+            delivId: Test.DELIVID0,
+            URL: null,
             cloneURL: null,
-            custom:   {},
-            teamIds:  []
+            custom: {},
+            teamIds: []
         };
 
         const rt = RepositoryController.repositoryToTransport(repo);

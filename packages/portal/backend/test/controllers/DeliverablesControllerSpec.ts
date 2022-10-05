@@ -1,12 +1,12 @@
 import {expect} from "chai";
 import "mocha";
-import {DeliverableTransport} from "../../../../common/types/PortalTypes";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
 
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {Deliverable} from "../../src/Types";
-
+import {DeliverableTransport} from "@common/types/PortalTypes";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {Test} from "@common/test/TestHarness";
+
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {Deliverable} from "@backend/Types";
 
 import "../GlobalSpec";
 import "./DatabaseControllerSpec"; // run first
@@ -71,15 +71,15 @@ describe("DeliverablesController", () => {
     it("Should be able to invalidate bad deliverables.", async () => {
         let deliv = await dc.validateDeliverableTransport(undefined);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
         deliv = await dc.validateDeliverableTransport(null);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
-        deliv = await dc.validateDeliverableTransport({id: 'a'} as DeliverableTransport);
+        deliv = await dc.validateDeliverableTransport({id: "a"} as DeliverableTransport);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
     });
 
     // this test should be last
@@ -104,7 +104,7 @@ describe("DeliverablesController", () => {
     });
 
     it("Should enforce custom entered minimum delay between grade requests", async () => {
-        const db = DatabaseController.getInstance();
+        DatabaseController.getInstance();
         let deliv = await dc.getDeliverable(Test.DELIVID1);
         expect(deliv).to.not.be.null;
         deliv.autotest.studentDelay = 901; // 15 minutes, 1 second

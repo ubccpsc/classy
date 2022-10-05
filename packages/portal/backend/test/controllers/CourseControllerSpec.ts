@@ -1,27 +1,26 @@
 import {expect} from "chai";
 import "mocha";
-import Log from "../../../../common/Log";
+
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
-import Util from "../../../../common/Util";
+import Util from "@common/Util";
 
-import {CourseController} from "../../src/controllers/CourseController";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions} from "../../src/controllers/GitHubActions";
-import {GitHubController} from "../../src/controllers/GitHubController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {Grade} from "../../src/Types";
+import {CourseController} from "@backend/controllers/CourseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions} from "@backend/controllers/GitHubActions";
+import {GitHubController} from "@backend/controllers/GitHubController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {Grade} from "@backend/Types";
 
-import '../GlobalSpec';
-import './PersonControllerSpec';
+import "../GlobalSpec";
+import "./PersonControllerSpec";
 
 describe("CourseController", () => {
-
-    const TIMEOUT = 10000;
 
     let cc: CourseController;
 
     before(async () => {
-        await Test.suiteBefore('CourseController');
+        await Test.suiteBefore("CourseController");
         await Test.preparePeople();
         await Test.prepareDeliverables();
     });
@@ -32,11 +31,11 @@ describe("CourseController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('CourseController');
+        Test.suiteAfter("CourseController");
     });
 
     it("Should be able to handle an unknown user.", async () => {
-        const person = await cc.handleUnknownUser('unknown_' + Date.now());
+        const person = await cc.handleUnknownUser("unknown_" + Date.now());
         // should do nothing
         expect(person).to.be.null;
     });
@@ -49,9 +48,9 @@ describe("CourseController", () => {
         const names = await cc.computeNames(deliv, [p1, p2]);
         Log.test("computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal('t_d1_' + Test.USER1.csId + '_' + Test.USER2.csId);
-        // expect(names.teamName).to.equal('t_d1_user1CSID_user2CSID');
-        expect(names.repoName).to.equal('d1_user1CSID_user2CSID');
+        expect(names.teamName).to.equal("t_d1_" + Test.USER1.csId + "_" + Test.USER2.csId);
+        // expect(names.teamName).to.equal("t_d1_user1CSID_user2CSID");
+        expect(names.repoName).to.equal("d1_user1CSID_user2CSID");
     });
 
     it("Should not be able to compute names if there are no people or no deliverable.", async () => {
@@ -84,7 +83,7 @@ describe("CourseController", () => {
             timestamp: deliv.closeTimestamp - 100,
             urlName:   null,
             URL:       null,
-            comment:   '',
+            comment:   "",
             custom:    {}
         };
 
@@ -105,7 +104,7 @@ describe("CourseController", () => {
             timestamp: deliv.closeTimestamp - 100,
             urlName:   null,
             URL:       null,
-            comment:   '',
+            comment:   "",
             custom:    {}
         };
 
@@ -125,7 +124,7 @@ describe("CourseController", () => {
             timestamp: 0,
             urlName:   null,
             URL:       null,
-            comment:   '',
+            comment:   "",
             custom:    {}
         };
 

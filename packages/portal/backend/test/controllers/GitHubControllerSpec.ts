@@ -1,20 +1,21 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GitHubActions, IGitHubActions} from "../../src/controllers/GitHubActions";
-import {GitHubController} from "../../src/controllers/GitHubController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {TeamController} from "../../src/controllers/TeamController";
-import {PersonKind, Repository, Team} from "../../src/Types";
 
-import '../GlobalSpec';
-import './TeamControllerSpec';
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions, IGitHubActions} from "@backend/controllers/GitHubActions";
+import {GitHubController} from "@backend/controllers/GitHubController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {PersonKind, Repository, Team} from "@backend/Types";
+
+import "../GlobalSpec";
+import "./TeamControllerSpec";
 
 describe("GitHubController", () => {
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
@@ -32,7 +33,7 @@ describe("GitHubController", () => {
         // force testorg so real org does not get deleted or modified
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
-        await Test.suiteBefore('GitHubController');
+        await Test.suiteBefore("GitHubController");
 
         gha = GitHubActions.getInstance(true);
         await gha.deleteTeam(Test.TEAMNAME1);
@@ -71,7 +72,7 @@ describe("GitHubController", () => {
     after(() => {
         Log.test("GitHubControllerSpec::after() - start; replacing original org");
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
-        Test.suiteAfter('GitHubController');
+        Test.suiteAfter("GitHubController");
     });
 
     beforeEach(function () {
@@ -107,7 +108,7 @@ describe("GitHubController", () => {
 
         const teamUrl = await gc.getTeamUrl(teams[0]);
         const config = Config.getInstance();
-        const url = config.getProp(ConfigKey.githubHost) + '/orgs/' + config.getProp(ConfigKey.org) + '/teams/' + Test.TEAMNAME1;
+        const url = config.getProp(ConfigKey.githubHost) + "/orgs/" + config.getProp(ConfigKey.org) + "/teams/" + Test.TEAMNAME1;
         expect(teamUrl).to.equal(url);
     });
 
@@ -117,7 +118,7 @@ describe("GitHubController", () => {
 
         const repoUrl = await gc.getRepositoryUrl(repos[0]);
         const config = Config.getInstance();
-        const url = config.getProp(ConfigKey.githubHost) + '/' + config.getProp(ConfigKey.org) + '/' + Test.REPONAME1;
+        const url = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + Test.REPONAME1;
         expect(repoUrl).to.equal(url);
     });
 
@@ -129,7 +130,7 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importUrl = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
         const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
         expect(provisioned).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
@@ -142,7 +143,7 @@ describe("GitHubController", () => {
         const teams = await new TeamController().getAllTeams();
         expect(teams.length).to.be.greaterThan(0);
 
-        const importUrl = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importUrl = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
@@ -157,7 +158,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // no repository object for this repoName
-            res = await gc.provisionRepository('invalidRepo' + Date.now(), teams, importUrl);
+            res = await gc.provisionRepository("invalidRepo" + Date.now(), teams, importUrl);
         } catch (err) {
             ex = err;
         }
@@ -173,15 +174,15 @@ describe("GitHubController", () => {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL);
         expect(success).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    // doesn't actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
+    // doesn"t actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
     // it("Should not be able to create a repo with an invalid name.", async function() {
-    //     const name = ''; // // repo names must have length 1 on github
-    //     const importURL = 'https://github.com/SECapstone/capstone';
+    //     const name = ""; // // repo names must have length 1 on github
+    //     const importURL = "https://github.com/SECapstone/capstone";
     //
     //     repo = null;
     //     let ex = null;
@@ -201,12 +202,12 @@ describe("GitHubController", () => {
         const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
         expect(repo).to.not.be.null;
 
-        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
         let res = null;
         let ex = null;
         try {
             // repo already exists
-            Log.test('checking repo that already exists');
+            Log.test("checking repo that already exists");
             res = await gc.createRepository(repo.id, importURL);
         } catch (err) {
             ex = err;
@@ -218,8 +219,8 @@ describe("GitHubController", () => {
         ex = null;
         try {
             // should fail because Repository object does not exist for this repoName
-            Log.test('checking repo that is not in datastore');
-            res = await gc.createRepository('unknownId' + Date.now(), importURL);
+            Log.test("checking repo that is not in datastore");
+            res = await gc.createRepository("unknownId" + Date.now(), importURL);
         } catch (err) {
             ex = err;
         }
@@ -246,7 +247,7 @@ describe("GitHubController", () => {
         await gha.deleteRepo(Test.REPONAME2); // delete repo from github
         Log.test("Custom setup done");
 
-        const importURL = githubHost + '/classytest/' + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importURL = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
         const success = await gc.createRepository(repo.id, importURL, "README.md");
         Log.test("Custom test done: " + success);
         expect(success).to.be.true;
@@ -301,7 +302,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             const team: any = {id: Test.TEAMNAME3, personIds: [Test.GITHUB1.id, Test.GITHUB2.id]};
-            // try to release a repo with a team that doesn't exist
+            // try to release a repo with a team that doesn"t exist
             res = await gc.releaseRepository(allRepos[1], [team], false);
             expect(res).to.be.false;
         } catch (err) {
@@ -391,7 +392,7 @@ describe("GitHubController", () => {
     //         // patchtool has not been integrated with tests yet,
     //         // so should fail to contact patchtool and return false
     //         const repos = await new RepositoryController().getAllRepos();
-    //         res = await gc.createPullRequest(repos[0], 'patch');
+    //         res = await gc.createPullRequest(repos[0], "patch");
     //     } catch (err) {
     //         ex = err;
     //     }

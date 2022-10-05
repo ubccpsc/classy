@@ -1,16 +1,16 @@
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../../../common/Log";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
 
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {TeamController} from "../../src/controllers/TeamController";
-import {PersonKind} from "../../src/Types";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {PersonKind} from "@backend/Types";
 
-import '../GlobalSpec';
-import './PersonControllerSpec';
+import "../GlobalSpec";
+import "./PersonControllerSpec";
 
 describe("TeamController", () => {
 
@@ -19,7 +19,7 @@ describe("TeamController", () => {
     let dc: DatabaseController;
 
     before(async () => {
-        await Test.suiteBefore('TeamController');
+        await Test.suiteBefore("TeamController");
 
         // clear stale data (removed; happens in suitebefore)
         // await dbc.clearData();
@@ -35,7 +35,7 @@ describe("TeamController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('TeamController');
+        Test.suiteAfter("TeamController");
     });
 
     it("Should be able to get all teams, even if there are none.", async () => {
@@ -163,7 +163,7 @@ describe("TeamController", () => {
         let team = null;
         let ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), null, [p1], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), null, [p1], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -176,7 +176,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), d0, [], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), d0, [], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -188,7 +188,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), d0, [p1, p2], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), d0, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -196,12 +196,12 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
-        // student's can't form for this deliverable
+        // student"s can"t form for this deliverable
         team = null;
         ex = null;
         try {
             const d3 = await dc.getDeliverable(Test.DELIVID0);
-            team = await tc.formTeam('testTeamName_' + Date.now(), d3, [p1, p2], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), d3, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -214,7 +214,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, null], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p1, null], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -226,7 +226,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p1, p3], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p1, p3], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -239,7 +239,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            team = await tc.formTeam('testTeamName_' + Date.now(), d1, [p2, p2], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), d1, [p2, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -257,7 +257,7 @@ describe("TeamController", () => {
             p6.kind = PersonKind.WITHDRAWN;
             await dbc.writePerson(p6);
 
-            team = await tc.formTeam('testTeamName_' + Date.now(), proj, [p2, p6], false);
+            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p2, p6], false);
         } catch (err) {
             Log.test(err);
             ex = err;

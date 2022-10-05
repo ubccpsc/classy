@@ -2,21 +2,21 @@ import {expect} from "chai";
 import "mocha";
 
 import {Test} from "@common/test/TestHarness";
-import {AutoTestGradeTransport} from "../../../../common/types/PortalTypes";
-import {GradePayload} from "../../../../common/types/SDMMTypes";
+import {AutoTestGradeTransport} from "@common/types/PortalTypes";
+import {GradePayload} from "@common/types/SDMMTypes";
 
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-import {GradesController} from "../../src/controllers/GradesController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GradesController} from "@backend/controllers/GradesController";
 
-import '../GlobalSpec';
-import './RepositoryControllerSpec';
+import "../GlobalSpec";
+import "./RepositoryControllerSpec";
 
 describe("GradeController", () => {
 
     let gc: GradesController;
 
     before(async () => {
-        await Test.suiteBefore('GradeController');
+        await Test.suiteBefore("GradeController");
         await Test.preparePeople();
         await Test.prepareAuth();
         await Test.prepareDeliverables();
@@ -29,7 +29,7 @@ describe("GradeController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('GradeController');
+        Test.suiteAfter("GradeController");
     });
 
     it("Should be able to get all grades, even if there are none.", async () => {
@@ -42,12 +42,12 @@ describe("GradeController", () => {
         expect(grades).to.have.lengthOf(0);
 
         const grade: GradePayload = {
-            score:     100,
-            comment:   'comment',
-            urlName:   'urlName',
-            URL:       'URL',
+            score: 100,
+            comment: "comment",
+            urlName: "urlName",
+            URL: "URL",
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
-            custom:    {}
+            custom: {}
         };
 
         const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
@@ -62,21 +62,21 @@ describe("GradeController", () => {
         expect(grades).to.have.lengthOf(2); // from previous
 
         const grade: GradePayload = {
-            score:     50,
-            comment:   'commentup',
-            urlName:   'urlName',
-            URL:       'URLup',
+            score: 50,
+            comment: "commentup",
+            urlName: "urlName",
+            URL: "URLup",
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
-            custom:    {}
+            custom: {}
         };
 
         const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades();
-        expect(grades).to.have.lengthOf(2); // still two (one for each teammember)
+        expect(grades).to.have.lengthOf(2); // still two (one for each team member)
         expect(grades[0].score).to.equal(50);
-        expect(grades[0].comment).to.equal('commentup');
-        expect(grades[0].URL).to.equal('URLup');
+        expect(grades[0].comment).to.equal("commentup");
+        expect(grades[0].URL).to.equal("URLup");
     });
 
     it("Should be able to get a grade for a user and deliverable.", async () => {
@@ -124,62 +124,68 @@ describe("GradeController", () => {
     it("Should be able to invalidate bad grades.", async () => {
         let deliv = await gc.validateAutoTestGrade(undefined);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
         deliv = await gc.validateAutoTestGrade(null);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
         let data: AutoTestGradeTransport = {} as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
-        data = {delivId: 'd0'} as AutoTestGradeTransport;
+        data = {delivId: "d0"} as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
-        data = {delivId: 'd0', score: 100} as AutoTestGradeTransport;
+        data = {delivId: "d0", score: 100} as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
-        data = {delivId: 'd0', score: 100, comment: 'comment'} as AutoTestGradeTransport;
+        data = {delivId: "d0", score: 100, comment: "comment"} as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
-        data = {delivId: 'd0', score: 100, comment: 'comment', urlName: 'urlName'} as AutoTestGradeTransport;
+        data = {delivId: "d0", score: 100, comment: "comment", urlName: "urlName"} as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
-
-        data = {delivId: 'd0', score: 100, comment: 'comment', urlName: 'urlName', URL: 'http://url'} as AutoTestGradeTransport;
-        deliv = await gc.validateAutoTestGrade(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
         data = {
-            delivId:   'd0',
-            score:     100,
-            comment:   'comment',
-            urlName:   'urlName',
-            URL:       'http://url',
+            delivId: "d0",
+            score: 100,
+            comment: "comment",
+            urlName: "urlName",
+            URL: "http://url"
+        } as AutoTestGradeTransport;
+        deliv = await gc.validateAutoTestGrade(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an("string");
+
+        data = {
+            delivId: "d0",
+            score: 100,
+            comment: "comment",
+            urlName: "urlName",
+            URL: "http://url",
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime()
         } as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an('string');
+        expect(deliv).to.be.an("string");
 
         data = {
-            delivId:   'd0',
-            score:     100,
-            comment:   'comment',
-            urlName:   'urlName',
-            URL:       'http://url',
+            delivId: "d0",
+            score: 100,
+            comment: "comment",
+            urlName: "urlName",
+            URL: "http://url",
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
-            custom:    {}
+            custom: {}
         } as AutoTestGradeTransport;
         deliv = await gc.validateAutoTestGrade(data);
         expect(deliv).to.be.null;

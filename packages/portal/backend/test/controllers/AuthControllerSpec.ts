@@ -1,14 +1,15 @@
 import {expect} from "chai";
 import "mocha";
 
-import {AuthController} from "../../src/controllers/AuthController";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {PersonController} from "../../src/controllers/PersonController";
-import {Auth} from "../../src/Types";
-
 import {Test} from "@common/test/TestHarness";
-import '../GlobalSpec';
-import './PersonControllerSpec';
+
+import {AuthController} from "@backend/controllers/AuthController";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {Auth} from "@backend/Types";
+
+import "../GlobalSpec";
+import "./PersonControllerSpec";
 
 describe("AuthController", () => {
 
@@ -17,7 +18,7 @@ describe("AuthController", () => {
     let ac: AuthController;
 
     before(async () => {
-        await Test.suiteBefore('AuthController');
+        await Test.suiteBefore("AuthController");
         await Test.preparePeople();
     });
 
@@ -26,23 +27,23 @@ describe("AuthController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('AuthController');
+        Test.suiteAfter("AuthController");
     });
 
     it("Should not validate a user who is null.", async () => {
-        const isValid = await ac.isValid(null, ''); // not registered
+        const isValid = await ac.isValid(null, ""); // not registered
         expect(isValid).to.be.false;
     });
 
     it("Should not validate a user who does not exist.", async () => {
-        const isValid = await ac.isValid('aUserwhoDoesNotExist_sadmewnmdsv', ''); // not registered
+        const isValid = await ac.isValid("aUserwhoDoesNotExist_sadmewnmdsv", ""); // not registered
         expect(isValid).to.be.false;
     });
 
     it("Should not validate a user who exists but does not have a valid token.", async () => {
         const auth: Auth = {
             personId: Test.USER1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
         const isValid = await ac.isValid(Test.USER1.id, Test.FAKETOKEN); // not valid
@@ -50,18 +51,18 @@ describe("AuthController", () => {
     });
 
     it("Should not let a person who does not exist be privileged.", async () => {
-        const isPriv = await ac.isPrivileged('aUserwhoDoesNotExist_' + Date.now(), ''); // not registered
+        const isPriv = await ac.isPrivileged("aUserwhoDoesNotExist_" + Date.now(), ""); // not registered
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
     });
 
-    it("Should identify a staff correctly.", async function() {
+    it("Should identify a staff correctly.", async function () {
         let isValid = await ac.isValid(Test.STAFF1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
             personId: Test.STAFF1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
         isValid = await ac.isValid(Test.STAFF1.id, Test.REALTOKEN);
@@ -72,13 +73,13 @@ describe("AuthController", () => {
         expect(isPriv.isStaff).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should identify an adminstaff correctly.", async function() {
+    it("Should identify an adminstaff correctly.", async function () {
         let isValid = await ac.isValid(Test.ADMINSTAFF1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
             personId: Test.ADMINSTAFF1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
         isValid = await ac.isValid(Test.ADMINSTAFF1.id, Test.REALTOKEN);
@@ -89,13 +90,13 @@ describe("AuthController", () => {
         expect(isPriv.isStaff).to.be.true;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should identify an admin (but not adminstaff) correctly.", async function() {
+    it("Should identify an admin (but not adminstaff) correctly.", async function () {
         let isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
             personId: Test.ADMIN1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
         isValid = await ac.isValid(Test.ADMIN1.id, Test.REALTOKEN);
@@ -106,13 +107,13 @@ describe("AuthController", () => {
         expect(isPriv.isStaff).to.be.false;
     }).timeout(Test.TIMEOUTLONG);
 
-    it("Should identify a non-admin correctly.", async function() {
+    it("Should identify a non-admin correctly.", async function () {
         let isValid = await ac.isValid(Test.USER1.id, Test.FAKETOKEN);
         expect(isValid).to.be.false;
 
         const auth: Auth = {
             personId: Test.USER1.id,
-            token:    Test.REALTOKEN
+            token: Test.REALTOKEN
         };
         await DatabaseController.getInstance().writeAuth(auth);
         isValid = await ac.isValid(Test.USER1.id, Test.REALTOKEN);
@@ -124,11 +125,9 @@ describe("AuthController", () => {
     }).timeout(TIMEOUT);
 
     it("Should be able to logout an admin user.", async () => {
-        // const personId = 'rtholmes';
         const dc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        // await dbc.getAuth(personId);
         let person = await pc.getPerson(Test.ADMIN1.id);
         expect(person.kind).to.not.be.null;
 
@@ -136,18 +135,16 @@ describe("AuthController", () => {
         expect(workedEnough).to.be.true;
 
         const auth = await dc.getAuth(Test.ADMIN1.id);
-        expect(auth).to.be.null; // shouldn't exist for a logged out person
+        expect(auth).to.be.null; // shouldn"t exist for a logged out person
 
         person = await pc.getPerson(Test.ADMIN1.id);
         expect(person.kind).to.be.null; // should be null after being logged out
     });
 
     it("Should be able to logout a student user.", async () => {
-        // const personId = 'rtholmes';
         const dc = DatabaseController.getInstance();
         const pc = new PersonController();
 
-        // await dbc.getAuth(personId);
         let person = await pc.getPerson(Test.USER1.id);
         expect(person.kind).to.not.be.null;
 
@@ -155,10 +152,10 @@ describe("AuthController", () => {
         expect(workedEnough).to.be.true;
 
         const auth = await dc.getAuth(Test.USER1.id);
-        expect(auth).to.be.null; // shouldn't exist for a logged out person
+        expect(auth).to.be.null; // shouldn"t exist for a logged out person
 
         person = await pc.getPerson(Test.USER1.id);
-        expect(person.kind).to.equal('student'); // students should stay students after logging out
+        expect(person.kind).to.equal("student"); // students should stay students after logging out
     });
 
     it("Should be able to handle trying to logout users who do not exist.", async () => {
@@ -169,8 +166,8 @@ describe("AuthController", () => {
         workedEnough = await ac.removeAuthentication(null);
         expect(workedEnough).to.be.false;
 
-        workedEnough = await ac.removeAuthentication('totallyMADEUPname12388291900d');
-        expect(workedEnough).to.be.false; // can't
+        workedEnough = await ac.removeAuthentication("totallyMADEUPname12388291900d");
+        expect(workedEnough).to.be.false; // can"t
     });
 
     // TODO: implement auth controller tests
