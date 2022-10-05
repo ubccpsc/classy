@@ -1,8 +1,8 @@
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../../../common/Log";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
+import Log from "@common/Log";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
