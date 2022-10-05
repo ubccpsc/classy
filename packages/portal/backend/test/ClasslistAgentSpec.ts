@@ -6,7 +6,7 @@ import {TestHarness} from "@common/test/TestHarness";
 
 import {ClasslistAgent} from "@backend/server/common/ClasslistAgent";
 
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 
 describe("ClasslistAgent", function() {
 

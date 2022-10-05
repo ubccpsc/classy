@@ -13,7 +13,7 @@ import {PersonController} from "@backend/controllers/PersonController";
 import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 
 describe("GitHubActions", () => {
 

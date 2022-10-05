@@ -9,7 +9,7 @@ import {PersonController} from "@backend/controllers/PersonController";
 import {TeamController} from "@backend/controllers/TeamController";
 import {PersonKind} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
 describe("TeamController", () => {

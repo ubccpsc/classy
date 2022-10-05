@@ -8,7 +8,7 @@ import {TestHarness} from "@common/test/TestHarness";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {Deliverable} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./DatabaseControllerSpec"; // run first
 
 describe("DeliverablesController", () => {

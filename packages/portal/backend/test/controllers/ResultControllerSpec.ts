@@ -7,7 +7,7 @@ import {AutoTestResultTransport} from "@common/types/PortalTypes";
 
 import {ResultsController} from "@backend/controllers/ResultsController";
 
-import "../GlobalSpec"; // load first
+import "@common/test/GlobalSpec"; // load first
 import "./AdminControllerSpec"; // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {

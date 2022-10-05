@@ -14,7 +14,7 @@ import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 import {PersonKind, Repository, Team} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./TeamControllerSpec";
 
 describe("GitHubController", () => {

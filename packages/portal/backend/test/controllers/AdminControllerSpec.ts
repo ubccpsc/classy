@@ -19,7 +19,7 @@ import {TeamController} from "@backend/controllers/TeamController";
 import {Factory} from "@backend/Factory";
 import {Person, PersonKind, Repository, Team} from "@backend/Types";
 
-import "../GlobalSpec"; // load first
+import "@common/test/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
 
 describe("AdminController", () => {

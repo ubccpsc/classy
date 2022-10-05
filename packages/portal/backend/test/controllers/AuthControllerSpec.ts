@@ -8,7 +8,7 @@ import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {Auth} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
 describe("AuthController", () => {

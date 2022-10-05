@@ -8,7 +8,7 @@ import {TestHarness} from "@common/test/TestHarness";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {PersonKind} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 
 /**
  * This suite seems like a lot of boilerplate, but is crucial to make sure the

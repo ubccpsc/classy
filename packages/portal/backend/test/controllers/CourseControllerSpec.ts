@@ -12,7 +12,7 @@ import {GitHubController} from "@backend/controllers/GitHubController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {Grade} from "@backend/Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
 describe("CourseController", () => {

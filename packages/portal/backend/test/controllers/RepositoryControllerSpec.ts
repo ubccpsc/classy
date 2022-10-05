@@ -10,7 +10,7 @@ import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 import {Repository} from "@backend/Types";
 
-import "../GlobalSpec"; // load first
+import "@common/test/GlobalSpec"; // load first
 import "./TeamControllerSpec"; // load first
 
 describe("RepositoryController", () => {

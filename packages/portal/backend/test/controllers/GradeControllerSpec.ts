@@ -8,7 +8,7 @@ import {GradePayload} from "@common/types/SDMMTypes";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {GradesController} from "@backend/controllers/GradesController";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./RepositoryControllerSpec";
 
 describe("GradeController", () => {

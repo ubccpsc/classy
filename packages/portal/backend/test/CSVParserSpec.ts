@@ -7,7 +7,7 @@ import {TestHarness} from "@common/test/TestHarness";
 import {GradesController} from "@backend/controllers/GradesController";
 import {CSVParser} from "@backend/server/common/CSVParser";
 
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 
 describe("CSVParser", function () {
 

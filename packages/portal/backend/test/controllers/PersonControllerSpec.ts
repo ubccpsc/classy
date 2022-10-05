@@ -5,7 +5,7 @@ import {TestHarness} from "@common/test/TestHarness";
 import {PersonController} from "@backend/controllers/PersonController";
 import {Person, PersonKind} from "@backend//Types";
 
-import "../GlobalSpec";
+import "@common/test/GlobalSpec"; // load first
 import "./DeliverablesControllerSpec";
 
 describe("PersonController", () => {
