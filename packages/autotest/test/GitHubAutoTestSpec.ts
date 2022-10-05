@@ -2,18 +2,17 @@ import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
-import Log from "../../common/Log";
-import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../common/types/ContainerTypes";
-import Util from "../../common/Util";
-
-import {IClassPortal} from "../src/autotest/ClassPortal";
-import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
-import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
-import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {IGitHubMessage} from "../src/github/GitHubUtil";
+import {IClassPortal} from "@autotest/autotest/ClassPortal";
+import {MockClassPortal} from "@autotest/autotest/mocks/MockClassPortal";
+import {MockDataStore} from "@autotest/autotest/mocks/MockDataStore";
+import {GitHubAutoTest} from "@autotest/github/GitHubAutoTest";
+import {IGitHubMessage} from "@autotest/github/GitHubUtil";
 
 import "@common/test/GlobalSpec"; // load first
 import {TestData} from "./TestData";
@@ -65,7 +64,7 @@ describe("GitHubAutoTest", () => {
     });
 
     afterEach(async function () {
-        // pause after each test so async issues don't persist
+        // pause after each test so async issues don"t persist
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
@@ -124,7 +123,7 @@ describe("GitHubAutoTest", () => {
     //     allData = await data.getAllData();
     //     expect(allData.pushes.length).to.equal(6); // unchanged
     //     expect(allData.records.length).to.equal(6);
-    //     // as long as the last record isn't the admin record it must have been bumped up
+    //     // as long as the last record isn"t the admin record it must have been bumped up
     //     expect(allData.records[5].input.target.adminRequest).to.be.undefined;
     //     // need to wait longer really, but
     //
@@ -197,88 +196,88 @@ describe("GitHubAutoTest", () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
-        Log.test('null info');
+        Log.test("null info");
         info = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
-        Log.test('undefined info');
+        Log.test("undefined info");
         info = undefined;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
-        Log.test('???');
+        Log.test("???");
         info = {
             adminRequest: false,
             personId: Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
-            delivId: 'd1',
-            kind: 'standard',
-            repoId: 'repoId',
-            commitSHA: 'SHA',
-            commitURL: 'https://URL',
-            postbackURL: 'https://postback',
+            delivId: "d1",
+            kind: "standard",
+            repoId: "repoId",
+            commitSHA: "SHA",
+            commitURL: "https://URL",
+            postbackURL: "https://postback",
             timestamp: new Date(2018, 2, 1).getTime(),
             cloneURL: "https://cloneURL"
         };
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.personId = 'validName';
+        info.personId = "validName";
 
-        Log.test('bot not mentioned');
+        Log.test("bot not mentioned");
         info.botMentioned = false;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.botMentioned = true;
 
-        Log.test('null delivId');
+        Log.test("null delivId");
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.delivId = 'd1';
+        info.delivId = "d1";
 
-        Log.test('wrong term');
+        Log.test("wrong term");
         const oldOrg = info.orgId;
-        info.orgId = 'INVALIDTERM';
+        info.orgId = "INVALIDTERM";
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.orgId = oldOrg;
 
-        Log.test('invalid delivId');
-        info.delivId = 'd_' + Date.now();
+        Log.test("invalid delivId");
+        info.delivId = "d_" + Date.now();
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.delivId = 'd1';
+        info.delivId = "d1";
 
-        // This actually passes: we don't check if the person exists, just if they are staff (and unknown users are not staff)
-        // Log.test('invalid person');
+        // This actually passes: we don"t check if the person exists, just if they are staff (and unknown users are not staff)
+        // Log.test("invalid person");
         // const person = info.personId;
-        // info.personId = 'person_' + Date.now();
+        // info.personId = "person_" + Date.now();
         // meetsPreconditions = await at["checkCommentPreconditions"](info);
         // expect(meetsPreconditions).to.be.false;
         // info.personId = person;
 
-        // This actually passes: we don't validate repo existence at this point (since these events should only come from valid repos anyways)
-        // Log.test('invalid repo');
+        // This actually passes: we don"t validate repo existence at this point (since these events should only come from valid repos anyways)
+        // Log.test("invalid repo");
         // const repo = info.repoId;
-        // info.repoId = 'repo_' + Date.now();
+        // info.repoId = "repo_" + Date.now();
         // meetsPreconditions = await at["checkCommentPreconditions"](info);
         // expect(meetsPreconditions).to.be.false;
         // info.repoId = repo;
 
-        Log.test('force by student');
+        Log.test("force by student");
         info.flags = ["#force"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         delete info.flags;
 
-        Log.test('silent by student');
+        Log.test("silent by student");
         info.flags = ["#silent"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         delete info.flags;
 
-        Log.test('force by autobot');
+        Log.test("force by autobot");
         const student = info.personId;
         info.personId = Config.getInstance().getProp(ConfigKey.botName);
         info.flags = ["#force"];
@@ -287,35 +286,35 @@ describe("GitHubAutoTest", () => {
         info.personId = student;
         delete info.flags;
 
-        Log.test('silent by staff');
-        info.personId = 'staff'; // Config.getInstance().getProp(ConfigKey.botName);
+        Log.test("silent by staff");
+        info.personId = "staff"; // Config.getInstance().getProp(ConfigKey.botName);
         info.flags = ["#silent"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.personId = student;
         delete info.flags;
 
-        Log.test('not open yet');
+        Log.test("not open yet");
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed but with late autotest allowed');
+        Log.test("closed but with late autotest allowed");
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed but with late autotest disallowed');
-        info.delivId = 'd0';
+        Log.test("closed but with late autotest disallowed");
+        info.delivId = "d0";
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
         // valid case
-        info.delivId = 'd1';
+        info.delivId = "d1";
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
     });
@@ -330,7 +329,7 @@ describe("GitHubAutoTest", () => {
             commitURL: pe.commitURL,
             adminRequest: false,
             personId: "myUser",
-            kind: 'standard',
+            kind: "standard",
             repoId: "d1_project9999",
             delivId: "d0",
             postbackURL: "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
@@ -338,16 +337,16 @@ describe("GitHubAutoTest", () => {
             cloneURL: "https://cloneURL"
         };
 
-        Log.test('getting data');
+        Log.test("getting data");
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
-        Log.test('handling comment');
+        Log.test("handling comment");
         await at.handleCommentEvent(ce);
-        Log.test('re-getting data');
+        Log.test("re-getting data");
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
 
-        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
+        // await Util.timeout(1 * 1000); // let test finish so it doesn"t ruin subsequent executions
     });
 
     it("Should be able to receive a comment event that queues right away due to no prior request.", async () => {
@@ -360,7 +359,7 @@ describe("GitHubAutoTest", () => {
             commitURL: pe.commitURL,
             adminRequest: false,
             personId: "myUser",
-            kind: 'standard',
+            kind: "standard",
             repoId: "d1_project9999",
             delivId: "d0",
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
@@ -369,14 +368,14 @@ describe("GitHubAutoTest", () => {
         };
         ce.flags = [];
 
-        Log.test('getting data');
+        Log.test("getting data");
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
 
-        Log.test('handling schedule');
+        Log.test("handling schedule");
         await at.handleCommentEvent(ce);
 
-        Log.test('re-getting data');
+        Log.test("re-getting data");
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
     });
@@ -397,7 +396,7 @@ describe("GitHubAutoTest", () => {
             commitURL: pushes[2].commitURL,
             adminRequest: false,
             personId: "myUser",
-            kind: 'standard',
+            kind: "standard",
             delivId: "d0",
             repoId: "d1_project9999",
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
@@ -421,9 +420,9 @@ describe("GitHubAutoTest", () => {
         gitHubMessages = [];
         at["postToGitHub"] = function (info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
             Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
-            Log.test(gitHubMessages.length + '');
-            if (typeof info.flags === 'undefined' || info.flags.indexOf("#silent") < 0) {
-                if (message !== null && typeof message.message !== 'undefined') {
+            Log.test(gitHubMessages.length + "");
+            if (typeof info.flags === "undefined" || info.flags.indexOf("#silent") < 0) {
+                if (message !== null && typeof message.message !== "undefined") {
                     gitHubMessages.push(message);
                 } else {
                     Log.test("stubbed postToGitHub(..) - invalid arg: " + message);
@@ -432,7 +431,7 @@ describe("GitHubAutoTest", () => {
             } else {
                 Log.test("stubbed postToGitHub(..) - #silent");
             }
-            Log.test(gitHubMessages.length + '');
+            Log.test(gitHubMessages.length + "");
             return Promise.resolve(true);
         };
     }
@@ -500,7 +499,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
-        // don't wait; want to catch this push in flight
+        // don"t wait; want to catch this push in flight
         Log.test("Setup complete");
 
         // TEST: send a comment (this is the previous test)
@@ -511,7 +510,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         Log.test("1: - allData: " + JSON.stringify(allData));
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
@@ -539,20 +538,20 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
-        // don't wait; want to catch this push in flight
+        // don"t wait; want to catch this push in flight
         Log.test("Setup validated");
 
         // TEST: send a comment (this is the previous test)
         const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
         req.flags = ["#check"];
-        req.kind = 'check';
+        req.kind = "check";
         await at.handleCommentEvent(req);
         Log.test("Test comment complete");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
@@ -587,7 +586,7 @@ describe("GitHubAutoTest", () => {
         // expect(gh.messages.length).to.equal(1); // should generate a warning
         // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         // expect(allData.comments.length).to.equal(1);
-        // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        // expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
 
         // Wait for it!
         await Util.timeout(WAIT);
@@ -621,7 +620,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
 
         // Wait for it!
         await Util.timeout(WAIT);
@@ -664,7 +663,7 @@ describe("GitHubAutoTest", () => {
         // // expect(gh.messages.length).to.equal(1); // should generate a warning
         // // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         // // expect(allData.comments.length).to.equal(1);
-        // // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        // // expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
         //
         // // Wait for it!
         // await Util.timeout(WAIT);
@@ -726,7 +725,7 @@ describe("GitHubAutoTest", () => {
             delivId: "d1", // same deliverable
             timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
             personId: "cs310test",
-            kind: 'standard'
+            kind: "standard"
         };
 
         await data.savePush(TestData.inputRecordA.target);
@@ -743,7 +742,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
-        expect(allData.comments.length).to.equal(0); // doesn't count as a comment, user has to ask again once they are in-quota
+        expect(allData.comments.length).to.equal(0); // doesn"t count as a comment, user has to ask again once they are in-quota
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
@@ -753,7 +752,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
-        pe.postbackURL = 'do it here';
+        pe.postbackURL = "do it here";
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pe);
@@ -782,7 +781,7 @@ describe("GitHubAutoTest", () => {
     //     return;
     // });
     //
-    // it.skip("Should ignore comments that don't mention @autobot.", async () => {
+    // it.skip("Should ignore comments that don"t mention @autobot.", async () => {
     //     return;
     // });
 

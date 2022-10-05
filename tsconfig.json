@@ -8,14 +8,17 @@
         "sourceMap": true,
         "baseUrl": ".",
         "paths": {
-            "@frontend/*": [
-                "packages/portal/frontend/src/app/*"
-            ],
             "@common/*": [
                 "packages/common/*"
             ],
+            "@frontend/*": [
+                "packages/portal/frontend/src/app/*"
+            ],
             "@backend/*": [
                 "packages/portal/backend/src/*"
+            ],
+            "@autotest/*": [
+                "packages/autotest/src/*"
             ]
         },
         "lib": [

@@ -2,18 +2,19 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
-import {Test} from "@common/test/TestHarness";
-import {CommitTarget} from "../../common/types/ContainerTypes";
-import {DeliverablesController} from "../../portal/backend/src/controllers/DeliverablesController";
-import {PersonController} from "../../portal/backend/src/controllers/PersonController";
-import BackendServer from "../../portal/backend/src/server/BackendServer";
-import {Deliverable, Person} from "../../portal/backend/src/Types";
-import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
-
-import {GitHubUtil} from "../src/github/GitHubUtil";
 import "@common/test/GlobalSpec"; // load first
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {Test} from "@common/test/TestHarness";
+import {CommitTarget} from "@common/types/ContainerTypes";
+
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {PersonController} from "@backend/controllers/PersonController";
+import BackendServer from "@backend/server/BackendServer";
+import {Deliverable, Person} from "@backend/Types";
+
+import {MockClassPortal} from "@autotest/autotest/mocks/MockClassPortal";
+import {GitHubUtil} from "@autotest/github/GitHubUtil";
 
 /* tslint:disable:max-line-length */
 describe("GitHub Event Parser", () => {

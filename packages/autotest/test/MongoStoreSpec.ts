@@ -1,14 +1,15 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
-import {Test} from "@common/test/TestHarness";
-import {CommitTarget} from "../../common/types/ContainerTypes";
-
-import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
-// const loadFirst = require('./GlobalSpec');
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import "@common/test/GlobalSpec";
+import {Test} from "@common/test/TestHarness";
+import {CommitTarget} from "@common/types/ContainerTypes";
+
+import {IDataStore, MongoDataStore} from "@autotest/autotest/DataStore";
+// const loadFirst = require("./GlobalSpec");
+
 import {TestData} from "./TestData";
 
 describe("MongoStore", () => {
@@ -95,7 +96,7 @@ describe("MongoStore", () => {
 
         // TEST
         const actual = await ds.getCommentRecord(TestData.commentRecordStaffA.commitURL,
-            TestData.commentRecordStaffA.delivId, 'standard');
+            TestData.commentRecordStaffA.delivId, "standard");
 
         // VERIFY
         expect(actual).to.not.be.null;
@@ -109,7 +110,7 @@ describe("MongoStore", () => {
 
         // TEST
         const actual = await ds.getCommentRecord(TestData.commentRecordUserA.commitURL,
-            TestData.commentRecordUserA.delivId, 'standard');
+            TestData.commentRecordUserA.delivId, "standard");
 
         // VERIFY
         expect(actual).to.be.null;
@@ -200,7 +201,7 @@ describe("MongoStore", () => {
 
         // TEST
         const actual = await ds.getLatestFeedbackGivenRecord(TestData.feedbackRecordA.delivId,
-            TestData.feedbackRecordA.personId, 'standard');
+            TestData.feedbackRecordA.personId, "standard");
 
         // VERIFY
         expect(actual).to.not.be.null;
