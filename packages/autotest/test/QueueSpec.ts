@@ -4,7 +4,7 @@ import "mocha";
 import Log from "../../common/Log";
 import {Queue} from "../src/autotest/Queue";
 // const loadFirst = require('./GlobalSpec');
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 import {TestData} from "./TestData";
 
 describe("Queue", () => {

@@ -13,7 +13,7 @@ import BackendServer from "@backend/server/BackendServer";
 import {Course} from "@backend/Types";
 import {ClassPortal, IClassPortal} from "../src/autotest/ClassPortal";
 
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();

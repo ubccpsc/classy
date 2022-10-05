@@ -1,8 +1,9 @@
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
-import {Test} from "@common/test/TestHarness";
+import Config, {ConfigKey} from "../Config";
+import Log from "../Log";
+
+import {Test} from "./TestHarness";
 
 before(async () => {
     Log.info("GlobalSpec::before() - resetting Config.name and Config.org for test suite.");

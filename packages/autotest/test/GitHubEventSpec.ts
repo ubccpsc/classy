@@ -13,7 +13,7 @@ import {Deliverable, Person} from "../../portal/backend/src/Types";
 import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
 
 import {GitHubUtil} from "../src/github/GitHubUtil";
-import "./GlobalSpec"; // load first
+import "@common/test/GlobalSpec"; // load first
 
 /* tslint:disable:max-line-length */
 describe("GitHub Event Parser", () => {

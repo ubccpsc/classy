@@ -5,7 +5,7 @@ import Config, {ConfigKey} from "../../common/Config";
 import Log from "../../common/Log";
 
 import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance();

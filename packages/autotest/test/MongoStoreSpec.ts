@@ -8,7 +8,7 @@ import {CommitTarget} from "../../common/types/ContainerTypes";
 
 import {IDataStore, MongoDataStore} from "../src/autotest/DataStore";
 // const loadFirst = require('./GlobalSpec');
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 import {TestData} from "./TestData";
 
 describe("MongoStore", () => {

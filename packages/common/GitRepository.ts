@@ -5,7 +5,7 @@ import {Command} from "./Command";
 interface Repository {
     /**
      * Wrapper for git checkout.
-     * @param commit The commit SHA to checkout.
+     * @param commit The commit SHA to check out.
      * @throws When the commit cannot be checked-out.
      */
     checkout(commit: string): Promise<CommandResult>;
@@ -13,7 +13,7 @@ interface Repository {
     /**
      * Wrapper for git clone. Credentials with read permission on the repository should be specified in the url.
      * @param url The location, including credentials, of the repository.
-     * @param dir The path on the locally machine to clone the files.
+     * @param dir The path on the local machine to clone the files.
      * @throws When the repository cannot be cloned.
      */
     clone(url: string, dir: string): Promise<CommandResult>;

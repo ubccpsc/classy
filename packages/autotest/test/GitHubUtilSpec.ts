@@ -8,7 +8,7 @@ import {Test} from "@common/test/TestHarness"; // included intentionally (loads 
 import Util from "@common/Util";
 import {GitHubUtil} from "../src/github/GitHubUtil";
 // const loadFirst = require('./GlobalSpec');
-import "./GlobalSpec";
+import "@common/test/GlobalSpec";
 
 describe("GitHubUtil", () => {
     Config.getInstance();
