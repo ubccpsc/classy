@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {ClasslistAgent} from "@backend/server/common/ClasslistAgent";
 
@@ -27,14 +27,14 @@ describe("ClasslistAgent", function() {
 
     it("Should be able to process an empty classlist", async function() {
         const path = __dirname + "/data/classlistEmpty.csv";
-        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
+        const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         Log.test("# rows processed: " + classlistChanges.updated.length + classlistChanges.created.length);
         expect(classlistChanges.updated.length + classlistChanges.created.length).to.equal(0);
     });
 
     it("Should be able to process a valid classlist using first name", async function() {
         const path = __dirname + "/data/classlistValidFirst.csv";
-        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
+        const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         const numChanges = classlistChanges.updated.length + classlistChanges.created.length;
         Log.test("# rows processed: " + numChanges);
         expect(numChanges).to.equal(5);
@@ -43,7 +43,7 @@ describe("ClasslistAgent", function() {
 
     it("Should be able to process a valid classlist using pref name", async function() {
         const path = __dirname + "/data/classlistValidPrefName.csv";
-        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
+        const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         const numChanges = classlistChanges.updated.length + classlistChanges.created.length;
         Log.test("# rows processed: " + numChanges);
         expect(numChanges).to.equal(5);
@@ -54,7 +54,7 @@ describe("ClasslistAgent", function() {
         const path = __dirname + "/data/classlistEmptyNamePrefName.csv";
         let ex = null;
         try {
-            await ca.processClasslist(Test.ADMIN1.id, path, null);
+            await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -65,7 +65,7 @@ describe("ClasslistAgent", function() {
         const path = __dirname + "/data/classlistEmptyField.csv";
         let ex = null;
         try {
-            await ca.processClasslist(Test.ADMIN1.id, path, null);
+            await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -76,7 +76,7 @@ describe("ClasslistAgent", function() {
         const path = __dirname + "/data/classlistDuplicateField.csv";
         let ex = null;
         try {
-            await ca.processClasslist(Test.ADMIN1.id, path, null);
+            await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -85,7 +85,7 @@ describe("ClasslistAgent", function() {
 
     it("Should be able to process an updated classlist", async function() {
         const path = __dirname + "/data/classlistValidUpdate.csv";
-        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, path, null);
+        const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         Log.test("# rows processed: " + classlistChanges.classlist.length);
         expect(classlistChanges.classlist.length).to.equal(5);
     });
@@ -95,7 +95,7 @@ describe("ClasslistAgent", function() {
         let ex = null;
         try {
             const path = __dirname + "/data/classlistInvalid.csv";
-            rows = await ca.processClasslist(Test.ADMIN1.id, path, null);
+            rows = await ca.processClasslist(TestHarness.ADMIN1.id, path, null);
         } catch (err) {
             ex = err;
         }
@@ -105,27 +105,27 @@ describe("ClasslistAgent", function() {
 
     it("Should produce a list of CREATED users if a new user has been created via classlist API", async function() {
         const data = mockAPIData.slice();
-        const classlistChanges = await ca.processClasslist(Test.ADMIN1.id, null, data);
+        const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
         expect(classlistChanges.created.length).to.equal(data.length);
     });
 
     it("Should produce a list of REMOVED users if user is NOT on second classlist API update", async function() {
         const data = mockAPIData.slice();
-        const firstUpdate = await ca.processClasslist(Test.ADMIN1.id, null, data);
+        const firstUpdate = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
         data.splice(2, 1); // remove 1 student
-        const secondUpdate = await ca.processClasslist(Test.ADMIN1.id, null, data);
+        const secondUpdate = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
         expect(firstUpdate.removed.length).to.be.lessThan(secondUpdate.removed.length);
         expect(secondUpdate.removed.length).to.equal(firstUpdate.removed.length + 1);
     });
 
     it("Should produce a list of UPDATED users if a property has changed via classlist API", async function() {
         const data = mockAPIData.slice();
-        const firstUpdate = await ca.processClasslist(Test.ADMIN1.id, null, data);
+        const firstUpdate = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
         // ONLY CWL AND LABID ARE PROGRAMMED TO CHANGE
         data[2].CWL = "newCWL";
-        const secondUpdate = await ca.processClasslist(Test.ADMIN1.id, null, data);
+        const secondUpdate = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
         expect(firstUpdate.updated.length).to.equal(0);
         expect(secondUpdate.updated.length).to.equal(1);
-        await ca.processClasslist(Test.ADMIN1.id, null, data);
+        await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
     });
 });

@@ -1,21 +1,20 @@
-import {DatabaseController} from "portal-backend/src/controllers/DatabaseController";
-import {DeliverablesController} from "portal-backend/src/controllers/DeliverablesController";
-import {GitHubActions} from "portal-backend/src/controllers/GitHubActions";
-import {GradesController} from "portal-backend/src/controllers/GradesController";
-import {PersonController} from "portal-backend/src/controllers/PersonController";
-import {RepositoryController} from "portal-backend/src/controllers/RepositoryController";
-import {TeamController} from "portal-backend/src/controllers/TeamController";
-import {Factory} from "portal-backend/src/Factory";
-import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "portal-backend/src/Types";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions} from "@backend/controllers/GitHubActions";
+import {GradesController} from "@backend/controllers/GradesController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {Factory} from "@backend/Factory";
+import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "@backend/Types";
 
-import Config, {ConfigKey} from "../Config";
-import Log from "../Log";
-import Util from "../Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
+import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
+import {GradePayload} from "@common/types/SDMMTypes";
 
-import {ContainerInput, ContainerOutput, ContainerState} from "../types/ContainerTypes";
-import {GradePayload} from "../types/SDMMTypes";
-
-export class Test {
+export class TestHarness {
 
     public static readonly TIMEOUT = 1000 * 10;
     public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
@@ -85,54 +84,73 @@ export class Test {
     }
 
     public static async prepareAll() {
-        await Test.preparePeople();
-        await Test.prepareAuth();
-        await Test.prepareDeliverables();
-        await Test.prepareTeams();
-        await Test.prepareRepositories();
-        await Test.prepareGrades();
-        await Test.prepareResults();
+        await TestHarness.preparePeople();
+        await TestHarness.prepareAuth();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.prepareTeams();
+        await TestHarness.prepareRepositories();
+        await TestHarness.prepareGrades();
+        await TestHarness.prepareResults();
     }
 
     public static async prepareAllReal() {
         const dbc = DatabaseController.getInstance();
 
-        await Test.prepareDeliverables();
+        await TestHarness.prepareDeliverables();
 
-        let person = await Test.createPerson(Test.GITHUB1.id, Test.GITHUB1.csId, Test.GITHUB1.github, PersonKind.STUDENT);
+        let person = await TestHarness.createPerson(
+            TestHarness.GITHUB1.id,
+            TestHarness.GITHUB1.csId,
+            TestHarness.GITHUB1.github,
+            PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.GITHUB2.id, Test.GITHUB2.csId, Test.GITHUB2.github, PersonKind.STUDENT);
+        person = await TestHarness.createPerson(
+            TestHarness.GITHUB2.id,
+            TestHarness.GITHUB2.csId,
+            TestHarness.GITHUB2.github,
+            PersonKind.STUDENT);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
+        person = await TestHarness.createPerson(
+            TestHarness.ADMIN1.id,
+            TestHarness.ADMIN1.csId,
+            TestHarness.ADMIN1.github,
+            PersonKind.ADMIN);
         await dbc.writePerson(person);
-        person = await Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        person = await TestHarness.createPerson(
+            TestHarness.ADMINSTAFF1.id,
+            TestHarness.ADMINSTAFF1.csId,
+            TestHarness.ADMINSTAFF1.github,
+            PersonKind.ADMINSTAFF);
         await dbc.writePerson(person);
-        await Test.prepareAuth();
+        await TestHarness.prepareAuth();
         // create a team
-        const team = await Test.createTeam(Test.TEAMNAMEREAL, Test.DELIVID0, [Test.GITHUB1.id, Test.GITHUB2.id]);
+        const team = await TestHarness.createTeam(
+            TestHarness.TEAMNAMEREAL,
+            TestHarness.DELIVID0,
+            [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id]);
         await dbc.writeTeam(team);
     }
 
     public static async prepareDeliverables(): Promise<void> {
         const dc = DatabaseController.getInstance();
 
-        let d = Test.createDeliverable(Test.DELIVID0);
+        let d = TestHarness.createDeliverable(TestHarness.DELIVID0);
         d.teamMinSize = 1;
         d.teamMaxSize = 1;
         await dc.writeDeliverable(d);
 
-        d = Test.createDeliverable(Test.DELIVID1);
+        d = TestHarness.createDeliverable(TestHarness.DELIVID1);
         d.shouldProvision = false;
         await dc.writeDeliverable(d);
 
-        d = Test.createDeliverable(Test.DELIVID2);
+        d = TestHarness.createDeliverable(TestHarness.DELIVID2);
         await dc.writeDeliverable(d);
 
-        d = Test.createDeliverable(Test.DELIVID3);
+        d = TestHarness.createDeliverable(TestHarness.DELIVID3);
         d.teamStudentsForm = false;
         await dc.writeDeliverable(d);
 
-        d = Test.createDeliverable(Test.DELIVIDPROJ);
+        d = TestHarness.createDeliverable(TestHarness.DELIVIDPROJ);
         d.teamMinSize = 2;
         d.teamMaxSize = 2;
         d.shouldProvision = true;
@@ -144,53 +162,105 @@ export class Test {
         const dc = DatabaseController.getInstance();
 
         // FAKE USERS ON GITHUB, BUT STILL IN DB FOR INTERNAL CLASSY BUSINESS LOGIC:
-        let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        let p = TestHarness.createPerson(
+            TestHarness.USER1.id,
+            TestHarness.USER1.csId,
+            TestHarness.USER1.github,
+            PersonKind.STUDENT);
         p.labId = "l1a";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.USER2.id,
+            TestHarness.USER2.csId,
+            TestHarness.USER2.github,
+            PersonKind.STUDENT);
         p.labId = "l1a";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.USER3.id,
+            TestHarness.USER3.csId,
+            TestHarness.USER3.github,
+            PersonKind.STUDENT);
         p.labId = "l1a";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.USER4.id,
+            TestHarness.USER4.csId,
+            TestHarness.USER4.github,
+            PersonKind.STUDENT);
         p.labId = "l2c";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.USER5.id,
+            TestHarness.USER5.csId,
+            TestHarness.USER5.github,
+            PersonKind.STUDENT);
         p.labId = "l2d";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.USER6.id,
+            TestHarness.USER6.csId,
+            TestHarness.USER6.github,
+            PersonKind.STUDENT);
         p.labId = "l2d";
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        p = TestHarness.createPerson(
+            TestHarness.ADMINSTAFF1.id,
+            TestHarness.ADMINSTAFF1.csId,
+            TestHarness.ADMINSTAFF1.github,
+            PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
         // REAL USERS CAPABLE FOR GITHUB EXTERNAL BUSINESS LOGIC TESTS. CAN ALWAYS ADD MORE REAL ATEST-xx USERS
-        p = Test.createPerson(Test.REALUSER1.id, Test.REALUSER1.csId, Test.REALUSER1.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.REALUSER1.id,
+            TestHarness.REALUSER1.csId,
+            TestHarness.REALUSER1.github,
+            PersonKind.STUDENT);
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.REALUSER2.id, Test.REALUSER2.csId, Test.REALUSER2.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.REALUSER2.id,
+            TestHarness.REALUSER2.csId,
+            TestHarness.REALUSER2.github,
+            PersonKind.STUDENT);
         await dc.writePerson(p);
 
-        p = Test.createPerson(Test.REALUSER3.id, Test.REALUSER3.csId, Test.REALUSER3.github, PersonKind.STUDENT);
+        p = TestHarness.createPerson(
+            TestHarness.REALUSER3.id,
+            TestHarness.REALUSER3.csId,
+            TestHarness.REALUSER3.github,
+            PersonKind.STUDENT);
         await dc.writePerson(p);
 
         // admin person (this username should be on the admin but not the staff team in the github org)
-        p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
+        p = TestHarness.createPerson(
+            TestHarness.ADMINSTAFF1.id,
+            TestHarness.ADMINSTAFF1.csId,
+            TestHarness.ADMINSTAFF1.github,
+            PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
         // staff person (this username should be on the "staff" team, but not the "admin" team in the github org)
-        p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, PersonKind.STAFF);
+        p = TestHarness.createPerson(
+            TestHarness.STAFF1.id,
+            TestHarness.STAFF1.csId,
+            TestHarness.STAFF1.github,
+            PersonKind.STAFF);
         await dc.writePerson(p);
 
         // admin person (this username should be on the "admin" team in the github org)
-        p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
+        p = TestHarness.createPerson(
+            TestHarness.ADMIN1.id,
+            TestHarness.ADMIN1.csId,
+            TestHarness.ADMIN1.github,
+            PersonKind.ADMIN);
         await dc.writePerson(p);
 
         Log.test("Test::preparePeople() - end");
@@ -201,11 +271,17 @@ export class Test {
         try {
             const db = DatabaseController.getInstance();
 
-            let team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+            let team = await TestHarness.createTeam(
+                TestHarness.TEAMNAME1,
+                TestHarness.DELIVID0,
+                [TestHarness.USER1.id, TestHarness.USER2.id]);
             await db.writeTeam(team);
 
             // user 1 has a different partner for d1
-            team = await Test.createTeam(Test.TEAMNAME2, Test.DELIVID1, [Test.USER1.id, Test.USER3.id]);
+            team = await TestHarness.createTeam(
+                TestHarness.TEAMNAME2,
+                TestHarness.DELIVID1,
+                [TestHarness.USER1.id, TestHarness.USER3.id]);
             await db.writeTeam(team);
 
         } catch (err) {
@@ -248,12 +324,12 @@ export class Test {
             // let team = await tc.getTeam(Test.TEAMNAME1);
             // let repo = await rc.createRepository(Test.REPONAME1, [team], {});
 
-            let repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID1, Test.TEAMNAME1);
+            let repo = await TestHarness.createRepository(TestHarness.REPONAME1, TestHarness.DELIVID1, TestHarness.TEAMNAME1);
             await db.writeRepository(repo);
 
             // team = await tc.getTeam(Test.TEAMNAME2);
             // repo = await rc.createRepository(Test.REPONAME2, [team], {});
-            repo = await Test.createRepository(Test.REPONAME2, Test.DELIVID1, Test.TEAMNAME2);
+            repo = await TestHarness.createRepository(TestHarness.REPONAME2, TestHarness.DELIVID1, TestHarness.TEAMNAME2);
             await db.writeRepository(repo);
 
         } catch (err) {
@@ -276,7 +352,7 @@ export class Test {
 
         const gc = new GradesController();
         // const valid =
-        await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        await gc.createGrade(TestHarness.REPONAME1, TestHarness.DELIVID1, grade);
     }
 
     public static async prepareResults(): Promise<void> {
@@ -285,19 +361,25 @@ export class Test {
         const dc = DatabaseController.getInstance();
 
         const tuples = [];
-        tuples.push({team: await dc.getTeam(Test.TEAMNAME1), repo: await dc.getRepository(Test.REPONAME1)});
-        tuples.push({team: await dc.getTeam(Test.TEAMNAME2), repo: await dc.getRepository(Test.REPONAME2)});
+        tuples.push({
+            team: await dc.getTeam(TestHarness.TEAMNAME1),
+            repo: await dc.getRepository(TestHarness.REPONAME1)
+        });
+        tuples.push({
+            team: await dc.getTeam(TestHarness.TEAMNAME2),
+            repo: await dc.getRepository(TestHarness.REPONAME2)
+        });
 
         // create the first one (used in autotest tests)
-        let result = Test.createResult(tuples[0].team.delivId, tuples[0].repo.id, tuples[0].team.personIds,
-            Test.getRandomInt(100), "sha");
+        let result = TestHarness.createResult(tuples[0].team.delivId, tuples[0].repo.id, tuples[0].team.personIds,
+            TestHarness.getRandomInt(100), "sha");
         await dc.writeResult(result);
 
         for (const tuple of tuples) {
             for (let i = 1; i < 10; i++) {
-                const score = Test.getRandomInt(100);
+                const score = TestHarness.getRandomInt(100);
 
-                result = Test.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
+                result = TestHarness.createResult(tuple.team.delivId, tuple.repo.id, tuple.team.personIds, score);
                 await dc.writeResult(result);
             }
         }
@@ -311,26 +393,26 @@ export class Test {
         const dc = DatabaseController.getInstance();
 
         let auth: Auth = {
-            personId: Test.USER1.id,
-            token: Test.REALTOKEN
+            personId: TestHarness.USER1.id,
+            token: TestHarness.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
-            personId: Test.GITHUB1.id,
-            token: Test.REALTOKEN
+            personId: TestHarness.GITHUB1.id,
+            token: TestHarness.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
-            personId: Test.ADMIN1.id,
-            token: Test.REALTOKEN
+            personId: TestHarness.ADMIN1.id,
+            token: TestHarness.REALTOKEN
         };
         await dc.writeAuth(auth);
 
         auth = {
-            personId: Test.ADMINSTAFF1.id,
-            token: Test.REALTOKEN
+            personId: TestHarness.ADMINSTAFF1.id,
+            token: TestHarness.REALTOKEN
         };
         await dc.writeAuth(auth);
     }
@@ -424,7 +506,7 @@ export class Test {
      * @returns {boolean}
      */
     public static runSlowTest() {
-        if (Factory.OVERRIDE || Test.isCI() === true) {
+        if (Factory.OVERRIDE || TestHarness.isCI() === true) {
             Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
             return true;
         } else {
@@ -464,20 +546,20 @@ export class Test {
     public static readonly INVALIDUSER1 = {id: "invalidUser1id", csId: "invalidUser1CSID", github: "invalidUser1gh"};
 
     // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
-    public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
-    public static readonly ADMINSTAFF1 = Test.getConfigUser(ConfigKey.githubAdminStaff);
-    public static readonly STAFF1 = Test.getConfigUser(ConfigKey.githubStaff);
-    public static readonly REALUSER1 = Test.getConfigUser(ConfigKey.githubTestUsers, 1);
-    public static readonly REALUSER2 = Test.getConfigUser(ConfigKey.githubTestUsers, 2);
-    public static readonly REALUSER3 = Test.getConfigUser(ConfigKey.githubTestUsers, 3);
+    public static readonly ADMIN1 = TestHarness.getConfigUser(ConfigKey.githubAdmin);
+    public static readonly ADMINSTAFF1 = TestHarness.getConfigUser(ConfigKey.githubAdminStaff);
+    public static readonly STAFF1 = TestHarness.getConfigUser(ConfigKey.githubStaff);
+    public static readonly REALUSER1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1);
+    public static readonly REALUSER2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 2);
+    public static readonly REALUSER3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 3);
 
-    public static readonly GITHUB1 = Test.getConfigUser(ConfigKey.githubTestUsers, 4);
-    public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
-    public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
+    public static readonly GITHUB1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 4);
+    public static readonly GITHUB2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 5);
+    public static readonly GITHUB3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 6);
 
-    public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was "cpscbot";
-    public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was "ubcbot";
-    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 1); // was "rthse2";
+    public static readonly REALBOTNAME1 = TestHarness.getConfigUser(ConfigKey.githubBot01); // was "cpscbot";
+    public static readonly REALBOTNAME2 = TestHarness.getConfigUser(ConfigKey.githubBot02); // was "ubcbot";
+    public static readonly REALUSERNAME = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1); // was "rthse2";
 
     public static readonly DELIVIDPROJ = "project";
     public static readonly DELIVID0 = "d0";
@@ -505,8 +587,8 @@ export class Test {
     public static readonly REALTOKEN = "realtoken";
     public static readonly FAKETOKEN = "faketoken";
 
-    public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
-    public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME0 = TestHarness.ASSIGNID0 + "__" + TestHarness.REALUSER1.id;
+    public static readonly ASSIGNTEAMNAME1 = TestHarness.ASSIGNID1 + "__" + TestHarness.REALUSER1.id;
 
     public static getDeliverable(delivId: string): Deliverable {
         const deliv: Deliverable = {
@@ -518,7 +600,7 @@ export class Test {
             gradesReleased: false,
             // delay:            -1,
             shouldProvision: false,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + Test.REPONAMEREAL_POSTTEST + ".git",
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + TestHarness.REPONAMEREAL_POSTTEST + ".git",
             teamMinSize: 1,
             teamMaxSize: 1,
             teamSameLab: false,
@@ -744,9 +826,9 @@ export class Test {
         ];
 
         const DELAY_SHORT = 200;
-        const ASSIGNREPO1 = "TEST__X__secap_" + Test.ASSIGNID0;
-        const ASSIGNREPO2 = "TEST__X__secap_" + Test.ASSIGNID1;
-        const TEAMNAME = "TEST__X__t_" + Test.TEAMNAME1;
+        const ASSIGNREPO1 = "TEST__X__secap_" + TestHarness.ASSIGNID0;
+        const ASSIGNREPO2 = "TEST__X__secap_" + TestHarness.ASSIGNID1;
+        const TEAMNAME = "TEST__X__t_" + TestHarness.TEAMNAME1;
 
         // loop through both kinds of GitHubAction (cached and live) to make sure they are consistent
         const ghactions = [GitHubActions.getInstance(true), GitHubActions.getInstance(false)];
@@ -773,8 +855,8 @@ export class Test {
                     repo.repoName.startsWith(ASSIGNREPO1) ||
                     repo.repoName.startsWith(ASSIGNREPO2) ||
                     repo.repoName.startsWith("test_") ||
-                    repo.repoName.startsWith(Test.ASSIGNID0 + "_") ||
-                    repo.repoName.startsWith(Test.ASSIGNID1 + "_") ||
+                    repo.repoName.startsWith(TestHarness.ASSIGNID0 + "_") ||
+                    repo.repoName.startsWith(TestHarness.ASSIGNID1 + "_") ||
                     repo.repoName.endsWith("_grades")) {
                     Log.info("Removing stale repo: " + repo.repoName);
                     await gh.deleteRepo(repo.repoName);
@@ -796,7 +878,7 @@ export class Test {
                 let done = false;
                 // for (const t of TESTTEAMNAMES) {
                 //     if (team.teamName === t ||
-                if (team.teamName.startsWith(Test.ASSIGNID0 + "_")) {
+                if (team.teamName.startsWith(TestHarness.ASSIGNID0 + "_")) {
                     Log.test("Removing stale team: " + team.teamName);
                     // const val = await gh.deleteTeam(team.teamNumber);
                     await gh.deleteTeam(team.teamName);

@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {GradeReport} from "@common/types/ContainerTypes";
 import {AutoTestResultTransport} from "@common/types/PortalTypes";
 
@@ -15,24 +15,24 @@ describe("ResultController", () => {
     let rc: ResultsController;
 
     before(async () => {
-        await Test.suiteBefore("ResultController");
+        await TestHarness.suiteBefore("ResultController");
 
         // clear stale data (removed; happens in suitebefore)
         // const dbc = DatabaseController.getInstance();
         // sawait dbc.clearData();
 
         // get data ready
-        await Test.prepareDeliverables();
-        await Test.preparePeople();
-        await Test.prepareAuth();
-        await Test.prepareRepositories();
-        await Test.prepareTeams();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.preparePeople();
+        await TestHarness.prepareAuth();
+        await TestHarness.prepareRepositories();
+        await TestHarness.prepareTeams();
 
         rc = new ResultsController();
     });
 
     after(async () => {
-        Test.suiteAfter("ResultController");
+        TestHarness.suiteAfter("ResultController");
     });
 
     it("Should be able to get all results, even if there are none.", async () => {
@@ -48,7 +48,7 @@ describe("ResultController", () => {
         // let data = fs.readJSONSync(fullPath);
         // let output = await rc.createResult(data[0]);
         // public static getResult(delivId: string, repoId: string, people: string[], score: number): Result {
-        const result = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
+        const result = TestHarness.createResult(TestHarness.DELIVID0, TestHarness.REPONAME1, [TestHarness.USER1.id], 50);
         const output = await rc.createResult(result);
         expect(output).to.be.true;
 

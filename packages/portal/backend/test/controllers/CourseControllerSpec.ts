@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import Util from "@common/Util";
 
 import {CourseController} from "@backend/controllers/CourseController";
@@ -20,9 +20,9 @@ describe("CourseController", () => {
     let cc: CourseController;
 
     before(async () => {
-        await Test.suiteBefore("CourseController");
-        await Test.preparePeople();
-        await Test.prepareDeliverables();
+        await TestHarness.suiteBefore("CourseController");
+        await TestHarness.preparePeople();
+        await TestHarness.prepareDeliverables();
     });
 
     beforeEach(() => {
@@ -31,7 +31,7 @@ describe("CourseController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter("CourseController");
+        TestHarness.suiteAfter("CourseController");
     });
 
     it("Should be able to handle an unknown user.", async () => {
@@ -42,20 +42,20 @@ describe("CourseController", () => {
 
     it("Should be able to compute names.", async () => {
 
-        const p1 = await new PersonController().getPerson(Test.USER1.id);
-        const p2 = await new PersonController().getPerson(Test.USER2.id);
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+        const p1 = await new PersonController().getPerson(TestHarness.USER1.id);
+        const p2 = await new PersonController().getPerson(TestHarness.USER2.id);
+        const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
         const names = await cc.computeNames(deliv, [p1, p2]);
         Log.test("computed names: " + JSON.stringify(names));
 
-        expect(names.teamName).to.equal("t_d1_" + Test.USER1.csId + "_" + Test.USER2.csId);
+        expect(names.teamName).to.equal("t_d1_" + TestHarness.USER1.csId + "_" + TestHarness.USER2.csId);
         // expect(names.teamName).to.equal("t_d1_user1CSID_user2CSID");
         expect(names.repoName).to.equal("d1_user1CSID_user2CSID");
     });
 
     it("Should not be able to compute names if there are no people or no deliverable.", async () => {
 
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+        const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
         let ex = null;
         try {
             await cc.computeNames(deliv, []);
@@ -64,7 +64,7 @@ describe("CourseController", () => {
         }
         expect(ex).to.not.be.null;
 
-        const p1 = await new PersonController().getPerson(Test.USER1.id);
+        const p1 = await new PersonController().getPerson(TestHarness.USER1.id);
         ex = null;
         try {
             await cc.computeNames(null, [p1]);
@@ -75,10 +75,10 @@ describe("CourseController", () => {
     });
 
     it("Should accept an autotest grade.", async () => {
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+        const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
         const g: Grade = {
-            personId:  Test.USER1.id,
-            delivId:   Test.DELIVID1,
+            personId:  TestHarness.USER1.id,
+            delivId:   TestHarness.DELIVID1,
             score:     50,
             timestamp: deliv.closeTimestamp - 100,
             urlName:   null,
@@ -96,10 +96,10 @@ describe("CourseController", () => {
     });
 
     it("Should not accept a smaller autotest grade.", async () => {
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+        const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
         const g: Grade = {
-            personId:  Test.USER1.id,
-            delivId:   Test.DELIVID1,
+            personId:  TestHarness.USER1.id,
+            delivId:   TestHarness.DELIVID1,
             score:     49,
             timestamp: deliv.closeTimestamp - 100,
             urlName:   null,
@@ -116,10 +116,10 @@ describe("CourseController", () => {
     });
 
     it("Should not accept an autotest grade outside of the deliverable window.", async () => {
-        const deliv = await new DeliverablesController().getDeliverable(Test.DELIVID1);
+        const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
         const g: Grade = {
-            personId:  Test.USER1.id,
-            delivId:   Test.DELIVID1,
+            personId:  TestHarness.USER1.id,
+            delivId:   TestHarness.DELIVID1,
             score:     49,
             timestamp: 0,
             urlName:   null,

@@ -6,7 +6,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -31,8 +31,8 @@ describe("AutoTest Routes", function () {
     before(async () => {
         Log.test("AutoTestRoutes::before - start");
 
-        await Test.suiteBefore("AutoTestRoutes");
-        await Test.prepareAll();
+        await TestHarness.suiteBefore("AutoTestRoutes");
+        await TestHarness.prepareAll();
 
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
         Config.getInstance().setProp(ConfigKey.name, Config.getInstance().getProp(ConfigKey.testname));
@@ -56,7 +56,7 @@ describe("AutoTest Routes", function () {
 
     after(async function () {
         Log.test("AutoTestRoutes::after - start");
-        Test.suiteAfter("AutoTestRoutes");
+        TestHarness.suiteAfter("AutoTestRoutes");
         await server.stop();
     });
 
@@ -97,7 +97,7 @@ describe("AutoTest Routes", function () {
 
         const dc = DatabaseController.getInstance();
         const cr = await dc.getCourseRecord();
-        cr.defaultDeliverableId = Test.DELIVID0;
+        cr.defaultDeliverableId = TestHarness.DELIVID0;
         await dc.writeCourseRecord(cr);
 
         try {
@@ -109,7 +109,7 @@ describe("AutoTest Routes", function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success.defaultDeliverable).to.not.be.undefined;
-        expect(body.success.defaultDeliverable).to.equal(Test.DELIVID0);
+        expect(body.success.defaultDeliverable).to.equal(TestHarness.DELIVID0);
     }).timeout(TIMEOUT);
 
     it("Should reject an authorized result", async function () {
@@ -134,7 +134,7 @@ describe("AutoTest Routes", function () {
 
         let response = null;
         const url = "/portal/at/result";
-        const body = Test.createResult(Test.DELIVID0, Test.REPONAME1, [Test.USER1.id], 50);
+        const body = TestHarness.createResult(TestHarness.DELIVID0, TestHarness.REPONAME1, [TestHarness.USER1.id], 50);
 
         try {
             response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -152,8 +152,8 @@ describe("AutoTest Routes", function () {
         const url = "/portal/at/result";
 
         const body = { // : IAutoTestResult
-            delivId: Test.DELIVID0,
-            repoId: Test.REPONAME1,
+            delivId: TestHarness.DELIVID0,
+            repoId: TestHarness.REPONAME1,
             timestamp: 0,
             commitURL: "url",
             commitSHA: "sha",
@@ -177,7 +177,7 @@ describe("AutoTest Routes", function () {
     it("Should respond to a valid result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + Test.DELIVID0 + "/" + Test.REPONAME1 + "/sha";
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
         let body = null;
         try {
             response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -194,7 +194,7 @@ describe("AutoTest Routes", function () {
     it("Should reject an unauthorized result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + Test.DELIVID0 + "/" + Test.REPONAME1 + "/sha";
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
         let body = null;
         try {
             response = await request(app).get(url).set("token", "INVALID");
@@ -229,7 +229,7 @@ describe("AutoTest Routes", function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = "/portal/at/isStaff/" + Test.ADMINSTAFF1.github;
+        const url = "/portal/at/isStaff/" + TestHarness.ADMINSTAFF1.github;
         try {
             response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -262,7 +262,7 @@ describe("AutoTest Routes", function () {
         expect(body.success.isAdmin).to.not.be.undefined;
         expect(body.success.isStaff).to.be.false;
         expect(body.success.isAdmin).to.be.false;
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should reject an unauthorized personId request", async function () {
 
@@ -285,7 +285,7 @@ describe("AutoTest Routes", function () {
 
         let response = null;
         let body: AutoTestAuthPayload;
-        const url = "/portal/at/personId/" + Test.USER1.github; // AutoTest only knows about githubId not personId
+        const url = "/portal/at/personId/" + TestHarness.USER1.github; // AutoTest only knows about githubId not personId
         try {
             response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
             body = response.body;
@@ -377,9 +377,9 @@ describe("AutoTest Routes", function () {
         let response = null;
 
         const gradePayload: AutoTestGradeTransport = {
-            delivId: Test.DELIVID0,
+            delivId: TestHarness.DELIVID0,
             score: 51,
-            repoId: Test.REPONAME1,
+            repoId: TestHarness.REPONAME1,
             repoURL: "repoURL",
             urlName: "urlName",
             URL: "test URL from grade record",
@@ -409,9 +409,9 @@ describe("AutoTest Routes", function () {
         let response = null;
 
         const gradePayload: AutoTestGradeTransport = {
-            delivId: Test.DELIVID0,
+            delivId: TestHarness.DELIVID0,
             score: 51,
-            repoId: Test.REPONAME1,
+            repoId: TestHarness.REPONAME1,
             repoURL: "repoURL",
             urlName: "urlName",
             URL: "test URL from grade record",
@@ -471,7 +471,7 @@ describe("AutoTest Routes", function () {
             let res: any;
 
             try {
-                res = await request(app).get(url).set("user", Test.REALUSER1.github);
+                res = await request(app).get(url).set("user", TestHarness.REALUSER1.github);
             } catch (err) {
                 res = err;
             } finally {
@@ -508,7 +508,7 @@ describe("AutoTest Routes", function () {
             let res: any;
 
             try {
-                res = await request(app).get(url).set("user", Test.ADMIN1.github);
+                res = await request(app).get(url).set("user", TestHarness.ADMIN1.github);
             } catch (err) {
                 res = err;
             } finally {
@@ -529,7 +529,7 @@ describe("AutoTest Routes", function () {
 
             try {
                 // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
-                res = await request(app).post(url).set("user", Test.REALUSER1.github).send(body);
+                res = await request(app).post(url).set("user", TestHarness.REALUSER1.github).send(body);
             } catch (err) {
                 res = err;
             } finally {
@@ -566,7 +566,7 @@ describe("AutoTest Routes", function () {
             let res: any;
 
             try {
-                res = await request(app).post(url).set("user", Test.ADMIN1.github).send(body);
+                res = await request(app).post(url).set("user", TestHarness.ADMIN1.github).send(body);
             } catch (err) {
                 res = err;
             } finally {

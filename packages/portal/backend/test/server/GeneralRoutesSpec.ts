@@ -6,7 +6,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {ConfigTransportPayload, Payload, TeamFormationTransport} from "@common/types/PortalTypes";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
@@ -26,8 +26,8 @@ describe("General Routes", function () {
 
     before(async () => {
         Log.test("GeneralRoutes::before - start");
-        await Test.suiteBefore("General Routes");
-        await Test.prepareAll();
+        await TestHarness.suiteBefore("General Routes");
+        await TestHarness.prepareAll();
 
         // add files for getResource
         // NOTE: if this fails in local testing, ensure your HOST_DIR and PERSIST_DIR are set appropriately
@@ -66,7 +66,7 @@ describe("General Routes", function () {
 
     after(function () {
         Log.test("GeneralRoutes::after - start");
-        Test.suiteAfter("General Routes");
+        TestHarness.suiteAfter("General Routes");
         return server.stop();
     });
 
@@ -98,7 +98,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -116,15 +116,15 @@ describe("General Routes", function () {
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
-        expect(body.success.id).to.equal(Test.USER1.id);
-        expect(body.success.githubId).to.equal(Test.USER1.github);
+        expect(body.success.id).to.equal(TestHarness.USER1.id);
+        expect(body.success.githubId).to.equal(TestHarness.USER1.github);
     });
 
     it("Should not be able to get a person without the right token.", async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -132,7 +132,7 @@ describe("General Routes", function () {
         const url = "/portal/person";
         try {
             Log.test("Making request");
-            response = await request(app).get(url).set("user", auth.personId).set("token", Test.FAKETOKEN);
+            response = await request(app).get(url).set("user", auth.personId).set("token", TestHarness.FAKETOKEN);
             Log.test("Response received");
             body = response.body;
         } catch (err) {
@@ -149,14 +149,14 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         // prepare deliverables
-        let deliv = Test.getDeliverable(Test.DELIVID1);
+        let deliv = TestHarness.getDeliverable(TestHarness.DELIVID1);
         deliv.gradesReleased = true;
         await dc.writeDeliverable(deliv);
-        deliv = Test.getDeliverable(Test.DELIVID2);
+        deliv = TestHarness.getDeliverable(TestHarness.DELIVID2);
         deliv.gradesReleased = true;
         await dc.writeDeliverable(deliv);
 
@@ -176,9 +176,9 @@ describe("General Routes", function () {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(2);
-        expect(body.success[0].delivId).to.equal(Test.DELIVID1);
+        expect(body.success[0].delivId).to.equal(TestHarness.DELIVID1);
         expect(body.success[0].score).to.equal(100);
-        expect(body.success[1].delivId).to.equal(Test.DELIVID2);
+        expect(body.success[1].delivId).to.equal(TestHarness.DELIVID2);
         expect(body.success[1].score).to.equal(null);
     });
 
@@ -186,7 +186,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -212,7 +212,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -238,7 +238,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -261,7 +261,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -284,7 +284,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -307,7 +307,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -330,7 +330,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -353,7 +353,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -378,7 +378,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.ADMIN1.id);
+        const auth = await dc.getAuth(TestHarness.ADMIN1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -453,7 +453,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -472,15 +472,15 @@ describe("General Routes", function () {
         expect(response.status).to.equal(200);
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(2);
-        expect(body.success[0].delivId).to.equal(Test.DELIVID0);
-        expect(body.success[0].id).to.equal(Test.TEAMNAME1);
+        expect(body.success[0].delivId).to.equal(TestHarness.DELIVID0);
+        expect(body.success[0].id).to.equal(TestHarness.TEAMNAME1);
     });
 
     it("Should not be able to get get teams without a valid token.", async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -507,7 +507,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -516,8 +516,8 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             const teamReq: TeamFormationTransport = {
-                delivId: Test.DELIVID0,
-                githubIds: [Test.USER1.github]
+                delivId: TestHarness.DELIVID0,
+                githubIds: [TestHarness.USER1.github]
             };
             // this is invalid because the person is already on a d0 team
             response = await request(app).post(url).send(teamReq).set("user", auth.personId).set("token", auth.token);
@@ -536,8 +536,8 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             const teamReq: TeamFormationTransport = {
-                delivId: Test.DELIVIDPROJ,
-                githubIds: [Test.USER5.github, Test.USER5.github]
+                delivId: TestHarness.DELIVIDPROJ,
+                githubIds: [TestHarness.USER5.github, TestHarness.USER5.github]
             };
             // this is invalid because the person id is used more than once
             response = await request(app).post(url).send(teamReq).set("user", auth.personId).set("token", auth.token);
@@ -560,7 +560,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -569,8 +569,8 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             const teamReq: TeamFormationTransport = {
-                delivId: Test.DELIVID0,
-                githubIds: [Test.USER2.github]
+                delivId: TestHarness.DELIVID0,
+                githubIds: [TestHarness.USER2.github]
             };
             // this is invalid because the person is not going to be on the resulting team
             response = await request(app).post(url).send(teamReq).set("user", auth.personId).set("token", auth.token);
@@ -592,7 +592,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -601,8 +601,8 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             const teamReq: TeamFormationTransport = {
-                delivId: Test.DELIVIDPROJ,
-                githubIds: [Test.USER1.github, Test.USER2.github]
+                delivId: TestHarness.DELIVIDPROJ,
+                githubIds: [TestHarness.USER1.github, TestHarness.USER2.github]
             };
             // this is invalid because the person is already on a d0 team
             response = await request(app).post(url).send(teamReq).set("user", auth.personId).set("token", auth.token);
@@ -623,7 +623,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -648,10 +648,10 @@ describe("General Routes", function () {
         expect(body.success.length).to.equal(0);
 
         // create a team, but don"t release it
-        const deliv = await dc.getDeliverable(Test.DELIVIDPROJ);
-        const team = await dc.getTeam("t_project_" + Test.USER1.csId + "_" + Test.USER2.csId);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+        const team = await dc.getTeam("t_project_" + TestHarness.USER1.csId + "_" + TestHarness.USER2.csId);
         const rc = new RepositoryController();
-        const repo = await rc.createRepository("t_project_" + Test.USER1.csId + "_" + Test.USER2.csId, deliv, [team], {});
+        const repo = await rc.createRepository("t_project_" + TestHarness.USER1.csId + "_" + TestHarness.USER2.csId, deliv, [team], {});
 
         ex = null;
         try {
@@ -697,7 +697,7 @@ describe("General Routes", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // get user
-        const auth = await dc.getAuth(Test.USER1.id);
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         expect(auth).to.not.be.null;
 
         let response = null;
@@ -706,7 +706,7 @@ describe("General Routes", function () {
         let ex = null;
         try {
             Log.test("Making request");
-            response = await request(app).get(url).set("user", auth.personId).set("token", Test.FAKETOKEN);
+            response = await request(app).get(url).set("user", auth.personId).set("token", TestHarness.FAKETOKEN);
             body = response.body;
             Log.test("First response received: " + body);
         } catch (err) {

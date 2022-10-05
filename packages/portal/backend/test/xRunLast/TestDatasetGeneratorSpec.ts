@@ -2,7 +2,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
@@ -35,9 +35,9 @@ describe("TestDatasetGenerator", function () {
 
         // create an admin
         let p: Person = {
-            id: Test.ADMIN1.id,
-            csId: Test.ADMIN1.csId,
-            githubId: Test.ADMIN1.github,
+            id: TestHarness.ADMIN1.id,
+            csId: TestHarness.ADMIN1.csId,
+            githubId: TestHarness.ADMIN1.github,
             studentNumber: -1,
 
             fName: "adminFirst",
@@ -58,9 +58,9 @@ describe("TestDatasetGenerator", function () {
 
         // create a student
         p = {
-            id: Test.USER1.id,
-            csId: Test.USER1.csId,
-            githubId: Test.USER1.github,
+            id: TestHarness.USER1.id,
+            csId: TestHarness.USER1.csId,
+            githubId: TestHarness.USER1.github,
             studentNumber: -1,
 
             fName: "adminFirst",
@@ -110,11 +110,11 @@ describe("TestDatasetGenerator", function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // create for an admin
-        let a: Auth = {personId: Test.ADMIN1.id, token: "TEST_TOKENADMIN"};
+        let a: Auth = {personId: TestHarness.ADMIN1.id, token: "TEST_TOKENADMIN"};
         await dc.writeAuth(a);
 
         // create for a student
-        a = {personId: Test.USER1.id, token: "TEST_TOKENSTUDENT"};
+        a = {personId: TestHarness.USER1.id, token: "TEST_TOKENSTUDENT"};
         await dc.writeAuth(a);
     });
 
@@ -177,7 +177,7 @@ describe("TestDatasetGenerator", function () {
         let pB = await pc.getPerson("p2");
         const deliv = await dc.getDeliverable("d0");
         try {
-            await tc.createTeam(Test.TEAMNAME3, deliv, [pA, pB], {});
+            await tc.createTeam(TestHarness.TEAMNAME3, deliv, [pA, pB], {});
         } catch (err) {
             // Fail silently, it"s fine, the team already exists
         }
@@ -186,7 +186,7 @@ describe("TestDatasetGenerator", function () {
         pB = await pc.getPerson("p4");
         const pC = await pc.getPerson("p5");
         try {
-            await tc.createTeam(Test.TEAMNAME4, deliv, [pA, pB, pC], {});
+            await tc.createTeam(TestHarness.TEAMNAME4, deliv, [pA, pB, pC], {});
         } catch (err) {
             // Fail silently, it"s fine, the team already exists
         }
@@ -198,15 +198,15 @@ describe("TestDatasetGenerator", function () {
         const teams = await tc.getAllTeams();
         const rc: RepositoryController = new RepositoryController();
         const dc = new DeliverablesController();
-        const deliv = await dc.getDeliverable(Test.DELIVID1);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         try {
-            await rc.createRepository(Test.REPONAME1, deliv, [teams[0]], {});
+            await rc.createRepository(TestHarness.REPONAME1, deliv, [teams[0]], {});
         } catch (err) {
             // Fail silently, it"s fine, the team already exists
         }
 
         try {
-            await rc.createRepository(Test.REPONAME2, deliv, [teams[1]], {});
+            await rc.createRepository(TestHarness.REPONAME2, deliv, [teams[1]], {});
         } catch (err) {
             // Fail silently, it"s fine, the team already exists
         }
@@ -214,7 +214,7 @@ describe("TestDatasetGenerator", function () {
 
     it("Run prepareAll at the end", async function () {
         Log.test("Finishing by preparing all");
-        await Test.prepareAll();
+        await TestHarness.prepareAll();
         Log.test("Finishing by preparing all - done");
     });
 

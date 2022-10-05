@@ -1,7 +1,7 @@
 // do not use module imports (@common, @backend) in this file
 import Log from "@common/Log";
 import Config, {ConfigKey} from "@common/Config";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "@backend/controllers/GitHubController";
 import {TeamController} from "@backend/controllers/TeamController";
@@ -115,7 +115,7 @@ export class TestGitHubActions implements IGitHubActions {
         if (teamName === null || teamName.length < 1) {
             return [];
         }
-        return [Test.REALBOTNAME1, Test.REALUSERNAME, Test.ADMIN1.github];
+        return [TestHarness.REALBOTNAME1, TestHarness.REALUSERNAME, TestHarness.ADMIN1.github];
     }
 
     public async getTeamNumber(teamName: string): Promise<number> {
@@ -151,7 +151,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === Test.ADMIN1.github || userName === Test.ADMIN1.github) {
+        if (userName === TestHarness.ADMIN1.github || userName === TestHarness.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -160,7 +160,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === Test.STAFF1.github || userName === Test.ADMIN1.github) {
+        if (userName === TestHarness.STAFF1.github || userName === TestHarness.ADMIN1.github) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }
@@ -198,16 +198,16 @@ export class TestGitHubActions implements IGitHubActions {
         const people: GitPersonTuple[] = [];
 
         const start = Date.now();
-        people.push({githubPersonNumber: start, url: "URL", githubId: Test.REALBOTNAME1});
-        people.push({githubPersonNumber: start - 5, url: "URL", githubId: Test.REALUSERNAME});
-        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALBOTNAME1});
-        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALUSER1.github});
-        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.REALUSER2.github});
-        people.push({githubPersonNumber: start - 15, url: "URL", githubId: Test.ADMIN1.github});
-        people.push({githubPersonNumber: start - 25, url: "URL", githubId: Test.USER1.github});
-        people.push({githubPersonNumber: start - 35, url: "URL", githubId: Test.USER2.github});
-        people.push({githubPersonNumber: start - 45, url: "URL", githubId: Test.USER3.github});
-        people.push({githubPersonNumber: start - 55, url: "URL", githubId: Test.USER4.github});
+        people.push({githubPersonNumber: start, url: "URL", githubId: TestHarness.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 5, url: "URL", githubId: TestHarness.REALUSERNAME});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: TestHarness.REALBOTNAME1});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: TestHarness.REALUSER1.github});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: TestHarness.REALUSER2.github});
+        people.push({githubPersonNumber: start - 15, url: "URL", githubId: TestHarness.ADMIN1.github});
+        people.push({githubPersonNumber: start - 25, url: "URL", githubId: TestHarness.USER1.github});
+        people.push({githubPersonNumber: start - 35, url: "URL", githubId: TestHarness.USER2.github});
+        people.push({githubPersonNumber: start - 45, url: "URL", githubId: TestHarness.USER3.github});
+        people.push({githubPersonNumber: start - 55, url: "URL", githubId: TestHarness.USER4.github});
 
         return people;
     }
@@ -275,7 +275,7 @@ export class TestGitHubActions implements IGitHubActions {
 
     public async setRepoPermission(repoName: string, permissionLevel: string): Promise<boolean> {
         Log.info("TestGitHubActions::setRepoPermission( " + repoName + ", " + permissionLevel + " )");
-        if (repoName === Test.INVALIDREPONAME) {
+        if (repoName === TestHarness.INVALIDREPONAME) {
             return false;
         }
         if (permissionLevel === "admin") {

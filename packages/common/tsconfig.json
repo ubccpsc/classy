@@ -13,7 +13,19 @@
         ],
         "typeRoots": [
             "../../node_modules/@types"
-        ]
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@common/*": [
+                "./*"
+            ],
+            "@backend/*": [
+                "../portal/backend/src/*"
+            ],
+            "@autotest/*": [
+                "../autotest/src/*"
+            ]
+        }
     },
     "include": [
         "../common/**/*.ts"

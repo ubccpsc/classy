@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "@common/types/PortalTypes";
@@ -26,10 +26,10 @@ describe("ClassPortal Service", () => {
         Log.test("ClassPortalSpec::before() - start");
         backend = new BackendServer();
         await backend.start();
-        await Test.prepareDeliverables();
-        await Test.preparePeople();
-        await Test.prepareTeams();
-        await Test.prepareRepositories();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.preparePeople();
+        await TestHarness.prepareTeams();
+        await TestHarness.prepareRepositories();
         Log.test("ClassPortalSpec::before() - done");
     });
 
@@ -46,7 +46,7 @@ describe("ClassPortal Service", () => {
     // NOTE: if this fails it could be because the ClassPortal Backend has not been started yet
     it("Should be able for a adminstaff user to be staff.", async () => {
         try {
-            const actual = await cp.isStaff(Test.ADMINSTAFF1.github);
+            const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);
             Log.test("Actual: " + actual);
             expect(actual.isStaff).to.equal(true);
             expect(actual.isAdmin).to.equal(true);
@@ -63,7 +63,7 @@ describe("ClassPortal Service", () => {
         } catch (err) {
             expect.fail("Should not happen");
         }
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able for invalid user to not be staff.", async () => {
         try {
@@ -89,7 +89,7 @@ describe("ClassPortal Service", () => {
         } catch (err) {
             expect.fail("Should not happen");
         }
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     // Tested in the backend (AutoTestRouteSpec)
     // it("Should return the test delay in seconds for a course.", async () => {
@@ -142,7 +142,7 @@ describe("ClassPortal Service", () => {
 
     it("Should be able to send a valid grade.", async () => {
         const grade: AutoTestGradeTransport = {
-            repoId: Test.REPONAME1,
+            repoId: TestHarness.REPONAME1,
             repoURL: "https://repo1",
             delivId: "d0",
             score: 60,
@@ -161,7 +161,7 @@ describe("ClassPortal Service", () => {
 
     it("Should fail to send an invalid grade.", async () => {
         const grade: any = { // AutoTestGradeTransport
-            repoId: Test.REPONAME1,
+            repoId: TestHarness.REPONAME1,
             repoURL: "https://repo1",
             // delivId:   "d0",  // this should be required
             score: 60,

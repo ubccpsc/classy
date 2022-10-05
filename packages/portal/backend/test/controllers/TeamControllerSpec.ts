@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {PersonController} from "@backend/controllers/PersonController";
@@ -19,15 +19,15 @@ describe("TeamController", () => {
     let dc: DatabaseController;
 
     before(async () => {
-        await Test.suiteBefore("TeamController");
+        await TestHarness.suiteBefore("TeamController");
 
         // clear stale data (removed; happens in suitebefore)
         // await dbc.clearData();
 
         // get data ready
-        await Test.prepareDeliverables();
-        await Test.preparePeople();
-        await Test.prepareAuth();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.preparePeople();
+        await TestHarness.prepareAuth();
 
         dc = DatabaseController.getInstance();
         tc = new TeamController();
@@ -35,7 +35,7 @@ describe("TeamController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter("TeamController");
+        TestHarness.suiteAfter("TeamController");
     });
 
     it("Should be able to get all teams, even if there are none.", async () => {
@@ -44,7 +44,7 @@ describe("TeamController", () => {
     });
 
     it("Should be able to get the teams for a person even if there are none.", async () => {
-        const person = await pc.getPerson(Test.USER1.id);
+        const person = await pc.getPerson(TestHarness.USER1.id);
         const teams = await tc.getTeamsForPerson(person);
         expect(teams).to.have.lengthOf(0);
     });
@@ -63,15 +63,15 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
-        const p1 = await pc.getPerson(Test.USER1.id);
-        const p2 = await pc.getPerson(Test.USER2.id);
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
         let ex = null;
         let team = null;
         try {
-            team = await tc.createTeam(Test.TEAMNAME1, null, [p1, p2], {});
+            team = await tc.createTeam(TestHarness.TEAMNAME1, null, [p1, p2], {});
         } catch (err) {
             ex = err;
         }
@@ -86,20 +86,20 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
-        const p1 = await pc.getPerson(Test.USER1.id);
-        const p2 = await pc.getPerson(Test.USER2.id);
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        let deliv = await dc.getDeliverable(Test.DELIVID0);
-        let team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
+        let deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+        let team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(1);
 
-        deliv = await dc.getDeliverable(Test.DELIVID1);
-        team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
+        deliv = await dc.getDeliverable(TestHarness.DELIVID1);
+        team = await tc.createTeam(TestHarness.TEAMNAME3, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
@@ -110,16 +110,16 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(2);
 
-        const p1 = await pc.getPerson(Test.USER1.id);
-        const p2 = await pc.getPerson(Test.USER2.id);
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
         let team = null;
         let exc = null;
         try {
-            team = await tc.createTeam(Test.TEAMNAME1, deliv, [p1, p2], {});
+            team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [p1, p2], {});
         } catch (err) {
             exc = err;
         }
@@ -134,11 +134,11 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(2);
 
-        const person = await pc.getPerson(Test.USER3.id);
+        const person = await pc.getPerson(TestHarness.USER3.id);
         expect(person).to.not.be.null;
 
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
-        const team = await tc.createTeam(Test.TEAMNAME2, deliv, [person], {});
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+        const team = await tc.createTeam(TestHarness.TEAMNAME2, deliv, [person], {});
         expect(team).to.not.be.null;
 
         teams = await tc.getAllTeams();
@@ -146,7 +146,7 @@ describe("TeamController", () => {
     });
 
     it("Should be able to get the teams for a person.", async () => {
-        const person = await pc.getPerson(Test.USER1.id);
+        const person = await pc.getPerson(TestHarness.USER1.id);
         const teams = await tc.getTeamsForPerson(person);
         expect(teams).to.have.lengthOf(2);
     });
@@ -155,9 +155,9 @@ describe("TeamController", () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(3);
 
-        const p1 = await pc.getGitHubPerson(Test.GITHUB1.github);
-        const p2 = await pc.getGitHubPerson(Test.GITHUB2.github);
-        const p3 = await pc.getGitHubPerson(Test.GITHUB3.github);
+        const p1 = await pc.getGitHubPerson(TestHarness.GITHUB1.github);
+        const p2 = await pc.getGitHubPerson(TestHarness.GITHUB2.github);
+        const p3 = await pc.getGitHubPerson(TestHarness.GITHUB3.github);
 
         // invalid deliverable
         let team = null;
@@ -171,7 +171,7 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
-        const d0 = await dc.getDeliverable(Test.DELIVID0);
+        const d0 = await dc.getDeliverable(TestHarness.DELIVID0);
         // too few students
         team = null;
         ex = null;
@@ -200,7 +200,7 @@ describe("TeamController", () => {
         team = null;
         ex = null;
         try {
-            const d3 = await dc.getDeliverable(Test.DELIVID0);
+            const d3 = await dc.getDeliverable(TestHarness.DELIVID0);
             team = await tc.formTeam("testTeamName_" + Date.now(), d3, [p1, p2], false);
         } catch (err) {
             Log.test(err);
@@ -210,7 +210,7 @@ describe("TeamController", () => {
         expect(team).to.be.null;
 
         // github id not in course
-        const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
+        const proj = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
         team = null;
         ex = null;
         try {
@@ -235,7 +235,7 @@ describe("TeamController", () => {
         expect(team).to.be.null;
 
         // students already on teams
-        const d1 = await dc.getDeliverable(Test.DELIVID0);
+        const d1 = await dc.getDeliverable(TestHarness.DELIVID0);
         team = null;
         ex = null;
         try {
@@ -253,7 +253,7 @@ describe("TeamController", () => {
         try {
             // withdraw a student
             const dbc = DatabaseController.getInstance();
-            const p6 = await pc.getGitHubPerson(Test.USER6.github);
+            const p6 = await pc.getGitHubPerson(TestHarness.USER6.github);
             p6.kind = PersonKind.WITHDRAWN;
             await dbc.writePerson(p6);
 
@@ -267,7 +267,7 @@ describe("TeamController", () => {
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(3);
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should form a team if deliverable constraints are not violated.", async () => {
         let teams = await tc.getAllTeams();
@@ -277,10 +277,10 @@ describe("TeamController", () => {
         let team = null;
         let ex = null;
         try {
-            const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const p1 = await pc.getGitHubPerson(Test.USER1.github);
-            const p2 = await pc.getGitHubPerson(Test.USER2.github);
-            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
+            const proj = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+            const p1 = await pc.getGitHubPerson(TestHarness.USER1.github);
+            const p2 = await pc.getGitHubPerson(TestHarness.USER2.github);
+            team = await tc.formTeam(TestHarness.REUSABLETEAMNAME, proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -290,7 +290,7 @@ describe("TeamController", () => {
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(4);
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should silently do nothing team is to be formed that already exists", async () => {
         let teams = await tc.getAllTeams();
@@ -300,10 +300,10 @@ describe("TeamController", () => {
         let team = null;
         let ex = null;
         try {
-            const proj = await dc.getDeliverable(Test.DELIVIDPROJ);
-            const p1 = await pc.getGitHubPerson(Test.USER1.github);
-            const p2 = await pc.getGitHubPerson(Test.USER2.github);
-            team = await tc.formTeam(Test.REUSABLETEAMNAME, proj, [p1, p2], false);
+            const proj = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+            const p1 = await pc.getGitHubPerson(TestHarness.USER1.github);
+            const p2 = await pc.getGitHubPerson(TestHarness.USER2.github);
+            team = await tc.formTeam(TestHarness.REUSABLETEAMNAME, proj, [p1, p2], false);
         } catch (err) {
             Log.test(err);
             ex = err;
@@ -313,10 +313,10 @@ describe("TeamController", () => {
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(4);
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Translation to transport type should work.", async () => {
-        const team = await tc.getTeam(Test.TEAMNAME1);
+        const team = await tc.getTeam(TestHarness.TEAMNAME1);
         expect(team).to.not.be.null;
 
         const trans = tc.teamToTransport(team);
@@ -327,5 +327,5 @@ describe("TeamController", () => {
         for (const p of team.personIds) {
             expect(trans.people).to.contain(p);
         }
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 });

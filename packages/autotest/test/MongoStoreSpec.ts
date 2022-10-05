@@ -4,7 +4,7 @@ import "mocha";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import "@common/test/GlobalSpec";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import {IDataStore, MongoDataStore} from "@autotest/autotest/DataStore";

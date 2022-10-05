@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import Util from "@common/Util";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
@@ -22,14 +22,14 @@ describe("GitHubActions", () => {
     // const gh: IGitHubActions = new TestGitHubActions();
     const gh: IGitHubActions = GitHubActions.getInstance(true);
 
-    const TIMEOUT = Test.TIMEOUTLONG; // was 20000; // was 5000
+    const TIMEOUT = TestHarness.TIMEOUTLONG; // was 20000; // was 5000
 
     // let DELAY_SEC = 1000;
     const DELAY_SHORT = 200;
 
-    const REPONAME = Test.REPONAME1;
-    const REPONAME3 = Test.REPONAME3;
-    const TEAMNAME = Test.TEAMNAME1;
+    const REPONAME = TestHarness.REPONAME1;
+    const REPONAME3 = TestHarness.REPONAME3;
+    const TEAMNAME = TestHarness.TEAMNAME1;
 
     const OLDORG = Config.getInstance().getProp(ConfigKey.org);
 
@@ -38,14 +38,14 @@ describe("GitHubActions", () => {
         // test github actions on a test github instance (for safety)
         Config.getInstance().setProp(ConfigKey.org, Config.getInstance().getProp(ConfigKey.testorg));
 
-        await Test.suiteBefore("GitHubActionSpec");
-        await Test.prepareAll();
+        await TestHarness.suiteBefore("GitHubActionSpec");
+        await TestHarness.prepareAll();
     });
 
     beforeEach(function () {
         gh.setPageSize(2); // force a small page size for testing
 
-        const exec = Test.runSlowTest();
+        const exec = TestHarness.runSlowTest();
         // exec = true;
         if (exec === true) {
             Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
@@ -63,7 +63,7 @@ describe("GitHubActions", () => {
         Log.test("GitHubActionSpec::after() - start; replacing original org");
         // return to original org
         Config.getInstance().setProp(ConfigKey.org, OLDORG);
-        Test.suiteAfter("GitHubActionSpec");
+        TestHarness.suiteAfter("GitHubActionSpec");
     });
 
     const TESTREPONAMES = ["testtest__repo1",
@@ -74,10 +74,10 @@ describe("GitHubActions", () => {
         "TESTrepo1",
         "TESTrepo2",
         "TESTrepo3",
-        Test.REPONAME1,
-        Test.REPONAME2,
-        Test.REPONAME3,
-        Test.REPONAMEREAL
+        TestHarness.REPONAME1,
+        TestHarness.REPONAME2,
+        TestHarness.REPONAME3,
+        TestHarness.REPONAMEREAL
     ];
 
     const TESTTEAMNAMES = [
@@ -90,11 +90,11 @@ describe("GitHubActions", () => {
         "TESTteam2",
         "TESTteam3",
         "TESTteam4",
-        Test.TEAMNAME1,
-        Test.TEAMNAME2,
-        Test.TEAMNAME3,
-        Test.TEAMNAME4,
-        Test.TEAMNAMEREAL
+        TestHarness.TEAMNAME1,
+        TestHarness.TEAMNAME2,
+        TestHarness.TEAMNAME3,
+        TestHarness.TEAMNAME4,
+        TestHarness.TEAMNAMEREAL
     ];
 
     it("Clear stale repos and teams.", async function () {
@@ -104,37 +104,37 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT * 100);
 
     it("Should not be possible to find a repo that does not exist.", async function () {
-        const val = await gh.repoExists(Test.INVALIDREPONAME);
+        const val = await gh.repoExists(TestHarness.INVALIDREPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to delete a repo that does not exist.", async function () {
         // and it should do so without crashing
-        const val = await gh.deleteRepo(Test.INVALIDREPONAME);
+        const val = await gh.deleteRepo(TestHarness.INVALIDREPONAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to find a team that does not exist.", async function () {
-        const val = await gh.getTeamNumber(Test.INVALIDTEAMNAME);
+        const val = await gh.getTeamNumber(TestHarness.INVALIDTEAMNAME);
         expect(val).to.be.lessThan(0);
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get the members of a team that does not exist.", async function () {
-        const val = await gh.getTeamMembers(Test.INVALIDTEAMNAME);
+        const val = await gh.getTeamMembers(TestHarness.INVALIDTEAMNAME);
         expect(val).to.be.an("array");
         expect(val).to.have.length(0);
     }).timeout(TIMEOUT);
 
     it("Should not be possible to delete a team that does not exist.", async function () {
         // and it should do so without crashing
-        const val = await gh.deleteTeam(Test.INVALIDTEAMNAME);
+        const val = await gh.deleteTeam(TestHarness.INVALIDTEAMNAME);
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a repo.", async function () {
         const rc = new RepositoryController();
         const dc = new DeliverablesController();
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
         await rc.createRepository(REPONAME, deliv, [], {});
 
         const val = await gh.createRepo(REPONAME);
@@ -185,15 +185,15 @@ describe("GitHubActions", () => {
 
     it("Should be possible to add members to a team that does exist.", async function () {
         const addMembers = await gh.addMembersToTeam(TEAMNAME,
-            [Test.GITHUB1.github, Test.GITHUB2.github]);
+            [TestHarness.GITHUB1.github, TestHarness.GITHUB2.github]);
         expect(addMembers.teamName).to.equal(TEAMNAME);
         Log.test("Members added");
     }).timeout(TIMEOUT);
 
     it("Should be possible to add get the members from a team.", async function () {
         const members = await gh.getTeamMembers(TEAMNAME);
-        expect(members).to.contain(Test.GITHUB1.github);
-        expect(members).to.contain(Test.GITHUB2.github);
+        expect(members).to.contain(TestHarness.GITHUB1.github);
+        expect(members).to.contain(TestHarness.GITHUB2.github);
     }).timeout(TIMEOUT);
 
     it("Should be possible to add a team to a repo.", async function () {
@@ -275,13 +275,13 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to identify an admin from the admin team.", async function () {
-        let res = await gh.isOnAdminTeam(Test.ADMIN1.github);
+        let res = await gh.isOnAdminTeam(TestHarness.ADMIN1.github);
         Log.test("res: " + res);
         expect(res).to.be.an("boolean");
         expect(res).to.be.true;
 
         // student should not be admin
-        res = await gh.isOnAdminTeam(Test.USER1.github);
+        res = await gh.isOnAdminTeam(TestHarness.USER1.github);
         Log.test("res: " + res);
         expect(res).to.be.an("boolean");
         expect(res).to.be.false;
@@ -295,13 +295,13 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to identify a staff from the staff team.", async function () {
-        let res = await gh.isOnStaffTeam(Test.STAFF1.github);
+        let res = await gh.isOnStaffTeam(TestHarness.STAFF1.github);
         Log.test("res: " + res);
         expect(res).to.be.an("boolean");
         expect(res).to.be.true;
 
         // student should not be admin
-        res = await gh.isOnStaffTeam(Test.USER1.github);
+        res = await gh.isOnStaffTeam(TestHarness.USER1.github);
         Log.test("res: " + res);
         expect(res).to.be.an("boolean");
         expect(res).to.be.false;
@@ -314,7 +314,7 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get a team number for a team that does not exist.", async function () {
-        const val = await gh.getTeamNumber(Test.INVALIDTEAMNAME);
+        const val = await gh.getTeamNumber(TestHarness.INVALIDTEAMNAME);
         Log.test("Team # " + val);
         expect(val).to.be.lessThan(0);
     }).timeout(TIMEOUT);
@@ -327,7 +327,7 @@ describe("GitHubActions", () => {
         expect(val.githubTeamNumber > 0).to.be.true;
 
         const addMembers = await gh.addMembersToTeam(val.teamName,
-            [Test.GITHUB1.github, Test.GITHUB2.github]);
+            [TestHarness.GITHUB1.github, TestHarness.GITHUB2.github]);
         expect(addMembers.teamName).to.equal(TEAMNAME); // not a strong test
         Log.test("Members added");
 
@@ -335,8 +335,8 @@ describe("GitHubActions", () => {
         Log.test("listed members: " + JSON.stringify(val));
         expect(getTeamMembers).to.be.an("array");
         expect(getTeamMembers.length).to.equal(2);
-        expect(getTeamMembers).to.include(Test.GITHUB1.github);
-        expect(getTeamMembers).to.include(Test.GITHUB2.github);
+        expect(getTeamMembers).to.include(TestHarness.GITHUB1.github);
+        expect(getTeamMembers).to.include(TestHarness.GITHUB2.github);
 
         // const teamAdd = await gh.addTeamToRepo(val.githubTeamNumber, REPONAME, "push");
         const teamAdd = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
@@ -353,7 +353,7 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to get a team number for a team that does exist.", async function () {
-        const val = await gh.getTeamNumber(Test.TEAMNAME1);
+        const val = await gh.getTeamNumber(TestHarness.TEAMNAME1);
         Log.test("Team # " + val);
         expect(val).to.be.greaterThan(0);
 
@@ -389,7 +389,7 @@ describe("GitHubActions", () => {
         const val = await gh.getTeamMembers("staff");
         Log.test("# Team members: " + val.length);
         expect(val.length).to.be.greaterThan(0);
-        expect(val).to.contain(Test.ADMINSTAFF1.github);
+        expect(val).to.contain(TestHarness.ADMINSTAFF1.github);
     }).timeout(TIMEOUT);
 
     it("Should be able to create many teams and get their numbers (tests team paging).", async function () {
@@ -401,7 +401,7 @@ describe("GitHubActions", () => {
         // should be able to create the teams
         for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + "_paging-" + i;
-            const team = await Test.createTeam(teamname, Test.DELIVID0, []);
+            const team = await TestHarness.createTeam(teamname, TestHarness.DELIVID0, []);
             await dbc.writeTeam(team); // get in database
 
             const val = await gh.createTeam(teamname, "push");
@@ -430,7 +430,7 @@ describe("GitHubActions", () => {
         const rc = new RepositoryController();
 
         const dc = new DeliverablesController();
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
 
         gh.setPageSize(2); // force a small page size for testing
 
@@ -472,7 +472,7 @@ describe("GitHubActions", () => {
 
         new RepositoryController();
         const dc = new DeliverablesController();
-        await dc.getDeliverable(Test.DELIVID0);
+        await dc.getDeliverable(TestHarness.DELIVID0);
 
         Log.test("Setup complete");
         // const repo = await rc.createRepository(REPONAME, deliv, [], {});
@@ -514,7 +514,7 @@ describe("GitHubActions", () => {
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
             Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
         // keep a random repo public here so that all Github instances can work with cloning this:
-        const importUrl = Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
+        const importUrl = Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
 
         const output = await gh.importRepoFS(importUrl, targetUrl);
         expect(output).to.be.true;
@@ -529,17 +529,17 @@ describe("GitHubActions", () => {
         const pc: PersonController = new PersonController();
 
         // get some persons
-        const p1 = await pc.getPerson(Test.USER1.id);
-        const p2 = await pc.getPerson(Test.USER2.id);
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
         // get the deliverable
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
         expect(deliv).to.not.be.null;
 
         // create the team
-        const team = await tc.createTeam(Test.TEAMNAME3, deliv, [p1, p2], {});
+        const team = await tc.createTeam(TestHarness.TEAMNAME3, deliv, [p1, p2], {});
         expect(team).to.not.be.null;
 
         // create the repository
@@ -555,8 +555,8 @@ describe("GitHubActions", () => {
         const start = Date.now();
         const targetUrl = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
             Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME3;
-        const importUrl = githubHost + "/classytest/" + Test.REPONAMEREAL_TESTINGSAMPLE;
-        const selectedFiles = Test.REPOSEEDFILEREAL_TESTINGSAMPLE;
+        const importUrl = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+        const selectedFiles = TestHarness.REPOSEEDFILEREAL_TESTINGSAMPLE;
         const output = await gh.importRepoFS(importUrl, targetUrl, selectedFiles);
         expect(output).to.be.true;
 
@@ -570,24 +570,24 @@ describe("GitHubActions", () => {
 
         const importTests: Array<[string, string]> = [
             // Should support a trailing .git
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git", undefined],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git", undefined],
             // Should support importing from a subdirectory
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git:" + TestHarness.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
             // Should support a subdirectory with "/" on either side
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:/" + Test.REPOSUBDIRREAL_TESTINGSAMPLE + "/", undefined],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git:/" + TestHarness.REPOSUBDIRREAL_TESTINGSAMPLE + "/", undefined],
             // Should support a subdirectory with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git:" + Test.REPOSUBDIRREAL_TESTINGSAMPLE,
-                Test.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git:" + TestHarness.REPOSUBDIRREAL_TESTINGSAMPLE,
+                TestHarness.REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE],
             // Should support importing from a branch
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, undefined],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git#" + TestHarness.REPOBRANCHREAL_TESTINGSAMPLE, undefined],
             // Should support importing from a branch with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git#" + TestHarness.REPOBRANCHREAL_TESTINGSAMPLE, "FILE.txt"],
             // Should support importing from a subdir on a branch
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
-            Test.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git#" + TestHarness.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
+            TestHarness.REPOSUBDIRREAL_TESTINGSAMPLE, undefined],
             // Should support importing from a subdir on a branch with a seedFile
-            [Test.REPONAMEREAL_TESTINGSAMPLE + ".git#" + Test.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
-            Test.REPOSUBDIRREAL_TESTINGSAMPLE, "BRANCH_NESTED.txt"],
+            [TestHarness.REPONAMEREAL_TESTINGSAMPLE + ".git#" + TestHarness.REPOBRANCHREAL_TESTINGSAMPLE + ":" +
+            TestHarness.REPOSUBDIRREAL_TESTINGSAMPLE, "BRANCH_NESTED.txt"],
         ];
 
         for (const importTest of importTests) {
@@ -740,7 +740,7 @@ describe("GitHubActions", () => {
 
         // Expects adding members to work
         const addMembers = await gh.addMembersToTeam(githubTeam.teamName,
-            [Test.GITHUB1.github, Test.GITHUB2.github]);
+            [TestHarness.GITHUB1.github, TestHarness.GITHUB2.github]);
         expect(addMembers).to.not.be.null;
 
         // const teamNum = await gh.getTeamNumber(githubTeam.teamName);
@@ -758,7 +758,7 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should not be able to change permissions of a repo that does not exist.", async function () {
-        const permissionEdit = await gh.setRepoPermission(Test.INVALIDREPONAME, "pull");
+        const permissionEdit = await gh.setRepoPermission(TestHarness.INVALIDREPONAME, "pull");
         expect(permissionEdit).to.be.false;
 
     }).timeout(TIMEOUT);
@@ -767,7 +767,7 @@ describe("GitHubActions", () => {
         let permissionEdit = null;
         let ex = null;
         try {
-            permissionEdit = await gh.setRepoPermission(Test.REPONAME1, "invalidvalue");
+            permissionEdit = await gh.setRepoPermission(TestHarness.REPONAME1, "invalidvalue");
         } catch (err) {
             ex = err;
         }
@@ -803,7 +803,7 @@ describe("GitHubActions", () => {
     // }).timeout(TIMEOUT);
 
     it("Should be possible to find the teams on a repo.", async function () {
-        const val = await gh.getTeamsOnRepo(Test.REPONAMEREAL);
+        const val = await gh.getTeamsOnRepo(TestHarness.REPONAMEREAL);
         expect(val).to.be.an("array");
         expect(val.length).to.equal(0);
     }).timeout(TIMEOUT);
@@ -863,19 +863,19 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to simulate a webhook.", async function () {
-        let worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "SHA", "message");
+        let worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "SHA", "message");
         expect(worked).to.be.false; // SHA is not right
 
         let ex = null;
         try {
             let msg = "message";
-            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             for (let i = 0; i < 10; i++) {
                 msg = msg + msg; // make a long message
             }
             msg = msg + "\n" + msg;
-            worked = await gh.simulateWebhookComment(Test.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
 
             // NOTE: worked not checked because githubWebhook needs to be active for this to work
             // expect(worked).to.be.true;
@@ -897,7 +897,7 @@ describe("GitHubActions", () => {
     it("Should be possible to make a comment.", async function () {
         const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
         let msg = "message";
-        let url = githubAPI + "/repos/classytest/" + Test.REPONAMEREAL_POSTTEST + "/commits/INVALIDSHA/comments";
+        let url = githubAPI + "/repos/classytest/" + TestHarness.REPONAMEREAL_POSTTEST + "/commits/INVALIDSHA/comments";
         let worked = await gh.makeComment(url, msg);
         expect(worked).to.be.false; // false because SHA is invalid
 
@@ -906,7 +906,7 @@ describe("GitHubActions", () => {
         }
         msg = msg + "\n" + msg;
 
-        url = githubAPI + "/repos/classytest/" + Test.REPONAMEREAL_POSTTEST +
+        url = githubAPI + "/repos/classytest/" + TestHarness.REPONAMEREAL_POSTTEST +
             "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
         worked = await gh.makeComment(url, msg);
         expect(worked).to.be.true; // should have worked
@@ -928,7 +928,7 @@ describe("GitHubActions", () => {
 
         exists = false;
         for (const team of val) {
-            if (team.teamName === Test.TEAMNAME1) {
+            if (team.teamName === TestHarness.TEAMNAME1) {
                 exists = true;
             }
         }

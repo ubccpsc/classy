@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {PersonController} from "@backend/controllers/PersonController";
@@ -21,17 +21,17 @@ describe("RepositoryController", () => {
     let dc: DeliverablesController;
 
     before(async () => {
-        await Test.suiteBefore("RepositoryController");
+        await TestHarness.suiteBefore("RepositoryController");
 
         // clear stale data (removed; happens in suiteBefore)
         // const dbc = DatabaseController.getInstance();
         // await dbc.clearData();
 
         // get data ready
-        await Test.prepareDeliverables();
-        await Test.preparePeople();
-        await Test.prepareAuth();
-        await Test.prepareTeams();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.preparePeople();
+        await TestHarness.prepareAuth();
+        await TestHarness.prepareTeams();
 
         tc = new TeamController();
         rc = new RepositoryController();
@@ -40,7 +40,7 @@ describe("RepositoryController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter("RepositoryController");
+        TestHarness.suiteAfter("RepositoryController");
     });
 
     it("Should be able to get all repositories, even if there are none.", async () => {
@@ -52,12 +52,12 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(0);
 
-        const team = await tc.getTeam(Test.TEAMNAME1);
+        const team = await tc.getTeam(TestHarness.TEAMNAME1);
         expect(team).to.not.be.null;
 
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
 
-        const repo = await rc.createRepository(Test.REPONAME1, deliv, [team], {});
+        const repo = await rc.createRepository(TestHarness.REPONAME1, deliv, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos();
@@ -68,12 +68,12 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(1);
 
-        const team = await tc.getTeam(Test.TEAMNAME1);
+        const team = await tc.getTeam(TestHarness.TEAMNAME1);
         expect(team).to.not.be.null;
 
-        const deliv = await dc.getDeliverable(Test.DELIVID0);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
 
-        const repo = await rc.createRepository(Test.REPONAME1, deliv, [team], {});
+        const repo = await rc.createRepository(TestHarness.REPONAME1, deliv, [team], {});
         expect(repo).to.not.be.null;
 
         repos = await rc.getAllRepos();
@@ -84,7 +84,7 @@ describe("RepositoryController", () => {
         let repos = await rc.getAllRepos();
         expect(repos).to.have.lengthOf(1);
 
-        const person = await pc.getPerson(Test.USER1.id);
+        const person = await pc.getPerson(TestHarness.USER1.id);
         repos = await rc.getReposForPerson(person);
         expect(repos).to.have.lengthOf(1);
     });
@@ -96,13 +96,13 @@ describe("RepositoryController", () => {
         const people = await rc.getPeopleForRepo(repos[0].id);
         Log.test(JSON.stringify(people));
         expect(people).to.have.lengthOf(2);
-        expect(people).to.contain(Test.USER1.id);
-        expect(people).to.contain(Test.USER2.id);
+        expect(people).to.contain(TestHarness.USER1.id);
+        expect(people).to.contain(TestHarness.USER2.id);
     });
 
     it("Should be able to find repos for a person.", async () => {
         // test should be in PersonControllerSpec but the repos are made here...
-        const repos = await pc.getRepos(Test.USER1.id);
+        const repos = await pc.getRepos(TestHarness.USER1.id);
         expect(repos).to.have.lengthOf(1);
     });
 
@@ -129,7 +129,7 @@ describe("RepositoryController", () => {
 
         const repo: Repository = {
             id: Date.now() + "_id",
-            delivId: Test.DELIVID0,
+            delivId: TestHarness.DELIVID0,
             URL: null,
             cloneURL: null,
             custom: {},
@@ -152,7 +152,7 @@ describe("RepositoryController", () => {
     it("Should be able to create a RepositoryTransport.", async () => {
         const repo: Repository = {
             id: Date.now() + "_id",
-            delivId: Test.DELIVID0,
+            delivId: TestHarness.DELIVID0,
             URL: null,
             cloneURL: null,
             custom: {},

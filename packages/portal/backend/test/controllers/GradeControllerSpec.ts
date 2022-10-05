@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {AutoTestGradeTransport} from "@common/types/PortalTypes";
 import {GradePayload} from "@common/types/SDMMTypes";
 
@@ -16,12 +16,12 @@ describe("GradeController", () => {
     let gc: GradesController;
 
     before(async () => {
-        await Test.suiteBefore("GradeController");
-        await Test.preparePeople();
-        await Test.prepareAuth();
-        await Test.prepareDeliverables();
-        await Test.prepareTeams();
-        await Test.prepareRepositories();
+        await TestHarness.suiteBefore("GradeController");
+        await TestHarness.preparePeople();
+        await TestHarness.prepareAuth();
+        await TestHarness.prepareDeliverables();
+        await TestHarness.prepareTeams();
+        await TestHarness.prepareRepositories();
     });
 
     beforeEach(() => {
@@ -29,7 +29,7 @@ describe("GradeController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter("GradeController");
+        TestHarness.suiteAfter("GradeController");
     });
 
     it("Should be able to get all grades, even if there are none.", async () => {
@@ -50,7 +50,7 @@ describe("GradeController", () => {
             custom: {}
         };
 
-        const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        const valid = await gc.createGrade(TestHarness.REPONAME1, TestHarness.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2);
@@ -70,7 +70,7 @@ describe("GradeController", () => {
             custom: {}
         };
 
-        const valid = await gc.createGrade(Test.REPONAME1, Test.DELIVID1, grade);
+        const valid = await gc.createGrade(TestHarness.REPONAME1, TestHarness.DELIVID1, grade);
         expect(valid).to.be.true;
         grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // still two (one for each team member)
@@ -83,7 +83,7 @@ describe("GradeController", () => {
         const grades = await gc.getAllGrades();
         expect(grades).to.have.lengthOf(2); // from previous
 
-        const grade = await gc.getGrade(Test.USER1.id, Test.DELIVID1);
+        const grade = await gc.getGrade(TestHarness.USER1.id, TestHarness.DELIVID1);
         expect(grade).to.not.be.null;
         expect(grade.score).to.equal(50);
     });
@@ -94,30 +94,30 @@ describe("GradeController", () => {
 
         // close deliv
         const dc = new DeliverablesController();
-        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        let deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         deliv.gradesReleased = false;
         await dc.saveDeliverable(deliv);
 
-        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
+        grades = await gc.getReleasedGradesForPerson(TestHarness.USER1.id);
         expect(grades.length).to.equal(0); // no deliverables have grades released
 
-        deliv = await dc.getDeliverable(Test.DELIVID1);
+        deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         deliv.gradesReleased = true;
         await dc.saveDeliverable(deliv);
 
-        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
+        grades = await gc.getReleasedGradesForPerson(TestHarness.USER1.id);
         expect(grades.length).to.equal(1); // no deliverables have grades released
         expect(grades[0].score).to.equal(50);
 
         // check with a released deliverable that has no grade record
-        deliv = Test.getDeliverable(Test.DELIVID2);
+        deliv = TestHarness.getDeliverable(TestHarness.DELIVID2);
         deliv.gradesReleased = true;
         await dc.saveDeliverable(deliv);
-        grades = await gc.getReleasedGradesForPerson(Test.USER1.id);
+        grades = await gc.getReleasedGradesForPerson(TestHarness.USER1.id);
         expect(grades.length).to.equal(2); // no deliverables have grades released
-        expect(grades[0].delivId).to.equal(Test.DELIVID1);
+        expect(grades[0].delivId).to.equal(TestHarness.DELIVID1);
         expect(grades[0].score).to.equal(50);
-        expect(grades[1].delivId).to.equal(Test.DELIVID2);
+        expect(grades[1].delivId).to.equal(TestHarness.DELIVID2);
         expect(grades[1].score).to.equal(null);
     });
 

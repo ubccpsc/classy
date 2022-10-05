@@ -5,7 +5,7 @@ import "mocha";
 import "@common/test/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
@@ -63,7 +63,7 @@ describe("GitHub Event Parser", () => {
             gradesReleased: false,
 
             shouldProvision: true,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + TestHarness.REPONAMEREAL_POSTTEST + '.git',
             teamMinSize: 2,
             teamMaxSize: 2,
             teamSameLab: true,
@@ -301,7 +301,7 @@ describe("GitHub Event Parser", () => {
 
     function readFile(fName: string): string {
         // test root folders depend on the environment executing the test case
-        if (Test.isCI() === true) {
+        if (TestHarness.isCI() === true) {
             // ./test/... works on CI
             return fs.readFileSync("./test/githubEvents/" + fName, "utf8");
         } else {

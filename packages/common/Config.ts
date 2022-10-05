@@ -14,10 +14,8 @@ if (envLoadResult.error) {
  */
 export enum ConfigCourses {
     classytest = "classytest",
-
     cs310 = "cs310",
-    cs340 = "cs340",
-
+    // cs340 = "cs340",
     sdmm = "sdmm", // edX micromasters capstone project
 }
 
@@ -85,12 +83,11 @@ export enum ConfigKey {
 
 export default class Config {
     protected static instance: Config = null;
-    private config: any;
+    private readonly config: any;
 
     public static getInstance(): Config {
         if (Config.instance === null) {
-            const c = new Config();
-            Config.instance = c;
+            Config.instance = new Config();
         }
         return Config.instance;
     }

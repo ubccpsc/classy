@@ -3,7 +3,7 @@ import "mocha";
 
 import {DeliverableTransport} from "@common/types/PortalTypes";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {Deliverable} from "@backend/Types";
@@ -18,8 +18,8 @@ describe("DeliverablesController", () => {
     let DELIV1: Deliverable = null; // delivs are complex so just use one for the whole suite
 
     before(async () => {
-        await Test.suiteBefore("DeliverablesController");
-        DELIV1 = Test.createDeliverable(Test.DELIVID1);
+        await TestHarness.suiteBefore("DeliverablesController");
+        DELIV1 = TestHarness.createDeliverable(TestHarness.DELIVID1);
     });
 
     beforeEach(() => {
@@ -27,7 +27,7 @@ describe("DeliverablesController", () => {
     });
 
     after(() => {
-        Test.suiteAfter("DeliverablesController");
+        TestHarness.suiteAfter("DeliverablesController");
     });
 
     it("Should be able to get all deliverables, even if there are none.", async () => {
@@ -63,9 +63,9 @@ describe("DeliverablesController", () => {
     });
 
     it("Should be able to get a specific deliverable.", async () => {
-        const deliv = await dc.getDeliverable(Test.DELIVID1);
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         expect(deliv).to.not.be.null;
-        expect(deliv.id).to.equal(Test.DELIVID1);
+        expect(deliv.id).to.equal(TestHarness.DELIVID1);
     });
 
     it("Should be able to invalidate bad deliverables.", async () => {
@@ -91,28 +91,28 @@ describe("DeliverablesController", () => {
             await db.deletePerson(p);
         }
 
-        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        let deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         expect(deliv).to.not.be.null;
 
         deliv.autotest.studentDelay = 60; // 1 minute
         const valid = await dc.saveDeliverable(deliv);
         expect(valid).to.not.be.null;
 
-        deliv = await dc.getDeliverable(Test.DELIVID1);
+        deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         expect(deliv).to.not.be.null;
         expect(deliv.autotest.studentDelay).to.be.greaterThan(120);
     });
 
     it("Should enforce custom entered minimum delay between grade requests", async () => {
         DatabaseController.getInstance();
-        let deliv = await dc.getDeliverable(Test.DELIVID1);
+        let deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         expect(deliv).to.not.be.null;
         deliv.autotest.studentDelay = 901; // 15 minutes, 1 second
 
         const valid = await dc.saveDeliverable(deliv);
         expect(valid).to.not.be.null;
 
-        deliv = await dc.getDeliverable(Test.DELIVID1);
+        deliv = await dc.getDeliverable(TestHarness.DELIVID1);
         expect(deliv).to.not.be.null;
         expect(deliv.autotest.studentDelay).to.be.equal(901);
     });

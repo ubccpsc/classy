@@ -5,7 +5,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {Test} from "@common/test/TestHarness";
+import {TestHarness} from "@common/test/TestHarness";
 import {
     AutoTestConfigTransport,
     AutoTestResultPayload,
@@ -35,7 +35,7 @@ describe("Admin Routes", function () {
     let app: restify.Server = null;
     let server: BackendServer = null;
 
-    const userName = Test.ADMIN1.id;
+    const userName = TestHarness.ADMIN1.id;
     let userToken: string;
 
     const TIMEOUT = 1000;
@@ -43,10 +43,10 @@ describe("Admin Routes", function () {
     before(async () => {
         Log.test("AdminRoutes::before - start");
 
-        await Test.suiteBefore("Admin Routes");
+        await TestHarness.suiteBefore("Admin Routes");
 
         // get data ready
-        await Test.prepareAll();
+        await TestHarness.prepareAll();
 
         try {
             // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
@@ -69,7 +69,7 @@ describe("Admin Routes", function () {
     after(async () => {
         Log.test("AdminRoutes::after - start");
         await server.stop();
-        await Test.suiteAfter("Admin Routes");
+        await TestHarness.suiteAfter("Admin Routes");
     });
 
     it("Should be able to get a list of students", async function () {
@@ -88,7 +88,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to get a list of staff", async function () {
 
@@ -106,7 +106,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to get a list of students with cookies for authentication", async function () {
 
@@ -124,7 +124,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success).to.be.an("array");
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should not be able to get a list of students if the requester is not privileged", async function () {
 
@@ -132,7 +132,7 @@ describe("Admin Routes", function () {
         let body: StudentTransportPayload;
         const url = "/portal/admin/students";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -202,7 +202,7 @@ describe("Admin Routes", function () {
         let body: StudentTransportPayload;
         const url = "/portal/admin/teams";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -229,7 +229,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should not be able to get a list of grades if the requester is not privileged", async function () {
 
@@ -237,7 +237,7 @@ describe("Admin Routes", function () {
         let body: StudentTransportPayload;
         const url = "/portal/admin/grades";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -265,7 +265,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to get a list of the best graded results for a deliverable", async function () {
         let response = null;
@@ -284,7 +284,7 @@ describe("Admin Routes", function () {
         expect(body.success).to.be.an("array");
 
         // should confirm body.success objects (at least one)
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to get a list of results", async function () {
 
@@ -312,7 +312,7 @@ describe("Admin Routes", function () {
         let body: AutoTestResultPayload;
         const url = "/portal/admin/results/any/any";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -349,7 +349,7 @@ describe("Admin Routes", function () {
         let body: AutoTestResultPayload;
         const url = "/portal/admin/dashboard/any/any";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -386,7 +386,7 @@ describe("Admin Routes", function () {
         let body: AutoTestResultPayload;
         const url = "/portal/admin/export/dashboard/any/any";
         try {
-            response = await request(app).get(url).set({user: Test.USER1.id, token: userToken});
+            response = await request(app).get(url).set({user: TestHarness.USER1.id, token: userToken});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -449,7 +449,7 @@ describe("Admin Routes", function () {
         const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable("d" + new Date().getTime()));
+                TestHarness.createDeliverable("d" + new Date().getTime()));
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -468,7 +468,7 @@ describe("Admin Routes", function () {
         const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable("d" + new Date().getTime()));
+                TestHarness.createDeliverable("d" + new Date().getTime()));
             deliv.id = null; // make invalid
 
             response = await request(app).post(url).send(deliv).set({user: userName, token: userToken});
@@ -491,8 +491,8 @@ describe("Admin Routes", function () {
         // and we _still_ want it all to fail
 
         const dc: DatabaseController = DatabaseController.getInstance();
-        await dc.writeAuth({personId: Test.USER1.id, token: "testtoken"}); // create an auth record
-        const auth = await dc.getAuth(Test.USER1.id);
+        await dc.writeAuth({personId: TestHarness.USER1.id, token: "testtoken"}); // create an auth record
+        const auth = await dc.getAuth(TestHarness.USER1.id);
         const token = auth.token;
 
         let response = null;
@@ -500,9 +500,9 @@ describe("Admin Routes", function () {
         const url = "/portal/admin/deliverable";
         try {
             const deliv = DeliverablesController.deliverableToTransport(
-                Test.createDeliverable("d" + new Date().getTime()));
+                TestHarness.createDeliverable("d" + new Date().getTime()));
 
-            response = await request(app).post(url).send(deliv).set({user: Test.USER1.id, token: token});
+            response = await request(app).post(url).send(deliv).set({user: TestHarness.USER1.id, token: token});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -685,7 +685,7 @@ describe("Admin Routes", function () {
 
     it("Should be able to update a classlist on restricted IP", async function () {
 
-        if (Test.isCI() === false) {
+        if (TestHarness.isCI() === false) {
             // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
             return;
@@ -711,7 +711,7 @@ describe("Admin Routes", function () {
 
         let response = null;
         let body: Payload;
-        const url = "/portal/admin/grades/" + Test.DELIVID1;
+        const url = "/portal/admin/grades/" + TestHarness.DELIVID1;
         try {
             response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesValid.csv").set({
                 user: userName,
@@ -733,7 +733,7 @@ describe("Admin Routes", function () {
 
         let response = null;
         let body: Payload;
-        const url = "/portal/admin/grades/" + Test.DELIVID1;
+        const url = "/portal/admin/grades/" + TestHarness.DELIVID1;
 
         response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesInvalid.csv").set({
             user: userName,
@@ -830,7 +830,7 @@ describe("Admin Routes", function () {
     describe("Slow AdminRoute Tests", () => {
 
         beforeEach(function () {
-            const exec = Test.runSlowTest();
+            const exec = TestHarness.runSlowTest();
 
             if (exec) {
                 Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
@@ -875,7 +875,7 @@ describe("Admin Routes", function () {
 
             let response = null;
             let body: RepositoryPayload;
-            const url = "/portal/admin/provision/" + Test.DELIVIDPROJ;
+            const url = "/portal/admin/provision/" + TestHarness.DELIVIDPROJ;
             try {
                 response = await request(app).get(url).set({user: userName, token: userToken});
                 body = response.body;
@@ -915,7 +915,7 @@ describe("Admin Routes", function () {
 
             let response = null;
             let body: RepositoryPayload;
-            const url = "/portal/admin/release/" + Test.DELIVIDPROJ;
+            const url = "/portal/admin/release/" + TestHarness.DELIVIDPROJ;
             try {
                 response = await request(app).get(url).set({user: userName, token: userToken});
                 body = response.body;
@@ -994,16 +994,16 @@ describe("Admin Routes", function () {
             const dbc = DatabaseController.getInstance();
             await dbc.clearData();
 
-            await clearAll([Test.REPONAMEREAL], []);
+            await clearAll([TestHarness.REPONAMEREAL], []);
 
             // const gha = GitHubActions.getInstance();
             // await gha.deleteRepo(Test.REPONAMEREAL);
 
-            await Test.prepareAllReal(); // create a valid set of users and teams
+            await TestHarness.prepareAllReal(); // create a valid set of users and teams
 
             let response = null;
             let body: Payload;
-            let url = "/portal/admin/provision/" + Test.DELIVID0;
+            let url = "/portal/admin/provision/" + TestHarness.DELIVID0;
 
             Log.test("planning the provisioning");
             // first plan the url
@@ -1020,7 +1020,7 @@ describe("Admin Routes", function () {
             // };
 
             Log.test("performing the provisioning");
-            url = "/portal/admin/provision/" + Test.DELIVID0 + "/" + Test.REPONAMEREAL;
+            url = "/portal/admin/provision/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAMEREAL;
             // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
@@ -1040,20 +1040,20 @@ describe("Admin Routes", function () {
             // expect(body.success).to.be.an("array");
             // expect(body.success.length).to.equal(0);
 
-        }).timeout(Test.TIMEOUTLONG);
+        }).timeout(TestHarness.TIMEOUTLONG);
 
         it("Should fail to provision a deliverable if invalid options are given", async function () {
 
             let response = null;
             let body: Payload;
-            let url = "/portal/admin/provision/" + Test.DELIVID0 + "/" + Test.REPONAMEREAL;
+            let url = "/portal/admin/provision/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAMEREAL;
 
             // const provision: ProvisionTransport = {
             //     delivId:    Test.DELIVID0,
             //     formSingle: false
             // };
             // bad token
-            response = await request(app).post(url).set({user: userName, token: Test.FAKETOKEN});
+            response = await request(app).post(url).set({user: userName, token: TestHarness.FAKETOKEN});
             body = response.body;
             Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(401);
@@ -1061,7 +1061,7 @@ describe("Admin Routes", function () {
             expect(body.failure).to.not.be.undefined;
 
             // invalid deliverable
-            url = "/portal/admin/provision/" + "FAKEDELIVERABLE" + "/" + Test.REPONAMEREAL;
+            url = "/portal/admin/provision/" + "FAKEDELIVERABLE" + "/" + TestHarness.REPONAMEREAL;
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
             Log.test("invalid deliverable: " + response.status + " -> " + JSON.stringify(body));
@@ -1070,7 +1070,7 @@ describe("Admin Routes", function () {
             expect(body.failure).to.not.be.undefined;
 
             // non-provisioning deliverable
-            url = "/portal/admin/provision/" + Test.DELIVID1 + "/" + Test.REPONAMEREAL;
+            url = "/portal/admin/provision/" + TestHarness.DELIVID1 + "/" + TestHarness.REPONAMEREAL;
             response = await request(app).post(url).set({user: userName, token: userToken});
             body = response.body;
             Log.test("non-provisioning deliverable: " + response.status + " -> " + JSON.stringify(body));
@@ -1083,7 +1083,7 @@ describe("Admin Routes", function () {
 
             let response = null;
             let body: Payload;
-            const url = "/portal/admin/release/" + Test.REPONAMEREAL;
+            const url = "/portal/admin/release/" + TestHarness.REPONAMEREAL;
 
             // const provision: ProvisionTransport = {
             //     delivId:    Test.DELIVID0,
@@ -1104,7 +1104,7 @@ describe("Admin Routes", function () {
             // expect(response.status).to.equal(200);
             // expect(body.success).to.be.an("array");
             // expect(body.success.length).to.equal(0);
-        }).timeout(Test.TIMEOUTLONG);
+        }).timeout(TestHarness.TIMEOUTLONG);
 
         it("Should fail to release a deliverable if invalid options are given", async function () {
 
@@ -1112,7 +1112,7 @@ describe("Admin Routes", function () {
             let body: Payload;
             const url = "/portal/admin/release/repoId";
 
-            response = await request(app).post(url).set({user: userName, token: Test.FAKETOKEN});
+            response = await request(app).post(url).set({user: userName, token: TestHarness.FAKETOKEN});
             body = response.body;
             Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
             expect(response.status).to.equal(401);
@@ -1147,8 +1147,8 @@ describe("Admin Routes", function () {
         try {
             // create 2 people in an individual deliverable (should be allowed for admin)
             const team: TeamFormationTransport = {
-                delivId: Test.DELIVID0,
-                githubIds: [Test.USER5.github, Test.USER6.github]
+                delivId: TestHarness.DELIVID0,
+                githubIds: [TestHarness.USER5.github, TestHarness.USER6.github]
             };
 
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
@@ -1172,8 +1172,8 @@ describe("Admin Routes", function () {
         const url = "/portal/admin/team";
         let ex = null;
         const team: TeamFormationTransport = {
-            delivId: Test.DELIVID0,
-            githubIds: [Test.USER5.github, Test.USER6.github]
+            delivId: TestHarness.DELIVID0,
+            githubIds: [TestHarness.USER5.github, TestHarness.USER6.github]
         };
         try {
             // already on team
@@ -1206,7 +1206,7 @@ describe("Admin Routes", function () {
 
         try {
             // invalid user
-            team.delivId = Test.DELIVID0;
+            team.delivId = TestHarness.DELIVID0;
             team.githubIds = ["INVALIDUSERNAME" + Date.now()];
             response = await request(app).post(url).send(team).set({user: userName, token: userToken});
             body = response.body;
@@ -1220,10 +1220,10 @@ describe("Admin Routes", function () {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
 
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to delete a deliverable", async function () {
-        const url = "/portal/admin/deliverable/" + Test.DELIVID0;
+        const url = "/portal/admin/deliverable/" + TestHarness.DELIVID0;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1265,7 +1265,7 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + Test.DELIVIDPROJ).set({user: userName, token: Test.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.DELIVIDPROJ).set({user: userName, token: TestHarness.FAKETOKEN});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1279,7 +1279,7 @@ describe("Admin Routes", function () {
     });
 
     it("Should be able to delete a repository", async function () {
-        const url = "/portal/admin/repository/" + Test.REPONAME1;
+        const url = "/portal/admin/repository/" + TestHarness.REPONAME1;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1296,9 +1296,9 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.be.an("string");
         expect(ex).to.be.null;
 
-        const team = await DatabaseController.getInstance().getTeam(Test.TEAMNAME1);
+        const team = await DatabaseController.getInstance().getTeam(TestHarness.TEAMNAME1);
         expect(team.custom.githubAttached).to.be.false;
-    }).timeout(Test.TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should fail to delete a repository if appropriate", async function () {
         const url = "/portal/admin/repository/";
@@ -1324,7 +1324,7 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + Test.REPONAME1).set({user: userName, token: Test.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.REPONAME1).set({user: userName, token: TestHarness.FAKETOKEN});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1338,7 +1338,7 @@ describe("Admin Routes", function () {
     });
 
     it("Should be able to delete a team", async function () {
-        const url = "/portal/admin/team/" + Test.TEAMNAME1;
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1;
         let response = null;
         let body: Payload;
         let ex = null;
@@ -1380,7 +1380,7 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + Test.TEAMNAME1).set({user: userName, token: Test.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.TEAMNAME1).set({user: userName, token: TestHarness.FAKETOKEN});
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1394,7 +1394,7 @@ describe("Admin Routes", function () {
     });
 
     it("Should be able to update a classlist if authorized as admin", async function () {
-        if (Test.isCI() === false) {
+        if (TestHarness.isCI() === false) {
             // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
             return;
