@@ -89,6 +89,21 @@ export class AdminConfigTab extends AdminPage {
             }
         };
 
+        (document.querySelector('#adminSubmitGradePrairieCSV') as OnsButtonElement).onclick = function (evt) {
+            Log.info('AdminConfigTab::handleAdminConfig(..) - upload prairie grades pressed');
+            evt.stopPropagation(); // prevents list item expansion
+
+            const fileInput = document.querySelector('#adminGradePrairieCSV') as HTMLInputElement;
+            const isValid: boolean = that.validateFileSpecified(fileInput);
+            if (isValid === true) {
+                that.uploadGradesPrairie(fileInput.files).then(function () {
+                    // done
+                }).catch(function (err) {
+                    Log.error('AdminConfigTab::handleAdminConfig(..) - upload grades pressed ERROR: ' + err.message);
+                });
+            }
+        };
+
         (document.querySelector('#adminSubmitDefaultDeliverable') as OnsButtonElement).onclick = function (evt) {
             Log.info('AdminConfigTab::handleAdminConfig(..) - default deliverable pressed');
             evt.preventDefault();
@@ -396,7 +411,7 @@ export class AdminConfigTab extends AdminPage {
 
     public async uploadGrades(fileList: FileList, delivId: string) {
         Log.info('AdminConfigTab::uploadGrades(..) - start');
-        const url = this.remote + '/portal/admin/grades/' + delivId;
+        const url = this.remote + '/portal/admin/grades/csv/' + delivId;
 
         UI.showModal('Uploading grades.');
 
@@ -435,6 +450,49 @@ export class AdminConfigTab extends AdminPage {
         }
 
         Log.trace('AdminConfigTab::uploadGrades(..) - end');
+    }
+
+    public async uploadGradesPrairie(fileList: FileList) {
+        Log.info('AdminConfigTab::uploadGradesPrairie(..) - start');
+        const url = this.remote + '/portal/admin/grades/prairie';
+
+        UI.showModal('Uploading PrairieLearn GradeBook.');
+
+        try {
+            const formData = new FormData();
+            formData.append('gradelist', fileList[0]); // The CSV is fileList[0]
+
+            const opts = {
+                headers: {
+                    // 'Content-Type': 'application/json', // violates CORS; leave commented out
+                    user: localStorage.user,
+                    token: localStorage.token
+                }
+            };
+            const response: Response = await Network.httpPostFile(url, opts, formData);
+            if (response.status >= 200 && response.status < 300) {
+                const data: Payload = await response.json();
+                UI.hideModal();
+                Log.info('AdminConfigTab::uploadGradesPrairie(..) - RESPONSE: ' + JSON.stringify(data));
+                UI.notification(data.success.message);
+            } else {
+                const reason = await response.json();
+                UI.hideModal();
+                if (typeof reason.failure && typeof reason.failure.message) {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns. <br/>Details: ' + reason.failure.message);
+                } else {
+                    UI.notification('There was an issue uploading your grade CSV. ' +
+                        'Please ensure the CSV file includes all required columns.');
+                }
+            }
+        } catch (err) {
+            UI.hideModal();
+            Log.error('AdminConfigTab::uploadGradesPrairie(..) - ERROR: ' + err.message);
+            AdminView.showError(err);
+        }
+
+        Log.trace('AdminConfigTab::uploadGradesPrairie(..) - end');
     }
 
     private async teamCreatePressed(): Promise<void> {

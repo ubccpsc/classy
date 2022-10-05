@@ -41,6 +41,7 @@ import {ClasslistAgent} from "./ClasslistAgent";
 import {ResultsKind} from "../../controllers/ResultsController";
 import IREST from "../IREST";
 import {CSVParser} from "./CSVParser";
+import {CSVPrairieLearnParser} from "@backend/server/common/CSVPrairieLearnParser";
 
 export default class AdminRoutes implements IREST {
 
@@ -71,7 +72,8 @@ export default class AdminRoutes implements IREST {
         // admin-only functions
         server.post('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.postClasslist);
         server.put('/portal/admin/classlist', AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
-        server.post('/portal/admin/grades/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
+        server.post('/portal/admin/grades/csv/:delivId', AdminRoutes.isAdmin, AdminRoutes.postGrades);
+        server.post('/portal/admin/grades/prairie', AdminRoutes.isAdmin, AdminRoutes.postGradesPrairie);
         server.post('/portal/admin/deliverable', AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
 
         server.post('/portal/admin/course', AdminRoutes.isAdmin, AdminRoutes.postCourse);
@@ -278,7 +280,7 @@ export default class AdminRoutes implements IREST {
         const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
-        // handled by preceeding action in chain above (see registerRoutes)
+        // handled by preceding action in chain above (see registerRoutes)
         cc.getTeams().then(function (teams) {
             Log.info('AdminRoutes::getTeams(..) - done; # teams: ' + teams.length + '; took: ' + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
@@ -655,7 +657,39 @@ export default class AdminRoutes implements IREST {
                 return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.message, res, next);
             });
         } catch (err) {
-            return AdminRoutes.handleError(400, 'Graes upload unsuccessful. ERROR: ' + err.message, res, next);
+            return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.message, res, next);
+        }
+    }
+
+    private static postGradesPrairie(req: any, res: any, next: any) {
+        Log.info('AdminRoutes::postGradesPrairie(..) - start');
+
+        // authentication handled by preceding action in chain above (see registerRoutes)
+
+        try {
+            // const user = req.params.user;
+            const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
+
+            const userName = AdminRoutes.getUser(req);
+            const csvParser = new CSVPrairieLearnParser();
+            csvParser.processGrades(userName, path).then(function (grades) {
+                if (grades.length > 0) {
+                    const payload: Payload = {
+                        success: {
+                            message: 'Grades upload successful. ' + grades.length + ' grades processed.'
+                        }
+                    };
+                    res.send(200, payload);
+                    Log.info('AdminRoutes::postGradesPrairie(..) - done: ' + payload.success.message);
+                } else {
+                    const msg = 'Grades upload not successful; no grades were processed from CSV.';
+                    return AdminRoutes.handleError(400, msg, res, next);
+                }
+            }).catch(function (err: Error) {
+                return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.message, res, next);
+            });
+        } catch (err) {
+            return AdminRoutes.handleError(400, 'Grades upload unsuccessful. ERROR: ' + err.message, res, next);
         }
     }
 
