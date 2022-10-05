@@ -3,10 +3,6 @@
     "version": "1.0.0",
     "description": "Classy Portal Frontend",
     "main": "app/index.html",
-    "scripts": {
-        "build": "tsc",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
     "repository": {
         "type": "git",
         "url": "git+https://github.com/ubccpsc/classy.git"
@@ -18,6 +14,7 @@
     },
     "homepage": "https://github.com/ubccpsc/classy",
     "scripts": {
+        "build": "tsc",
         "frontend": "webpack --watch"
     },
     "dependencies": {

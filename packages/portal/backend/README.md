@@ -40,13 +40,13 @@ Follow the one-time instructions below. Once those are done do the following:
 
 * Configure WebStorm for testing (only needs to happen once):
 	* Create `Mocha` execution profile
-	* Node options: `--require dotenv/config --require tsconfig-paths/register`
+	* Node options: `--require dotenv/config -r tsconfig-paths/register`
 	* Mocha package: `<classy-dir>/packages/portal/backend/node_modules/mocha`
 	* Extra Mocha options: `--exit`
 	* Test directory: `<classy-dir>/packages/portal/backend/test` (select `Include subdirectories`)
 
 * Configure WebStorm for interactive execution (only needs to happen once):
     * Create `Node.js` execution profile
-    * Node options: `--require dotenv/config --require tsconfig-paths/register`
+    * Node options: `-r dotenv/config -r tsconfig-paths/register`
     * Working directory: `<classy-dir>/packages/portal/backend`
     * JavaScript file: `src/Backend.js`

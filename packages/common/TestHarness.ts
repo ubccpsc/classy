@@ -18,7 +18,7 @@ import {
     Team
 } from "../portal/backend/src/Types";
 import Config, {ConfigKey} from "./Config";
-import Log, {LogLevel} from "./Log";
+import Log from "./Log";
 import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
 import {GradePayload} from "./types/SDMMTypes";
 import Util from "./Util";
@@ -41,17 +41,17 @@ export class Test {
 
     public static testBefore(context: any) {
         Log.test("*****");
-        let testName = 'UNKNOWN TEST';
-        let suiteName = 'UNKNOWN SUITE';
+        let testName = "UNKNOWN TEST";
+        let suiteName = "UNKNOWN SUITE";
 
-        if (typeof context.currentTest !== 'undefined' &&
-            typeof context.currentTest.title !== 'undefined') {
+        if (typeof context.currentTest !== "undefined" &&
+            typeof context.currentTest.title !== "undefined") {
             testName = context.currentTest.title;
         }
 
-        if (typeof context.currentTest !== 'undefined' &&
-            typeof context.currentTest.parent !== 'undefined' &&
-            context.currentTest.parent.title !== 'undefined') {
+        if (typeof context.currentTest !== "undefined" &&
+            typeof context.currentTest.parent !== "undefined" &&
+            context.currentTest.parent.title !== "undefined") {
             suiteName = context.currentTest.parent.title;
         }
 
@@ -62,29 +62,29 @@ export class Test {
     public static testAfter(context: any) {
         Log.test("*****");
 
-        let testName = 'UNKNOWN TEST';
-        let suiteName = 'UNKNOWN SUITE';
-        let testStatus = 'UNKNOWN STATUS';
+        let testName = "UNKNOWN TEST";
+        let suiteName = "UNKNOWN SUITE";
+        let testStatus = "UNKNOWN STATUS";
 
-        if (typeof context.currentTest !== 'undefined' &&
-            typeof context.currentTest.title !== 'undefined') {
+        if (typeof context.currentTest !== "undefined" &&
+            typeof context.currentTest.title !== "undefined") {
             testName = context.currentTest.title;
         }
 
-        if (typeof context.currentTest !== 'undefined' &&
-            typeof context.currentTest.parent !== 'undefined' &&
-            context.currentTest.parent.title !== 'undefined') {
+        if (typeof context.currentTest !== "undefined" &&
+            typeof context.currentTest.parent !== "undefined" &&
+            context.currentTest.parent.title !== "undefined") {
             suiteName = context.currentTest.parent.title;
         }
 
-        if (typeof context.currentTest !== 'undefined' &&
-            typeof context.currentTest.state !== 'undefined') {
+        if (typeof context.currentTest !== "undefined" &&
+            typeof context.currentTest.state !== "undefined") {
             testStatus = context.currentTest.state;
         }
 
-        if (testStatus === 'failed') {
+        if (testStatus === "failed") {
             Log.test("* END: _TEST FAILED_ " + suiteName + " ( " + testName + " )");
-        } else if (testStatus === 'passed') {
+        } else if (testStatus === "passed") {
             Log.test("* END: _TEST PASSED_ " + suiteName + " ( " + testName + " )");
         } else {
             Log.test("* END: _TEST UNKNOWN_ " + suiteName + " ( " + testName + " ) - state: " + testStatus);
@@ -153,27 +153,27 @@ export class Test {
 
         // FAKE USERS ON GITHUB, BUT STILL IN DB FOR INTERNAL CLASSY BUSINESS LOGIC:
         let p = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
-        p.labId = 'l1a';
+        p.labId = "l1a";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
-        p.labId = 'l1a';
+        p.labId = "l1a";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
-        p.labId = 'l1a';
+        p.labId = "l1a";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER4.id, Test.USER4.csId, Test.USER4.github, PersonKind.STUDENT);
-        p.labId = 'l2c';
+        p.labId = "l2c";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER5.id, Test.USER5.csId, Test.USER5.github, PersonKind.STUDENT);
-        p.labId = 'l2d';
+        p.labId = "l2d";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.USER6.id, Test.USER6.csId, Test.USER6.github, PersonKind.STUDENT);
-        p.labId = 'l2d';
+        p.labId = "l2d";
         await dc.writePerson(p);
 
         p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
@@ -193,11 +193,11 @@ export class Test {
         p = Test.createPerson(Test.ADMINSTAFF1.id, Test.ADMINSTAFF1.csId, Test.ADMINSTAFF1.github, PersonKind.ADMINSTAFF);
         await dc.writePerson(p);
 
-        // staff person (this username should be on the 'staff' team, but not the 'admin' team in the github org)
+        // staff person (this username should be on the "staff" team, but not the "admin" team in the github org)
         p = Test.createPerson(Test.STAFF1.id, Test.STAFF1.csId, Test.STAFF1.github, PersonKind.STAFF);
         await dc.writePerson(p);
 
-        // admin person (this username should be on the 'admin' team in the github org)
+        // admin person (this username should be on the "admin" team in the github org)
         p = Test.createPerson(Test.ADMIN1.id, Test.ADMIN1.csId, Test.ADMIN1.github, PersonKind.ADMIN);
         await dc.writePerson(p);
 
@@ -233,8 +233,7 @@ export class Test {
         const dc = new DeliverablesController();
         const deliv = await dc.getDeliverable(delivId);
         const tc = new TeamController();
-        const team = await tc.createTeam(teamId, deliv, people, {});
-        return team;
+        return await tc.createTeam(teamId, deliv, people, {});
     }
 
     public static async createRepository(repoName: string, delivName: string, teamName: string): Promise<Repository> {
@@ -244,9 +243,7 @@ export class Test {
 
         const deliv = await dc.getDeliverable(delivName);
         const team = await tc.getTeam(teamName);
-        const repo = await rc.createRepository(repoName, deliv, [team], {});
-
-        return repo;
+        return await rc.createRepository(repoName, deliv, [team], {});
     }
 
     public static async prepareRepositories(): Promise<void> {
@@ -278,9 +275,9 @@ export class Test {
         // NOTE: see FrontendDatasetGenerator for ideas
         const grade: GradePayload = {
             score: 100,
-            comment: 'comment',
-            urlName: 'urlName',
-            URL: 'URL',
+            comment: "comment",
+            urlName: "urlName",
+            URL: "URL",
             timestamp: new Date(Date.UTC(2018, 1, 1, 1, 1)).getTime(),
             custom: {}
         };
@@ -301,7 +298,7 @@ export class Test {
 
         // create the first one (used in autotest tests)
         let result = Test.createResult(tuples[0].team.delivId, tuples[0].repo.id, tuples[0].team.personIds,
-            Test.getRandomInt(100), 'sha');
+            Test.getRandomInt(100), "sha");
         await dc.writeResult(result);
 
         for (const tuple of tuples) {
@@ -347,28 +344,28 @@ export class Test {
     }
 
     public static createDeliverable(delivId: string): Deliverable {
-        const d: Deliverable = {
+        return {
             id: delivId,
 
-            URL: 'http://NOTSET',
+            URL: "http://NOTSET",
             openTimestamp: new Date(1400000000000).getTime(),
             closeTimestamp: new Date(1500000000000).getTime(),
             gradesReleased: false,
 
             shouldProvision: true,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/PostTestDoNotDelete.git',
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/PostTestDoNotDelete.git",
             teamMinSize: 2,
             teamMaxSize: 2,
             teamSameLab: true,
             teamStudentsForm: true,
-            teamPrefix: 't',
-            repoPrefix: '',
+            teamPrefix: "t",
+            repoPrefix: "",
 
             visibleToStudents: true,
             lateAutoTest: false,
             shouldAutoTest: true,
             autotest: {
-                dockerImage: 'testImage',
+                dockerImage: "testImage",
                 studentDelay: 60 * 60 * 12, // 12h
                 maxExecTime: 300,
                 regressionDelivIds: [],
@@ -377,42 +374,38 @@ export class Test {
 
             rubric: {},
             custom: {}
-        };
-
-        return d;
+        } as Deliverable;
     }
 
     public static createGrade(personId: string, delivId: string, score: number): Grade {
-        const grade: Grade = {
+        return {
             personId,
             delivId,
             score,
-            comment: 'comment',
+            comment: "comment",
             timestamp: Date.now(),
-            urlName: 'name',
-            URL: 'URL',
+            urlName: "name",
+            URL: "URL",
             custom: {}
-        };
-        return grade;
+        } as Grade;
     }
 
     public static createPerson(id: string, csId: string, githubId: string, kind: PersonKind | null): Person {
-        const p: Person = {
+        return {
             id: id,
             csId: csId,
             githubId: githubId,
             studentNumber: null,
 
-            fName: 'first_' + id,
-            lName: 'last_' + id,
+            fName: "first_" + id,
+            lName: "last_" + id,
             kind: kind,
-            URL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + githubId,
+            URL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + githubId,
 
             labId: null,
 
             custom: {}
-        };
-        return p;
+        } as Person;
     }
 
     /**
@@ -434,7 +427,7 @@ export class Test {
      * Determines whether slow tests should be executed. They will _always_ run on CI, but
      * you can also set override = true to execute them locally. This is important if you
      * are editing code that touches the stuff that might be slow (e.g., specifically
-     * GitHub-related functions.
+     * GitHub-related functions).
      *
      * @returns {boolean}
      */
@@ -448,35 +441,35 @@ export class Test {
         }
     }
 
-    public static readonly TEAMNAME1 = 't1_d0_user1CSID_user2CSID';
-    public static readonly TEAMNAME2 = 'TESTteam2';
-    public static readonly TEAMNAME3 = 'TESTteam3';
-    public static readonly TEAMNAME4 = 'TESTteam4';
-    public static readonly TEAMNAMEREAL = 't_d0_atest-04CSID_atest-05CSID';
+    public static readonly TEAMNAME1 = "t1_d0_user1CSID_user2CSID";
+    public static readonly TEAMNAME2 = "TESTteam2";
+    public static readonly TEAMNAME3 = "TESTteam3";
+    public static readonly TEAMNAME4 = "TESTteam4";
+    public static readonly TEAMNAMEREAL = "t_d0_atest-04CSID_atest-05CSID";
     public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
 
     /**
-     * Creates user testing templates for real Github accounts configured in .env
-     * @param userKey ConfigKey property for user ie. ConfigKey.githubAdmin
+     * Creates user testing templates for real GitHub accounts configured in .env
+     * @param userKey ConfigKey property for user i.e., ConfigKey.githubAdmin
      * @param num account number (atest-06 would be the number 6)
      */
     public static getConfigUser(userKey: ConfigKey, num: number = null): any {
-        const username = num ? Config.getInstance().getProp(userKey).split(',')[num - 1].trim() : Config.getInstance().getProp(userKey);
+        const username = num ? Config.getInstance().getProp(userKey).split(",")[num - 1].trim() : Config.getInstance().getProp(userKey);
         return {
-            id: username + 'ID',
-            csId: username + 'CSID',
+            id: username + "ID",
+            csId: username + "CSID",
             github: username
         };
     }
 
     // FAKE USERS -- NOT USED TO INTERACT WITH GITHUB AND WORK
-    public static readonly USER1 = {id: 'user1ID', csId: 'user1CSID', github: 'user1gh'};
-    public static readonly USER2 = {id: 'user2ID', csId: 'user2CSID', github: 'user2gh'};
-    public static readonly USER3 = {id: 'user3ID', csId: 'user3CSID', github: 'user3gh'};
-    public static readonly USER4 = {id: 'user4ID', csId: 'user4CSID', github: 'user4gh'};
-    public static readonly USER5 = {id: 'user5ID', csId: 'user5CSID', github: 'user5gh'};
-    public static readonly USER6 = {id: 'user6ID', csId: 'user6CSID', github: 'user6gh'};
-    public static readonly INVALIDUSER1 = {id: 'invalidUser1id', csId: 'invalidUser1CSID', github: 'invalidUser1gh'};
+    public static readonly USER1 = {id: "user1ID", csId: "user1CSID", github: "user1gh"};
+    public static readonly USER2 = {id: "user2ID", csId: "user2CSID", github: "user2gh"};
+    public static readonly USER3 = {id: "user3ID", csId: "user3CSID", github: "user3gh"};
+    public static readonly USER4 = {id: "user4ID", csId: "user4CSID", github: "user4gh"};
+    public static readonly USER5 = {id: "user5ID", csId: "user5CSID", github: "user5gh"};
+    public static readonly USER6 = {id: "user6ID", csId: "user6CSID", github: "user6gh"};
+    public static readonly INVALIDUSER1 = {id: "invalidUser1id", csId: "invalidUser1CSID", github: "invalidUser1gh"};
 
     // REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
     public static readonly ADMIN1 = Test.getConfigUser(ConfigKey.githubAdmin);
@@ -490,35 +483,35 @@ export class Test {
     public static readonly GITHUB2 = Test.getConfigUser(ConfigKey.githubTestUsers, 5);
     public static readonly GITHUB3 = Test.getConfigUser(ConfigKey.githubTestUsers, 6);
 
-    public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was 'cpscbot';
-    public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was 'ubcbot';
-    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 1); // was 'rthse2';
+    public static readonly REALBOTNAME1 = Test.getConfigUser(ConfigKey.githubBot01); // was "cpscbot";
+    public static readonly REALBOTNAME2 = Test.getConfigUser(ConfigKey.githubBot02); // was "ubcbot";
+    public static readonly REALUSERNAME = Test.getConfigUser(ConfigKey.githubTestUsers, 1); // was "rthse2";
 
-    public static readonly DELIVIDPROJ = 'project';
-    public static readonly DELIVID0 = 'd0';
-    public static readonly DELIVID1 = 'd1';
-    public static readonly DELIVID2 = 'd2';
-    public static readonly DELIVID3 = 'd3';
-    public static readonly ASSIGNID0 = 'a0';
-    public static readonly ASSIGNID1 = 'a1';
+    public static readonly DELIVIDPROJ = "project";
+    public static readonly DELIVID0 = "d0";
+    public static readonly DELIVID1 = "d1";
+    public static readonly DELIVID2 = "d2";
+    public static readonly DELIVID3 = "d3";
+    public static readonly ASSIGNID0 = "a0";
+    public static readonly ASSIGNID1 = "a1";
 
-    public static readonly REPONAME1 = 'TESTrepo1';
-    public static readonly REPONAME2 = 'TESTrepo2';
-    public static readonly REPONAME3 = 'TESTrepo3';
-    public static readonly REPONAMEREAL = 'd0_atest-04CSID_atest-05CSID';
+    public static readonly REPONAME1 = "TESTrepo1";
+    public static readonly REPONAME2 = "TESTrepo2";
+    public static readonly REPONAME3 = "TESTrepo3";
+    public static readonly REPONAMEREAL = "d0_atest-04CSID_atest-05CSID";
     public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
 
-    public static readonly REUSABLETEAMNAME = 'testTeamName_' + Date.now();
+    public static readonly REUSABLETEAMNAME = "testTeamName_" + Date.now();
 
-    public static readonly REPONAMEREAL_POSTTEST = 'PostTestDoNotDelete';
-    public static readonly REPONAMEREAL_TESTINGSAMPLE = 'TESTING_SAMPLE_REPO';
-    public static readonly REPOBRANCHREAL_TESTINGSAMPLE = 'test-branch';
-    public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = 'subdirectory';
-    public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = 'README.md';
-    public static readonly REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE = 'NESTED.txt';
+    public static readonly REPONAMEREAL_POSTTEST = "PostTestDoNotDelete";
+    public static readonly REPONAMEREAL_TESTINGSAMPLE = "TESTING_SAMPLE_REPO";
+    public static readonly REPOBRANCHREAL_TESTINGSAMPLE = "test-branch";
+    public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = "subdirectory";
+    public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = "README.md";
+    public static readonly REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE = "NESTED.txt";
 
-    public static readonly REALTOKEN = 'realtoken';
-    public static readonly FAKETOKEN = 'faketoken';
+    public static readonly REALTOKEN = "realtoken";
+    public static readonly FAKETOKEN = "faketoken";
 
     public static readonly ASSIGNTEAMNAME0 = Test.ASSIGNID0 + "__" + Test.REALUSER1.id;
     public static readonly ASSIGNTEAMNAME1 = Test.ASSIGNID1 + "__" + Test.REALUSER1.id;
@@ -527,24 +520,24 @@ export class Test {
         const deliv: Deliverable = {
             id: delivId,
 
-            URL: 'https://NOTSET',
+            URL: "https://NOTSET",
             openTimestamp: -1,
             closeTimestamp: -1,
             gradesReleased: false,
             // delay:            -1,
             shouldProvision: false,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + Test.REPONAMEREAL_POSTTEST + '.git',
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + Test.REPONAMEREAL_POSTTEST + ".git",
             teamMinSize: 1,
             teamMaxSize: 1,
             teamSameLab: false,
             teamStudentsForm: false,
-            teamPrefix: 'team',
-            repoPrefix: '',
-            // bootstrapUrl:     '',
+            teamPrefix: "team",
+            repoPrefix: "",
+            // bootstrapUrl:     "",
             lateAutoTest: false,
             shouldAutoTest: true,
             autotest: {
-                dockerImage: 'testImage',
+                dockerImage: "testImage",
                 studentDelay: 60 * 60 * 12, // 12h
                 maxExecTime: 300,
                 regressionDelivIds: [],
@@ -564,8 +557,8 @@ export class Test {
             githubId: id,
             studentNumber: Number((Math.random() * 100000).toFixed(0)),
 
-            fName: 'f' + id,
-            lName: 'l' + id,
+            fName: "f" + id,
+            lName: "l" + id,
             kind: null,
             URL: null,
 
@@ -582,11 +575,11 @@ export class Test {
             delivId: delivId,
 
             score: score,
-            comment: '',
+            comment: "",
             timestamp: Date.now(),
 
-            urlName: 'urlName',
-            URL: 'url',
+            urlName: "urlName",
+            URL: "url",
 
             custom: {}
         };
@@ -598,8 +591,8 @@ export class Test {
             id: teamId,
             delivId: delivId,
             githubId: null,
-            // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-            //            Config.getInstance().getProp(ConfigKey.org) + '/teams/' + teamId,
+            // URL:       Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
+            //            Config.getInstance().getProp(ConfigKey.org) + "/teams/" + teamId,
             // repoName:  null,
             // repoUrl:   null,
             URL: null,
@@ -613,8 +606,8 @@ export class Test {
         const repo: Repository = {
             id: id,
             delivId: delivId,
-            URL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id,
-            cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + id + '.git',
+            URL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id,
+            cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id + ".git",
             teamIds: [teamId],
             custom: {}
         };
@@ -623,22 +616,21 @@ export class Test {
 
     public static createCourseRecord(): Course {
         const courseId = Config.getInstance().getProp(ConfigKey.name);
-        const out: Course = {
+        return {
             id: courseId,
             defaultDeliverableId: null,
             custom: {}
-        };
-        return out;
+        } as Course;
     }
 
     public static createResult(delivId: string, repoId: string, people: string[], score: number, sha?: string): Result {
 
         const ts = Date.now() - Math.random() * 1000 * 600;
-        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
-        const commitURL = projectURL + '/commits/FOOOSHA';
+        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
+            Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
+        const commitURL = projectURL + "/commits/FOOOSHA";
 
-        const names = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J'];
+        const names = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J"];
         const passNames = [];
         const failNames = [];
         const errorNames = [];
@@ -656,8 +648,8 @@ export class Test {
             }
         }
 
-        if (typeof sha === 'undefined') {
-            sha = 'sha' + Date.now() + (Math.random() * 1000) + (Math.random() * 1000) + (Math.random() * 1000);
+        if (typeof sha === "undefined") {
+            sha = "sha" + Date.now() + (Math.random() * 1000) + (Math.random() * 1000) + (Math.random() * 1000);
         }
 
         const output: ContainerOutput = {
@@ -672,8 +664,8 @@ export class Test {
                 errorNames: errorNames,
                 skipNames: skipNames,
                 custom: {},
-                feedback: 'feedback',
-                result: 'SUCCESS',
+                feedback: "feedback",
+                result: "SUCCESS",
                 attachments: []
             },
             postbackOnComplete: true,
@@ -687,18 +679,18 @@ export class Test {
                 delivId: delivId,
                 repoId: repoId,
 
-                // branch:    'master',
-                cloneURL: 'cloneURL',
+                // branch:    "master",
+                cloneURL: "cloneURL",
                 commitSHA: sha,
                 commitURL: commitURL,
 
                 botMentioned: false,
                 adminRequest: false,
                 personId: null,
-                kind: 'push',
+                kind: "push",
 
                 // projectURL:  projectURL,
-                postbackURL: 'postbackURL',
+                postbackURL: "postbackURL",
                 timestamp: ts
             },
             containerConfig: {
@@ -729,7 +721,7 @@ export class Test {
     }
 
     public static async deleteStaleRepositories(): Promise<boolean> {
-        Log.test('GlobalSpec::deleteStaleRepositories() - start');
+        Log.test("GlobalSpec::deleteStaleRepositories() - start");
         const start = Date.now();
 
         const TESTREPONAMES = [
@@ -774,8 +766,8 @@ export class Test {
             for (const repo of repos) {
                 for (const r of TESTREPONAMES) {
                     if (repo.repoName === r) {
-                        Log.info('Removing stale repo: ' + repo.repoName);
-                        const val = await gh.deleteRepo(r);
+                        Log.info("Removing stale repo: " + repo.repoName);
+                        await gh.deleteRepo(r);
                         await Util.delay(DELAY_SHORT);
                         // expect(val).to.be.true;
                     }
@@ -784,31 +776,31 @@ export class Test {
 
             // delete test repos if needed
             for (const repo of repos) {
-                Log.info('Evaluating repo: ' + repo.repoName);
-                if (repo.repoName.indexOf('TEST__X__') === 0 ||
+                Log.info("Evaluating repo: " + repo.repoName);
+                if (repo.repoName.indexOf("TEST__X__") === 0 ||
                     repo.repoName.startsWith(ASSIGNREPO1) ||
                     repo.repoName.startsWith(ASSIGNREPO2) ||
                     repo.repoName.startsWith("test_") ||
                     repo.repoName.startsWith(Test.ASSIGNID0 + "_") ||
                     repo.repoName.startsWith(Test.ASSIGNID1 + "_") ||
                     repo.repoName.endsWith("_grades")) {
-                    Log.info('Removing stale repo: ' + repo.repoName);
-                    const val = await gh.deleteRepo(repo.repoName);
+                    Log.info("Removing stale repo: " + repo.repoName);
+                    await gh.deleteRepo(repo.repoName);
                     // expect(val).to.be.true;
                     const teamName = repo.repoName.substr(15);
-                    Log.info('Adding stale team name: ' + repo.repoName);
+                    Log.info("Adding stale team name: " + repo.repoName);
                     TESTTEAMNAMES.push(teamName);
                 }
             }
 
             // delete teams if needed
             const teams = await gh.listTeams();
-            // expect(teams).to.be.an('array');
+            // expect(teams).to.be.an("array");
             // expect(teams.length > 0).to.be.true; // can have 0 teams
-            Log.test('All Teams: ' + JSON.stringify(teams));
-            Log.test('Stale Teams: ' + JSON.stringify(TESTTEAMNAMES));
+            Log.test("All Teams: " + JSON.stringify(teams));
+            Log.test("Stale Teams: " + JSON.stringify(TESTTEAMNAMES));
             for (const team of teams) {
-                // Log.info('Evaluating team: ' + JSON.stringify(team));
+                // Log.info("Evaluating team: " + JSON.stringify(team));
                 let done = false;
                 // for (const t of TESTTEAMNAMES) {
                 //     if (team.teamName === t ||
@@ -830,7 +822,7 @@ export class Test {
                 }
             }
         }
-        Log.test('GitHubActionSpec::deleteStale() - done; took: ' + Util.took(start));
+        Log.test("GitHubActionSpec::deleteStale() - done; took: " + Util.took(start));
         return true;
     }
 }
