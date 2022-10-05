@@ -1,52 +1,49 @@
-import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {DeliverablesController} from "../../src/controllers/DeliverablesController";
-
-import {PersonController} from "../../src/controllers/PersonController";
-import {RepositoryController} from "../../src/controllers/RepositoryController";
-import {TeamController} from "../../src/controllers/TeamController";
-import {Auth, Course, Deliverable, Person, PersonKind} from "../../src/Types";
-
-// import "../server/SDMMRoutesSpec"; // try to run last
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
 
-describe('TestDatasetGenerator', function() {
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {Auth, Course, Deliverable, Person, PersonKind} from "@backend/Types";
 
-    before(async function() {
+describe('TestDatasetGenerator', function () {
+
+    before(async function () {
         // await Test.suiteBefore('TestDatasetGenerator');
     });
 
-    it('Can generate the course object', async function() {
+    it('Can generate the course object', async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         const course: Course = {
-            id:                   Config.getInstance().getProp(ConfigKey.testname),
+            id: Config.getInstance().getProp(ConfigKey.testname),
             defaultDeliverableId: 'd0',
-            custom:               {}
+            custom: {}
         };
 
         await dc.writeCourseRecord(course);
 
     });
 
-    it('Can generate some students', async function() {
+    it('Can generate some students', async function () {
         const pc: PersonController = new PersonController();
 
         // create an admin
         let p: Person = {
-            id:            Test.ADMIN1.id,
-            csId:          Test.ADMIN1.csId,
-            githubId:      Test.ADMIN1.github,
+            id: Test.ADMIN1.id,
+            csId: Test.ADMIN1.csId,
+            githubId: Test.ADMIN1.github,
             studentNumber: -1,
 
             fName: 'adminFirst',
             lName: 'adminLast',
-            kind:  null,
-            URL:   null,
+            kind: null,
+            URL: null,
 
             labId: null,
 
@@ -61,15 +58,15 @@ describe('TestDatasetGenerator', function() {
 
         // create a student
         p = {
-            id:            Test.USER1.id,
-            csId:          Test.USER1.csId,
-            githubId:      Test.USER1.github,
+            id: Test.USER1.id,
+            csId: Test.USER1.csId,
+            githubId: Test.USER1.github,
             studentNumber: -1,
 
             fName: 'adminFirst',
             lName: 'adminLast',
-            kind:  PersonKind.STUDENT,
-            URL:   null,
+            kind: PersonKind.STUDENT,
+            URL: null,
 
             labId: null,
 
@@ -86,15 +83,15 @@ describe('TestDatasetGenerator', function() {
             const pid = 'p' + i;
 
             p = {
-                id:            pid,
-                csId:          pid,
-                githubId:      pid,
+                id: pid,
+                csId: pid,
+                githubId: pid,
                 studentNumber: i,
 
                 fName: pid + 'first',
                 lName: pid + 'last',
-                kind:  PersonKind.STUDENT,
-                URL:   null,
+                kind: PersonKind.STUDENT,
+                URL: null,
 
                 labId: 'l1a',
 
@@ -109,7 +106,7 @@ describe('TestDatasetGenerator', function() {
         }
     });
 
-    it('Can generate some auth tokens', async function() {
+    it('Can generate some auth tokens', async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
         // create for an admin
@@ -121,36 +118,36 @@ describe('TestDatasetGenerator', function() {
         await dc.writeAuth(a);
     });
 
-    it('Can generate some deliverables', async function() {
+    it('Can generate some deliverables', async function () {
         const dc: DeliverablesController = new DeliverablesController();
 
         const d: Deliverable = {
             id: '',
 
-            URL:               'http://NOTSET',
-            openTimestamp:     -1,
-            closeTimestamp:    -1,
-            gradesReleased:    false,
+            URL: 'http://NOTSET',
+            openTimestamp: -1,
+            closeTimestamp: -1,
+            gradesReleased: false,
             visibleToStudents: true,
 
-            shouldProvision:  true,
-            repoPrefix:       '',
-            teamPrefix:       't',
-            importURL:        null,
-            teamMinSize:      1,
-            teamMaxSize:      2,
-            teamSameLab:      true,
+            shouldProvision: true,
+            repoPrefix: '',
+            teamPrefix: 't',
+            importURL: null,
+            teamMinSize: 1,
+            teamMaxSize: 2,
+            teamSameLab: true,
             teamStudentsForm: true,
             // bootstrapUrl:     '',
 
-            lateAutoTest:   false,
+            lateAutoTest: false,
             shouldAutoTest: true,
-            autotest:       {
-                dockerImage:        'testImage',
-                studentDelay:       60 * 60 * 12, // 12h
-                maxExecTime:        300,
+            autotest: {
+                dockerImage: 'testImage',
+                studentDelay: 60 * 60 * 12, // 12h
+                maxExecTime: 300,
                 regressionDelivIds: [],
-                custom:             {}
+                custom: {}
             },
 
             rubric: {},
@@ -171,7 +168,7 @@ describe('TestDatasetGenerator', function() {
         }
     });
 
-    it('Can generate some teams', async function() {
+    it('Can generate some teams', async function () {
         const tc: TeamController = new TeamController();
         const pc: PersonController = new PersonController();
         const dc = DatabaseController.getInstance();
@@ -195,7 +192,7 @@ describe('TestDatasetGenerator', function() {
         }
     });
 
-    it('Can generate some repos', async function() {
+    it('Can generate some repos', async function () {
         const tc: TeamController = new TeamController();
 
         const teams = await tc.getAllTeams();
@@ -215,7 +212,7 @@ describe('TestDatasetGenerator', function() {
         }
     });
 
-    it('Run prepareAll at the end', async function() {
+    it('Run prepareAll at the end', async function () {
         Log.test("Finishing by preparing all");
         await Test.prepareAll();
         Log.test("Finishing by preparing all - done");

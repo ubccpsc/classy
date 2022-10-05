@@ -1,16 +1,20 @@
-import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config, {ConfigCourses, ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {Test} from "@common/test/TestHarness";
 
-import {DatabaseController} from "../src/controllers/DatabaseController";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
 
-if (typeof it === 'function') {
+/**
+ *
+ * TODO: This should have a different name (or be merged with) @common/test/GlobalSpec
+ *
+ */
+if (typeof it === "function") {
     // only if we're running in mocha
     before(async () => {
-        Log.info('GlobalSpec::before() - start');
+        Log.info("GlobalSpec::before() - start");
 
         Config.getInstance();
 
@@ -19,20 +23,20 @@ if (typeof it === 'function') {
         const db = DatabaseController.getInstance();
         await db.clearData(); // nuke everything
 
-        Log.info('GlobalSpec::before() - done');
+        Log.info("GlobalSpec::before() - done");
     });
 
     after(async () => {
-        Log.info('GlobalSpec::after() - start');
+        Log.info("GlobalSpec::after() - start");
         await Test.prepareAll();
-        Log.info('GlobalSpec::after() - done');
+        Log.info("GlobalSpec::after() - done");
     });
 
-    beforeEach(function() {
+    beforeEach(function () {
         Test.testBefore(this);
     });
 
-    afterEach(function() {
+    afterEach(function () {
         Test.testAfter(this);
     });
 }

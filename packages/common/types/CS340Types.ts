@@ -1,4 +1,10 @@
 /**
+ * DEPRECATED
+ *
+ * 340 is not using Classy anymore, these can probably be removed.
+ */
+
+/**
  * Custom type definitions, to be placed inside the custom field
  */
 
@@ -69,8 +75,8 @@ export interface SubQuestionGradingRubric {
 }
 
 export enum AssignmentStatus {
-                            // Repositories Status:
-                            // Created | Pull | Push  |
+    // Repositories Status:
+    // Created | Pull | Push  |
     INACTIVE, //    = 1,        //         |      |       | Repositories not created or viewable
     CREATED, //     = 2,        //    X    |      |       | Repositories are created, not viewable
     RELEASED, //    = 3,        //    X    |  X   |   X   | Created and viewable, with push access

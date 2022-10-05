@@ -1,13 +1,14 @@
 // import { use as chaiUse } from 'chai';
-import {use as chaiUse, expect} from "chai";
+import {expect, use as chaiUse} from "chai";
 import * as chaiAsPromised from "chai-as-promised";
 import "mocha";
 
-import Log from "../../../common/Log";
-import {Factory} from "../src/Factory";
+import Log from "@common/Log";
+import Config, {ConfigKey} from "@common/Config";
+
+import {Factory} from "@backend/Factory";
 
 import './GlobalSpec';
-import Config, {ConfigKey} from "@common/Config";
 
 chaiUse(chaiAsPromised);
 

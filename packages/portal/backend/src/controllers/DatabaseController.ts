@@ -423,18 +423,26 @@ export class DatabaseController {
     }
 
     public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
+
+        const isEmpty = function (obj: any): boolean {
+            if (typeof obj === 'undefined' || obj === null) {
+                return true;
+            }
+            return Object.keys(obj).length === 0 && obj.constructor === Object;
+        };
+
         try {
             // Log.info("DatabaseController::writeAudit(..) - start");
             Log.trace("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
-                !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
+                !isEmpty(before) + ", hasAfter: " + !isEmpty(after) + " ) - start");
 
             let finalLabel = label + '_';
-            if (Util.isEmpty(before) === true && Util.isEmpty(after) === true) {
+            if (isEmpty(before) === true && isEmpty(after) === true) {
                 // is an action, no postfix
                 finalLabel = label;
-            } else if (Util.isEmpty(before) === true) {
+            } else if (isEmpty(before) === true) {
                 finalLabel = finalLabel + 'CREATE';
-            } else if (Util.isEmpty(after) === true) {
+            } else if (isEmpty(after) === true) {
                 finalLabel = finalLabel + 'DELETE';
             } else {
                 finalLabel = finalLabel + 'UPDATE';
