@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 import Log from "../../../../common/Log";
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import Util from "../../../../common/Util";
 
 import {CourseController} from "../../src/controllers/CourseController";

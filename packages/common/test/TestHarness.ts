@@ -1,27 +1,19 @@
-import {DatabaseController} from "../portal/backend/src/controllers/DatabaseController";
-import {DeliverablesController} from "../portal/backend/src/controllers/DeliverablesController";
-import {GitHubActions} from "../portal/backend/src/controllers/GitHubActions";
-import {GradesController} from "../portal/backend/src/controllers/GradesController";
-import {PersonController} from "../portal/backend/src/controllers/PersonController";
-import {RepositoryController} from "../portal/backend/src/controllers/RepositoryController";
-import {TeamController} from "../portal/backend/src/controllers/TeamController";
-import {Factory} from "../portal/backend/src/Factory";
-import {
-    Auth,
-    Course,
-    Deliverable,
-    Grade,
-    Person,
-    PersonKind,
-    Repository,
-    Result,
-    Team
-} from "../portal/backend/src/Types";
-import Config, {ConfigKey} from "./Config";
-import Log from "./Log";
-import {ContainerInput, ContainerOutput, ContainerState} from "./types/ContainerTypes";
-import {GradePayload} from "./types/SDMMTypes";
-import Util from "./Util";
+import {DatabaseController} from "portal-backend/src/controllers/DatabaseController";
+import {DeliverablesController} from "portal-backend/src/controllers/DeliverablesController";
+import {GitHubActions} from "portal-backend/src/controllers/GitHubActions";
+import {GradesController} from "portal-backend/src/controllers/GradesController";
+import {PersonController} from "portal-backend/src/controllers/PersonController";
+import {RepositoryController} from "portal-backend/src/controllers/RepositoryController";
+import {TeamController} from "portal-backend/src/controllers/TeamController";
+import {Factory} from "portal-backend/src/Factory";
+import {Auth, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "portal-backend/src/Types";
+
+import Config, {ConfigKey} from "../Config";
+import Log from "../Log";
+import Util from "../Util";
+
+import {ContainerInput, ContainerOutput, ContainerState} from "../types/ContainerTypes";
+import {GradePayload} from "../types/SDMMTypes";
 
 export class Test {
 

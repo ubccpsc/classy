@@ -61,8 +61,8 @@
         "build:prod": "tsc --outDir bin --sourceMap false",
         "lint": "tslint --project tsconfig.json",
         "cover": "nyc --reporter text --reporter html yarn run test",
-        "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --exit packages/portal/backend/test packages/autotest/test",
-        "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --exit packages/portal/backend/test",
-        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --exit packages/autotest/test"
+        "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
+        "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
+        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"
     }
 }

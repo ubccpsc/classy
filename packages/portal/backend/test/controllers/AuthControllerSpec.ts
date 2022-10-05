@@ -6,7 +6,7 @@ import {DatabaseController} from "../../src/controllers/DatabaseController";
 import {PersonController} from "../../src/controllers/PersonController";
 import {Auth} from "../../src/Types";
 
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import '../GlobalSpec';
 import './PersonControllerSpec';
 

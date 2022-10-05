@@ -7,7 +7,7 @@ import * as request from "supertest";
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,

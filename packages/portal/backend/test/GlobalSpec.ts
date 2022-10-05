@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
 import Log from "../../../common/Log";
-import {Test} from "../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 

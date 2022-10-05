@@ -8,7 +8,7 @@ import {RepositoryController} from "../../src/controllers/RepositoryController";
 import {TeamController} from "../../src/controllers/TeamController";
 import {Repository} from "../../src/Types";
 
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import '../GlobalSpec'; // load first
 import './TeamControllerSpec'; // load first
 

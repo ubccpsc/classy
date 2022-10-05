@@ -4,7 +4,7 @@ import "mocha";
 import Config from "@common/Config";
 import Log from "@common/Log";
 // noinspection ES6UnusedImports
-import {Test} from "@common/TestHarness"; // included intentionally (loads TestHarness first)
+import {Test} from "@common/test/TestHarness"; // included intentionally (loads TestHarness first)
 import Util from "@common/Util";
 import {GitHubUtil} from "../src/github/GitHubUtil";
 // const loadFirst = require('./GlobalSpec');

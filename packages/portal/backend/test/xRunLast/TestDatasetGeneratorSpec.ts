@@ -12,7 +12,7 @@ import {TeamController} from "../../src/controllers/TeamController";
 import {Auth, Course, Deliverable, Person, PersonKind} from "../../src/Types";
 
 // import "../server/SDMMRoutesSpec"; // try to run last
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 
 describe('TestDatasetGenerator', function() {
 

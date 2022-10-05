@@ -1,5 +1,5 @@
 import Log from "../../../common/Log";
-import {Test} from "../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import {AdminController} from "../src/controllers/AdminController";
 /* istanbul ignore file */
 import {DatabaseController} from "../src/controllers/DatabaseController";

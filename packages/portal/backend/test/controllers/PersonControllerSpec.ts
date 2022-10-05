@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../../../../common/TestHarness";
+import {Test} from "@common/test/TestHarness";
 import {PersonController} from "../../src/controllers/PersonController";
 import {Person, PersonKind} from "../../src/Types";
 
