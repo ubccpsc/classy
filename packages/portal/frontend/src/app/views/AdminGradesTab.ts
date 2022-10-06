@@ -1,14 +1,9 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
+import {DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport} from "@common/types/PortalTypes";
 
-import {
-    DeliverableTransport,
-    GradeTransport,
-    GradeTransportPayload,
-    StudentTransport
-} from "../../../../../common/types/PortalTypes";
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-
 import {UI} from "../util/UI";
+
 import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminStudentsTab} from "./AdminStudentsTab";
@@ -102,7 +97,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: right;'
             };
             headers.push(col);
         }
@@ -128,19 +123,30 @@ export class AdminGradesTab extends AdminPage {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
                             const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
-                            let score = '';
+                            // let score = '';
+                            let scoreText: string = '';
+                            let scorePrepend = '';
                             if (grade.score !== null && grade.score >= 0) {
-                                score = grade.score + '';
+                                scoreText = grade.score.toFixed(2);
+                                if (grade.score < 100) {
+                                    // two decimal places
+                                    // prepend space (not 100)
+                                    scorePrepend = "&#8199;" + scorePrepend;
+                                    if (grade.score < 10) {
+                                        // prepend with extra space if < 10
+                                        scorePrepend = "&#8199;" + scorePrepend;
+                                    }
+                                }
                             }
                             let html;
-                            if (score !== '' && grade.URL !== null) {
-                                html = `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${score}</a>`;
-                            } else if (score !== '' && grade.URL === null) {
-                                html = `<div title="${hoverComment}">${score}</div>`;
+                            if (scoreText !== '' && grade.URL !== null) {
+                                html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${scoreText}</a>`;
+                            } else if (scoreText !== '' && grade.URL === null) {
+                                html = `<div title="${hoverComment}">${scoreText}</div>`;
                             } else {
-                                html = score;
+                                html = scoreText;
                             }
-                            tableCell = {value: score, html};
+                            tableCell = {value: scoreText, html};
                         }
                     }
                 }
@@ -178,7 +184,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: true,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: 'avg',
@@ -186,7 +192,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: 'median',
@@ -194,7 +200,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '009',
@@ -202,7 +208,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '1019',
@@ -210,7 +216,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '2029',
@@ -218,7 +224,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '3039',
@@ -226,7 +232,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '4049',
@@ -234,7 +240,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '5059',
@@ -242,7 +248,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '6069',
@@ -250,7 +256,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '7079',
@@ -258,7 +264,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '8089',
@@ -266,7 +272,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '9099',
@@ -274,7 +280,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             },
             {
                 id: '100',
@@ -282,7 +288,7 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
             }
 
         ];

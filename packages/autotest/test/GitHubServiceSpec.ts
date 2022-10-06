@@ -1,19 +1,18 @@
 import {expect} from "chai";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import "@common/test/GlobalSpec";
 
-import {GitHubUtil, IGitHubMessage} from "../src/github/GitHubUtil";
-import "./GlobalSpec";
+import {GitHubUtil, IGitHubMessage} from "@autotest/github/GitHubUtil";
 
 describe("GitHub Markdown Service", () => {
     Config.getInstance();
 
     // tslint:disable-next-line
     const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
-    const VALID_URL = githubAPI + '/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments';
+    const VALID_URL = githubAPI + "/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
 
     const TIMEOUT = 5000;
 
@@ -21,7 +20,7 @@ describe("GitHub Markdown Service", () => {
 
     const postbackVal = Config.getInstance().getProp(ConfigKey.postback);
 
-    before(function() {
+    before(function () {
         // gh = new GitHubService();
 
         // set postback to be true so we an actually validate this
@@ -29,15 +28,15 @@ describe("GitHub Markdown Service", () => {
         config.setProp(ConfigKey.postback, true);
     });
 
-    after(function() {
+    after(function () {
         // return postback val
         const config = Config.getInstance();
         config.setProp(ConfigKey.postback, postbackVal);
     });
 
-    it("Should be able to post a valid message.", async function() {
+    it("Should be able to post a valid message.", async function () {
         const post: IGitHubMessage = {
-            url:     VALID_URL,
+            url: VALID_URL,
             message: "Automated Test Suite Message"
         };
 
@@ -50,9 +49,9 @@ describe("GitHub Markdown Service", () => {
             Log.test("Failure (unexpected)");
             expect.fail();
         }
-    }).timeout(TIMEOUT);
+    }).timeout(TIMEOUT * 2);
 
-    it("Should fail when trying to post an invalid message.", async function() {
+    it("Should fail when trying to post an invalid message.", async function () {
         const post: any = {
             url: VALID_URL
         };

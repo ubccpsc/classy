@@ -10,14 +10,14 @@ export class DeliverablesController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllDeliverables(): Promise<Deliverable[]> {
-        Log.info("DeliverablesController::getAllGrades() - start");
+        Log.trace("DeliverablesController::getAllGrades() - start");
 
         const delivs = await this.db.getDeliverables();
         return delivs;
     }
 
     public async getDeliverable(delivId: string): Promise<Deliverable | null> {
-        Log.info("DeliverablesController::getDeliverable( " + delivId + " ) - start");
+        Log.trace("DeliverablesController::getDeliverable( " + delivId + " ) - start");
 
         const deliv = await this.db.getDeliverable(delivId);
         return deliv;
@@ -48,6 +48,7 @@ export class DeliverablesController {
         }
 
         await this.db.writeDeliverable(deliv); // let this handle the update
+        Log.info("DeliverableController::saveDeliverable(..) - done");
         return deliv;
     }
 
@@ -87,33 +88,33 @@ export class DeliverablesController {
         at.closeTimestamp = deliv.closeTimestamp;
 
         const trans: DeliverableTransport = {
-            id:  deliv.id,
+            id: deliv.id,
             URL: deliv.URL,
 
             repoPrefix: deliv.repoPrefix,
             teamPrefix: deliv.teamPrefix,
 
-            openTimestamp:  deliv.openTimestamp,
+            openTimestamp: deliv.openTimestamp,
             closeTimestamp: deliv.closeTimestamp,
 
-            lateAutoTest:      deliv.lateAutoTest,
-            shouldProvision:   deliv.shouldProvision,
-            minTeamSize:       deliv.teamMinSize,
-            maxTeamSize:       deliv.teamMaxSize,
-            teamsSameLab:      deliv.teamSameLab,
+            lateAutoTest: deliv.lateAutoTest,
+            shouldProvision: deliv.shouldProvision,
+            minTeamSize: deliv.teamMinSize,
+            maxTeamSize: deliv.teamMaxSize,
+            teamsSameLab: deliv.teamSameLab,
             studentsFormTeams: deliv.teamStudentsForm,
-            importURL:         deliv.importURL,
+            importURL: deliv.importURL,
 
-            onOpenAction:  '',
+            onOpenAction: '',
             onCloseAction: '',
 
-            gradesReleased:    deliv.gradesReleased,
+            gradesReleased: deliv.gradesReleased,
             visibleToStudents: deliv.visibleToStudents,
 
             shouldAutoTest: deliv.shouldAutoTest,
-            autoTest:       at,
-            rubric:         deliv.rubric,
-            custom:         deliv.custom
+            autoTest: at,
+            rubric: deliv.rubric,
+            custom: deliv.custom
         };
         return trans;
     }
@@ -121,20 +122,20 @@ export class DeliverablesController {
     public static transportToDeliverable(trans: DeliverableTransport): Deliverable {
 
         const deliv: Deliverable = {
-            id:  trans.id,
+            id: trans.id,
             URL: trans.URL,
 
-            openTimestamp:  trans.openTimestamp,
+            openTimestamp: trans.openTimestamp,
             closeTimestamp: trans.closeTimestamp,
             gradesReleased: trans.gradesReleased,
 
-            lateAutoTest:     trans.lateAutoTest,
-            shouldProvision:  trans.shouldProvision,
-            teamMinSize:      trans.minTeamSize,
-            teamMaxSize:      trans.maxTeamSize,
-            teamSameLab:      trans.teamsSameLab,
+            lateAutoTest: trans.lateAutoTest,
+            shouldProvision: trans.shouldProvision,
+            teamMinSize: trans.minTeamSize,
+            teamMaxSize: trans.maxTeamSize,
+            teamSameLab: trans.teamsSameLab,
             teamStudentsForm: trans.studentsFormTeams,
-            importURL:        trans.importURL,
+            importURL: trans.importURL,
 
             repoPrefix: trans.repoPrefix,
             teamPrefix: trans.teamPrefix,
@@ -142,7 +143,7 @@ export class DeliverablesController {
             visibleToStudents: trans.visibleToStudents,
 
             shouldAutoTest: trans.shouldAutoTest,
-            autotest:       trans.autoTest,
+            autotest: trans.autoTest,
 
             rubric: trans.rubric,
             custom: trans.custom

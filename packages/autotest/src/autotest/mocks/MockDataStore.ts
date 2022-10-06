@@ -8,6 +8,13 @@ import {CommitTarget} from "../../../../common/types/ContainerTypes";
 import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
+/**
+ * NOTE: this can have some unhappy consequences if a job is rapidly reading/writing
+ * to this datastore w/o waiting appropriately (e.g., if many jobs are processing
+ * at once in the test suite).
+ *
+ * Just know that race conditions are likely, if you are testing that kind of thing.
+ */
 export class MockDataStore implements IDataStore {
 
     // NOTE: this creates temp space but does not use the files in autotest/test/githubAutoTestData
@@ -73,7 +80,7 @@ export class MockDataStore implements IDataStore {
     }
 
     public async savePush(info: CommitTarget): Promise<void> {
-        // Log.info("MockDataStore::savePush(..) - start");
+        Log.info("MockDataStore::savePush(..) - start");
         try {
             const start = Date.now();
             // read
@@ -82,8 +89,7 @@ export class MockDataStore implements IDataStore {
             records.push(info);
             // write
             await fs.writeJSON(this.PUSH_PATH, records);
-
-            Log.info("MockDataStore::savePush(..) - done; took: " + Util.took(start));
+            Log.info("MockDataStore::savePush(..) - done; #: " + records.length + "; took: " + Util.took(start));
         } catch (err) {
             Log.error("MockDataStore::savePush(..) - ERROR: " + err);
         }
@@ -205,7 +211,7 @@ export class MockDataStore implements IDataStore {
                 Log.info("MockDataStore::getLatestFeedbackGivenRecord(..) - not found; took: " + Util.took(start));
                 ret = null;
             } else {
-                Math.max.apply(Math, shortList.map(function(o: IFeedbackGiven) {
+                Math.max.apply(Math, shortList.map(function (o: IFeedbackGiven) {
                     Log.info("MockDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));

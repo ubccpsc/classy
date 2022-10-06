@@ -18,7 +18,7 @@ export class ResultsController {
         const results = await this.db.getAllResults();
 
         // NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
-        results.sort(function(a: Result, b: Result) {
+        results.sort(function (a: Result, b: Result) {
             let tsA = 0;
             let tsB = 0;
             if (typeof a.input.target !== 'undefined') {
@@ -57,7 +57,8 @@ export class ResultsController {
     }
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
-        Log.info("ResultsController::createResult(..) - start for commit: " + record.commitURL);
+        Log.info("ResultsController::createResult(..) - start; deliv: " + record.delivId + "; repo: "
+            + record.repoId + "; SHA: " + record.commitSHA);
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
         const start = Date.now();
 
@@ -229,7 +230,7 @@ export class ResultsController {
             return reportMsg;
         }
 
-        Log.info('ResultsController::validateAutoTestResult(..) - done; object is valid');
+        Log.trace('ResultsController::validateAutoTestResult(..) - done; object is valid');
         return null;
     }
 
@@ -313,12 +314,13 @@ export class ResultsController {
             Log.error('ResultsController::validateGradeReport(..) - ERROR: ' + msg);
             return msg;
         }
-        Log.info('ResultsController::validateGradeReport(..) - done; report is valid');
+
+        Log.trace('ResultsController::validateGradeReport(..) - done; report is valid');
         return null; // everything is good
     }
 
     public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
-        Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
+        Log.trace("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
         const start = Date.now();
 
         let outcome: Result[] = [];
@@ -338,7 +340,7 @@ export class ResultsController {
     }
 
     public async getResultsForRepo(repoId: string) {
-        Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - start");
+        Log.trace("ResultsController::getResultsForRepo( " + repoId + " ) - start");
         const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);

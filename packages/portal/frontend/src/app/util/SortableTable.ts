@@ -1,4 +1,4 @@
-import Log from "../../../../../common/Log";
+import Log from "@common/Log";
 
 /**
  * These correspond to the columns in the table.
@@ -63,7 +63,7 @@ export class SortableTable {
     }
 
     /**
-     * Replaces all of the current rows.
+     * Replaces all the current rows.
      *
      * @param {TableCell[][]} rows
      */
@@ -121,7 +121,7 @@ export class SortableTable {
             const ths = div.getElementsByTagName('th');
             const thsArray = Array.prototype.slice.call(ths, 0);
             for (const th of thsArray) {
-                th.onclick = function() {
+                th.onclick = function () {
                     const colName = this.getAttribute('col');
                     that.sort(colName);
                 };
@@ -131,6 +131,17 @@ export class SortableTable {
         }
 
         this.attachDownload();
+
+        setTimeout(() => {
+            Log.info("SortableTable::generate() - updating table height; div: " + this.divName);
+            this.updateTableHeight();
+        }, 100);
+
+        // need to update the viewport so sticky headers keep working after resize events
+        window.addEventListener('resize', (evt) => {
+            Log.info("SortableTable::generate()::resize - div: " + this.divName);
+            this.updateTableHeight();
+        }, true);
     }
 
     private startTable() {
@@ -215,7 +226,7 @@ export class SortableTable {
         Log.trace('SortableTable::sort() - col: ' + sortHead.id + '; down: ' + sortHead.sortDown +
             '; mult: ' + mult + '; index: ' + sortIndex);
 
-        this.rows = this.rows.sort(function(a, b) {
+        this.rows = this.rows.sort(function (a, b) {
 
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
@@ -357,5 +368,35 @@ export class SortableTable {
         this.downloadCSV(csv, 'classy.csv', 'Download Values as CSV&nbsp;');
         const links = this.exportTableLinksToCSV();
         this.downloadCSV(links, 'classyLinks.csv', '&nbsp;Download Links as CSV');
+    }
+
+    /**
+     * Compute the visible height of the table. This is needed for display: sticky
+     * to work. But adds a bit of complication because if the window is resized
+     * the values also need to be recomputed.
+     */
+    public updateTableHeight() {
+        Log.info("SortableTable::updateTableHeight() - table: " + this.divName);
+
+        if (this.numRows() < 20) {
+            // if the number of rows is low, don't bother doing this
+            Log.info("SortableTable::updateTableHeight() - skipped; # rows: " +
+                this.numRows() + "; table: " + this.divName);
+            return;
+        }
+
+        try {
+            let offset = 0;
+            let node: any = document.querySelector(this.divName);
+            while (node.offsetParent && node.offsetParent.id !== "wrapper") {
+                offset += node.offsetTop;
+                node = node.offsetParent;
+            }
+            const visibleHeight = (node.offsetHeight - offset) + "px";
+            node = document.querySelector(this.divName);
+            node.style.height = visibleHeight;
+        } catch (err) {
+            Log.error("SortableTable::updateTableHeight() - ERROR: " + err.messsage);
+        }
     }
 }

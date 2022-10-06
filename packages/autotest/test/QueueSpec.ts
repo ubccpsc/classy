@@ -1,37 +1,38 @@
 import {expect} from "chai";
 import "mocha";
 
-import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
-import {Queue} from "../src/autotest/Queue";
-// const loadFirst = require('./GlobalSpec');
-import "./GlobalSpec";
+import Log from "@common/Log";
+import "@common/test/GlobalSpec";
+
+import {Queue} from "@autotest/autotest/Queue";
+
+// const loadFirst = require("./GlobalSpec");
 import {TestData} from "./TestData";
 
 describe("Queue", () => {
 
     let q: Queue;
 
-    before(function() {
+    before(function () {
         Log.test("QueueSpec::before");
-        q = new Queue('test', 1);
+        q = new Queue("test", 1);
     });
 
-    after(function() {
+    after(function () {
         Log.test("QueueSpec::after");
-        q = new Queue('test', 1);
+        q = new Queue("test", 1);
     });
 
     it("Should work when empty.", () => {
-        let res: any = q.indexOf('foo');
+        let res: any = q.indexOf(TestData.inputRecordA);
         expect(res).to.equal(-1);
         res = q.pop();
         expect(res).to.be.null;
         res = q.length();
         expect(res).to.equal(0);
-        res = q.remove('bar');
+        res = q.remove(TestData.inputRecordB);
         expect(res).to.equal(null);
-        res = q.indexOf('baz');
+        res = q.indexOf(TestData.inputRecordB);
         expect(res).to.equal(-1);
     });
 
@@ -47,10 +48,10 @@ describe("Queue", () => {
         res = q.push(TestData.inputRecordA);
         expect(res).to.equal(1);
 
-        res = q.indexOf(TestData.inputRecordA.target.commitURL);
+        res = q.indexOf(TestData.inputRecordA);
         expect(res).to.equal(0);
 
-        res = q.remove(TestData.inputRecordA.target.commitURL);
+        res = q.remove(TestData.inputRecordA);
         expect(res).to.not.be.null;
         expect(q.length()).to.equal(0);
     });

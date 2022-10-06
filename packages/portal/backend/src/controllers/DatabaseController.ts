@@ -117,17 +117,18 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getGradedResults() - start");
         const pipeline = [
-            { $match : { delivId : deliv } },
-            { $group: { _id: '$URL' } },
-            { $lookup:
-                {
-                    from: this.RESULTCOLL,
-                    localField: '_id',
-                    foreignField: 'commitURL',
-                    as: 'results'
-                }
+            {$match: {delivId: deliv}},
+            {$group: {_id: '$URL'}},
+            {
+                $lookup:
+                    {
+                        from: this.RESULTCOLL,
+                        localField: '_id',
+                        foreignField: 'commitURL',
+                        as: 'results'
+                    }
             },
-            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
+            {$project: {result: {$arrayElemAt: ["$results", 0]}}}
         ];
         const collection = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
         const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
@@ -140,28 +141,32 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getBestResults() - start");
         const pipeline = [
-            { $match : { delivId : deliv } },
-            { $group: { _id: '$repoId', maxScore: { $max: "$output.report.scoreOverall" } } },
-            { $lookup:
-                {
-                    from: this.RESULTCOLL,
-                    let: { srcRepo: "$_id", score: "$maxScore" },
-                    pipeline: [
-                        { $match:
-                            { $expr:
-                                { $and:
-                                    [
-                                        { $eq: [ "$repoId",  "$$srcRepo" ] },
-                                        { $eq: [ "$output.report.scoreOverall", "$$score" ] }
-                                    ]
-                                }
+            {$match: {delivId: deliv}},
+            {$group: {_id: '$repoId', maxScore: {$max: "$output.report.scoreOverall"}}},
+            {
+                $lookup:
+                    {
+                        from: this.RESULTCOLL,
+                        let: {srcRepo: "$_id", score: "$maxScore"},
+                        pipeline: [
+                            {
+                                $match:
+                                    {
+                                        $expr:
+                                            {
+                                                $and:
+                                                    [
+                                                        {$eq: ["$repoId", "$$srcRepo"]},
+                                                        {$eq: ["$output.report.scoreOverall", "$$score"]}
+                                                    ]
+                                            }
+                                    }
                             }
-                        }
-                    ],
-                    as: 'results'
-                }
+                        ],
+                        as: 'results'
+                    }
             },
-            { $project: { result: { $arrayElemAt: ["$results", 0] } } }
+            {$project: {result: {$arrayElemAt: ["$results", 0]}}}
         ];
         const collection = await this.getCollection(this.RESULTCOLL, QueryKind.SLOW);
         const results = (await collection.aggregate(pipeline).toArray()).map((r) => r.result);
@@ -171,7 +176,7 @@ export class DatabaseController {
     }
 
     public async getTeamsForPerson(personId: string): Promise<Team[]> {
-        Log.info("DatabaseController::getTeamsForPerson() - start");
+        Log.trace("DatabaseController::getTeamsForPerson( " + personId + " ) - start");
         const teams = await this.readRecords(this.TEAMCOLL, QueryKind.FAST, false, {});
         const myTeams = [];
         for (const t of teams as Team[]) {
@@ -188,18 +193,18 @@ export class DatabaseController {
         const query = [
             {
                 $lookup: {
-                    from:         "teams",
-                    localField:   "teamIds",
+                    from: "teams",
+                    localField: "teamIds",
                     foreignField: "id",
-                    as:           "teams"
+                    as: "teams"
                 }
             },
             {
                 $lookup: {
-                    from:         "people",
-                    localField:   "teams.personIds",
+                    from: "people",
+                    localField: "teams.personIds",
                     foreignField: "id",
-                    as:           "teammembers"
+                    as: "teammembers"
                 }
             },
             {
@@ -320,7 +325,7 @@ export class DatabaseController {
      * @returns {Promise<boolean>}
      */
     public async writeResult(record: Result): Promise<boolean> {
-        Log.info("DatabaseController::writeResult(..) - start");
+        Log.trace("DatabaseController::writeResult(..) - start");
 
         const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA);
         if (resultExists === null) {
@@ -418,29 +423,37 @@ export class DatabaseController {
     }
 
     public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
+
+        const isEmpty = function (obj: any): boolean {
+            if (typeof obj === 'undefined' || obj === null) {
+                return true;
+            }
+            return Object.keys(obj).length === 0 && obj.constructor === Object;
+        };
+
         try {
             // Log.info("DatabaseController::writeAudit(..) - start");
-            Log.info("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
-                !Util.isEmpty(before) + ", hasAfter: " + !Util.isEmpty(after) + " ) - start");
+            Log.trace("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
+                !isEmpty(before) + ", hasAfter: " + !isEmpty(after) + " ) - start");
 
             let finalLabel = label + '_';
-            if (Util.isEmpty(before) === true && Util.isEmpty(after) === true) {
+            if (isEmpty(before) === true && isEmpty(after) === true) {
                 // is an action, no postfix
                 finalLabel = label;
-            } else if (Util.isEmpty(before) === true) {
+            } else if (isEmpty(before) === true) {
                 finalLabel = finalLabel + 'CREATE';
-            } else if (Util.isEmpty(after) === true) {
+            } else if (isEmpty(after) === true) {
                 finalLabel = finalLabel + 'DELETE';
             } else {
                 finalLabel = finalLabel + 'UPDATE';
             }
             const auditRecord: AuditEvent = {
-                label:     finalLabel,
+                label: finalLabel,
                 timestamp: Date.now(),
-                personId:  personId,
-                before:    before,
-                after:     after,
-                custom:    custom
+                personId: personId,
+                before: before,
+                after: after,
+                custom: custom
             };
             return await this.writeRecord(this.AUDITCOLL, auditRecord);
         } catch (err) {
@@ -677,7 +690,9 @@ export class DatabaseController {
                 }
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl
-                Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
+                // too much info, logs password
+                // Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
+                Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
 
                 const client = await MongoClient.connect(dbHost);
                 if (kind === 'slow') {
@@ -735,14 +750,14 @@ export class DatabaseController {
             let team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
-                    id:        teamName,
-                    delivId:   null, // null for special teams
-                    githubId:  null, // to be filled in later
-                    URL:       null, // to be filled in later
+                    id: teamName,
+                    delivId: null, // null for special teams
+                    githubId: null, // to be filled in later
+                    URL: null, // to be filled in later
                     personIds: [], // empty for special teams
                     // repoName:  null, // null for special teams
                     // repoUrl:   null,
-                    custom:    {}
+                    custom: {}
                 };
                 await this.writeTeam(newTeam);
             }
@@ -750,14 +765,14 @@ export class DatabaseController {
             team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
-                    id:        teamName,
-                    delivId:   null, // null for special teams
-                    githubId:  null, // to be filled in later
-                    URL:       null, // to be filled in later
+                    id: teamName,
+                    delivId: null, // null for special teams
+                    githubId: null, // to be filled in later
+                    URL: null, // to be filled in later
                     personIds: [], // empty for special teams
                     // repoName:  null, // null for special teams
                     // repoUrl:   null,
-                    custom:    {}
+                    custom: {}
                 };
                 await this.writeTeam(newTeam);
             }
@@ -765,14 +780,14 @@ export class DatabaseController {
             team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
-                    id:        teamName,
-                    delivId:   null, // null for special teams
-                    githubId:  null, // to be filled in later
-                    URL:       null, // to be filled in later
+                    id: teamName,
+                    delivId: null, // null for special teams
+                    githubId: null, // to be filled in later
+                    URL: null, // to be filled in later
                     personIds: [], // empty for special teams
                     // repoName:  null, // null for special teams
                     // repoUrl:   null,
-                    custom:    {}
+                    custom: {}
                 };
                 await this.writeTeam(newTeam);
             }

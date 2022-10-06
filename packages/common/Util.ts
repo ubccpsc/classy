@@ -70,32 +70,18 @@ export default class Util {
     public static delay(ms: number): Promise<{}> {
         // logger.info("GitHubActions::delay( " + ms + ") - start");
         const start = Date.now();
-        return new Promise(function(resolve) {
+        return new Promise(function (resolve) {
             const fire = new Date(start + ms);
             Log.trace("Util::delay( " + ms + " ms ) - waiting; will trigger at " + fire.toLocaleTimeString());
-            setTimeout(function() {
+            setTimeout(function () {
                 const actual = Date.now();
                 const took = actual - start;
                 const delta = actual - fire.getTime();
-                Log.info("Util::delay( " + ms + " ms ) - fired; took: " + took + " ms; jitter: " + delta + " ms");
+                Log.trace("Util::delay( " + ms + " ms ) - fired; took: " + took + " ms; jitter: " + delta + " ms");
                 resolve();
             }, ms);
         });
     }
-
-    /**
-     * Creates a query string for fetch requests
-     * @param obj: [key: string]: string type.
-     * @return qs: UrlSearchParams
-     */
-    public static getQueryStr(obj: {[key: string]: string}): string {
-        const qs = '?';
-        const params = Object.keys(obj).map((key) => {
-            return encodeURIComponent(key) + '=' + encodeURIComponent(obj[key]);
-        })
-        .join('&');
-        return qs + params;
-}
 
     /**
      * Makes a copy of an object.
@@ -108,23 +94,4 @@ export default class Util {
         return ret;
     }
 
-    public static truncateNumber(num: number, digits: number): number {
-        try {
-            if (typeof num === 'undefined' || num === null) {
-                return 0;
-            }
-            return Number(Number(num).toFixed(digits)) + 0;
-        } catch (err) {
-            Log.error("Util::truncateNumber(..) - ERROR: " + err.message);
-            Log.error("Util::truncateNumber( " + num + ", " + digits + " ) - ERROR: " + err.message);
-            return 0;
-        }
-    }
-
-    public static isEmpty(obj: any): boolean {
-        if (typeof obj === 'undefined' || obj === null) {
-            return true;
-        }
-        return Object.keys(obj).length === 0 && obj.constructor === Object;
-    }
 }

@@ -2,21 +2,19 @@ import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
 
-import Config, {ConfigKey} from "../../common/Config";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
-import Log from "../../common/Log";
-import {Test} from "../../common/TestHarness";
-import {IFeedbackGiven} from "../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../common/types/ContainerTypes";
-import Util from "../../common/Util";
+import {IClassPortal} from "@autotest/autotest/ClassPortal";
+import {MockClassPortal} from "@autotest/autotest/mocks/MockClassPortal";
+import {MockDataStore} from "@autotest/autotest/mocks/MockDataStore";
+import {GitHubAutoTest} from "@autotest/github/GitHubAutoTest";
+import {IGitHubMessage} from "@autotest/github/GitHubUtil";
 
-import {IClassPortal} from "../src/autotest/ClassPortal";
-import {MockClassPortal} from "../src/autotest/mocks/MockClassPortal";
-import {MockDataStore} from "../src/autotest/mocks/MockDataStore";
-import {GitHubAutoTest} from "../src/github/GitHubAutoTest";
-import {IGitHubMessage} from "../src/github/GitHubUtil";
-
-import "./GlobalSpec"; // load first
+import "@common/test/GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
@@ -30,8 +28,8 @@ describe("GitHubAutoTest", () => {
     let at: GitHubAutoTest;
 
     const TS_IN = new Date(2018, 3, 3).getTime();
-    const TS_BEFORE = new Date(2017, 12, 12).getTime();
-    const TS_AFTER = new Date(2018, 12, 12).getTime();
+    // const TS_BEFORE = new Date(2017, 12, 12).getTime();
+    // const TS_AFTER = new Date(2018, 12, 12).getTime();
 
     const WAIT = 1000;
 
@@ -39,7 +37,7 @@ describe("GitHubAutoTest", () => {
     // now -10h: 1516523258762
     // now - 24h: 1516472872288
 
-    before(async function() {
+    before(async function () {
         Log.test("AutoTest::before() - start");
 
         pushes = fs.readJSONSync(__dirname + "/githubAutoTestData/pushes.json");
@@ -58,15 +56,15 @@ describe("GitHubAutoTest", () => {
         Log.test("AutoTest::before() - done");
     });
 
-    beforeEach(async function() {
+    beforeEach(async function () {
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
         at = new GitHubAutoTest(data, portal, null); // , gh);
     });
 
-    afterEach(async function() {
-        // pause after each test so async issues don't persist
+    afterEach(async function () {
+        // pause after each test so async issues don"t persist
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
@@ -87,12 +85,11 @@ describe("GitHubAutoTest", () => {
     });
 
     it("Should be able to receive multiple pushes.", async () => {
-        expect(at).not.to.equal(null);
+        expect(at).to.not.be.null;
 
-        const pe: CommitTarget = pushes[0];
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
-        await at.handlePushEvent(pe);
+        await at.handlePushEvent(pushes[0]);
         await at.handlePushEvent(pushes[1]);
         await at.handlePushEvent(pushes[2]);
         await at.handlePushEvent(pushes[3]);
@@ -102,30 +99,84 @@ describe("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(6);
     });
 
-    it("Should be able to receive multiple concurrent pushes.", async () => {
-        try {
-            expect(at).not.to.equal(null);
+    // this works, but with the filesystem-backed mock data store, race conditions
+    // keep happening
+    // it("Admin requests should go to the front of the queue.", async () => {
+    //     expect(at).to.not.be.null;
+    //
+    //     let allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(0);
+    //     await at.handlePushEvent(pushes[0]);
+    //     await at.handlePushEvent(pushes[1]);
+    //     await at.handlePushEvent(pushes[2]);
+    //     await at.handlePushEvent(pushes[3]);
+    //     await at.handlePushEvent(pushes[4]);
+    //     const push = Object.assign({}, pushes[5]);
+    //     push.commitSHA = "admin_" + push.commitSHA;
+    //     push.adminRequest = true;
+    //     push.personId = "admin1";
+    //     await at.handlePushEvent(push);
+    //     allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(6);
+    //
+    //     await Util.delay(WAIT * 5);
+    //     allData = await data.getAllData();
+    //     expect(allData.pushes.length).to.equal(6); // unchanged
+    //     expect(allData.records.length).to.equal(6);
+    //     // as long as the last record isn"t the admin record it must have been bumped up
+    //     expect(allData.records[5].input.target.adminRequest).to.be.undefined;
+    //     // need to wait longer really, but
+    //
+    //     // TODO, check all data to make sure the admin push processed first
+    // }).timeout(WAIT * 6);
 
-            // const pe: IPushEvent = pushes[0];
-            const arr = [];
-            arr.push(at.handlePushEvent(pushes[0]));
-            arr.push(at.handlePushEvent(pushes[1]));
-            arr.push(at.handlePushEvent(pushes[2]));
-            arr.push(at.handlePushEvent(pushes[3]));
-            arr.push(at.handlePushEvent(pushes[4]));
-            arr.push(at.handlePushEvent(pushes[5]));
+    it("Rapid requests should go to the regression queue.", async () => {
+        expect(at).to.not.be.null;
+        await Util.delay(WAIT); // let old tests expire before starting
 
-            Log.test('multiple concurrent pushes - before promise.all');
-            await Promise.all(arr);
-            Log.test('multiple concurrent pushes - after promise.all');
-            // const allData = await data.getAllData();
-            // Log.test('after getAllData');
-            // expect(allData.pushes.length).to.equal(6);
-        } catch (err) {
-            Log.error('multiple concurrent pushes - should never happen: ' + err);
-            expect.fail('multiple concurrent pushes - should never happen', err);
-        }
-    });
+        // start fresh
+        await data.clearData();
+        stubDependencies();
+
+        let allData = await data.getAllData();
+        expect(allData.pushes.length).to.equal(0);
+        await at.handlePushEvent(pushes[0]);
+        await at.handlePushEvent(pushes[1]);
+        await at.handlePushEvent(pushes[2]);
+        await at.handlePushEvent(pushes[3]);
+        await at.handlePushEvent(pushes[4]);
+        await at.handlePushEvent(pushes[5]);
+        await at.handlePushEvent(pushes[6]);
+        await at.handlePushEvent(pushes[7]);
+        await at.handlePushEvent(pushes[8]);
+        Log.test("all pushes sent");
+
+        // to see at what admin pushes look like
+        // const push = Object.assign({}, pushes[5]);
+        // push.commitSHA = "admin_" + push.commitSHA;
+        // push.adminRequest = true;
+        // push.personId = "admin1";
+        // await at.handlePushEvent(push);
+
+        allData = await data.getAllData();
+
+        await Util.delay(10);
+
+        // all pushes should be here
+        expect(allData.pushes.length).to.equal(9);
+        const eq = (at["expressQueue"] as any);
+        const sq = (at["standardQueue"] as any);
+        const rq = (at["regressionQueue"] as any);
+        Log.test("about to check values");
+        expect(eq.slots).to.have.length(2); // two jobs should have been backfilled to express
+        expect(eq.data).to.have.length(0); // nothing should be queued on express
+        expect(sq.slots).to.have.length(2); // two should be running on standard
+        expect(sq.data).to.have.length(3); // one should be waiting on standard
+        expect(rq.slots).to.have.length(1); // one should be running on regression
+        // this is the main check: if this all worked, a job should have been pushed onto the regression queue
+        expect(rq.data).to.have.length(1); // one should be queued on regression
+        Log.test("values checked");
+    }).timeout(WAIT * 3);
 
     it("Should gracefully fail with bad comments.", async () => {
         expect(at).not.to.equal(null);
@@ -145,80 +196,88 @@ describe("GitHubAutoTest", () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 
-        Log.test('null info');
+        Log.test("null info");
         info = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
-        Log.test('undefined info');
+        Log.test("undefined info");
         info = undefined;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
 
-        Log.test('???');
+        Log.test("???");
         info = {
-            personId:     Config.getInstance().getProp(ConfigKey.botName),
+            adminRequest: false,
+            personId: Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
-            delivId:      'd1',
-            kind:         'standard',
-            repoId:       'repoId',
-            commitSHA:    'SHA',
-            commitURL:    'https://URL',
-            postbackURL:  'https://postback',
-            timestamp:    new Date(2018, 2, 1).getTime(),
-            cloneURL:     "https://cloneURL"
+            delivId: "d1",
+            kind: "standard",
+            repoId: "repoId",
+            commitSHA: "SHA",
+            commitURL: "https://URL",
+            postbackURL: "https://postback",
+            timestamp: new Date(2018, 2, 1).getTime(),
+            cloneURL: "https://cloneURL"
         };
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.personId = 'validName';
+        info.personId = "validName";
 
-        Log.test('bot not mentioned');
+        Log.test("bot not mentioned");
         info.botMentioned = false;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.botMentioned = true;
 
-        Log.test('null delivId');
+        Log.test("null delivId");
         info.delivId = null;
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.delivId = 'd1';
+        info.delivId = "d1";
 
-        Log.test('invalid delivId');
-        info.delivId = 'd_' + Date.now();
+        Log.test("wrong term");
+        const oldOrg = info.orgId;
+        info.orgId = "INVALIDTERM";
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
-        info.delivId = 'd1';
+        info.orgId = oldOrg;
 
-        // This actually passes: we don't check if the person exists, just if they are staff (and unknown users are not staff)
-        // Log.test('invalid person');
+        Log.test("invalid delivId");
+        info.delivId = "d_" + Date.now();
+        meetsPreconditions = await at["checkCommentPreconditions"](info);
+        expect(meetsPreconditions).to.be.false;
+        info.delivId = "d1";
+
+        // This actually passes: we don"t check if the person exists, just if they are staff (and unknown users are not staff)
+        // Log.test("invalid person");
         // const person = info.personId;
-        // info.personId = 'person_' + Date.now();
+        // info.personId = "person_" + Date.now();
         // meetsPreconditions = await at["checkCommentPreconditions"](info);
         // expect(meetsPreconditions).to.be.false;
         // info.personId = person;
 
-        // This actually passes: we don't validate repo existence at this point (since these events should only come from valid repos anyways)
-        // Log.test('invalid repo');
+        // This actually passes: we don"t validate repo existence at this point (since these events should only come from valid repos anyways)
+        // Log.test("invalid repo");
         // const repo = info.repoId;
-        // info.repoId = 'repo_' + Date.now();
+        // info.repoId = "repo_" + Date.now();
         // meetsPreconditions = await at["checkCommentPreconditions"](info);
         // expect(meetsPreconditions).to.be.false;
         // info.repoId = repo;
 
-        Log.test('force by student');
+        Log.test("force by student");
         info.flags = ["#force"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         delete info.flags;
 
-        Log.test('silent by student');
+        Log.test("silent by student");
         info.flags = ["#silent"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         delete info.flags;
 
-        Log.test('force by autobot');
+        Log.test("force by autobot");
         const student = info.personId;
         info.personId = Config.getInstance().getProp(ConfigKey.botName);
         info.flags = ["#force"];
@@ -227,41 +286,35 @@ describe("GitHubAutoTest", () => {
         info.personId = student;
         delete info.flags;
 
-        Log.test('silent by staff');
-        info.personId = 'staff'; // Config.getInstance().getProp(ConfigKey.botName);
+        Log.test("silent by staff");
+        info.personId = "staff"; // Config.getInstance().getProp(ConfigKey.botName);
         info.flags = ["#silent"];
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.personId = student;
         delete info.flags;
 
-        Log.test('schedule and unschedule');
-        info.flags = ["#schedule", "#unschedule"];
-        meetsPreconditions = await at["checkCommentPreconditions"](info);
-        expect(meetsPreconditions).to.be.false;
-        delete info.flags;
-
-        Log.test('not open yet');
+        Log.test("not open yet");
         info.timestamp = new Date(2001, 12, 1).getTime(); // not open yet
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed but with late autotest allowed');
+        Log.test("closed but with late autotest allowed");
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
-        Log.test('closed but with late autotest disallowed');
-        info.delivId = 'd0';
+        Log.test("closed but with late autotest disallowed");
+        info.delivId = "d0";
         info.timestamp = new Date(2050, 12, 1).getTime(); // closed, but late autotest is true
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.false;
         info.timestamp = new Date(2018, 2, 1).getTime();
 
         // valid case
-        info.delivId = 'd1';
+        info.delivId = "d1";
         meetsPreconditions = await at["checkCommentPreconditions"](info);
         expect(meetsPreconditions).to.be.true;
     });
@@ -272,91 +325,60 @@ describe("GitHubAutoTest", () => {
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pe.commitSHA,
-            commitURL:    pe.commitURL,
-            personId:     "myUser",
-            kind:         'standard',
-            repoId:       "d1_project9999",
-            delivId:      "d0",
-            postbackURL:  "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            commitSHA: pe.commitSHA,
+            commitURL: pe.commitURL,
+            adminRequest: false,
+            personId: "myUser",
+            kind: "standard",
+            repoId: "d1_project9999",
+            delivId: "d0",
+            postbackURL: "https://github.students.cs.ubc.ca/api/v3/repos/classytest/PostTestDoNotDelete/commit/c35a0e5968338a9757813b58368f36ddd64b063e/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
 
-        Log.test('getting data');
+        Log.test("getting data");
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
-        Log.test('handling comment');
+        Log.test("handling comment");
         await at.handleCommentEvent(ce);
-        Log.test('re-getting data');
+        Log.test("re-getting data");
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
 
-        // await Util.timeout(1 * 1000); // let test finish so it doesn't ruin subsequent executions
+        // await Util.timeout(1 * 1000); // let test finish so it doesn"t ruin subsequent executions
     });
 
-    it("Should be able to receive a comment event that schedules right away due to no prior request.", async () => {
+    it("Should be able to receive a comment event that queues right away due to no prior request.", async () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pe.commitSHA,
-            commitURL:    pe.commitURL,
-            personId:     "myUser",
-            kind:         'standard',
-            repoId:       "d1_project9999",
-            delivId:      "d0",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            commitSHA: pe.commitSHA,
+            commitURL: pe.commitURL,
+            adminRequest: false,
+            personId: "myUser",
+            kind: "standard",
+            repoId: "d1_project9999",
+            delivId: "d0",
+            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
-        ce.flags = ["#schedule"];
+        ce.flags = [];
 
-        Log.test('getting data');
+        Log.test("getting data");
         let allData = await data.getAllData();
         expect(allData.comments.length).to.equal(0);
 
-        Log.test('handling schedule');
+        Log.test("handling schedule");
         await at.handleCommentEvent(ce);
 
-        Log.test('re-getting data');
+        Log.test("re-getting data");
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
     });
-
-    // TODO: need to strengthen this with a new feedback record in
-    // it("Should be able to receive a comment event that schedules for the future due to prior requests.", async () => {
-    //     expect(at).not.to.equal(null);
-    //
-    //     const pe: CommitTarget = pushes[0];
-    //     const ce: CommitTarget = {
-    //         botMentioned: true,
-    //         commitSHA:    pe.commitSHA,
-    //         commitURL:    pe.commitURL,
-    //         personId:     "cs310test",
-    //         kind:         'standard',
-    //         repoId:       "d1_project9999",
-    //         delivId:      "d1",
-    //         postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
-    //         timestamp:    TS_IN,
-    //         cloneURL:     "https://cloneURL"
-    //     };
-    //     ce.flags = ["#schedule"];
-    //
-    //     Log.test('getting data');
-    //     let allData = await data.getAllData();
-    //     expect(allData.comments.length).to.equal(0);
-    //     expect(allData.feedback.length).to.equal(1); // should be one record in there for this user
-    //
-    //     Log.test('handling schedule');
-    //     ce.timestamp = TS_IN + 1000;
-    //     await at.handleCommentEvent(ce);
-    //
-    //     Log.test('re-getting data');
-    //     allData = await data.getAllData();
-    //     expect(allData.comments.length).to.equal(1);
-    // });
 
     it("Should be able to use a comment event to start the express queue.", async () => {
         expect(at).not.to.equal(null);
@@ -370,15 +392,16 @@ describe("GitHubAutoTest", () => {
 
         const ce: CommitTarget = {
             botMentioned: true,
-            commitSHA:    pushes[2].commitSHA,
-            commitURL:    pushes[2].commitURL,
-            personId:     "myUser",
-            kind:         'standard',
-            delivId:      "d0",
-            repoId:       "d1_project9999",
-            postbackURL:  "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
-            timestamp:    TS_IN,
-            cloneURL:     "https://cloneURL"
+            commitSHA: pushes[2].commitSHA,
+            commitURL: pushes[2].commitURL,
+            adminRequest: false,
+            personId: "myUser",
+            kind: "standard",
+            delivId: "d0",
+            repoId: "d1_project9999",
+            postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/cbe1b0918b872997de4c4d2baf4c263f8d4c6dc2/comments",
+            timestamp: TS_IN,
+            cloneURL: "https://cloneURL"
         };
 
         await Util.delay(WAIT);
@@ -395,11 +418,11 @@ describe("GitHubAutoTest", () => {
 
     function stubDependencies() {
         gitHubMessages = [];
-        at["postToGitHub"] = function(info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
+        at["postToGitHub"] = function (info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
             Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
-            Log.test(gitHubMessages.length + '');
-            if (typeof info.flags === 'undefined' || info.flags.indexOf("#silent") < 0) {
-                if (message !== null && typeof message.message !== 'undefined') {
+            Log.test(gitHubMessages.length + "");
+            if (typeof info.flags === "undefined" || info.flags.indexOf("#silent") < 0) {
+                if (message !== null && typeof message.message !== "undefined") {
                     gitHubMessages.push(message);
                 } else {
                     Log.test("stubbed postToGitHub(..) - invalid arg: " + message);
@@ -408,7 +431,7 @@ describe("GitHubAutoTest", () => {
             } else {
                 Log.test("stubbed postToGitHub(..) - #silent");
             }
-            Log.test(gitHubMessages.length + '');
+            Log.test(gitHubMessages.length + "");
             return Promise.resolve(true);
         };
     }
@@ -434,7 +457,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
 
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit has been queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1); // comment event should not have been saved
     });
 
@@ -457,7 +480,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1);
 
         await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
@@ -476,7 +499,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
-        // don't wait; want to catch this push in flight
+        // don"t wait; want to catch this push in flight
         Log.test("Setup complete");
 
         // TEST: send a comment (this is the previous test)
@@ -484,10 +507,10 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         Log.test("1: - ghMessages: " + JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         Log.test("1: - allData: " + JSON.stringify(allData));
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
@@ -510,27 +533,30 @@ describe("GitHubAutoTest", () => {
 
         // SETUP: add a push with no output records
         await at.handlePushEvent(TestData.pushEventA);
+        Log.test("Setup push complete");
         let allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
         expect(allData.comments.length).to.equal(0);
         expect(allData.pushes.length).to.equal(1);
-        // don't wait; want to catch this push in flight
-        Log.test("Setup complete");
+        // don"t wait; want to catch this push in flight
+        Log.test("Setup validated");
 
         // TEST: send a comment (this is the previous test)
         const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
         req.flags = ["#check"];
-        req.kind = 'check';
+        req.kind = "check";
         await at.handleCommentEvent(req);
+        Log.test("Test comment complete");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 
         allData = await data.getAllData();
+        Log.trace(JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(2); // should generate a warning
         expect(gitHubMessages[1].message).to.equal("Test execution complete.");
         expect(allData.comments.length).to.equal(1);
@@ -560,7 +586,7 @@ describe("GitHubAutoTest", () => {
         // expect(gh.messages.length).to.equal(1); // should generate a warning
         // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         // expect(allData.comments.length).to.equal(1);
-        // expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        // expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
 
         // Wait for it!
         await Util.timeout(WAIT);
@@ -594,7 +620,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don't charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
 
         // Wait for it!
         await Util.timeout(WAIT);
@@ -604,6 +630,48 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
+    }).timeout(WAIT * 10);
+
+    it("Should ignore a request for a push from a prior version of the course.", async () => {
+        expect(at).not.to.equal(null);
+
+        // start fresh
+        await data.clearData();
+        // gh.messages = [];
+        stubDependencies();
+
+        let allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0);
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(0);
+
+        // SETUP: add a push with no output records
+        const push = Object.assign({}, TestData.pushEventPostback);
+        push.orgId = "SOMERANDOMTERM";
+        await at.handlePushEvent(push);
+
+        allData = await data.getAllData();
+        expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
+        expect(allData.comments.length).to.equal(0);
+        expect(allData.pushes.length).to.equal(0); // push should not save as it was dropped
+
+        //
+        //
+        // // TEST: send a comment (this is the previous test)
+        // // await at.handleCommentEvent(commentRecordUserA);
+        // // allData = await data.getAllData();
+        // // expect(gh.messages.length).to.equal(1); // should generate a warning
+        // // expect(gh.messages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
+        // // expect(allData.comments.length).to.equal(1);
+        // // expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
+        //
+        // // Wait for it!
+        // await Util.timeout(WAIT);
+        // allData = await data.getAllData();
+        // expect(gitHubMessages.length).to.equal(1); // should post response
+        // expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
+        // expect(allData.comments.length).to.equal(0);
+        // expect(allData.feedback.length).to.equal(0); // no charge
     }).timeout(WAIT * 10);
 
     it("Should give a user the results message on a commit that has been finished.", async () => {
@@ -654,10 +722,10 @@ describe("GitHubAutoTest", () => {
         // SETUP: add a push with no output records
         const fg: IFeedbackGiven = {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263fSOMEOTHER", // different commit
-            delivId:   "d1", // same deliverable
+            delivId: "d1", // same deliverable
             timestamp: TestData.commentRecordUserA.timestamp, // 1516451273288,
-            personId:  "cs310test",
-            kind:      'standard'
+            personId: "cs310test",
+            kind: "standard"
         };
 
         await data.savePush(TestData.inputRecordA.target);
@@ -674,7 +742,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
-        expect(allData.comments.length).to.equal(0); // doesn't count as a comment, user has to ask again once they are in-quota
+        expect(allData.comments.length).to.equal(0); // doesn"t count as a comment, user has to ask again once they are in-quota
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");
@@ -684,7 +752,7 @@ describe("GitHubAutoTest", () => {
         expect(at).not.to.equal(null);
 
         const pe: CommitTarget = pushes[0];
-        pe.postbackURL = 'do it here';
+        pe.postbackURL = "do it here";
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
         await at.handlePushEvent(pe);
@@ -713,7 +781,7 @@ describe("GitHubAutoTest", () => {
     //     return;
     // });
     //
-    // it.skip("Should ignore comments that don't mention @autobot.", async () => {
+    // it.skip("Should ignore comments that don"t mention @autobot.", async () => {
     //     return;
     // });
 

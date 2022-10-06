@@ -1,13 +1,14 @@
 import {expect} from "chai";
 import "mocha";
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {Test} from "../../../../common/TestHarness";
 
-import {DatabaseController} from "../../src/controllers/DatabaseController";
-import {PersonKind} from "../../src/Types";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {TestHarness} from "@common/test/TestHarness";
 
-import '../GlobalSpec';
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {PersonKind} from "@backend/Types";
+
+import "@common/test/GlobalSpec"; // load first
 
 /**
  * This suite seems like a lot of boilerplate, but is crucial to make sure the
@@ -23,7 +24,7 @@ describe("DatabaseController", () => {
     let dc: DatabaseController;
 
     before(async () => {
-        await Test.suiteBefore('DatabaseController');
+        await TestHarness.suiteBefore("DatabaseController");
     });
 
     beforeEach(() => {
@@ -31,17 +32,17 @@ describe("DatabaseController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('DatabaseController');
+        TestHarness.suiteAfter("DatabaseController");
     });
 
     function expectEmptyArray(records: any) {
         expect(records).to.not.be.null;
-        expect(records).to.be.an('array');
+        expect(records).to.be.an("array");
         expect(records).to.have.lengthOf(0);
     }
 
     it("Should not be able to get an invalid person by id.", async () => {
-        const person = await dc.getPerson(Test.INVALIDUSER1.id);
+        const person = await dc.getPerson(TestHarness.INVALIDUSER1.id);
         expect(person).to.be.null;
     });
 
@@ -51,17 +52,17 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid person by githubId.", async () => {
-        const person = await dc.getGitHubPerson(Test.INVALIDUSER1.github);
+        const person = await dc.getGitHubPerson(TestHarness.INVALIDUSER1.github);
         expect(person).to.be.null;
     });
 
     it("Should not be able to get an invalid deliverable by id.", async () => {
-        const deliv = await dc.getDeliverable('invalidDelivId');
+        const deliv = await dc.getDeliverable("invalidDelivId");
         expect(deliv).to.be.null;
     });
 
     it("Should not be able to get an invalid repo by id.", async () => {
-        const repo = await dc.getRepository('invalidRepoId');
+        const repo = await dc.getRepository("invalidRepoId");
         expect(repo).to.be.null;
     });
 
@@ -71,7 +72,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid team by id.", async () => {
-        const team = await dc.getTeam('invalidTeamId');
+        const team = await dc.getTeam("invalidTeamId");
         expect(team).to.be.null;
     });
 
@@ -81,7 +82,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid auth by personId.", async () => {
-        const auth = await dc.getAuth(Test.INVALIDUSER1.id);
+        const auth = await dc.getAuth(TestHarness.INVALIDUSER1.id);
         expect(auth).to.be.null;
     });
 
@@ -91,21 +92,21 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid result.", async () => {
-        const result = await dc.getResult('invalidDeliv', 'invalidRepo', 'invalidSHA' + Date.now());
+        const result = await dc.getResult("invalidDeliv", "invalidRepo", "invalidSHA" + Date.now());
         expect(result).to.be.null;
     });
 
     it("Should not be able to get an invalid result URL.", async () => {
-        const result = await dc.getResultFromURL('invalidURL' + Date.now(), Test.DELIVID0);
+        const result = await dc.getResultFromURL("invalidURL" + Date.now(), TestHarness.DELIVID0);
         expect(result).to.be.null;
     });
 
     it("Should not be able to get an invalid grade.", async () => {
-        const grade = await dc.getGrade(Test.INVALIDUSER1.id, 'invalidDeliv');
+        const grade = await dc.getGrade(TestHarness.INVALIDUSER1.id, "invalidDeliv");
         expect(grade).to.be.null;
     });
 
-    it("Should not be able to get a course record when it hasn't been stored.", async () => {
+    it("Should not be able to get a course record when it has not been stored.", async () => {
         const cr = await dc.getCourseRecord();
         expect(cr).to.be.null;
     });
@@ -127,7 +128,7 @@ describe("DatabaseController", () => {
 
     it("Should be able to get a list of teams when there are none.", async () => {
         const teams = await dc.getTeams();
-        expect(teams).to.have.lengthOf(3); // default teams: 'admin', 'staff', 'students'
+        expect(teams).to.have.lengthOf(3); // default teams: "admin", "staff", "students"
         // expectEmptyArray(teams);
     });
 
@@ -142,18 +143,18 @@ describe("DatabaseController", () => {
     });
 
     it("Should be able to get a list teams for a person who is invalid.", async () => {
-        const teams = await dc.getTeamsForPerson(Test.INVALIDUSER1.id);
+        const teams = await dc.getTeamsForPerson(TestHarness.INVALIDUSER1.id);
         expectEmptyArray(teams);
     });
 
     it("Should be able to get a list repositories for a person who is invalid.", async () => {
-        const teams = await dc.getRepositoriesForPerson(Test.INVALIDUSER1.id);
+        const teams = await dc.getRepositoriesForPerson(TestHarness.INVALIDUSER1.id);
         expectEmptyArray(teams);
     });
 
     // write new course record
     it("Should be able to write a course record.", async () => {
-        const cr = Test.createCourseRecord();
+        const cr = TestHarness.createCourseRecord();
         const res = await dc.writeCourseRecord(cr);
         expect(res).to.be.true;
     });
@@ -178,36 +179,36 @@ describe("DatabaseController", () => {
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.defaultDeliverableId = Test.DELIVID0;
+        res.defaultDeliverableId = TestHarness.DELIVID0;
         const worked = await dc.writeCourseRecord(res);
         expect(worked).to.be.true;
 
         res = await dc.getCourseRecord();
         expect(res.id).to.equal(courseId);
-        expect(res.defaultDeliverableId).to.equal(Test.DELIVID0);
+        expect(res.defaultDeliverableId).to.equal(TestHarness.DELIVID0);
         expect((res.custom as any).foo).to.be.true;
     });
 
     // write new deliverable
     it("Should be able to write a deliverable.", async () => {
-        const record = Test.createDeliverable(Test.DELIVID0);
+        const record = TestHarness.createDeliverable(TestHarness.DELIVID0);
         const res = await dc.writeDeliverable(record);
         expect(res).to.be.true;
     });
 
     // read deliverable
     it("Should be able to read a deliverable.", async () => {
-        const res = await dc.getDeliverable(Test.DELIVID0);
+        const res = await dc.getDeliverable(TestHarness.DELIVID0);
         Log.test(JSON.stringify(res));
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.DELIVID0);
+        expect(res.id).to.equal(TestHarness.DELIVID0);
     });
 
     // update deliverable
     it("Should be able to update a deliverable.", async () => {
-        let res = await dc.getDeliverable(Test.DELIVID0);
+        let res = await dc.getDeliverable(TestHarness.DELIVID0);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.DELIVID0);
+        expect(res.id).to.equal(TestHarness.DELIVID0);
         expect(res.visibleToStudents).to.be.true;
         expect((res.custom as any).foo).to.be.undefined;
 
@@ -216,179 +217,189 @@ describe("DatabaseController", () => {
         const worked = await dc.writeDeliverable(res);
         expect(worked).to.be.true;
 
-        res = await dc.getDeliverable(Test.DELIVID0);
+        res = await dc.getDeliverable(TestHarness.DELIVID0);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.DELIVID0);
+        expect(res.id).to.equal(TestHarness.DELIVID0);
         expect(res.visibleToStudents).to.be.false;
         expect((res.custom as any).foo).to.be.true;
     });
 
     // write new person
     it("Should be able to write a person.", async () => {
-        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        const record = TestHarness.createPerson(TestHarness.USER1.id, TestHarness.USER1.csId, TestHarness.USER1.github, PersonKind.STUDENT);
         const res = await dc.writePerson(record);
         expect(res).to.be.true;
     });
 
     // read person
     it("Should be able to read a person.", async () => {
-        const res = await dc.getPerson(Test.USER1.id);
+        const res = await dc.getPerson(TestHarness.USER1.id);
         Log.test(JSON.stringify(res));
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.USER1.id);
+        expect(res.id).to.equal(TestHarness.USER1.id);
     });
 
     // delete person
     it("Should be able to delete a person.", async () => {
-        let res = await dc.getPerson(Test.USER1.id);
+        let res = await dc.getPerson(TestHarness.USER1.id);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.USER1.id);
+        expect(res.id).to.equal(TestHarness.USER1.id);
 
         const worked = await dc.deletePerson(res);
         expect(worked).to.be.true;
 
         // verify they are deleted
-        res = await dc.getPerson(Test.USER1.id);
+        res = await dc.getPerson(TestHarness.USER1.id);
         expect(res).to.be.null;
     });
 
     // update person
     it("Should be able to update a person.", async () => {
         // get the person in there
-        const record = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
+        const record = TestHarness.createPerson(TestHarness.USER1.id, TestHarness.USER1.csId, TestHarness.USER1.github, PersonKind.STUDENT);
         await dc.writePerson(record);
 
-        let res = await dc.getPerson(Test.USER1.id);
+        let res = await dc.getPerson(TestHarness.USER1.id);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.USER1.id);
-        expect(res.githubId).to.equal(Test.USER1.github);
+        expect(res.id).to.equal(TestHarness.USER1.id);
+        expect(res.githubId).to.equal(TestHarness.USER1.github);
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.githubId = 'newGHid';
+        res.githubId = "newGHid";
         const worked = await dc.writePerson(res);
         expect(worked).to.be.true;
 
-        res = await dc.getPerson(Test.USER1.id);
+        res = await dc.getPerson(TestHarness.USER1.id);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.USER1.id);
-        expect(res.githubId).to.equal('newGHid');
+        expect(res.id).to.equal(TestHarness.USER1.id);
+        expect(res.githubId).to.equal("newGHid");
         expect((res.custom as any).foo).to.be.true;
     });
 
     // write new team
     it("Should be able to write a team.", async () => {
         // prep
-        const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
+        const p2 = TestHarness.createPerson(
+            TestHarness.USER2.id,
+            TestHarness.USER2.csId,
+            TestHarness.USER2.github,
+            PersonKind.STUDENT);
         let res = await dc.writePerson(p2);
         expect(res).to.be.true;
 
-        const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+        const team = await TestHarness.createTeam(
+            TestHarness.TEAMNAME1,
+            TestHarness.DELIVID0,
+            [TestHarness.USER1.id, TestHarness.USER2.id]);
         res = await dc.writeTeam(team);
         expect(res).to.be.true;
     });
 
     // read team
     it("Should be able to read a team.", async () => {
-        const res = await dc.getTeam(Test.TEAMNAME1);
+        const res = await dc.getTeam(TestHarness.TEAMNAME1);
         Log.test(JSON.stringify(res));
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.TEAMNAME1);
+        expect(res.id).to.equal(TestHarness.TEAMNAME1);
     });
 
     // delete team
     it("Should be able to delete a team.", async () => {
-        let res = await dc.getTeam(Test.TEAMNAME1);
+        let res = await dc.getTeam(TestHarness.TEAMNAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.TEAMNAME1);
+        expect(res.id).to.equal(TestHarness.TEAMNAME1);
 
         const worked = await dc.deleteTeam(res);
         expect(worked).to.be.true;
 
         // verify they are deleted
-        res = await dc.getTeam(Test.TEAMNAME1);
+        res = await dc.getTeam(TestHarness.TEAMNAME1);
         expect(res).to.be.null;
     });
 
     // update team
     it("Should be able to update a team.", async () => {
         // get the person in there
-        const team = await Test.createTeam(Test.TEAMNAME1, Test.DELIVID0, [Test.USER1.id, Test.USER2.id]);
+        const team = await TestHarness.createTeam(
+            TestHarness.TEAMNAME1,
+            TestHarness.DELIVID0,
+            [TestHarness.USER1.id, TestHarness.USER2.id]);
         await dc.writeTeam(team);
 
-        let res = await dc.getTeam(Test.TEAMNAME1);
+        let res = await dc.getTeam(TestHarness.TEAMNAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.TEAMNAME1);
+        expect(res.id).to.equal(TestHarness.TEAMNAME1);
         expect(res.URL).to.equal(null);
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.URL = 'newURL';
+        res.URL = "newURL";
         const worked = await dc.writeTeam(res);
         expect(worked).to.be.true;
 
-        res = await dc.getTeam(Test.TEAMNAME1);
+        res = await dc.getTeam(TestHarness.TEAMNAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.TEAMNAME1);
-        expect(res.URL).to.equal('newURL');
+        expect(res.id).to.equal(TestHarness.TEAMNAME1);
+        expect(res.URL).to.equal("newURL");
         expect((res.custom as any).foo).to.be.true;
     });
 
     // write new repo
     it("Should be able to write a repository.", async () => {
         // prep
-        // const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, 'student');
+        // const p2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, "student");
         // let res = await dbc.writePerson(p2);
         // expect(res).to.be.true;
 
-        const repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID0, Test.TEAMNAME1);
+        const repo = await TestHarness.createRepository(TestHarness.REPONAME1, TestHarness.DELIVID0, TestHarness.TEAMNAME1);
         const worked = await dc.writeRepository(repo);
         expect(worked).to.be.true;
     });
 
     // read repo
     it("Should be able to read a repository.", async () => {
-        const res = await dc.getRepository(Test.REPONAME1);
+        const res = await dc.getRepository(TestHarness.REPONAME1);
         Log.test(JSON.stringify(res));
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.REPONAME1);
+        expect(res.id).to.equal(TestHarness.REPONAME1);
     });
 
     // delete repo
     it("Should be able to delete a repository.", async () => {
-        let res = await dc.getRepository(Test.REPONAME1);
+        let res = await dc.getRepository(TestHarness.REPONAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.REPONAME1);
+        expect(res.id).to.equal(TestHarness.REPONAME1);
 
         const worked = await dc.deleteRepository(res);
         expect(worked).to.be.true;
 
         // verify they are deleted
-        res = await dc.getRepository(Test.REPONAME1);
+        res = await dc.getRepository(TestHarness.REPONAME1);
         expect(res).to.be.null;
     });
 
     // update repository
     it("Should be able to update a repository.", async () => {
         // get the team in there
-        const repo = await Test.createRepository(Test.REPONAME1, Test.DELIVID0, Test.TEAMNAME1);
+        const repo = await TestHarness.createRepository(TestHarness.REPONAME1, TestHarness.DELIVID0, TestHarness.TEAMNAME1);
         await dc.writeRepository(repo);
 
-        let res = await dc.getRepository(Test.REPONAME1);
+        let res = await dc.getRepository(TestHarness.REPONAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.REPONAME1);
+        expect(res.id).to.equal(TestHarness.REPONAME1);
         expect(res.URL).to.equal(null);
         expect((res.custom as any).foo).to.be.undefined;
 
         (res.custom as any).foo = true;
-        res.URL = 'newURL';
+        res.URL = "newURL";
         const worked = await dc.writeRepository(res);
         expect(worked).to.be.true;
 
-        res = await dc.getRepository(Test.REPONAME1);
+        res = await dc.getRepository(TestHarness.REPONAME1);
         expect(res).to.not.be.null;
-        expect(res.id).to.equal(Test.REPONAME1);
-        expect(res.URL).to.equal('newURL');
+        expect(res.id).to.equal(TestHarness.REPONAME1);
+        expect(res.URL).to.equal("newURL");
         expect((res.custom as any).foo).to.be.true;
     });
 

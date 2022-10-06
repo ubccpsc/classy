@@ -7,8 +7,6 @@ import {GitHubActions} from "./controllers/GitHubActions";
 import {GitHubController, IGitHubController} from "./controllers/GitHubController";
 import IREST from "./server/IREST";
 
-import * as path from 'path';
-
 export class Factory {
 
     /**
@@ -16,7 +14,7 @@ export class Factory {
      *
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
-        // public static OVERRIDE = true; // NOTE: should be commented out when committing
+    // public static OVERRIDE = true; // NOTE: should be commented out when committing
     public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     private static readonly TESTNAME = "classytest";
@@ -107,7 +105,7 @@ export class Factory {
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
             const handler = new plug[constructorName](ghController);
-            Log.info("Factory::getCourseController() - handler instantiated");
+            Log.trace("Factory::getCourseController() - handler instantiated");
             return handler;
         } catch (err) {
             const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";

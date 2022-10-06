@@ -17,19 +17,21 @@
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
-        <ons-tab id="AdminTeamTab" page="teams.html" label="Teams" icon="ion-ios-people">
+        <ons-tab id="AdminTeamTab" page="teams.html" label="Teams" icon="md-accounts-outline"> <!-- ion-ios-people -->
         </ons-tab>
 
-        <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="ion-ios-paper-outline">
+        <ons-tab id="AdminGradeTab" page="grades.html" label="Grades" icon="md-file-text"><!-- ion-ios-paper-outline -->
         </ons-tab>
 
-        <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="ion-android-checkmark-circle">
+        <ons-tab id="AdminResultTab" page="results.html" label="Results" icon="md-check-circle">
+            <!-- ion-android-checkmark-circle -->
         </ons-tab>
 
-        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="ion-ios-speedometer-outline">
+        <ons-tab id="AdminDashboardTab" page="dashboard.html" label="Dash" icon="md-view-dashboard">
+            <!-- ion-ios-speedometer-outline -->
         </ons-tab>
 
-        <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="ion-ios-gear">
+        <ons-tab id="AdminConfigTab" page="config.html" label="Config" icon="md-settings"> <!-- ion-ios-gear -->
         </ons-tab>
     </ons-tabbar>
 
@@ -75,22 +77,21 @@
     <template id="teams.html">
         <ons-page id="AdminTeams">
             <ons-list id="AdminStudentsList">
-                <div style="text-align:center; padding: 1em;">
-                    Select Deliverable:
-                    <select id="teamsListSelect" style="margin-left: 1em;">
-                        <option value="''">-None-</option>
-                    </select></div>
-                <ons-list-header>Formed Teams</ons-list-header>
+                <div style="display:flex; flex-direction: row; justify-content: center;">
+                    <div style="text-align:center; padding: 1em;  display: flex;">
+                        Select Deliverable:
+                        <select id="teamsListSelect" style="margin-left: 1em;">
+                            <option value="''">-None-</option>
+                        </select></div>
+                    <div style="text-align:center; padding: 1em; display: flex;">
+                        Team status:
+                        <select id="teamsListStatusSelect" style="margin-left: 1em;">
+                            <option value="formed">Formed</option>
+                            <option value="unformed">Unformed</option>
+                        </select></div>
+                </div>
+                <ons-list-header>Team Results</ons-list-header>
                 <div id="teamsListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
-                <div id="teamsListTableNone" class="noResultsRow">
-                    No Results
-                </div>
-                <ons-list-header>Individuals</ons-list-header>
-                <div id="teamsIndividualListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;">
-                </div>
-                <div id="teamsIndividualListTableNone" class="noResultsRow">
-                    No Results
-                </div>
             </ons-list>
         </ons-page>
     </template>
@@ -112,16 +113,16 @@
     <template id="results.html">
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
-                <div style="text-align:center; padding: 1em;">
-                    Deliverable:
-                    <select id="resultsDelivSelect" style="margin-left: 1em;">
+                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                    <span style="padding-right: 0.5em;">Deliv:</span>
+                    <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    Repo:
-                    <select id="resultsRepoSelect" style="margin-left: 1em;">
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <select id="resultsRepoSelect" style="display: flex; width: 8em;">
                         <option value="any">-All-</option>
                     </select>
-                    <button id="resultsUpdateButton">Update</button>
+                    <button style="margin-left: 1em;" id="resultsUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
                 <div id="resultsListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
@@ -135,26 +136,16 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
-                <!--<div style="text-align:center; padding: 1em;">-->
-                <!--Select Deliverable:-->
-                <!--<select id="dashboardListSelect" style="margin-left: 1em;">-->
-                <!--<option value="''">-None-</option>-->
-                <!--</select></div>-->
-                <!--<ons-list-header>Dashboard</ons-list-header>-->
-                <!--<div id="dashboardListTable" style="width:100%;"></div>-->
-                <!--<div id="dashboardListTableNone" class="noResultsRow">-->
-                <!--No Results-->
-                <!--</div>-->
-                <div style="text-align:center; padding: 1em;">
-                    Deliverable:
-                    <select id="dashboardDelivSelect" style="margin-left: 1em;">
+                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                    <span style="padding-right: 0.5em">Deliv:</span>
+                    <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    Repo:
-                    <select id="dashboardRepoSelect" style="margin-left: 1em;">
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <select id="dashboardRepoSelect" style="width: 8em;">
                         <option value="any">-All-</option>
                     </select>
-                    <button id="dashboardUpdateButton">Update</button>
+                    <button style="margin-left: 1em;" id="dashboardUpdateButton">Update</button>
                 </div>
                 <ons-list-header>Results</ons-list-header>
                 <div id="dashboardListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
@@ -163,20 +154,6 @@
                 </div>
             </ons-list>
         </ons-page>
-    </template>
-
-    <template id="classlistDialog.html">
-        <ons-dialog id="adminClasslistConfirmHeader">
-            <ons-list-header style="text-align: center; font-weight: 700">
-            </ons-list-header>
-            <ons-scroller>
-                <ons-list>
-                </ons-list>
-            </ons-scroller>
-            <ons-button>
-                Close
-            </ons-button>
-        </ons-dialog>
     </template>
 
     <template id="dockerBuildDialog.html">
@@ -195,7 +172,7 @@
                         <ons-button>
                             Close
                         </ons-button>
-                        </a>
+                    </a>
                     <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
                         <ons-button>
                             Save
@@ -227,7 +204,8 @@
                         <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
                         The corresponding classlist command for this is:
                         <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
-                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing GitHub logins presents
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing
+                        GitHub logins presents
                         its own issues that require manual effort on the part of course staff to handle).
                         Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
                     </div>
@@ -239,13 +217,15 @@
                     </div>
                     <div class="center">
                         Update classlist via Classlist API
-                        <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update Classlist
+                        <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update
+                            Classlist
                         </ons-button>
                     </div>
                     <div class="expandable-content">
                         BETA: This will update your classlist with the latest Classlist data
 
-                        This will act as if you uploaded your own classlist. The goal is to set this on a timer and automatically update it
+                        This will act as if you uploaded your own classlist. The goal is to set this on a timer and
+                        automatically update it
                         once we further understand the implications of this logic.
                     </div>
                 </ons-list-item>
@@ -256,27 +236,31 @@
                     </div>
                     <div class="center">
                         Synchronize class list
-                        <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark withdrawn students
+                        <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark
+                            withdrawn students
                         </ons-button>
                     </div>
                     <div class="expandable-content">
-                        As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP query. This action
-                        just marks students not present in this list as withdrawn. It does not delete any teams, repos, grades, or results
-                        although the grades view will not return grades for students who are withdrawn (e.g., so the course statistics are
-                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab sections, etc.
+                        As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP
+                        query. This action
+                        just marks students not present in this list as withdrawn. It does not delete any teams, repos,
+                        grades, or results
+                        although the grades view will not return grades for students who are withdrawn (e.g., so the
+                        course statistics are
+                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab
+                        sections, etc.
                     </div>
                 </ons-list-item>
 
                 <ons-list-header>Upload Grades</ons-list-header>
-
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-user-graduate"></ons-icon>
                     </div>
                     <div class="center">
-                        Deliverable
+                        By Deliverable.&nbsp;&nbsp;Deliverable:
                         <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        Select Grade CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
+                        Select CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
                         <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
                     </div>
                     <div class="expandable-content">
@@ -290,6 +274,25 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-graduate"></ons-icon>
+                    </div>
+                    <div class="center">
+                        From PrairieLearn.&nbsp;&nbsp;
+                        Select GradeBook CSV <input id="adminGradePrairieCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradePrairieCSV" modifier="medium">Upload Gradebook</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>UID,UIN,Role,delivIdHeaders*</pre>
+                        The UID columns should be in CWL@ubc.ca format. Any empty grade cell will be ignored,
+                        but any present grade cell will overwrite whatever is already available online.
+                        This cannot be undone.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Team Management</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -299,14 +302,19 @@
                         Deliverable
                         <select id="adminTeamDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
                         Members
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em" id="adminTeamText"></ons-input>
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamText"></ons-input>
                         <ons-button id="adminCreateTeamButton" modifier="medium">Create Team</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be provided in the text box.
-                        This does the same thing as if the students created the team themselves but overrides the team size limits (e.g.,
-                        there can be more or fewer students than the deliverable requires). Students must NOT already be on a team
-                        for this deliverable. This also does not create the team on GitHub, to do that you will need to use the Provision
+                        Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be
+                        provided in the text box.
+                        This does the same thing as if the students created the team themselves but overrides the team
+                        size limits (e.g.,
+                        there can be more or fewer students than the deliverable requires). Students must NOT already be
+                        on a team
+                        for this deliverable. This also does not create the team on GitHub, to do that you will need to
+                        use the Provision
                         and Release page.
                     </div>
                 </ons-list-item>
@@ -322,7 +330,8 @@
                         <ons-button id="adminDeleteTeamManageButton" modifier="medium">Disband Team</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Disbands a team. This will detach the team from any GitHub repos that it knows about, remove the users from the
+                        Disbands a team. This will detach the team from any GitHub repos that it knows about, remove the
+                        users from the
                         team, delete the GitHub team, and delete the team from the local Classy database.
                     </div>
                 </ons-list-item>
@@ -341,8 +350,10 @@
                         <ons-button id="adminTeamAddMemberButton" modifier="medium">Add Member</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Specify the team name and GitHub username for the user. Adds the user to the team. The user must not aleady be on a
-                        team for the deliverable the specified team is associated with. Team size limits will be ignored.
+                        Specify the team name and GitHub username for the user. Adds the user to the team. The user must
+                        not aleady be on a
+                        team for the deliverable the specified team is associated with. Team size limits will be
+                        ignored.
                     </div>
                 </ons-list-item>
 
@@ -360,7 +371,8 @@
                         <ons-button id="adminTeamRemoveMemberButton" modifier="medium">Remove Member</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Specify the team name and GitHub username for the user. User is removed from the team on GitHub (if provisioned) and
+                        Specify the team name and GitHub username for the user. User is removed from the team on GitHub
+                        (if provisioned) and
                         local database.
                     </div>
                 </ons-list-item>
@@ -372,12 +384,16 @@
                     </div>
                     <div class="center">
                         Default Deliverable
-                        <select id="adminDefaultDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable</ons-button>
+                        <select id="adminDefaultDeliverableSelect"
+                                style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Setting the default deliverable is only required for AutoTest. This lets the container know what tests
-                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to be run
+                        Setting the default deliverable is only required for AutoTest. This lets the container know what
+                        tests
+                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to
+                        be run
                         automatically after a student push, just leave this blank.
                     </div>
                 </ons-list-item>
@@ -388,13 +404,10 @@
                         <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories</ons-button>
+                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories
+                        </ons-button>
                     </div>
                 </ons-list-item>
-
-                <!-- UNSUPPORTED FEATURE. A containerized patch tool exists that may be integrated with Portal back-end endpoints to implement this feature.
-
-                     Uncomment code and implement container as a service, found here: github.students.cs.ubc.ca/cpsc310/repoPatchTool.git, in docker-compose.yml.
 
                 <ons-list-header>Manage and Apply Pull Requests</ons-list-header>
                 <ons-list-item>
@@ -402,9 +415,10 @@
                         <ons-icon icon="fa-band-aid"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests</ons-button>
+                        <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests
+                        </ons-button>
                     </div>
-                </ons-list-item> -->
+                </ons-list-item>
 
                 <div style="display:none;">
                     <ons-list-item expandable>
@@ -413,19 +427,25 @@
                         </div>
                         <div class="center">
                             Provision Repositories for Deliverable
-                            <select id="adminProvisionDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <select id="adminProvisionDeliverableSelect"
+                                    style="margin-left: 1em; margin-right: 1em;"></select>
                             <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
                         </div>
                         <div class="expandable-content">
-                            Creates the repositories for any provisionable Deliverable using all of the settings specified in the
+                            Creates the repositories for any provisionable Deliverable using all of the settings
+                            specified in the
                             deliverable
-                            page. This is an incremental function; you can provision a deliverable several times as teams are formed, or
+                            page. This is an incremental function; you can provision a deliverable several times as
+                            teams are formed, or
                             after
-                            the class composition changes. It will also provision deliverables for all staff members who have previously
+                            the class composition changes. It will also provision deliverables for all staff members who
+                            have previously
                             logged
-                            into Classy (e.g., so they can see what the students see). This is a slow action (up to 30 seconds / repository)
+                            into Classy (e.g., so they can see what the students see). This is a slow action (up to 30
+                            seconds / repository)
                             so
-                            do not leave this until the last second, and make sure multiple of these requests are not running concurrently.
+                            do not leave this until the last second, and make sure multiple of these requests are not
+                            running concurrently.
                             Cannot be undone, so use this with care.
                         </div>
                     </ons-list-item>
@@ -436,12 +456,15 @@
                         </div>
                         <div class="center">
                             Enable write access for deliverable repositories
-                            <select id="adminReleaseDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <select id="adminReleaseDeliverableSelect"
+                                    style="margin-left: 1em; margin-right: 1em;"></select>
                             <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
                         </div>
                         <div class="expandable-content">
-                            Releases any provisoined repositories so students can make commits to their repositories. This is an incremental
-                            function; you can release a deliverable several times as teams are formed, or after the class composition
+                            Releases any provisoined repositories so students can make commits to their repositories.
+                            This is an incremental
+                            function; you can release a deliverable several times as teams are formed, or after the
+                            class composition
                             changes.
                         </div>
                     </ons-list-item>
@@ -452,7 +475,8 @@
                         </div>
                         <div class="center">
                             NOT IMPLEMENTED: Disable write access for deliverable repositories
-                            <select id="adminReadOnlyDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <select id="adminReadOnlyDeliverableSelect"
+                                    style="margin-left: 1em; margin-right: 1em;"></select>
                             <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
                         </div>
                         <div class="expandable-content">
@@ -466,7 +490,8 @@
                         </div>
                         <div class="center">
                             NOT IMPLEMENTED: Enable write access for deliverable repositories
-                            <select id="adminReadWriteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            <select id="adminReadWriteDeliverableSelect"
+                                    style="margin-left: 1em; margin-right: 1em;"></select>
                             <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
                         </div>
                         <div class="expandable-content">
@@ -517,7 +542,8 @@
                 <ons-list id="admin-editable-deliverable-list">
                     <input type="hidden" id="adminEditDeliverablePage-id"/> <!-- what is this for? -->
 
-                    <ons-list-header id="adminEditDeliverablePage-header-deliverableOptions">Deliverable Options</ons-list-header>
+                    <ons-list-header id="adminEditDeliverablePage-header-deliverableOptions">Deliverable Options
+                    </ons-list-header>
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
@@ -530,7 +556,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-name"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            Deliverable Id. <b>Cannot be changed.</b> Deliverable Ids must consist of only letters and numbers; no
+                            Deliverable Id. <b>Cannot be changed.</b> Deliverable Ids must consist of only letters and
+                            numbers; no
                             punctuation and
                             no spaces are permitted.
                         </div>
@@ -538,7 +565,7 @@
 
                     <ons-list-item expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-link"></ons-icon>
+                            <ons-icon icon="md-link"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             URL
@@ -559,11 +586,14 @@
                             <span title="Visible to students.">Visible to students</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-visible" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Whether the deliverable is visible to students in their grading sheet (independent from whether the grade has
-                            been released). This is useful for maintaining grade entries the students do not need to see.
+                            Whether the deliverable is visible to students in their grading sheet (independent from
+                            whether the grade has
+                            been released). This is useful for maintaining grade entries the students do not need to
+                            see.
                         </div>
                     </ons-list-item>
 
@@ -575,10 +605,12 @@
                             <span title="Displays Grades in student grade view.">Grades Released</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-gradesReleased" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Releases the grades to the students. This will make the value on the admin grading table visible on the student
+                            Releases the grades to the students. This will make the value on the admin grading table
+                            visible on the student
                             grade table.
                         </div>
                     </ons-list-item>
@@ -611,7 +643,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-custom"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            This is a JSON object that will be stored along with the deliverable and can be used by custom course
+                            This is a JSON object that will be stored along with the deliverable and can be used by
+                            custom course
                             controllers. It must be valid JSON (or {} if you do not want to pass any custom params).
                             This should usually be just {}.
                         </div>
@@ -658,10 +691,11 @@
                     </ons-list-item>
                     -->
 
-                    <ons-list-header id="adminEditDeliverablePage-header-deliverableDates">Deliverable Dates</ons-list-header>
+                    <ons-list-header id="adminEditDeliverablePage-header-deliverableDates">Deliverable Dates
+                    </ons-list-header>
                     <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-calendar"></ons-icon>
+                            <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
@@ -680,7 +714,7 @@
 
                     <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
-                            <ons-icon icon="ion-calendar"></ons-icon>
+                            <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
                             <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
@@ -693,7 +727,8 @@
                             </input>
                         </div>
                         <div class="expandable-content">
-                            Students cannot invoke AutoTest after to this date for grading, although they can invoke it without updating
+                            Students cannot invoke AutoTest after to this date for grading, although they can invoke it
+                            without updating
                             their grades with the option below.
                         </div>
                     </ons-list-item>
@@ -706,18 +741,23 @@
                             <span title="Allow invoking AutoTest after deadline">Allow late AutoTest</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-lateAutoTest" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-lateAutoTest" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            This can be used to let the students run AutoTest <b>after</b> the close date has passed. By default this does
-                            NOT allow grades to be updated (but this is at the discretion of your custom course controller). It is customary
+                            This can be used to let the students run AutoTest <b>after</b> the close date has passed. By
+                            default this does
+                            NOT allow grades to be updated (but this is at the discretion of your custom course
+                            controller). It is customary
                             for
-                            this to be false until a day or two after the close date has happened so students requesting grades on late
+                            this to be false until a day or two after the close date has happened so students requesting
+                            grades on late
                             deliverables are aware that the deadline has passed and is being enforced.
                         </div>
                     </ons-list-item>
 
-                    <ons-list-header id="adminEditDeliverablePage-header-provisioningOptions">Provisioning Options</ons-list-header>
+                    <ons-list-header id="adminEditDeliverablePage-header-provisioningOptions">Provisioning Options
+                    </ons-list-header>
                     <ons-list-item style="display: flex;" expandable>
                         <div class="left settingIcon">
                             <ons-icon icon="fa-location-arrow"></ons-icon>
@@ -726,7 +766,8 @@
                             <span>Deliverable will provision repos</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-shouldProvision" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-shouldProvision" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
                             If new repositories will be provisioned for this deliverable, say yes. Otherwise no.
@@ -745,8 +786,11 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repos are provisioned for this deliverable, where should they be imported from (e.g., the boostrap clone
-                            URL).
+                            If any repos are provisioned for this deliverable, where should they be imported from
+                            (e.g., the boostrap clone URL).
+                            <br><br>
+                            You can optionally import from a branch or subdirectory using the syntax
+                            `https://bootstrap.git#branch:directory`
                         </div>
                     </ons-list-item>
 
@@ -762,7 +806,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repositories are generated as a part of this deliverable, this prefix will be used when naming. Will
+                            If any repositories are generated as a part of this deliverable, this prefix will be used
+                            when naming. Will
                             default to '&lt;delivId&gt;_' if empty.
                         </div>
                     </ons-list-item>
@@ -777,7 +822,8 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any teams are generated as a part of this deliverable, this prefix will be used when naming. Will revert to '&lt;delivId&gt;_'
+                            If any teams are generated as a part of this deliverable, this prefix will be used when
+                            naming. Will revert to '&lt;delivId&gt;_'
                             if empty.
                         </div>
                     </ons-list-item>
@@ -837,10 +883,12 @@
                             <span>Must Be In Same Lab</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-inSameLab" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
-                            Enable if the Students for Team Generation and Student-made Teams must be in the same lab based on the Lab List.
+                            Enable if the Students for Team Generation and Student-made Teams must be in the same lab
+                            based on the Lab List.
                         </div>
                     </ons-list-item>
                     <ons-list-item style="display: flex;" expandable>
@@ -851,7 +899,8 @@
                             <span>Students Make Teams</span>
                         </div>
                         <div class="right settingRight">
-                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item" onclick=""></ons-switch>
+                            <ons-switch id="adminEditDeliverablePage-studentsMakeTeams" modifier="list-item"
+                                        onclick=""></ons-switch>
                         </div>
                         <div class="expandable-content">
                             Enable if Students are allowed to create their own teams for this deliverable.
@@ -861,7 +910,8 @@
                 <ons-list>
 
                     <ons-list>
-                        <ons-list-header id="adminEditDeliverablePage-header-autoTestOptions">AutoTest Options</ons-list-header>
+                        <ons-list-header id="adminEditDeliverablePage-header-autoTestOptions">AutoTest Options
+                        </ons-list-header>
                         <ons-list-item style="display: flex;" expandable>
                             <div class="left settingIcon">
                                 <ons-icon icon="fa-location-arrow"></ons-icon>
@@ -870,7 +920,8 @@
                                 <span>Deliverable will use AutoTest</span>
                             </div>
                             <div class="right settingRight">
-                                <ons-switch id="adminEditDeliverablePage-shouldAutoTest" modifier="list-item" onclick=""></ons-switch>
+                                <ons-switch id="adminEditDeliverablePage-shouldAutoTest" modifier="list-item"
+                                            onclick=""></ons-switch>
                             </div>
                             <div class="expandable-content">
                                 If AutoTest will be used for this deliverable, say yes. Otherwise no.
@@ -909,7 +960,8 @@
                                 <ons-list id="docker-image-list">
                                     <ons-list-item>
                                         <label class="left">
-                                            <ons-radio name="docker-image" input-id="radio-0" disabled style=""></ons-radio>
+                                            <ons-radio name="docker-image" input-id="radio-0" disabled
+                                                       style=""></ons-radio>
                                         </label>
                                         <label for="radio-0" class="center">
                                             <ons-row>
@@ -924,7 +976,8 @@
 
                                 <ons-list-item class="list-item" id="docker-image-create">
                                     <div class="center list-item__center">
-                                        <ons-button id="btnNewImage" modifier="large" class="button--large button">Create New
+                                        <ons-button id="btnNewImage" modifier="large" class="button--large button">
+                                            Create New
                                             Image
                                         </ons-button>
                                     </div>
@@ -945,7 +998,8 @@
                                            id="adminEditDeliverablePage-atContainerTimeout"></ons-input>
                             </div>
                             <div class="expandable-content">
-                                This defines how long the AutoTest container will try to run the student code before it times out. E.g., 300
+                                This defines how long the AutoTest container will try to run the student code before it
+                                times out. E.g., 300
                                 (5 minutes).
                             </div>
                         </ons-list-item>
@@ -958,13 +1012,13 @@
                                 Student Delay
                             </div>
                             <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay" maxLength="6"
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atStudentDelay"
+                                           maxLength="6"
                                            style="width: 5em;"></ons-input>
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 900 (15 minutes), 43200 (12 hours), 86400 (24 hours). Cannot be lower than
-                                15 minutes unless a minimum value is set in the environmental config.
+                                E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 
@@ -976,10 +1030,12 @@
                                 Regression Deliverables
                             </div>
                             <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atRegressionIds"></ons-input>
+                                <ons-input class="settingTextInput"
+                                           id="adminEditDeliverablePage-atRegressionIds"></ons-input>
                             </div>
                             <div class="expandable-content">
-                                Comma separated list of deliverableIds that should be run when this container is invoked.
+                                Comma separated list of deliverableIds that should be run when this container is
+                                invoked.
                             </div>
                         </ons-list-item>
 
@@ -994,7 +1050,8 @@
                                 <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
                             </div>
                             <div class="expandable-content">
-                                This field is a convenient way to pass custom parameters into a grading container for a specific
+                                This field is a convenient way to pass custom parameters into a grading container for a
+                                specific
                                 deliverable. It must be a valid JSON object (or {}).
                             </div>
                         </ons-list-item>
@@ -1039,12 +1096,16 @@
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-context-input" type="url" required></ons-input>
+                            <ons-input class="settingTextInput" id="docker-image-context-input" type="url"
+                                       required></ons-input>
                         </div>
                         <div class="expandable-content">
-                            See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker build</a>
-                            documentation for details about how to construct the URL. The URL should start with "https://" and end with
-                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include the token in the URL.
+                            See <a href="https://docs.docker.com/engine/reference/commandline/build/#git-repositories">docker
+                            build</a>
+                            documentation for details about how to construct the URL. The URL should start with
+                            "https://" and end with
+                            ".git" suffix. If the repository is private, set GH_DOCKER_TOKEN in the .env. Do not include
+                            the token in the URL.
                         </div>
                     </ons-list-item>
 
@@ -1080,7 +1141,8 @@
 
                     <ons-list-item class="list-item" id="docker-image-create">
                         <div class="center list-item__center">
-                            <button id="build-image-button" class="button--large button" type="submit">Build Image</button>
+                            <button id="build-image-button" class="button--large button" type="submit">Build Image
+                            </button>
                         </div>
                     </ons-list-item>
                 </ons-list>
@@ -1115,8 +1177,10 @@
 
             <ons-list>
                 <ons-list-header>EULA</ons-list-header>
-                <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up. Some of these items will be
-                    present here but not in GitHub; this is because this list is populated from the Classy database. Deletion events will
+                <ons-list-item>Note: These are all unrecoverable actions. Like seriously. Don't screw up. Some of these
+                    items will be
+                    present here but not in GitHub; this is because this list is populated from the Classy database.
+                    Deletion events will
                     delete both database entries and GitHub entities.
                 </ons-list-item>
                 <ons-list-header>Select Deliverable to Delete</ons-list-header>
@@ -1143,12 +1207,14 @@
                     </div>
                     <div class="center">
                         Teams:
-                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="teamDeleteSelect">
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="teamDeleteSelect">
                         </select>
                         <ons-button id="adminDeleteTeamButton" modifier="medium">Delete Team</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Will delete team object and associated GitHub team, if it exists. Will not delete grades or results associated
+                        Will delete team object and associated GitHub team, if it exists. Will not delete grades or
+                        results associated
                         with the team.
                     </div>
                 </ons-list-item>
@@ -1161,12 +1227,14 @@
                     </div>
                     <div class="center">
                         Repositories:
-                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;" id="repoDeleteSelect">
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repoDeleteSelect">
                         </select>
                         <ons-button id="adminDeleteRepositoryButton" modifier="medium">Delete Repository</ons-button>
                     </div>
                     <div class="expandable-content">
-                        Will delete repository object and associated GitHub repository, if it exists. Will not delete grades or
+                        Will delete repository object and associated GitHub repository, if it exists. Will not delete
+                        grades or
                         results associated with the repository.
                     </div>
                 </ons-list-item>
@@ -1177,13 +1245,15 @@
                         <ons-icon icon="fa-users"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminDeleteSanitizeDB" modifier="medium" style="margin-right: 1em">GitHub Synchronization
+                        <ons-button id="adminDeleteSanitizeDB" modifier="medium" style="margin-right: 1em">GitHub
+                            Synchronization
                         </ons-button>
                         Dry Run:
                         <ons-switch id="adminDeleteSanitizeDBToggle" style="margin-left: 1em" checked></ons-switch>
                     </div>
                     <div class="expandable-content">
-                        This will synchronize the database with GitHub. There is no UI or progress. You almost certainly do not want to do
+                        This will synchronize the database with GitHub. There is no UI or progress. You almost certainly
+                        do not want to do
                         this. It will run for 60 minutes or more for any large course.
                     </div>
                 </ons-list-item>
@@ -1219,12 +1289,16 @@
             <ons-list>
                 <ons-list-header>Overview</ons-list-header>
                 <ons-list-item>
-                    This page is used for creating GitHub repositories for learners. The process has been split into two parts:
+                    This page is used for creating GitHub repositories for learners. The process has been split into two
+                    parts:
                     <ul style="margin-bottom: 0;">
-                        <li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a
+                        <li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being
+                            provisioned. This is a
                             slow operation and can take a up to a minute or more to create a repository.
                         </li>
-                        <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>
+                        <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick
+                            operation.
+                        </li>
                     </ul>
                     Please do not start a release until a provision is complete.
                 </ons-list-item>
@@ -1240,7 +1314,8 @@
                         </select></div>
                     </div>
                     <div class="expandable-content">
-                        Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you want to provision
+                        Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you
+                        want to provision
                         above.
                     </div>
                 </ons-list-item>
@@ -1255,7 +1330,8 @@
                         <select multiple size="10"
                                 style="width: 20em; margin-left: 1em; margin-right: 1em;"
                                 id="repositoryProvisionSelect"></select>
-                        <ons-button id="adminManageProvisionButton" modifier="medium">Provision Repositories</ons-button>
+                        <ons-button id="adminManageProvisionButton" modifier="medium">Provision Repositories
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
                         Select the repositories you wish to provision.
@@ -1358,8 +1434,12 @@
                         </select>
                         Create branch from first commit
                         <ons-switch id="headOrRoot" modifier="medium" onclick="" style="margin-left: 1em;"></ons-switch>
-                        <ons-button id="adminViewPatch" style="margin-left: 1em;" modifier="medium">View Selected Patch</ons-button>
-                        <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch List</ons-button>
+                        <ons-button id="adminViewPatch" style="margin-left: 1em;" modifier="medium">View Selected
+                            Patch
+                        </ons-button>
+                        <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch
+                            List
+                        </ons-button>
                     </div>
                     </div>
                     <div class="expandable-content">

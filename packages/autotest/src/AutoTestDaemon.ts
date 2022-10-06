@@ -2,13 +2,13 @@
  * Created by rtholmes on 2016-06-19.
  */
 
-import Config, {ConfigKey} from "../../common/Config";
-import Log from "./../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import Server from "./server/Server";
+import Server from "@autotest/server/Server";
 
 /**
- * Starts the server; doesn't listen to whether the start was successful.
+ * Starts the server; does not listen to whether the start was successful.
  */
 export class AutoTestDaemon {
 
@@ -20,28 +20,34 @@ export class AutoTestDaemon {
         // start server
         const s = new Server();
         s.setPort(portNum);
-        s.start().then(function(val: boolean) {
+        s.start().then(function (val: boolean) {
             Log.info("AutoTestDaemon::initServer() - started: " + val);
-        }).catch(function(err: Error) {
+        }).catch(function (err: Error) {
             Log.error("AutoTestDaemon::initServer() - ERROR: " + err.message);
         });
     }
 
 }
 
-// This ends up starting the whole system
+// This starts up the AutoTest system
 Log.info("AutoTest Daemon - starting");
 const app = new AutoTestDaemon();
 app.initServer();
 
 Log.info("AutoTestDaemon - registering unhandled rejection");
 
-process.on('unhandledRejection', (reason, p) => {
+/**
+ * AutoTest instances are run without then/catch blocks since we have
+ * no way of recovering anyway. This just gives us an opportunity to
+ * log when a container has failed (which in practice is extremely
+ * rare).
+ */
+process.on("unhandledRejection", (reason, p) => {
     try {
-        Log.error('AutoTestDaemon - unhandled promise'); // in case next line fails
+        Log.warn("AutoTestDaemon - unhandled promise rejection"); // in case next line fails
         // tslint:disable-next-line
-        console.log('AutoTestDaemon - unhandled rejection at: ', p, '; reason:', reason);
-        Log.error('AutoTestDaemon - unhandled promise: ' + JSON.stringify(reason));
+        console.log("AutoTestDaemon - unhandled rejection at: ", p, "; reason:", reason);
+        Log.error("AutoTestDaemon - unhandled promise rejection: " + JSON.stringify(reason));
     } catch (err) {
         // eat any error
     }

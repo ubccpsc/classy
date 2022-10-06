@@ -10,8 +10,8 @@ import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
-    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName);
-    public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName);
+    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName) as string;
+    public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName) as string;
 
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;
@@ -52,12 +52,12 @@ export class TeamController {
     }
 
     public async getTeam(name: string): Promise<Team | null> {
-        Log.info("TeamController::getTeam( " + name + " ) - start");
+        Log.trace("TeamController::getTeam( " + name + " ) - start");
         const start = Date.now();
 
         const team = await this.db.getTeam(name);
 
-        Log.info("TeamController::getTeam( " + name + " ) - done; took: " + Util.took(start));
+        Log.trace("TeamController::getTeam( " + name + " ) - done; took: " + Util.took(start));
         return team;
     }
 
@@ -120,7 +120,7 @@ export class TeamController {
         }
 
         // sort by delivIds
-        myTeams = myTeams.sort(function(a: Team, b: Team) {
+        myTeams = myTeams.sort(function (a: Team, b: Team) {
             return a.delivId.localeCompare(b.delivId);
         });
 
@@ -213,6 +213,7 @@ export class TeamController {
         }
 
         const team = await this.createTeam(teamId, deliv, people, {});
+        Log.info("TeamController::formTeam( " + teamId + ", ... ) - done");
         return team;
     }
 
@@ -252,16 +253,18 @@ export class TeamController {
                 // }
 
                 const team: Team = {
-                    id:        name,
-                    delivId:   deliv.id,
-                    githubId:  null,
-                    URL:       null,
+                    id: name,
+                    delivId: deliv.id,
+                    githubId: null,
+                    URL: null,
                     personIds: peopleIds,
-                    custom:    custom
+                    custom: custom
                     // repoName:  null, // repoName, // team counts above used repoName
                     // repoUrl:   null
                 };
                 await this.db.writeTeam(team);
+
+                Log.info("TeamController::teamCreate( " + name + ", ... ) - done");
                 return await this.db.getTeam(name);
             } else {
                 // Log.info("TeamController::teamCreate( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
@@ -276,10 +279,10 @@ export class TeamController {
 
     public teamToTransport(team: Team): TeamTransport {
         const t: TeamTransport = {
-            id:      team.id,
+            id: team.id,
             delivId: team.delivId,
-            people:  team.personIds,
-            URL:     team.URL
+            people: team.personIds,
+            URL: team.URL
             // repoName: team.repoName,
             // repoUrl:  team.repoUrl
         };

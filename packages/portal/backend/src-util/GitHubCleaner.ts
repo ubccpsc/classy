@@ -59,8 +59,9 @@ export class GitHubCleaner {
             Log.info("GitHubCleaner::cleanTeams() - DRY_RUN === false");
             for (const team of teamsToRemove) {
                 Log.info("GitHubCleaner::cleanTeams() - removing: " + team.teamName);
-                const teamNum = await this.tc.getTeamNumber(team.teamName); // await this.gha.getTeamNumber(team.teamName);
-                await this.gha.deleteTeam(teamNum);
+                // const teamNum = await this.tc.getTeamNumber(team.teamName); // await this.gha.getTeamNumber(team.teamName);
+                // await this.gha.deleteTeam(teamNum);
+                await this.gha.deleteTeam(team.teamName);
                 Log.info("GitHubCleaner::cleanTeams() - done removing: " + team.teamName);
             }
         }

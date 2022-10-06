@@ -1,4 +1,5 @@
-import Log from "../../../../common/Log";
+import Log from "@common/Log";
+
 import {AdminView} from "./views/AdminView";
 import {IView} from "./views/IView";
 

@@ -1,10 +1,12 @@
 import fetch, {RequestInit} from 'node-fetch';
 
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Log from "@common/Log";
+import {AutoTestAuthTransport} from "@common/types/PortalTypes";
 
-import {CommitTarget} from "../../../common/types/ContainerTypes";
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
+import Util from "@common/Util";
 
 export interface IGitHubMessage {
     /**
@@ -29,6 +31,7 @@ export class GitHubUtil {
      * The '#' is required, the 'd' is required, and a number is required.
      *
      * @param message
+     * @param {string[]} delivIds
      * @returns {string | null}
      */
     public static parseDeliverableFromComment(message: any, delivIds: string[]): string | null {
@@ -86,11 +89,13 @@ export class GitHubUtil {
      * Throws exception if something goes wrong.
      *
      * @param payload
-     * @returns {ICommentEvent}
+     * @returns {Promise<CommitTarget>}
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
             Log.info("GitHubUtil::processComment(..) - start");
+            const start = Date.now();
+
             const commitSHA = payload.comment.commit_id;
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
@@ -99,16 +104,25 @@ export class GitHubUtil {
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
-            const requestor = String(payload.comment.user.login); // .toLowerCase();
+            let orgId;
+            try {
+                orgId = payload.repository.full_name.substr(0,
+                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+                Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
+                    "; name: " + payload.repository.name + "; org: " + orgId);
+            } catch (err) {
+                Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
+            }
+            const requester = String(payload.comment.user.login); // .toLowerCase();
             const message = payload.comment.body;
 
-            Log.info("GitHubUtil::processComment(..) - 1");
+            Log.trace("GitHubUtil::processComment(..) - 1");
 
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
-            Log.info("GitHubUtil::processComment(..) - 2");
+            Log.trace("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = GitHubUtil.parseCommandsFromComment(message);
 
@@ -117,29 +131,38 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
-            Log.info("GitHubUtil::processComment(..) - 3");
+            Log.trace("GitHubUtil::processComment(..) - 3");
 
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
-            const personResponse = await cp.getPersonId(requestor); // NOTE: this returns Person.id, id, not Person.gitHubId!
+            const personResponse = await cp.getPersonId(requester); // NOTE: this returns Person.id, id, not Person.gitHubId!
             const personId = personResponse.personId;
+
+            let adminRequest = false;
+            const authLevel: AutoTestAuthTransport = await cp.isStaff(personId);
+            if (authLevel.isStaff === true || authLevel.isAdmin === true) {
+                adminRequest = true;
+            }
+
             let kind = 'standard'; // if #check, set that here
             if (flags.indexOf("#check") >= 0) {
                 kind = 'check';
             }
 
-            Log.info("GitHubUtil::processComment(..) - 4");
+            Log.trace("GitHubUtil::processComment(..) - 4");
 
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
+                orgId,
                 botMentioned,
                 commitSHA,
                 commitURL,
                 postbackURL,
                 cloneURL,
+                adminRequest,
                 personId,
                 kind,
                 timestamp,
@@ -154,8 +177,8 @@ export class GitHubUtil {
                 }
             }
 
-            Log.info("GitHubUtil.processComment(..) - who: " + requestor + "; repoId: " +
-                repoId + "; botMentioned: " + botMentioned + "; message: " + msg);
+            Log.info("GitHubUtil.processComment(..) - done; who: " + requester + "; repoId: " +
+                repoId + "; botMentioned: " + botMentioned + "; message: " + msg + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
 
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
@@ -177,17 +200,31 @@ export class GitHubUtil {
      *
      * Returns null for push operations we do not need to handle (like branch deletion).
      *
-     * @param payload
-     * @returns {IPushEvent}
+     * @param {any} payload
+     * @param {IClassPortal} portal
+     * @returns {CommitTarget | null} null for pushes that should be ignored
      */
     public static async processPush(payload: any, portal: IClassPortal): Promise<CommitTarget | null> {
         try {
             Log.trace("GitHubUtil::processPush(..) - start");
+            const start = Date.now();
+
             const repo = payload.repository.name;
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
-            Log.info("GitHubUtil::processPush(..) - repo: " + repo + "; projectURL: " + projectURL + "; ref: " + ref);
+            const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
+            let org;
+            try {
+                org = payload.repository.full_name.substr(0,
+                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+                Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
+                    "; name: " + payload.repository.name + "; org: " + org);
+            } catch (err) {
+                Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
+            }
+
+            Log.info("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
@@ -201,15 +238,15 @@ export class GitHubUtil {
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
                 commitURL = payload.commits[payload.commits.length - 1].url;
-                Log.info("GitHubUtil::processPush(..) - regular push; # commits: " + payload.commits.length + "; URL: " + commitURL);
+                Log.info("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
             } else {
                 // use this one when creating a new branch (may not have any commits)
                 commitSHA = payload.head_commit.id;
                 commitURL = payload.head_commit.url;
-                Log.info("GitHubUtil::processPush(..) - branch added; URL: " + commitURL);
+                Log.info("GitHubUtil::processPush(..) - branch added; repo: " + repo);
             }
 
-            Log.info("GitHubUtil::processPush(..) - sha: " + commitSHA + "; commitURL: " + commitURL);
+            Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push
@@ -224,11 +261,13 @@ export class GitHubUtil {
             }
 
             const pushEvent: CommitTarget = {
-                delivId:      backendConfig.defaultDeliverable,
-                repoId:       repo,
+                delivId: backendConfig.defaultDeliverable,
+                repoId: repo,
+                orgId: org,
                 botMentioned: false, // not explicitly invoked
-                personId:     null, // not explicitly requested
-                kind:         'push',
+                adminRequest: false, // all pushes are treated equally
+                personId: pusher?.personId ?? null,
+                kind: 'push',
                 cloneURL,
                 commitSHA,
                 commitURL,
@@ -237,7 +276,8 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done");
+            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo +
+                "; SHA: " + commitSHA + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
@@ -277,13 +317,13 @@ export class GitHubUtil {
 
             const body: string = JSON.stringify({body: message.message});
             const options: RequestInit = {
-                method:  "POST",
+                method: "POST",
                 headers: {
-                    "Content-Type":  "application/json",
-                    "User-Agent":    "UBC-AutoTest",
+                    "Content-Type": "application/json",
+                    "User-Agent": "UBC-AutoTest",
                     "Authorization": Config.getInstance().getProp(ConfigKey.githubBotToken)
                 },
-                body:    body
+                body: body
             };
 
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {

@@ -1,7 +1,7 @@
 import {expect} from "chai";
 import * as Docker from "dockerode";
-import {Test} from "../../common/TestHarness";
-import {GradingJob} from "../src/autotest/GradingJob";
+import {TestHarness} from "@common/test/TestHarness";
+import {GradingJob} from "@autotest/autotest/GradingJob";
 
 class ContainerMock extends Docker.Container {
     public timer: any;
@@ -44,7 +44,7 @@ describe("GradingJob", function() {
             container = new ContainerMock(null, "test-container");
         });
 
-        it("Should return the container's exit code", async function() {
+        it("Should return the exit code for the container", async function() {
             let result: any;
             try {
                 result = await GradingJob.runContainer(container, containerMaxExecTime);

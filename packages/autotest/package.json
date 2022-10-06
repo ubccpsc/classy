@@ -38,13 +38,13 @@
     "build": "tsc",
     "build:prod": "tsc --outDir bin --sourceMap false",
     "lint": "tslint -c tslint.json 'src/**/*.ts' 'test/**/*.ts'",
-    "test": "mocha --require=dotenv/config --require ts-node/register --timeout 10000",
+    "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000",
     "testCI": "TS_NODE_PROJECT=../../tsconfig.json node ./node_modules/.bin/mocha --require tsconfig-paths/register --reporter mocha-junit-reporter --reporter-options mochaFile=../../testOutput/autotest/test/test-results.xml --timeout 10000 --recursive --exit",
-    "cover": "nyc --reporter text --reporter html ./node_modules/mocha/bin/mocha --require=dotenv/config --require ts-node/register --timeout 10000 --exit",
+    "cover": "nyc --reporter text --reporter html ./node_modules/mocha/bin/mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --exit",
     "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov yarn run testCI",
     "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
-    "run:dev": "nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &",
-    "run:prod": "LOG_LEVEL=INFO nohup node ./src/AutoTestDaemon.js 310 &> nohup.out &"
+    "run:dev": "LOG_LEVEL=TRACE nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &",
+    "run:prod": "LOG_LEVEL=INFO nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &"
   },
   "devDependencies": {
     "@types/dockerode": "^2.5.9"

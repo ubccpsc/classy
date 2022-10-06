@@ -42,9 +42,11 @@ export interface CommitTarget {
      */
     delivId: string;
     repoId: string;
+    orgId?: string;
 
+    adminRequest: boolean; // true if requested by admin or staff
     botMentioned: boolean; // true if explicitly mentioned
-    personId: string | null; // string is Person.id if explicily invoked, null otherwise
+    personId: string | null; // string is Person.id if explicitly invoked, null otherwise
     kind: string; // kind of request (currently just 'push', 'standard' or 'check')
 
     cloneURL: string;
@@ -116,7 +118,7 @@ export interface GradeReport {
 
 /**
  * Description of attachments that are saved in files on disk. This
- * helps minimize database size making it easier to backup and much
+ * helps minimize database size making it easier to back up and much
  * quicker to search and traverse (especially over the network).
  */
 export interface Attachment {

@@ -9,8 +9,11 @@
         "baseUrl": ".",
         "paths": {
             "@backend/*": [
-                "../../portal/backend/src/*"
+                "./src/*"
             ],
+            "@common/*": [
+                "../../common/*"
+            ]
         },
         "lib": [
             "es7",
@@ -22,7 +25,8 @@
         ]
     },
     "include": [
-        "src/**/*.ts"
+        "src/**/*.ts",
+        "test/**/*.ts"
     ],
     "exclude": [
         "node_modules"

@@ -13,11 +13,21 @@
         ],
         "typeRoots": [
             "../../node_modules/@types"
-        ]
+        ],
+        "baseUrl": ".",
+        "paths": {
+            "@common/*": [
+                "./*"
+            ],
+            "@backend/*": [
+                "../portal/backend/src/*"
+            ],
+            "@autotest/*": [
+                "../autotest/src/*"
+            ]
+        }
     },
     "include": [
-        "src/**/*.ts",
-        "test/**/*.ts",
         "../common/**/*.ts"
     ],
     "exclude": [

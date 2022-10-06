@@ -9,10 +9,10 @@
  *
  */
 
-import Log from "../../../../../common/Log";
-import {CourseTransport, CourseTransportPayload} from "../../../../../common/types/PortalTypes";
-import {Factory} from "../Factory";
+import Log from "@common/Log";
+import {CourseTransport, CourseTransportPayload} from "@common/types/PortalTypes";
 
+import {Factory} from "../Factory";
 import {UI} from "../util/UI";
 
 import {AdminConfigTab} from "./AdminConfigTab";
@@ -147,8 +147,8 @@ export class AdminView implements IView {
         const options = {
             headers: {
                 'Content-Type': 'application/json',
-                'user':         localStorage.user,
-                'token':        localStorage.token
+                'user': localStorage.user,
+                'token': localStorage.token
             }
         };
         return options;
@@ -205,9 +205,9 @@ export class AdminView implements IView {
 
     protected handleAdminEditDeliverable(opts: any) {
         // this will call render
-        this.deliverablesTab.initEditDeliverablePage(opts).then(function() {
+        this.deliverablesTab.initEditDeliverablePage(opts).then(function () {
             // blank
-        }).catch(function(err) {
+        }).catch(function (err) {
             // blank
         });
     }
@@ -218,9 +218,9 @@ export class AdminView implements IView {
             opts = {};
         }
         const prefix = Factory.getInstance().getHTMLPrefix();
-        UI.pushPage(prefix + '/' + pageName, opts).then(function() {
+        UI.pushPage(prefix + '/' + pageName, opts).then(function () {
             // success
-        }).catch(function(err) {
+        }).catch(function (err) {
             Log.error("UI::pushPage(..) - ERROR: " + err.message);
         });
     }

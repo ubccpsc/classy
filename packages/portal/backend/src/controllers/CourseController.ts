@@ -2,7 +2,6 @@ import Log from "../../../../common/Log";
 import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 
 import {CommitTarget} from "../../../../common/types/ContainerTypes";
-import {TransportKind} from "../../../../common/types/PortalTypes";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
@@ -69,13 +68,6 @@ export interface ICourseController {
     finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean>;
 
     /**
-     * For forwarding custom fields from a record to its respective transport
-     * @param record
-     * @param kind
-     */
-    forwardCustomFields(record: any, kind: TransportKind): any;
-
-    /**
      * For forcing certain push events to the express queue
      * e.g.: Commits on master getting automatically graded
      * @param info
@@ -126,19 +118,19 @@ export class CourseController implements ICourseController {
      */
     public handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean> {
         const LOGPRE = "CourseController::handleNewAutoTestGrade( " + deliv.id + ", " +
-            newGrade.personId + ", " + newGrade.score + ", ... ) - URL: " + newGrade.URL + " - ";
+            newGrade.personId + ", " + newGrade.score + ", ... ) - start - ";
 
-        Log.info(LOGPRE + "start");
+        Log.trace(LOGPRE + "start");
 
         if (newGrade.timestamp < deliv.openTimestamp) {
             // too early
-            Log.info(LOGPRE + "not recorded; deliverable not yet open");
+            Log.trace(LOGPRE + "not recorded; deliverable not yet open");
             return Promise.resolve(false);
         }
 
         if (newGrade.timestamp > deliv.closeTimestamp) {
             // too late
-            Log.info(LOGPRE + "not recorded; deliverable closed");
+            Log.trace(LOGPRE + "not recorded; deliverable closed");
             return Promise.resolve(false);
         }
 
@@ -159,7 +151,7 @@ export class CourseController implements ICourseController {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }
 
-        Log.info('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
+        Log.trace('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
         if (people.length < 1) {
             throw new Error("CourseController::computeNames( ... ) - must provide people");
         }
@@ -196,7 +188,7 @@ export class CourseController implements ICourseController {
         const repo = await db.getRepository(rName);
 
         if (team === null && repo === null) {
-            Log.info('CourseController::computeNames( ... ) - done; t: ' + tName); // + ', r: ' + rName);
+            Log.trace('CourseController::computeNames( ... ) - done; t: ' + tName); // + ', r: ' + rName);
             return {teamName: tName, repoName: rName};
             // return tName;
         } else {
@@ -209,10 +201,6 @@ export class CourseController implements ICourseController {
     public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
         Log.warn("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
         return true;
-    }
-
-    public forwardCustomFields(record: any, kind: TransportKind): any {
-        return {};
     }
 
     public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {

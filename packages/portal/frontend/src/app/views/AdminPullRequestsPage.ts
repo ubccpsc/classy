@@ -1,9 +1,11 @@
 import {OnsButtonElement} from "onsenui";
-// import Config, {ConfigKey} from "../../../../../common/Config";
-import Log from "../../../../../common/Log";
-import {Payload, RepositoryTransport} from "../../../../../common/types/PortalTypes";
-import Util from "../../../../../common/Util";
+
+import Log from "@common/Log";
+import {Payload, RepositoryTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
+
 import {UI} from "../util/UI";
+
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 
@@ -26,48 +28,48 @@ export class AdminPullRequestsPage extends AdminPage {
         await this.populatePatches();
         await this.populateRepos();
 
-        (document.querySelector('#adminViewPatch') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminViewPatch') as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminPullRequestsPage::viewPatchButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
-            that.handleViewPatch().then(function() {
+            that.handleViewPatch().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminRefreshPatches') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminRefreshPatches') as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminPullRequestsPage::refreshPatchesButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
-            that.handlePatchRefresh().then(function() {
+            that.handlePatchRefresh().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminPatchSubsetOfReposButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminPatchSubsetOfReposButton') as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminPullRequestsPage::patchSubsetRepos(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
-            that.handlePatchSubset().then(function() {
+            that.handlePatchSubset().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
-        (document.querySelector('#adminPatchAllReposButton') as OnsButtonElement).onclick = function(evt) {
+        (document.querySelector('#adminPatchAllReposButton') as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminPullRequestsPage::patchAllRepos(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
-            that.handlePatchAll().then(function() {
+            that.handlePatchAll().then(function () {
                 // worked
-            }).catch(function(err) {
+            }).catch(function (err) {
                 // didn't
             });
         };
 
         const patchSelector = document.querySelector('#adminPatchSelect') as HTMLSelectElement;
-        patchSelector.onchange = function(evt) {
+        patchSelector.onchange = function (evt) {
             evt.stopPropagation(); // prevents list item expansion
         };
 
@@ -189,7 +191,10 @@ export class AdminPullRequestsPage extends AdminPage {
         } else if (patch === '-None-') {
             UI.showErrorToast("No patch has been selected.");
         } else {
-            UI.showSuccessToast("Patching commenced. Do not close this browser window.", {timeout: 10000, buttonLabel: 'Ok'});
+            UI.showSuccessToast("Patching commenced. Do not close this browser window.", {
+                timeout: 10000,
+                buttonLabel: 'Ok'
+            });
             let i = 0;
             for (const repo of repoList) {
                 const start = Date.now();

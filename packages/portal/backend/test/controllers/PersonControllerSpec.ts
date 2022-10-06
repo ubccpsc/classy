@@ -1,12 +1,12 @@
 import {expect} from "chai";
 import "mocha";
 
-import {Test} from "../../../../common/TestHarness";
-import {PersonController} from "../../src/controllers/PersonController";
-import {Person, PersonKind} from "../../src/Types";
+import {TestHarness} from "@common/test/TestHarness";
+import {PersonController} from "@backend/controllers/PersonController";
+import {Person, PersonKind} from "@backend//Types";
 
-import '../GlobalSpec';
-import './DeliverablesControllerSpec';
+import "@common/test/GlobalSpec"; // load first
+import "./DeliverablesControllerSpec";
 
 describe("PersonController", () => {
 
@@ -16,13 +16,11 @@ describe("PersonController", () => {
     let PERSON2: Person = null;
     let PERSON3: Person = null;
 
-    const TIMEOUT = 1000;
-
     before(async () => {
-        await Test.suiteBefore('PersonController');
-        PERSON1 = Test.createPerson(Test.USER1.id, Test.USER1.csId, Test.USER1.github, PersonKind.STUDENT);
-        PERSON2 = Test.createPerson(Test.USER2.id, Test.USER2.csId, Test.USER2.github, PersonKind.STUDENT);
-        PERSON3 = Test.createPerson(Test.USER3.id, Test.USER3.csId, Test.USER3.github, PersonKind.STUDENT);
+        await TestHarness.suiteBefore("PersonController");
+        PERSON1 = TestHarness.createPerson(TestHarness.USER1.id, TestHarness.USER1.csId, TestHarness.USER1.github, PersonKind.STUDENT);
+        PERSON2 = TestHarness.createPerson(TestHarness.USER2.id, TestHarness.USER2.csId, TestHarness.USER2.github, PersonKind.STUDENT);
+        PERSON3 = TestHarness.createPerson(TestHarness.USER3.id, TestHarness.USER3.csId, TestHarness.USER3.github, PersonKind.STUDENT);
     });
 
     beforeEach(() => {
@@ -30,7 +28,7 @@ describe("PersonController", () => {
     });
 
     after(async () => {
-        Test.suiteAfter('PersonController');
+        TestHarness.suiteAfter("PersonController");
     });
 
     it("Should be able to be validate a new user.", async () => {
@@ -83,16 +81,16 @@ describe("PersonController", () => {
         expect(person).to.not.be.null;
         expect(person.id).to.equal(PERSON1.id);
 
-        person = await pc.getPerson('randomIDthatDoesNotexist23232333');
+        person = await pc.getPerson("randomIDthatDoesNotexist23232333");
         expect(person).to.be.null;
 
         person = await pc.getGitHubPerson(PERSON1.githubId);
         expect(person).to.not.be.null;
         expect(person.id).to.equal(PERSON1.id);
 
-        person = await pc.getGitHubPerson('randomIDthatDoesNotexist23232333');
+        person = await pc.getGitHubPerson("randomIDthatDoesNotexist23232333");
         expect(person).to.be.null;
-    }).timeout(Test.TIMEOUTLONG);
+    }).timeout(TestHarness.TIMEOUTLONG);
 
     it("Should be able to write a person.", async () => {
         let person = await pc.getPerson(PERSON1.id);
@@ -105,26 +103,26 @@ describe("PersonController", () => {
         expect(success).to.be.true;
         person = await pc.getPerson(PERSON1.id);
         expect(person.custom.myProp).to.be.true;
-    }).timeout(Test.TIMEOUTLONG);
+    }).timeout(TestHarness.TIMEOUTLONG);
 
     it("Should be able to get a person who is not registered but is an admin.", async () => {
-        let person = await pc.getPerson(Test.ADMIN1.github);
+        let person = await pc.getPerson(TestHarness.ADMIN1.github);
         expect(person).to.be.null;
 
-        person = await pc.getGitHubPerson(Test.ADMIN1.github);
+        person = await pc.getGitHubPerson(TestHarness.ADMIN1.github);
         expect(person).to.not.be.null;
-        expect(person.id).to.equal(Test.ADMIN1.github); // admin ids are their github id
-    }).timeout(Test.TIMEOUT);
+        expect(person.id).to.equal(TestHarness.ADMIN1.github); // admin ids are their github id
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to get the repos for a person.", async () => {
 
         const repos = await pc.getRepos(PERSON1.id);
-        expect(repos).to.be.an('array');
+        expect(repos).to.be.an("array");
         expect(repos).to.be.empty;
 
         // TODO: create a repo
 
-    }).timeout(Test.TIMEOUTLONG);
+    }).timeout(TestHarness.TIMEOUTLONG);
 
     it("Should be able to translate a person.", async () => {
         const person = await pc.getPerson(PERSON1.id);
@@ -148,6 +146,6 @@ describe("PersonController", () => {
         expect(trans).to.be.null;
         expect(ex).to.not.be.null;
 
-    }).timeout(Test.TIMEOUTLONG);
+    }).timeout(TestHarness.TIMEOUTLONG);
 
 });

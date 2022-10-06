@@ -12,7 +12,7 @@ This assumes you're working with WebStorm.
 
 1) Configure WebStorm for testing (only needs to happen once):
 	* Create `Mocha` execution profile
-	* Node options: `--require dotenv/config`
+	* Node options: `-r dotenv/config -r tsconfig-paths/register`
 	* Mocha package: `<classy-dir>/packages/autotest/node_modules/mocha`
 	* Extra Mocha options: `dotenv_config_path=<classy-dir>/.env`
 	* Test directory: `<classy-dir>/packages/autotest/test`

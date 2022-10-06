@@ -1,22 +1,22 @@
 {
     "name": "portal-frontend",
     "version": "1.0.0",
-    "description": "SDMM Student Portal",
+    "description": "Classy Portal Frontend",
     "main": "app/index.html",
-    "scripts": {
-        "build": "tsc",
-        "test": "echo \"Error: no test specified\" && exit 1"
-    },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/ubccpsc/sdmm-portal.git"
+        "url": "git+https://github.com/ubccpsc/classy.git"
     },
     "author": "",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/ubccpsc/sdmm-portal/issues"
+        "url": "https://github.com/ubccpsc/classy/issues"
     },
-    "homepage": "https://github.com/ubccpsc/sdmm-portal#readme",
+    "homepage": "https://github.com/ubccpsc/classy",
+    "scripts": {
+        "build": "tsc",
+        "frontend": "webpack --watch"
+    },
     "dependencies": {
         "@types/mongodb": "^3.0.5",
         "@types/node": "^12.0.0",
@@ -30,7 +30,7 @@
         "fs-extra": "^5.0.0",
         "moment": "^2.29.4",
         "mongodb": "^3.0.2",
-        "onsenui": "^2.9.2",
+        "onsenui": "^2.12.2",
         "restify": "^8.4.0",
         "source-map-loader": "^0.2.4",
         "ts-loader": "^9.2.3",

@@ -66,11 +66,17 @@ export default class RouteHandler {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent + "; signature: " + githubSecret);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent); // + "; signature: " + githubSecret);
         const body = req.body;
 
-        const handleError = function(msg: string) {
-            Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
+        const handleError = function (msg: string) {
+            if (msg.indexOf("was deleted") > 0) {
+                // branch deletions are common and are not worth putting in the error list
+                // but if it _isn't_ a branch deletion, we might want to know about it in future, so warn
+                Log.warn("RouteHandler::postGithubHook() - not processed:  " + msg + "; took: " + Util.took(start));
+            } else {
+                Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
+            }
             res.json(400, "Failed to process commit: " + msg);
         };
 
@@ -89,7 +95,7 @@ export default class RouteHandler {
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
-                    Log.info("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
+                    Log.trace("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
                         "; took: " + Util.took(start));
                 } else {
                     Log.warn("RouteHandler::postGithubHook(..) - webhook secrets do not match");
@@ -109,7 +115,7 @@ export default class RouteHandler {
                 Log.info("RouteHandler::postGithubHook() - <200> pong.");
                 res.json(200, "pong");
             } else {
-                RouteHandler.handleWebhook(githubEvent, body).then(function(commitEvent) {
+                RouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
                     Log.info("RouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
                     if (commitEvent !== null) {
                         res.json(200, commitEvent); // report back our interpretation of the hook
@@ -117,7 +123,7 @@ export default class RouteHandler {
                         // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
                         handleError("Webhook not handled (if branch was deleted this is normal)");
                     }
-                }).catch(function(err) {
+                }).catch(function (err) {
                     Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
                     handleError(err);
                 });
@@ -125,6 +131,8 @@ export default class RouteHandler {
         } else {
             handleError("Invalid payload signature.");
         }
+
+        Log.info("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
         return next();
     }
 
@@ -210,7 +218,7 @@ export default class RouteHandler {
                 socketPath: '/var/run/docker.sock',
                 path: '/v1.24/build?' + reqParams,
                 method: 'POST'
-              };
+            };
 
             const handler = (stream: any) => {
                 stream.on('data', (chunk: any) => {

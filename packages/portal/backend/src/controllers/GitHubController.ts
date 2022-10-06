@@ -1,6 +1,3 @@
-import * as http from "http";
-import fetch, {RequestInit} from "node-fetch";
-
 import Config, {ConfigKey} from "../../../../common/Config";
 import Log from "../../../../common/Log";
 import Util from "../../../../common/Util";
@@ -35,6 +32,18 @@ export interface IGitHubController {
     getTeamUrl(team: Team): Promise<string>;
 
     releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
+}
+
+export interface GitPersonTuple {
+    githubId: string;
+    githubPersonNumber: number;
+    url: string;
+}
+
+export interface GitRepoTuple {
+    repoName: string;
+    githubRepoNumber: number;
+    url: string;
 }
 
 export interface GitTeamTuple {
@@ -75,6 +84,7 @@ export class GitHubController implements IGitHubController {
 
     public async getTeamUrl(team: Team): Promise<string> {
         const c = Config.getInstance();
+        // GET /orgs/:org/teams/:team_slug
         const teamUrl = c.getProp(ConfigKey.githubHost) + '/orgs/' + c.getProp(ConfigKey.org) + '/teams/' + team.id;
         Log.info("GitHubController::getTeamUrl( " + team.id + " ) - URL: " + teamUrl);
         return teamUrl;
@@ -134,15 +144,17 @@ export class GitHubController implements IGitHubController {
         try {
             // still add staff team with push, just not students
             Log.trace("GitHubController::createRepository() - add staff team to repo");
-            const staffTeamNumber = await this.tc.getTeamNumber(TeamController.STAFF_NAME);
-            Log.trace('GitHubController::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            // const staffTeamNumber = await this.tc.getTeamNumber(TeamController.STAFF_NAME);
+            // Log.trace('GitHubController::createRepository(..) - staffTeamNumber: ' + staffTeamNumber);
+            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
             Log.trace('GitHubController::createRepository(..) - team name: ' + staffAdd.teamName);
 
             Log.trace("GitHubController::createRepository() - add admin team to repo");
-            const adminTeamNumber = await this.tc.getTeamNumber(TeamController.ADMIN_NAME);
-            Log.trace('GitHubController::createRepository(..) - adminTeamNumber: ' + adminTeamNumber);
-            const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            // const adminTeamNumber = await this.tc.getTeamNumber(TeamController.ADMIN_NAME);
+            // Log.trace('GitHubController::createRepository(..) - adminTeamNumber: ' + adminTeamNumber);
+            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
             Log.trace('GitHubController::createRepository(..) - team name: ' + adminAdd.teamName);
 
             // add webhooks
@@ -203,10 +215,11 @@ export class GitHubController implements IGitHubController {
 
                 await this.checkDatabase(null, team.id);
 
-                const teamNum = await this.tc.getTeamNumber(team.id);
-
+                // const teamNum = await this.tc.getTeamNumber(team.id);
+                // const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
+                const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
                 // now, add the team to the repository
-                const res = await this.gha.addTeamToRepo(teamNum, repo.id, "push");
+                // const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
                 if (res.githubTeamNumber > 0) {
                     // keep track of team addition
                     team.custom.githubAttached = true;
@@ -302,7 +315,9 @@ export class GitHubController implements IGitHubController {
 
                         if (teamValue.githubTeamNumber > 0) {
                             // worked
-                            team.URL = teamValue.URL;
+
+                            // team.URL = teamValue.URL;
+                            team.URL = await this.getTeamUrl(team);
                             team.githubId = teamValue.githubTeamNumber;
                             team.custom.githubAttached = false; // attaching happens in release
                             await dbc.writeTeam(team);
@@ -327,14 +342,17 @@ export class GitHubController implements IGitHubController {
             }
 
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            const staffTeamNumber = await tc.getTeamNumber(TeamController.STAFF_NAME);
-            Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
-            const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            // const staffTeamNumber = await tc.getTeamNumber(TeamController.STAFF_NAME);
+            // Log.trace('GitHubController::provisionRepository(..) - staffTeamNumber: ' + staffTeamNumber);
+            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, 'admin');
+            const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + staffAdd.teamName);
 
-            const adminTeamNumber = await tc.getTeamNumber(TeamController.ADMIN_NAME);
-            Log.trace('GitHubController::provisionRepository(..) - adminTeamNumber: ' + adminTeamNumber);
-            const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            Log.trace("GitHubController::provisionRepository() - add admin team to repo");
+            // const adminTeamNumber = await tc.getTeamNumber(TeamController.ADMIN_NAME);
+            // Log.trace('GitHubController::provisionRepository(..) - adminTeamNumber: ' + adminTeamNumber);
+            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, 'admin');
+            const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, 'admin');
             Log.trace('GitHubController::provisionRepository(..) - team name: ' + adminAdd.teamName);
 
             // add webhooks
@@ -363,6 +381,10 @@ export class GitHubController implements IGitHubController {
     }
 
     public async updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean> {
+        if (repo === null) {
+            throw new Error("GitHubController::updateBranchProtection(..) - null repo");
+        }
+
         Log.info("GitHubController::updateBranchProtection(", repo.id, ", ...) - start");
         if (!await this.gha.repoExists(repo.id)) {
             throw new Error("GitHubController::updateBranchProtection() - " + repo.id + " did not exist");
@@ -374,6 +396,10 @@ export class GitHubController implements IGitHubController {
     }
 
     public async createIssues(repo: Repository, issues: Issue[]): Promise<boolean> {
+        if (repo === null) {
+            throw new Error("GitHubController::createIssues(..) - null repo");
+        }
+
         Log.info("GitHubController::createIssues(", repo.id, ", ...) - start");
         if (!await this.gha.repoExists(repo.id)) {
             throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
@@ -396,58 +422,60 @@ export class GitHubController implements IGitHubController {
      */
     public async createPullRequest(repo: Repository, prName: string, dryrun: boolean = false, root: boolean = false): Promise<boolean> {
         Log.info(`GitHubController::createPullRequest(..) - Repo: (${repo.id}) start`);
-        // if (repo.cloneURL === null || repo.cloneURL === undefined) {
-        //     Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
-        //     return false;
+        throw new Error("Not implemented"); // code below used to work but depended on service that no longer exists
+        // // if (repo.cloneURL === null || repo.cloneURL === undefined) {
+        // //     Log.error(`GitHubController::createPullRequest(..) - ${repo.id} didn't have a valid cloneURL associated with it.`);
+        // //     return false;
+        // // }
+        //
+        // const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
+        // const patchUrl: string = `${baseUrl}/autopatch`;
+        // const updateUrl: string = `${baseUrl}/update`;
+        // const qs: string = Util.getQueryStr({
+        //     patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
+        // });
+        //
+        // const options: RequestInit = {
+        //     method: 'POST',
+        //     agent: new http.Agent()
+        // };
+        //
+        // let result;
+        //
+        // try {
+        //     await fetch(patchUrl + qs, options);
+        //     Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
+        //     return true;
+        // } catch (err) {
+        //     result = err;
         // }
-
-        const baseUrl: string = Config.getInstance().getProp(ConfigKey.patchToolUrl);
-        const patchUrl: string = `${baseUrl}/autopatch`;
-        const updateUrl: string = `${baseUrl}/update`;
-        const qs: string = Util.getQueryStr({
-            patch_id: prName, github_url: `${repo.URL}.git`, dryrun: String(dryrun), from_beginning: String(root)
-        });
-
-        const options: RequestInit = {
-            method:             'POST',
-            agent:              new http.Agent()
-        };
-
-        let result;
-
-        try {
-            await fetch(patchUrl + qs, options);
-            Log.info("GitHubController::createPullRequest(..) - Patch applied successfully");
-            return true;
-        } catch (err) {
-            result = err;
-        }
-
-        switch (result.statusCode) {
-            case 424:
-                Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
-                try {
-                    await fetch(updateUrl, options);
-                    Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
-                    await fetch(patchUrl + qs, {...options});
-                    Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
-                    return true;
-                } catch (err) {
-                    Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. Message from patchtool server:" +
-                        result.message);
-                    return false;
-                }
-            case 500:
-                Log.error(
-                    `GitHubController::createPullRequest(..) - patchtool internal error. Message from patchtool server: ${result.message}`
-                );
-                return false;
-            default:
-                Log.error(
-                    `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
-                );
-                return false;
-        }
+        //
+        // switch (result.statusCode) {
+        //     case 424:
+        //         Log.info(`GitHubController::createPullRequest(..) - ${prName} wasn't found by the patchtool. Updating patches.`);
+        //         try {
+        //             await fetch(updateUrl, options);
+        //             Log.info(`GitHubController::createPullRequest(..) - Patches updated successfully. Retrying.`);
+        //             await fetch(patchUrl + qs, {...options});
+        //             Log.info("GitHubController::createPullRequest(..) - Patch applied successfully on second attempt");
+        //             return true;
+        //         } catch (err) {
+        //             Log.error("GitHubController::createPullRequest(..) - Patch failed on second attempt. "+
+        //                 "Message from patchtool server:" + result.message);
+        //             return false;
+        //         }
+        //     case 500:
+        //         Log.error(
+        //             `GitHubController::createPullRequest(..) - patchtool internal error. " +
+        //             "Message from patchtool server: ${result.message}`
+        //         );
+        //         return false;
+        //     default:
+        //         Log.error(
+        //             `GitHubController::createPullRequest(..) - Wasn't able to make a connection to patchtool. Error: ${result.message}`
+        //         );
+        //         return false;
+        // }
     }
 
     /**

@@ -12,34 +12,34 @@ export class RepositoryController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllRepos(): Promise<Repository[]> {
-        Log.info("RepositoryController::getAllRepos() - start");
+        Log.trace("RepositoryController::getAllRepos() - start");
         const start = Date.now();
 
         const repos = await this.db.getRepositories();
 
-        Log.info("RepositoryController::getAllRepos() - done; # repos: " + repos.length + "; took: " + Util.took(start));
+        Log.trace("RepositoryController::getAllRepos() - done; # repos: " + repos.length + "; took: " + Util.took(start));
         return repos;
     }
 
     public async getRepository(name: string): Promise<Repository | null> {
-        Log.info("RepositoryController::getRepository( " + name + " ) - start");
+        Log.trace("RepositoryController::getRepository( " + name + " ) - start");
         const start = Date.now();
 
         const repo = await this.db.getRepository(name);
 
-        Log.info("RepositoryController::getRepository( " + name + " ) - done; took: " + Util.took(start));
+        Log.trace("RepositoryController::getRepository( " + name + " ) - done; took: " + Util.took(start));
         return repo;
     }
 
     public async getReposForPerson(myPerson: Person): Promise<Repository[]> {
-        Log.info("RepositoryController::getReposForPerson( " + myPerson.id + " ) - start");
+        Log.trace("RepositoryController::getReposForPerson( " + myPerson.id + " ) - start");
         const start = Date.now();
 
         // TODO: this is slow; there is a faster implementation in db.getReposForPerson now, but it is untested
         // db.getRepositoriesForPerson(myPerson.id)
 
         const myTeams = await new TeamController().getTeamsForPerson(myPerson);
-        Log.info("RepositoryController::getReposForPerson( " + myPerson.id + " ) - # teams: " + myTeams.length);
+        Log.trace("RepositoryController::getReposForPerson( " + myPerson.id + " ) - # teams: " + myTeams.length);
 
         const myRepos: Repository[] = [];
         const allRepos = await this.db.getRepositories();
@@ -51,7 +51,7 @@ export class RepositoryController {
             }
         }
 
-        Log.info("RepositoryController::getReposForPerson( " + myPerson.id +
+        Log.trace("RepositoryController::getReposForPerson( " + myPerson.id +
             " ) - done; # found: " + myRepos.length + "; took: " + Util.took(start));
         return myRepos;
     }
@@ -63,10 +63,11 @@ export class RepositoryController {
      * @returns {Promise<Repository>}
      */
     public async updateRepository(repo: Repository): Promise<Repository> {
-        Log.info("RepositoryController::updateRepository( .. ) - start");
         if (typeof repo === 'undefined' || repo === null) {
             return null;
         }
+
+        Log.info("RepositoryController::updateRepository( " + repo.id + " ) - start");
 
         const existingRepo = await this.getRepository(repo.id);
         if (existingRepo === null) {
@@ -87,6 +88,8 @@ export class RepositoryController {
             repo.custom = customCombined;
             await this.db.writeRepository(repo);
         }
+
+        Log.info("RepositoryController::updateRepository( " + repo.id + " ) - done");
         return await this.db.getRepository(repo.id);
     }
 
@@ -102,15 +105,17 @@ export class RepositoryController {
             }
 
             const repo: Repository = {
-                id:       name,
-                delivId:  deliv.id,
-                URL:      null,
+                id: name,
+                delivId: deliv.id,
+                URL: null,
                 cloneURL: null,
-                teamIds:  teamIds,
-                custom:   custom
+                teamIds: teamIds,
+                custom: custom
             };
 
             await this.db.writeRepository(repo);
+
+            Log.info("RepositoryController::createRepository( " + name + ", .. ) - done");
             return await this.db.getRepository(repo.id);
         } else {
             Log.info("RepositoryController::createRepository( " + name + ", .. ) - repository exists: " + JSON.stringify(existingRepo));
@@ -132,7 +137,7 @@ export class RepositoryController {
     // }
 
     public async getPeopleForRepo(repoId: string): Promise<string[] | null> {
-        Log.info("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  start");
+        Log.trace("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  start");
         const start = Date.now();
 
         const peopleIds: string[] = [];
@@ -149,7 +154,7 @@ export class RepositoryController {
             }
         }
 
-        Log.info("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  done; # people: " +
+        Log.trace("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  done; # people: " +
             peopleIds.length + "; took: " + Util.took(start));
         return peopleIds;
     }
@@ -160,8 +165,8 @@ export class RepositoryController {
         }
 
         const repo: RepositoryTransport = {
-            id:      repository.id,
-            URL:     repository.URL,
+            id: repository.id,
+            URL: repository.URL,
             delivId: repository.delivId
         };
 

@@ -120,6 +120,12 @@ Dashboard Page
     user-select: text !important;
 }
 
+.sortableTable th {
+    background-color: white;
+    position: sticky;
+    top: 0;
+}
+
 .selectable {
     user-select: text !important;
 }

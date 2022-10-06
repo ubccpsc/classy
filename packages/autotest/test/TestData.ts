@@ -1,5 +1,5 @@
-import {AutoTestResult, IFeedbackGiven} from "../../common/types/AutoTestTypes";
-import {CommitTarget, ContainerInput, ContainerState} from "../../common/types/ContainerTypes";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget, ContainerInput, ContainerState} from "@common/types/ContainerTypes";
 
 export class TestData {
     public static readonly pushEventA: CommitTarget = {
@@ -10,8 +10,9 @@ export class TestData {
         repoId:       "d0_team999",
         timestamp:    1516472872288,
         botMentioned: false,
+        adminRequest: false,
         personId:     null,
-        kind:         'push',
+        kind:         "push",
         flags:        [],
         delivId:      "d0"
     };
@@ -25,8 +26,9 @@ export class TestData {
         repoId:       "d0_team999",
         timestamp:    1516992872288,
         botMentioned: false,
+        adminRequest: false,
         personId:     null,
-        kind:         'push',
+        kind:         "push",
         flags:        [],
         delivId:      "d0"
     };
@@ -41,8 +43,9 @@ export class TestData {
         repoId:       "d0_team999",
         timestamp:    1516472872288,
         botMentioned: false,
+        adminRequest: false,
         personId:     null,
-        kind:         'push',
+        kind:         "push",
         flags:        [],
         delivId:      "d0"
     };
@@ -81,8 +84,9 @@ export class TestData {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        adminRequest: false,
         personId:     "cs310test",
-        kind:         'standard',
+        kind:         "standard",
         flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
@@ -95,8 +99,9 @@ export class TestData {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
+        adminRequest: false,
         personId:     "cs310test",
-        kind:         'standard',
+        kind:         "standard",
         flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
@@ -109,8 +114,9 @@ export class TestData {
         botMentioned: true,
         commitSHA:    "abe1b0918b872997de4c4d2baf4c263f8d4staff",
         commitURL:    "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",
+        adminRequest: true,
         personId:     "staff",
-        kind:         'standard',
+        kind:         "standard",
         flags:        [],
         repoId:       "d0_team999",
         delivId:      "d1",
@@ -125,7 +131,7 @@ export class TestData {
         delivId:   TestData.commentRecordStaffA.delivId,
         timestamp: TestData.commentRecordStaffA.timestamp + 1000,
         commitURL: TestData.commentRecordStaffA.commitURL,
-        kind:      'standard'
+        kind:      "standard"
     };
 
     public static readonly feedbackRecordB: IFeedbackGiven = {
@@ -134,7 +140,7 @@ export class TestData {
         delivId:   TestData.commentRecordUserA.delivId,
         timestamp: TestData.commentRecordUserA.timestamp + 1000,
         commitURL: TestData.commentRecordUserA.commitURL,
-        kind:      'standard'
+        kind:      "standard"
     };
 
     public static readonly outputRecordA: AutoTestResult = {

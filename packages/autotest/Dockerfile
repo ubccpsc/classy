@@ -16,6 +16,6 @@ RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
  && chmod -R a+rx /app
 
-CMD ["node", "/app/packages/autotest/src/AutoTestDaemon.js"]
+CMD ["node", "--require", "/app/node_modules/tsconfig-paths/register", "/app/packages/autotest/src/AutoTestDaemon.js"]
 
 
