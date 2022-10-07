@@ -76,7 +76,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private expressQueue = new Queue("express", 2);
+    private expressQueue = new Queue("exp", 2);
 
     /**
      * Standard jobs. Always execute after Express jobs, but also always
@@ -84,7 +84,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private standardQueue = new Queue("standard", 2);
+    private standardQueue = new Queue("std", 2);
 
     /**
      * Regression jobs. These will happen whenever they can. Repos
@@ -93,7 +93,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private regressionQueue = new Queue("regression", 1);
+    private regressionQueue = new Queue("reg", 1);
 
     /**
      * The maximum number of jobs a single user can have on the standard queue
@@ -245,7 +245,7 @@ export abstract class AutoTest implements IAutoTest {
             const tickQueue = function (queue: Queue): void {
                 if (queue.length() > 0 && queue.hasCapacity() === true) {
                     const info: ContainerInput = queue.scheduleNext();
-                    Log.info("AutoTest::tick::tickQueue(..)         [JOB] - starting: " + queue.getName() + "; deliv: " +
+                    Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
                         info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA);
 
                     let gradingJob: GradingJob;
@@ -528,7 +528,7 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
-            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - done; deliv: " +
+            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
                 data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
                 "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
         } catch (err) {
