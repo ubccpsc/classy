@@ -93,4 +93,42 @@ export default class Util {
         const ret = Object.assign({}, obj);
         return ret;
     }
+
+    /**
+     * Converts a string value to a boolean.
+     *
+     * The following are True:
+     *
+     * true
+     * "true" (case-insensitive)
+     * "yes" (case-insensitive)
+     * 1
+     * "1"
+     *
+     * Every other thing is false, but most commonly:
+     *
+     * false
+     * "False" (case-insensitive)
+     * 0
+     * "0"
+     * null
+     * undefined
+     *
+     * @param value
+     */
+    public static toBoolean(value: any): boolean {
+        let strValue = String(value).toLowerCase();
+        if ((!isNaN(strValue as any) && strValue !== "0") &&
+            strValue !== "" &&
+            strValue !== "null" &&
+            strValue !== "undefined") {
+            strValue = "1";
+        }
+        if (strValue === "true" || strValue === "yes" || strValue === "1") {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
 }

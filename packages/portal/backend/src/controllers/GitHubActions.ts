@@ -279,7 +279,7 @@ export class GitHubActions implements IGitHubActions {
 
         // if we're on CI, still run the whole thing
         const ci = process.env.CI;
-        if (typeof ci !== "undefined" && Boolean(ci) === true) {
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
             forceReal = true;
         }
 

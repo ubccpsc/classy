@@ -488,7 +488,7 @@ export class TestHarness {
      */
     public static isCI(): boolean {
         const ci = process.env.CI;
-        if (typeof ci !== "undefined" && Boolean(ci) === true) {
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
             Log.test("Test::isCI() - running in CI");
             return true;
         } else {
