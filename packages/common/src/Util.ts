@@ -117,18 +117,8 @@ export default class Util {
      * @param value
      */
     public static toBoolean(value: any): boolean {
-        let strValue = String(value).toLowerCase();
-        if ((!isNaN(strValue as any) && strValue !== "0") &&
-            strValue !== "" &&
-            strValue !== "null" &&
-            strValue !== "undefined") {
-            strValue = "1";
-        }
-        if (strValue === "true" || strValue === "yes" || strValue === "1") {
-            return true;
-        } else {
-            return false;
-        }
+        const strValue = String(value).toLowerCase();
+        return strValue === "true" || strValue === "yes" || strValue === "1";
     }
 
 }
