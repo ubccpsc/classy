@@ -9,10 +9,14 @@
         // only the frontend plugin code should use @frontend and @common
         // unless we adopt tsconfig-paths (to resolve these references at runtime)
         // the frontend does this with tsconfig-paths-webpack-plugin
+        // TODO: refactor the type cycle that requires the @backend reference here
         "baseUrl": ".",
         "paths": {
             "@frontend/*": [
                 "../../portal/frontend/src/app/*"
+            ],
+            "@backend/*": [
+                "../../portal/backend/src/*"
             ],
             "@common/*": [
                 "../../common/src/*"
