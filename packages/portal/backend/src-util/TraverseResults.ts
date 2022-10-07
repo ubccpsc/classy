@@ -1,6 +1,6 @@
-import Log, {LogLevel} from "../../../common/Log";
-import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import Util from "../../../common/Util";
+import Log, {LogLevel} from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import Util from "@common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";

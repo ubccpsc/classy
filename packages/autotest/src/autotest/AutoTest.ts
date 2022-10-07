@@ -1,10 +1,12 @@
 import * as Docker from "dockerode";
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {ContainerInput} from "../../../common/types/ContainerTypes";
-import {AutoTestGradeTransport} from "../../../common/types/PortalTypes";
-import Util from "../../../common/Util";
+
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import {ContainerInput} from "@common/types/ContainerTypes";
+import {AutoTestGradeTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
+
 import {IClassPortal} from "./ClassPortal";
 import {IDataStore} from "./DataStore";
 import {GradingJob} from "./GradingJob";

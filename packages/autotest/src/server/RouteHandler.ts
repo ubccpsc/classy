@@ -4,10 +4,10 @@ import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";

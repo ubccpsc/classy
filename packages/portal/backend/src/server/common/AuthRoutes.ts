@@ -2,10 +2,9 @@ import * as ClientOAuth2 from "client-oauth2";
 import fetch, {RequestInit} from "node-fetch";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
-import Log from "../../../../../common/Log";
-
-import {AuthTransportPayload, Payload} from "../../../../../common/types/PortalTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AuthTransportPayload, Payload} from "@common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";

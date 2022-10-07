@@ -1,8 +1,8 @@
 import * as fs from "fs-extra";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from '../../../../../common/Config';
-import Log from "../../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {
     ConfigTransportPayload,
     GradeTransport,
@@ -14,7 +14,7 @@ import {
     TeamFormationTransport,
     TeamTransport,
     TeamTransportPayload
-} from "../../../../../common/types/PortalTypes";
+} from "@common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";

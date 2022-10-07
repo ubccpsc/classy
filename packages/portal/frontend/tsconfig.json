@@ -15,7 +15,7 @@
                 "../../portal/frontend/src/app/*"
             ],
             "@common/*": [
-                "../../common/*"
+                "../../common/src/*"
             ]
         },
         "lib": [

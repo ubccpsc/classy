@@ -1,9 +1,9 @@
 import * as Docker from "dockerode";
+
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
 import {CommitTarget, ContainerInput} from "@common/types/ContainerTypes";
-
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -11,6 +11,7 @@ import {
     ClassyConfigurationTransport
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+
 import {AutoTest} from "../autotest/AutoTest";
 import {IClassPortal} from "../autotest/ClassPortal";
 import {IDataStore} from "../autotest/DataStore";

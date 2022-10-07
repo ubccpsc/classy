@@ -1,9 +1,9 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import {AutoTestGradeTransport, GradeTransport} from "../../../../common/types/PortalTypes";
-import {GradePayload} from "../../../../common/types/SDMMTypes";
-import Util from "../../../../common/Util";
+import {AutoTestGradeTransport, GradeTransport} from "@common/types/PortalTypes";
+import {GradePayload} from "@common/types/SDMMTypes";
+import Util from "@common/Util";
 import {Grade, PersonKind} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";

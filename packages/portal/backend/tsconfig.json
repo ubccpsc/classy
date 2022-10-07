@@ -12,7 +12,8 @@
                 "./src/*"
             ],
             "@common/*": [
-                "../../common/*"
+                "../../common/src/*",
+                "../../common/test/*"
             ]
         },
         "lib": [

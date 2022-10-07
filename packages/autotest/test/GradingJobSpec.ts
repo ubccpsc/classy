@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import * as Docker from "dockerode";
-import {TestHarness} from "@common/test/TestHarness";
+
+import {TestHarness} from "@common/TestHarness";
 import {GradingJob} from "@autotest/autotest/GradingJob";
 
 class ContainerMock extends Docker.Container {

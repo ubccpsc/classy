@@ -11,7 +11,7 @@ export default class Util {
     }
 
     public static tookHuman(start: number, end?: number): string {
-        if (typeof end === 'undefined') {
+        if (typeof end === "undefined") {
             end = Date.now();
         }
         const delta = Math.floor((end - start) / 1000); // convert to seconds
@@ -27,7 +27,7 @@ export default class Util {
         }
 
         if (hours > 0) {
-            // won't have seconds
+            // won"t have seconds
             if (minutes === 1) {
                 msg = msg + " and 1 minute";
             } else {
@@ -93,5 +93,4 @@ export default class Util {
         const ret = Object.assign({}, obj);
         return ret;
     }
-
 }

@@ -1,6 +1,7 @@
-import Config, {ConfigCourses, ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import Util from "../../../common/Util";
+import Config, {ConfigCourses, ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
+
 import {DatabaseController, QueryKind} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
 import {GradesController} from "../src/controllers/GradesController";

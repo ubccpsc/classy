@@ -1,10 +1,11 @@
 import * as restify from "restify";
+import fetch from "node-fetch";
+
+import Log from "@common/Log";
 
 import IREST from "@backend/server/IREST";
-import Log from "@common/Log";
-import {CustomCourseController} from "./CustomCourseController";
 
-import fetch from 'node-fetch';
+import {CustomCourseController} from "./CustomCourseController";
 
 /**
  * This class should add any custom routes a course might need.

@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import Util from "@common/Util";
 
 import {CourseController} from "@backend/controllers/CourseController";
@@ -12,7 +12,7 @@ import {GitHubController} from "@backend/controllers/GitHubController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {Grade} from "@backend/Types";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
 describe("CourseController", () => {

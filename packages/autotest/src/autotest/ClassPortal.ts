@@ -4,7 +4,7 @@ import fetch, {RequestInit} from "node-fetch";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -17,8 +17,8 @@ import {
     ClassyConfigurationPayload,
     ClassyConfigurationTransport,
     Payload
-} from "../../../common/types/PortalTypes";
-import Util from "../../../common/Util";
+} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 export interface IClassPortal {
 

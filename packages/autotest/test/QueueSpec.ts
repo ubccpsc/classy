@@ -2,7 +2,7 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
 
 import {Queue} from "@autotest/autotest/Queue";
 

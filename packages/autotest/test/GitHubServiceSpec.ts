@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
 
 import {GitHubUtil, IGitHubMessage} from "@autotest/github/GitHubUtil";
 

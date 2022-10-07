@@ -8,7 +8,7 @@ import Config, {ConfigKey} from "@common/Config";
 
 import {Factory} from "@backend/Factory";
 
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
 
 chaiUse(chaiAsPromised);
 

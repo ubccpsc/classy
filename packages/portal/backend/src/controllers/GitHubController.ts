@@ -1,6 +1,6 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
 
 import {Repository, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";

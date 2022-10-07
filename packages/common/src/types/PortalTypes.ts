@@ -6,7 +6,7 @@
  * All fields should be primitives.
  */
 import {AutoTestResult} from "./AutoTestTypes";
-import {PersonKind} from "portal-backend/src/Types";
+import {PersonKind} from "@backend/Types";
 
 export interface FailurePayload {
     message: string;

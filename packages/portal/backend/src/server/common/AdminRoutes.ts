@@ -1,11 +1,10 @@
-import * as cookie from 'cookie';
-import * as http from 'http';
+import * as cookie from "cookie";
+import * as http from "http";
 import fetch, {RequestInit} from "node-fetch";
-import * as restify from 'restify';
+import * as restify from "restify";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
-
-import Log from "../../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {
     AutoTestResultSummaryPayload,
     ClasslistChangesTransportPayload,
@@ -22,10 +21,10 @@ import {
     TeamFormationTransport,
     TeamTransport,
     TeamTransportPayload
-} from '../../../../../common/types/PortalTypes';
-import Util from '../../../../../common/Util';
-import {AuditLabel, Person, Repository} from "../../Types";
+} from '@common/types/PortalTypes';
+import Util from '@common/Util';
 
+import {AuditLabel, Person, Repository} from "../../Types";
 import {AdminController} from "../../controllers/AdminController";
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";

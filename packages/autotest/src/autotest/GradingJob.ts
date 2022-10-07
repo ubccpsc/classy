@@ -1,12 +1,12 @@
 import {exec} from "child_process";
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
-import Config, {ConfigKey} from "../../../common/Config";
-import {GitRepository} from "../../../common/GitRepository";
-import Log from "../../../common/Log";
-import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {ContainerInput, ContainerState} from "../../../common/types/ContainerTypes";
-import {AutoTestConfigTransport} from "../../../common/types/PortalTypes";
+
+import Config, {ConfigKey} from "@common/Config";
+import {GitRepository} from "@common/commands/GitRepository";
+import Log from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import {ContainerInput, ContainerState} from "@common/types/ContainerTypes";
 
 export class GradingJob {
     public readonly record: AutoTestResult;

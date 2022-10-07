@@ -14,7 +14,7 @@ import {MockDataStore} from "@autotest/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "@autotest/github/GitHubAutoTest";
 import {IGitHubMessage} from "@autotest/github/GitHubUtil";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */

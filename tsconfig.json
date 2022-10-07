@@ -9,7 +9,8 @@
         "baseUrl": ".",
         "paths": {
             "@common/*": [
-                "packages/common/*"
+                "packages/common/src/*",
+                "packages/common/test/*"
             ],
             "@frontend/*": [
                 "packages/portal/frontend/src/app/*"

@@ -1,7 +1,7 @@
-import Log from "../../../../common/Log";
-import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {GradeReport} from "../../../../common/types/ContainerTypes";
-import Util from "../../../../common/Util";
+import Log from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import {GradeReport} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 import {Result} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";

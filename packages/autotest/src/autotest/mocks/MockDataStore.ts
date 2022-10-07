@@ -1,11 +1,11 @@
 import * as fs from "fs-extra";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
-import {AutoTestResult, IFeedbackGiven} from "../../../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../../../common/types/ContainerTypes";
-import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
 /**

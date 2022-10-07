@@ -1,7 +1,7 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import {GradeReport} from "../../../../common/types/ContainerTypes";
+import {GradeReport} from "@common/types/ContainerTypes";
 import {
     AutoTestDashboardTransport,
     AutoTestGradeTransport,
@@ -13,8 +13,8 @@ import {
     RepositoryTransport,
     StudentTransport,
     TeamTransport,
-} from '../../../../common/types/PortalTypes';
-import Util from "../../../../common/Util";
+} from '@common/types/PortalTypes';
+import Util from "@common/Util";
 import {Factory} from "../Factory";
 import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";

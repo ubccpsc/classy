@@ -1,8 +1,8 @@
 import {Collection, Db, MongoClient} from "mongodb";
-import Config, {ConfigCourses, ConfigKey} from "../../../../common/Config";
 
-import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
+import Config, {ConfigCourses, ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
 
 import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
 import {TeamController} from "./TeamController";

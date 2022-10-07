@@ -1,10 +1,10 @@
-import Log from "../../../../common/Log";
+import Log from "@common/Log";
 
-import {TeamTransport} from "../../../../common/types/PortalTypes";
-import Util from "../../../../common/Util";
+import {TeamTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
+import Config, {ConfigKey} from "@common/Config";
+
 import {Deliverable, Person, PersonKind, Team} from "../Types";
-
-import Config, {ConfigKey} from "../../../../common/Config";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
 

@@ -1,7 +1,7 @@
-import Log from "../../../../common/Log";
-import {Person, PersonKind} from "../Types";
+import Log from "@common/Log";
+import Config, {ConfigKey} from "@common/Config";
 
-import Config, {ConfigKey} from "../../../../common/Config";
+import {Person, PersonKind} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions} from "./GitHubActions";
 import {PersonController} from "./PersonController";
@@ -42,7 +42,7 @@ export class AuthController {
         }
     }
 
-    public async personPriviliged(person: Person): Promise<{isAdmin: boolean, isStaff: boolean}> {
+    public async personPriviliged(person: Person): Promise<{ isAdmin: boolean, isStaff: boolean }> {
 
         const personId = person.id;
         if (person.kind === null || person.kind === PersonKind.NONE) {
@@ -86,7 +86,7 @@ export class AuthController {
         }
     }
 
-    public async isPrivileged(personId: string, token: string): Promise<{isAdmin: boolean, isStaff: boolean}> {
+    public async isPrivileged(personId: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - start");
         const pc = new PersonController();
         const dc = DatabaseController.getInstance();

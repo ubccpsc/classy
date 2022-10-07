@@ -1,7 +1,7 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../../../common/types/ContainerTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
 import {
     AutoTestAuthTransport,
     AutoTestConfigTransport,
@@ -10,7 +10,8 @@ import {
     AutoTestResultTransport,
     ClassyConfigurationTransport,
     Payload
-} from "../../../../common/types/PortalTypes";
+} from "@common/types/PortalTypes";
+
 import {IClassPortal} from "../ClassPortal";
 import {MockDataStore} from "./MockDataStore";
 
@@ -52,14 +53,14 @@ export class MockClassPortal implements IClassPortal {
                 const delay = 6 * 60 * 60; // 6 hours in seconds
 
                 const ret: AutoTestConfigTransport = {
-                    dockerImage:        "310container",
-                    studentDelay:       delay,
-                    maxExecTime:        300,
+                    dockerImage: "310container",
+                    studentDelay: delay,
+                    maxExecTime: 300,
                     regressionDelivIds: [],
-                    custom:             {},
-                    openTimestamp:      new Date(2015, 1, 1).getTime(),
-                    closeTimestamp:     new Date(2030, 6, 1).getTime(),
-                    lateAutoTest:       true
+                    custom: {},
+                    openTimestamp: new Date(2015, 1, 1).getTime(),
+                    closeTimestamp: new Date(2030, 6, 1).getTime(),
+                    lateAutoTest: true
                 };
 
                 if (delivId === 'd0') {
@@ -125,7 +126,7 @@ export class MockClassPortal implements IClassPortal {
         return Promise.resolve(res.output.report.feedback);
     }
 
-    public async  shouldPromotePush(info: CommitTarget): Promise<boolean> {
+    public async shouldPromotePush(info: CommitTarget): Promise<boolean> {
         Log.info("MockClassPortal::shouldPromotePush(..) - Start");
         return false;
     }

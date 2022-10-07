@@ -3,9 +3,9 @@ import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
 // can't use @common here as this is referenced from TestHarness and ends up being circular
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import Util from "../../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
 
 import {Factory} from "../Factory";
 import {DatabaseController} from "./DatabaseController";

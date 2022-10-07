@@ -1,7 +1,7 @@
 import * as restify from "restify";
 
-import Config from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config from "@common/Config";
+import Log from "@common/Log";
 
 import RouteHandler from "./RouteHandler";
 

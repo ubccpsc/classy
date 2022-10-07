@@ -2,8 +2,8 @@ import {expect} from "chai";
 import "mocha";
 
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
-import "@common/test/GlobalSpec";
+import {TestHarness} from "@common/TestHarness";
+import "@common/GlobalSpec";
 
 import {GradesController} from "@backend/controllers/GradesController";
 import {CSVPrairieLearnParser} from "@backend/server/common/CSVPrairieLearnParser";

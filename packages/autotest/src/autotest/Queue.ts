@@ -1,8 +1,8 @@
 import * as fs from "fs-extra";
-import Config, {ConfigKey} from "../../../common/Config";
 
-import Log from "../../../common/Log";
-import {ContainerInput} from "../../../common/types/ContainerTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {ContainerInput} from "@common/types/ContainerTypes";
 
 export class Queue {
 

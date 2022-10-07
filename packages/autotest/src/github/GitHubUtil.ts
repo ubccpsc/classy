@@ -1,12 +1,12 @@
-import fetch, {RequestInit} from 'node-fetch';
+import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "@common/Config";
 import {CommitTarget} from "@common/types/ContainerTypes";
 import Log from "@common/Log";
 import {AutoTestAuthTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
-import Util from "@common/Util";
 
 export interface IGitHubMessage {
     /**

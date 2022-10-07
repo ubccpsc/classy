@@ -1,6 +1,7 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
+
 import {GitHubActions} from "../src/controllers/GitHubActions";
 
 /**

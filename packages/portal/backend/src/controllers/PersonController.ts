@@ -1,6 +1,6 @@
-import Log from "../../../../common/Log";
-import {StudentTransport} from "../../../../common/types/PortalTypes";
-import Util from "../../../../common/Util";
+import Log from "@common/Log";
+import {StudentTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 import {Person, PersonKind, Repository} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";

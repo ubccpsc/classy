@@ -1,7 +1,7 @@
 // do not use module imports (@common, @backend) in this file
 import Log from "@common/Log";
 import Config, {ConfigKey} from "@common/Config";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "@backend/controllers/GitHubController";
 import {TeamController} from "@backend/controllers/TeamController";

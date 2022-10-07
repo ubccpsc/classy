@@ -1,5 +1,5 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
 import {AdminController} from "./controllers/AdminController";
 import {ICourseController} from "./controllers/CourseController";

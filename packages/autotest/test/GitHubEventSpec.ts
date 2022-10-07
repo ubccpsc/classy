@@ -2,10 +2,10 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";

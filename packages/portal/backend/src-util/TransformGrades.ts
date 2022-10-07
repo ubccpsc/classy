@@ -1,5 +1,5 @@
-import Log, {LogLevel} from "../../../common/Log";
-import Util from "../../../common/Util";
+import Log, {LogLevel} from "@common/Log";
+import Util from "@common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {GradesController} from "../src/controllers/GradesController";

@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "@common/types/PortalTypes";
@@ -14,7 +14,7 @@ import {Course} from "@backend/Types";
 
 import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
 
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();

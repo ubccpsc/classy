@@ -1,6 +1,6 @@
-import {AutoTestResult} from "../../../common/types/AutoTestTypes";
-import {AutoTestConfig} from "../../../common/types/ContainerTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/types/CS340Types";
+import {AutoTestResult} from "../../../common/src/types/AutoTestTypes";
+import {AutoTestConfig} from "../../../common/src/types/ContainerTypes";
+import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/src/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.

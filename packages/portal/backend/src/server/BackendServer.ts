@@ -4,8 +4,8 @@
 import * as fs from "fs";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
 import {Factory} from "../Factory";
 import AdminRoutes from "./common/AdminRoutes";

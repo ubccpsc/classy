@@ -1,14 +1,14 @@
 import {expect} from "chai";
 import "mocha";
 
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {AutoTestGradeTransport} from "@common/types/PortalTypes";
 import {GradePayload} from "@common/types/SDMMTypes";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {GradesController} from "@backend/controllers/GradesController";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./RepositoryControllerSpec";
 
 describe("GradeController", () => {

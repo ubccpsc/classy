@@ -1,5 +1,5 @@
 import fetch, {RequestInit} from "node-fetch";
-import * as restify from 'restify';
+import * as restify from "restify";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";

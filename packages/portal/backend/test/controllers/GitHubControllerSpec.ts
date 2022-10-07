@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
@@ -14,7 +14,7 @@ import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 import {PersonKind, Repository, Team} from "@backend/Types";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./TeamControllerSpec";
 
 describe("GitHubController", () => {

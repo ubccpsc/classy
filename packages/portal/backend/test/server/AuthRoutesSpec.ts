@@ -5,7 +5,7 @@ import * as request from "supertest";
 
 import Log from "@common/Log";
 import {AuthTransportPayload} from "@common/types/PortalTypes";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";

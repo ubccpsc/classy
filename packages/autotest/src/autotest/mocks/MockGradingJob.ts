@@ -1,8 +1,9 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-import {AutoTestResult} from "../../../../common/types/AutoTestTypes";
-import {ContainerInput, ContainerOutput, ContainerState, GradeReport} from "../../../../common/types/ContainerTypes";
-import Util from "../../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult} from "@common/types/AutoTestTypes";
+import {ContainerInput, ContainerOutput, ContainerState, GradeReport} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
+
 import {GradingJob} from "../GradingJob";
 
 export class MockGradingJob extends GradingJob {
@@ -31,27 +32,27 @@ export class MockGradingJob extends GradingJob {
 
             const gradeReport: GradeReport = {
                 scoreOverall: 50,
-                scoreTest:    50,
-                scoreCover:   50,
-                passNames:    [],
-                failNames:    [],
-                errorNames:   [],
-                skipNames:    [],
-                custom:       {},
-                feedback:     "Test execution complete.",
-                result:        "SUCCESS",
-                attachments:  []
+                scoreTest: 50,
+                scoreCover: 50,
+                passNames: [],
+                failNames: [],
+                errorNames: [],
+                skipNames: [],
+                custom: {},
+                feedback: "Test execution complete.",
+                result: "SUCCESS",
+                attachments: []
             };
 
             const out: ContainerOutput = {
                 // commitURL:          this.input.pushInfo.commitURL,
-                timestamp:          Date.now(),
-                report:             gradeReport,
+                timestamp: Date.now(),
+                report: gradeReport,
                 // feedback:           "Test execution complete.",
                 postbackOnComplete: false,
-                custom:             {},
-                state:              ContainerState.SUCCESS,
-                graderTaskId:        ""
+                custom: {},
+                state: ContainerState.SUCCESS,
+                graderTaskId: ""
             };
 
             // just a hack to test postback events
@@ -61,13 +62,13 @@ export class MockGradingJob extends GradingJob {
             }
 
             const ret: AutoTestResult = {
-                delivId:   this.input.delivId,
-                repoId:    this.input.target.repoId,
+                delivId: this.input.delivId,
+                repoId: this.input.target.repoId,
                 // timestamp: this.input.pushInfo.timestamp,
                 commitURL: this.input.target.commitURL,
                 commitSHA: this.input.target.commitSHA,
-                input:     this.input,
-                output:    out
+                input: this.input,
+                output: out
             };
 
             Log.info("MockGrader::execute() - execution complete; commit: " + this.input.target.commitSHA);

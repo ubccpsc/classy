@@ -1,6 +1,6 @@
-import Config, {ConfigKey} from '../../../../common/Config';
-import Log from "../../../../common/Log";
-import {AutoTestConfigTransport, DeliverableTransport} from "../../../../common/types/PortalTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestConfigTransport, DeliverableTransport} from "@common/types/PortalTypes";
 import {Deliverable} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";

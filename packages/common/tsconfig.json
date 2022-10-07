@@ -17,7 +17,8 @@
         "baseUrl": ".",
         "paths": {
             "@common/*": [
-                "./*"
+                "./src/*",
+                "./test/*"
             ],
             "@backend/*": [
                 "../portal/backend/src/*"
@@ -28,7 +29,8 @@
         }
     },
     "include": [
-        "../common/**/*.ts"
+        "./src/**/*.ts",
+        "./test/**/*.ts"
     ],
     "exclude": [
         "node_modules"

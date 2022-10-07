@@ -1,11 +1,11 @@
 import {Collection, Db, MongoClient} from "mongodb";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "@common/Config";
 
-import Log from "../../../common/Log";
-import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
+import Log from "@common/Log";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
 
-import Util from "../../../common/Util";
+import Util from "@common/Util";
 
 export interface IDataStore {
 
