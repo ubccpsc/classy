@@ -34,7 +34,7 @@ export interface IAutoTest {
      *
      * @param {ContainerInput} element
      */
-    addToRegressionQueue(element: ContainerInput): void;
+    addToLowQueue(element: ContainerInput): void;
 
     /**
      * Updates the internal clock of the handler. This might or might not do anything.
@@ -76,7 +76,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private expressQueue = new Queue("exp", 2);
+    private expressQueue = new Queue("exp");
 
     /**
      * Standard jobs. Always execute after Express jobs, but also always
@@ -84,7 +84,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private standardQueue = new Queue("std", 2);
+    private standardQueue = new Queue("std");
 
     /**
      * Regression jobs. These will happen whenever they can. Repos
@@ -93,11 +93,11 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private {Queue}
      */
-    private regressionQueue = new Queue("reg", 1);
+    private lowQueue = new Queue("low");
 
     /**
      * The maximum number of jobs a single user can have on the standard queue
-     * before it will schedule on the regression queue instead. This is to
+     * before it will schedule on the low queue instead. This is to
      * prevent DOS attacks because a single user could submit an unbounded number
      * of requests preventing others from being graded.
      *
@@ -106,7 +106,7 @@ export abstract class AutoTest implements IAutoTest {
     private readonly MAX_STANDARD_JOBS: number = 3;
 
     /**
-     * The maximum number of jobs a single user can have on the regression queue
+     * The maximum number of jobs a single user can have on the low queue
      * before we refrain from scheduling them at all.
      *
      * NOTE: not currently used.
@@ -115,6 +115,18 @@ export abstract class AutoTest implements IAutoTest {
      */
     // noinspection JSUnusedLocalSymbols
     // private readonly MAX_JOBS: number = 100;
+
+    /**
+     * Max number of execution slots.
+     */
+    private numSlots = 5; // TODO: make this configurable
+
+    /**
+     * Job execution slots.
+     *
+     * @private
+     */
+    private slots: ContainerInput[] = [];
 
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
         Log.info("AutoTest::<init> - starting AutoTest");
@@ -140,7 +152,6 @@ export abstract class AutoTest implements IAutoTest {
     public addToExpressQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToExpressQueue(..) - start; commit: " + input.target.commitSHA);
         try {
-
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToExpressQueue(..) - not added; commit already executing");
                 return;
@@ -152,7 +163,7 @@ export abstract class AutoTest implements IAutoTest {
 
                 // if job is on any other queue, remove it
                 this.standardQueue.remove(input);
-                this.regressionQueue.remove(input);
+                this.lowQueue.remove(input);
             } else {
                 Log.info("AutoTest::addToExpressQueue(..) - user: " + input.target.personId +
                     " already has job on express queue; adding: " +
@@ -178,25 +189,25 @@ export abstract class AutoTest implements IAutoTest {
             // only add job if it is not already on express
             if (this.expressQueue.indexOf(input) < 0) {
 
-                const standardJobCount = this.standardQueue.numberJobsForPerson(input);
-                const regressionJobCount = this.regressionQueue.numberJobsForPerson(input);
+                const stdJobCount = this.standardQueue.numberJobsForPerson(input);
+                const lowJobCount = this.lowQueue.numberJobsForPerson(input);
 
                 // this is fairly permissive; only queued jobs (not executing jobs) are counted
-                if (standardJobCount < this.MAX_STANDARD_JOBS) {
+                if (stdJobCount < this.MAX_STANDARD_JOBS) {
                     this.standardQueue.push(input);
 
                     // if job is on any other queue, remove it
-                    this.regressionQueue.remove(input);
+                    this.lowQueue.remove(input);
                 } else {
                     Log.warn("AutoTest::addToStandardQueue(..) - repo: " +
-                        input.target.repoId + "; has #" + standardJobCount +
-                        " standard jobs queued and #" + regressionJobCount +
-                        " regression jobs queued");
+                        input.target.repoId + "; has #" + stdJobCount +
+                        " standard jobs queued and #" + lowJobCount +
+                        " low jobs queued");
 
                     // NOTE: this _could_ post a warning back to the user
                     // that their priority is lowered due to excess jobs
 
-                    this.addToRegressionQueue(input);
+                    this.addToLowQueue(input);
                 }
 
             } else {
@@ -208,24 +219,24 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
-    public addToRegressionQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToRegressionQueue(..) - start; commit: " + input.target.commitSHA);
+    public addToLowQueue(input: ContainerInput): void {
+        Log.info("AutoTest::addToLowQueue(..) - start; commit: " + input.target.commitSHA);
         try {
 
             if (this.isCommitExecuting(input)) {
-                Log.info("AutoTest::addToRegressionQueue(..) - not added; commit already executing");
+                Log.info("AutoTest::addToLowQueue(..) - not added; commit already executing");
                 return;
             }
 
             // add to the regression queue if it is not already on express or standard
             if (this.expressQueue.indexOf(input) < 0 && this.standardQueue.indexOf(input) < 0) {
-                this.regressionQueue.push(input);
+                this.lowQueue.push(input);
             } else {
-                Log.info("AutoTest::addToRegressionQueue(..) - skipped; " +
+                Log.info("AutoTest::addToLowQueue(..) - skipped; " +
                     "job already on standard or express queue; SHA: " + input.target.commitSHA);
             }
         } catch (err) {
-            Log.error("AutoTest::addToRegressionQueue(..) - ERROR: " + err);
+            Log.error("AutoTest::addToLowQueue(..) - ERROR: " + err);
         }
     }
 
@@ -235,16 +246,18 @@ export abstract class AutoTest implements IAutoTest {
     public tick(): void {
         try {
             Log.trace("AutoTest::tick(..) - start; " +
-                "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
-                "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
-                "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
+                "exp - #wait: " + this.expressQueue.length() + "; " +
+                "std - #wait: " + this.standardQueue.length() + "; " +
+                "low - #wait: " + this.lowQueue.length() + ".");
 
             // let updated = false;
             const that = this;
 
             const tickQueue = function (queue: Queue): void {
-                if (queue.length() > 0 && queue.hasCapacity() === true) {
-                    const info: ContainerInput = queue.scheduleNext();
+                if (queue.length() > 0 && that.hasCapacity() === true) {
+                    const info: ContainerInput = queue.pop(); // get the job
+                    that.slots.push(info); // put it on the execution queue
+
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
                         info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA);
 
@@ -311,60 +324,62 @@ export abstract class AutoTest implements IAutoTest {
             };
 
             //
-            // handle the queues in order: express -> standard -> regression
+            // handle the queues in order: express -> standard -> low
             //
 
+            // TODO: this is overly complex with the new one-slot-list model
+
             // fill all express execution slots with express jobs
-            while (this.expressQueue.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
+            while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
                 tickQueue(this.expressQueue);
             }
 
             // fill all standard execution slots with express jobs
-            while (this.standardQueue.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
+            while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
                 // move express job to standard slot
                 switchQueues(this.expressQueue.peek(), this.expressQueue, this.standardQueue, true);
                 tickQueue(this.standardQueue);
             }
 
-            // fill all regression slots with express jobs
-            while (this.regressionQueue.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
-                switchQueues(this.expressQueue.peek(), this.expressQueue, this.regressionQueue, true);
-                tickQueue(this.regressionQueue);
+            // fill all low slots with express jobs
+            while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
+                switchQueues(this.expressQueue.peek(), this.expressQueue, this.lowQueue, true);
+                tickQueue(this.lowQueue);
             }
 
             // fill standard slots with standard jobs
-            while (this.standardQueue.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
+            while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
                 tickQueue(this.standardQueue);
             }
 
             // fill regression slots with standard jobs
-            while (this.regressionQueue.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
-                switchQueues(this.standardQueue.peek(), this.standardQueue, this.regressionQueue, true);
-                tickQueue(this.regressionQueue);
+            while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
+                switchQueues(this.standardQueue.peek(), this.standardQueue, this.lowQueue, true);
+                tickQueue(this.lowQueue);
             }
 
-            // backfill standard jobs to the express queue, if there is pace
-            while (this.expressQueue.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
+            // back fill standard jobs to the express queue, if there is pace
+            while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
                 switchQueues(this.standardQueue.peek(), this.standardQueue, this.expressQueue, true);
                 tickQueue(this.expressQueue);
             }
 
             // finally, run the regression queue with any of its jobs that are waiting
-            while (this.regressionQueue.hasCapacity() && this.regressionQueue.hasWaitingJobs()) {
-                tickQueue(this.regressionQueue);
+            while (that.hasCapacity() && this.lowQueue.hasWaitingJobs()) {
+                tickQueue(this.lowQueue);
             }
 
-            if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
-                this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
-                this.regressionQueue.length() === 0 && this.regressionQueue.numRunning() === 0) {
-                Log.info("AutoTest::tick(..) - done: queues empty and idle; no new jobs started.");
-            } else {
-                // Log.info("AutoTest::tick(..) - done - execution slots busy; no new jobs started");
-                Log.info("AutoTest::tick(..) - done: " +
-                    "express - #wait: " + this.expressQueue.length() + ", #run: " + this.expressQueue.numRunning() + "; " +
-                    "standard - #wait: " + this.standardQueue.length() + ", #run: " + this.standardQueue.numRunning() + "; " +
-                    "regression - #wait: " + this.regressionQueue.length() + ", #run: " + this.regressionQueue.numRunning() + ".");
-            }
+            // if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
+            //     this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
+            //     this.lowQueue.length() === 0 && this.lowQueue.numRunning() === 0) {
+            //     Log.info("AutoTest::tick(..) - done: queues empty and idle; no new jobs started.");
+            // } else {
+            // Log.info("AutoTest::tick(..) - done - execution slots busy; no new jobs started");
+            Log.info("AutoTest::tick(..) - done: " +
+                "express - #wait: " + this.expressQueue.length() + "; " +
+                "standard - #wait: " + this.standardQueue.length() + "; " +
+                "regression - #wait: " + this.lowQueue.length() + ".");
+            // }
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);
@@ -383,7 +398,7 @@ export abstract class AutoTest implements IAutoTest {
             // noinspection ES6MissingAwait
             const writing = [
                 this.standardQueue.persist(), // await in Promise.all
-                this.regressionQueue.persist(), // await in Promise.all
+                this.lowQueue.persist(), // await in Promise.all
                 this.expressQueue.persist()
             ];
             await Promise.all(writing);
@@ -399,7 +414,7 @@ export abstract class AutoTest implements IAutoTest {
         try {
             Log.info("AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
             this.standardQueue.load();
-            this.regressionQueue.load();
+            this.lowQueue.load();
             this.expressQueue.load();
             Log.info("AutoTest::loadQueues() - done; queues loaded");
         } catch (err) {
@@ -429,18 +444,12 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected isCommitExecuting(input: ContainerInput): boolean {
         try {
-            if (this.standardQueue.isCommitExecuting(input) === true) {
-                return true;
+            for (const execution of this.slots) {
+                if (execution.target.commitURL === input.target.commitURL &&
+                    execution.delivId === input.target.delivId) {
+                    return true;
+                }
             }
-
-            if (this.expressQueue.isCommitExecuting(input) === true) {
-                return true;
-            }
-
-            if (this.regressionQueue.isCommitExecuting(input) === true) {
-                return true;
-            }
-
             return false;
         } catch (err) {
             Log.error("AutoTest::isCommitExecuting() - ERROR: " + err);
@@ -462,7 +471,7 @@ export abstract class AutoTest implements IAutoTest {
                 onQueue = true;
             } else if (this.expressQueue.indexOf(input) >= 0) {
                 onQueue = true;
-            } else if (this.regressionQueue.indexOf(input) >= 0) {
+            } else if (this.lowQueue.indexOf(input) >= 0) {
                 onQueue = true;
             }
         } catch (err) {
@@ -483,8 +492,6 @@ export abstract class AutoTest implements IAutoTest {
      */
     private async handleExecutionComplete(data: AutoTestResult): Promise<void> {
         try {
-            const start = Date.now();
-
             if (typeof data === "undefined" || data === null) {
                 Log.error("AutoTest::handleExecutionComplete(..) - null data; skipping");
                 return;
@@ -522,9 +529,9 @@ export abstract class AutoTest implements IAutoTest {
             // when done clear the execution slot and schedule the next
             const commitURL = data.commitURL;
             const delivId = data.delivId;
-            this.expressQueue.clearExecution(commitURL, delivId);
-            this.standardQueue.clearExecution(commitURL, delivId);
-            this.regressionQueue.clearExecution(commitURL, delivId);
+            this.clearExecution(commitURL, delivId);
+            this.clearExecution(commitURL, delivId);
+            this.clearExecution(commitURL, delivId);
 
             // execution done, advance the clock
             this.tick();
@@ -583,4 +590,43 @@ export abstract class AutoTest implements IAutoTest {
             }
         }
     }
+
+    /**
+     * Returns true if there is capacity for executing a new job.
+     *
+     * @private
+     */
+    private hasCapacity() {
+        if (this.slots.length <= this.numSlots) {
+            return true;
+        }
+        return false;
+    }
+
+    /**
+     * Returns whether a given SHA:deliv tuple is executing on the current queue;
+     * if true, the job is also removed from its execution slot so another job
+     * can be started.
+     *
+     * @param commitURL
+     * @param delivId
+     */
+    private clearExecution(commitURL: string, delivId: string): boolean {
+        let removed = false;
+        for (let i = this.slots.length - 1; i >= 0; i--) {
+            const execution = this.slots[i];
+            if (execution !== null) {
+                if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
+                    // remove this one
+                    const lenBefore = this.slots.length;
+                    this.slots.splice(i, 1);
+                    const lenAfter = this.slots.length;
+                    Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore + "; # after: " + lenAfter + "; commitURL: " + commitURL);
+                    removed = true;
+                }
+            }
+        }
+        return removed;
+    }
+
 }

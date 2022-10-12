@@ -133,7 +133,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
                                     "; input: " + JSON.stringify(regressionInput));
 
-                                this.addToRegressionQueue(regressionInput);
+                                this.addToLowQueue(regressionInput);
                             }
                         }
                     }

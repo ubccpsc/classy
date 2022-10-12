@@ -166,7 +166,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(9);
         const eq = (at["expressQueue"] as any);
         const sq = (at["standardQueue"] as any);
-        const rq = (at["regressionQueue"] as any);
+        const rq = (at["lowQueue"] as any);
         Log.test("about to check values");
         expect(eq.slots).to.have.length(2); // two jobs should have been backfilled to express
         expect(eq.data).to.have.length(0); // nothing should be queued on express
