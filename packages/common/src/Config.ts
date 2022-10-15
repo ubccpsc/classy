@@ -58,6 +58,7 @@ export enum ConfigKey {
     autotestUrl = "autotestUrl",
     autotestPort = "autotestPort",
     autotestSecret = "autotestSecret",
+    autotestJobs = "autotestJobs",
 
     sslKeyPath = "sslKeyPath",
     sslCertPath = "sslCertPath",
@@ -178,6 +179,19 @@ export default class Config {
 
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
+        }
+    }
+
+    /**
+     * Checks if a property has been defined in in the current configuration.
+     *
+     * @param prop
+     */
+    public hasProp(prop: ConfigKey): boolean {
+        if (typeof this.config[prop] === "undefined") {
+            return false;
+        } else {
+            return true;
         }
     }
 

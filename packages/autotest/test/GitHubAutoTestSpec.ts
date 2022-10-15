@@ -60,7 +60,7 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
 
         // create a new AutoTest every test (allows us to mess with methods and make sure they are called)
-        at = new GitHubAutoTest(data, portal, null); // , gh);
+        at = new GitHubAutoTest(data, portal, null);
     });
 
     afterEach(async function () {
@@ -73,6 +73,19 @@ describe("GitHubAutoTest", () => {
     it("Should be able to be instantiated.", () => {
         expect(at).not.to.equal(null);
         expect(pushes.length).to.equal(9);
+    });
+
+    it("Should be able to read numJobs from config if given.", () => {
+        // check default
+        expect(Config.getInstance().getProp(ConfigKey.autotestJobs)).to.be.null;
+        expect(at["numJobs"]).to.equal(5); // 5 jobs by default
+
+        // update
+        Config.getInstance().setProp(ConfigKey.autotestJobs, 10);
+        at = new GitHubAutoTest(data, portal, null);
+        expect(at["numJobs"]).to.equal(10);
+
+        Config.getInstance().setProp(ConfigKey.autotestJobs, 5); // put back to 5 jobs
     });
 
     it("Should gracefully fail with bad pushes.", async () => {
@@ -138,8 +151,8 @@ describe("GitHubAutoTest", () => {
         await data.clearData();
         stubDependencies();
 
-        let slots = at["slots"];
-        expect(slots).to.have.length(0);
+        let jobs = at["jobs"];
+        expect(jobs).to.have.length(0);
 
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
@@ -165,8 +178,8 @@ describe("GitHubAutoTest", () => {
 
         await Util.delay(10);
 
-        slots = at["slots"];
-        expect(slots).to.have.length(5);
+        jobs = at["jobs"];
+        expect(jobs).to.have.length(5);
 
         // all pushes should be here
         expect(allData.pushes.length).to.equal(9);
@@ -175,7 +188,7 @@ describe("GitHubAutoTest", () => {
         const rq = (at["lowQueue"] as any);
         Log.test("about to check values");
 
-        Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + rq.data.length + "; #slots: " + slots.length);
+        Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + rq.data.length + "; #jobs: " + jobs.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
         expect(sq.data).to.have.length(3); // three should be waiting on standard
         // this is the main check: if this all worked, a job should have been pushed onto the regression queue

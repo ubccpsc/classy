@@ -39,8 +39,8 @@ export interface IAutoTest {
     /**
      * Updates the internal clock of the handler. This might or might not do anything.
      *
-     * But if there are execution slots on any queue available, and any queue has jobs waiting,
-     * a waiting job should start processing on the available slot.
+     * But if there is space to start a new job, and any queue has jobs waiting,
+     * a waiting job should be started.
      */
     tick(): void;
 }
@@ -51,18 +51,14 @@ export interface IAutoTest {
  * In general, queueing looks like this:
  *
  * 1) Express jobs are always handled if there is a job waiting
- * and an execution slot available on any other queue.
+ * and space for one to start.
  *
  * 2) Standard jobs run when no express jobs are waiting. If too
  * many jobs are added to this queue from a single user the
- * jobs are demoted to the regression queue.
+ * jobs are demoted to the low queue.
  *
- * 3) Regression jobs are run when no express or standard jobs
+ * 3) Low jobs are run when no express or standard jobs
  * are waiting.
- *
- * NOTE: the schedule queue is its own thing and does not interact
- * with any of these other queues except that it puts jobs into
- * the express queue when they are ready.
  *
  */
 export abstract class AutoTest implements IAutoTest {
@@ -117,29 +113,35 @@ export abstract class AutoTest implements IAutoTest {
     // private readonly MAX_JOBS: number = 100;
 
     /**
-     * Max number of execution slots.
+     * Max number of execution jobs.
      */
-    private numSlots = 5; // TODO: make this configurable
+    private readonly numJobs: number;
+
+    private readonly DEFAULT_NUM_JOBS = 5;
 
     /**
-     * Job execution slots.
+     * List of executing jobs.
      *
      * @private
      */
-    private slots: ContainerInput[] = [];
+    private jobs: ContainerInput[] = [];
 
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
         Log.info("AutoTest::<init> - starting AutoTest");
         this.dataStore = dataStore;
         this.classPortal = classPortal;
         this.docker = docker;
-        this.loadQueues();
 
-        // TODO: this is a temporary solution to make sure the schedule queue is checked
-        setInterval(() => {
-            Log.trace("AutoTest::<init>::$1 - Calling Tick");
-            this.tick();
-        }, 1000 * 60 * 5);
+        const config = Config.getInstance();
+        let numJobs = this.DEFAULT_NUM_JOBS;
+        if (config.hasProp(ConfigKey.autotestJobs) === true) {
+            numJobs = Number.parseInt(config.getProp(ConfigKey.autotestJobs), 10);
+        }
+        this.numJobs = numJobs;
+        Log.info("AutoTest::<init> - starting AutoTest; numJobs: " + this.numJobs);
+
+        // load the queues after the number of jobs has been defined
+        this.loadQueues();
     }
 
     /**
@@ -241,7 +243,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     /**
-     * Advance the queues. Does nothing if all execution slots are full.
+     * Advance the queues. Does nothing if all execution jobs are full.
      */
     public tick(): void {
         try {
@@ -256,7 +258,7 @@ export abstract class AutoTest implements IAutoTest {
             const tickQueue = function (queue: Queue): void {
                 if (queue.length() > 0 && that.hasCapacity() === true) {
                     const info: ContainerInput = queue.pop(); // get the job
-                    that.slots.push(info); // put it on the execution queue
+                    that.jobs.push(info); // put it on the execution queue
 
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
                         info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA);
@@ -323,63 +325,23 @@ export abstract class AutoTest implements IAutoTest {
                 Log.trace("AutoTest::tick::switchQueues(..) - switched: " + input.target.commitSHA);
             };
 
-            //
             // handle the queues in order: express -> standard -> low
-            //
-
-            // TODO: this is overly complex with the new one-slot-list model
-
-            // fill all express execution slots with express jobs
             while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
                 tickQueue(this.expressQueue);
             }
 
-            // fill all standard execution slots with express jobs
-            while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
-                // move express job to standard slot
-                switchQueues(this.expressQueue.peek(), this.expressQueue, this.standardQueue, true);
-                tickQueue(this.standardQueue);
-            }
-
-            // fill all low slots with express jobs
-            while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
-                switchQueues(this.expressQueue.peek(), this.expressQueue, this.lowQueue, true);
-                tickQueue(this.lowQueue);
-            }
-
-            // fill standard slots with standard jobs
             while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
                 tickQueue(this.standardQueue);
             }
 
-            // fill regression slots with standard jobs
-            while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
-                switchQueues(this.standardQueue.peek(), this.standardQueue, this.lowQueue, true);
-                tickQueue(this.lowQueue);
-            }
-
-            // back fill standard jobs to the express queue, if there is pace
-            while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
-                switchQueues(this.standardQueue.peek(), this.standardQueue, this.expressQueue, true);
-                tickQueue(this.expressQueue);
-            }
-
-            // finally, run the regression queue with any of its jobs that are waiting
             while (that.hasCapacity() && this.lowQueue.hasWaitingJobs()) {
                 tickQueue(this.lowQueue);
             }
 
-            // if (this.standardQueue.length() === 0 && this.standardQueue.numRunning() === 0 &&
-            //     this.expressQueue.length() === 0 && this.expressQueue.numRunning() === 0 &&
-            //     this.lowQueue.length() === 0 && this.lowQueue.numRunning() === 0) {
-            //     Log.info("AutoTest::tick(..) - done: queues empty and idle; no new jobs started.");
-            // } else {
-            // Log.info("AutoTest::tick(..) - done - execution slots busy; no new jobs started");
             Log.info("AutoTest::tick(..) - done: " +
                 "express - #wait: " + this.expressQueue.length() + "; " +
                 "standard - #wait: " + this.standardQueue.length() + "; " +
                 "regression - #wait: " + this.lowQueue.length() + ".");
-            // }
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);
@@ -444,7 +406,7 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected isCommitExecuting(input: ContainerInput): boolean {
         try {
-            for (const execution of this.slots) {
+            for (const execution of this.jobs) {
                 if (execution.target.commitURL === input.target.commitURL &&
                     execution.delivId === input.target.delivId) {
                     return true;
@@ -526,11 +488,9 @@ export abstract class AutoTest implements IAutoTest {
                 Log.error("AutoTest::handleExecutionComplete(..) - ERROR; sending/processing: " + err);
             }
 
-            // when done clear the execution slot and schedule the next
+            // when done clear the execution job and schedule the next
             const commitURL = data.commitURL;
             const delivId = data.delivId;
-            this.clearExecution(commitURL, delivId);
-            this.clearExecution(commitURL, delivId);
             this.clearExecution(commitURL, delivId);
 
             // execution done, advance the clock
@@ -597,30 +557,28 @@ export abstract class AutoTest implements IAutoTest {
      * @private
      */
     private hasCapacity() {
-        if (this.slots.length < this.numSlots) {
+        if (this.jobs.length < this.numJobs) {
             return true;
         }
         return false;
     }
 
     /**
-     * Returns whether a given SHA:deliv tuple is executing on the current queue;
-     * if true, the job is also removed from its execution slot so another job
-     * can be started.
+     * Removes a job (SHA:deliv tuple) from the jobs list.
      *
      * @param commitURL
      * @param delivId
      */
     private clearExecution(commitURL: string, delivId: string): boolean {
         let removed = false;
-        for (let i = this.slots.length - 1; i >= 0; i--) {
-            const execution = this.slots[i];
+        for (let i = this.jobs.length - 1; i >= 0; i--) {
+            const execution = this.jobs[i];
             if (execution !== null) {
                 if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
                     // remove this one
-                    const lenBefore = this.slots.length;
-                    this.slots.splice(i, 1);
-                    const lenAfter = this.slots.length;
+                    const lenBefore = this.jobs.length;
+                    this.jobs.splice(i, 1);
+                    const lenAfter = this.jobs.length;
                     Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore + "; # after: " + lenAfter + "; commitURL: " + commitURL);
                     removed = true;
                 }

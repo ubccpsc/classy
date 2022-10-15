@@ -12,9 +12,9 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
-import {AutoTest} from "../autotest/AutoTest";
-import {IClassPortal} from "../autotest/ClassPortal";
-import {IDataStore} from "../autotest/DataStore";
+import {AutoTest} from "@autotest/autotest/AutoTest";
+import {IClassPortal} from "@autotest/autotest/ClassPortal";
+import {IDataStore} from "@autotest/autotest/DataStore";
 import {GitHubUtil, IGitHubMessage} from "./GitHubUtil";
 
 export interface IGitHubTestManager {
@@ -38,11 +38,8 @@ export interface IGitHubTestManager {
 
 export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
-    // private github: IGitHubService = null;
-
     constructor(dataStore: IDataStore, portal: IClassPortal, docker: Docker) {
         super(dataStore, portal, docker);
-        // this.github = github;
     }
 
     /**
