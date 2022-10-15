@@ -6,7 +6,6 @@ import "@common/GlobalSpec";
 
 import {Queue} from "@autotest/autotest/Queue";
 
-// const loadFirst = require("./GlobalSpec");
 import {TestData} from "./TestData";
 
 describe("Queue", () => {

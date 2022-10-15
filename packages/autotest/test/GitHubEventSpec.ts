@@ -32,11 +32,10 @@ describe("GitHub Event Parser", () => {
 
         const pc = new PersonController();
         const id = PERSONID;
-        const githubId = GITHUBID;
         const p: Person = {
             id: id,
             csId: id,
-            githubId: githubId,
+            githubId: GITHUBID,
             studentNumber: null,
 
             fName: 'f' + id,

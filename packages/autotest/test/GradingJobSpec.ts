@@ -1,15 +1,14 @@
 import {expect} from "chai";
 import * as Docker from "dockerode";
 
-import {TestHarness} from "@common/TestHarness";
 import {GradingJob} from "@autotest/autotest/GradingJob";
 
 class ContainerMock extends Docker.Container {
     public timer: any;
     public waitTime: number = 0;
     private resolveWait: any;
-    private isRunning: boolean = false;
-    private isWaiting: boolean = false;
+    // private isRunning: boolean = false;
+    // private isWaiting: boolean = false;
 
     public start(options?: {}): Promise<any> {
         return null;
