@@ -597,7 +597,7 @@ export abstract class AutoTest implements IAutoTest {
      * @private
      */
     private hasCapacity() {
-        if (this.slots.length <= this.numSlots) {
+        if (this.slots.length < this.numSlots) {
             return true;
         }
         return false;

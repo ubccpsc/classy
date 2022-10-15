@@ -130,13 +130,16 @@ describe("GitHubAutoTest", () => {
     //     // TODO, check all data to make sure the admin push processed first
     // }).timeout(WAIT * 6);
 
-    it("Rapid requests should go to the regression queue.", async () => {
+    it("Rapid requests should go to the low queue.", async () => {
         expect(at).to.not.be.null;
         await Util.delay(WAIT); // let old tests expire before starting
 
         // start fresh
         await data.clearData();
         stubDependencies();
+
+        let slots = at["slots"];
+        expect(slots).to.have.length(0);
 
         let allData = await data.getAllData();
         expect(allData.pushes.length).to.equal(0);
@@ -162,17 +165,19 @@ describe("GitHubAutoTest", () => {
 
         await Util.delay(10);
 
+        slots = at["slots"];
+        expect(slots).to.have.length(5);
+
         // all pushes should be here
         expect(allData.pushes.length).to.equal(9);
         const eq = (at["expressQueue"] as any);
         const sq = (at["standardQueue"] as any);
         const rq = (at["lowQueue"] as any);
         Log.test("about to check values");
-        expect(eq.slots).to.have.length(2); // two jobs should have been backfilled to express
+
+        Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + rq.data.length + "; #slots: " + slots.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
-        expect(sq.slots).to.have.length(2); // two should be running on standard
-        expect(sq.data).to.have.length(3); // one should be waiting on standard
-        expect(rq.slots).to.have.length(1); // one should be running on regression
+        expect(sq.data).to.have.length(3); // three should be waiting on standard
         // this is the main check: if this all worked, a job should have been pushed onto the regression queue
         expect(rq.data).to.have.length(1); // one should be queued on regression
         Log.test("values checked");

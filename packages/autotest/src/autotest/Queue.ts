@@ -6,20 +6,17 @@ import {ContainerInput} from "@common/types/ContainerTypes";
 
 export class Queue {
 
-    private readonly name: string = '';
-
-    // private slots: ContainerInput[] = [];
+    private readonly name: string = "";
     private readonly persistDir: string;
 
     constructor(name: string) {
         Log.info("Queue::<init>( " + name + " )");
         this.name = name;
-        // this.numSlots = numSlots;
 
         // almost certainly exists (contains all queue output), but quick to check
-        fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + '/queues');
+        fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + "/queues");
 
-        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + '/queues/' + this.name + '.json';
+        this.persistDir = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/" + this.name + ".json";
     }
 
     private data: ContainerInput[] = [];
@@ -93,7 +90,7 @@ export class Queue {
      */
     public remove(info: ContainerInput): ContainerInput | null {
         for (let i = this.data.length - 1; i >= 0; i--) {
-            // count down instead of up so we don't miss anything after a removal
+            // count down instead of up so we do not miss anything after a removal
             const queued = this.data[i];
             if (queued.target.commitURL === info.target.commitURL && queued.target.delivId === info.target.delivId) {
                 this.data.splice(i, 1);
@@ -150,7 +147,7 @@ export class Queue {
         for (const job of this.data) {
             if (job.target?.personId === input.target?.personId) {
                 if (input.target?.adminRequest === true) {
-                    // admin requests shouldn't count towards repo totals
+                    // admin requests should not count towards repo totals
                 } else {
                     count++;
                 }
@@ -163,75 +160,6 @@ export class Queue {
         // }
         return count;
     }
-
-    // /**
-    //  * Returns whether a given SHA:deliv tuple is executing on the current queue.
-    //  *
-    //  * @param {ContainerInput} input
-    //  * @returns {boolean} whether the commit/delivId tuple is executing on the current queue.
-    //  */
-    // public isCommitExecuting(input: ContainerInput): boolean {
-    //     for (const execution of this.slots) {
-    //         if (execution.target.commitURL === input.target.commitURL &&
-    //             execution.delivId === input.target.delivId) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
-    // /**
-    //  * Returns whether a given SHA:deliv tuple is executing on the current queue;
-    //  * if true, the job is also removed from its execution slot so another job
-    //  * can be started.
-    //  *
-    //  * @param commitURL
-    //  * @param delivId
-    //  */
-    // public clearExecution(commitURL: string, delivId: string): boolean {
-    //     let removed = false;
-    //     for (let i = this.slots.length - 1; i >= 0; i--) {
-    //         const execution = this.slots[i];
-    //         if (execution !== null) {
-    //             if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
-    //                 // remove this one
-    //                 const lenBefore = this.slots.length;
-    //                 this.slots.splice(i, 1);
-    //                 const lenAfter = this.slots.length;
-    //                 Log.trace('Queue::clearExecution( .., ' + delivId + ' ) - ' + this.getName() +
-    //                     ' cleared; # before: ' + lenBefore + '; # after: ' + lenAfter + '; commitURL: ' + commitURL);
-    //                 removed = true;
-    //             }
-    //         }
-    //     }
-    //     return removed;
-    // }
-
-    // /**
-    //  * Move the next job from the waiting queue to the execution queue.
-    //  *
-    //  * NOTE: this just updates the execution slots, it doesn't actually start the job processing!
-    //  *
-    //  * @returns {ContainerInput | null} returns the container that should start executing, or null if nothing is available
-    //  */
-    // public scheduleNext(): ContainerInput | null {
-    //     if (this.data.length < 1) {
-    //         throw new Error("Queue::scheduleNext() - " + this.getName() + " called without anything on the stack.");
-    //     }
-    //     const input = this.pop();
-    //     this.slots.push(input);
-    //
-    //     Log.info("Queue::scheduleNext() - " + this.getName() + " done; delivId: " +
-    //         input.delivId + "; repo: " + input.target.repoId);
-    //     return input;
-    // }
-
-    // /**
-    //  * @returns {number} the number of jobs currently scheduled to execute
-    //  */
-    // public numRunning(): number {
-    //     return this.slots.length;
-    // }
 
     public async persist(): Promise<boolean> {
         try {
@@ -272,7 +200,7 @@ export class Queue {
             }
             // Log.info("Queue::load() - rehydrating: " + this.name + " - done");
         } catch (err) {
-            // if anything happens just don't add to the queue
+            // if anything happens just do not add to the queue
             Log.error("Queue::load() - ERROR rehydrating queue: " + err.message);
         }
     }

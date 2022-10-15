@@ -23,6 +23,8 @@
 **/html/**/*.map
 **/bin/
 
+persist/queues/**.json
+
 packages/common/**/*.js
 packages/common/**/*.map
 packages/portal/backend/**/*.js
