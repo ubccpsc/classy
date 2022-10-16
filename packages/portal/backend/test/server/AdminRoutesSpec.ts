@@ -1269,7 +1269,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.contain(TestHarness.REALUSER1.github);
     });
 
-    it("Should be able to remove a member to a team.", async function () {
+    it("Should be able to remove a member from a team.", async function () {
 
         let response = null;
         let body: Payload;
@@ -1289,6 +1289,69 @@ describe("Admin Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.not.be.undefined;
         expect(body.success.message).to.not.contain(TestHarness.REALUSER1.github);
+    });
+
+    it("Should not be able to remove a person who is not already a member from a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER3.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it("Should not be able to remove a member from a team that does not exist.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + "INVALIDPERSON";
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it("Should not be able to remove an invalid member from a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + "INVALIDTEAMNAME" + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
     });
 
     it("Should be able to delete a deliverable", async function () {

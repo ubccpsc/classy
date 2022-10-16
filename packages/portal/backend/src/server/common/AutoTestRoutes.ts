@@ -373,16 +373,19 @@ export class AutoTestRoutes implements IREST {
             Log.info("AutoTestRouteHandler::githubWebhook(..) - success; took: " + Util.took(start));
             res.send(200, succ);
         }).catch(function (err) {
-            if (err.message.indexOf("was deleted") > 0) {
-                Log.info("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
-            } else {
-                Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
-            }
-            if (err.message && err.message.indexOf("hang up") >= 0) {
-                Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response");
-                return res.end();
-            } else {
-                return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res, next);
+            /* istanbul ignore next: curlies needed for ignore (only reachable when deployed) */
+            {
+                if (err.message.indexOf("was deleted") > 0) {
+                    Log.info("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+                } else {
+                    Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+                }
+                if (err.message && err.message.indexOf("hang up") >= 0) {
+                    Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response");
+                    return res.end();
+                } else {
+                    return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res, next);
+                }
             }
         });
     }
@@ -405,22 +408,25 @@ export class AutoTestRoutes implements IREST {
             body: JSON.stringify(req.body)
         };
         const res = await fetch(url, options);
-        if (res.ok) {
-            Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
-            Log.info("AutoTestRouteHandler::handleWebhook(..) - success");
-            return res.ok;
-        } else {
-            const err = await res.json();
-            let msg = "";
-            if (err.indexOf("was deleted") > 0) {
-                // just warn for branch deletions
-                msg = "AutoTestRouteHandler::handleWebhook(..) - not handled: " + err;
-                Log.warn(msg);
+        /* istanbul ignore next: curlies needed for ignore (not reachable except when deployed) */
+        {
+            if (res.ok) {
+                Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
+                Log.info("AutoTestRouteHandler::handleWebhook(..) - success");
+                return res.ok;
             } else {
-                msg = "AutoTestRouteHandler::handleWebhook(..) - ERROR: " + err;
-                Log.error(msg);
+                const err = await res.json();
+                let msg = "";
+                if (err.indexOf("was deleted") > 0) {
+                    // just warn for branch deletions
+                    msg = "AutoTestRouteHandler::handleWebhook(..) - not handled: " + err;
+                    Log.warn(msg);
+                } else {
+                    msg = "AutoTestRouteHandler::handleWebhook(..) - ERROR: " + err;
+                    Log.error(msg);
+                }
+                throw new Error(msg);
             }
-            throw new Error(msg);
         }
     }
 
