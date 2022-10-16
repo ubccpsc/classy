@@ -39,7 +39,6 @@ export class AutoTestRoutes implements IREST {
         Log.info("AutoTestRouteHandler::registerRoutes() - start");
 
         server.get("/portal/at", AutoTestRoutes.atConfiguration); // deprecates defaultDeliverable endpoint
-        // server.get("/portal/at/defaultDeliverable", AutoTestRoutes.atDefaultDeliverable);
         server.get("/portal/at/isStaff/:githubId", AutoTestRoutes.atIsStaff);
         server.get("/portal/at/personId/:githubId", AutoTestRoutes.atPersonId);
         server.get("/portal/at/container/:delivId", AutoTestRoutes.atContainerDetails);
@@ -147,35 +146,11 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
-    // public static atDefaultDeliverable(req: any, res: any, next: any) {
-    //     Log.info("AutoTestRouteHandler::atDefaultDeliverable(..) - /defaultDeliverable/:name - start GET");
-    //
-    //     let payload: AutoTestDefaultDeliverablePayload;
-    //     const providedSecret = req.headers.token;
-    //     if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-    //         return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
-    //     } else {
-    //
-    //         const name = Config.getInstance().getProp(ConfigKey.name);
-    //         Log.info("AutoTestRouteHandler::atDefaultDeliverable(..) - name: " + name);
-    //
-    //         const cc = Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
-    //         cc.getCourse().then(function(course) {
-    //             payload = {success: {defaultDeliverable: course.defaultDeliverableId}};
-    //             res.send(200, payload);
-    //             return next(true);
-    //         }).catch(function(err) {
-    //             return AutoTestRoutes.handleError(400, "No default deliverable found. ", res, next);
-    //         });
-    //     }
-    // }
-
     public static atGrade(req: any, res: any, next: any) {
         Log.trace("AutoTestRouteHandler::atGrade(..) - start");
         const start = Date.now();
 
         let payload: Payload;
-
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
@@ -278,7 +253,6 @@ export class AutoTestRoutes implements IREST {
         const start = Date.now();
 
         let payload: AutoTestAuthPayload;
-
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
@@ -286,7 +260,6 @@ export class AutoTestRoutes implements IREST {
             const githubId = req.params.githubId;
 
             // Log.info("AutoTestRouteHandler::atIsStaff(..) - personId: " + githubId);
-
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             if (person !== null) {
@@ -312,7 +285,6 @@ export class AutoTestRoutes implements IREST {
         const start = Date.now();
 
         let payload: Payload;
-
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
@@ -340,7 +312,6 @@ export class AutoTestRoutes implements IREST {
         Log.trace("AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET");
 
         let payload: AutoTestResultPayload;
-
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
             return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
@@ -430,7 +401,7 @@ export class AutoTestRoutes implements IREST {
         const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/githubWebhook";
         const options: RequestInit = {
             method: "POST",
-            headers: JSON.parse(headers), // use GitHub"s headers
+            headers: JSON.parse(headers), // use GitHub headers
             body: JSON.stringify(req.body)
         };
         const res = await fetch(url, options);
@@ -513,18 +484,16 @@ export class AutoTestRoutes implements IREST {
             }
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
-            fetch(url, options)
-                .then(async (response) => {
-                    if (!response.ok) {
-                        throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
-                            + response.status);
-                    }
-                    response.body.pipe(res);
-                })
-                .catch((err) => {
-                    Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
-                    res.send(500);
-                });
+            fetch(url, options).then(async (response) => {
+                if (!response.ok) {
+                    throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
+                        + response.status);
+                }
+                response.body.pipe(res);
+            }).catch((err) => {
+                Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
+                res.send(500);
+            });
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);

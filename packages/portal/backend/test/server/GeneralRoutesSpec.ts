@@ -374,6 +374,29 @@ describe("General Routes", function () {
         expect(body.for).to.equal("student");
     });
 
+    it("Student should be able to get get a student resource directory.", async function () {
+        const dc: DatabaseController = DatabaseController.getInstance();
+
+        // get user
+        const auth = await dc.getAuth(TestHarness.USER1.id);
+        expect(auth).to.not.be.null;
+
+        let response = null;
+        let body: any;
+        const url = "/portal/resource/TESTID/student/";
+        try {
+            Log.test("Making request");
+            response = await request(app).get(url).set("user", auth.personId).set("token", auth.token);
+            Log.test("Response received: " + response.text);
+            body = response.text; // directory representation is html
+        } catch (err) {
+            Log.test("ERROR: " + err);
+        }
+
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+    });
+
     it("Admin should be able to get get an admin resource.", async function () {
         const dc: DatabaseController = DatabaseController.getInstance();
 
