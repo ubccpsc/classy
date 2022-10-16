@@ -12,7 +12,7 @@ import {PersonKind} from "@backend/Types";
 import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
-describe("TeamController", () => {
+describe.only("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
@@ -72,6 +72,54 @@ describe("TeamController", () => {
         let team = null;
         try {
             team = await tc.createTeam(TestHarness.TEAMNAME1, null, [p1, p2], {});
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+    });
+
+    it("Should not able to create a team with no name.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
+        expect(p1).to.not.be.null;
+        expect(p2).to.not.be.null;
+
+        let ex = null;
+        let team = null;
+        try {
+            const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+            team = await tc.createTeam("", deliv, [p1, p2], {});
+        } catch (err) {
+            ex = err;
+        }
+        expect(ex).to.not.be.null;
+        expect(team).to.be.null;
+
+        teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+    });
+
+    it("Should not able to create a team with no people.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(0);
+
+        const p1 = await pc.getPerson(TestHarness.USER1.id);
+        const p2 = await pc.getPerson(TestHarness.USER2.id);
+        expect(p1).to.not.be.null;
+        expect(p2).to.not.be.null;
+
+        let ex = null;
+        let team = null;
+        try {
+            const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+            team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [], {});
         } catch (err) {
             ex = err;
         }
@@ -196,7 +244,7 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
-        // student"s can"t form for this deliverable
+        // students cannot form for this deliverable
         team = null;
         ex = null;
         try {
@@ -247,7 +295,7 @@ describe("TeamController", () => {
         expect(ex).to.not.be.null;
         expect(team).to.be.null;
 
-        // student already withrdawn
+        // student already withdrawn
         team = null;
         ex = null;
         try {
