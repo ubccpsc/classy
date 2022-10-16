@@ -159,12 +159,9 @@ export class AuthRoutes implements IREST {
             throw new Error("Login error; user: " + user + " not valid.");
         }
         Log.trace("AuthRoutes::getCredentials( " + user + " ) - isValid true");
-        let isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
 
-        if (typeof isPrivileged === "undefined" || isPrivileged === null) {
-            Log.warn("AuthRoutes::getCredentials( " + user + " ) - failsafe; DEBUG this case?");
-            isPrivileged = {isAdmin: false, isStaff: false}; // fail safe
-        }
+        // if isPrivileged fails, it will throw an exception which will reject this method's promise
+        const isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
         return {isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff};
     }
 

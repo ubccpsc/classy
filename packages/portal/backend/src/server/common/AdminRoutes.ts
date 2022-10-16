@@ -24,23 +24,25 @@ import {
 } from '@common/types/PortalTypes';
 import Util from '@common/Util';
 
-import {AuditLabel, Person, Repository} from "../../Types";
-import {AdminController} from "../../controllers/AdminController";
-import {AuthController} from "../../controllers/AuthController";
-import {DatabaseController} from "../../controllers/DatabaseController";
-import {DeliverablesController} from "../../controllers/DeliverablesController";
-import {GitHubActions} from "../../controllers/GitHubActions";
-import {GitHubController} from "../../controllers/GitHubController";
-import {PersonController} from "../../controllers/PersonController";
-import {RepositoryController} from "../../controllers/RepositoryController";
-import {TeamController} from "../../controllers/TeamController";
-import {Factory} from "../../Factory";
-import {ClasslistAgent} from "./ClasslistAgent";
+import {AuditLabel, Person, Repository} from "@backend/Types";
+import {Factory} from "@backend/Factory";
 
-import {ResultsKind} from "../../controllers/ResultsController";
-import IREST from "../IREST";
-import {CSVParser} from "./CSVParser";
+import {AdminController} from "@backend/controllers/AdminController";
+import {AuthController} from "@backend/controllers/AuthController";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {DeliverablesController} from "@backend/controllers/DeliverablesController";
+import {GitHubActions} from "@backend/controllers/GitHubActions";
+import {GitHubController} from "@backend/controllers/GitHubController";
+import {PersonController} from "@backend/controllers/PersonController";
+import {RepositoryController} from "@backend/controllers/RepositoryController";
+import {TeamController} from "@backend/controllers/TeamController";
+import {ResultsKind} from "@backend/controllers/ResultsController";
+
+import IREST from "@backend/server/IREST";
 import {CSVPrairieLearnParser} from "@backend/server/common/CSVPrairieLearnParser";
+
+import {ClasslistAgent} from "./ClasslistAgent";
+import {CSVParser} from "./CSVParser";
 
 export default class AdminRoutes implements IREST {
 
@@ -586,11 +588,11 @@ export default class AdminRoutes implements IREST {
                 Log.info('AdminRoutes::updateClasslist(..) - done: ' + 'Classlist upload successful. '
                     + (classlistChanges.classlist.length) + ' students processed.');
             } else {
-                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                const msg = 'Classlist upload not successful; no students were processed from classlist service.';
                 return AdminRoutes.handleError(400, msg, res, next);
             }
         } catch (err) {
-            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            const msg = 'Classlist upload not successful; no students were processed from classlist service.';
             return AdminRoutes.handleError(400, msg, res, next);
         }
     }
@@ -630,7 +632,7 @@ export default class AdminRoutes implements IREST {
     private static postGrades(req: any, res: any, next: any) {
         Log.info('AdminRoutes::postGrades(..) - start');
 
-        // authentication handled by preceeding action in chain above (see registerRoutes)
+        // authentication handled by preceding action in chain above (see registerRoutes)
 
         try {
             // const user = req.params.user;

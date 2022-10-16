@@ -30,7 +30,7 @@ import BackendServer from "@backend/server/BackendServer";
 
 import "./AuthRoutesSpec";
 
-describe("Admin Routes", function () {
+describe.only("Admin Routes", function () {
 
     let app: restify.Server = null;
     let server: BackendServer = null;
@@ -707,7 +707,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.contain("Classlist upload successful");
     });
 
-    it("Should be able to upload a new grades", async function () {
+    it("Should be able to upload a new grades with CSV", async function () {
 
         let response = null;
         let body: Payload;
@@ -729,7 +729,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.contain("3 grades");
     });
 
-    it("Should fail to upload a bad grades list", async function () {
+    it("Should fail to upload a bad grades CSV", async function () {
 
         let response = null;
         let body: Payload;
@@ -756,6 +756,27 @@ describe("Admin Routes", function () {
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an("string"); // test no records found
         expect(body.failure.message).to.contain("no grades");
+    });
+
+    it("Should be able to upload a new grades from prairielearn", async function () {
+        let response = null;
+        let body: Payload;
+        const url = "/portal/admin/grades/prairie";
+        try {
+            response = await request(app).post(url).attach("gradelist", __dirname + "/../data/prairieValid.csv").set({
+                user: userName,
+                token: userToken
+            });
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            expect.fail("should not happen");
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an("string");
+        expect(body.success.message).to.contain("3 grades");
     });
 
     it("Should be able to get the course object", async function () {
@@ -1265,7 +1286,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.DELIVIDPROJ).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.DELIVIDPROJ).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1324,7 +1348,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.REPONAME1).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.REPONAME1).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1380,7 +1407,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.TEAMNAME1).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.TEAMNAME1).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1428,5 +1458,22 @@ describe("Admin Routes", function () {
         }
 
         expect(body).to.haveOwnProperty("failure");
+    });
+
+    it("Should be able to initiate a class list update request", async function () {
+
+        let response = null;
+        let body: Payload;
+        const url = "/portal/admin/classlist";
+        try {
+            response = await request(app).put(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an("string");
     });
 });
