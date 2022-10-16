@@ -53,7 +53,6 @@ export class AuthController {
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
             const dc = DatabaseController.getInstance();
-
             if (isStaff === true && isAdmin === true) {
                 person.kind = PersonKind.ADMINSTAFF;
                 await dc.writePerson(person);

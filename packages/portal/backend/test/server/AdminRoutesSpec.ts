@@ -1524,4 +1524,31 @@ describe("Admin Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.message).to.be.an("string");
     });
+
+    // /**
+    //  * PATCH TESTS
+    //  */
+    //
+    // it.only("Should be able to list patches", async function () {
+    //
+    //     let response = null;
+    //     let body: Payload;
+    //
+    //     const url = "/portal/admin/listPatches";
+    //     try {
+    //         response = await request(app).get(url).send().set({user: userName, token: userToken});
+    //         body = response.body;
+    //     } catch (err) {
+    //         Log.test("ERROR: " + err);
+    //     }
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(200);
+    //     expect(body.success).to.not.be.undefined;
+    //     expect(body.success.message).to.be.an("string");
+    // });
+    //
+    // server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
+    // server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+    // server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
+    // server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
 });
