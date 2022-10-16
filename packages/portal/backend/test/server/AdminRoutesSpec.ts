@@ -1243,6 +1243,54 @@ describe("Admin Routes", function () {
 
     }).timeout(TestHarness.TIMEOUT);
 
+    /**
+     * Team membership tests
+     */
+
+    it("Should be able to add a member to a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).post(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.not.be.undefined;
+        expect(body.success.message).to.contain(TestHarness.REALUSER1.github);
+    });
+
+    it("Should be able to remove a member to a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.not.be.undefined;
+        expect(body.success.message).to.not.contain(TestHarness.REALUSER1.github);
+    });
+
     it("Should be able to delete a deliverable", async function () {
         const url = "/portal/admin/deliverable/" + TestHarness.DELIVID0;
         let response = null;

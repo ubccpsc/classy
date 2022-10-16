@@ -13,6 +13,7 @@ import Log from "@common/Log";
 import Util from "@common/Util";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
 import {GradePayload} from "@common/types/SDMMTypes";
+import {AutoTestConfigTransport} from "@common/types/PortalTypes";
 
 export class TestHarness {
 
@@ -792,6 +793,32 @@ export class TestHarness {
         };
 
         return Util.clone(result) as Result;
+    }
+
+    public static createContainerInput(): ContainerInput {
+        const input: ContainerInput = {
+            delivId: "", // TBD
+            containerConfig: {} as AutoTestConfigTransport,
+            target: {
+                delivId: "", // TBD
+                repoId: "", // TBD
+
+                cloneURL: "cloneURL",
+                commitSHA: "", // TBD
+                commitURL: "", // TBD
+
+                botMentioned: false,
+                adminRequest: false,
+                personId: null,
+                kind: "push",
+
+                ref: "", // TBD
+                // projectURL:  projectURL,
+                postbackURL: "postbackURL",
+                timestamp: -1 // TBD
+            }
+        };
+        return input;
     }
 
     public static async deleteStaleRepositories(): Promise<boolean> {

@@ -381,7 +381,7 @@ export class AutoTestRoutes implements IREST {
                 res.send(200, payload);
                 return next(true);
             } catch (err) {
-                return AutoTestRoutes.handleError(400, `Failed to find push promotion details`, res, next);
+                return AutoTestRoutes.handleError(400, "Failed to find push promotion details", res, next);
             }
         }
     }
