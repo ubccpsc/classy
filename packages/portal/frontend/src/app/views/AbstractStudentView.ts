@@ -30,36 +30,36 @@ export abstract class AbstractStudentView implements IView {
     }
 
     private async prepareData(): Promise<void> {
-        // UI.showModal('Fetching Data');
+        // UI.showModal("Fetching Data");
         this.grades = [];
         this.person = null;
 
         try {
-            this.person = await this.fetchData('/portal/person') as StudentTransport;
+            this.person = await this.fetchData("/portal/person") as StudentTransport;
         } catch (err) {
-            Log.error('AbstractStudentView::prepareData() - fetching person; ERROR: ' + err.message);
+            Log.error("AbstractStudentView::prepareData() - fetching person; ERROR: " + err.message);
             UI.showError(err.message);
             this.person = null;
         }
 
         try {
-            this.grades = await this.fetchData('/portal/grades') as GradeTransport[];
+            this.grades = await this.fetchData("/portal/grades") as GradeTransport[];
             if (this.grades === null) {
                 this.grades = [];
             }
         } catch (err) {
-            Log.error('AbstractStudentView::prepareData() - fetching person; ERROR: ' + err.message);
+            Log.error("AbstractStudentView::prepareData() - fetching person; ERROR: " + err.message);
             UI.showError(err.message);
             this.grades = [];
         }
 
         try {
-            this.repos = await this.fetchData('/portal/repos') as RepositoryTransport[];
+            this.repos = await this.fetchData("/portal/repos") as RepositoryTransport[];
             if (this.repos === null) {
                 this.repos = [];
             }
         } catch (err) {
-            Log.error('AbstractStudentView::prepareData() - fetching repos; ERROR: ' + err.message);
+            Log.error("AbstractStudentView::prepareData() - fetching repos; ERROR: " + err.message);
             UI.showError(err.message);
             this.repos = [];
         }
@@ -79,18 +79,18 @@ export abstract class AbstractStudentView implements IView {
         const url = this.remote + endpoint;
         const response = await fetch(url, this.getOptions());
         if (response.status === 200) {
-            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - 200 received');
+            Log.trace("AbstractStudentView::fetchData( " + endpoint + " ) - 200 received");
             const json = await response.json();
-            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - payload: ' + JSON.stringify(json));
-            if (typeof json.success !== 'undefined') {
-                Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - success: ' + json.success);
+            Log.trace("AbstractStudentView::fetchData( " + endpoint + " ) - payload: " + JSON.stringify(json));
+            if (typeof json.success !== "undefined") {
+                Log.trace("AbstractStudentView::fetchData( " + endpoint + " ) - success: " + json.success);
                 return json.success;
             } else {
-                Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - ERROR: ' + json.failure.message);
+                Log.trace("AbstractStudentView::fetchData( " + endpoint + " ) - ERROR: " + json.failure.message);
                 throw new Error(json.failure.message);
             }
         } else {
-            Log.trace('AbstractStudentView::fetchData( ' + endpoint + ' ) - teams !200 received');
+            Log.trace("AbstractStudentView::fetchData( " + endpoint + " ) - teams !200 received");
         }
         return null;
     }
@@ -98,58 +98,58 @@ export abstract class AbstractStudentView implements IView {
     private renderGrades() {
         Log.trace("AbstractStudentView::renderGrades() - start");
 
-        if (document.getElementById('studentGradeTable') === null) {
-            Log.error("AbstractStudentView::renderGrades() - 'studentGradeTable' element is missing; grades not rendered.");
+        if (document.getElementById("studentGradeTable") === null) {
+            Log.error("AbstractStudentView::renderGrades() - element is missing; grades not rendered.");
             return;
         }
 
         if (this.grades === null || this.grades.length < 1) {
-            const el = document.getElementById('studentGradeTable');
+            const el = document.getElementById("studentGradeTable");
             el.innerHTML = "No released grades.";
         } else {
             const headers: TableHeader[] = [
                 {
-                    id: 'id',
-                    text: 'Deliv Id',
+                    id: "id",
+                    text: "Deliv Id",
                     sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                     defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                     sortDown: false, // Whether the column should initially sort descending or ascending.
-                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    style: "padding-left: 1em; padding-right: 1em; text-align: center;"
                 },
                 {
-                    id: 'grade',
-                    text: 'Grade',
+                    id: "grade",
+                    text: "Grade",
                     sortable: true,
                     defaultSort: false,
                     sortDown: true,
-                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    style: "padding-left: 1em; padding-right: 1em; text-align: center;"
                 },
                 {
-                    id: 'comment',
-                    text: 'Comment',
+                    id: "comment",
+                    text: "Comment",
                     sortable: false,
                     defaultSort: false,
                     sortDown: true,
-                    style: 'padding-left: 1em; padding-right: 1em; text-align: left;'
+                    style: "padding-left: 1em; padding-right: 1em; text-align: left;"
                 }
             ];
 
-            const st = new SortableTable(headers, '#studentGradeTable');
+            const st = new SortableTable(headers, "#studentGradeTable");
             for (const grade of this.grades) {
 
                 let score: number | string = grade.score;
-                let scoreHTML = '';
+                let scoreHTML = "";
                 if (score === null) {
-                    score = 'Not Set';
+                    score = "Not Set";
                     scoreHTML = score; // no link if the score is not set
                 } else if (grade.URL === null) {
                     scoreHTML = String(score); // no link if the link is not set
                 } else {
-                    scoreHTML = '<a href="' + grade.URL + '">' + score + '</a>';
+                    scoreHTML = "<a href='" + grade.URL + "'>" + score + "</a>";
                 }
                 let comment = grade.comment;
                 if (comment === null) {
-                    comment = '';
+                    comment = "";
                 }
                 const row: TableCell[] = [
                     {value: grade.delivId, html: grade.delivId},
@@ -167,42 +167,42 @@ export abstract class AbstractStudentView implements IView {
         Log.trace("AbstractStudentView::renderRepositories() - start");
 
         if (this.repos === null || this.repos.length < 1) {
-            const el = document.getElementById('studentRepoTable');
+            const el = document.getElementById("studentRepoTable");
             el.innerHTML = "None released.";
         } else {
             const headers: TableHeader[] = [
                 {
-                    id: 'id',
-                    text: 'Repository',
+                    id: "id",
+                    text: "Repository",
                     sortable: true,
                     defaultSort: false,
                     sortDown: true,
-                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    style: "padding-left: 1em; padding-right: 1em; text-align: center;"
                 },
                 {
-                    id: 'delivId',
-                    text: 'Deliverable',
+                    id: "delivId",
+                    text: "Deliverable",
                     sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                     defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                     sortDown: false, // Whether the column should initially sort descending or ascending.
-                    style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                    style: "padding-left: 1em; padding-right: 1em; text-align: center;"
                 }
                 // could be result in the future (provisioned | detached)
                 // {
-                //     id:          'result',
-                //     text:        'State',
+                //     id:          "result",
+                //     text:        "State",
                 //     sortable:    false,
                 //     defaultSort: false,
                 //     sortDown:    true,
-                //     style:       'padding-left: 1em; padding-right: 1em; text-align: left;'
+                //     style:       "padding-left: 1em; padding-right: 1em; text-align: left;"
                 // }
             ];
 
-            const st = new SortableTable(headers, '#studentRepoTable');
+            const st = new SortableTable(headers, "#studentRepoTable");
             for (const repo of this.repos) {
 
                 const row: TableCell[] = [
-                    {value: repo.id, html: '<a href="' + repo.URL + '">' + repo.id + '</a>'},
+                    {value: repo.id, html: "<a href='" + repo.URL + "'>" + repo.id + "</a>"},
                     {value: repo.delivId, html: repo.delivId}
                     // {value: comment, html: comment}
                 ];
@@ -214,24 +214,23 @@ export abstract class AbstractStudentView implements IView {
     }
 
     protected getOptions(): { headers: { [header: string]: string } } {
-        const options = {
+        return {
             headers: {
-                'Content-Type': 'application/json',
-                'user': localStorage.user,
-                'token': localStorage.token,
-                'org': localStorage.org
+                "Content-Type": "application/json",
+                "user": localStorage.user,
+                "token": localStorage.token,
+                "org": localStorage.org
             }
         };
-        return options;
     }
 
     public pushPage(pageName: string, opts: {}) {
         Log.info("AbstractStudentView::pushPage( " + pageName + ", ... ) - start");
-        if (typeof opts !== 'object') {
+        if (typeof opts !== "object") {
             opts = {};
         }
         const prefix = Factory.getInstance().getHTMLPrefix();
-        UI.pushPage(prefix + '/' + pageName, opts).then(function () {
+        UI.pushPage(prefix + "/" + pageName, opts).then(function () {
             // success
         }).catch(function (err) {
             Log.error("AbstractStudentView::pushPage(..) - ERROR: " + err.message);

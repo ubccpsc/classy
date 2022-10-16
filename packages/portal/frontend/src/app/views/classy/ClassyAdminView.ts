@@ -14,24 +14,24 @@ export class ClassyAdminView extends AdminView {
     }
 
     public renderPage(name: string, opts: any) {
-        Log.info('ClassyAdminView::renderPage( ' + name + ', ... ) - start; options: ' + JSON.stringify(opts));
+        Log.info("ClassyAdminView::renderPage( " + name + ", ... ) - start; options: " + JSON.stringify(opts));
         super.renderPage(name, opts);
 
-        if (name === 'AdminRoot') {
-            Log.info('ClassyAdminView::renderPage(..) - augmenting tabs');
+        if (name === "AdminRoot") {
+            Log.info("ClassyAdminView::renderPage(..) - augmenting tabs");
 
-            // this does not seem to work; it creates the tab on the menu, but it isn't clickable
-            // const tab = document.createElement('ons-tab');
-            // tab.setAttribute('page', 'dashboard.html');
-            // tab.setAttribute('label', 'Foo');
-            // tab.setAttribute('active', 'true');
-            // tab.setAttribute('icon', 'ion-ios-gear');
-            // tab.setAttribute('class', 'tabbar__item tabbar--top__item');
-            // tab.setAttribute('modifier', 'top');
-            // const tabbar = document.getElementById('adminTabbar');
+            // this does not seem to work; it creates the tab on the menu, but it isn"t clickable
+            // const tab = document.createElement("ons-tab");
+            // tab.setAttribute("page", "dashboard.html");
+            // tab.setAttribute("label", "Foo");
+            // tab.setAttribute("active", "true");
+            // tab.setAttribute("icon", "ion-ios-gear");
+            // tab.setAttribute("class", "tabbar__item tabbar--top__item");
+            // tab.setAttribute("modifier", "top");
+            // const tabbar = document.getElementById("adminTabbar");
             // tabbar.children[1].appendChild(tab);
 
-            Log.info('ClassyAdminView::renderPage(..) - augmenting tabs done.');
+            Log.info("ClassyAdminView::renderPage(..) - augmenting tabs done.");
         }
     }
 }

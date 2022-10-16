@@ -42,7 +42,7 @@ export class AdminDashboardTab extends AdminPage {
     public async init(opts: any): Promise<void> {
         Log.info("AdminDashboardTab::init(..) - start");
         const that = this;
-        // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
+        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
         document.getElementById("dashboardListTable").innerHTML = ""; // clear target
 
         UI.showModal("Retrieving results.");
@@ -181,7 +181,7 @@ export class AdminDashboardTab extends AdminPage {
 
         const st = new DashboardTable(headers, "#dashboardListTable");
 
-        // this loop couldn't possibly be less efficient
+        // this loop couldn"t possibly be less efficient
         for (const result of results) {
 
             // repoId
@@ -209,18 +209,18 @@ export class AdminDashboardTab extends AdminPage {
             const row: TableCell[] = [
                 {
                     value: "",
-                    html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                        stdioViewerURL + '"><ons-icon icon="md-info-outline"</ons-icon></a>'
+                    html: "<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
+                        stdioViewerURL + "><ons-icon icon='md-info-outline'</ons-icon></a>"
                 },
                 {
                     value: result.repoId,
-                    html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'
+                    html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>"
                 },
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: this.alignValue(result.scoreOverall)},
                 {value: result.scoreTests, html: this.alignValue(result.scoreTests)},
                 {value: result.scoreCover, html: this.alignValue(result.scoreCover)},
-                {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'},
+                {value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>"},
                 {value: "", html: dashRow}
             ];
 
@@ -296,7 +296,7 @@ export class AdminDashboardTab extends AdminPage {
             annotated.push({name: name, state: state, colour: colour});
         }
 
-        let str: string = '<div class="histogramcontainer">';
+        let str: string = "<div class='histogramcontainer'>";
         str += this.generateTable(annotated);
         if (row.hasOwnProperty("cluster")) {
             str += this.generateClusteredTable(annotated, row.delivId, row.custom.cluster);
@@ -306,12 +306,12 @@ export class AdminDashboardTab extends AdminPage {
     }
 
     private generateTable(annotated: DetailRow[]): string {
-        let str = '<span class="normalhistogram"><table style="height: 20px;">';
-        str += '<tr class="selectable">';
+        let str = "<span class='normalhistogram'><table style='height: 20px;'>";
+        str += "<tr class='selectable'>";
         // underscores for easier searching
-        str += '<td class="selectable" style="width: 2em; text-align: center;">_' + annotated.length + '_</td>';
+        str += "<td class='selectable' style='width: 2em; text-align: center;'>_" + annotated.length + "_</td>";
         for (const a of annotated) {
-            str += '<td class="dashResultCell" style="width: 5px; height: 20px; background: ' + a.colour + '" title="' + a.name + '"></td>';
+            str += "<td class='dashResultCell' style='width: 5px; height: 20px; background: " + a.colour + "' title='" + a.name + "'></td>";
         }
         str += "</tr>";
         str += "</table></span>";
@@ -325,10 +325,10 @@ export class AdminDashboardTab extends AdminPage {
             const n = cell.name;
             cellMap[cell.name] = `<td class="dashResultCell" style="width: 5px; height: 20px; background: ${c}" title="${n}"></td>`;
         }
-        let str = '<span class="clusteredhistogram hidden"><table style="height: 20px;">';
+        let str = "<span class='clusteredhistogram hidden'><table style='height: 20px;'>";
         for (const cluster of Object.keys(clusteredResult)) {
             str += "<tr>";
-            str += '<td style="width: 2em; text-align: center;">' + cluster + '</td>';
+            str += "<td style='width: 2em; text-align: center;'> " + cluster + " < /td>";
             for (const test of clusteredResult[cluster].allNames) {
                 str += cellMap[test];
             }
@@ -349,7 +349,7 @@ export class AdminDashboardTab extends AdminPage {
         if (response.status === 200) {
             Log.trace("AdminDashboardTab::getDashboard(..) - 200 received");
             const json: AutoTestDashboardPayload = await response.json();
-            // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
+            // Log.trace("AdminView::handleStudents(..)  - payload: " + JSON.stringify(json));
             if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
                 Log.trace("AdminDashboardTab::getDashboard(..)  - worked; # rows: " + json.success.length + "; took: " + UI.took(start));
                 return json.success;

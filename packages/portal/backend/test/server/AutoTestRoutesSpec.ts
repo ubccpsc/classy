@@ -73,6 +73,7 @@ describe("AutoTest Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
@@ -126,6 +127,7 @@ describe("AutoTest Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
@@ -141,6 +143,7 @@ describe("AutoTest Routes", function () {
         } catch (err) {
             Log.test("ERROR: " + err);
         }
+        expect(response).to.not.be.null;
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
@@ -168,6 +171,7 @@ describe("AutoTest Routes", function () {
         } catch (err) {
             Log.test("ERROR: " + err);
         }
+        expect(response).to.not.be.null;
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
         expect(response.body.success).to.be.undefined;

@@ -35,7 +35,7 @@ export class AdminResultsTab extends AdminPage {
         Log.info("AdminResultsTab::init(..) - start");
         const that = this;
 
-        // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
+        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
         document.getElementById("resultsListTable").innerHTML = ""; // clear target
 
         UI.showModal("Retrieving results.");
@@ -140,7 +140,7 @@ export class AdminResultsTab extends AdminPage {
 
         const st = new SortableTable(headers, "#resultsListTable");
 
-        // this loop couldn't possibly be less efficient
+        // this loop could not possibly be less efficient
         for (const result of results) {
 
             // repoId
@@ -159,7 +159,7 @@ export class AdminResultsTab extends AdminPage {
             const date = new Date(ts);
             const mom = moment(date);
             const tsString = mom.format("MM/DD[@]HH:mm");
-            // const tsString = new Date(ts).toLocaleDateString() + ' @ ' + new Date(ts).toLocaleTimeString();
+            // const tsString = new Date(ts).toLocaleDateString() + " @ " + new Date(ts).toLocaleTimeString();
 
             const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
@@ -185,18 +185,18 @@ export class AdminResultsTab extends AdminPage {
             const row: TableCell[] = [
                 {
                     value: "",
-                    html: '<a style="cursor: pointer; cursor: hand;" target="_blank" href="' +
-                        stdioViewerURL + '"><ons-icon icon="md-info-outline"</ons-icon></a>'
+                    html: "<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
+                        stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>"
                 },
                 {
                     value: result.repoId,
-                    html: '<a class="selectable" href="' + result.repoURL + '">' + result.repoId + '</a>'
+                    html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>"
                 },
                 // {value: result.repoId, html: result.repoId},
                 {value: result.delivId, html: result.delivId},
                 {value: result.scoreOverall, html: scorePrepend + score},
                 {value: result.state, html: result.state},
-                {value: ts, html: '<a class="selectable" href="' + result.commitURL + '">' + tsString + '</a>'}
+                {value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>"}
             ];
 
             st.addRow(row);

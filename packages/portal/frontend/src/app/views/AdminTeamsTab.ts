@@ -31,17 +31,17 @@ export class AdminTeamsTab extends AdminPage {
 
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
-        Log.info('AdminTeamsTab::init(..) - start; opts: ' + JSON.stringify(opts));
+        Log.info("AdminTeamsTab::init(..) - start; opts: " + JSON.stringify(opts));
         const start = Date.now();
 
-        document.getElementById('teamsListTable').innerHTML = ''; // clear target
-        // document.getElementById('teamsIndividualListTable').innerHTML = ''; // clear target
+        document.getElementById("teamsListTable").innerHTML = ""; // clear target
+        // document.getElementById("teamsIndividualListTable").innerHTML = ""; // clear target
 
         this.students = [];
         this.teams = [];
         this.repos = [];
 
-        UI.showModal('Retrieving teams.');
+        UI.showModal("Retrieving teams.");
         this.course = await AdminView.getCourse(this.remote);
 
         const provisionDelivs = (await AdminDeliverablesTab.getDeliverables(this.remote))
@@ -52,25 +52,25 @@ export class AdminTeamsTab extends AdminPage {
 
         this.staff = await AdminStudentsTab.getStaff(this.remote);
 
-        if (typeof opts.delivId === 'undefined') {
+        if (typeof opts.delivId === "undefined") {
             const defaultDelivProvisions = provisionDelivs
                 .some((deliv) => deliv.id === this.course.defaultDeliverableId);
             if (defaultDelivProvisions) {
                 opts.delivId = this.course.defaultDeliverableId;
             } else {
-                opts.delivId = '-None-';
+                opts.delivId = "-None-";
             }
         }
 
-        const dStr = ['-None-'];
+        const dStr = ["-None-"];
         for (const deliv of provisionDelivs) {
             dStr.push(deliv.id);
         }
         // opts = opts.sort();
-        UI.setDropdownOptions('teamsListSelect', dStr, opts.delivId);
+        UI.setDropdownOptions("teamsListSelect", dStr, opts.delivId);
 
-        const delivSelector = document.querySelector('#teamsListSelect') as HTMLSelectElement;
-        const statusSelector = document.querySelector('#teamsListStatusSelect') as HTMLSelectElement;
+        const delivSelector = document.querySelector("#teamsListSelect") as HTMLSelectElement;
+        const statusSelector = document.querySelector("#teamsListStatusSelect") as HTMLSelectElement;
 
         const that = this;
 
@@ -90,13 +90,13 @@ export class AdminTeamsTab extends AdminPage {
         };
 
         delivSelector.onchange = function (evt) {
-            Log.info('AdminTeamsTab::init(..) - deliv changed');
+            Log.info("AdminTeamsTab::init(..) - deliv changed");
             evt.stopPropagation(); // prevents list item expansion
             updateTeamTable();
         };
 
         statusSelector.onchange = function (evt) {
-            Log.info('AdminTeamsTab::init(..) - status changed');
+            Log.info("AdminTeamsTab::init(..) - status changed");
             evt.stopPropagation(); // prevents list item expansion
 
             updateTeamTable();
@@ -116,72 +116,72 @@ export class AdminTeamsTab extends AdminPage {
         Log.trace("AdminTeamsTab::renderTeams(..) - start");
         const headers: TableHeader[] = [
             {
-                id: 'num',
-                text: '#',
+                id: "num",
+                text: "#",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'id',
-                text: 'Team Id',
+                id: "id",
+                text: "Team Id",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'repo',
-                text: 'Repository',
+                id: "repo",
+                text: "Repository",
                 sortable: true,
                 defaultSort: false,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'labs',
-                text: 'Labs',
+                id: "labs",
+                text: "Labs",
                 sortable: true,
                 defaultSort: false,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'p1',
-                text: 'First Member',
+                id: "p1",
+                text: "First Member",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'p2',
-                text: 'Second Member',
+                id: "p2",
+                text: "Second Member",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'p3',
-                text: 'Third Member',
+                id: "p3",
+                text: "Third Member",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             }
         ];
 
-        // let delivOptions = ['-None-'];
-        const st = new SortableTable(headers, '#teamsListTable');
+        // let delivOptions = ["-None-"];
+        const st = new SortableTable(headers, "#teamsListTable");
         let listContainsStudents = false;
 
         let count = 1;
         for (const team of teams) {
-            let p1 = '';
-            let p2 = '';
-            let p3 = '';
+            let p1 = "";
+            let p2 = "";
+            let p3 = "";
             if (team.people.length === 0) {
                 // do nothing
             } else if (team.people.length === 1) {
@@ -203,22 +203,22 @@ export class AdminTeamsTab extends AdminPage {
                     repoURL = repo.URL;
                 }
             }
-            let repoDisplay = '<a class="selectable" href="' + repoURL + '">' + repoName + '</a>';
+            let repoDisplay = "<a class='selectable' href='" + repoURL + "'>" + repoName + "</a>";
             if (repoURL === null) {
-                // repo not yet provisioned; don't show anything
-                repoDisplay = '';
+                // repo not yet provisioned; don"t show anything
+                repoDisplay = "";
             }
 
-            let teamDisplay = '<a class="selectable" href="' + team.URL + '">' + team.id + '</a>';
+            let teamDisplay = "<a class='selectable' href='" + team.URL + "'>" + team.id + "</a>";
             if (team.URL === null) {
-                // team not yet provisioned, don't turn this into a link
+                // team not yet provisioned, don"t turn this into a link
                 teamDisplay = team.id;
             }
 
             const labs = this.getLabsCell(team.people);
 
             const row: TableCell[] = [
-                {value: count, html: count + ''},
+                {value: count, html: count + ""},
                 {value: team.id, html: teamDisplay},
                 {value: repoName, html: repoDisplay},
                 {value: labs, html: labs},
@@ -237,11 +237,11 @@ export class AdminTeamsTab extends AdminPage {
         st.generate();
 
         // if (st.numRows() > 0) {
-        //     UI.showSection('teamsListTable');
-        //     UI.hideSection('teamsListTableNone');
+        //     UI.showSection("teamsListTable");
+        //     UI.hideSection("teamsListTableNone");
         // } else {
-        //     UI.hideSection('teamsListTable');
-        //     UI.showSection('teamsListTableNone');
+        //     UI.hideSection("teamsListTable");
+        //     UI.showSection("teamsListTableNone");
         // }
     }
 
@@ -249,7 +249,7 @@ export class AdminTeamsTab extends AdminPage {
         const labs = people
             .map((personId) => this.getPerson(personId)?.labId)
             .filter((lab) => !!lab);
-        return [...new Set(labs)].sort().join(',');
+        return [...new Set(labs)].sort().join(",");
     }
 
     private getPerson(personId: string): StudentTransport | null {
@@ -278,18 +278,18 @@ export class AdminTeamsTab extends AdminPage {
             // atest ids are often used for sample repos course staff can work with
             if (staff === null && personId.startsWith("atest-") === false) {
                 // withdrawn student
-                render = 'Withdrawn: ' + personId;
+                render = "Withdrawn: " + personId;
             } else {
                 // staff
-                render = 'Staff: ' + personId;
+                render = "Staff: " + personId;
             }
             return render;
         }
 
         if (student?.id === personId) {
-            if (student.userUrl !== null && student.userUrl.startsWith('http') === true) {
-                render = '<a class="selectable" href="' + student.userUrl + '">' +
-                    student.githubId + '</a> (' + student.firstName + ' ' + student.lastName + ')';
+            if (student.userUrl !== null && student.userUrl.startsWith("http") === true) {
+                render = "<a class='selectable' href='" + student.userUrl + "'>" +
+                    student.githubId + "</a> (" + student.firstName + " " + student.lastName + ")";
             } else {
                 render = student.githubId + " (" + student.firstName + " " + student.lastName + ")";
             }
@@ -302,33 +302,33 @@ export class AdminTeamsTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id: 'num',
-                text: '#',
+                id: "num",
+                text: "#",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'lab',
-                text: 'Lab',
+                id: "lab",
+                text: "Lab",
                 sortable: true,
                 defaultSort: false,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'id',
-                text: 'Student',
+                id: "id",
+                text: "Student",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: true, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             }
         ];
 
-        // const st = new SortableTable(headers, '#teamsIndividualListTable');
-        const st = new SortableTable(headers, '#teamsListTable');
+        // const st = new SortableTable(headers, "#teamsIndividualListTable");
+        const st = new SortableTable(headers, "#teamsListTable");
 
         const studentsOnTeams: string[] = [];
         for (const team of teams) {
@@ -345,18 +345,18 @@ export class AdminTeamsTab extends AdminPage {
         for (const student of students) {
             if (studentsOnTeams.indexOf(student.id) < 0) {
 
-                const lab = student.labId ?? '';
-                const studentHTML = student.firstName + ' ' + student.lastName +
-                    ' <a class="selectable" href="' + student.userUrl + '">' +
-                    student.githubId + '</a> (' + student.firstName + ' ' +
-                    student.lastName + ')';
+                const lab = student.labId ?? "";
+                const studentHTML = student.firstName + " " + student.lastName +
+                    " <a class='selectable' href='" + student.userUrl + "'>" +
+                    student.githubId + "</a> (" + student.firstName + " " +
+                    student.lastName + ")";
 
                 const row: TableCell[] = [
-                    {value: count, html: count++ + ''},
+                    {value: count, html: count++ + ""},
                     {value: lab, html: lab},
                     {value: student.id, html: studentHTML}
                 ];
-                if (delivId !== '-None-') {
+                if (delivId !== "-None-") {
                     st.addRow(row);
                     listContainsStudents = true;
                 }
@@ -366,11 +366,11 @@ export class AdminTeamsTab extends AdminPage {
         st.generate();
 
         // if (st.numRows() > 0) {
-        //     UI.showSection('teamsIndividualListTable');
-        //     UI.hideSection('teamsIndividualListTableNone');
+        //     UI.showSection("teamsIndividualListTable");
+        //     UI.hideSection("teamsIndividualListTableNone");
         // } else {
-        //     UI.hideSection('teamsIndividualListTable');
-        //     UI.showSection('teamsIndividualListTableNone');
+        //     UI.hideSection("teamsIndividualListTable");
+        //     UI.showSection("teamsIndividualListTableNone");
         // }
 
     }
@@ -380,22 +380,22 @@ export class AdminTeamsTab extends AdminPage {
         try {
             const start = Date.now();
             const options = AdminView.getOptions();
-            const url = remote + '/portal/admin/teams';
+            const url = remote + "/portal/admin/teams";
             const response = await fetch(url, options);
 
             if (response.status === 200) {
-                Log.trace('AdminTeamsTab::getTeams(..) - 200 received');
+                Log.trace("AdminTeamsTab::getTeams(..) - 200 received");
                 const json: TeamTransportPayload = await response.json();
-                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminTeamsTab::getTeams(..)  - worked; # teams: ' +
-                        json.success.length + '; took: ' + UI.took(start));
+                if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
+                    Log.trace("AdminTeamsTab::getTeams(..)  - worked; # teams: " +
+                        json.success.length + "; took: " + UI.took(start));
                     return json.success;
                 } else {
-                    Log.trace('AdminTeamsTab::getTeams(..)  - ERROR: ' + json.failure.message);
+                    Log.trace("AdminTeamsTab::getTeams(..)  - ERROR: " + json.failure.message);
                     AdminView.showError(json.failure); // FailurePayload
                 }
             } else {
-                Log.trace('AdminTeamsTab::getTeams(..)  - !200 received: ' + response.status);
+                Log.trace("AdminTeamsTab::getTeams(..)  - !200 received: " + response.status);
                 const text = await response.text();
                 AdminView.showError(text);
             }

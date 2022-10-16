@@ -24,8 +24,6 @@ import Util from "@common/Util";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {GitHubActions} from "@backend/controllers/GitHubActions";
-import {PersonController} from "@backend/controllers/PersonController";
-import {TeamController} from "@backend/controllers/TeamController";
 import BackendServer from "@backend/server/BackendServer";
 
 import "./AuthRoutesSpec";
@@ -573,7 +571,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.be.an("string");
         Log.test("update did not fail");
 
-        // check that the newtime was updated
+        // check that the new time was updated
         const allDelivs = await dc.getAllDeliverables();
         const d0updated = allDelivs[0];
         expect(d0updated.openTimestamp).to.equal(newTime);
@@ -876,8 +874,8 @@ describe("Admin Routes", function () {
 
             const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
-            const tcCache = new TeamController(ghCache);
-            const tcReal = new TeamController(ghReal);
+            // const tcCache = new TeamController(ghCache);
+            // const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
                 await ghCache.deleteRepo(repoName);
@@ -975,8 +973,8 @@ describe("Admin Routes", function () {
         it("Should be able to perform a withdraw task", async function () {
             // This is tricky because the live github data will have a different team id than we"re using locally
 
-            const pc = new PersonController();
-            const dc = DatabaseController.getInstance();
+            // const pc = new PersonController();
+            // const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;
@@ -1379,7 +1377,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1408,6 +1406,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
@@ -1441,7 +1440,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1470,6 +1469,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
@@ -1500,7 +1500,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1529,6 +1529,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
