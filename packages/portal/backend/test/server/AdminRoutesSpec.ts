@@ -30,7 +30,7 @@ import BackendServer from "@backend/server/BackendServer";
 
 import "./AuthRoutesSpec";
 
-describe.only("Admin Routes", function () {
+describe("Admin Routes", function () {
 
     let app: restify.Server = null;
     let server: BackendServer = null;

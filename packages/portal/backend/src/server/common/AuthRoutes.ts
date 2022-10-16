@@ -6,15 +6,14 @@ import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AuthTransportPayload, Payload} from "@common/types/PortalTypes";
 
-import {AuthController} from "../../controllers/AuthController";
-import {DatabaseController} from "../../controllers/DatabaseController";
-import {PersonController} from "../../controllers/PersonController";
-import {Factory} from "../../Factory";
-import {Auth} from "../../Types";
+import {AuthController} from "@backend/controllers/AuthController";
+import {DatabaseController} from "@backend/controllers/DatabaseController";
+import {PersonController} from "@backend/controllers/PersonController";
 
-import IREST from "../IREST";
+import {Factory} from "@backend/Factory";
+import {Auth} from "@backend/Types";
 
-// import ClientOAuth2 = require("client-oauth2");
+import IREST from "@backend/server/IREST";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.
@@ -26,19 +25,19 @@ export class AuthRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
         Log.info("AuthRoutes::registerRoutes() - start");
 
-        server.on('MethodNotAllowed', AuthRoutes.handlePreflight); // preflights cors requests
+        server.on("MethodNotAllowed", AuthRoutes.handlePreflight); // preflights cors requests
 
         // user endpoints
-        server.get('/portal/getCredentials', AuthRoutes.getCredentials); // verify Classy credentials
-        server.get('/portal/logout', AuthRoutes.getLogout);
+        server.get("/portal/getCredentials", AuthRoutes.getCredentials); // verify Classy credentials
+        server.get("/portal/logout", AuthRoutes.getLogout);
 
         // GitHub OAuth endpoints
-        server.get('/portal/auth', AuthRoutes.getAuth); // start GitHub OAuth flow
-        server.get('/authCallback', AuthRoutes.authCallback); // finalize GitHub OAuth flow
+        server.get("/portal/auth", AuthRoutes.getAuth); // start GitHub OAuth flow
+        server.get("/authCallback", AuthRoutes.authCallback); // finalize GitHub OAuth flow
     }
 
     /**
-     * Work around some CORS-related issues for OAuth. This looks manky, but don't change it.
+     * Work around some CORS-related issues for OAuth. This looks manky, but do NOT change it.
      *
      * Really.
      *
@@ -54,81 +53,81 @@ export class AuthRoutes implements IREST {
     public static handlePreflight(req: any, res: any) {
         Log.trace("AuthRoutes::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
 
-        const allowHeaders = ['Accept', 'Accept-Version', 'Content-Type', 'Api-Version', 'user-agent', 'user', 'token', 'org', 'name'];
-        if (res.methods.indexOf('OPTIONS') === -1) {
-            res.methods.push('OPTIONS');
+        const allowHeaders = ["Accept", "Accept-Version", "Content-Type", "Api-Version", "user-agent", "user", "token", "org", "name"];
+        if (res.methods.indexOf("OPTIONS") === -1) {
+            res.methods.push("OPTIONS");
         }
 
-        if (res.methods.indexOf('GET') === -1) {
-            res.methods.push('GET');
+        if (res.methods.indexOf("GET") === -1) {
+            res.methods.push("GET");
         }
 
-        res.header('Access-Control-Allow-Credentials', true);
-        res.header('Access-Control-Allow-Headers', allowHeaders.join(', '));
-        res.header('Access-Control-Allow-Methods', res.methods.join(', '));
-        res.header('Access-Control-Allow-Origin', req.headers.origin);
+        res.header("Access-Control-Allow-Credentials", true);
+        res.header("Access-Control-Allow-Headers", allowHeaders.join(", "));
+        res.header("Access-Control-Allow-Methods", res.methods.join(", "));
+        res.header("Access-Control-Allow-Origin", req.headers.origin);
 
         Log.trace("AuthRoutes::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
         return res.send(204);
     }
 
     public static getLogout(req: any, res: any, next: any) {
-        Log.trace('AuthRouteHandler::getLogout(..) - start');
+        Log.trace("AuthRouteHandler::getLogout(..) - start");
         let user = req.headers.user;
         let token = req.headers.token;
 
-        if (typeof user === 'undefined') {
+        if (typeof user === "undefined") {
             user = null;
         }
-        if (typeof token === 'undefined') {
+        if (typeof token === "undefined") {
             token = null;
         }
 
-        Log.trace('AuthRoutes::getLogout(..) - user: ' + user + '; token: ' + token);
+        Log.trace("AuthRoutes::getLogout(..) - user: " + user + "; token: " + token);
         let payload: Payload;
 
         const handleError = function (msg: string) {
-            Log.warn('AuthRoutes::getLogout(..) - ERROR: ' + msg);
-            payload = {failure: {message: 'Logout failed: ' + msg, shouldLogout: false}};
+            Log.warn("AuthRoutes::getLogout(..) - ERROR: " + msg);
+            payload = {failure: {message: "Logout failed: " + msg, shouldLogout: false}};
             res.send(400, payload);
             return next();
         };
 
         if (user === null) {
-            Log.warn('AuthRoutes::getLogout(..) - cannot logout unspecified user: ' + user);
+            Log.warn("AuthRoutes::getLogout(..) - cannot logout unspecified user: " + user);
             handleError("unknown user.");
         }
 
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
             if (isValid === true) {
-                Log.trace('AuthRoutes::getLogout(..) - user: ' + user + '; valid user');
+                Log.trace("AuthRoutes::getLogout(..) - user: " + user + "; valid user");
             } else {
                 // logout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
-                Log.warn('AuthRoutes::getLogout(..) - user: ' + user + '; invalid user');
+                Log.warn("AuthRoutes::getLogout(..) - user: " + user + "; invalid user");
             }
             // logout
             const ac = new AuthController();
             return ac.removeAuthentication(user);
         }).then(function (success) {
             if (success) {
-                Log.info('AuthRoutes::getLogout(..) - logged out; user: ' + user);
+                Log.info("AuthRoutes::getLogout(..) - logged out; user: " + user);
                 payload = {success: {message: "Logout successful"}};
                 res.send(200, payload);
             } else {
                 handleError("Logout unsuccessful.");
             }
         }).catch(function (err) {
-            Log.error('AuthRoutes::getLogout(..) - unexpected ERROR: ' + err.message);
+            Log.error("AuthRoutes::getLogout(..) - unexpected ERROR: " + err.message);
             handleError(err.message);
         });
     }
 
     public static getCredentials(req: any, res: any, next: any) {
-        Log.trace('AuthRoutes::getCredentials(..) - start');
+        Log.trace("AuthRoutes::getCredentials(..) - start");
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.trace('AuthRoutes::getCredentials(..) - user: ' + user + '; token: ' + token);
+        Log.trace("AuthRoutes::getCredentials(..) - user: " + user + "; token: " + token);
 
         let payload: AuthTransportPayload;
         AuthRoutes.performGetCredentials(user, token).then(function (isPrivileged) {
@@ -140,7 +139,7 @@ export class AuthRoutes implements IREST {
                     isStaff: isPrivileged.isStaff
                 }
             };
-            Log.trace('AuthRoutes::getCredentials(..) - sending 200; isPriv: ' + (isPrivileged.isStaff || isPrivileged.isAdmin));
+            Log.trace("AuthRoutes::getCredentials(..) - sending 200; isPriv: " + (isPrivileged.isStaff || isPrivileged.isAdmin));
             res.send(200, payload);
             return next(true);
         }).catch(function (err) {
@@ -160,7 +159,7 @@ export class AuthRoutes implements IREST {
         }
         Log.trace("AuthRoutes::getCredentials( " + user + " ) - isValid true");
 
-        // if isPrivileged fails, it will throw an exception which will reject this method's promise
+        // if isPrivileged fails, it will throw an exception which will reject this method"s promise
         const isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
         return {isAdmin: isPrivileged.isAdmin, isStaff: isPrivileged.isStaff};
     }
@@ -177,9 +176,9 @@ export class AuthRoutes implements IREST {
         const setup = {
             clientId: config.getProp(ConfigKey.githubClientId),
             clientSecret: config.getProp(ConfigKey.githubClientSecret),
-            accessTokenUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
-            authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            scopes: ['']
+            accessTokenUri: config.getProp(ConfigKey.githubHost) + "/login/oauth/access_token",
+            authorizationUri: config.getProp(ConfigKey.githubHost) + "/login/oauth/authorize",
+            scopes: [""]
         };
 
         const githubAuth = new ClientOAuth2(setup);
@@ -193,7 +192,7 @@ export class AuthRoutes implements IREST {
      * really think on it over a weekend before deciding to make any edits to _anything_
      * in this method.
      *
-     * Coverage won't happen because of GitHub dependencies.
+     * Coverage won"t happen because of GitHub dependencies.
      *
      * @param req
      * @param res
@@ -236,14 +235,14 @@ export class AuthRoutes implements IREST {
         const config = Config.getInstance();
         const personController = new PersonController();
 
-        // Log.trace('req: ' + req + '; res: ' + res + '; next: ' + next);
+        // Log.trace("req: " + req + "; res: " + res + "; next: " + next);
 
         const opts = {
             clientId: config.getProp(ConfigKey.githubClientId),
             clientSecret: config.getProp(ConfigKey.githubClientSecret),
-            accessTokenUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/access_token',
-            authorizationUri: config.getProp(ConfigKey.githubHost) + '/login/oauth/authorize',
-            scopes: ['']
+            accessTokenUri: config.getProp(ConfigKey.githubHost) + "/login/oauth/access_token",
+            authorizationUri: config.getProp(ConfigKey.githubHost) + "/login/oauth/authorize",
+            scopes: [""]
         };
 
         Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - setup: " + JSON.stringify(opts));
@@ -251,24 +250,24 @@ export class AuthRoutes implements IREST {
         const githubAuth = new ClientOAuth2(opts);
         let token: string | null;
         let username: string | null;
-        const uri: string = config.getProp(ConfigKey.githubAPI) + '/user';
+        const uri: string = config.getProp(ConfigKey.githubAPI) + "/user";
         const user = await githubAuth.code.getToken(url);
 
         Log.trace("AuthRoutes::performAuthCallback(..) - token acquired");
 
         token = user.accessToken;
         const options: RequestInit = {
-            method: 'GET',
+            method: "GET",
             headers: {
-                'Content-Type': 'application/json',
-                'User-Agent': 'Portal',
-                'Authorization': 'token ' + token
+                "Content-Type": "application/json",
+                "User-Agent": "Portal",
+                "Authorization": "token " + token
             }
             // rejectUnauthorized: false,
             // insecure:           true
         };
 
-        // this extra check isn't strictly required, but means we can
+        // this extra check isn"t strictly required, but means we can
         // associate a GitHub username with a token on the backend
         const ans = await fetch(uri, options);
 
@@ -301,13 +300,13 @@ export class AuthRoutes implements IREST {
         // }
 
         let feUrl = host; // req.headers.host;
-        if (feUrl.indexOf('//') > 0) {
-            feUrl = feUrl.substr(feUrl.indexOf('//') + 2, feUrl.length);
+        if (feUrl.indexOf("//") > 0) {
+            feUrl = feUrl.substr(feUrl.indexOf("//") + 2, feUrl.length);
         }
         let fePort = 443; // default to ssl port
-        if (feUrl.indexOf(':') > 0) {
-            fePort = Number(feUrl.substr(feUrl.indexOf(':') + 1, feUrl.length));
-            feUrl = feUrl.substr(0, feUrl.indexOf(':'));
+        if (feUrl.indexOf(":") > 0) {
+            fePort = Number(feUrl.substr(feUrl.indexOf(":") + 1, feUrl.length));
+            feUrl = feUrl.substr(0, feUrl.indexOf(":"));
         }
 
         if (person === null) {
@@ -316,7 +315,7 @@ export class AuthRoutes implements IREST {
             return {
                 cookie: null,
                 hostname: feUrl,
-                pathname: 'invalid.html',
+                pathname: "invalid.html",
                 port: fePort
             };
         } else {
@@ -334,12 +333,12 @@ export class AuthRoutes implements IREST {
 
             // this is tricky; need to redirect to the client with a cookie being set on the connection
             // only header method that worked for me
-            const cookie = "token=" + token + '__' + person.id; // Firefox doesn't like multiple tokens (line above)
+            const cookie = "token=" + token + "__" + person.id; // Firefox does not like multiple tokens (line above)
             Log.trace("AuthRoutes::performAuthCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
             return {
                 cookie: cookie,
                 hostname: feUrl,
-                pathname: 'index.html',
+                pathname: "index.html",
                 port: fePort
             };
         }
