@@ -129,6 +129,15 @@ describe("TeamController", () => {
         expect(teams).to.have.lengthOf(2);
     });
 
+    it("Should be able to save a team.", async () => {
+        let teams = await tc.getAllTeams();
+        expect(teams).to.have.lengthOf(2);
+
+        await tc.saveTeam(teams[0]);
+        teams = await tc.getAllTeams(); // only really checking for not crashing
+        expect(teams).to.have.lengthOf(2); // still one team
+    });
+
     // it("Should not add a team a second time.", async () => {
     //     let teams = await tc.getAllTeams();
     //     expect(teams).to.have.lengthOf(2);
