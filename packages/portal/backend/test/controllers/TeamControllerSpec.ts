@@ -138,30 +138,6 @@ describe("TeamController", () => {
         expect(teams).to.have.lengthOf(2); // still one team
     });
 
-    // it("Should not add a team a second time.", async () => {
-    //     let teams = await tc.getAllTeams();
-    //     expect(teams).to.have.lengthOf(2);
-    //
-    //     const p1 = await pc.getPerson(TestHarness.USER1.id);
-    //     const p2 = await pc.getPerson(TestHarness.USER2.id);
-    //     expect(p1).to.not.be.null;
-    //     expect(p2).to.not.be.null;
-    //
-    //     const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-    //     let team = null;
-    //     let exc = null;
-    //     try {
-    //         team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [p1, p2], {});
-    //     } catch (err) {
-    //         exc = err;
-    //     }
-    //     expect(team).to.be.null;
-    //     expect(exc).to.not.be.null;
-    //
-    //     teams = await tc.getAllTeams();
-    //     expect(teams).to.have.lengthOf(2);
-    // });
-
     it("Should be able to create an individual team.", async () => {
         let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(2);

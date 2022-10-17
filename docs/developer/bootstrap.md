@@ -37,7 +37,7 @@ To install Classy for development:
 
 5. You are ready to run any of the applications (commands found in `package.json` files under respective application package directories).
 
-## Running for dev
+## Running as dev
 
 There are a variety of services you may want to run independently while developing.
 Most will require configuring mongo to run in dev mode (see `DB_URL` in `.env`). 
@@ -55,6 +55,10 @@ The automated test suite is stored in:
 
 To run these in the IDE create a Mocha target in Webstorm with `-r tsconfig-paths/register` as the node options and `--exit` as the mocha options.
 To run these on the terminal, execute `yarn run test` in `packages/autotest/` or `packages/portal/backend/`
+
+### Coverage
+
+The best way to run coverage locally is to execute `yarn run cover` in `classy/`. The coverage report will be generated in `testOutput/coverage/index.html`. NOTE: when executing locally, mocks are extensively used so the report will not be as comprehensive as executing on CI.
 
 ## QA Checklist
 

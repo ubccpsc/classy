@@ -55,12 +55,20 @@
     "resolutions": {
         "**/mem": "^4.0.0"
     },
+    "nyc": {
+        "exclude": [
+            "**/*Spec.ts",
+            "**/TestHarness.ts",
+            "**/TestData.ts",
+            "**/TestGitHubActions.ts"
+        ]
+    },
     "scripts": {
         "postinstall": "git config core.hooksPath .githooks",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
         "lint": "tslint --project tsconfig.json",
-        "cover": "nyc --reporter text --reporter html yarn run test",
+        "cover": "nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
         "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
         "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"
