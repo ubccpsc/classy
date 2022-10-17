@@ -239,17 +239,18 @@ export class TeamController {
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::teamCreate( " + name + ", ... ) - start");
 
-        if (name === null || name.length < 1) {
+        if (typeof name === "undefined" || name === null || name.length < 1) {
             throw new Error("TeamController::teamCreate() - no team name provided.");
         }
 
-        if (deliv === null) {
-            throw new Error("TeamController::teamCreate() - null deliverable provided.");
+        if (typeof deliv === "undefined" || deliv === null) {
+            throw new Error("TeamController::teamCreate() - no deliverable provided.");
         }
 
-        if (Array.isArray(people) === false || people.length < 1) {
-            throw new Error("TeamController::teamCreate() - no people provided.");
-        }
+        // this constraint is not necessary
+        // if (Array.isArray(people) === false || people.length < 1) {
+        //     throw new Error("TeamController::teamCreate() - no people provided.");
+        // }
 
         try {
             const existingTeam = await this.getTeam(name);

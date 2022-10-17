@@ -7,12 +7,12 @@ import {TestHarness} from "@common/TestHarness";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {TeamController} from "@backend/controllers/TeamController";
-import {PersonKind} from "@backend/Types";
+import {Deliverable, Person, PersonKind, Team} from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
-describe.only("TeamController", () => {
+describe("TeamController", () => {
 
     let tc: TeamController;
     let pc: PersonController;
@@ -21,7 +21,7 @@ describe.only("TeamController", () => {
     before(async () => {
         await TestHarness.suiteBefore("TeamController");
 
-        // clear stale data (removed; happens in suitebefore)
+        // clear stale data (removed; happens in suite before)
         // await dbc.clearData();
 
         // get data ready
@@ -59,75 +59,50 @@ describe.only("TeamController", () => {
         expect(teamNumber).to.be.null;
     });
 
-    it("Should not able to create a team if a deliverable was not specified.", async () => {
-        let teams = await tc.getAllTeams();
+    it("Should not able to create a team if a constraint is violated.", async () => {
+        let team: Team = null;
+        let teams: Team[] = null;
+        let ex: Error = null;
+
+        teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
         const p1 = await pc.getPerson(TestHarness.USER1.id);
         const p2 = await pc.getPerson(TestHarness.USER2.id);
+
         expect(p1).to.not.be.null;
         expect(p2).to.not.be.null;
 
-        let ex = null;
-        let team = null;
-        try {
-            team = await tc.createTeam(TestHarness.TEAMNAME1, null, [p1, p2], {});
-        } catch (err) {
-            ex = err;
-        }
+        const createTeam = async function (name: string, deliv: Deliverable, people: Person[]): Promise<void> {
+            try {
+                team = null;
+                ex = null;
+                teams = null;
+
+                team = await tc.createTeam(name, deliv, people, {});
+            } catch (err) {
+                ex = err;
+            }
+            teams = await tc.getAllTeams();
+            return;
+        };
+
+        // empty name
+        const d0 = await dc.getDeliverable(TestHarness.DELIVID0);
+        await createTeam("", d0, [p1, p2]);
         expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("no team name");
         expect(team).to.be.null;
-
-        teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(0);
-    });
-
-    it("Should not able to create a team with no name.", async () => {
-        let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
-        const p1 = await pc.getPerson(TestHarness.USER1.id);
-        const p2 = await pc.getPerson(TestHarness.USER2.id);
-        expect(p1).to.not.be.null;
-        expect(p2).to.not.be.null;
-
-        let ex = null;
-        let team = null;
-        try {
-            const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-            team = await tc.createTeam("", deliv, [p1, p2], {});
-        } catch (err) {
-            ex = err;
-        }
+        // invalid deliverable
+        await createTeam(TestHarness.TEAMNAME1, null, [p1, p2]);
         expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("no deliverable");
         expect(team).to.be.null;
-
-        teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(0);
-    });
-
-    it("Should not able to create a team with no people.", async () => {
-        let teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(0);
 
-        const p1 = await pc.getPerson(TestHarness.USER1.id);
-        const p2 = await pc.getPerson(TestHarness.USER2.id);
-        expect(p1).to.not.be.null;
-        expect(p2).to.not.be.null;
-
-        let ex = null;
-        let team = null;
-        try {
-            const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-            team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [], {});
-        } catch (err) {
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(0);
+        // TODO: duplicate team
     });
 
     it("Should be able to create a team.", async () => {
@@ -154,29 +129,29 @@ describe.only("TeamController", () => {
         expect(teams).to.have.lengthOf(2);
     });
 
-    it("Should not add a team a second time.", async () => {
-        let teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(2);
-
-        const p1 = await pc.getPerson(TestHarness.USER1.id);
-        const p2 = await pc.getPerson(TestHarness.USER2.id);
-        expect(p1).to.not.be.null;
-        expect(p2).to.not.be.null;
-
-        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-        let team = null;
-        let exc = null;
-        try {
-            team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [p1, p2], {});
-        } catch (err) {
-            exc = err;
-        }
-        expect(team).to.be.null;
-        expect(exc).to.not.be.null;
-
-        teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(2);
-    });
+    // it("Should not add a team a second time.", async () => {
+    //     let teams = await tc.getAllTeams();
+    //     expect(teams).to.have.lengthOf(2);
+    //
+    //     const p1 = await pc.getPerson(TestHarness.USER1.id);
+    //     const p2 = await pc.getPerson(TestHarness.USER2.id);
+    //     expect(p1).to.not.be.null;
+    //     expect(p2).to.not.be.null;
+    //
+    //     const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+    //     let team = null;
+    //     let exc = null;
+    //     try {
+    //         team = await tc.createTeam(TestHarness.TEAMNAME1, deliv, [p1, p2], {});
+    //     } catch (err) {
+    //         exc = err;
+    //     }
+    //     expect(team).to.be.null;
+    //     expect(exc).to.not.be.null;
+    //
+    //     teams = await tc.getAllTeams();
+    //     expect(teams).to.have.lengthOf(2);
+    // });
 
     it("Should be able to create an individual team.", async () => {
         let teams = await tc.getAllTeams();
@@ -199,122 +174,100 @@ describe.only("TeamController", () => {
         expect(teams).to.have.lengthOf(2);
     });
 
-    it("Should fail to form a team if deliverable constraints are violated.", async () => {
-        let teams = await tc.getAllTeams();
-        expect(teams).to.have.lengthOf(3);
-
-        const p1 = await pc.getGitHubPerson(TestHarness.GITHUB1.github);
-        const p2 = await pc.getGitHubPerson(TestHarness.GITHUB2.github);
-        const p3 = await pc.getGitHubPerson(TestHarness.GITHUB3.github);
-
-        // invalid deliverable
-        let team = null;
-        let ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), null, [p1], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        const d0 = await dc.getDeliverable(TestHarness.DELIVID0);
-        // too few students
-        team = null;
-        ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), d0, [], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // too many students
-        team = null;
-        ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), d0, [p1, p2], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // students cannot form for this deliverable
-        team = null;
-        ex = null;
-        try {
-            const d3 = await dc.getDeliverable(TestHarness.DELIVID0);
-            team = await tc.formTeam("testTeamName_" + Date.now(), d3, [p1, p2], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // github id not in course
-        const proj = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
-        team = null;
-        ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p1, null], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // students not in same lab section
-        team = null;
-        ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p1, p3], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // students already on teams
-        const d1 = await dc.getDeliverable(TestHarness.DELIVID0);
-        team = null;
-        ex = null;
-        try {
-            team = await tc.formTeam("testTeamName_" + Date.now(), d1, [p2, p2], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
-
-        // student already withdrawn
-        team = null;
-        ex = null;
-        try {
-            // withdraw a student
-            const dbc = DatabaseController.getInstance();
-            const p6 = await pc.getGitHubPerson(TestHarness.USER6.github);
-            p6.kind = PersonKind.WITHDRAWN;
-            await dbc.writePerson(p6);
-
-            team = await tc.formTeam("testTeamName_" + Date.now(), proj, [p2, p6], false);
-        } catch (err) {
-            Log.test(err);
-            ex = err;
-        }
-        expect(ex).to.not.be.null;
-        expect(team).to.be.null;
+    it("Should fail to form a team if constraints are violated.", async () => {
+        let team: Team = null;
+        let teams: Team[] = null;
+        let ex: Error = null;
 
         teams = await tc.getAllTeams();
         expect(teams).to.have.lengthOf(3);
+
+        const p1 = await pc.getGitHubPerson(TestHarness.USER1.github);
+        const p2 = await pc.getGitHubPerson(TestHarness.USER2.github);
+        const p3 = await pc.getGitHubPerson(TestHarness.USER3.github);
+
+        // let p1 = await pc.getGitHubPerson(TestHarness.GITHUB1.github);
+        // let p2 = await pc.getGitHubPerson(TestHarness.GITHUB2.github);
+        // let p3 = await pc.getGitHubPerson(TestHarness.GITHUB3.github);
+
+        const formTeam = async function (name: string, deliv: Deliverable, people: Person[], override: boolean): Promise<void> {
+            team = null;
+            teams = null;
+            ex = null;
+            try {
+                team = await tc.formTeam(name, deliv, people, override);
+            } catch (err) {
+                Log.test(err);
+                ex = err;
+            }
+            teams = await tc.getAllTeams();
+            return;
+        };
+
+        // invalid deliverable
+        const tName = "testTeamName_" + Date.now();
+        await formTeam(tName, null, [p1], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("deliverable does not");
+
+        // too few students
+        const d0 = await dc.getDeliverable(TestHarness.DELIVID0);
+        await formTeam(tName, d0, [], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("too few team members");
+
+        // too many students
+        await formTeam(tName, d0, [p1, p2], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("too many team members");
+
+        // student not in course
+        await formTeam(tName, d0, [p1, null], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("not members of the course");
+
+        // not in same lab
+        const proj = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+        p3.labId = "L1other";
+        await formTeam(tName, proj, [p1, p3], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("not in the same lab");
+
+        // students already on teams for deliverable
+        await formTeam(tName, d0, [p1], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("on existing team");
+
+        // student withdrawn
+        const p6 = {kind: PersonKind.WITHDRAWN} as Person;
+        await formTeam(tName, proj, [p2, p6], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("not an active member");
+
+        // students cannot form for this deliverable
+        const d3 = await dc.getDeliverable(TestHarness.DELIVID3);
+        d3.teamStudentsForm = false;
+        d3.teamMaxSize = 2;
+        await formTeam(tName, d3, [p1, p2], false);
+        expect(team).to.be.null;
+        expect(teams).to.have.lengthOf(3);
+        expect(ex).to.not.be.null;
+        expect(ex.message).to.contain("students cannot form");
+
     }).timeout(TestHarness.TIMEOUT);
 
     it("Should form a team if deliverable constraints are not violated.", async () => {
