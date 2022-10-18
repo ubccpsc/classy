@@ -260,8 +260,11 @@ export abstract class AutoTest implements IAutoTest {
                     const info: ContainerInput = queue.pop(); // get the job
                     that.jobs.push(info); // put it on the execution queue
 
+                    const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
+                    const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
-                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA);
+                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA +
+                        "# running: " + totalJobsRunning + "; # queued: " + totalNumQueued);
 
                     let gradingJob: GradingJob;
                     // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
