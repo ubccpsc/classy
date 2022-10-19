@@ -10,6 +10,13 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
+    public static shaHuman(sha: string): string {
+        if (sha !== null && typeof sha === "string" && sha.length > 6) {
+            return sha.substr(0, 6);
+        }
+        return sha;
+    }
+
     public static tookHuman(start: number, end?: number): string {
         if (typeof end === "undefined") {
             end = Date.now();

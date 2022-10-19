@@ -214,7 +214,7 @@ export abstract class AutoTest implements IAutoTest {
 
             } else {
                 Log.info("AutoTest::addToStandardQueue(..) - skipped; " +
-                    "job already on express queue; SHA: " + input.target.commitSHA);
+                    "job already on express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
             }
         } catch (err) {
             Log.error("AutoTest::addToStandardQueue(..) - ERROR: " + err);
@@ -235,7 +235,7 @@ export abstract class AutoTest implements IAutoTest {
                 this.lowQueue.push(input);
             } else {
                 Log.info("AutoTest::addToLowQueue(..) - skipped; " +
-                    "job already on standard or express queue; SHA: " + input.target.commitSHA);
+                    "job already on standard or express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
             }
         } catch (err) {
             Log.error("AutoTest::addToLowQueue(..) - ERROR: " + err);
@@ -263,7 +263,7 @@ export abstract class AutoTest implements IAutoTest {
                     const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
-                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + info.target.commitSHA +
+                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + Util.shaHuman(info.target.commitSHA) +
                         "# running: " + totalJobsRunning + "; # queued: " + totalNumQueued);
 
                     let gradingJob: GradingJob;
@@ -295,7 +295,7 @@ export abstract class AutoTest implements IAutoTest {
              */
             const switchQueues = function (input: ContainerInput, sourceQueue: Queue, destQueue: Queue, onFront: boolean) {
                 Log.info("AutoTest::tick::switchQueues(..) - start; source: " + sourceQueue.getName() +
-                    "->dest: " + destQueue.getName() + "; for SHA: " + input.target.commitSHA);
+                    "->dest: " + destQueue.getName() + "; for SHA: " + Util.shaHuman(input.target.commitSHA));
 
                 if (that.isCommitExecuting(input)) {
                     Log.info("AutoTest::tick::switchQueues(..) - skipped; commit already executing");
@@ -473,7 +473,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": delivId: " + data.delivId + "; repoId: " + data.repoId +
                 "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp) +
-                "; SHA: " + data.commitSHA);
+                "; SHA: " + Util.shaHuman(data.commitSHA));
 
             try {
                 // Sends the result payload to Classy for saving in the database.
@@ -499,7 +499,7 @@ export abstract class AutoTest implements IAutoTest {
             // execution done, advance the clock
             this.tick();
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
-                data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
+                data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
                 "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
@@ -512,7 +512,7 @@ export abstract class AutoTest implements IAutoTest {
         let record = job.record;
         let gradePayload: AutoTestGradeTransport;
 
-        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + input.target.commitSHA);
+        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
         Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
@@ -542,7 +542,7 @@ export abstract class AutoTest implements IAutoTest {
         } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
-                "; SHA: " + input.target.commitSHA + "; took: " + Util.tookHuman(start));
+                "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
         }
 
         if (gradePayload) {
