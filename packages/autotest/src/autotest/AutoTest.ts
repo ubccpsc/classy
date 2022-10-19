@@ -30,7 +30,7 @@ export interface IAutoTest {
     addToStandardQueue(element: ContainerInput): void;
 
     /**
-     * Adds a new job to be processed by the regression queue.
+     * Adds a new job to be processed by the low queue.
      *
      * @param {ContainerInput} element
      */
@@ -76,16 +76,16 @@ export abstract class AutoTest implements IAutoTest {
 
     /**
      * Standard jobs. Always execute after Express jobs, but also always
-     * before any regression jobs.
+     * before any low jobs.
      *
      * @private {Queue}
      */
     private standardQueue = new Queue("std");
 
     /**
-     * Regression jobs. These will happen whenever they can. Repos
+     * Low priority jobs. These will happen whenever they can. Repos
      * that push too rapidly will have their jobs demoted to the
-     * regression queue.
+     * low queue.
      *
      * @private {Queue}
      */
@@ -230,7 +230,7 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            // add to the regression queue if it is not already on express or standard
+            // add to the low queue if it is not already on express or standard
             if (this.expressQueue.indexOf(input) < 0 && this.standardQueue.indexOf(input) < 0) {
                 this.lowQueue.push(input);
             } else {
@@ -344,7 +344,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::tick(..) - done: " +
                 "express - #wait: " + this.expressQueue.length() + "; " +
                 "standard - #wait: " + this.standardQueue.length() + "; " +
-                "regression - #wait: " + this.lowQueue.length() + ".");
+                "low - #wait: " + this.lowQueue.length() + ".");
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);

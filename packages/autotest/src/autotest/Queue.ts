@@ -181,7 +181,7 @@ export class Queue {
         try {
             // this happens so infrequently, we will do it synchronously
             const store = fs.readJSONSync(this.persistDir, {throws: false});
-            if (typeof store === "undefined" || store === null) {
+            if (store?.slots?.length === undefined) {
                 // read failed; skip hydrating
                 Log.info("Queue::load() - rehydrating: " + this.name + " skipped");
                 return;
