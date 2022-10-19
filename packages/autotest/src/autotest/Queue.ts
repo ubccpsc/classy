@@ -180,7 +180,12 @@ export class Queue {
     public load() {
         try {
             // this happens so infrequently, we will do it synchronously
-            const store = fs.readJSONSync(this.persistDir);
+            const store = fs.readJSONSync(this.persistDir, {throws: false});
+            if (typeof store === "undefined" || store === null) {
+                // read failed; skip hydrating
+                Log.info("Queue::load() - rehydrating: " + this.name + " skipped");
+                return;
+            }
             // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
             Log.info("Queue::load() - rehydrating: " +
                 this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);

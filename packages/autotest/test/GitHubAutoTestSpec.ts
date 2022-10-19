@@ -27,9 +27,9 @@ describe("GitHubAutoTest", () => {
     let portal: IClassPortal;
     let at: GitHubAutoTest;
 
-    const TS_IN = new Date(2018, 3, 3).getTime();
-    // const TS_BEFORE = new Date(2017, 12, 12).getTime();
-    // const TS_AFTER = new Date(2018, 12, 12).getTime();
+    const now = Date.now();
+    const TS_IN = new Date(now - (1000 * 60 * 5)).getTime(); // 5 mins ago
+    // const TS_IN = new Date(2018, 3, 3).getTime();
 
     const WAIT = 1000;
 
