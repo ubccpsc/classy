@@ -56,6 +56,7 @@ export interface CommitTarget {
 
     postbackURL: string; // where to send postback results
     timestamp: number; // timestamp of push event
+    tsJobStart?: number; // timestamp when target started executing
 
     ref?: string; // git reference; might be useful for tracking a branch name in future
     flags?: string[]; // other flags for the commit (e.g., #slient, #force)

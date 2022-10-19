@@ -470,10 +470,16 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
+            if (typeof data.input.target.tsJobStart === "undefined") {
+                data.input.target.tsJobStart = data.input.target.timestamp;
+            }
+
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": delivId: " + data.delivId + "; repoId: " + data.repoId +
-                "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp) +
-                "; SHA: " + Util.shaHuman(data.commitSHA));
+                "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
+                "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart) +
+                "; SHA: " + Util.shaHuman(data.commitSHA)
+            );
 
             try {
                 // Sends the result payload to Classy for saving in the database.
@@ -508,10 +514,11 @@ export abstract class AutoTest implements IAutoTest {
 
     private async handleTick(job: GradingJob) {
         const start = Date.now();
-        const input = job.input;
-        let record = job.record;
-        let gradePayload: AutoTestGradeTransport;
 
+        let gradePayload: AutoTestGradeTransport;
+        let record = job.record;
+        const input = job.input;
+        input.target.tsJobStart = start;
         Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
         Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
