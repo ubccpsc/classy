@@ -470,14 +470,13 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            if (typeof data.input.target.tsJobStart === "undefined") {
-                data.input.target.tsJobStart = data.input.target.timestamp;
-            }
-
+            // if (typeof data.input.target.tsJobStart === "undefined") {
+            //     data.input.target.tsJobStart = data.input.target.timestamp;
+            // }
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": delivId: " + data.delivId + "; repoId: " + data.repoId +
-                "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
-                "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart) +
+                // "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
+                // "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart) +
                 "; SHA: " + Util.shaHuman(data.commitSHA)
             );
 
@@ -504,9 +503,15 @@ export abstract class AutoTest implements IAutoTest {
 
             // execution done, advance the clock
             this.tick();
+
+            if (typeof data.input.target.tsJobStart === "undefined") {
+                data.input.target.tsJobStart = data.input.target.timestamp;
+            }
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
                 data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
-                "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
+                "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
+                "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart));
+            // "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }
