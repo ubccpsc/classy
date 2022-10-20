@@ -438,7 +438,7 @@ describe("GitHubAutoTest", () => {
         gitHubMessages = [];
         at["postToGitHub"] = function (info: CommitTarget, message: IGitHubMessage): Promise<boolean> {
             Log.test("stubbed postToGitHub(..) - message: " + JSON.stringify(message));
-            Log.test(gitHubMessages.length + "");
+            Log.test("stubbed postToGitHub(..) - start; length: " + gitHubMessages.length);
             if (typeof info.flags === "undefined" || info.flags.indexOf("#silent") < 0) {
                 if (message !== null && typeof message.message !== "undefined") {
                     gitHubMessages.push(message);
@@ -449,7 +449,8 @@ describe("GitHubAutoTest", () => {
             } else {
                 Log.test("stubbed postToGitHub(..) - #silent");
             }
-            Log.test(gitHubMessages.length + "");
+            Log.test("stubbed postToGitHub(..) - done; length: " +
+                gitHubMessages.length + "; content: " + JSON.stringify(gitHubMessages));
             return Promise.resolve(true);
         };
     }
@@ -565,11 +566,12 @@ describe("GitHubAutoTest", () => {
         req.kind = "check";
         await at.handleCommentEvent(req);
         Log.test("Test comment complete");
+
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("This commit is still queued for processing against d1. Your results will be posted here as soon as they are ready.");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // do not charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
         Log.test("Round 1 complete");
 

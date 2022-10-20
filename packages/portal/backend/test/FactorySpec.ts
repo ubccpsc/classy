@@ -52,13 +52,9 @@ describe("Factory", function () {
         const pluginVal = Config.getInstance().getProp(ConfigKey.plugin);
         Config.getInstance().setProp(ConfigKey.plugin, "INVALIDPLUGIN");
 
-        Log.test("1");
         await expect(Factory.getCustomRouteHandler("INVALID_PLUGIN")).to.eventually.throw;
-        Log.test("2");
         await expect(Factory.getCourseController(null, "INVALID_PLUGIN")).to.eventually.throw;
-        Log.test("3");
         await expect(Factory.getCourseController(undefined, undefined)).to.eventually.throw;
-        Log.test("4");
 
         Config.getInstance().setProp(ConfigKey.plugin, pluginVal);
     });

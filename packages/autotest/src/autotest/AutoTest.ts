@@ -250,7 +250,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.trace("AutoTest::tick(..) - start; " +
                 "exp - #wait: " + this.expressQueue.length() + "; " +
                 "std - #wait: " + this.standardQueue.length() + "; " +
-                "low - #wait: " + this.lowQueue.length() + ".");
+                "low - #wait: " + this.lowQueue.length());
 
             // let updated = false;
             const that = this;
@@ -344,7 +344,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.info("AutoTest::tick(..) - done: " +
                 "express - #wait: " + this.expressQueue.length() + "; " +
                 "standard - #wait: " + this.standardQueue.length() + "; " +
-                "low - #wait: " + this.lowQueue.length() + ".");
+                "low - #wait: " + this.lowQueue.length());
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);

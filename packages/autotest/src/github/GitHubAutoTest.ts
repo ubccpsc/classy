@@ -395,8 +395,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(target);
 
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
-            target.personId + " for commit: " + target.commitURL + "; null previous: " + (previousRequest === null) +
-            "; null delay: " + (feedbackDelay === null));
+            target.personId + "; null previous: " + (previousRequest === null) +
+            "; null delay: " + (feedbackDelay === null) +
+            " for commit: " + target.commitURL);
 
         if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + target.personId + "; must wait: " +
