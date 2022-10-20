@@ -152,7 +152,7 @@ export abstract class AutoTest implements IAutoTest {
      * @param input
      */
     public addToExpressQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToExpressQueue(..) - start; commit: " + input.target.commitSHA);
+        Log.info("AutoTest::addToExpressQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
         try {
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToExpressQueue(..) - not added; commit already executing");
@@ -169,7 +169,7 @@ export abstract class AutoTest implements IAutoTest {
             } else {
                 Log.info("AutoTest::addToExpressQueue(..) - user: " + input.target.personId +
                     " already has job on express queue; adding: " +
-                    input.target.commitSHA + " to standard queue");
+                    Util.shaHuman(input.target.commitSHA) + " to standard queue");
 
                 // express queue already has a job for this user, move to standard
                 this.addToStandardQueue(input);
@@ -180,7 +180,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToStandardQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + input.target.commitSHA);
+        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
         try {
 
             if (this.isCommitExecuting(input)) {
@@ -222,7 +222,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToLowQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToLowQueue(..) - start; commit: " + input.target.commitSHA);
+        Log.info("AutoTest::addToLowQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
         try {
 
             if (this.isCommitExecuting(input)) {
@@ -285,48 +285,48 @@ export abstract class AutoTest implements IAutoTest {
                 }
             };
 
-            /**
-             * Moves a job from one queue to another.
-             *
-             * @param input
-             * @param sourceQueue
-             * @param destQueue
-             * @param onFront whether the job should be put at the front (true) or back (false) of the queue.
-             */
-            const switchQueues = function (input: ContainerInput, sourceQueue: Queue, destQueue: Queue, onFront: boolean) {
-                Log.info("AutoTest::tick::switchQueues(..) - start; source: " + sourceQueue.getName() +
-                    "->dest: " + destQueue.getName() + "; for SHA: " + Util.shaHuman(input.target.commitSHA));
-
-                if (that.isCommitExecuting(input)) {
-                    Log.info("AutoTest::tick::switchQueues(..) - skipped; commit already executing");
-                    return;
-                }
-
-                const onSourceQueue = sourceQueue.indexOf(input) >= 0;
-                const onDestQueue = destQueue.indexOf(input) >= 0;
-
-                if (onDestQueue === true) {
-                    // already on dest queue
-                    Log.warn("AutoTest::tick::switchQueues(..) - already on dest queue: " + input.target.commitSHA);
-                    return;
-                }
-
-                if (onSourceQueue === false) {
-                    // not on source to switch
-                    Log.warn("AutoTest::tick::switchQueues(..) - not on source queue: " + input.target.commitSHA);
-                    return;
-                }
-
-                // swap queues
-                Log.trace("AutoTest::tick::switchQueues(..) - switching: " + input.target.commitSHA);
-                sourceQueue.remove(input);
-                if (onFront === true) {
-                    destQueue.pushFirst(input); // put on the front of the next queue
-                } else {
-                    destQueue.push(input); // put on the front of the next queue
-                }
-                Log.trace("AutoTest::tick::switchQueues(..) - switched: " + input.target.commitSHA);
-            };
+            // /**
+            //  * Moves a job from one queue to another.
+            //  *
+            //  * @param input
+            //  * @param sourceQueue
+            //  * @param destQueue
+            //  * @param onFront whether the job should be put at the front (true) or back (false) of the queue.
+            //  */
+            // const switchQueues = function (input: ContainerInput, sourceQueue: Queue, destQueue: Queue, onFront: boolean) {
+            //     Log.info("AutoTest::tick::switchQueues(..) - start; source: " + sourceQueue.getName() +
+            //         "->dest: " + destQueue.getName() + "; for SHA: " + Util.shaHuman(input.target.commitSHA));
+            //
+            //     if (that.isCommitExecuting(input)) {
+            //         Log.info("AutoTest::tick::switchQueues(..) - skipped; commit already executing");
+            //         return;
+            //     }
+            //
+            //     const onSourceQueue = sourceQueue.indexOf(input) >= 0;
+            //     const onDestQueue = destQueue.indexOf(input) >= 0;
+            //
+            //     if (onDestQueue === true) {
+            //         // already on dest queue
+            //         Log.warn("AutoTest::tick::switchQueues(..) - already on dest queue: " + input.target.commitSHA);
+            //         return;
+            //     }
+            //
+            //     if (onSourceQueue === false) {
+            //         // not on source to switch
+            //         Log.warn("AutoTest::tick::switchQueues(..) - not on source queue: " + input.target.commitSHA);
+            //         return;
+            //     }
+            //
+            //     // swap queues
+            //     Log.trace("AutoTest::tick::switchQueues(..) - switching: " + input.target.commitSHA);
+            //     sourceQueue.remove(input);
+            //     if (onFront === true) {
+            //         destQueue.pushFirst(input); // put on the front of the next queue
+            //     } else {
+            //         destQueue.push(input); // put on the front of the next queue
+            //     }
+            //     Log.trace("AutoTest::tick::switchQueues(..) - switched: " + input.target.commitSHA);
+            // };
 
             // handle the queues in order: express -> standard -> low
             while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
@@ -411,13 +411,14 @@ export abstract class AutoTest implements IAutoTest {
         try {
             for (const execution of this.jobs) {
                 if (execution.target.commitURL === input.target.commitURL &&
-                    execution.delivId === input.target.delivId) {
+                    execution.target.delivId === input.target.delivId) {
                     return true;
                 }
             }
             return false;
         } catch (err) {
             Log.error("AutoTest::isCommitExecuting() - ERROR: " + err);
+            return false;
         }
     }
 
@@ -448,10 +449,10 @@ export abstract class AutoTest implements IAutoTest {
     /**
      * Called when a container completes.
      *
-     * Persist record. (could decide to move this persistence into ClassPortal::sendResult in future)
+     * Persist record (could decide to move this persistence into ClassPortal::sendResult in future).
      * Post back if specified by container output.
-     * Post back if requested by TA
-     * Post back if requested by user and quota allows (and record feedback given)
+     * Post back if requested by TA.
+     * Post back if requested by user and quota allows (and record feedback given).
      *
      * @param data
      */

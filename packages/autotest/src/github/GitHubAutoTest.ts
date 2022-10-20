@@ -101,10 +101,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     this.addToStandardQueue(input);
 
                     const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
-                    if (shouldPromotePush) {
+                    if (shouldPromotePush === true) {
                         Log.info(`GitHubAutoTest::handlePushEvent(${info.commitSHA}) - Promoting to express queue`);
-                        // this.promoteIfNeeded(info);
                         this.addToExpressQueue(input);
+                    } else {
+                        this.addToStandardQueue(input);
                     }
 
                     if (Array.isArray(deliv.regressionDelivIds) && deliv.regressionDelivIds.length > 0) {
@@ -283,7 +284,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message; repo: " + target.repoId);
         } else {
             Log.info("GitHubAutoTest::postToGitHub(..) - posting; repo: " + target.repoId +
-                "; deliv: " + target.delivId + "; SHA: " + target.commitSHA);
+                "; deliv: " + target.delivId + "; SHA: " + Util.shaHuman(target.commitSHA));
             Log.trace("GitHubAutoTest::postToGitHub(..) - target: " + JSON.stringify(target));
             Log.trace("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message));
             return await GitHubUtil.postMarkdownToGithub(message);
@@ -329,12 +330,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             } else {
                 // previously paid, do not charge
                 Log.info("GitHubAutoTest::processCommentExists(..) - result already exists and paid for for: " +
-                    info.personId + "; SHA: " + info.commitSHA);
+                    info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
             }
         } else {
             // postbackOnComplete should only be true for lint / compile errors; do not saveFeedback (charge) for these
             Log.info("GitHubAutoTest::processCommentExists(..) - result already exists; feedback request skipped for: " +
-                info.personId + "; SHA: " + info.commitSHA);
+                info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
         }
         return;
     }
@@ -344,7 +345,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.personId + " for commit: " + info.commitURL);
 
         Log.info("GitHubAutoTest::processCommentNew(..) - result not yet done; handling for: " +
-            info.personId + "; SHA: " + info.commitSHA);
+            info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
@@ -366,15 +367,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
                 msg = "This commit has been queued for processing against " + info.delivId + ".";
                 msg += " Your results will be posted here as soon as they are ready.";
-
-                // STUDENT: need to guard this
-                // await this.schedule(info);
             }
             await this.saveCommentInfo(info);
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
 
-            // add to express queue
-            // this.promoteIfNeeded(info);
+            // student request events always go on the express queue
             this.addToExpressQueue(input);
         } else {
             Log.warn("GitHubAutoTest::processCommentNew(..) - null container config deliv: " + info.delivId);
@@ -403,13 +400,13 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + target.personId + "; must wait: " +
-                feedbackDelay + "; SHA: " + target.commitURL);
+                feedbackDelay + "; SHA: " + Util.shaHuman(target.commitURL));
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
             const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
             await this.postToGitHub(target, {url: target.postbackURL, message: msg});
         } else if (previousRequest !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - feedback previously given for: " +
-                target.personId + "; deliv: " + target.delivId + "; SHA: " + target.commitURL);
+                target.personId + "; deliv: " + target.delivId + "; SHA: " + Util.shaHuman(target.commitURL));
             // feedback given before; same as next case but logging is different
             // processComment will take of whether this is already in progress, etc.
             await this.processComment(target, res);
@@ -418,7 +415,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             //     Log.target("GitHubAutoTest::handleCommentStudent(..) - handling #check");
             //     await this.handleCheck(target, res);
         } else {
-            Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " + target.personId + "; SHA: " + target.commitURL);
+            Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " +
+                target.personId + "; SHA: " + Util.shaHuman(target.commitURL));
             // no time limitations. Because of this, queueing is the same as submitting now.
             // processComment will take of whether this is already in progress, etc.
             await this.processComment(target, res);
@@ -482,7 +480,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commenter: " +
-            info.personId + "; SHA: " + info.commitSHA);
+            info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - start; comment: " +
             JSON.stringify(info));
@@ -496,7 +494,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
-            info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA + "; hasPush: " + (pushEvent !== null));
+            info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA) + "; hasPush: " + (pushEvent !== null));
 
         if (pushEvent !== null && typeof pushEvent.ref === "string") {
             // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
@@ -520,8 +518,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            // staff request
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
-                info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+                info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA));
             info.adminRequest = true; // set admin request so queues can handle this appropriately
             if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
                 Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; processing with #force");
@@ -529,15 +528,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             } else {
                 await this.processComment(info, res);
             }
-
         } else {
+            // student request
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
-                info.personId + "; deliv: " + info.delivId + "; SHA: " + info.commitSHA);
+                info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA));
             info.adminRequest = false;
             await this.handleCommentStudent(info, res);
         }
 
-        this.tick(); // make sure the queues have ticked after the comment has been processed
+        // make sure the queues have ticked after the comment has been processed
+        this.tick();
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
     }
 
@@ -548,13 +548,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             const standardFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "standard");
             const checkFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "check");
-            // const containerConfig = await this.classPortal.getContainerDetails(delivId);
+            const feedbackRequested = (standardFeedbackRequested !== null || checkFeedbackRequested !== null);
 
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
+            // Log.trace(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
-            Log.trace(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
+            // emit for testing
+            Log.info("GitHubAutoTest::processExecution() - " +
+                "repo: " + data.repoId +
+                "; deliv: " + data.delivId +
+                "; SHA: " + Util.shaHuman(data.commitSHA) +
+                "; postback: " + data.output.postbackOnComplete +
+                "; requested: " + feedbackRequested +
+                "; delay: " + feedbackDelay +
+                "; futureTarget: " + futureTarget);
 
             if (data.output.postbackOnComplete === true) {
                 // handle "free" feedback as specified by the grading container
@@ -567,16 +576,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
                 // do this first, does not count against quota
                 Log.info("GitHubAutoTest::processExecution(..) - postback: true; deliv: " +
-                    delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + ";");
+                    delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) + ";");
                 const msg = await this.classPortal.formatFeedback(data);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
-            } else if ((checkFeedbackRequested !== null || standardFeedbackRequested !== null) &&
-                feedbackDelay === null && futureTarget === false) {
+            } else if (feedbackRequested === true && // person requested feedback
+                feedbackDelay === null && // person has feedback 'credit'
+                futureTarget === false) {
                 // handle user-requested feedback
 
                 const giveFeedback = async function (target: CommitTarget, kind: string): Promise<void> {
                     Log.info("GitHubAutoTest::processExecution(..) - " + kind + " feedback requested; deliv: " +
-                        delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA + "; for: " + target.personId);
+                        delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) + "; for: " + target.personId);
                     const msg = await that.classPortal.formatFeedback(data);
                     await that.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
                     await that.saveFeedbackGiven(delivId, target.personId,
@@ -593,11 +603,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // no feedback should be returned
                 if (feedbackDelay !== null) {
                     Log.info("GitHubAutoTest::processExecution(..) - commit no longer eligible for receiving feedback: " +
-                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA +
+                        data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
                         ". This was probably caused by a race condition.");
                 } else {
                     Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
-                        data.delivId + "; repo: " + data.repoId + "; SHA: " + data.commitSHA);
+                        data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA));
                 }
             }
         } catch (err) {
@@ -607,7 +617,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
-     * Check to see if the current user is allowed to make a result request
+     * Check to see if the current user is allowed to make a result request.
      *
      * Null means yes, string will contain how long (in a human-readable format).
      *
@@ -687,7 +697,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async saveCommentInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::saveCommentInfo(..) - for: " + info.personId +
-                "; SHA: " + info.commitSHA + "; kind: " + info.kind);
+                "; SHA: " + Util.shaHuman(info.commitSHA) + "; kind: " + info.kind);
             await this.dataStore.saveComment(info);
         } catch (err) {
             Log.error("GitHubAutoTest::saveCommentInfo(..) - ERROR: " + err);
@@ -738,7 +748,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
-     * Return the username that requested the result for the given commitURL (or null)
+     * Return the CommitTarget if the <SHA, delivId, kind> has been requested.
+     * Returns null if a request has not been made.
      *
      * @param commitURL
      * @param delivId
@@ -750,9 +761,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (record !== null) {
                 return record;
             }
-            return null;
         } catch (err) {
             Log.error("GitHubAutoTest::getRequester() - ERROR: " + err);
         }
+        return null;
     }
 }
