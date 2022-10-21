@@ -127,7 +127,7 @@ export abstract class AutoTest implements IAutoTest {
     private jobs: ContainerInput[] = [];
 
     constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
-        Log.info("AutoTest::<init> - starting AutoTest");
+        Log.trace("AutoTest::<init> - starting AutoTest");
         this.dataStore = dataStore;
         this.classPortal = classPortal;
         this.docker = docker;
@@ -152,7 +152,9 @@ export abstract class AutoTest implements IAutoTest {
      * @param input
      */
     public addToExpressQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToExpressQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
+        Log.info("AutoTest::addToExpressQueue(..) - start; " +
+            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
+            "; commit: " + Util.shaHuman(input.target.commitSHA));
         try {
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToExpressQueue(..) - not added; commit already executing");
@@ -167,9 +169,9 @@ export abstract class AutoTest implements IAutoTest {
                 this.standardQueue.remove(input);
                 this.lowQueue.remove(input);
             } else {
-                Log.info("AutoTest::addToExpressQueue(..) - user: " + input.target.personId +
-                    " already has job on express queue; adding: " +
-                    Util.shaHuman(input.target.commitSHA) + " to standard queue");
+                Log.info("AutoTest::addToExpressQueue(..) - user: " +
+                    input.target.personId + " already has job on express queue" +
+                    "; adding: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
 
                 // express queue already has a job for this user, move to standard
                 this.addToStandardQueue(input);
@@ -180,9 +182,11 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToStandardQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToStandardQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
-        try {
+        Log.info("AutoTest::addToStandardQueue(..) - start; " +
+            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
+            "; commit: " + Util.shaHuman(input.target.commitSHA));
 
+        try {
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing");
                 return;
@@ -211,7 +215,6 @@ export abstract class AutoTest implements IAutoTest {
 
                     this.addToLowQueue(input);
                 }
-
             } else {
                 Log.info("AutoTest::addToStandardQueue(..) - skipped; " +
                     "job already on express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
@@ -222,7 +225,10 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToLowQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToLowQueue(..) - start; commit: " + Util.shaHuman(input.target.commitSHA));
+        Log.info("AutoTest::addToLowQueue(..) - start; " +
+            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
+            "; commit: " + Util.shaHuman(input.target.commitSHA));
+
         try {
 
             if (this.isCommitExecuting(input)) {
@@ -247,10 +253,10 @@ export abstract class AutoTest implements IAutoTest {
      */
     public tick(): void {
         try {
-            Log.trace("AutoTest::tick(..) - start; " +
-                "exp - #wait: " + this.expressQueue.length() + "; " +
-                "std - #wait: " + this.standardQueue.length() + "; " +
-                "low - #wait: " + this.lowQueue.length());
+            Log.trace("AutoTest::tick(..) - start: " +
+                "#exp: " + this.expressQueue.length() + "; " +
+                "#std: " + this.standardQueue.length() + "; " +
+                "#low: " + this.lowQueue.length());
 
             // let updated = false;
             const that = this;
@@ -341,10 +347,10 @@ export abstract class AutoTest implements IAutoTest {
                 tickQueue(this.lowQueue);
             }
 
-            Log.info("AutoTest::tick(..) - done: " +
-                "express - #wait: " + this.expressQueue.length() + "; " +
-                "standard - #wait: " + this.standardQueue.length() + "; " +
-                "low - #wait: " + this.lowQueue.length());
+            Log.info("AutoTest::tick(..) - done:  " +
+                "#exp: " + this.expressQueue.length() + "; " +
+                "#std: " + this.standardQueue.length() + "; " +
+                "#low: " + this.lowQueue.length());
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);
@@ -357,14 +363,14 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     private async persistQueues(): Promise<boolean> {
-        Log.trace("AutoTest::persistQueues() - start");
+        Log.trace("AutoTest::persistQueues()");
         try {
             const start = Date.now();
             // noinspection ES6MissingAwait
             const writing = [
                 this.standardQueue.persist(), // await in Promise.all
                 this.lowQueue.persist(), // await in Promise.all
-                this.expressQueue.persist()
+                this.expressQueue.persist() // await in Promise.all
             ];
             await Promise.all(writing);
             Log.trace("AutoTest::persistQueues() - done; took: " + Util.took(start));
@@ -381,11 +387,12 @@ export abstract class AutoTest implements IAutoTest {
             this.standardQueue.load();
             this.lowQueue.load();
             this.expressQueue.load();
-            Log.info("AutoTest::loadQueues() - done; queues loaded");
+            const numQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
+            Log.info("AutoTest::loadQueues() - done; numJobs: " + numQueued);
         } catch (err) {
             Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
         }
-        this.tick();
+        this.tick(); // start any jobs that were loaded
     }
 
     /**
@@ -402,7 +409,7 @@ export abstract class AutoTest implements IAutoTest {
     protected abstract processExecution(data: AutoTestResult): Promise<void>;
 
     /**
-     * Returns whether the commitURL is currently executing the given deliverable.
+     * Returns whether the <commitURL, delivId> is currently executing.
      *
      * @param {ContainerInput} input
      * @returns {boolean} true if a commit is executing on any of the queues
@@ -526,7 +533,7 @@ export abstract class AutoTest implements IAutoTest {
         const input = job.input;
         input.target.tsJobStart = start;
         Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
-        Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
+        // Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
             await job.prepare();

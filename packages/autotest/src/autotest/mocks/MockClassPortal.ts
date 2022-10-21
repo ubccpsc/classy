@@ -33,21 +33,21 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
-        Log.info("MockClassPortal::getDefaultDeliverableId(..) - start");
+        Log.info("MockClassPortal::getConfiguration(..) - start");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) {
             return {defaultDeliverable: "d1", deliverableIds: ["d1", "d4"]};
         }
-        Log.error('MockClassPortal::getDefaultDeliverableId() - MockClassPortal should not be used with: ' + name);
+        Log.error('MockClassPortal::getConfiguration() - MockClassPortal should not be used with: ' + name);
         return null;
     }
 
     public async getContainerDetails(delivId: string): Promise<AutoTestConfigTransport | null> {
-        Log.info("MockClassPortal::getContainerDetails(..) - start");
+        Log.info("MockClassPortal::getContainerDetails( " + delivId + " )");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
-        const validDelivs = ['d0', 'd1'];
+        const validDelivs = ["d0", "d1"];
         if (name === testname) { // test suites only
             if (validDelivs.indexOf(delivId) >= 0) {
                 const delay = 6 * 60 * 60; // 6 hours in seconds
@@ -63,7 +63,7 @@ export class MockClassPortal implements IClassPortal {
                     lateAutoTest: true
                 };
 
-                if (delivId === 'd0') {
+                if (delivId === "d0") {
                     ret.lateAutoTest = false;
                 }
 
@@ -109,7 +109,7 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {
-        const VALID_PEOPLE = ['staff', 'myUser'];
+        const VALID_PEOPLE = ["staff", "myUser"];
         if (VALID_PEOPLE.indexOf(userName) >= 0) {
             Log.info("MockClassPortal::getPersonId(..) - valid person: " + userName);
             return Promise.resolve({personId: userName});
@@ -127,7 +127,7 @@ export class MockClassPortal implements IClassPortal {
     }
 
     public async shouldPromotePush(info: CommitTarget): Promise<boolean> {
-        Log.info("MockClassPortal::shouldPromotePush(..) - Start");
+        Log.info("MockClassPortal::shouldPromotePush(..) - promote: false");
         return false;
     }
 

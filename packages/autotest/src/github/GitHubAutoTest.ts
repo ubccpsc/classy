@@ -60,21 +60,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             const org = Config.getInstance().getProp(ConfigKey.org);
-            Log.info("GitHubAutoTest::handlePushEvent(..) - org: " + org + "; push org: " + info.orgId);
+            Log.info("GitHubAutoTest::handlePushEvent(..) - start; org: " + org + "; push org: " + info.orgId);
             if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - ignored, org: " + info.orgId +
                     " does not match current course: " + org);
                 return false;
             }
 
-            Log.info("GitHubAutoTest::handlePushEvent(..) - start; commit: " + info.commitSHA);
+            Log.info("GitHubAutoTest::handlePushEvent(..) - " +
+                "repo: " + info.repoId + "; sha: " + Util.shaHuman(info.commitSHA));
             const start = Date.now();
             await this.savePushInfo(info);
 
             if (typeof delivId === "undefined" || delivId === null) {
                 Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; requesting");
                 delivId = await this.getDelivId(); // current default deliverable
-                Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; retrieved: " +
+                Log.info("GitHubAutoTest::handlePushEvent(..) - retrieved delivId: " +
                     delivId + "; type: " + typeof delivId);
 
                 if (delivId === "null") {
@@ -84,21 +85,20 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             if (delivId !== null) {
-                const deliv = await this.classPortal.getContainerDetails(delivId);
-                if (deliv === null) {
+                const containerConfig = await this.classPortal.getContainerDetails(delivId);
+                if (containerConfig === null) {
                     Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; no default deliverable");
                     return false;
                 }
 
-                if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
+                if (containerConfig.closeTimestamp < info.timestamp && containerConfig.lateAutoTest === false) {
                     Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed to grading");
                     return false;
                 }
 
-                const containerConfig = await this.classPortal.getContainerDetails(delivId);
+                // const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig !== null) {
                     const input: ContainerInput = {delivId, target: info, containerConfig};
-                    this.addToStandardQueue(input);
 
                     const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
                     if (shouldPromotePush === true) {
@@ -108,8 +108,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                         this.addToStandardQueue(input);
                     }
 
-                    if (Array.isArray(deliv.regressionDelivIds) && deliv.regressionDelivIds.length > 0) {
-                        for (const regressionId of deliv.regressionDelivIds) {
+                    if (Array.isArray(containerConfig.regressionDelivIds) && containerConfig.regressionDelivIds.length > 0) {
+                        for (const regressionId of containerConfig.regressionDelivIds) {
                             const regressionDetails = await this.classPortal.getContainerDetails(regressionId);
                             if (regressionDetails !== null) {
                                 const regressionInfo: CommitTarget = JSON.parse(JSON.stringify(info)); // ensure we have a copy
@@ -137,7 +137,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     }
 
                     this.tick();
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; commit: " + info.commitSHA + "; took: " + Util.took(start));
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; repo: " +
+                        info.repoId + "; delivId: " + info.delivId + "; sha: " +
+                        Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
                     return true;
                 } else {
                     Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
@@ -683,7 +685,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async savePushInfo(info: CommitTarget) {
         try {
-            Log.trace("GitHubAutoTest::savePushInfo(..) - commit: " + info.commitSHA);
+            Log.trace("GitHubAutoTest::savePushInfo(..) - repo: " + info.repoId +
+                "; commit: " + Util.shaHuman(info.commitSHA));
             await this.dataStore.savePush(info);
         } catch (err) {
             Log.error("GitHubAutoTest::savePushInfo(..) - ERROR: " + err);
@@ -706,7 +709,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
-     * Gets the current deliverable id
+     * Gets the current deliverable id.
      */
     private async getDelivId(): Promise<string | null> {
         Log.trace("GitHubAutoTest::getDelivId() - start");

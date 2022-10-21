@@ -299,7 +299,7 @@ export class MockDataStore implements IDataStore {
                 fs.writeJSONSync(this.FEEDBACK_PATH, []);
             }
 
-            Log.info("MockDataStore::clearData() - files removed");
+            Log.info("MockDataStore::clearData() - all data files removed");
         } else {
             throw new Error("MockDataStore::clearData() - can only be called on test configurations");
         }

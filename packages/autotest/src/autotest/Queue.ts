@@ -10,7 +10,7 @@ export class Queue {
     private readonly persistDir: string;
 
     constructor(name: string) {
-        Log.info("Queue::<init>( " + name + " )");
+        Log.trace("Queue::<init>( " + name + " )");
         this.name = name;
 
         // almost certainly exists (contains all queue output), but quick to check

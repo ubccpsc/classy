@@ -18,13 +18,14 @@ export class MockGradingJob extends GradingJob {
 
     public async run(docker: any): Promise<AutoTestResult> {
         try {
-            Log.info("MockGrader::execute() - start; commitSHA: " + this.input.target.commitSHA);
+            Log.info("MockGrader::execute() - start; repo: " + this.input.target.repoId +
+                "; deliv: " + this.input.target.delivId + "; sha: " + Util.shaHuman(this.input.target.commitSHA));
             // const oracleToken = Config.getInstance().getProp(ConfigKey.githubOracleToken);
             // const dockerId = Config.getInstance().getProp(ConfigKey.dockerId);
             // const workspace = Config.getInstance().getProp(ConfigKey.workspace);
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
-            let timeout = 10000;
+            let timeout = 1000;
             if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
                 timeout = 200; // don't slow down tests; don't need a lot to get out of order here
             }
@@ -71,7 +72,8 @@ export class MockGradingJob extends GradingJob {
                 output: out
             };
 
-            Log.info("MockGrader::execute() - execution complete; commit: " + this.input.target.commitSHA);
+            Log.info("MockGrader::execute() - execution complete; repo: " + this.input.target.repoId +
+                "; deliv: " + this.input.target.delivId + "; sha: " + Util.shaHuman(this.input.target.commitSHA));
             return ret;
 
         } catch (err) {
