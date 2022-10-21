@@ -7,6 +7,8 @@ import {GradingJob} from "../GradingJob";
 
 export class MockGradingJob extends GradingJob {
 
+    public static readonly JOB_WAIT = 200;
+
     constructor(input: ContainerInput) {
         super(input);
     }
@@ -28,8 +30,8 @@ export class MockGradingJob extends GradingJob {
             // if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
             //     timeout = 200; // don't slow down tests; don't need a lot to get out of order here
             // }
-            const timeout = 200;
-            await Util.delay(timeout); // simulate the container taking longer than the rest of the process
+
+            await Util.delay(MockGradingJob.JOB_WAIT); // simulate the container taking longer than the rest of the process
 
             const gradeReport: GradeReport = {
                 scoreOverall: 50,

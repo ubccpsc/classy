@@ -365,6 +365,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             } else {
                 const pe = await this.dataStore.getPushRecord(info.commitURL);
                 if (pe === null) {
+                    // NOTE: if a commentEvent is made on a commit we do not have a pushEvent for, create one.
+                    // This is _permissive_, but is useful for cases when AutoTest missed a push event
+                    // (e.g., during a crash). This could conceivably be used to fake timestamps, but would
+                    // require blocking AutoTest getting the PushEvent from GitHub, which is unlikely to happen.
                     Log.warn("GitHubAutoTest::processCommentNew(..) - push event was not present; adding now. URL: " +
                         info.commitURL + "; for: " + info.personId + "; SHA: " + info.commitSHA);
                     // store this push event for consistency in case we need it for anything else later
