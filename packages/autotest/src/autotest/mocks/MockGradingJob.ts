@@ -1,4 +1,3 @@
-import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState, GradeReport} from "@common/types/ContainerTypes";
@@ -25,10 +24,11 @@ export class MockGradingJob extends GradingJob {
             // const workspace = Config.getInstance().getProp(ConfigKey.workspace);
 
             // TODO: This should really become TestDocker.ts or something that can be instantiated
-            let timeout = 1000;
-            if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
-                timeout = 200; // don't slow down tests; don't need a lot to get out of order here
-            }
+            // let timeout = 1000;
+            // if (Config.getInstance().getProp(ConfigKey.name) === Config.getInstance().getProp(ConfigKey.testname)) {
+            //     timeout = 200; // don't slow down tests; don't need a lot to get out of order here
+            // }
+            const timeout = 200;
             await Util.delay(timeout); // simulate the container taking longer than the rest of the process
 
             const gradeReport: GradeReport = {
@@ -58,14 +58,15 @@ export class MockGradingJob extends GradingJob {
 
             // just a hack to test postback events
             if (this.input.target.postbackURL === "POSTBACK") {
+                Log.info("MockGrader::execute() - overriding for postback");
                 out.postbackOnComplete = true;
                 out.report.feedback = "Build Problem Encountered.";
+                out.report.result = "FAIL_COMPILE";
             }
 
             const ret: AutoTestResult = {
-                delivId: this.input.delivId,
+                delivId: this.input.target.delivId,
                 repoId: this.input.target.repoId,
-                // timestamp: this.input.pushInfo.timestamp,
                 commitURL: this.input.target.commitURL,
                 commitSHA: this.input.target.commitSHA,
                 input: this.input,
@@ -73,7 +74,8 @@ export class MockGradingJob extends GradingJob {
             };
 
             Log.info("MockGrader::execute() - execution complete; repo: " + this.input.target.repoId +
-                "; deliv: " + this.input.target.delivId + "; sha: " + Util.shaHuman(this.input.target.commitSHA));
+                "; deliv: " + this.input.target.delivId + "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
+                "; feedback: " + ret.output.report.feedback);
             return ret;
 
         } catch (err) {

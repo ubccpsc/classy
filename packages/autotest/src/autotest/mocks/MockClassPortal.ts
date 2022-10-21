@@ -17,18 +17,20 @@ import {MockDataStore} from "./MockDataStore";
 
 export class MockClassPortal implements IClassPortal {
 
+    private ds = new MockDataStore();
+
     public async isStaff(userName: string): Promise<AutoTestAuthTransport> {
         Log.info("MockClassPortal::isStaff(..) - start");
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) {
-            if (userName === 'staff' || userName === 'cs310') {
+            if (userName === "staff" || userName === "cs310") {
                 return {personId: userName, isStaff: true, isAdmin: true};
             } else {
                 return {personId: userName, isStaff: false, isAdmin: false};
             }
         }
-        Log.error('MockClassPortal::isStaff() - MockClassPortal should not be used with: ' + name);
+        Log.error("MockClassPortal::isStaff() - MockClassPortal should not be used with: " + name);
         return {personId: userName, isStaff: false, isAdmin: false};
     }
 
@@ -39,7 +41,7 @@ export class MockClassPortal implements IClassPortal {
         if (name === testname) {
             return {defaultDeliverable: "d1", deliverableIds: ["d1", "d4"]};
         }
-        Log.error('MockClassPortal::getConfiguration() - MockClassPortal should not be used with: ' + name);
+        Log.error("MockClassPortal::getConfiguration() - MockClassPortal should not be used with: " + name);
         return null;
     }
 
@@ -93,19 +95,18 @@ export class MockClassPortal implements IClassPortal {
         const name = Config.getInstance().getProp(ConfigKey.name);
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (name === testname) {
-            const ds = new MockDataStore();
-            await ds.saveResult(result);
+            // const ds = new MockDataStore();
+            await this.ds.saveResult(result);
             return {success: {worked: true}};
         } else {
-            return {failure: {message: 'did not work', shouldLogout: false}};
+            return {failure: {message: "did not work", shouldLogout: false}};
         }
     }
 
     public async getResult(delivId: string, repoId: string): Promise<AutoTestResultTransport | null> {
         Log.info("MockClassPortal::getResult(..) - start");
 
-        const ds = new MockDataStore();
-        return await ds.getResult(delivId, repoId);
+        return await this.ds.getResult(delivId, repoId);
     }
 
     public async getPersonId(userName: string): Promise<AutoTestPersonIdTransport | null> {

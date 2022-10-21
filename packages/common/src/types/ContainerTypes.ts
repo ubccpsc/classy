@@ -16,7 +16,7 @@ export enum ContainerState {
  * Primary data structure that the course container is invoked with.
  */
 export interface ContainerInput {
-    delivId: string; // Specifies what delivId the Grader should execute against.
+    // delivId: string; // Specifies what delivId the Grader should execute against.
     target: CommitTarget; // Details about the push event that led to this request.
     containerConfig: AutoTestConfigTransport; // Container configuration details.
 }

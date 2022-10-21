@@ -131,11 +131,11 @@ export class ResultsController {
         // rudimentary checking
 
         // delivId: string; // (already in input)
-        if (typeof record.delivId === 'undefined') {
-            const msg = 'delivId undefined';
-            Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
-            return msg;
-        }
+        // if (typeof record.delivId === 'undefined') {
+        //     const msg = 'delivId undefined';
+        //     Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
+        //     return msg;
+        // }
 
         // repoId: string;  // (already in input)
         if (typeof record.repoId === 'undefined') {
@@ -165,7 +165,7 @@ export class ResultsController {
             return msg;
         }
 
-        if (typeof record.input.delivId !== 'string') {
+        if (typeof record.input.target.delivId !== "string") {
             const msg = 'input delivId missing';
             Log.error('ResultsController::validateAutoTestResult(..) - ERROR: ' + msg);
             return msg;

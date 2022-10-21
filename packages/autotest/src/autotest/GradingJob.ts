@@ -19,7 +19,7 @@ export class GradingJob {
         this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
         this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
         this.record = {
-            delivId: this.input.delivId,
+            delivId: this.input.target.delivId,
             repoId: this.input.target.repoId,
             commitURL: this.input.target.commitURL,
             commitSHA: this.input.target.commitSHA,
@@ -86,7 +86,7 @@ export class GradingJob {
             User: Config.getInstance().getProp(ConfigKey.dockerUid),
             Image: this.input.containerConfig.dockerImage,
             Env: [
-                `ASSIGNMENT=${this.input.delivId}`,
+                `ASSIGNMENT=${this.input.target.delivId}`,
                 `EXEC_ID=${this.id}`,
                 `INPUT=${JSON.stringify(this.input)}`
             ],
@@ -112,7 +112,7 @@ export class GradingJob {
 
         const out = this.record.output;
         if (exitCode === -1) {
-            out.report.feedback = "Container did not complete for `" + this.input.delivId + "` in the allotted time.";
+            out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
             out.state = ContainerState.TIMEOUT;
         } else {
             try {

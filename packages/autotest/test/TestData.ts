@@ -14,7 +14,7 @@ export class TestData {
         personId:     null,
         kind:         "push",
         flags:        [],
-        delivId:      "d0"
+        delivId:      "d1"
     };
 
     public static readonly pushEventB: CommitTarget = {
@@ -30,7 +30,7 @@ export class TestData {
         personId:     null,
         kind:         "push",
         flags:        [],
-        delivId:      "d0"
+        delivId:      "d1"
     };
 
     public static readonly pushEventPostback: CommitTarget = {
@@ -47,11 +47,11 @@ export class TestData {
         personId:     null,
         kind:         "push",
         flags:        [],
-        delivId:      "d0"
+        delivId:      "d1"
     };
 
     public static readonly inputRecordA: ContainerInput = {
-        delivId:         "d0",
+        // delivId:         "d0",
         containerConfig: {
             dockerImage:        "imageName",
             studentDelay:       300,
@@ -66,7 +66,7 @@ export class TestData {
     };
 
     public static readonly inputRecordB: ContainerInput = {
-        delivId:         "d0",
+        // delivId:         "d0",
         containerConfig: {
             dockerImage:        "imageName",
             studentDelay:       300,
@@ -144,7 +144,7 @@ export class TestData {
     };
 
     public static readonly outputRecordA: AutoTestResult = {
-        delivId:   TestData.inputRecordA.delivId,
+        delivId:   TestData.inputRecordA.target.delivId,
         repoId:    TestData.inputRecordA.target.repoId,
         // "timestamp": TestData.inputRecordA.pushInfo.timestamp,
         commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4c6dc2",
@@ -174,7 +174,7 @@ export class TestData {
     };
 
     public static readonly outputRecordB: AutoTestResult = {
-        delivId:   TestData.inputRecordB.delivId,
+        delivId:   TestData.inputRecordB.target.delivId,
         repoId:    TestData.inputRecordB.target.repoId,
         // "timestamp": TestData.inputRecordB.pushInfo.timestamp,
         commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d0_team999/commit/abe1b0918b872997de4c4d2baf4c263f8d4staff",

@@ -778,7 +778,7 @@ export class TestHarness {
                 closeTimestamp: 10000,
                 lateAutoTest: true,
             },
-            delivId: delivId,
+            // delivId: delivId,
         };
 
         const result: Result = {
@@ -797,7 +797,7 @@ export class TestHarness {
 
     public static createContainerInput(): ContainerInput {
         const input: ContainerInput = {
-            delivId: "", // TBD
+            // delivId: "", // TBD
             containerConfig: {} as AutoTestConfigTransport,
             target: {
                 delivId: "", // TBD

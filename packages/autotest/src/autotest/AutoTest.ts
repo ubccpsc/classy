@@ -269,7 +269,7 @@ export abstract class AutoTest implements IAutoTest {
                     const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
-                        info.delivId + "; repo: " + info.target.repoId + "; SHA: " + Util.shaHuman(info.target.commitSHA) +
+                        info.target.delivId + "; repo: " + info.target.repoId + "; SHA: " + Util.shaHuman(info.target.commitSHA) +
                         "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued);
 
                     let gradingJob: GradingJob;
@@ -532,7 +532,7 @@ export abstract class AutoTest implements IAutoTest {
         let record = job.record;
         const input = job.input;
         input.target.tsJobStart = start;
-        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.target.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
         // Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
@@ -547,7 +547,7 @@ export abstract class AutoTest implements IAutoTest {
             const org = Config.getInstance().getProp(ConfigKey.org);
             const repoId = input.target.repoId;
             gradePayload = {
-                delivId: input.delivId,
+                delivId: input.target.delivId,
                 repoId,
                 repoURL: `${githubHost}/${org}/${repoId}`,
                 score,
@@ -561,7 +561,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {
             await this.handleExecutionComplete(record);
-            Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.delivId +
+            Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.target.delivId +
                 "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
         }
 
@@ -597,7 +597,7 @@ export abstract class AutoTest implements IAutoTest {
         for (let i = this.jobs.length - 1; i >= 0; i--) {
             const execution = this.jobs[i];
             if (execution !== null) {
-                if (execution.target.commitURL === commitURL && execution.delivId === delivId) {
+                if (execution.target.commitURL === commitURL && execution.target.delivId === delivId) {
                     // remove this one
                     const lenBefore = this.jobs.length;
                     this.jobs.splice(i, 1);

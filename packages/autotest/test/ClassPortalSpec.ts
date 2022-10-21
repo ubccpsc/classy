@@ -234,7 +234,7 @@ describe("ClassPortal Service", () => {
                 closeTimestamp: 10000,
                 lateAutoTest: true,
             },
-            delivId: delivId,
+            // delivId: delivId,
         };
 
         const result: AutoTestResult = {
@@ -261,7 +261,7 @@ describe("ClassPortal Service", () => {
 
     it("Should not be able to send an invalid result.", async () => {
         const result = getResult("d0", "TESTrepo1", 50);
-        delete result.delivId; // REQUIRED field
+        delete result.input.target.delivId; // REQUIRED field
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 

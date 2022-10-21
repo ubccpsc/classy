@@ -18,7 +18,7 @@ import "@common/GlobalSpec"; // load first
 import {TestData} from "./TestData";
 
 /* tslint:disable:max-line-length */
-describe.only("GitHubAutoTest", () => {
+describe("GitHubAutoTest", () => {
 
     Config.getInstance();
 
@@ -28,7 +28,7 @@ describe.only("GitHubAutoTest", () => {
     let at: GitHubAutoTest;
 
     const now = Date.now();
-    const TS_IN = new Date(now - (1000 * 60 * 5)).getTime(); // 5 mins ago
+    const TS_IN = new Date(now - (1000 * 60 * 5)).getTime(); // 5 minutes ago
     // const TS_IN = new Date(2018, 3, 3).getTime();
 
     const WAIT = 1000 * 1;
@@ -64,7 +64,7 @@ describe.only("GitHubAutoTest", () => {
     });
 
     afterEach(async function () {
-        // pause after each test so async issues don"t persist
+        // pause after each test so async issues do not persist
         // this is a hack, but makes the tests more deterministic
         // Log.test("AutoTest::afterEach() - start");
         await Util.timeout(WAIT / 2);
@@ -364,7 +364,7 @@ describe.only("GitHubAutoTest", () => {
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
 
-        // await Util.timeout(1 * 1000); // let test finish so it doesn"t ruin subsequent executions
+        // await Util.timeout(1 * 1000); // let test finish so it does not ruin subsequent executions
     });
 
     it("Should be able to receive a comment event that queues right away due to no prior request.", async () => {
@@ -470,7 +470,8 @@ describe.only("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(0);
         Log.test("Setup complete");
 
-        // TEST: send a comment
+        // do not wait for job to finish, comment right away
+
         TestData.commentRecordUserA.timestamp = TS_IN;
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
@@ -478,15 +479,16 @@ describe.only("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1); // comment event should not have been saved
+
+        await Util.timeout(WAIT); // just clear the buffer before moving onto the next test
     });
 
-    it("Should give a user a 'still processing' message on a commit that has not been finished.", async () => {
+    it("Should give a user a _still processing_ message on a commit that has not been finished.", async () => {
         expect(at).not.to.equal(null);
 
         // start fresh
         await data.clearData();
         stubDependencies();
-        // gh.messages = [];
 
         // SETUP: add a push with no output records
         await at.handlePushEvent(TestData.pushEventA);
@@ -495,7 +497,8 @@ describe.only("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(1);
         Log.test("Setup complete");
 
-        // TEST: send a comment
+        // do not wait for job to finish, comment right away
+
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
@@ -555,7 +558,7 @@ describe.only("GitHubAutoTest", () => {
         Log.test("Setup push complete");
         let allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(0, "setup messages"); // should not be any feedback yet
-        expect(allData.comments.length).to.equal(0), "setup comments";
+        expect(allData.comments.length).to.equal(0, "setup comments");
         expect(allData.pushes.length).to.equal(1, "setup pushes");
         Log.test("Setup validated");
 
@@ -570,7 +573,7 @@ describe.only("GitHubAutoTest", () => {
 
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1, "1 messages"); // should generate a warning
-        expect(gitHubMessages[gitHubMessages.length - 1].message).to.contain("queued for processing against d1");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1, "1 comments");
         expect(allData.feedback.length).to.equal(0, "1 feedback"); // do not charge for feedback until it is given
         await Util.timeout(WAIT); // Wait for it!
@@ -583,6 +586,8 @@ describe.only("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1, "2 comments");
         expect(allData.feedback.length).to.equal(1, "2 feedback");
         Log.test("Test complete");
+
+        await Util.timeout(WAIT); // give test time to clear
     }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true.", async () => {
@@ -617,9 +622,11 @@ describe.only("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(0);
         expect(allData.feedback.length).to.equal(0); // no charge
+
     }).timeout(WAIT * 10);
 
     it("Should give a user a response for on a commit once it finishes if postback is true. They should not be charged if they requested this build.", async () => {
+        await Util.timeout(WAIT); // wait for prior failures to finish
         expect(at).not.to.equal(null);
 
         // start fresh
@@ -635,7 +642,8 @@ describe.only("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(1);
         Log.test("Setup complete");
 
-        // TEST: send a comment (this is the previous test)
+        // don't wait, send request right away
+
         await at.handleCommentEvent(TestData.commentRecordUserA);
         Log.test("test one ready");
         allData = await data.getAllData();
@@ -643,15 +651,19 @@ describe.only("GitHubAutoTest", () => {
         expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
+        Log.test("test one done");
 
         // Wait for it!
         await Util.timeout(WAIT);
+
         Log.test("test two ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(2); // should post response
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
+        Log.test("test two done");
+
     }).timeout(WAIT * 10);
 
     it("Should ignore a request for a push from a prior version of the course.", async () => {
@@ -764,7 +776,7 @@ describe.only("GitHubAutoTest", () => {
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
-        expect(allData.comments.length).to.equal(0); // doesn"t count as a comment, user has to ask again once they are in-quota
+        expect(allData.comments.length).to.equal(0); // does not count as a comment, user has to ask again once they are in-quota
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
         Log.test("Test complete.");

@@ -98,7 +98,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 // const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig !== null) {
-                    const input: ContainerInput = {delivId, target: info, containerConfig};
+                    const input: ContainerInput = {target: info, containerConfig};
 
                     const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
                     if (shouldPromotePush === true) {
@@ -122,7 +122,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 // regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
 
                                 const regressionInput: ContainerInput = {
-                                    delivId: regressionId,
+                                    // delivId: regressionId,
                                     target: regressionInfo,
                                     containerConfig: regressionDetails
                                 };
@@ -294,6 +294,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
+        Log.info("GitHubAutoTest::processComment( ..) - repo: " + info.repoId +
+            "; deliv: " + info.delivId + "; hasRes: " + (res !== null));
+
         if (res === null) {
             return this.processCommentNew(info);
         } else {
@@ -351,7 +354,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
-            const input: ContainerInput = {delivId: info.delivId, target: info, containerConfig};
+            const input: ContainerInput = {target: info, containerConfig};
 
             // not yet processed
             const onQueue = this.isOnQueue(input);
@@ -547,7 +550,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const that = this;
-            const delivId = data.input.delivId;
+            const delivId = data.input.target.delivId;
 
             const standardFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "standard");
             const checkFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "check");
@@ -686,6 +689,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async savePushInfo(info: CommitTarget) {
         try {
             Log.trace("GitHubAutoTest::savePushInfo(..) - repo: " + info.repoId +
+                "; deliv: " + info.delivId +
                 "; commit: " + Util.shaHuman(info.commitSHA));
             await this.dataStore.savePush(info);
         } catch (err) {
