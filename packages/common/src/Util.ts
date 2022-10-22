@@ -74,7 +74,7 @@ export default class Util {
 
     // just a useful delay function for when we need to wait for GH to do something
     // or we want a test to be able to slow itself down
-    public static delay(ms: number): Promise<{}> {
+    public static delay(ms: number): Promise<void> {
         // logger.info("GitHubActions::delay( " + ms + ") - start");
         const start = Date.now();
         return new Promise(function (resolve) {

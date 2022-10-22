@@ -40,6 +40,9 @@ packages/portal/frontend/src/app/custom/CustomStudentView.ts
 packages/portal/backend/src/custom/CustomCourseController.ts
 packages/portal/backend/src/custom/CustomCourseRoutes.ts
 
+# Plugins
+packages/portal/frontend/src/app/plugs/
+
 .circleci/
 
 # Webstorm
