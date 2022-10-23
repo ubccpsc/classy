@@ -53,7 +53,7 @@ export interface IDataStore {
      *
      * @returns {Promise<{records: AutoTestResult[]; comments: CommitTarget[]; pushes: CommitTarget[]; feedback: IFeedbackGiven[]}>}
      */
-    getAllData(): Promise<{records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
+    getAllData(): Promise<{ records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[] }>;
 
     /**
      * Debugging only:
@@ -185,8 +185,8 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveComment(info: CommitTarget): Promise<void> {
-        Log.info("MongoDataStore::saveComment(..) - start; delivId: " +
-            info.delivId + "; repo: " + info.repoId + "; url: " + info.commitURL);
+        Log.info("MongoDataStore::saveComment(..) - start; repo: " +
+            info.repoId + "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA));
         try {
             const start = Date.now();
             await this.saveRecord(this.COMMENTCOLL, info);
@@ -201,7 +201,11 @@ export class MongoDataStore implements IDataStore {
         Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL + "; kind: " + kind);
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL, kind: kind});
+            const res = await this.getSingleRecord(this.COMMENTCOLL, {
+                delivId: delivId,
+                commitURL: commitURL,
+                kind: kind
+            });
             if (res === null) {
                 Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {
@@ -253,7 +257,7 @@ export class MongoDataStore implements IDataStore {
             } else {
                 // pick the most recent
                 let ret: IFeedbackGiven | null = null;
-                Math.max.apply(Math, res.map(function(o: IFeedbackGiven) {
+                Math.max.apply(Math, res.map(function (o: IFeedbackGiven) {
                     // Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));

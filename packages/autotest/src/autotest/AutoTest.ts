@@ -152,7 +152,7 @@ export abstract class AutoTest implements IAutoTest {
      * @param input
      */
     public addToExpressQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToExpressQueue(..) - start; " +
+        Log.info("AutoTest::addToExpressQueue(..) - start" +
             "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
             "; commit: " + Util.shaHuman(input.target.commitSHA));
         try {
@@ -182,7 +182,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToStandardQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToStandardQueue(..) - start; " +
+        Log.info("AutoTest::addToStandardQueue(..) - start" +
             "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
             "; commit: " + Util.shaHuman(input.target.commitSHA));
 
@@ -225,7 +225,7 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     public addToLowQueue(input: ContainerInput): void {
-        Log.info("AutoTest::addToLowQueue(..) - start; " +
+        Log.info("AutoTest::addToLowQueue(..) - start" +
             "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
             "; commit: " + Util.shaHuman(input.target.commitSHA));
 
@@ -517,8 +517,11 @@ export abstract class AutoTest implements IAutoTest {
             }
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
                 data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
-                "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
-                "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart));
+                "; wait: " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
+                "; exec: " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart));
+            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - input.tsJobStart: " +
+                data.input.target.tsJobStart + "; input.timestamp: " + data.input.target.timestamp +
+                "; output.timstamp: " + data.output.timestamp);
             // "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);

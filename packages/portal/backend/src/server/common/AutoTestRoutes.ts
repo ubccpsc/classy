@@ -339,6 +339,7 @@ export class AutoTestRoutes implements IREST {
 
     public static async atShouldPromotePush(req: any, res: any, next: any) {
         Log.info("AutoTestRoutes::atShouldPromotePush(..) - start");
+        const start = Date.now();
 
         const providedSecret = req.headers.token;
         if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
@@ -348,6 +349,7 @@ export class AutoTestRoutes implements IREST {
                 const info: CommitTarget = req.body;
                 const courseController = await Factory.getCourseController();
                 const shouldPromote = await courseController.shouldPrioritizePushEvent(info);
+                Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote + "; took: " + Util.took(start));
                 const payload: Payload = {success: {shouldPromote}};
                 res.send(200, payload);
                 return next(true);

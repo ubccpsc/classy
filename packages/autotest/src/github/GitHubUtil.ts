@@ -277,7 +277,7 @@ export class GitHubUtil {
             };
 
             Log.info("GitHubUtil::processPush(..) - done; repo: " + repo +
-                "; SHA: " + commitSHA + "; took: " + Util.took(start));
+                "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
@@ -303,17 +303,32 @@ export class GitHubUtil {
                 return false;
             }
 
-            // find a better short string for logging
-            let loggingMessage = message.message;
-            if (loggingMessage.indexOf('\n') > 0) {
-                loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf('\n'));
-            }
-            if (loggingMessage.length > 80) {
-                loggingMessage = loggingMessage.substr(0, 80) + "...";
-            }
+            try {
+                // find a better short string for logging
+                let loggingMessage = message.message;
+                if (loggingMessage.indexOf('\n') > 0) {
+                    loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf('\n'));
+                }
+                if (loggingMessage.length > 80) {
+                    loggingMessage = loggingMessage.substr(0, 80) + "...";
+                }
 
-            Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown to url: " +
-                message.url + "; message: " + loggingMessage);
+                // find better sha/repo for logging
+                if (message.url.indexOf("commits/") > 0 && message.url.indexOf("/commits") > 0) {
+                    let sha = message.url;
+                    sha = sha.substring(sha.indexOf("/commits/") + 9, sha.indexOf("/comments"));
+
+                    let repo = message.url;
+                    repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commits/") - 1) + 1, repo.indexOf("/commits/"));
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for repo: " +
+                        repo + "; sha: " + sha + "; message: " + loggingMessage);
+                } else {
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for url: " +
+                        message.url + "; message: " + loggingMessage);
+                }
+            } catch (err) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err.message);
+            }
 
             const body: string = JSON.stringify({body: message.message});
             const options: RequestInit = {
@@ -329,13 +344,13 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await fetch(message.url, options);
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - success for url: " + message.url);
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - done"); // for url: " + message.url);
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
                 }
             } else {
-                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false) for url: " + message.url);
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped"); // (config.postback === false) for url: " + message.url);
             }
         } catch (err) {
             Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);

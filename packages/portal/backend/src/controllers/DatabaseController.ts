@@ -904,7 +904,7 @@ export class DatabaseController {
         }
 
         if (result === null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - result not found");
+            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - result not found");
         }
         return result;
     }
