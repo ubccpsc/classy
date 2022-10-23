@@ -136,12 +136,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     }
 
                     this.tick();
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; repo: " +
-                        info.repoId + "; deliv: " + info.delivId + "; SHA: " +
+                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; " +
+                        "deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " +
                         Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
                     return true;
                 } else {
-                    Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
+                    Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitURL +
                         " - No container info for deliv: " + delivId + "; push ignored");
                     return false;
                 }
@@ -285,8 +285,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (typeof target.flags !== "undefined" && target.flags.indexOf("#silent") >= 0) {
             Log.info("GitHubAutoTest::postToGitHub(..) - #silent specified; NOT posting message; repo: " + target.repoId);
         } else {
-            Log.info("GitHubAutoTest::postToGitHub(..) - posting; repo: " + target.repoId +
-                "; deliv: " + target.delivId + "; SHA: " + Util.shaHuman(target.commitSHA));
+            Log.info("GitHubAutoTest::postToGitHub(..) - posting" +
+                "; deliv: " + target.delivId +
+                "; repo: " + target.repoId +
+                "; SHA: " + Util.shaHuman(target.commitSHA));
             Log.trace("GitHubAutoTest::postToGitHub(..) - target: " + JSON.stringify(target));
             Log.trace("GitHubAutoTest::postToGitHub(..) - message: " + JSON.stringify(message));
             return await GitHubUtil.postMarkdownToGithub(message);
@@ -294,8 +296,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
-        Log.info("GitHubAutoTest::processComment(..) - repo: " + info.repoId +
-            "; deliv: " + info.delivId + "; hasRes: " + (res !== null));
+        Log.info("GitHubAutoTest::processComment(..) - " +
+            "deliv: " + info.delivId +
+            "; repo: " + info.repoId +
+            "; hasRes: " + (res !== null));
 
         if (res === null) {
             return this.processCommentNew(info);
@@ -347,7 +351,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processCommentNew(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::processCommentNew(..) - handling request for user: " +
-            info.personId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
+            info.personId + "; deliv: " + info.delivId +
+            "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         // Log.info("GitHubAutoTest::processCommentNew(..) - result not yet done; handling for: " +
         //     info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
@@ -406,7 +411,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
             target.personId + "; null previous: " + (previousRequest === null) +
             "; null delay: " + (feedbackDelay === null) +
-            "; repo: " + target.repoId + "; sha: " + Util.shaHuman(target.commitSHA));
+            "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitSHA));
 
         if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + target.personId + "; must wait: " +
