@@ -153,8 +153,9 @@ export abstract class AutoTest implements IAutoTest {
      */
     public addToExpressQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToExpressQueue(..) - start" +
-            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
-            "; commit: " + Util.shaHuman(input.target.commitSHA));
+            "; deliv: " + input.target.delivId +
+            "; repo: " + input.target.repoId +
+            "; SHA: " + Util.shaHuman(input.target.commitSHA));
         try {
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToExpressQueue(..) - not added; commit already executing");
@@ -171,7 +172,7 @@ export abstract class AutoTest implements IAutoTest {
             } else {
                 Log.info("AutoTest::addToExpressQueue(..) - user: " +
                     input.target.personId + " already has job on express queue" +
-                    "; adding: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
+                    "; adding SHA: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
 
                 // express queue already has a job for this user, move to standard
                 this.addToStandardQueue(input);
@@ -183,8 +184,9 @@ export abstract class AutoTest implements IAutoTest {
 
     public addToStandardQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToStandardQueue(..) - start" +
-            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
-            "; commit: " + Util.shaHuman(input.target.commitSHA));
+            "; deliv: " + input.target.delivId +
+            "; repo: " + input.target.repoId +
+            "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
         try {
             if (this.isCommitExecuting(input)) {
@@ -226,8 +228,9 @@ export abstract class AutoTest implements IAutoTest {
 
     public addToLowQueue(input: ContainerInput): void {
         Log.info("AutoTest::addToLowQueue(..) - start" +
-            "; repo: " + input.target.repoId + "; deliv: " + input.target.delivId +
-            "; commit: " + Util.shaHuman(input.target.commitSHA));
+            "; deliv: " + input.target.delivId +
+            "; repo: " + input.target.repoId +
+            "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
         try {
 
@@ -290,49 +293,6 @@ export abstract class AutoTest implements IAutoTest {
                     Log.trace("AutoTest::tick::tickQueue(..) - no capacity to tick");
                 }
             };
-
-            // /**
-            //  * Moves a job from one queue to another.
-            //  *
-            //  * @param input
-            //  * @param sourceQueue
-            //  * @param destQueue
-            //  * @param onFront whether the job should be put at the front (true) or back (false) of the queue.
-            //  */
-            // const switchQueues = function (input: ContainerInput, sourceQueue: Queue, destQueue: Queue, onFront: boolean) {
-            //     Log.info("AutoTest::tick::switchQueues(..) - start; source: " + sourceQueue.getName() +
-            //         "->dest: " + destQueue.getName() + "; for SHA: " + Util.shaHuman(input.target.commitSHA));
-            //
-            //     if (that.isCommitExecuting(input)) {
-            //         Log.info("AutoTest::tick::switchQueues(..) - skipped; commit already executing");
-            //         return;
-            //     }
-            //
-            //     const onSourceQueue = sourceQueue.indexOf(input) >= 0;
-            //     const onDestQueue = destQueue.indexOf(input) >= 0;
-            //
-            //     if (onDestQueue === true) {
-            //         // already on dest queue
-            //         Log.warn("AutoTest::tick::switchQueues(..) - already on dest queue: " + input.target.commitSHA);
-            //         return;
-            //     }
-            //
-            //     if (onSourceQueue === false) {
-            //         // not on source to switch
-            //         Log.warn("AutoTest::tick::switchQueues(..) - not on source queue: " + input.target.commitSHA);
-            //         return;
-            //     }
-            //
-            //     // swap queues
-            //     Log.trace("AutoTest::tick::switchQueues(..) - switching: " + input.target.commitSHA);
-            //     sourceQueue.remove(input);
-            //     if (onFront === true) {
-            //         destQueue.pushFirst(input); // put on the front of the next queue
-            //     } else {
-            //         destQueue.push(input); // put on the front of the next queue
-            //     }
-            //     Log.trace("AutoTest::tick::switchQueues(..) - switched: " + input.target.commitSHA);
-            // };
 
             // handle the queues in order: express -> standard -> low
             while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
@@ -519,10 +479,9 @@ export abstract class AutoTest implements IAutoTest {
                 data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
                 "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart) +
                 "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp));
-            Log.info("AutoTest::handleExecutionComplete(..) [JOB] - input.tsJobStart: " +
-                data.input.target.tsJobStart + "; input.timestamp: " + data.input.target.timestamp +
-                "; output.timestamp: " + data.output.timestamp);
-            // "; took (waiting + execution): " + Util.tookHuman(data.input.target.timestamp));
+            // Log.info("AutoTest::handleExecutionComplete(..) [JOB] - input.tsJobStart: " +
+            //     data.input.target.tsJobStart + "; input.timestamp: " + data.input.target.timestamp +
+            //     "; output.timestamp: " + data.output.timestamp);
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }
@@ -535,7 +494,8 @@ export abstract class AutoTest implements IAutoTest {
         let record = job.record;
         const input = job.input;
         input.target.tsJobStart = start;
-        Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+        Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId +
+            "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
         try {
             await job.prepare();
@@ -564,6 +524,7 @@ export abstract class AutoTest implements IAutoTest {
         } finally {
             await this.handleExecutionComplete(record);
             Log.info("AutoTest::handleTick(..) - complete; deliv: " + input.target.delivId +
+                "; repo: " + input.target.repoId +
                 "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
         }
 
