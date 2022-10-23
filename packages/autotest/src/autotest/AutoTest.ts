@@ -482,7 +482,7 @@ export abstract class AutoTest implements IAutoTest {
             //     data.input.target.tsJobStart = data.input.target.timestamp;
             // }
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
-                ": delivId: " + data.delivId + "; repoId: " + data.repoId +
+                ": deliv: " + data.delivId + "; repo: " + data.repoId +
                 // "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
                 // "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart) +
                 "; SHA: " + Util.shaHuman(data.commitSHA)
@@ -535,7 +535,7 @@ export abstract class AutoTest implements IAutoTest {
         let record = job.record;
         const input = job.input;
         input.target.tsJobStart = start;
-        Log.info("AutoTest::handleTick(..) - start; delivId: " + input.target.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+        Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
         // Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
@@ -564,7 +564,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {
             await this.handleExecutionComplete(record);
-            Log.info("AutoTest::handleTick(..) - complete; delivId: " + input.target.delivId +
+            Log.info("AutoTest::handleTick(..) - complete; deliv: " + input.target.delivId +
                 "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
         }
 

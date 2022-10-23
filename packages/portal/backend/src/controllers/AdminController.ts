@@ -107,7 +107,7 @@ export class AdminController {
                     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {
-                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for delivId: "
+                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for deliv: "
                         + newGrade.delivId + "; repo: " + grade.repoId);
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});

@@ -67,6 +67,7 @@ export default class GeneralRoutes implements IREST {
 
     public static async getConfig(req: any, res: any, next: any) {
         Log.info("GeneralRoutes::getConfig(..) - start");
+        const start = Date.now();
 
         const org = Config.getInstance().getProp(ConfigKey.org);
         const name = Config.getInstance().getProp(ConfigKey.name);
@@ -78,6 +79,7 @@ export default class GeneralRoutes implements IREST {
         let payload: ConfigTransportPayload;
         if (org !== null) {
             payload = {success: {org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds}};
+            Log.info("GeneralRoutes::getConfig(..) - done; took: " + Util.took(start));
             Log.trace("GeneralRoutes::getConfig(..) - sending: " + JSON.stringify(payload));
             res.send(200, payload);
             return next(false);

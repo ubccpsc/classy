@@ -15,7 +15,7 @@ export class GradesController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllGrades(studentsOnly?: boolean): Promise<Grade[]> {
-        if (typeof studentsOnly === 'undefined') {
+        if (typeof studentsOnly === "undefined") {
             studentsOnly = true;
         }
         Log.info("GradesController::getAllGrades( " + studentsOnly + " ) - start");
@@ -164,7 +164,7 @@ export class GradesController {
         }
 
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - done; took: " + Util.took(start));
-        return true; // if an exception hasn't been thrown we must be ok
+        return true; // if an exception has not been thrown we must be ok
     }
 
     public async saveGrade(grade: Grade): Promise<boolean> {
@@ -193,67 +193,67 @@ export class GradesController {
      * @returns {string | null} String will contain a description of the error, null if successful.
      */
     public validateAutoTestGrade(record: AutoTestGradeTransport): string | null {
-        // multiple returns is poor, but at least it's quick
-        Log.trace('GradesController::validateAutoTestGrade(..) - start');
+        // multiple returns is poor, but at least it"s quick
+        Log.trace("GradesController::validateAutoTestGrade(..) - start");
 
-        if (typeof record === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record === "undefined") {
+            const msg = "object undefined";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
 
         if (record === null) {
-            const msg = 'object null';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+            const msg = "object null";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
 
         // just rudimentary checking
 
         // delivId: string; // invariant: deliv grade is associated with
-        if (typeof record.delivId === 'undefined') {
-            const msg = 'delivId missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.delivId === "undefined") {
+            const msg = "delivId missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
-        // score: number; // grade: < 0 will mean 'N/A' in the UI
-        if (typeof record.score === 'undefined') {
-            const msg = 'score missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        // score: number; // grade: < 0 will mean "N/A" in the UI
+        if (typeof record.score === "undefined") {
+            const msg = "score missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
         // comment: string; // simple grades will just have a comment
-        if (typeof record.comment === 'undefined') {
-            const msg = 'comment missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.comment === "undefined") {
+            const msg = "comment missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
         // urlName: string | null; // description to go with the URL (repo if exists)
-        if (typeof record.urlName === 'undefined') {
-            const msg = 'urlName missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.urlName === "undefined") {
+            const msg = "urlName missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
         // URL: string | null; // commit URL if known, otherwise repo URL (commit / repo if exists)
-        if (typeof record.URL === 'undefined') {
-            const msg = 'URL missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.URL === "undefined") {
+            const msg = "URL missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
         // timestamp: number; // even if grade < 0 might as well return when the entry was made
-        if (typeof record.timestamp === 'undefined') {
-            const msg = 'timestamp missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.timestamp === "undefined") {
+            const msg = "timestamp missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
         // custom: any;
-        if (typeof record.custom !== 'object') {
-            const msg = 'custom object missing';
-            Log.error('GradesController::validateAutoTestGrade(..) - ERROR: ' + msg);
+        if (typeof record.custom !== "object") {
+            const msg = "custom object missing";
+            Log.error("GradesController::validateAutoTestGrade(..) - ERROR: " + msg);
             return msg;
         }
 
-        Log.trace('GradesController::validateAutoTestGrade(..) - done; object is valid');
+        Log.trace("GradesController::validateAutoTestGrade(..) - done; object is valid");
 
         return null;
     }
@@ -266,7 +266,7 @@ export class GradesController {
 
         const g: GradeTransport = {
             personId:  grade.personId,
-            personURL: config.getProp(ConfigKey.githubHost) + '/' + p.githubId, // grade.personId,
+            personURL: config.getProp(ConfigKey.githubHost) + "/" + p.githubId, // grade.personId,
 
             delivId: grade.delivId,
 

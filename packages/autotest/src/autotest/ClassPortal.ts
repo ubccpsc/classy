@@ -246,14 +246,14 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(grade)
             };
 
-            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + "; delivId: " + grade.delivId +
+            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + "; deliv: " + grade.delivId +
                 "; repo: " + grade.repoId + "; url: " + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
             const json = await res.json();
             if (typeof json.success !== "undefined") {
-                Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
+                Log.info("ClassPortal::sendGrade(..) - grade accepted; deliv: " + grade.delivId +
                     "; repo: " + grade.repoId + "; took: " + Util.took(start));
                 return json;
             } else {
@@ -269,7 +269,7 @@ export class ClassPortal implements IClassPortal {
     public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         const start = Date.now();
 
-        Log.trace("ClassPortal::formatFeedback(..) - start; delivId: " +
+        Log.trace("ClassPortal::formatFeedback(..) - start; deliv: " +
             res.delivId + "; URL: " + res.commitURL);
 
         let feedback: string = "";
@@ -324,7 +324,7 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(result)
             };
 
-            Log.trace("ClassPortal::sendResult(..) - sending to: " + url + " for delivId: " + result.delivId +
+            Log.trace("ClassPortal::sendResult(..) - sending to: " + url + " for deliv: " + result.delivId +
                 "; repoId: " + result.repoId + "; SHA: " + result.input.target.commitSHA);
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));

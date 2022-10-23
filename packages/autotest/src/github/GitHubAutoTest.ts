@@ -73,9 +73,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             await this.savePushInfo(info);
 
             if (typeof delivId === "undefined" || delivId === null) {
-                Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; requesting");
+                Log.info("GitHubAutoTest::handlePushEvent(..) - deliv not specified; requesting");
                 delivId = await this.getDefaultDelivId(); // current default deliverable
-                Log.info("GitHubAutoTest::handlePushEvent(..) - retrieved delivId: " +
+                Log.info("GitHubAutoTest::handlePushEvent(..) - retrieved deliv: " +
                     delivId + "; type: " + typeof delivId);
 
                 if (delivId === "null") {
@@ -137,12 +137,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; repo: " +
-                        info.repoId + "; delivId: " + info.delivId + "; sha: " +
+                        info.repoId + "; deliv: " + info.delivId + "; sha: " +
                         Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
                     return true;
                 } else {
                     Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA +
-                        " - No container info for delivId: " + delivId + "; push ignored");
+                        " - No container info for deliv: " + delivId + "; push ignored");
                     return false;
                 }
             } else {
@@ -201,7 +201,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         // ignore messages that do not request grading on a deliverable that is configured for autotest
         const deliv = await this.classPortal.getContainerDetails(delivId);
         if (deliv === null) {
-            Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown delivId: " + delivId);
+            Log.warn("GitHubAutoTest::checkCommentPreconditions(..) - ignored, unknown deliv: " + delivId);
             // no deliverable, give warning and abort
             const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
             await this.postToGitHub(info, {url: info.postbackURL, message: msg});
@@ -306,7 +306,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async processCommentExists(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         // previously processed
         Log.info("GitHubAutoTest::processCommentExists(..) - handling request for: " +
-            info.personId + "; delivId: " + info.delivId + "; commit: " + info.commitURL);
+            info.personId + "; deliv: " + info.delivId + "; commit: " + info.commitURL);
 
         // const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
 
@@ -612,10 +612,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // no feedback should be returned
                 if (feedbackDelay !== null) {
                     Log.info("GitHubAutoTest::processExecution(..) - commit no longer eligible for receiving feedback: " +
-                        data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
+                        "deliv: " + data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
                         ". This was probably caused by a race condition.");
                 } else {
-                    Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given;  deliv: " +
+                    Log.info("GitHubAutoTest::processExecution(..) - commit not requested - no feedback given; deliv: " +
                         data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA));
                 }
             }
@@ -691,9 +691,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async savePushInfo(info: CommitTarget) {
         try {
-            Log.trace("GitHubAutoTest::savePushInfo(..) - repo: " + info.repoId +
-                "; deliv: " + info.delivId +
-                "; commit: " + Util.shaHuman(info.commitSHA));
+            Log.trace("GitHubAutoTest::savePushInfo(..) - deliv: " + info.delivId +
+                "repo: " + info.repoId +
+                "; sha: " + Util.shaHuman(info.commitSHA));
             await this.dataStore.savePush(info);
         } catch (err) {
             Log.error("GitHubAutoTest::savePushInfo(..) - ERROR: " + err);
@@ -744,7 +744,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     private async saveFeedbackGiven(delivId: string, userName: string, timestamp: number, commitURL: string, kind: string): Promise<void> {
         try {
             Log.info("GitHubAutoTest::saveFeedbackGiven(..) - feedback request logged for: " +
-                userName + "; delivId: " + delivId + "; commit: " + commitURL);
+                userName + "; deliv: " + delivId + "; commit: " + commitURL);
             const record: IFeedbackGiven = {
                 commitURL,
                 delivId,

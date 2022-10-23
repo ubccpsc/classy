@@ -174,10 +174,10 @@ export class AutoTestRoutes implements IREST {
         if (validGradeRecord !== null) {
             throw new Error("Invalid Grade Record: " + validGradeRecord);
         } else {
-            Log.info("AutoTestRouteHandler::atGrade(..) - repoId: " + grade.repoId +
-                "; delivId: " + grade.delivId + "; grade: " + grade.score);
-            Log.trace("AutoTestRouteHandler::atGrade(..) - repoId: " + grade.repoId +
-                "; delivId: " + grade.delivId + "; body: " + JSON.stringify(grade));
+            Log.info("AutoTestRouteHandler::atGrade(..) - deliv: " + grade.delivId +
+                "; repo: " + grade.repoId + "; grade: " + grade.score);
+            // Log.trace("AutoTestRouteHandler::atGrade(..) - repoId: " + grade.repoId +
+            //     "; delivId: " + grade.delivId + "; body: " + JSON.stringify(grade));
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             return await cc.processNewAutoTestGrade(grade);
         }
