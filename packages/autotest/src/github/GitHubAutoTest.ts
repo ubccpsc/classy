@@ -169,7 +169,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
-        Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId + "; commit: " + info.commitSHA);
+        Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId +
+            "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         // ignore messages made by the bot, unless they are #force
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
@@ -306,7 +307,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     protected async processCommentExists(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         // previously processed
         Log.info("GitHubAutoTest::processCommentExists(..) - handling request for: " +
-            info.personId + "; deliv: " + info.delivId + "; commit: " + info.commitURL);
+            info.personId + "; deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         // const containerDetails = await this.classPortal.getContainerDetails(res.delivId);
 
@@ -346,10 +347,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     protected async processCommentNew(info: CommitTarget): Promise<void> {
         Log.info("GitHubAutoTest::processCommentNew(..) - handling request for user: " +
-            info.personId + " for commit: " + info.commitURL);
+            info.personId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
-        Log.info("GitHubAutoTest::processCommentNew(..) - result not yet done; handling for: " +
-            info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
+        // Log.info("GitHubAutoTest::processCommentNew(..) - result not yet done; handling for: " +
+        //     info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
@@ -396,7 +397,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     protected async handleCommentStudent(target: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
-            target.personId + "; deliv: " + target.delivId + "; for commit: " + target.commitURL);
+            target.personId + "; deliv: " + target.delivId + "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitURL));
 
         const shouldCharge = await this.shouldCharge(target, null, res);
         const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId, target.timestamp);
@@ -405,7 +406,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
             target.personId + "; null previous: " + (previousRequest === null) +
             "; null delay: " + (feedbackDelay === null) +
-            " for commit: " + target.commitURL);
+            "; repo: " + target.repoId + "; sha: " + Util.shaHuman(target.commitSHA));
 
         if (shouldCharge === true && previousRequest === null && feedbackDelay !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + target.personId + "; must wait: " +
@@ -743,8 +744,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async saveFeedbackGiven(delivId: string, userName: string, timestamp: number, commitURL: string, kind: string): Promise<void> {
         try {
-            Log.info("GitHubAutoTest::saveFeedbackGiven(..) - feedback request logged for: " +
-                userName + "; deliv: " + delivId + "; commit: " + commitURL);
+            Log.info("GitHubAutoTest::saveFeedbackGiven(..) - feedback request saved" +
+                "; person: " + userName + "; deliv: " + delivId +
+                "; repo: " + GitHubUtil.commitURLtoRepoName(commitURL));
             const record: IFeedbackGiven = {
                 commitURL,
                 delivId,

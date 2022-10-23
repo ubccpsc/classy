@@ -301,6 +301,7 @@ export class GitHubUtil {
     }
 
     public static async postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
+        const start = Date.now();
         try {
             // sanity checking
             if (message === null) {
@@ -326,20 +327,11 @@ export class GitHubUtil {
                     loggingMessage = loggingMessage.substr(0, 80) + "...";
                 }
 
-                // find better sha/repo for logging
-                if (message.url.indexOf("commits/") > 0 && message.url.indexOf("/commits") > 0) {
-                    let sha = message.url;
-                    sha = sha.substring(sha.indexOf("/commits/") + 9, sha.indexOf("/comments"));
-                    sha = Util.shaHuman(sha);
+                const sha = GitHubUtil.commitURLtoSHA(message.url);
+                const repo = GitHubUtil.commitURLtoRepoName(message.url);
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for repo: " +
+                    repo + "; sha: " + sha + "; message: " + loggingMessage);
 
-                    let repo = message.url;
-                    repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commits/") - 1) + 1, repo.indexOf("/commits/"));
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for repo: " +
-                        repo + "; sha: " + sha + "; message: " + loggingMessage);
-                } else {
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for url: " +
-                        message.url + "; message: " + loggingMessage);
-                }
             } catch (err) {
                 Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err.message);
             }
@@ -358,7 +350,7 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await fetch(message.url, options);
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - done");
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - posted; took: " + Util.took(start));
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
@@ -371,5 +363,51 @@ export class GitHubUtil {
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns the repo name from a full commit url.
+     * If the parse does not work, the URL itself is returned again.
+     *
+     * Should work on URLs like:
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commit/47046cae35a31083761788d9fce80e85ca77f6d5
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
+     *
+     * @param string
+     */
+    public static commitURLtoRepoName(commitURL: string): string {
+        try {
+            if (commitURL.indexOf("/commit") > 0) {
+                let repo = commitURL;
+                repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commit") - 1) + 1, repo.indexOf("/commits/"));
+                return repo;
+            }
+        } catch (err) {
+            // ignored
+        }
+        return commitURL;
+    }
+
+    /**
+     * Returns the repo name from a full commit url.
+     * If the parse does not work, the URL itself is returned again.
+     *
+     * Should work on URLs like:
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
+     *
+     * @param string
+     */
+    public static commitURLtoSHA(commitURL: string): string {
+        try {
+            if (commitURL.indexOf("commits/") > 0 && commitURL.indexOf("/comments") > 0) {
+                let sha = commitURL;
+                sha = sha.substring(sha.indexOf("/commits/") + 9, sha.indexOf("/comments"));
+                sha = Util.shaHuman(sha);
+                return sha;
+            }
+        } catch (err) {
+            // ignored
+        }
+        return commitURL;
     }
 }
