@@ -368,11 +368,11 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static githubWebhook(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::githubWebhook(..) - start");
+        Log.info("AutoTestRouteHandler::githubWebhook(..) - start");
         const start = Date.now();
 
         AutoTestRoutes.handleWebhook(req).then(function (succ) {
-            Log.info("AutoTestRouteHandler::githubWebhook(..) - success; took: " + Util.took(start));
+            Log.info("AutoTestRouteHandler::githubWebhook(..) - done; took: " + Util.took(start));
             res.send(200, succ);
         }).catch(function (err) {
             /* istanbul ignore next: curlies needed for ignore (only reachable when deployed) */
@@ -400,6 +400,9 @@ export class AutoTestRoutes implements IREST {
      * @returns {Promise<{}>}
      */
     private static async handleWebhook(req: any): Promise<{}> {
+        Log.trace("AutoTestRouteHandler::handleWebhook(..) - start");
+        const start = Date.now();
+
         const headers = JSON.stringify(req.headers);
         const config = Config.getInstance();
         const atHost = config.getProp(ConfigKey.autotestUrl);
@@ -414,7 +417,7 @@ export class AutoTestRoutes implements IREST {
         {
             if (res.ok) {
                 Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
-                Log.info("AutoTestRouteHandler::handleWebhook(..) - success");
+                Log.trace("AutoTestRouteHandler::handleWebhook(..) - done; took: " + Util.took(start));
                 return res.ok;
             } else {
                 const err = await res.json();

@@ -282,7 +282,8 @@ export class ClassPortal implements IClassPortal {
                     state = res.output.state;
                 }
                 feedback = `AutoTest status for commit: **_${state}_**`;
-                Log.info("ClassPortal::formatFeedback(..) - check; URL: " + res.commitURL + "; status: " + state);
+                Log.info("ClassPortal::formatFeedback(..) - check; repo: " +
+                    res.repoId + "; SHA: " + Util.shaHuman(res.commitSHA) + "; status: " + state);
             } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
@@ -301,8 +302,8 @@ export class ClassPortal implements IClassPortal {
             }
         }
 
-        Log.trace("ClassPortal::formatFeedback(..) - feedback generated; URL: " +
-            res.commitURL + "; feedback: " + msg + "; took: " + Util.took(start));
+        Log.trace("ClassPortal::formatFeedback(..) - repo: " + res.repoId + "; SHA: " +
+            Util.shaHuman(res.commitSHA) + "; feedback: " + msg + "; took: " + Util.took(start));
         Log.info("ClassPortal::formatFeedback(..) - feedback generated; deliv: " +
             res.delivId + "; repo: " + res.repoId + "; feedback: " + msg + "; took: " + Util.took(start));
         return feedback;

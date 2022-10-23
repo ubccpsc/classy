@@ -24,12 +24,16 @@ export default class Util {
 
         if (start > end) {
             // swap, want end to be most recent
-            const oldStart = start;
-            start = end;
-            end = oldStart;
+            [start, end] = [end, start]; // es6 destructuring ftw
         }
 
-        const delta = Math.floor((end - start) / 1000); // convert to seconds
+        let delta = end - start;
+        if (delta < 1000) {
+            // just short circuit for really fast times
+            return delta + " ms";
+        }
+
+        delta = Math.floor(delta / 1000); // convert to seconds
         const hours = Math.floor(delta / 3600);
         const minutes = Math.floor((delta - (hours * 3600)) / 60);
         const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
@@ -42,14 +46,14 @@ export default class Util {
         }
 
         if (hours > 0) {
-            // won"t have seconds
+            // will not show seconds
             if (minutes === 1) {
                 msg = msg + " and 1 minute";
             } else {
                 msg = msg + " and " + minutes + " minutes";
             }
         } else {
-            /// will have eseconds
+            /// will have seconds
             if (minutes === 1) {
                 msg = "1 minute";
             } else {
@@ -105,8 +109,7 @@ export default class Util {
      * @returns {{}}
      */
     public static clone(obj: {}): {} {
-        const ret = Object.assign({}, obj);
-        return ret;
+        return Object.assign({}, obj);
     }
 
     /**

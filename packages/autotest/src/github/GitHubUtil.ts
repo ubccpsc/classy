@@ -28,7 +28,7 @@ export class GitHubUtil {
     /**
      * Identifies all deliverables mentioned in a string.
      * Deliverables _must_ be of the form #d1, #d1223, etc.
-     * The '#' is required, the 'd' is required, and a number is required.
+     * The "#" is required, the "d" is required, and a number is required.
      *
      * @param message
      * @param {string[]} delivIds
@@ -43,8 +43,8 @@ export class GitHubUtil {
         let msg = message;
         if (msg.length > 40) {
             msg = msg.substr(0, 40) + "...";
-            if (msg.indexOf('\n') > 0) {
-                msg = msg.substr(0, msg.indexOf('\n'));
+            if (msg.indexOf("\n") > 0) {
+                msg = msg.substr(0, msg.indexOf("\n"));
             }
         }
 
@@ -56,7 +56,7 @@ export class GitHubUtil {
             for (const delivId of delivIds) {
                 for (let match of matches) {
                     if (parsedDelivId === null) {
-                        match = match.replace('#', '');
+                        match = match.replace("#", "");
                         match = match.trim();
                         if (match === delivId) {
                             // present in message and valid
@@ -133,7 +133,7 @@ export class GitHubUtil {
 
             Log.trace("GitHubUtil::processComment(..) - 3");
 
-            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can"t add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
@@ -146,9 +146,9 @@ export class GitHubUtil {
                 adminRequest = true;
             }
 
-            let kind = 'standard'; // if #check, set that here
+            let kind = "standard"; // if #check, set that here
             if (flags.indexOf("#check") >= 0) {
-                kind = 'check';
+                kind = "check";
             }
 
             Log.trace("GitHubUtil::processComment(..) - 4");
@@ -213,7 +213,9 @@ export class GitHubUtil {
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
-            const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
+
+            const cp = new ClassPortal();
+            const pusher = await cp.getPersonId(payload.pusher.name);
             let org;
             try {
                 org = payload.repository.full_name.substr(0,
@@ -232,8 +234,8 @@ export class GitHubUtil {
                 return null;
             }
 
-            let commitURL = '';
-            let commitSHA = '';
+            let commitURL = "";
+            let commitSHA = "";
 
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
@@ -260,14 +262,25 @@ export class GitHubUtil {
                 return null;
             }
 
+            let isAdmin = false;
+            if (pusher?.personId) {
+                // see if this pusher is an admin so their requests can be prioritized
+                // (many admin scripts cause push events, and we do not want these
+                // to be put on the low priority queue)
+                const perms = await cp.isStaff(pusher.personId);
+                if (perms.isStaff === true || perms.isAdmin === true) {
+                    isAdmin = true;
+                }
+            }
+
             const pushEvent: CommitTarget = {
                 delivId: backendConfig.defaultDeliverable,
                 repoId: repo,
                 orgId: org,
                 botMentioned: false, // not explicitly invoked
-                adminRequest: false, // all pushes are treated equally
+                adminRequest: isAdmin, // let us prioritize admin pushes
                 personId: pusher?.personId ?? null,
-                kind: 'push',
+                kind: "push",
                 cloneURL,
                 commitSHA,
                 commitURL,
@@ -306,8 +319,8 @@ export class GitHubUtil {
             try {
                 // find a better short string for logging
                 let loggingMessage = message.message;
-                if (loggingMessage.indexOf('\n') > 0) {
-                    loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf('\n'));
+                if (loggingMessage.indexOf("\n") > 0) {
+                    loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf("\n"));
                 }
                 if (loggingMessage.length > 80) {
                     loggingMessage = loggingMessage.substr(0, 80) + "...";
@@ -317,6 +330,7 @@ export class GitHubUtil {
                 if (message.url.indexOf("commits/") > 0 && message.url.indexOf("/commits") > 0) {
                     let sha = message.url;
                     sha = sha.substring(sha.indexOf("/commits/") + 9, sha.indexOf("/comments"));
+                    sha = Util.shaHuman(sha);
 
                     let repo = message.url;
                     repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commits/") - 1) + 1, repo.indexOf("/commits/"));
