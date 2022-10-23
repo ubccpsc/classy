@@ -185,8 +185,9 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveComment(info: CommitTarget): Promise<void> {
-        Log.info("MongoDataStore::saveComment(..) - start; repo: " +
-            info.repoId + "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA));
+        Log.trace("MongoDataStore::saveComment(..) - start" +
+            "; deliv: " + info.delivId +
+            "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
         try {
             const start = Date.now();
             await this.saveRecord(this.COMMENTCOLL, info);
@@ -198,7 +199,7 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL + "; kind: " + kind);
+        Log.trace("MongoDataStore::getCommentRecord(..) - start; deliv: " + delivId + "; url: " + commitURL + "; kind: " + kind);
         try {
             const start = Date.now();
             const res = await this.getSingleRecord(this.COMMENTCOLL, {
@@ -239,7 +240,7 @@ export class MongoDataStore implements IDataStore {
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
         try {
             await this.saveRecord(this.FEEDBACKCOLL, info);
-            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; delivId: " +
+            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; deliv: " +
                 info.delivId + "; user: " + info.personId + "; commit: " + info.commitURL);
         } catch (err) {
             Log.error("MongoDataStore::saveFeedbackGivenRecord(..) - ERROR: " + err);

@@ -364,7 +364,7 @@ export class GitHubUtil {
                     return false;
                 }
             } else {
-                Log.trace("GitHubUtil::postMarkdownToGithub(..) - send skipped"); // (config.postback === false)
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.AUTOTEST_POSTBACK === false)");
             }
         } catch (err) {
             Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
