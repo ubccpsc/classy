@@ -59,27 +59,27 @@ export class AdminController {
      * @returns {Promise<boolean>} Whether the new grade was saved
      */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
-        Log.trace("AdminController::processNewAutoTestGrade( .. ) - start");
+        Log.trace("AdminController::processNewAutoTestGrade(..) - start");
 
         const cc = await Factory.getCourseController(this.gh);
 
         try {
-            Log.trace("AdminController::processNewAutoTestGrade( .. ) - payload: " + JSON.stringify(grade));
+            Log.trace("AdminController::processNewAutoTestGrade(..) - payload: " + JSON.stringify(grade));
             const repo = await this.rc.getRepository(grade.repoId);
             if (repo === null) {
                 // sanity check
-                Log.error("AdminController::processNewAutoTestGrade( .. ) - invalid repo name: " + grade.repoId);
+                Log.error("AdminController::processNewAutoTestGrade(..) - invalid repo name: " + grade.repoId);
                 return false;
             }
 
             const peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
             if (peopleIds.length < 1) {
                 // sanity check
-                Log.error("AdminController::processNewAutoTestGrade( .. ) - no people to associate grade record with.");
+                Log.error("AdminController::processNewAutoTestGrade(..) - no people to associate grade record with.");
                 return false;
             }
 
-            Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
+            Log.trace("AdminController::processNewAutoTestGrade(..) - getting deliv"); // NOTE: for hangup debugging
 
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
@@ -98,16 +98,16 @@ export class AdminController {
                     custom: grade.custom
                 };
 
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
+                Log.trace("AdminController::processNewAutoTestGrade(..) - getting grade for " + personId); // NOTE: for hangup debugging
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade(..) - handling grade for " + personId +
                     "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade(..) - handled grade for " + personId +
                     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {
-                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for deliv: "
+                    Log.info("AdminController::processNewAutoTestGrade(..) - saving grade for deliv: "
                         + newGrade.delivId + "; repo: " + grade.repoId);
                     await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
                         existingGrade, newGrade, {repoId: grade.repoId});
@@ -117,7 +117,7 @@ export class AdminController {
             }
             return saved;
         } catch (err) {
-            Log.error("AdminController::processNewAutoTestGrade( .. ) - ERROR: " + err);
+            Log.error("AdminController::processNewAutoTestGrade(..) - ERROR: " + err);
             return false;
         }
     }
@@ -141,8 +141,7 @@ export class AdminController {
         if (record !== null) {
             // merge the new with the old
             record.defaultDeliverableId = course.defaultDeliverableId;
-            const custom = Object.assign({}, record.custom, course.custom); // merge custom properties
-            record.custom = custom;
+            record.custom = Object.assign({}, record.custom, course.custom); // merge custom properties
         }
         return await this.dbc.writeCourseRecord(record);
     }
@@ -438,8 +437,7 @@ export class AdminController {
         const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
-
-            const repoId = result.input.target.repoId;
+            // const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
                 const resultTrans = await this.clipAutoTestResult(result);
                 results.push(resultTrans);
@@ -455,7 +453,6 @@ export class AdminController {
      * Transforms a Result into an AutoTestResultSummaryTransport
      */
     private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
-        const cc = await Factory.getCourseController(this.gh);
         const repoId = result.input.target.repoId;
         const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
             Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
@@ -541,7 +538,7 @@ export class AdminController {
      * Validates the CourseTransport object.
      *
      * @param {CourseTransport} courseTrans
-     * @returns {string | null} null if objct is valid; string description of error if not.
+     * @returns {string | null} null if object is valid; string description of error if not.
      */
     public static validateCourseTransport(courseTrans: CourseTransport): string | null {
         if (typeof courseTrans === 'undefined' || courseTrans === null) {
@@ -591,23 +588,23 @@ export class AdminController {
     //
     //     if (deliv.teamMaxSize === 1) {
     //         formSingleTeams = true;
-    //         Log.info("AdminController::provision( .. ) - team maxSize 1: formSingleTeams forced to true");
+    //         Log.info("AdminController::provision(..) - team maxSize 1: formSingleTeams forced to true");
     //     }
     //
     //     const delivTeams: Team[] = [];
     //     for (const team of allTeams) {
     //         if (team === null || deliv === null || team.id === null || deliv.id === null) {
     //             // seeing this during 310 provisioning, need to figure this out
-    //             Log.error("AdminController::provision( .. ) - ERROR! null team: " +
+    //             Log.error("AdminController::provision(..) - ERROR! null team: " +
     //                 JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
     //         } else {
     //             if (team.delivId === deliv.id) {
-    //                 Log.trace("AdminController::provision( .. ) - adding team: " + team.id + " to delivTeams");
+    //                 Log.trace("AdminController::provision(..) - adding team: " + team.id + " to delivTeams");
     //                 delivTeams.push(team);
     //             }
     //         }
     //     }
-    //     Log.trace("AdminController::provision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+    //     Log.trace("AdminController::provision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
     //
     //     // remove any people who are already on teams
     //     for (const team of delivTeams) {
@@ -623,7 +620,7 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # people not on teams: " + allPeople.length);
+    //     Log.trace("AdminController::provision(..) - # people not on teams: " + allPeople.length);
     //
     //     if (formSingleTeams === true) {
     //         // now create teams for individuals
@@ -635,14 +632,14 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+    //     Log.trace("AdminController::provision(..) - # delivTeams after individual teams added: " + delivTeams.length);
     //
     //     const reposToProvision: Repository[] = [];
     //     // now process the teams to create their repos
     //     for (const delivTeam of delivTeams) {
     //         // if (team.URL === null) { // this would be faster, but we are being more conservative here
     //
-    //         Log.trace('AdminController::provision( .. ) - preparing to provision team: ' + delivTeam.id);
+    //         Log.trace('AdminController::provision(..) - preparing to provision team: ' + delivTeam.id);
     //
     //         const people: Person[] = [];
     //         for (const pId of delivTeam.personIds) {
@@ -650,7 +647,7 @@ export class AdminController {
     //         }
     //         const names = await this.cc.computeNames(deliv, people);
     //
-    //         Log.trace('AdminController::provision( .. ) - delivTeam: ' + delivTeam.id +
+    //         Log.trace('AdminController::provision(..) - delivTeam: ' + delivTeam.id +
     //             '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
     //
     //         const team = await this.tc.getTeam(names.teamName);
@@ -681,7 +678,7 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # repos to provision: " + reposToProvision.length);
+    //     Log.trace("AdminController::provision(..) - # repos to provision: " + reposToProvision.length);
     //
     //     const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
     //     return provisionedRepos; // only returns provisioned this time; should it return all of them?
@@ -709,23 +706,23 @@ export class AdminController {
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
-            Log.info("AdminController::planProvision( .. ) - team maxSize 1: formSingleTeams forced to true");
+            Log.info("AdminController::planProvision(..) - team maxSize 1: formSingleTeams forced to true");
         }
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::planProvision( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planProvision(..) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::planProvision( .. ) - adding team: " + team.id + " to delivTeams");
+                    Log.trace("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
         }
-        Log.trace("AdminController::planProvision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+        Log.trace("AdminController::planProvision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -741,7 +738,7 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # people not on teams: " + allPeople.length);
+        Log.trace("AdminController::planProvision(..) - # people not on teams: " + allPeople.length);
 
         if (formSingleTeams === true) {
             // now create teams for individuals
@@ -753,12 +750,12 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+        Log.trace("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
-            Log.trace('AdminController::planProvision( .. ) - preparing to provision team: ' + delivTeam.id);
+            Log.trace('AdminController::planProvision(..) - preparing to provision team: ' + delivTeam.id);
 
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
@@ -766,7 +763,7 @@ export class AdminController {
             }
             const names = await cc.computeNames(deliv, people);
 
-            Log.trace('AdminController::planProvision( .. ) - delivTeam: ' + delivTeam.id +
+            Log.trace('AdminController::planProvision(..) - delivTeam: ' + delivTeam.id +
                 '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
@@ -799,7 +796,7 @@ export class AdminController {
             reposToProvision.push(repo);
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # repos to provision: " + reposToProvision.length);
+        Log.trace("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
 
         const repoTrans: RepositoryTransport[] = [];
         for (const repo of reposToProvision) {
@@ -831,43 +828,43 @@ export class AdminController {
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
 
-        Log.info("AdminController::performProvision( .. ) - start; # repos: " +
+        Log.info("AdminController::performProvision(..) - start; # repos: " +
             repos.length + "; importURL: " + importURL);
         const provisionedRepos: Repository[] = [];
 
         for (const repo of repos) {
             try {
                 const start = Date.now();
-                Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
+                Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
                 if (repo.URL === null) { // key check: repo.URL is only set if the repo has been provisioned
                     const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
                     const teams: Team[] = await Promise.all(futureTeams);
-                    Log.trace("AdminController::performProvision( .. ) - about to provision: " + repo.id);
+                    Log.trace("AdminController::performProvision(..) - about to provision: " + repo.id);
                     let success = await ghc.provisionRepository(repo.id, teams, importURL);
                     success = success && await cc.finalizeProvisionedRepo(repo, teams);
-                    Log.trace("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
+                    Log.trace("AdminController::performProvision(..) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
                         repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
                         await dbc.writeRepository(repo);
-                        Log.trace("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
+                        Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::performProvision( .. ) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
+                        Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    Log.trace("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
+                    Log.trace("AdminController::performProvision(..) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
-                    // Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
-                    Log.info("AdminController::performProvision( .. ) ***** DONE *****; repo: " +
+                    // Log.info("AdminController::performProvision(..) - done for repo: " + repo.id + "; wait complete");
+                    Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " +
                         repo.id + "; took: " + Util.took(start));
                 } else {
-                    Log.info("AdminController::performProvision( .. ) - skipped; already provisioned: " +
+                    Log.info("AdminController::performProvision(..) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::performProvision( .. ) - FAILED: " +
+                Log.error("AdminController::performProvision(..) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -898,7 +895,7 @@ export class AdminController {
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::planRelease( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planRelease(..) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
@@ -939,7 +936,7 @@ export class AdminController {
             } catch (err) {
                 /* istanbul ignore next: curlies needed for ignore */
                 {
-                    Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
+                    Log.error("AdminController::planRelease(..) - ERROR: " + err.message);
                     Log.exception(err);
                 }
             }
@@ -950,7 +947,7 @@ export class AdminController {
         // we want to know all repos whether they are released or not
         const allRepos: Repository[] = reposAlreadyReleased;
         for (const toReleaseRepo of reposToRelease) {
-            toReleaseRepo.URL = null; // HACK, but denotes that it hasn't been relesed yet
+            toReleaseRepo.URL = null; // HACK, but denotes that it hasn't been released yet
             allRepos.push(toReleaseRepo);
         }
         return allRepos;
@@ -960,7 +957,7 @@ export class AdminController {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
-        Log.info("AdminController::performRelease( .. ) - start; # repos: " + repos.length);
+        Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length);
         const start = Date.now();
 
         const releasedRepos = [];
@@ -977,20 +974,20 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::performRelease( .. ) - success: " + repo.id +
+                        Log.info("AdminController::performRelease(..) - success: " + repo.id +
                             '; took: ' + Util.took(startRepo));
                         releasedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::performRelease( .. ) - FAILED: " + repo.id);
+                        Log.warn("AdminController::performRelease(..) - FAILED: " + repo.id);
                     }
 
                     await Util.delay(200); // after any releasing wait a short bit
                 } else {
-                    Log.info("AdminController::performRelease( .. ) - skipped; repo not yet provisioned: "
+                    Log.info("AdminController::performRelease(..) - skipped; repo not yet provisioned: "
                         + repo.id); // + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::performRelease( .. ) - FAILED: " +
+                Log.error("AdminController::performRelease(..) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -999,7 +996,7 @@ export class AdminController {
         for (const repo of releasedRepos) {
             releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
         }
-        Log.info("AdminController::performRelease( .. ) - complete; # released: " +
+        Log.info("AdminController::performRelease(..) - complete; # released: " +
             releasedRepositoryTransport.length + "; took: " + Util.took(start));
 
         return releasedRepositoryTransport;

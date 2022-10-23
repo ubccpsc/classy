@@ -224,7 +224,7 @@ export class AutoTestRoutes implements IREST {
             throw new Error("Invalid Result Record: " + validResultRecord);
         } else {
             Log.info("AutoTestRouteHandler::performPostResult(..) - valid result && valid secret; deliv: " +
-                result.delivId + "; repo: " + result.repoId + "; sha: " + Util.shaHuman(result.commitSHA));
+                result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA));
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(result.delivId);
             // if results should only be saved during the marking range, use the first line; otherwise the second
@@ -320,7 +320,7 @@ export class AutoTestRoutes implements IREST {
             const repoId = req.params.repoId;
             const sha = req.params.sha;
 
-            Log.info("AutoTestRouteHandler::atGetResult(..) - delivId: " + delivId + "; repoId: " + repoId + "; sha: " + sha);
+            Log.info("AutoTestRouteHandler::atGetResult(..) - delivId: " + delivId + "; repoId: " + repoId + "; SHA: " + sha);
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {

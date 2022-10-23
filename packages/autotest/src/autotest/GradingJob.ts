@@ -111,6 +111,8 @@ export class GradingJob {
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
 
         const out = this.record.output;
+        out.timestamp = Date.now(); // update TS to when job actually finished
+
         if (exitCode === -1) {
             out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
             out.state = ContainerState.TIMEOUT;
@@ -141,7 +143,7 @@ export class GradingJob {
         await container.start();
 
         if (maxExecTime > 0) {
-            // Set a timer to kill the container if it doesn't finish in the allotted time
+            // Set a timer to kill the container if it does not finish in the allotted time
             timer = setTimeout(async () => {
                 timedOut = true;
                 await container.stop();

@@ -23,7 +23,7 @@ export default class RouteHandler {
     public static getDocker(): Docker {
         if (RouteHandler.docker === null) {
             if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-                // Running tests; don't need to connect to the Docker daemon
+                // Running tests; don"t need to connect to the Docker daemon
                 this.docker = null;
             } else {
                 // Connect to the Docker socket using defaults
@@ -62,17 +62,17 @@ export default class RouteHandler {
         let githubSecret: string = req.header("X-Hub-Signature");
 
         // https://developer.github.com/webhooks/securing/
-        if (typeof githubSecret === 'undefined') {
+        if (typeof githubSecret === "undefined") {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent); // + "; signature: " + githubSecret);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
 
         const handleError = function (msg: string) {
             if (msg.indexOf("was deleted") > 0) {
                 // branch deletions are common and are not worth putting in the error list
-                // but if it _isn't_ a branch deletion, we might want to know about it in future, so warn
+                // but if it _is not_ a branch deletion, we might want to know about it in future, so warn
                 Log.warn("RouteHandler::postGithubHook() - not processed:  " + msg + "; took: " + Util.took(start));
             } else {
                 Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
@@ -86,12 +86,12 @@ export default class RouteHandler {
                 Log.trace("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-                const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex'); // secret w/ sha256
+                const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex"); // secret w/ sha256
                 // Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
 
-                const computed = "sha1=" + crypto.createHmac('sha1', key) // payload w/ sha1
+                const computed = "sha1=" + crypto.createHmac("sha1", key) // payload w/ sha1
                     .update(JSON.stringify(body))
-                    .digest('hex');
+                    .digest("hex");
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
@@ -110,7 +110,7 @@ export default class RouteHandler {
 
         secretVerified = true; // TODO: stop overwriting this
         if (secretVerified === true) {
-            if (githubEvent === 'ping') {
+            if (githubEvent === "ping") {
                 // github test packet; use to let the webhooks know we are listening
                 Log.info("RouteHandler::postGithubHook() - <200> pong.");
                 res.json(200, "pong");
@@ -138,7 +138,7 @@ export default class RouteHandler {
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
 
-        // cast is unfortunate, but if we're listening to these routes it must be a github AT instance
+        // cast is unfortunate, but if we"re listening to these routes it must be a github AT instance
         const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
 
         switch (event) {
@@ -215,20 +215,20 @@ export default class RouteHandler {
             const dockerOptions = {remote, t: tag, dockerfile: file};
             const reqParams = querystring.stringify(dockerOptions);
             const reqOptions = {
-                socketPath: '/var/run/docker.sock',
-                path: '/v1.24/build?' + reqParams,
-                method: 'POST'
+                socketPath: "/var/run/docker.sock",
+                path: "/v1.24/build?" + reqParams,
+                method: "POST"
             };
 
             const handler = (stream: any) => {
-                stream.on('data', (chunk: any) => {
-                    Log.trace('RouteHandler::postDockerImage(...) - ' + chunk.toString());
+                stream.on("data", (chunk: any) => {
+                    Log.trace("RouteHandler::postDockerImage(...) - " + chunk.toString());
                 });
-                stream.on('end', (chunk: any) => {
-                    Log.info('RouteHandler::postDockerImage(...) - Closing Docker API Connection.');
+                stream.on("end", (chunk: any) => {
+                    Log.info("RouteHandler::postDockerImage(...) - Closing Docker API Connection.");
                 });
-                stream.on('error', (chunk: any) => {
-                    Log.error('RouteHandler::postDockerImage(...) Docker Stream ERROR: ' + chunk);
+                stream.on("error", (chunk: any) => {
+                    Log.error("RouteHandler::postDockerImage(...) Docker Stream ERROR: " + chunk);
                 });
                 stream.pipe(res);
             };

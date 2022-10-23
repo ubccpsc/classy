@@ -68,7 +68,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                "repo: " + info.repoId + "; sha: " + Util.shaHuman(info.commitSHA));
+                "repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
             const start = Date.now();
             await this.savePushInfo(info);
 
@@ -137,7 +137,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                     this.tick();
                     Log.info("GitHubAutoTest::handlePushEvent(..) - done; repo: " +
-                        info.repoId + "; deliv: " + info.delivId + "; sha: " +
+                        info.repoId + "; deliv: " + info.delivId + "; SHA: " +
                         Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
                     return true;
                 } else {
@@ -293,7 +293,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async processComment(info: CommitTarget, res: AutoTestResultTransport): Promise<void> {
-        Log.info("GitHubAutoTest::processComment( ..) - repo: " + info.repoId +
+        Log.info("GitHubAutoTest::processComment(..) - repo: " + info.repoId +
             "; deliv: " + info.delivId + "; hasRes: " + (res !== null));
 
         if (res === null) {
@@ -485,7 +485,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         const start = Date.now();
 
         if (typeof info === "undefined" || info === null) {
-            throw new Error("GitHubAutoTest::handleCommentEvent( .. ) - info is null");
+            throw new Error("GitHubAutoTest::handleCommentEvent(..) - info is null");
         }
 
         Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commenter: " +
@@ -566,8 +566,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             // emit for testing
             Log.info("GitHubAutoTest::processExecution() - " +
-                "repo: " + data.repoId +
-                "; deliv: " + data.delivId +
+                "deliv: " + data.delivId +
+                "; repo: " + data.repoId +
                 "; SHA: " + Util.shaHuman(data.commitSHA) +
                 "; postback: " + data.output.postbackOnComplete +
                 "; requested: " + feedbackRequested +
@@ -693,7 +693,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         try {
             Log.trace("GitHubAutoTest::savePushInfo(..) - deliv: " + info.delivId +
                 "repo: " + info.repoId +
-                "; sha: " + Util.shaHuman(info.commitSHA));
+                "; SHA: " + Util.shaHuman(info.commitSHA));
             await this.dataStore.savePush(info);
         } catch (err) {
             Log.error("GitHubAutoTest::savePushInfo(..) - ERROR: " + err);

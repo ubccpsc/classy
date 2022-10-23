@@ -536,7 +536,6 @@ export abstract class AutoTest implements IAutoTest {
         const input = job.input;
         input.target.tsJobStart = start;
         Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
-        // Log.trace("AutoTest::handleTick(..) - input: " + JSON.stringify(input, null, 2));
 
         try {
             await job.prepare();
