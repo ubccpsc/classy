@@ -32,6 +32,7 @@ import {ClasslistAgent} from "./ClasslistAgent";
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
 import {AuthRoutes} from "./AuthRoutes";
+import Util from "@common/Util";
 
 export default class GeneralRoutes implements IREST {
 
@@ -144,8 +145,11 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
         Log.info("GeneralRoutes::getTeams(..) - start; user: " + user);
+        const start = Date.now();
 
         GeneralRoutes.performGetTeams(user, token).then(function (teams) {
+            Log.info("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " +
+                teams.length + "; took: " + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(200, payload);
             return next(false);

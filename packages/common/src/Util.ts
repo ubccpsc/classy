@@ -21,6 +21,14 @@ export default class Util {
         if (typeof end === "undefined") {
             end = Date.now();
         }
+
+        if (start > end) {
+            // swap, want end to be most recent
+            const oldStart = start;
+            start = end;
+            end = oldStart;
+        }
+
         const delta = Math.floor((end - start) / 1000); // convert to seconds
         const hours = Math.floor(delta / 3600);
         const minutes = Math.floor((delta - (hours * 3600)) / 60);

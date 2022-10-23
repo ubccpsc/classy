@@ -44,6 +44,7 @@ export class ResultsController {
      * Gets the result from a commitURL.
      *
      * @param {string} url
+     * @param {string} delivId
      * @returns {Result}
      */
     public async getResultFromURL(url: string, delivId: string): Promise<Result | null> {
@@ -58,7 +59,7 @@ export class ResultsController {
 
     public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start; deliv: " + record.delivId + "; repo: "
-            + record.repoId + "; SHA: " + record.commitSHA);
+            + record.repoId + "; SHA: " + Util.shaHuman(record.commitSHA));
         Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
         const start = Date.now();
 
@@ -88,7 +89,7 @@ export class ResultsController {
     }
 
     /**
-     * Find all of the results for a given deliverable and repo. Return [] if there are no results.
+     * Find all the results for a given deliverable and repo. Return [] if there are no results.
      *
      * @param delivId
      * @param repoId
@@ -108,7 +109,7 @@ export class ResultsController {
     /**
      * Validates the AutoTest result object.
      *
-     * @param {IAutoTestResult} record
+     * @param {AutoTestResult} record
      * @returns {string | null} String will contain a description of the error, null if successful.
      */
     public validateAutoTestResult(record: AutoTestResult): string | null {

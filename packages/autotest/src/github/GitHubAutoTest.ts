@@ -74,7 +74,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             if (typeof delivId === "undefined" || delivId === null) {
                 Log.info("GitHubAutoTest::handlePushEvent(..) - delivId not specified; requesting");
-                delivId = await this.getDelivId(); // current default deliverable
+                delivId = await this.getDefaultDelivId(); // current default deliverable
                 Log.info("GitHubAutoTest::handlePushEvent(..) - retrieved delivId: " +
                     delivId + "; type: " + typeof delivId);
 
@@ -96,13 +96,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
-                // const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig !== null) {
                     const input: ContainerInput = {target: info, containerConfig};
-
                     const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
                     if (shouldPromotePush === true) {
-                        Log.info(`GitHubAutoTest::handlePushEvent(${info.commitSHA}) - Promoting to express queue`);
+                        const sha = Util.shaHuman(info.commitSHA);
+                        Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Promoting to express queue`);
                         this.addToExpressQueue(input);
                     } else {
                         this.addToStandardQueue(input);
@@ -719,16 +718,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     /**
      * Gets the current deliverable id.
      */
-    private async getDelivId(): Promise<string | null> {
-        Log.trace("GitHubAutoTest::getDelivId() - start");
+    private async getDefaultDelivId(): Promise<string | null> {
+        Log.trace("GitHubAutoTest::getDefaultDelivId() - start");
         try {
             const config: ClassyConfigurationTransport = await this.classPortal.getConfiguration();
-            Log.trace("GitHubAutoTest::getDelivId() - response: " + JSON.stringify(config));
+            Log.trace("GitHubAutoTest::getDefaultDelivId() - response: " + JSON.stringify(config));
             if (config !== null && typeof config.defaultDeliverable !== "undefined") {
                 return config.defaultDeliverable;
             }
         } catch (err) {
-            Log.error("GitHubAutoTest::getDelivId() - ERROR: " + err);
+            Log.error("GitHubAutoTest::getDefaultDelivId() - ERROR: " + err);
         }
         return null;
     }
