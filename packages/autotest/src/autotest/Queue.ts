@@ -144,8 +144,6 @@ export class Queue {
      */
     public numberJobsForPerson(input: ContainerInput): number {
         let count = 0;
-        Log.info("Queue::numberJobsForPerson( .. ) - person: " +
-            input.target?.personId + "; isAdmin: " + input.target?.adminRequest);
         for (const job of this.data) {
             if (job.target?.personId === input.target?.personId) {
                 if (input.target?.adminRequest === true) {
@@ -155,6 +153,8 @@ export class Queue {
                 }
             }
         }
+        Log.info("Queue::numberJobsForPerson( .. ) - person: " +
+            input.target?.personId + "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
         return count;
     }
 

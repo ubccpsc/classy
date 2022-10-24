@@ -232,9 +232,12 @@ export class AutoTestRoutes implements IREST {
             // saving results is always open, but saving grades (in performPostGrades) probably won"t be
             // NOTE: this allows AutoTest to request the cached results for later access which won"t be possible if saving is prohibited
             if (deliv !== null) {
-                return await rc.createResult(result);
+                const success = await rc.createResult(result);
+                Log.info("AutoTestRouteHandler::performPostResult(..) - done; valid result && valid secret; deliv: " +
+                    result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA) + "; success: " + success);
+                return success;
             } else {
-                Log.info("AutoTestRouteHandler::performPostResult(..) - not accepting new results for delivId: " + result.delivId +
+                Log.info("AutoTestRouteHandler::performPostResult(..) - not accepting new results for deliv: " + result.delivId +
                     "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }

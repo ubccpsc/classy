@@ -267,13 +267,13 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getTeams(req: any, res: any, next: any) {
-        Log.info("AdminRoutes::getTeams(..) - start");
+        Log.trace("AdminRoutes::getTeams(..) - start");
         const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceding action in chain above (see registerRoutes)
         cc.getTeams().then(function (teams) {
-            Log.info("AdminRoutes::getTeams(..) - done; # teams: " + teams.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getTeams(..) - # teams: " + teams.length + "; took: " + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(payload);
             return next();
@@ -289,7 +289,7 @@ export default class AdminRoutes implements IREST {
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceding action in chain above (see registerRoutes)
         cc.getRepositories().then(function (repos) {
-            Log.info("AdminRoutes::getRepositories(..) - done; # repos: " + repos.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getRepositories(..) - # repos: " + repos.length + "; took: " + Util.took(start));
             const payload: RepositoryPayload = {success: repos};
             res.send(payload);
             return next();
@@ -306,7 +306,7 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getResults(req: any, res: any, next: any) {
-        Log.info("AdminRoutes::getResults(..) - start");
+        Log.trace("AdminRoutes::getResults(..) - start");
         const start = Date.now();
 
         // if these params are missing the client will get 404 since they are part of the path
@@ -316,7 +316,7 @@ export default class AdminRoutes implements IREST {
         // handled by preceding action in chain above (see registerRoutes)
         const cc = new AdminController(AdminRoutes.ghc);
         cc.getResults(delivId, repoId).then(function (results) {
-            Log.info("AdminRoutes::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getResults(..) - # results: " + results.length + "; took: " + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();

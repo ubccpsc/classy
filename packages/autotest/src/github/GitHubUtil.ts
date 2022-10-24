@@ -220,7 +220,7 @@ export class GitHubUtil {
             try {
                 org = payload.repository.full_name.substr(0,
                     payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-                Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
+                Log.trace("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
                     "; org: " + org + "; name: " + payload.repository.name);
             } catch (err) {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
@@ -324,12 +324,12 @@ export class GitHubUtil {
                     loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf("\n"));
                 }
                 if (loggingMessage.length > 80) {
-                    loggingMessage = loggingMessage.substr(0, 80) + "...";
+                    loggingMessage = loggingMessage.substr(0, 60) + "...";
                 }
 
                 const sha = GitHubUtil.commitURLtoSHA(message.url);
                 const repo = GitHubUtil.commitURLtoRepoName(message.url);
-                Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown for repo: " +
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting to repo: " +
                     repo + "; sha: " + sha + "; message: " + loggingMessage);
 
             } catch (err) {
@@ -350,7 +350,8 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await fetch(message.url, options);
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - posted; took: " + Util.took(start));
+                    const repo = GitHubUtil.commitURLtoRepoName(message.url);
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - posted to: " + repo + "; took: " + Util.took(start));
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
