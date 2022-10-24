@@ -344,7 +344,7 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
-        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - start");
         const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
 
@@ -355,7 +355,7 @@ export class ClassPortal implements IClassPortal {
                 headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
 
-            Log.info("ClassPortal::getResult(..) - requesting from: " + url);
+            Log.trace("ClassPortal::getResult(..) - requesting from: " + url);
             const res = await fetch(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = await res.json() as AutoTestResultPayload;

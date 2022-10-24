@@ -146,11 +146,11 @@ export default class GeneralRoutes implements IREST {
     public static getTeams(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info("GeneralRoutes::getTeams(..) - start; user: " + user);
+        Log.trace("GeneralRoutes::getTeams(..) - start; user: " + user);
         const start = Date.now();
 
         GeneralRoutes.performGetTeams(user, token).then(function (teams) {
-            Log.info("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " +
+            Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " +
                 teams.length + "; took: " + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(200, payload);

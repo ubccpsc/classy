@@ -330,11 +330,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     res.input.target.botMentioned = info.botMentioned;
                     res.input.target.personId = info.personId;
                     res.input.target.kind = "standard"; // was push from the original request
+
                     Log.info("GitHubAutoTest::processCommentExists(..) - updating target for: " +
+                        info.personId + "; deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
+                    Log.trace("GitHubAutoTest::processCommentExists(..) - updating target for: " +
                         res.commitURL + " to: " + JSON.stringify(res.input.target));
                     await this.classPortal.sendResult(res);
                 } else {
-                    Log.info("GitHubAutoTest::processCommentExists(..) - updating target not needed for: " + res.commitURL);
+                    Log.info("GitHubAutoTest::processCommentExists(..) - updating target not needed for: " +
+                        info.personId + "; deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
                 }
             } else {
                 // previously paid, do not charge
@@ -653,15 +657,18 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return null; // staff can always request
             } else {
                 if (nextTimeslot === null) {
-                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; no prior request - no delay");
+                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
+                        userName + "; no prior request - no delay");
                     return null; // no prior requests
                 } else {
                     if (reqTimestamp > nextTimeslot) {
-                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; enough time passed; no delay");
+                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
+                            userName + "; enough time passed; no delay");
                         return null; // enough time has passed
                     } else {
                         const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
-                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - for: " + userName + "; NOT enough time passed; delay: " + msg);
+                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
+                            userName + "; NOT enough time passed; delay: " + msg);
                         return msg;
                     }
                 }

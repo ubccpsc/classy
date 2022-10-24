@@ -224,12 +224,12 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getStudents(req: any, res: any, next: any) {
-        Log.info("AdminRoutes::getStudents(..) - start");
+        Log.trace("AdminRoutes::getStudents(..) - start");
         const start = Date.now();
 
         const ac = new AdminController(AdminRoutes.ghc);
         ac.getStudents().then(function (students) {
-            Log.info("AdminRoutes::getStudents(..) - done; # students: " + students.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getStudents(..) - # students: " + students.length + "; took: " + Util.took(start));
             const payload: StudentTransportPayload = {success: students};
             res.send(payload);
             return next();

@@ -79,12 +79,13 @@ export class ResultsController {
      * @param sha
      */
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResult | null> {
-        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        Log.trace("ResultsController::getResult( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - start");
         const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResult(delivId, repoId, sha);
 
-        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " + sha + " ) - done; took: " + Util.took(start));
+        Log.info("ResultsController::getResult( " + delivId + ", " + repoId + ", " +
+            Util.shaHuman(sha) + " ) - done; found: " + (outcome !== null) + "; took: " + Util.took(start));
         return outcome;
     }
 

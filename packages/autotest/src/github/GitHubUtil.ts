@@ -379,7 +379,7 @@ export class GitHubUtil {
         try {
             if (commitURL.indexOf("/commit") > 0) {
                 let repo = commitURL;
-                repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commit") - 1) + 1, repo.indexOf("/commits/"));
+                repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commit") - 1) + 1, repo.indexOf("/commit"));
                 return repo;
             }
         } catch (err) {

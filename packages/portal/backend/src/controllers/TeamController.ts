@@ -134,7 +134,7 @@ export class TeamController {
             return a.delivId.localeCompare(b.delivId);
         });
 
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " +
+        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - # teams: " +
             myTeams.length + "; took: " + Util.took(start));
         return myTeams;
     }

@@ -320,7 +320,7 @@ export class AutoTestRoutes implements IREST {
             const repoId = req.params.repoId;
             const sha = req.params.sha;
 
-            Log.info("AutoTestRouteHandler::atGetResult(..) - delivId: " + delivId + "; repoId: " + repoId + "; SHA: " + sha);
+            Log.trace("AutoTestRouteHandler::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha));
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {

@@ -20,7 +20,7 @@ export class AuthController {
     public async isValid(personId: string, token: string): Promise<boolean> {
         Log.trace("AuthController::isValid( " + personId + ", ... ) - start");
 
-        if (typeof personId === 'undefined' || personId === null || typeof token === 'undefined' || token === null) {
+        if (typeof personId === "undefined" || personId === null || typeof token === "undefined" || token === null) {
             // invalid person
             // these are never valid; this would be caught below, but this is just to be extra cautious
             Log.trace("AuthController::isValid( " + personId + ", ... ) - false; undefined | null encoutered");
@@ -88,7 +88,7 @@ export class AuthController {
     public async isPrivileged(personId: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - start");
         const pc = new PersonController();
-        const dc = DatabaseController.getInstance();
+        // const dc = DatabaseController.getInstance();
         const person = await pc.getPerson(personId);
         if (person !== null) {
             const valid = await this.isValid(personId, token);
@@ -109,8 +109,8 @@ export class AuthController {
      * @returns {Promise<boolean>}
      */
     public async removeAuthentication(personId: string): Promise<boolean> {
-        Log.trace("AuthController::removeAuthentication() - start");
-        if (typeof personId !== 'undefined' && personId !== null) {
+        Log.info("AuthController::removeAuthentication( " + personId + " ) - start");
+        if (typeof personId !== "undefined" && personId !== null) {
             const pc = new PersonController();
             const person = await pc.getPerson(personId);
 
@@ -118,7 +118,7 @@ export class AuthController {
                 Log.trace("AuthController::removeAuthentication() - person does not exist");
                 return false; // just say it worked although nothing happened
             } else {
-                if (person.kind !== 'student') {
+                if (person.kind !== "student") {
                     // Students stay students _forever_
                     // This is just a safe option.
                     // Students do become TAs during the term for courses they were already students in.
@@ -133,7 +133,7 @@ export class AuthController {
             }
         }
         Log.error("AuthController::removeAuthentication() - no person provided");
-        return false; // if it doesn't throw an exception it must have worked enough
+        return false; // if it does not throw an exception it must have worked enough
     }
 
     private isLocalRequest(token: string): boolean {

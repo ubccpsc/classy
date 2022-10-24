@@ -347,8 +347,9 @@ export class DatabaseController {
 
     public async deleteAuth(record: Auth): Promise<boolean> {
         if (record !== null) {
-            Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - start");
-            return await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
+            const success = await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
+            Log.info("DatabaseController::deleteAuth( " + record.personId + " ) - success: " + success);
+            return success;
         }
         return false;
     }
