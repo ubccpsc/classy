@@ -1003,7 +1003,7 @@ export class GitHubActions implements IGitHubActions {
      * @returns {Promise<string[]>}
      */
     public async getTeamMembers(teamName: string): Promise<string[]> {
-        Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - start");
+        Log.trace("GitHubAction::getTeamMembers( " + teamName + " ) - start");
 
         if (teamName === null) {
             throw new Error("GitHubAction::getTeamMembers( null ) - null team requested");
@@ -1023,22 +1023,12 @@ export class GitHubActions implements IGitHubActions {
             };
 
             const teamMembersRaw: any = await this.handlePagination(uri, options);
-
             const ids: string[] = [];
             for (const teamMember of teamMembersRaw) {
                 ids.push(teamMember.login);
             }
 
-            // NOTE: not sure how this will respond to paging if there are lots of members on the team
-            // const body = await rp(options);
-            //
-            // const resp = JSON.parse(body);
-            // const ids: string[] = [];
-            // for (const result of resp) {
-            //     ids.push(result.login);
-            // }
-
-            Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - done; # results: " +
+            Log.trace("GitHubAction::getTeamMembers( " + teamName + " ) - done; # results: " +
                 ids.length + "; took: " + Util.took(start));
 
             return ids;
