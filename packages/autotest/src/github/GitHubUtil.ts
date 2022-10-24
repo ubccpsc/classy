@@ -48,7 +48,7 @@ export class GitHubUtil {
             }
         }
 
-        Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
+        Log.trace("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
             "; matches: " + JSON.stringify(matches) + " for msg: " + msg);
 
         let parsedDelivId = null;
@@ -68,7 +68,7 @@ export class GitHubUtil {
         }
 
         if (parsedDelivId === null) {
-            Log.info("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
+            Log.trace("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
                 msg + "; options: " + JSON.stringify(delivIds));
         } else {
             Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + msg + "; output: " + parsedDelivId);
@@ -93,7 +93,7 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.info("GitHubUtil::processComment(..) - start");
+            Log.trace("GitHubUtil::processComment(..) - start");
             const start = Date.now();
 
             const commitSHA = payload.comment.commit_id;
@@ -221,7 +221,7 @@ export class GitHubUtil {
                 org = payload.repository.full_name.substr(0,
                     payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
                 Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
-                    "; name: " + payload.repository.name + "; org: " + org);
+                    "; org: " + org + "; name: " + payload.repository.name);
             } catch (err) {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
             }
