@@ -116,7 +116,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
-            Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
+            Log.info("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
@@ -160,7 +160,7 @@ export class ClassPortal implements IClassPortal {
             const json: Payload = await res.json() as Payload;
             if (typeof json.success !== "undefined") {
                 Log.info("ClassPortal::getPersonId( " + githubId + " ) - success; personId: " +
-                    json.success + "; took: " + Util.took(start));
+                    json.success?.personId + "; took: " + Util.took(start));
                 return json.success; // AutoTestPersonIdTransport
             } else {
                 Log.error("ClassPortal::getPersonId(..) - ERROR: " + JSON.stringify(json));

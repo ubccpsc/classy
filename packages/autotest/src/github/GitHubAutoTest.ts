@@ -169,8 +169,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
-        Log.info("GitHubAutoTest::checkCommentPreconditions(..) - for: " + info.personId +
-            "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
+        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - repo: " +
+            info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         // ignore messages made by the bot, unless they are #force
         if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
@@ -498,8 +498,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             throw new Error("GitHubAutoTest::handleCommentEvent(..) - info is null");
         }
 
-        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; commenter: " +
-            info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
+        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; SHA: " + Util.shaHuman(info.commitSHA));
 
         Log.trace("GitHubAutoTest::handleCommentEvent(..) - start; comment: " +
             JSON.stringify(info));
@@ -507,13 +506,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
         if (preconditionsMet === false) {
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - preconditions not met; not processing comment further.");
+            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId +
+                " ) - preconditions not met; not processing comment further.");
             return false;
         }
 
         const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
-        Log.info("GitHubAutoTest::handleCommentEvent(..) - start; for: " +
-            info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA) + "; hasPush: " + (pushEvent !== null));
+        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; deliv: " +
+            info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) + "; hasPush: " + (pushEvent !== null));
 
         if (pushEvent !== null && typeof pushEvent.ref === "string") {
             // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).

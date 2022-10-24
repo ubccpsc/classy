@@ -256,7 +256,7 @@ export abstract class AutoTest implements IAutoTest {
      */
     public tick(): void {
         try {
-            Log.trace("AutoTest::tick(..) - start: " +
+            Log.info("AutoTest::tick(..) - start: " +
                 "# exp: " + this.expressQueue.length() + "; " +
                 "# std: " + this.standardQueue.length() + "; " +
                 "# low: " + this.lowQueue.length());
