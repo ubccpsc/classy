@@ -445,7 +445,8 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+        Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - done; # results: " +
+            results.length + "; took: " + Util.took(start));
         return results;
     }
 

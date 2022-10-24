@@ -247,10 +247,11 @@ export default class AdminRoutes implements IREST {
      */
     private static getStaff(req: any, res: any, next: any) {
         Log.trace("AdminRoutes::getStaff(..) - start");
+        const start = Date.now();
 
         const ac = new AdminController(AdminRoutes.ghc);
         ac.getStaff().then(function (staff) {
-            Log.info("AdminRoutes::getStaff(..) - # staff: " + staff.length);
+            Log.info("AdminRoutes::getStaff(..) - # staff: " + staff.length + "; took: " + Util.took(start));
             const payload: StudentTransportPayload = {success: staff};
             res.send(payload);
             return next();
@@ -283,13 +284,13 @@ export default class AdminRoutes implements IREST {
     }
 
     private static getRepositories(req: any, res: any, next: any) {
-        Log.trace("AdminRoutes::getRepositories(..) - start");
+        Log.trace("AdminRoutes::getRepositories() - start");
         const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceding action in chain above (see registerRoutes)
         cc.getRepositories().then(function (repos) {
-            Log.info("AdminRoutes::getRepositories(..) - # repos: " + repos.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getRepositories() - # repos: " + repos.length + "; took: " + Util.took(start));
             const payload: RepositoryPayload = {success: repos};
             res.send(payload);
             return next();
@@ -316,7 +317,8 @@ export default class AdminRoutes implements IREST {
         // handled by preceding action in chain above (see registerRoutes)
         const cc = new AdminController(AdminRoutes.ghc);
         cc.getResults(delivId, repoId).then(function (results) {
-            Log.info("AdminRoutes::getResults(..) - # results: " + results.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " +
+                results.length + "; took: " + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();
@@ -541,12 +543,13 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getDeliverables(req: any, res: any, next: any) {
-        Log.trace("AdminRoutes::getDeliverables(..) - start");
+        Log.trace("AdminRoutes::getDeliverables() - start");
+        const start = Date.now();
 
         // handled by preceding action in chain above (see registerRoutes)
         const cc = new AdminController(AdminRoutes.ghc);
         cc.getDeliverables().then(function (delivs) {
-            Log.info("AdminRoutes::getDeliverables(..) - # delivs: " + delivs.length);
+            Log.info("AdminRoutes::getDeliverables() - # delivs: " + delivs.length + "; took: " + Util.took(start));
             const payload: DeliverableTransportPayload = {success: delivs};
             res.send(payload);
             return next();
@@ -711,12 +714,12 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getCourse(req: any, res: any, next: any) {
-        Log.trace("AdminRoutes::getCourse(..) - start");
+        Log.trace("AdminRoutes::getCourse() - start");
         const start = Date.now();
 
         const cc = new AdminController(AdminRoutes.ghc);
         cc.getCourse().then(function (course) {
-            Log.info("AdminRoutes::getCourse(..) - done; took: " + Util.took(start));
+            Log.trace("AdminRoutes::getCourse() - done; took: " + Util.took(start));
             const payload: CourseTransportPayload = {success: course};
             res.send(payload);
             return next();

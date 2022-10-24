@@ -653,28 +653,25 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
 
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
-                Log.info("GitHubAutoTest::requestFeedbackDelay(..) - staff; no delay");
+                Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - staff; no delay");
                 return null; // staff can always request
             } else {
                 if (nextTimeslot === null) {
-                    Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
-                        userName + "; no prior request - no delay");
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; no prior request, no delay");
                     return null; // no prior requests
                 } else {
                     if (reqTimestamp > nextTimeslot) {
-                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
-                            userName + "; enough time passed; no delay");
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; enough time passed, no delay");
                         return null; // enough time has passed
                     } else {
                         const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
-                        Log.info("GitHubAutoTest::requestFeedbackDelay(..) - done for: " +
-                            userName + "; NOT enough time passed; delay: " + msg);
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; NOT enough time passed, delay: " + msg);
                         return msg;
                     }
                 }
             }
         } catch (err) {
-            Log.error("GitHubAutoTest::requestFeedbackDelay() - ERROR: " + err);
+            Log.error("GitHubAutoTest::requestFeedbackDelay(" + delivId + ", " + userName + " ) - ERROR: " + err);
         }
     }
 
@@ -689,7 +686,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         Log.trace("GitHubAutoTest::requestNextTimeslot(..) - testDelay: " + testDelay);
         if (record) {
             const nextTimeslot: number = record.timestamp + (testDelay * 1000);
-            Log.info("GitHubAutoTest::requestNextTimeslot(..) - for: " + userName + "; delay: " + testDelay + "; last: " +
+            Log.info("GitHubAutoTest::requestNextTimeslot( " + delivId + ", " + userName + " ) - delay: " + testDelay + "; last: " +
                 new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
             return nextTimeslot;
         } else {

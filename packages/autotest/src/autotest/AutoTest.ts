@@ -208,8 +208,8 @@ export abstract class AutoTest implements IAutoTest {
                     this.lowQueue.remove(input);
                 } else {
                     Log.warn("AutoTest::addToStandardQueue(..) - repo: " +
-                        input.target.repoId + "; has #" + stdJobCount +
-                        " standard jobs queued and #" + lowJobCount +
+                        input.target.repoId + "; has # " + stdJobCount +
+                        " standard jobs queued and # " + lowJobCount +
                         " low jobs queued");
 
                     // NOTE: this _could_ post a warning back to the user
@@ -257,9 +257,9 @@ export abstract class AutoTest implements IAutoTest {
     public tick(): void {
         try {
             Log.trace("AutoTest::tick(..) - start: " +
-                "#exp: " + this.expressQueue.length() + "; " +
-                "#std: " + this.standardQueue.length() + "; " +
-                "#low: " + this.lowQueue.length());
+                "# exp: " + this.expressQueue.length() + "; " +
+                "# std: " + this.standardQueue.length() + "; " +
+                "# low: " + this.lowQueue.length());
 
             // let updated = false;
             const that = this;
@@ -308,9 +308,9 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             Log.info("AutoTest::tick(..) - done:  " +
-                "#exp: " + this.expressQueue.length() + "; " +
-                "#std: " + this.standardQueue.length() + "; " +
-                "#low: " + this.lowQueue.length());
+                "# exp: " + this.expressQueue.length() + "; " +
+                "# std: " + this.standardQueue.length() + "; " +
+                "# low: " + this.lowQueue.length());
 
             this.persistQueues().then(function (success: boolean) {
                 Log.trace("AutoTest::tick() - persist complete: " + success);

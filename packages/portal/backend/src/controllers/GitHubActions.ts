@@ -1102,14 +1102,12 @@ export class GitHubActions implements IGitHubActions {
         const teamMembers = await gh.getTeamMembers(teamName);
         for (const member of teamMembers) {
             if (member === userName) {
-                Log.info("GitHubAction::isOnTeam(..) - user: " + userName +
-                    " IS on team: " + teamName + "; took: " + Util.took(start));
+                Log.info("GitHubAction::isOnTeam( " + userName + " ) - IS on team: " + teamName + "; took: " + Util.took(start));
                 return true;
             }
         }
 
-        Log.info("GitHubAction::isOnTeam(..) - user: " + userName +
-            " is NOT on team: " + teamName + "; took: " + Util.took(start));
+        Log.info("GitHubAction::isOnTeam( " + userName + " ) - is NOT on team: " + teamName + "; took: " + Util.took(start));
         return false;
     }
 

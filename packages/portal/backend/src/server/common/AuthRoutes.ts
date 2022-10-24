@@ -104,14 +104,14 @@ export class AuthRoutes implements IREST {
             } else {
                 // logout anyways? if your user / token is stale we still need log you out
                 // but that could mean someone else could spoof-log you out too
-                Log.warn("AuthRoutes::getLogout(..) - user: " + user + "; invalid user");
+                Log.warn("AuthRoutes::getLogout( " + user + " ) - invalid user");
             }
             // logout
             const ac = new AuthController();
             return ac.removeAuthentication(user);
         }).then(function (success) {
             if (success) {
-                Log.info("AuthRoutes::getLogout(..) - logged out; user: " + user);
+                Log.info("AuthRoutes::getLogout( " + user + " ) - logged out");
                 payload = {success: {message: "Logout successful"}};
                 res.send(200, payload);
             } else {

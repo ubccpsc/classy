@@ -148,7 +148,7 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
 
         try {
-            Log.info("ClassPortal::personId(..) - requesting from: " + url);
+            Log.info("ClassPortal::getPersonId(..) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
@@ -157,18 +157,19 @@ export class ClassPortal implements IClassPortal {
             };
 
             const res = await fetch(url, opts);
-            Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
             const json: Payload = await res.json() as Payload;
             if (typeof json.success !== "undefined") {
+                Log.info("ClassPortal::getPersonId( " + githubId + " ) - success; personId: " +
+                    json.success + "; took: " + Util.took(start));
                 return json.success; // AutoTestPersonIdTransport
             } else {
-                Log.error("ClassPortal::personId(..) - ERROR: " + JSON.stringify(json));
+                Log.error("ClassPortal::getPersonId(..) - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
-            Log.error("ClassPortal::personId(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return null;
+            Log.error("ClassPortal::getPersonId(..) - ERROR; url: " + url + "; ERROR: " + err);
         }
+        return null;
     }
 
     public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
