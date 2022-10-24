@@ -181,7 +181,7 @@ export class AdminDashboardTab extends AdminPage {
 
         const st = new DashboardTable(headers, "#dashboardListTable");
 
-        // this loop couldn"t possibly be less efficient
+        // this loop could not possibly be less efficient
         for (const result of results) {
 
             // repoId
@@ -210,7 +210,7 @@ export class AdminDashboardTab extends AdminPage {
                 {
                     value: "",
                     html: "<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
-                        stdioViewerURL + "><ons-icon icon='md-info-outline'</ons-icon></a>"
+                        stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>"
                 },
                 {
                     value: result.repoId,
@@ -291,7 +291,7 @@ export class AdminDashboardTab extends AdminPage {
                 state = "error";
                 colour = "orange";
             } else {
-                // uhoh
+                // unknown name
             }
             annotated.push({name: name, state: state, colour: colour});
         }
