@@ -229,7 +229,7 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AdminController(AdminRoutes.ghc);
         ac.getStudents().then(function (students) {
-            Log.info("AdminRoutes::getStudents(..) - # students: " + students.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
             const payload: StudentTransportPayload = {success: students};
             res.send(payload);
             return next();
@@ -467,17 +467,18 @@ export default class AdminRoutes implements IREST {
      * @param next
      */
     private static getDashboard(req: any, res: any, next: any) {
-        Log.info("AdminRoutes::getDashboard(..) - start");
         const start = Date.now();
 
         // if these params are missing the client will get 404 since they are part of the path
-        const delivId = req.params.delivId;
-        const repoId = req.params.repoId;
+        const delivId = req.params?.delivId;
+        const repoId = req.params?.repoId;
 
+        Log.info("AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - start");
         // handled by preceding action in chain above (see registerRoutes)
         const cc = new AdminController(AdminRoutes.ghc);
         cc.getDashboard(delivId, repoId).then(function (results) {
-            Log.info("AdminRoutes::getDashboard(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getDashboard( " + delivId + ", " + repoId +
+                " ) - done; # results: " + results.length + "; took: " + Util.took(start));
             const payload: AutoTestResultSummaryPayload = {success: results};
             res.send(payload);
             return next();

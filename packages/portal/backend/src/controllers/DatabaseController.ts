@@ -29,16 +29,16 @@ export class DatabaseController {
     private writeDb: Db = null;
     private slowDb: Db = null;
 
-    private readonly COURSECOLL = 'course';
-    private readonly PERSONCOLL = 'people';
-    private readonly GRADECOLL = 'grades';
-    private readonly RESULTCOLL = 'results';
-    private readonly TEAMCOLL = 'teams';
-    private readonly DELIVCOLL = 'deliverables';
-    private readonly REPOCOLL = 'repositories';
-    private readonly AUTHCOLL = 'auth';
-    private readonly AUDITCOLL = 'audit';
-    private readonly TICKERCOLL = 'ids';
+    private readonly COURSECOLL = "course";
+    private readonly PERSONCOLL = "people";
+    private readonly GRADECOLL = "grades";
+    private readonly RESULTCOLL = "results";
+    private readonly TEAMCOLL = "teams";
+    private readonly DELIVCOLL = "deliverables";
+    private readonly REPOCOLL = "repositories";
+    private readonly AUTHCOLL = "auth";
+    private readonly AUDITCOLL = "audit";
+    private readonly TICKERCOLL = "ids";
 
     /**
      * use getInstance() instead.
@@ -104,7 +104,7 @@ export class DatabaseController {
         const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, query, latestFirst) as Result[];
 
         for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
@@ -118,14 +118,14 @@ export class DatabaseController {
         Log.trace("DatabaseController::getGradedResults() - start");
         const pipeline = [
             {$match: {delivId: deliv}},
-            {$group: {_id: '$URL'}},
+            {$group: {_id: "$URL"}},
             {
                 $lookup:
                     {
                         from: this.RESULTCOLL,
-                        localField: '_id',
-                        foreignField: 'commitURL',
-                        as: 'results'
+                        localField: "_id",
+                        foreignField: "commitURL",
+                        as: "results"
                     }
             },
             {$project: {result: {$arrayElemAt: ["$results", 0]}}}
@@ -142,7 +142,7 @@ export class DatabaseController {
         Log.trace("DatabaseController::getBestResults() - start");
         const pipeline = [
             {$match: {delivId: deliv}},
-            {$group: {_id: '$repoId', maxScore: {$max: "$output.report.scoreOverall"}}},
+            {$group: {_id: "$repoId", maxScore: {$max: "$output.report.scoreOverall"}}},
             {
                 $lookup:
                     {
@@ -163,7 +163,7 @@ export class DatabaseController {
                                     }
                             }
                         ],
-                        as: 'results'
+                        as: "results"
                     }
             },
             {$project: {result: {$arrayElemAt: ["$results", 0]}}}
@@ -213,19 +213,8 @@ export class DatabaseController {
         ];
 
         const collection = await this.getCollection(this.REPOCOLL, QueryKind.FAST);
-        const records: any[] = await collection.aggregate(query).toArray();
-
-        return records;
+        return await collection.aggregate(query).toArray() as any[];
     }
-
-    // case issues will be harder to fix than this
-    // private fixPersonCase(person: Person): Person {
-    //     if (person !== null) {
-    //         (person as any).id = person.id.toLowerCase(); // always force id to be lowercase
-    //         person.githubId = person.githubId.toLowerCase(); // always force id to be lowercase
-    //     }
-    //     return person;
-    // }
 
     public async getPeople(): Promise<Person[]> {
         const people = await this.readRecords(this.PERSONCOLL, QueryKind.FAST, false, {}) as Person[];
@@ -338,13 +327,6 @@ export class DatabaseController {
         }
     }
 
-    /*
-    public async deletePerson(record: Person): Promise<boolean> {
-        Log.info("DatabaseController::deletePerson(..) - start");
-        return await this.deleteRecord(this.PERSONCOLL, {id: record.id});
-    }
-    */
-
     public async deleteAuth(record: Auth): Promise<boolean> {
         if (record !== null) {
             const success = await this.deleteRecord(this.AUTHCOLL, {personId: record.personId});
@@ -426,7 +408,7 @@ export class DatabaseController {
     public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
 
         const isEmpty = function (obj: any): boolean {
-            if (typeof obj === 'undefined' || obj === null) {
+            if (typeof obj === "undefined" || obj === null) {
                 return true;
             }
             return Object.keys(obj).length === 0 && obj.constructor === Object;
@@ -437,16 +419,16 @@ export class DatabaseController {
             Log.trace("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
                 !isEmpty(before) + ", hasAfter: " + !isEmpty(after) + " ) - start");
 
-            let finalLabel = label + '_';
+            let finalLabel = label + "_";
             if (isEmpty(before) === true && isEmpty(after) === true) {
                 // is an action, no postfix
                 finalLabel = label;
             } else if (isEmpty(before) === true) {
-                finalLabel = finalLabel + 'CREATE';
+                finalLabel = finalLabel + "CREATE";
             } else if (isEmpty(after) === true) {
-                finalLabel = finalLabel + 'DELETE';
+                finalLabel = finalLabel + "DELETE";
             } else {
-                finalLabel = finalLabel + 'UPDATE';
+                finalLabel = finalLabel + "UPDATE";
             }
             const auditRecord: AuditEvent = {
                 label: finalLabel,
@@ -514,12 +496,12 @@ export class DatabaseController {
      *
      * Usage:
      *
-     *   (await getCollection('users')).find().toArray().then( ... )
+     *   (await getCollection("users")).find().toArray().then( ... )
      */
     public async getCollection(collectionName: string, queryKind?: QueryKind): Promise<Collection> {
         try {
             let db;
-            if (typeof queryKind === 'undefined' || queryKind === null) {
+            if (typeof queryKind === "undefined" || queryKind === null) {
                 db = await this.open(QueryKind.FAST);
             } else if (queryKind === QueryKind.SLOW) {
                 db = await this.open(QueryKind.SLOW);
@@ -572,7 +554,6 @@ export class DatabaseController {
     private async readSingleRecord(column: string, query: {}): Promise<{} | null> {
         try {
             // Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
-            const start = Date.now();
             const col = await this.getCollection(column, QueryKind.FAST);
 
             const records: any[] = await (col as any).find(query).toArray();
@@ -583,7 +564,7 @@ export class DatabaseController {
                 // Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " +
                 // records.length + "; took: " + Util.took(start));
                 const record = records[0];
-                delete record._id; // remove the record id, just so we can't use it
+                delete record._id; // remove the record id, just so we can"t use it
                 return record;
             }
         } catch (err) {
@@ -595,7 +576,7 @@ export class DatabaseController {
     /**
      *
      * @param {string} column
-     * @param {QueryKind} kind this is the kind of query ('slow', 'write', or null)
+     * @param {QueryKind} kind this is the kind of query ("slow", "write", or null)
      * * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
      * * @param {{}} sort? send only if a specific ordering is required
@@ -603,7 +584,7 @@ export class DatabaseController {
      */
     public async readRecords(column: string, kind: QueryKind, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
         try {
-            if (typeof sort === 'undefined') {
+            if (typeof sort === "undefined") {
                 Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
             } else {
                 Log.trace("DatabaseController::readRecords( " + column + ", " +
@@ -620,7 +601,7 @@ export class DatabaseController {
             const col = await this.getCollection(column, kind);
 
             let records: any[];
-            if (typeof sort === 'undefined') {
+            if (typeof sort === "undefined") {
                 records = await (col as any).find(query).limit(LIMITS).toArray();
             } else {
                 records = await (col as any).find(query).limit(LIMITS).sort(sort).toArray();
@@ -632,7 +613,7 @@ export class DatabaseController {
                 return [];
             } else {
                 for (const r of records) {
-                    delete r._id; // remove the record id, just so we can't use it
+                    delete r._id; // remove the record id, just so we can"t use it
                 }
                 Log.trace("DatabaseController::readRecords(..) - done; query: " + JSON.stringify(query) + "; # records: " +
                     records.length + ". took: " + Util.took(start));
@@ -646,7 +627,6 @@ export class DatabaseController {
 
     private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
         try {
-            const start = Date.now();
             const col = await this.getCollection(column, QueryKind.WRITE);
 
             const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
@@ -686,26 +666,26 @@ export class DatabaseController {
                 const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
                 /* istanbul ignore if */
-                if (dbName === 'sdmm') {
-                    dbName = 'secapstone'; // NOTE: this is just an unfortunate historical artifact
+                if (dbName === "sdmm") {
+                    dbName = "secapstone"; // NOTE: this is just an unfortunate historical artifact
                 }
 
                 // _ are to help diagnose whitespace in dbname/mongoUrl
                 // too much info, logs password
                 // Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
-                Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
+                Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
 
                 const client = await MongoClient.connect(dbHost);
-                if (kind === 'slow') {
-                    Log.info("DatabaseController::open() - creating slowDb");
+                if (kind === "slow") {
+                    Log.trace("DatabaseController::open() - creating slowDb");
                     this.slowDb = await client.db(dbName);
                     db = this.slowDb;
                 } else if (kind === QueryKind.WRITE) {
-                    Log.info("DatabaseController::open() - creating writeDb");
+                    Log.trace("DatabaseController::open() - creating writeDb");
                     this.writeDb = await client.db(dbName);
                     db = this.writeDb;
                 } else {
-                    Log.info("DatabaseController::open() - creating standard db");
+                    Log.trace("DatabaseController::open() - creating standard db");
                     this.db = await client.db(dbName);
                     db = this.db;
 
@@ -713,7 +693,7 @@ export class DatabaseController {
                     await this.initDatabase();
                 }
 
-                Log.info("DatabaseController::open() - db null; new connection made");
+                Log.trace("DatabaseController::open() - db null; new connection made");
             }
             // Log.trace("DatabaseController::open() - returning db");
             return db;
@@ -735,7 +715,7 @@ export class DatabaseController {
                 throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
             }
 
-            // create indexes if they don't exist (idempotent operation; even if index exists this is ok)
+            // create indexes if they don"t exist (idempotent operation; even if index exists this is ok)
             // https://stackoverflow.com/a/35020346
 
             // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
@@ -777,7 +757,7 @@ export class DatabaseController {
                 };
                 await this.writeTeam(newTeam);
             }
-            teamName = 'students';
+            teamName = "students";
             team = await this.getTeam(teamName);
             if (team === null) {
                 const newTeam: Team = {
@@ -811,7 +791,7 @@ export class DatabaseController {
     /**
      * For a given deliverable and repo, find all the results.
      *
-     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
      * @param delivId
      * @param repoId
@@ -823,7 +803,7 @@ export class DatabaseController {
         const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false,
             {delivId: delivId, repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
@@ -838,9 +818,9 @@ export class DatabaseController {
     /**
      * For a given deliverable, find all the results.
      *
-     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
-     * @param delivId
+     * @param repoId
      */
     public async getResultsForRepo(repoId: string): Promise<Result[]> {
         const start = Date.now();
@@ -849,7 +829,7 @@ export class DatabaseController {
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, {repoId: repoId}, latestFirst) as Result[];
         for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
@@ -864,7 +844,7 @@ export class DatabaseController {
     /**
      * For a given deliverable, find all the results.
      *
-     * NOTE: These are _all_ results, the deliverable's deadlines are not considered.
+     * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
      * @param delivId
      */
@@ -875,7 +855,7 @@ export class DatabaseController {
         const latestFirst = {"input.target.timestamp": -1}; // most recent first
         const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, true, {delivId: delivId}, latestFirst) as Result[];
         for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== 'undefined' && typeof result.input.target === 'undefined') {
+            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
                 // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
                 result.input.target = (result.input as any).pushInfo;
             }
@@ -919,18 +899,16 @@ export class DatabaseController {
      * @returns {Promise<Result>}
      */
     public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
-        const result = await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
-        return result;
+        return await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
     }
 
     public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
-        const result = await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
-        return result;
+        return await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
     }
 }
 
 export enum QueryKind {
-    FAST = 'fast',
-    SLOW = 'slow',
-    WRITE = 'write'
+    FAST = "fast",
+    SLOW = "slow",
+    WRITE = "write"
 }
