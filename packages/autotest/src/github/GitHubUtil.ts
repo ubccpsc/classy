@@ -329,8 +329,8 @@ export class GitHubUtil {
 
                 const sha = GitHubUtil.commitURLtoSHA(message.url);
                 const repo = GitHubUtil.commitURLtoRepoName(message.url);
-                Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting to repo: " +
-                    repo + "; sha: " + sha + "; message: " + loggingMessage);
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - posting to repo: " +
+                    repo + "; SHA: " + sha + "; message: " + loggingMessage);
 
             } catch (err) {
                 Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err.message);

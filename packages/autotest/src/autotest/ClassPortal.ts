@@ -116,7 +116,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
-            Log.info("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
+            Log.trace("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
@@ -143,12 +143,11 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async getPersonId(githubId: string): Promise<AutoTestPersonIdTransport> {
-        // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
         const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
         const start = Date.now();
 
         try {
-            Log.info("ClassPortal::getPersonId(..) - requesting from: " + url);
+            Log.trace("ClassPortal::getPersonId( " + githubId + " ) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
