@@ -153,8 +153,8 @@ export class Queue {
                 }
             }
         }
-        Log.info("Queue::numberJobsForPerson( .. ) - person: " +
-            input.target?.personId + "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
+        Log.info("Queue::numberJobsForPerson( " + input.target?.personId + " ) - queue: " + this.name +
+            "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
         return count;
     }
 

@@ -99,14 +99,9 @@ export class AuthRoutes implements IREST {
         }
 
         AuthRoutes.ac.isValid(user, token).then(function (isValid) {
-            if (isValid === true) {
-                Log.trace("AuthRoutes::getLogout(..) - user: " + user + "; valid user");
-            } else {
-                // logout anyways? if your user / token is stale we still need log you out
-                // but that could mean someone else could spoof-log you out too
-                Log.warn("AuthRoutes::getLogout( " + user + " ) - invalid user");
-            }
-            // logout
+            Log.trace("AuthRoutes::getLogout( " + user + " ) - isValid: " + isValid);
+
+            // logout either way
             const ac = new AuthController();
             return ac.removeAuthentication(user);
         }).then(function (success) {
@@ -152,12 +147,12 @@ export class AuthRoutes implements IREST {
 
     public static async performGetCredentials(user: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
-        Log.trace("AuthRoutes::getCredentials( " + user + " ) - in isValid(..)");
+        Log.trace("AuthRoutes::performGetCredentials( " + user + " ) - in isValid(..)");
         if (isValid === false) {
-            Log.warn("AuthRoutes::getCredentials( " + user + " ) - isValid false");
+            Log.trace("AuthRoutes::performGetCredentials( " + user + " ) - isValid false");
             throw new Error("Login error; user: " + user + " not valid.");
         }
-        Log.trace("AuthRoutes::getCredentials( " + user + " ) - isValid true");
+        Log.trace("AuthRoutes::performGetCredentials( " + user + " ) - isValid true");
 
         // if isPrivileged fails, it will throw an exception which will reject this method"s promise
         const isPrivileged = await AuthRoutes.ac.isPrivileged(user, token);
