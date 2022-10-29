@@ -477,11 +477,8 @@ export abstract class AutoTest implements IAutoTest {
             }
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
                 data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
-                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart) +
-                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp));
-            // Log.info("AutoTest::handleExecutionComplete(..) [JOB] - input.tsJobStart: " +
-            //     data.input.target.tsJobStart + "; input.timestamp: " + data.input.target.timestamp +
-            //     "; output.timestamp: " + data.output.timestamp);
+                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart, true) +
+                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp, true));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

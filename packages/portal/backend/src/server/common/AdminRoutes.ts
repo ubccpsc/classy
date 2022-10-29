@@ -67,8 +67,8 @@ export default class AdminRoutes implements IREST {
         server.get("/portal/admin/export/dashboard/:delivId/:repoId",
             AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
         server.get("/portal/admin/results/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
-        server.get("/portal/admin/gradedResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getGradedResults); // Graded results
-        server.get("/portal/admin/bestResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // Results with best score
+        server.get("/portal/admin/gradedResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getGradedResults); // graded results
+        server.get("/portal/admin/bestResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // results with best score
 
         // admin-only functions
         server.post("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.postClasslist);
@@ -251,7 +251,7 @@ export default class AdminRoutes implements IREST {
 
         const ac = new AdminController(AdminRoutes.ghc);
         ac.getStaff().then(function (staff) {
-            Log.info("AdminRoutes::getStaff(..) - # staff: " + staff.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
             const payload: StudentTransportPayload = {success: staff};
             res.send(payload);
             return next();
@@ -274,7 +274,7 @@ export default class AdminRoutes implements IREST {
         const cc = new AdminController(AdminRoutes.ghc);
         // handled by preceding action in chain above (see registerRoutes)
         cc.getTeams().then(function (teams) {
-            Log.info("AdminRoutes::getTeams(..) - # teams: " + teams.length + "; took: " + Util.took(start));
+            Log.info("AdminRoutes::getTeams() - # teams: " + teams.length + "; took: " + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(payload);
             return next();
@@ -283,7 +283,7 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static getRepositories(req: any, res: any, next: any) {
+    private static getRepositories(_req: any, res: any, next: any) {
         Log.trace("AdminRoutes::getRepositories() - start");
         const start = Date.now();
 
@@ -450,12 +450,16 @@ export default class AdminRoutes implements IREST {
     private static getUser(req: any): string {
         const user = AdminRoutes.processAuth(req);
         let userName = "UNKNOWN";
-        if (user === null ||
-            typeof user !== "undefined" &&
-            typeof user.user !== "undefined" &&
-            user.user !== null) {
+        if (typeof user?.user === "string") {
             userName = user.user;
         }
+        // was too complex, but need to make sure this still works before removing
+        // if (user === null ||
+        //     typeof user !== "undefined" &&
+        //     typeof user.user !== "undefined" &&
+        //     user.user !== null) {
+        //     userName = user.user;
+        // }
         return userName;
     }
 
@@ -680,7 +684,7 @@ export default class AdminRoutes implements IREST {
         const delivTrans: DeliverableTransport = req.params;
         Log.info("AdminRoutes::postDeliverable() - body: " + delivTrans);
         AdminRoutes.handlePostDeliverable(userName, delivTrans).then(function (success) {
-            Log.info("AdminRoutes::postDeliverable() - done");
+            Log.info("AdminRoutes::postDeliverable() - done; success: " + success);
             const payload: Payload = {success: {message: "Deliverable saved successfully"}};
             res.send(200, payload);
         }).catch(function (err) {
@@ -736,6 +740,7 @@ export default class AdminRoutes implements IREST {
         const courseTrans: CourseTransport = req.params;
         Log.info("AdminRoutes::postCourse() - body: " + courseTrans);
         AdminRoutes.handlePostCourse(userName, courseTrans).then(function (success) {
+            Log.trace("AdminRoutes::postCourse() -handle done; success: " + success);
             const payload: Payload = {success: {message: "Course object saved successfully"}};
             res.send(200, payload);
             return next(true);
@@ -1230,7 +1235,7 @@ export default class AdminRoutes implements IREST {
         return afterTeam;
     }
 
-    private static updatePatches(req: any, res: any, next: any) {
+    private static updatePatches(_req: any, res: any, next: any) {
         Log.trace("AdminRoutes::updatePatches(..) - start");
         const start = Date.now();
 
@@ -1240,7 +1245,7 @@ export default class AdminRoutes implements IREST {
             agent: new http.Agent()
         };
         fetch(url, opts)
-            .then((result) => {
+            .then((_result) => {
                 Log.info("AdminRoutes::updatePatches(..) - done; took: " + Util.took(start));
                 res.send({success: "patches updated"});
                 return next();
@@ -1249,7 +1254,7 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static listPatches(req: any, res: any, next: any) {
+    private static listPatches(_req: any, res: any, next: any) {
         Log.trace("AdminRoutes::listPatches(..) - start");
         const start = Date.now();
 
@@ -1299,7 +1304,7 @@ export default class AdminRoutes implements IREST {
             });
     }
 
-    private static patchSource(req: any, res: any, next: any) {
+    private static patchSource(_req: any, res: any, next: any) {
         Log.trace("AdminRoutes::patchSource(..) - start");
         const patchSourceRepo: string = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
         if (patchSourceRepo && patchSourceRepo !== "") {

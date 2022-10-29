@@ -17,9 +17,13 @@ export default class Util {
         return sha;
     }
 
-    public static tookHuman(start: number, end?: number): string {
+    public static tookHuman(start: number, end?: number, shortForm?: boolean): string {
         if (typeof end === "undefined") {
             end = Date.now();
+        }
+
+        if (typeof shortForm === "undefined") {
+            shortForm = false;
         }
 
         if (start > end) {
@@ -79,6 +83,16 @@ export default class Util {
                     msg = seconds + " seconds";
                 }
             }
+        }
+
+        if (shortForm === true) {
+            msg = msg.replace(" and ", " ");
+            msg = msg.replace("seconds", "secs");
+            msg = msg.replace("second", "sec");
+            msg = msg.replace("minutes", "mins");
+            msg = msg.replace("minute", "min");
+            msg = msg.replace("hours", "hrs");
+            msg = msg.replace("hour", "hr");
         }
 
         return msg;
