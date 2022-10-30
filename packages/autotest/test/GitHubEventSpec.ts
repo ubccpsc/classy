@@ -98,12 +98,25 @@ describe("GitHub Event Parser", () => {
     });
 
     it("Should fail gracefully with a bad push.", async () => {
+        let actual = null;
+        let ex = null;
+        try {
+            actual = await GitHubUtil.processPush(null, new MockClassPortal());
+        } catch (err) {
+            ex = err;
+        }
+        expect(actual).to.be.null;
+        expect(ex).to.not.be.null;
 
-        let actual = await GitHubUtil.processPush(null, new MockClassPortal());
-        expect(actual).to.deep.equal(null);
-
-        actual = await GitHubUtil.processPush(undefined, new MockClassPortal());
-        expect(actual).to.deep.equal(null);
+        actual = null;
+        ex = null;
+        try {
+            actual = await GitHubUtil.processPush(undefined, new MockClassPortal());
+        } catch (err) {
+            ex = err;
+        }
+        expect(actual).to.be.null;
+        expect(ex).to.not.be.null;
     });
 
     it("Should be able to parse a standard push.", async () => {
