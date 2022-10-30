@@ -138,7 +138,7 @@ export default class RouteHandler {
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
 
-        // cast is unfortunate, but if we"re listening to these routes it must be a github AT instance
+        // cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
         const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
 
         switch (event) {

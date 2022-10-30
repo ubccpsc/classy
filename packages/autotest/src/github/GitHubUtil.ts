@@ -97,10 +97,12 @@ export class GitHubUtil {
             const start = Date.now();
 
             const commitSHA = payload.comment.commit_id;
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+            const requester = String(payload.comment.user.login); // .toLowerCase();
+            const message = payload.comment.body;
+
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
-
-            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
@@ -108,13 +110,14 @@ export class GitHubUtil {
             try {
                 orgId = payload.repository.full_name.substr(0,
                     payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-                Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
+                Log.trace("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
                     "; name: " + payload.repository.name + "; org: " + orgId);
+
+                Log.info("GitHubUtil::processComment(..) - start; repo: " + payload.repository.name +
+                    "; person: " + requester + "; SHA: " + Util.shaHuman(commitSHA));
             } catch (err) {
                 Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
             }
-            const requester = String(payload.comment.user.login); // .toLowerCase();
-            const message = payload.comment.body;
 
             Log.trace("GitHubUtil::processComment(..) - 1");
 
@@ -177,16 +180,17 @@ export class GitHubUtil {
                 }
             }
 
-            Log.info("GitHubUtil.processComment(..) - done; who: " + requester + "; repoId: " +
-                repoId + "; botMentioned: " + botMentioned + "; message: " + msg + "; took: " + Util.took(start));
-            Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
-
+            Log.info("GitHubUtil.processComment(..) - done" +
+                "; repo: " + payload.repository.name +
+                "; person: " + requester +
+                "; SHA: " + Util.shaHuman(commitSHA) +
+                "; message: " + msg + "; took: " + Util.took(start));
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
             Log.error("GitHubUtil::processComment(..) - ERROR payload: ", payload);
-            return null;
+            throw err; // re-throw on error, null is "ignore comment"
         }
     }
 
@@ -219,18 +223,18 @@ export class GitHubUtil {
             let org;
             try {
                 org = payload.repository.full_name.substr(0,
-                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
+                    payload.repository.full_name.lastIndexOf(repo) - 1);
                 Log.trace("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
-                    "; org: " + org + "; name: " + payload.repository.name);
+                    "; org: " + org + "; name: " + repo);
             } catch (err) {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
             }
-
-            Log.info("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
+            // Log.trace("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
-                Log.info("GitHubUtil::processPush(..) - branch removed; no further processing - URL: " + projectURL);
+                Log.info("GitHubUtil::processPush(..) - skipped; repo: " +
+                    repo + "; branch removed: " + projectURL);
                 return null;
             }
 
@@ -240,13 +244,16 @@ export class GitHubUtil {
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
                 commitURL = payload.commits[payload.commits.length - 1].url;
-                Log.info("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
+                Log.trace("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
             } else {
                 // use this one when creating a new branch (may not have any commits)
                 commitSHA = payload.head_commit.id;
                 commitURL = payload.head_commit.url;
-                Log.info("GitHubUtil::processPush(..) - branch added; repo: " + repo);
+                Log.trace("GitHubUtil::processPush(..) - branch added; repo: " + repo);
             }
+
+            Log.info("GitHubUtil::processPush(..) - start; repo: " + repo +
+                "; person: " + pusher + "; SHA: " + Util.shaHuman(commitSHA));
 
             Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
             const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
@@ -289,14 +296,15 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo +
-                "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
+            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo + "; person: " +
+                pusher + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
+
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
             Log.error("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
-            return null;
+            throw err; // re-throw on error, null is "ignore push"
         }
     }
 
