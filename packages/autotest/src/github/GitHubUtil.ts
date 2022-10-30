@@ -253,17 +253,13 @@ export class GitHubUtil {
             }
 
             Log.info("GitHubUtil::processPush(..) - start; repo: " + repo +
-                "; person: " + pusher + "; SHA: " + Util.shaHuman(commitSHA));
-
+                "; person: " + pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA));
             Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
-            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push
             // const timestamp = payload.repository.pushed_at * 1000;
             const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
-
             const backendConfig = await portal.getConfiguration();
-
             if (backendConfig === null) {
                 Log.warn("GitHubUtil::processComment() - no default deliverable for course");
                 return null;
@@ -280,6 +276,7 @@ export class GitHubUtil {
                 }
             }
 
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
             const pushEvent: CommitTarget = {
                 delivId: backendConfig.defaultDeliverable,
                 repoId: repo,
@@ -297,8 +294,7 @@ export class GitHubUtil {
             };
 
             Log.info("GitHubUtil::processPush(..) - done; repo: " + repo + "; person: " +
-                pusher + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
-
+                pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
