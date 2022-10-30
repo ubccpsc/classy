@@ -74,6 +74,7 @@ export default class Server {
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
 
+                // AutoTest image creation / listing endpoints
                 that.rest.post("/docker/image", restify.plugins.bodyParser(), RouteHandler.postDockerImage);
                 that.rest.get("/docker/images", restify.plugins.queryParser(), RouteHandler.getDockerImages);
 

@@ -70,13 +70,13 @@ export default class RouteHandler {
         const body = req.body;
 
         const handleError = function (msg: string) {
-            if (msg.indexOf("was deleted") > 0) {
-                // branch deletions are common and are not worth putting in the error list
-                // but if it _is not_ a branch deletion, we might want to know about it in future, so warn
-                Log.warn("RouteHandler::postGithubHook() - not processed:  " + msg + "; took: " + Util.took(start));
-            } else {
-                Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            }
+            // if (msg.indexOf("was deleted") > 0) {
+            //     // branch deletions are common and are not worth putting in the error list
+            //     // but if it _is not_ a branch deletion, we might want to know about it in future, so warn
+            //     Log.warn("RouteHandler::postGithubHook() - not processed:  " + msg + "; took: " + Util.took(start));
+            // } else {
+            Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
+            // }
             res.json(400, "Failed to process commit: " + msg);
         };
 
@@ -121,7 +121,8 @@ export default class RouteHandler {
                         res.json(200, commitEvent); // report back our interpretation of the hook
                     } else {
                         // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
-                        handleError("Webhook not handled (if branch was deleted this is normal)");
+                        // handleError("Webhook not handled (if branch was deleted this is normal)");
+                        res.json(204, {}); // report back that nothing happened
                     }
                 }).catch(function (err) {
                     Log.error("RouteHandler::postGithubHook() - ERROR: " + err);

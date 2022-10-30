@@ -57,7 +57,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
-        if (msg.indexOf("was deleted") > 0) {
+        if (code < 400) {
             // these are not errors
             Log.info("AutoTestRoutes::handleError(..) - code: " + code + "; WARN: " + msg);
         } else {
@@ -378,7 +378,7 @@ export class AutoTestRoutes implements IREST {
             Log.info("AutoTestRouteHandler::githubWebhook(..) - done; took: " + Util.took(start));
             res.send(200, succ);
         }).catch(function (err) {
-            /* istanbul ignore next: curlies needed for ignore (only reachable when deployed) */
+            /* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
             {
                 if (err.message.indexOf("was deleted") > 0) {
                     Log.info("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
@@ -416,7 +416,7 @@ export class AutoTestRoutes implements IREST {
             body: JSON.stringify(req.body)
         };
         const res = await fetch(url, options);
-        /* istanbul ignore next: curlies needed for ignore (not reachable except when deployed) */
+        /* istanbul ignore next: braces needed for ignore (not reachable except when deployed) */
         {
             if (res.ok) {
                 Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
