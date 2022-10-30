@@ -380,11 +380,7 @@ export class AutoTestRoutes implements IREST {
         }).catch(function (err) {
             /* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
             {
-                // if (err.message.indexOf("was deleted") > 0) {
-                //     Log.info("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
-                // } else {
                 Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
-                // }
                 if (err.message && err.message.indexOf("hang up") >= 0) {
                     Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response");
                     return res.end();
@@ -424,15 +420,8 @@ export class AutoTestRoutes implements IREST {
                 return res.ok;
             } else {
                 const err = await res.json();
-                // let msg = "";
-                // if (err.indexOf("was deleted") > 0) {
-                //     // just warn for branch deletions
-                //     msg = "AutoTestRouteHandler::handleWebhook(..) - not handled: " + err;
-                //     Log.warn(msg);
-                // } else {
                 const msg = "AutoTestRouteHandler::handleWebhook(..) - ERROR: " + err;
                 Log.error(msg);
-                // }
                 throw new Error(msg);
             }
         }
