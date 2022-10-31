@@ -296,7 +296,7 @@ export class ClassPortal implements IClassPortal {
 
         let msg = feedback;
         if (msg !== null) {
-            const MAX_COMMENT_LENGTH = 35;
+            const MAX_COMMENT_LENGTH = 40;
             if (msg.length > MAX_COMMENT_LENGTH) {
                 // shorten long messages
                 msg = msg.substr(0, MAX_COMMENT_LENGTH) + "...";
@@ -308,7 +308,7 @@ export class ClassPortal implements IClassPortal {
 
         Log.trace("ClassPortal::formatFeedback(..) - repo: " + res.repoId + "; SHA: " +
             Util.shaHuman(res.commitSHA) + "; feedback: " + msg + "; took: " + Util.took(start));
-        Log.info("ClassPortal::formatFeedback(..) - feedback generated; deliv: " +
+        Log.info("ClassPortal::formatFeedback(..) - deliv: " +
             res.delivId + "; repo: " + res.repoId + "; feedback: " + msg + "; took: " + Util.took(start));
         return feedback;
     }
