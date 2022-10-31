@@ -295,11 +295,14 @@ export class ClassPortal implements IClassPortal {
         }
 
         let msg = feedback;
-        if (msg !== null && msg.length > 40) {
-            msg = msg.substr(0, 40) + "...";
-            if (msg.indexOf("\n") > 0) {
-                msg = msg.substr(0, msg.indexOf("\n"));
+        if (msg !== null) {
+            const MAX_COMMENT_LENGTH = 35;
+            if (msg.length > MAX_COMMENT_LENGTH) {
+                // shorten long messages
+                msg = msg.substr(0, MAX_COMMENT_LENGTH) + "...";
             }
+            // replace newlines / line breaks with "; ", regardless of length
+            msg = msg.replace(/(?:\r\n|\r|\n)/g, "; ");
         }
 
         Log.trace("ClassPortal::formatFeedback(..) - repo: " + res.repoId + "; SHA: " +

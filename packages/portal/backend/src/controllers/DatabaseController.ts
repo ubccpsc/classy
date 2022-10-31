@@ -188,7 +188,7 @@ export class DatabaseController {
     }
 
     public async getRepositoriesForPerson(personId: string): Promise<Repository[]> {
-        Log.info("DatabaseController::getRepositoriesForPerson() - start");
+        Log.trace("DatabaseController::getRepositoriesForPerson() - start");
 
         const query = [
             {
@@ -274,7 +274,6 @@ export class DatabaseController {
     }
 
     public async writePerson(record: Person): Promise<boolean> {
-        // Log.info("DatabaseController::writePerson(..) - start");
         const existingPerson = await this.getPerson(record.id);
         if (existingPerson === null) {
             return await this.writeRecord(this.PERSONCOLL, record);
@@ -285,7 +284,6 @@ export class DatabaseController {
     }
 
     public async writeTeam(record: Team): Promise<boolean> {
-        // Log.info("DatabaseController::writeTeam(..) - start");
         const existingTeam = await this.getTeam(record.id);
         if (existingTeam === null) {
             return await this.writeRecord(this.TEAMCOLL, record);
@@ -296,7 +294,6 @@ export class DatabaseController {
     }
 
     public async writeCourseRecord(record: Course): Promise<boolean> {
-        // Log.info("DatabaseController::writeCourseRecord(..) - start");
         const existingRecord = await this.getCourseRecord();
         if (existingRecord === null) {
             return await this.writeRecord(this.COURSECOLL, record);
@@ -382,8 +379,6 @@ export class DatabaseController {
     }
 
     public async writeDeliverable(record: Deliverable): Promise<boolean> {
-        // Log.info("DatabaseController::writeDeliverable(..) - start");
-        // Log.trace("DatabaseController::writeDeliverable(..) - deliv: " + JSON.stringify(record));
         const existingDeiverable = await this.getDeliverable(record.id);
         if (existingDeiverable === null) {
             return await this.writeRecord(this.DELIVCOLL, record);
@@ -394,8 +389,6 @@ export class DatabaseController {
     }
 
     public async writeGrade(record: Grade): Promise<boolean> {
-        // Log.info("DatabaseController::writeGrade(..) - start");
-        // Log.trace("DatabaseController::writeGrade(..) - grade: " + JSON.stringify(record));
         const gradeExists = await this.getGrade(record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
@@ -415,7 +408,6 @@ export class DatabaseController {
         };
 
         try {
-            // Log.info("DatabaseController::writeAudit(..) - start");
             Log.trace("DatabaseController::writeAudit( " + label + ", " + personId + ", hasBefore: " +
                 !isEmpty(before) + ", hasAfter: " + !isEmpty(after) + " ) - start");
 
@@ -447,11 +439,9 @@ export class DatabaseController {
     }
 
     public async writeRepository(record: Repository): Promise<boolean> {
-        // Log.info("DatabaseController::writeRepository(..) - start");
         if (record.custom === null) {
             record.custom = {}; // make sure this always exists
         }
-        // Log.trace("DatabaseController::writeRepository(..) - repo: " + JSON.stringify(record));
         const existingRepo = await this.getRepository(record.id);
         if (existingRepo === null) {
             return await this.writeRecord(this.REPOCOLL, record);
@@ -670,11 +660,7 @@ export class DatabaseController {
                     dbName = "secapstone"; // NOTE: this is just an unfortunate historical artifact
                 }
 
-                // _ are to help diagnose whitespace in dbname/mongoUrl
-                // too much info, logs password
-                // Log.info("DatabaseController::open() - db null; making new connection to: _" + dbName + "_ on: _" + dbHost + "_");
                 Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
-
                 const client = await MongoClient.connect(dbHost);
                 if (kind === "slow") {
                     Log.trace("DatabaseController::open() - creating slowDb");
@@ -885,7 +871,7 @@ export class DatabaseController {
         }
 
         if (result === null) {
-            Log.info("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - result not found");
+            Log.trace("DatabaseController::getResult( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - result not found");
         }
         return result;
     }

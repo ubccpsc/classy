@@ -205,7 +205,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - org: " + org + "; comment org: " + info.orgId);
+        Log.trace("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - org: " + org + "; comment org: " + info.orgId);
         if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
             Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, org: " + info.orgId +
                 " does not match current course: " + org);
@@ -415,7 +415,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     protected async handleCommentStudent(target: CommitTarget, res: AutoTestResultTransport): Promise<void> {
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
-            target.personId + "; deliv: " + target.delivId + "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitURL));
+            target.personId + "; deliv: " + target.delivId + "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitSHA));
 
         const shouldCharge = await this.shouldCharge(target, null, res);
         const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId, target.timestamp);

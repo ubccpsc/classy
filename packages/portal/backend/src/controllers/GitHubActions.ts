@@ -1107,7 +1107,8 @@ export class GitHubActions implements IGitHubActions {
             }
         }
 
-        Log.info("GitHubAction::isOnTeam( " + userName + " ) - is NOT on team: " + teamName + "; took: " + Util.took(start));
+        // only info by default if you are _on_ a team
+        Log.trace("GitHubAction::isOnTeam( " + userName + " ) - is NOT on team: " + teamName + "; took: " + Util.took(start));
         return false;
     }
 
