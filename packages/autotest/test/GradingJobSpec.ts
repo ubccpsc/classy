@@ -44,7 +44,7 @@ describe("GradingJob", function() {
             container = new ContainerMock(null, "test-container");
         });
 
-        it("Should return the exit code for the container", async function() {
+        it("Should return the exit code for the container.", async function() {
             let result: any;
             try {
                 result = await GradingJob.runContainer(container, containerMaxExecTime);
@@ -55,7 +55,7 @@ describe("GradingJob", function() {
             }
         });
 
-        it("Should return -1 if the container is stopped", async function() {
+        it("Should return -1 if the container is stopped.", async function() {
             container.waitTime = containerMaxExecTime + 0.05;
             let result: any;
             try {

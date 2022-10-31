@@ -153,8 +153,16 @@ export class Queue {
                 }
             }
         }
-        Log.info("Queue::numberJobsForPerson( " + input.target?.personId + " ) - queue: " + this.name +
-            "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
+
+        if (count > 1 || input.target?.adminRequest === true) {
+            Log.info("Queue::numberJobsForPerson( " + input.target?.personId + " ) - queue: " + this.name +
+                "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
+        } else {
+            // skip reporting the usual case
+            Log.trace("Queue::numberJobsForPerson( " + input.target?.personId + " ) - queue: " + this.name +
+                "; isAdmin: " + input.target?.adminRequest + "; count: " + count);
+        }
+
         return count;
     }
 

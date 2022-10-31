@@ -109,7 +109,7 @@ describe("GitHubAutoTest", () => {
         Config.getInstance().setProp(ConfigKey.autotestJobs, 5); // put back to 5 jobs
     });
 
-    it("Should gracefully fail with bad pushes.", async () => {
+    it("Should fail gracefully with bad pushes.", async () => {
         let res = await at.handlePushEvent(null);
         expect(res).to.be.false;
         res = await at.handlePushEvent(undefined);
@@ -206,22 +206,18 @@ describe("GitHubAutoTest", () => {
         Log.test("values checked");
     }).timeout(WAIT * 3);
 
-    it("Should gracefully fail with bad comments.", async () => {
-        let res = null;
-        let ex = null;
-        try {
-            res = await at.handleCommentEvent(null);
-        } catch (err) {
-            ex = err;
-        }
-        expect(res).to.be.null;
-        expect(ex).to.not.be.null;
+    it("Should fail gracefully with bad comments.", async () => {
+        let res = await at.handleCommentEvent(null);
+        expect(res).to.be.false;
+
+        res = await at.handleCommentEvent(undefined);
+        expect(res).to.be.false;
 
         const allData = await data.getAllData();
         expect(allData.comments).to.have.length(0);
     });
 
-    it("Check comment preconditions fail appropriately", async () => {
+    it("Check comment preconditions fail appropriately.", async () => {
         let info: CommitTarget;
         let meetsPreconditions: boolean;
 

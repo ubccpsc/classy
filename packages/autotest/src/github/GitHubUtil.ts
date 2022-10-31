@@ -37,7 +37,7 @@ export class GitHubUtil {
     public static parseDeliverableFromComment(message: any, delivIds: string[]): string | null {
         // const matches = message.match("\\S*#d\\d+\\S*"); // just deliverables
         // from https://stackoverflow.com/a/25693471
-        const regexp = /(\s|^)\#\w\w+\b/gm;
+        const regexp = /(\s|^)#\w\w+\b/gm;
         const matches = message.match(regexp);
 
         let msg = message;
@@ -378,7 +378,7 @@ export class GitHubUtil {
      * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commit/47046cae35a31083761788d9fce80e85ca77f6d5
      * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
      *
-     * @param string
+     * @param commitURL
      */
     public static commitURLtoRepoName(commitURL: string): string {
         try {
@@ -400,7 +400,7 @@ export class GitHubUtil {
      * Should work on URLs like:
      * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
      *
-     * @param string
+     * @param commitURL
      */
     public static commitURLtoSHA(commitURL: string): string {
         try {

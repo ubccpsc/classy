@@ -58,7 +58,7 @@ describe("GitHubUtil", () => {
         expect(actual).to.deep.equal(["#forcefoo"]);
     });
 
-    it("Should be able to correctly create human durations", () => {
+    it("Should be able to correctly create human durations.", () => {
         const now = Date.now();
         const oneSecond = now - 1000;
         const twoSeconds = now - 1000 * 2;
@@ -80,5 +80,4 @@ describe("GitHubUtil", () => {
         expect(Util.tookHuman(oneHour)).to.equal("1 hour and 0 minutes");
         expect(Util.tookHuman(oneHourHalf)).to.equal("1 hour and 30 minutes");
     });
-
 });

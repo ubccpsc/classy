@@ -96,56 +96,50 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
-                if (containerConfig !== null) {
-                    const input: ContainerInput = {target: info, containerConfig};
-                    const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
-                    const sha = Util.shaHuman(info.commitSHA);
-                    if (shouldPromotePush === true) {
-                        Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to exp queue`);
-                        this.addToExpressQueue(input);
-                    } else {
-                        Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to std queue`);
-                        this.addToStandardQueue(input);
-                    }
+                const input: ContainerInput = {target: info, containerConfig};
+                const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
+                const sha = Util.shaHuman(info.commitSHA);
+                if (shouldPromotePush === true) {
+                    Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to exp queue`);
+                    this.addToExpressQueue(input);
+                } else {
+                    Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to std queue`);
+                    this.addToStandardQueue(input);
+                }
 
-                    if (Array.isArray(containerConfig.regressionDelivIds) && containerConfig.regressionDelivIds.length > 0) {
-                        for (const regressionId of containerConfig.regressionDelivIds) {
-                            const regressionDetails = await this.classPortal.getContainerDetails(regressionId);
-                            if (regressionDetails !== null) {
-                                const regressionInfo: CommitTarget = JSON.parse(JSON.stringify(info)); // ensure we have a copy
-                                regressionInfo.delivId = regressionId;
+                if (Array.isArray(containerConfig.regressionDelivIds) && containerConfig.regressionDelivIds.length > 0) {
+                    for (const regressionId of containerConfig.regressionDelivIds) {
+                        const regressionDetails = await this.classPortal.getContainerDetails(regressionId);
+                        if (regressionDetails !== null) {
+                            const regressionInfo: CommitTarget = JSON.parse(JSON.stringify(info)); // ensure we have a copy
+                            regressionInfo.delivId = regressionId;
 
-                                if (typeof regressionInfo.flags === "undefined" || Array.isArray(regressionInfo.flags) === false) {
-                                    regressionInfo.flags = [];
-                                }
-                                // This was problematic because timeouts would not postback
-                                // regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
-
-                                const regressionInput: ContainerInput = {
-                                    // delivId: regressionId,
-                                    target: regressionInfo,
-                                    containerConfig: regressionDetails
-                                };
-
-                                Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
-                                Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
-                                    "; input: " + JSON.stringify(regressionInput));
-
-                                this.addToLowQueue(regressionInput);
+                            if (typeof regressionInfo.flags === "undefined" || Array.isArray(regressionInfo.flags) === false) {
+                                regressionInfo.flags = [];
                             }
+                            // This was problematic because timeouts would not postback
+                            // regressionInfo.flags.push("#silent"); // avoid posting back regression feedback
+
+                            const regressionInput: ContainerInput = {
+                                // delivId: regressionId,
+                                target: regressionInfo,
+                                containerConfig: regressionDetails
+                            };
+
+                            Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
+                            Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
+                                "; input: " + JSON.stringify(regressionInput));
+
+                            this.addToLowQueue(regressionInput);
                         }
                     }
-
-                    this.tick();
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - done; " +
-                        "deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " +
-                        Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
-                    return true;
-                } else {
-                    Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitURL +
-                        " - No container info for deliv: " + delivId + "; push ignored");
-                    return false;
                 }
+
+                this.tick();
+                Log.info("GitHubAutoTest::handlePushEvent(..) - done; " +
+                    "deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " +
+                    Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
+                return true;
             } else {
                 // no active deliverable, ignore this push event (do not push an error either)
                 Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA + " - No active deliverable; push ignored.");

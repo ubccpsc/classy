@@ -36,7 +36,7 @@ import IREST from "@backend/server/IREST";
 export class AutoTestRoutes implements IREST {
 
     public registerRoutes(server: restify.Server) {
-        Log.info("AutoTestRouteHandler::registerRoutes() - start");
+        Log.info("AutoTestRoutes::registerRoutes() - start");
 
         server.get("/portal/at", AutoTestRoutes.atConfiguration); // deprecates defaultDeliverable endpoint
         server.get("/portal/at/isStaff/:githubId", AutoTestRoutes.atIsStaff);
@@ -69,7 +69,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atContainerDetails(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atContainerDetails(..) - /at/container/:delivId - start GET");
+        Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - start GET");
         const start = Date.now();
 
         let payload: AutoTestConfigPayload;
@@ -80,7 +80,7 @@ export class AutoTestRoutes implements IREST {
             const delivId = req.params.delivId;
             const name = Config.getInstance().getProp(ConfigKey.name);
 
-            Log.trace("AutoTestRouteHandler::atContainerDetails(..) - name: " + name + "; delivId: " + delivId);
+            Log.trace("AutoTestRoutes::atContainerDetails(..) - name: " + name + "; delivId: " + delivId);
 
             const dc = new DeliverablesController();
             dc.getDeliverable(delivId).then(function (deliv) {
@@ -96,7 +96,7 @@ export class AutoTestRoutes implements IREST {
                         lateAutoTest: deliv.lateAutoTest
                     };
                     payload = {success: at};
-                    Log.trace("AutoTestRouteHandler::atContainerDetails(..) - /at/container/:delivId - done; took: " + Util.took(start));
+                    Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; took: " + Util.took(start));
                     res.send(200, payload);
                     return next(true);
                 } else {
@@ -110,7 +110,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atConfiguration(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atConfiguration(..) - /at - start");
+        Log.trace("AutoTestRoutes::atConfiguration(..) - /at - start");
         const start = Date.now();
 
         let payload: ClassyConfigurationPayload;
@@ -120,15 +120,15 @@ export class AutoTestRoutes implements IREST {
         } else {
 
             const name = Config.getInstance().getProp(ConfigKey.name);
-            Log.trace("AutoTestRouteHandler::atConfiguration(..) - name: " + name + "; took: " + Util.took(start));
+            Log.trace("AutoTestRoutes::atConfiguration(..) - name: " + name + "; took: " + Util.took(start));
 
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             let defaultDeliverable: string | null = null;
-            Log.trace("AutoTestRouteHandler::atConfiguration(..) - cc; took: " + Util.took(start));
+            Log.trace("AutoTestRoutes::atConfiguration(..) - cc; took: " + Util.took(start));
 
             cc.getCourse().then(function (course) {
                 defaultDeliverable = course.defaultDeliverableId;
-                Log.trace("AutoTestRouteHandler::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
                 return cc.getDeliverables();
             }).then(function (deliverables) {
                 const delivIds = [];
@@ -137,7 +137,7 @@ export class AutoTestRoutes implements IREST {
                 }
                 payload = {success: {defaultDeliverable: defaultDeliverable, deliverableIds: delivIds}};
 
-                Log.trace("AutoTestRouteHandler::atConfiguration(..) - /at - done; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atConfiguration(..) - /at - done; took: " + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             }).catch(function () { // err
@@ -147,7 +147,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atGrade(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atGrade(..) - start");
+        Log.trace("AutoTestRoutes::atGrade(..) - start");
         const start = Date.now();
 
         let payload: Payload;
@@ -159,7 +159,7 @@ export class AutoTestRoutes implements IREST {
 
             AutoTestRoutes.performPostGrade(gradeRecord).then(function (saved: any) {
                 payload = {success: {success: saved}};
-                Log.trace("AutoTestRouteHandler::atGrade(..) - done; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atGrade(..) - done; took: " + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             }).catch(function (err) {
@@ -174,9 +174,9 @@ export class AutoTestRoutes implements IREST {
         if (validGradeRecord !== null) {
             throw new Error("Invalid Grade Record: " + validGradeRecord);
         } else {
-            Log.info("AutoTestRouteHandler::atGrade(..) - deliv: " + grade.delivId +
+            Log.info("AutoTestRoutes::atGrade(..) - deliv: " + grade.delivId +
                 "; repo: " + grade.repoId + "; grade: " + grade.score);
-            // Log.trace("AutoTestRouteHandler::atGrade(..) - repoId: " + grade.repoId +
+            // Log.trace("AutoTestRoutes::atGrade(..) - repoId: " + grade.repoId +
             //     "; delivId: " + grade.delivId + "; body: " + JSON.stringify(grade));
             const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
             return await cc.processNewAutoTestGrade(grade);
@@ -195,7 +195,7 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static atPostResult(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atPostResult(..) - start");
+        Log.trace("AutoTestRoutes::atPostResult(..) - start");
         const start = Date.now();
 
         let payload: Payload = null;
@@ -205,10 +205,10 @@ export class AutoTestRoutes implements IREST {
             return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
         } else {
             const resultRecord: AutoTestResultTransport = req.body;
-            // Log.trace("AutoTestRouteHandler::atPostResult(..) - body: " + JSON.stringify(resultRecord));
+            // Log.trace("AutoTestRoutes::atPostResult(..) - body: " + JSON.stringify(resultRecord));
             AutoTestRoutes.performPostResult(resultRecord).then(function () {
                 payload = {success: {message: "Result received"}};
-                Log.trace("AutoTestRouteHandler::atPostResult(..) - done; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atPostResult(..) - done; took: " + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             }).catch(function (err) {
@@ -223,7 +223,7 @@ export class AutoTestRoutes implements IREST {
         if (validResultRecord !== null) {
             throw new Error("Invalid Result Record: " + validResultRecord);
         } else {
-            Log.info("AutoTestRouteHandler::performPostResult(..) - valid result && valid secret; deliv: " +
+            Log.info("AutoTestRoutes::performPostResult(..) - valid result && valid secret; deliv: " +
                 result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA));
             const dc = new DeliverablesController();
             const deliv = await dc.getDeliverable(result.delivId);
@@ -233,11 +233,11 @@ export class AutoTestRoutes implements IREST {
             // NOTE: this allows AutoTest to request the cached results for later access which won"t be possible if saving is prohibited
             if (deliv !== null) {
                 const success = await rc.createResult(result);
-                Log.info("AutoTestRouteHandler::performPostResult(..) - done; valid result && valid secret; deliv: " +
+                Log.info("AutoTestRoutes::performPostResult(..) - done; valid result && valid secret; deliv: " +
                     result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA) + "; success: " + success);
                 return success;
             } else {
-                Log.info("AutoTestRouteHandler::performPostResult(..) - not accepting new results for deliv: " + result.delivId +
+                Log.info("AutoTestRoutes::performPostResult(..) - not accepting new results for deliv: " + result.delivId +
                     "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
@@ -252,7 +252,7 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static async atIsStaff(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - start");
+        Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - start");
         const start = Date.now();
 
         let payload: AutoTestAuthPayload;
@@ -262,20 +262,20 @@ export class AutoTestRoutes implements IREST {
         } else {
             const githubId = req.params.githubId;
 
-            // Log.info("AutoTestRouteHandler::atIsStaff(..) - personId: " + githubId);
+            // Log.info("AutoTestRoutes::atIsStaff(..) - personId: " + githubId);
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             if (person !== null) {
                 const ac = new AuthController();
                 const priv = await ac.personPriviliged(person);
                 payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
-                Log.trace("AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - done: " +
+                Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " +
                     JSON.stringify(payload) + "; took: " + Util.took(start));
                 res.send(200, payload);
                 return next(true);
             } else {
                 payload = {success: {personId: githubId, isStaff: false, isAdmin: false}};
-                Log.trace("AutoTestRouteHandler::atIsStaff(..) - /isStaff/:githubId - unknown person; result: " +
+                Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - unknown person; result: " +
                     JSON.stringify(payload));
                 res.send(200, payload);
                 return next(true);
@@ -284,7 +284,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atPersonId(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atPersonId(..) - /isStaff/:githubId - start GET");
+        Log.trace("AutoTestRoutes::atPersonId(..) - /isStaff/:githubId - start GET");
         const start = Date.now();
 
         let payload: Payload;
@@ -297,7 +297,7 @@ export class AutoTestRoutes implements IREST {
             const pc = new PersonController();
             pc.getGitHubPerson(githubId).then(function (person) {
                 if (person !== null) {
-                    Log.info("AutoTestRouteHandler::atPersonId(..) - personId: " +
+                    Log.info("AutoTestRoutes::atPersonId(..) - personId: " +
                         person.id + "; githubId: " + githubId + "; took: " + Util.took(start));
                     payload = {success: {personId: person.id}}; // PersonTransportPayload
                     res.send(200, payload);
@@ -312,7 +312,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atGetResult(req: any, res: any, next: any) {
-        Log.trace("AutoTestRouteHandler::atGetResult(..) - /at/result/:delivId/:repoId - start GET");
+        Log.trace("AutoTestRoutes::atGetResult(..) - /at/result/:delivId/:repoId - start GET");
 
         let payload: AutoTestResultPayload;
         const providedSecret = req.headers.token;
@@ -323,7 +323,7 @@ export class AutoTestRoutes implements IREST {
             const repoId = req.params.repoId;
             const sha = req.params.sha;
 
-            Log.trace("AutoTestRouteHandler::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha));
+            Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha));
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {
@@ -371,18 +371,18 @@ export class AutoTestRoutes implements IREST {
      * @param next
      */
     public static githubWebhook(req: any, res: any, next: any) {
-        Log.info("AutoTestRouteHandler::githubWebhook(..) - start");
+        Log.info("AutoTestRoutes::githubWebhook(..) - start");
         const start = Date.now();
 
         AutoTestRoutes.handleWebhook(req).then(function (succ) {
-            Log.info("AutoTestRouteHandler::githubWebhook(..) - done; took: " + Util.took(start));
+            Log.info("AutoTestRoutes::githubWebhook(..) - done; took: " + Util.took(start));
             res.send(200, succ);
         }).catch(function (err) {
             /* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
             {
-                Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+                Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
                 if (err.message && err.message.indexOf("hang up") >= 0) {
-                    Log.error("AutoTestRouteHandler::githubWebhook(..) - ERROR: handling hangup; ending response");
+                    Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: handling hangup; ending response");
                     return res.end();
                 } else {
                     return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res, next);
@@ -399,7 +399,7 @@ export class AutoTestRoutes implements IREST {
      * @returns {Promise<{}>}
      */
     private static async handleWebhook(req: any): Promise<{}> {
-        Log.trace("AutoTestRouteHandler::handleWebhook(..) - start");
+        Log.trace("AutoTestRoutes::handleWebhook(..) - start");
         const start = Date.now();
 
         const headers = JSON.stringify(req.headers);
@@ -415,12 +415,12 @@ export class AutoTestRoutes implements IREST {
         /* istanbul ignore next: braces needed for ignore (not reachable except when deployed) */
         {
             if (res.ok) {
-                Log.trace("AutoTestRouteHandler::handleWebhook(..) - success: " + JSON.stringify(res.ok));
-                Log.trace("AutoTestRouteHandler::handleWebhook(..) - done; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::handleWebhook(..) - success: " + JSON.stringify(res.ok));
+                Log.trace("AutoTestRoutes::handleWebhook(..) - done; took: " + Util.took(start));
                 return res.ok;
             } else {
                 const err = await res.json();
-                const msg = "AutoTestRouteHandler::handleWebhook(..) - ERROR: " + err;
+                const msg = "AutoTestRoutes::handleWebhook(..) - ERROR: " + err;
                 Log.error(msg);
                 throw new Error(msg);
             }
