@@ -209,11 +209,14 @@ export class AuthRoutes implements IREST {
             } else {
                 Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect invalid credentials");
             }
-
             res.redirect(redirectOptions, next);
-
         }).catch(function (err) {
-            Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
+            if (typeof err === "string" && err.indexOf("incorrect or expired") >= 0) {
+                // just a warning for auth expiry
+                Log.warn("AuthRoutes::authCallback(..) - /authCallback - WARN: " + err);
+            } else {
+                Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
+            }
             // TODO: should this be returning 400 or something?
             return next(false);
         });

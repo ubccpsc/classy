@@ -126,7 +126,7 @@ export default class RouteHandler {
             handleError("Invalid payload signature.");
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
+        Log.trace("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
         return next();
     }
 
