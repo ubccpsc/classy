@@ -438,13 +438,8 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            // if (typeof data.input.target.tsJobStart === "undefined") {
-            //     data.input.target.tsJobStart = data.input.target.timestamp;
-            // }
             Log.info("AutoTest::handleExecutionComplete(..) - start" +
                 ": deliv: " + data.delivId + "; repo: " + data.repoId +
-                // "; took (wait): " + Util.tookHuman(data.input.target.tsJobStart - data.input.target.timestamp) +
-                // "; took (exec): " + Util.tookHuman(data.output.timestamp - data.input.target.tsJobStart) +
                 "; SHA: " + Util.shaHuman(data.commitSHA)
             );
 
@@ -498,6 +493,9 @@ export abstract class AutoTest implements IAutoTest {
             await job.prepare();
             record = await job.run(this.docker);
 
+            Log.info("AutoTest::handleTick(..) - executed; deliv: " + input.target.delivId +
+                "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+
             let score = -1;
             if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
                 score = record.output.report.scoreOverall;
@@ -520,9 +518,6 @@ export abstract class AutoTest implements IAutoTest {
             Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
         } finally {
             await this.handleExecutionComplete(record);
-            Log.info("AutoTest::handleTick(..) - complete; deliv: " + input.target.delivId +
-                "; repo: " + input.target.repoId +
-                "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
         }
 
         if (gradePayload) {
@@ -532,6 +527,9 @@ export abstract class AutoTest implements IAutoTest {
                 Log.error("AutoTest::handleTick(..) - ERROR sending grade for SHA: " + input.target.commitSHA + "; ERROR: " + err);
             }
         }
+        Log.info("AutoTest::handleTick(..) - done; deliv: " + input.target.delivId +
+            "; repo: " + input.target.repoId +
+            "; SHA: " + Util.shaHuman(input.target.commitSHA) + "; took: " + Util.tookHuman(start));
     }
 
     /**

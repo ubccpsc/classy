@@ -103,6 +103,10 @@ export default class RouteHandler {
             Log.warn("RouteHandler::postGithubHook(..) - secret ignored (not present)");
         }
 
+        // leave this on for a while; would like to verify that this works so we can replace the hardcode below
+        Log.info("RouteHandler::postGithubHook(..) - hasSecret: " +
+            (typeof githubSecret === "string") + "; secretVerified: " + secretVerified);
+
         secretVerified = true; // TODO: stop overwriting this
         if (secretVerified === true) {
             if (githubEvent === "ping") {

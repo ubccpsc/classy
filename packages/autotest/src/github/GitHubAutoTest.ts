@@ -580,9 +580,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
-            // Log.trace(`GitHubAutoTest::processExecution() - Target is from the future: ${futureTarget}`);
 
-            // emit for testing
             Log.info("GitHubAutoTest::processExecution() - " +
                 "deliv: " + data.delivId +
                 "; repo: " + data.repoId +
