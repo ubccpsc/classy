@@ -7,7 +7,7 @@ jobs:
   build:
     docker:
       # specify the version you desire here
-      - image: cimg/node:12.22.7
+      - image: cimg/node:18.12.0
       - image: circleci/mongo:3.6
 
       # Specify service dependencies here if necessary
