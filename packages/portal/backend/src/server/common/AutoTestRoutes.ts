@@ -297,8 +297,8 @@ export class AutoTestRoutes implements IREST {
             const pc = new PersonController();
             pc.getGitHubPerson(githubId).then(function (person) {
                 if (person !== null) {
-                    Log.info("AutoTestRoutes::atPersonId(..) - personId: " +
-                        person.id + "; githubId: " + githubId + "; took: " + Util.took(start));
+                    Log.info("AutoTestRoutes::atPersonId(..) - person: " +
+                        person.id + "; github: " + githubId + "; took: " + Util.took(start));
                     payload = {success: {personId: person.id}}; // PersonTransportPayload
                     res.send(200, payload);
                     return next(true);

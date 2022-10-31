@@ -158,7 +158,7 @@ export class ClassPortal implements IClassPortal {
             const res = await fetch(url, opts);
             const json: Payload = await res.json() as Payload;
             if (typeof json.success !== "undefined") {
-                Log.info("ClassPortal::getPersonId( " + githubId + " ) - success; personId: " +
+                Log.info("ClassPortal::getPersonId( " + githubId + " ) - success; person: " +
                     json.success?.personId + "; took: " + Util.took(start));
                 return json.success; // AutoTestPersonIdTransport
             } else {
@@ -303,6 +303,7 @@ export class ClassPortal implements IClassPortal {
             }
             // replace newlines / line breaks with "; ", regardless of length
             msg = msg.replace(/(?:\r\n|\r|\n)/g, "; ");
+            msg = msg.replace("; ; ", "; "); // replace a double new line
         }
 
         Log.trace("ClassPortal::formatFeedback(..) - repo: " + res.repoId + "; SHA: " +

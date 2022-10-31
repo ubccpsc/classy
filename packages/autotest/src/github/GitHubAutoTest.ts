@@ -164,7 +164,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             return false;
         }
 
-        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - repo: " +
+        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - start; repo: " +
             info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
 
         // ignore messages made by the bot, unless they are #force
@@ -598,11 +598,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 // intentionally skips calling saveFeedback (because the request should be free)
                 if (futureTarget === true) {
-                    Log.info(`GitHubAutoTest::processExecution() - postbackOnComplete true;` +
+                    Log.info(`GitHubAutoTest::processExecution() - postback true for futureTarget` +
                         `removing ${data.input.target.personId} from scheduleQueue.`);
                 }
                 // do this first, does not count against quota
-                Log.info("GitHubAutoTest::processExecution() - postback: true; deliv: " +
+                Log.trace("GitHubAutoTest::processExecution() - postback: true; deliv: " +
                     delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) + ";");
                 const msg = await this.classPortal.formatFeedback(data);
                 await this.postToGitHub(data.input.target, {url: data.input.target.postbackURL, message: msg});
@@ -655,7 +655,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      */
     private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
         try {
-            Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", " + reqTimestamp + " ) - start");
+            Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", ... ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
             const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
