@@ -1,4 +1,4 @@
-import * as parse from "csv-parse";
+import {parse} from "csv-parse";
 import * as fs from "fs";
 
 import Log from "@common/Log";
@@ -24,14 +24,14 @@ export class CSVParser {
      * @returns {Promise<any[]>}
      */
     public parsePath(path: string): Promise<any[]> {
-        return new Promise(function(fulfill, reject) {
+        return new Promise(function (fulfill, reject) {
 
             const rs = fs.createReadStream(path);
             const options = {
-                columns:          true,
+                columns: true,
                 skip_empty_lines: true,
-                trim:             true,
-                bom:              true // fixes CSV compatibility issue
+                trim: true,
+                bom: true // fixes CSV compatibility issue
             };
 
             const parser = parse(options, (err: Error, data: any[]) => {
@@ -107,14 +107,14 @@ export class CSVParser {
 
                     const personId = row.CSID;
                     const g: Grade = {
-                        personId:  personId,
-                        delivId:   delivId,
-                        score:     Number(row.GRADE),
-                        comment:   row.COMMENT,
+                        personId: personId,
+                        delivId: delivId,
+                        score: Number(row.GRADE),
+                        comment: row.COMMENT,
                         timestamp: Date.now(),
-                        urlName:   "CSV Upload",
-                        URL:       null, // set to null so GradesController can restore URL if needed
-                        custom:    {}
+                        urlName: "CSV Upload",
+                        URL: null, // set to null so GradesController can restore URL if needed
+                        custom: {}
                     };
 
                     const person = pc.getPerson(personId);

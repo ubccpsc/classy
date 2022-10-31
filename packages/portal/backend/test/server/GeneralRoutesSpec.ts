@@ -362,8 +362,9 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             response = await request(app).get(url).set("user", auth.personId).set("token", auth.token);
-            Log.test("Response received: " + response.text);
-            body = JSON.parse(response.text); // test files are json
+            const text = response.body;
+            Log.test("Response received: " + text);
+            body = JSON.parse(text); // test files are json
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -410,8 +411,9 @@ describe("General Routes", function () {
         try {
             Log.test("Making request");
             response = await request(app).get(url).set("user", auth.personId).set("token", auth.token);
-            Log.test("Response received: " + response.text);
-            body = JSON.parse(response.text); // test files are json
+            const text = response.body;
+            Log.test("Response received: " + text);
+            body = JSON.parse(text); // test files are json
         } catch (err) {
             Log.test("ERROR: " + err);
         }

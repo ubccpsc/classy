@@ -2,7 +2,6 @@ import * as crypto from "crypto";
 import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
-// can"t use @common here as this is referenced from TestHarness and ends up being circular
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
@@ -11,8 +10,6 @@ import {Factory} from "../Factory";
 import {DatabaseController} from "./DatabaseController";
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
-
-// import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
 
 // tslint:disable-next-line
 const tmp = require("tmp-promise");
@@ -346,7 +343,7 @@ export class GitHubActions implements IGitHubActions {
 
             Log.info("GitHubAction::createRepo( " + repoName + " ) - making request");
             const response = await fetch(uri, options);
-            const body = await response.json();
+            const body = await response.json() as any;
             Log.info("GitHubAction::createRepo( " + repoName + " ) - request complete");
             const url = body.html_url;
 
@@ -569,7 +566,7 @@ export class GitHubActions implements IGitHubActions {
         try {
             Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
             let response = await fetch(uri, options);
-            let body = await response.json();
+            let body = await response.json() as any;
             let results: any[] = body; // save the first page of values
 
             if (response.headers.has("link") === false) {
@@ -664,7 +661,7 @@ export class GitHubActions implements IGitHubActions {
 
         const response = await fetch(uri, opts);
         Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
-        return response.json();
+        return await response.json() as any;
     }
 
     public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
@@ -785,7 +782,7 @@ export class GitHubActions implements IGitHubActions {
                     })
                 };
                 const response = await fetch(uri, options);
-                const body = await response.json();
+                const body = await response.json() as any;
                 Log.info("GitHubAction::teamCreate(..) - success; new: " + body.id + "; took: " + Util.took(start));
 
                 // remove default token provider/maintainer from team
@@ -1072,7 +1069,7 @@ export class GitHubActions implements IGitHubActions {
             return null;
         }
 
-        const body = await response.json();
+        const body = await response.json() as any;
         const ret = {githubTeamNumber: body.id, teamName: body.name};
         Log.info("GitHubAction::getTeam( " + teamNumber + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
         return ret;
@@ -1543,7 +1540,7 @@ export class GitHubActions implements IGitHubActions {
                 // Change each team"s permission
                 // tslint:disable-next-line:no-floating-promises
                 const response = await fetch(teamsUri, teamOptions); // .then(function(responseData: any) {
-                const body = await response.json();
+                const body = await response.json() as any;
                 Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
                 for (const team of body) {
                     // Don"t change teams that have admin permission
@@ -1871,7 +1868,7 @@ export class GitHubActions implements IGitHubActions {
 
         try {
             const response = await fetch(uri, options);
-            const results = await response.json();
+            const results = await response.json() as any;
             Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
 
             const toReturn: GitTeamTuple[] = [];

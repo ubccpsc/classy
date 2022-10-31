@@ -17,7 +17,7 @@
     "license": "MIT",
     "version": "2.5.0",
     "engines": {
-        "node": ">= 12.13 < 13"
+        "node": ">= 18.12 < 19"
     },
     "workspaces": [
         "packages/*",
@@ -25,32 +25,29 @@
         "packages/portal/backend"
     ],
     "devDependencies": {
-        "@types/dotenv": "4.0.2",
-        "@types/fs-extra": "5.0.0",
-        "@types/jszip": "3.1.6",
-        "@types/mocha": "2.2.44",
-        "@types/mongodb": "^3.0.5",
-        "@types/node": "~8.10.53",
-        "@types/node-fetch": "^2.5.5",
-        "@types/restify": "^8.4.1",
+        "@types/dotenv": "6.1.1",
+        "@types/fs-extra": "9.0.13",
+        "@types/jszip": "3.4.0",
+        "@types/mocha": "10.0.0",
+        "@types/node": "~18.11.8",
+        "@types/node-fetch": "^2.6.2",
+        "@types/restify": "^8.5.5",
         "chai": "^4.3.6",
-        "jsonschema": "1.2.2",
-        "mocha": "^9.2.2",
-        "ts-node": "4.1.0",
-        "tslint": "^5.11.0",
-        "typescript": "^3.7.2",
-        "webpack": "^5.38.1"
+        "jsonschema": "1.4.1",
+        "mocha": "^10.1.0",
+        "ts-node": "10.9.1",
+        "tslint": "^5.20.1",
+        "typescript": "^4.8.4",
+        "webpack": "^5.74.0"
     },
     "dependencies": {
-        "@types/bson": "^4.2.0",
-        "@types/mongodb": "^3.0.5",
-        "@types/node-schedule": "^1.2.2",
-        "dotenv": "4.0.0",
-        "fs-extra": "5.0.0",
-        "jszip": "3.7.0",
-        "mongodb": "^3.0.2",
+        "@types/node-schedule": "^2.1.0",
+        "dotenv": "16.0.3",
+        "fs-extra": "10.1.0",
+        "jszip": "3.10.1",
+        "mongodb": "^4.11.0",
         "node-fetch": "^2.6.7",
-        "restify": "^8.4.0"
+        "restify": "^8.6.1"
     },
     "resolutions": {
         "**/mem": "^4.0.0"
