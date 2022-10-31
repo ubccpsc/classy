@@ -69,7 +69,7 @@ More checks may need to be made depending on the nature of your work, but these 
 3. [ ] AutoTest compiles
 4. [ ] CI tests pass for Portal Back-end
 5. [ ] CI tests pass for AutoTest
-6. [ ] Project containers build successfully (`docker-compose build` and `docker-compose up`)
+6. [ ] Project containers build successfully (`docker compose build` and `docker compose up`)
 
 *NOTE*:
 
