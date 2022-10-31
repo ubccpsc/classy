@@ -289,7 +289,7 @@ export class AdminTeamsTab extends AdminPage {
         if (student?.id === personId) {
             if (student.userUrl !== null && student.userUrl.startsWith("http") === true) {
                 render = "<a class='selectable' href='" + student.userUrl + "'>" +
-                    student.githubId + "</a> (" + student.firstName + " " + student.lastName + ")";
+                    student.githubId + "</a> [" + student.id + "] (" + student.firstName + " " + student.lastName + ")";
             } else {
                 render = student.githubId + " (" + student.firstName + " " + student.lastName + ")";
             }

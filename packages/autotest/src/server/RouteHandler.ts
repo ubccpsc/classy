@@ -52,9 +52,10 @@ export default class RouteHandler {
     }
 
     /**
-     * Handles GitHub POSTs, currently:
-     *  - commit_comment
-     *  - push
+     * Handles GitHub POST events:
+     * - ping
+     * - commit_comment
+     * - push
      */
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
@@ -131,7 +132,6 @@ export default class RouteHandler {
     }
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
-
         // cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
         const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
 

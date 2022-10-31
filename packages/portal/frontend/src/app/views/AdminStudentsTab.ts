@@ -53,7 +53,7 @@ export class AdminStudentsTab {
             },
             {
                 id: "id",
-                text: "Internal Id",
+                text: "CSID",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,

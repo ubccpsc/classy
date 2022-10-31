@@ -48,7 +48,7 @@ export class AdminGradesTab extends AdminPage {
             },
             {
                 id: "id",
-                text: "Internal Id",
+                text: "CSID",
                 sortable: true,
                 defaultSort: true,
                 sortDown: false,
