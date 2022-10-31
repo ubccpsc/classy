@@ -1,7 +1,7 @@
 // do not use module imports (@common, @backend) in this file
 import Log from "@common/Log";
 import Config, {ConfigKey} from "@common/Config";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "@backend/controllers/GitHubController";
 import {TeamController} from "@backend/controllers/TeamController";
@@ -151,7 +151,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnAdminTeam(userName: string): Promise<boolean> {
-        if (userName === TestHarness.ADMIN1.github || userName === TestHarness.ADMIN1.github) {
+        if (userName === TestHarness.ADMIN1.github || userName === TestHarness.ADMINSTAFF1.github) {
             Log.info("TestGitHubActions::isOnAdminTeam( " + userName + " ) - true");
             return true;
         }
@@ -160,7 +160,7 @@ export class TestGitHubActions implements IGitHubActions {
     }
 
     public async isOnStaffTeam(userName: string): Promise<boolean> {
-        if (userName === TestHarness.STAFF1.github || userName === TestHarness.ADMIN1.github) {
+        if (userName === TestHarness.STAFF1.github || userName === TestHarness.ADMINSTAFF1.github) {
             Log.info("TestGitHubActions::isOnStaffTeam( " + userName + " ) - true");
             return true;
         }

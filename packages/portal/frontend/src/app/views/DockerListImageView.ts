@@ -77,7 +77,7 @@ export class DockerListImageView {
     }
 
     public setCheckedItem(item: OnsListItemElement) {
-        const radio: OnsRadioElement = item.querySelector('ons-radio');
+        const radio: OnsRadioElement = item.querySelector("ons-radio");
         radio.checked = true;
     }
 
@@ -105,17 +105,17 @@ export class DockerListImageView {
         const response = await fetch(url, options);
 
         if (response.status === 200) {
-            Log.trace('DockerListImageView::getDockerImages(..) - 200 received');
+            Log.trace("DockerListImageView::getDockerImages(..) - 200 received");
             const json = await response.json();
             if (Array.isArray(json)) {
-                Log.trace('DockerListImageView::getDockerImages(..)  - worked; took: ' + UI.took(start));
+                Log.trace("DockerListImageView::getDockerImages(..)  - worked; took: " + UI.took(start));
                 return json;
             } else {
-                Log.trace('DockerListImageView::getDockerImages(..)  - ERROR Expected array; got ' + json);
-                throw new Error('Invalid response body format');
+                Log.trace("DockerListImageView::getDockerImages(..)  - ERROR Expected array; got " + json);
+                throw new Error("Invalid response body format");
             }
         } else {
-            Log.trace('DockerListImageView::getDockerImages(..)  - !200 received: ' + response.status);
+            Log.trace("DockerListImageView::getDockerImages(..)  - !200 received: " + response.status);
             throw await response.text();
         }
     }

@@ -4,10 +4,10 @@ import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
 import {AutoTest} from "../autotest/AutoTest";
 import {ClassPortal} from "../autotest/ClassPortal";
@@ -23,7 +23,7 @@ export default class RouteHandler {
     public static getDocker(): Docker {
         if (RouteHandler.docker === null) {
             if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-                // Running tests; don't need to connect to the Docker daemon
+                // Running tests; don"t need to connect to the Docker daemon
                 this.docker = null;
             } else {
                 // Connect to the Docker socket using defaults
@@ -52,9 +52,10 @@ export default class RouteHandler {
     }
 
     /**
-     * Handles GitHub POSTs, currently:
-     *  - commit_comment
-     *  - push
+     * Handles GitHub POST events:
+     * - ping
+     * - commit_comment
+     * - push
      */
     public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
         const start = Date.now();
@@ -62,21 +63,15 @@ export default class RouteHandler {
         let githubSecret: string = req.header("X-Hub-Signature");
 
         // https://developer.github.com/webhooks/securing/
-        if (typeof githubSecret === 'undefined') {
+        if (typeof githubSecret === "undefined") {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent); // + "; signature: " + githubSecret);
+        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
 
         const handleError = function (msg: string) {
-            if (msg.indexOf("was deleted") > 0) {
-                // branch deletions are common and are not worth putting in the error list
-                // but if it _isn't_ a branch deletion, we might want to know about it in future, so warn
-                Log.warn("RouteHandler::postGithubHook() - not processed:  " + msg + "; took: " + Util.took(start));
-            } else {
-                Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            }
+            Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
             res.json(400, "Failed to process commit: " + msg);
         };
 
@@ -86,12 +81,12 @@ export default class RouteHandler {
                 Log.trace("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-                const key = crypto.createHash('sha256').update(atSecret, 'utf8').digest('hex'); // secret w/ sha256
+                const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex"); // secret w/ sha256
                 // Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
 
-                const computed = "sha1=" + crypto.createHmac('sha1', key) // payload w/ sha1
+                const computed = "sha1=" + crypto.createHmac("sha1", key) // payload w/ sha1
                     .update(JSON.stringify(body))
-                    .digest('hex');
+                    .digest("hex");
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
@@ -108,20 +103,24 @@ export default class RouteHandler {
             Log.warn("RouteHandler::postGithubHook(..) - secret ignored (not present)");
         }
 
+        // leave this on for a while; would like to verify that this works so we can replace the hardcode below
+        Log.info("RouteHandler::postGithubHook(..) - hasSecret: " +
+            (typeof githubSecret === "string") + "; secretVerified: " + secretVerified);
+
         secretVerified = true; // TODO: stop overwriting this
         if (secretVerified === true) {
-            if (githubEvent === 'ping') {
+            if (githubEvent === "ping") {
                 // github test packet; use to let the webhooks know we are listening
                 Log.info("RouteHandler::postGithubHook() - <200> pong.");
                 res.json(200, "pong");
             } else {
                 RouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
-                    Log.info("RouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
                     if (commitEvent !== null) {
+                        Log.info("RouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
                         res.json(200, commitEvent); // report back our interpretation of the hook
                     } else {
-                        // handleError("Error handling webhook; event: " + githubEvent + "; body: " + JSON.stringify(body, null, 2));
-                        handleError("Webhook not handled (if branch was deleted this is normal)");
+                        Log.info("RouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
+                        res.json(204, {}); // report back that nothing happened
                     }
                 }).catch(function (err) {
                     Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
@@ -132,13 +131,12 @@ export default class RouteHandler {
             handleError("Invalid payload signature.");
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
+        Log.trace("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
         return next();
     }
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
-
-        // cast is unfortunate, but if we're listening to these routes it must be a github AT instance
+        // cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
         const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
 
         switch (event) {
@@ -215,20 +213,20 @@ export default class RouteHandler {
             const dockerOptions = {remote, t: tag, dockerfile: file};
             const reqParams = querystring.stringify(dockerOptions);
             const reqOptions = {
-                socketPath: '/var/run/docker.sock',
-                path: '/v1.24/build?' + reqParams,
-                method: 'POST'
+                socketPath: "/var/run/docker.sock",
+                path: "/v1.24/build?" + reqParams,
+                method: "POST"
             };
 
             const handler = (stream: any) => {
-                stream.on('data', (chunk: any) => {
-                    Log.trace('RouteHandler::postDockerImage(...) - ' + chunk.toString());
+                stream.on("data", (chunk: any) => {
+                    Log.trace("RouteHandler::postDockerImage(...) - " + chunk.toString());
                 });
-                stream.on('end', (chunk: any) => {
-                    Log.info('RouteHandler::postDockerImage(...) - Closing Docker API Connection.');
+                stream.on("end", (chunk: any) => {
+                    Log.info("RouteHandler::postDockerImage(...) - Closing Docker API Connection.");
                 });
-                stream.on('error', (chunk: any) => {
-                    Log.error('RouteHandler::postDockerImage(...) Docker Stream ERROR: ' + chunk);
+                stream.on("error", (chunk: any) => {
+                    Log.error("RouteHandler::postDockerImage(...) Docker Stream ERROR: " + chunk);
                 });
                 stream.pipe(res);
             };

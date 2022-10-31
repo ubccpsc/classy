@@ -1,12 +1,12 @@
-import fetch, {RequestInit} from 'node-fetch';
+import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "@common/Config";
 import {CommitTarget} from "@common/types/ContainerTypes";
 import Log from "@common/Log";
 import {AutoTestAuthTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import {ClassPortal, IClassPortal} from "../autotest/ClassPortal";
-import Util from "@common/Util";
 
 export interface IGitHubMessage {
     /**
@@ -28,7 +28,7 @@ export class GitHubUtil {
     /**
      * Identifies all deliverables mentioned in a string.
      * Deliverables _must_ be of the form #d1, #d1223, etc.
-     * The '#' is required, the 'd' is required, and a number is required.
+     * The "#" is required, the "d" is required, and a number is required.
      *
      * @param message
      * @param {string[]} delivIds
@@ -37,18 +37,18 @@ export class GitHubUtil {
     public static parseDeliverableFromComment(message: any, delivIds: string[]): string | null {
         // const matches = message.match("\\S*#d\\d+\\S*"); // just deliverables
         // from https://stackoverflow.com/a/25693471
-        const regexp = /(\s|^)\#\w\w+\b/gm;
+        const regexp = /(\s|^)#\w\w+\b/gm;
         const matches = message.match(regexp);
 
         let msg = message;
         if (msg.length > 40) {
             msg = msg.substr(0, 40) + "...";
-            if (msg.indexOf('\n') > 0) {
-                msg = msg.substr(0, msg.indexOf('\n'));
+            if (msg.indexOf("\n") > 0) {
+                msg = msg.substr(0, msg.indexOf("\n"));
             }
         }
 
-        Log.info("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
+        Log.trace("GitHubUtil::parseDeliverableFromComment(..) - ids: " + JSON.stringify(delivIds) +
             "; matches: " + JSON.stringify(matches) + " for msg: " + msg);
 
         let parsedDelivId = null;
@@ -56,7 +56,7 @@ export class GitHubUtil {
             for (const delivId of delivIds) {
                 for (let match of matches) {
                     if (parsedDelivId === null) {
-                        match = match.replace('#', '');
+                        match = match.replace("#", "");
                         match = match.trim();
                         if (match === delivId) {
                             // present in message and valid
@@ -68,7 +68,7 @@ export class GitHubUtil {
         }
 
         if (parsedDelivId === null) {
-            Log.info("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
+            Log.trace("GitHubUtil::parseDeliverableFromComment() - NO MATCH; input: " +
                 msg + "; options: " + JSON.stringify(delivIds));
         } else {
             Log.trace("GitHubUtil::parseDeliverableFromComment() - input: " + msg + "; output: " + parsedDelivId);
@@ -93,14 +93,16 @@ export class GitHubUtil {
      */
     public static async processComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.info("GitHubUtil::processComment(..) - start");
+            Log.trace("GitHubUtil::processComment(..) - start");
             const start = Date.now();
 
             const commitSHA = payload.comment.commit_id;
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
+            const requester = String(payload.comment.user.login); // .toLowerCase();
+            const message = payload.comment.body;
+
             let commitURL = payload.comment.html_url;  // this is the comment Url
             commitURL = commitURL.substr(0, commitURL.lastIndexOf("#")); // strip off the comment reference
-
-            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // NEXT: need cloneURL
             const cloneURL = String(payload.repository.clone_url);
@@ -108,13 +110,14 @@ export class GitHubUtil {
             try {
                 orgId = payload.repository.full_name.substr(0,
                     payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-                Log.info("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
+                Log.trace("GitHubUtil::processComment(..) - full_name: " + payload.repository.full_name +
                     "; name: " + payload.repository.name + "; org: " + orgId);
+
+                Log.info("GitHubUtil::processComment(..) - start; repo: " + payload.repository.name +
+                    "; person: " + requester + "; SHA: " + Util.shaHuman(commitSHA));
             } catch (err) {
                 Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
             }
-            const requester = String(payload.comment.user.login); // .toLowerCase();
-            const message = payload.comment.body;
 
             Log.trace("GitHubUtil::processComment(..) - 1");
 
@@ -133,7 +136,7 @@ export class GitHubUtil {
 
             Log.trace("GitHubUtil::processComment(..) - 3");
 
-            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can't add requests to a past comment
+            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can"t add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)
@@ -146,9 +149,9 @@ export class GitHubUtil {
                 adminRequest = true;
             }
 
-            let kind = 'standard'; // if #check, set that here
+            let kind = "standard"; // if #check, set that here
             if (flags.indexOf("#check") >= 0) {
-                kind = 'check';
+                kind = "check";
             }
 
             Log.trace("GitHubUtil::processComment(..) - 4");
@@ -177,16 +180,17 @@ export class GitHubUtil {
                 }
             }
 
-            Log.info("GitHubUtil.processComment(..) - done; who: " + requester + "; repoId: " +
-                repoId + "; botMentioned: " + botMentioned + "; message: " + msg + "; took: " + Util.took(start));
-            Log.trace("GitHubUtil::processComment(..) - done; commentEvent:", commentEvent);
-
+            Log.info("GitHubUtil.processComment(..) - done" +
+                "; repo: " + payload.repository.name +
+                "; person: " + requester +
+                "; SHA: " + Util.shaHuman(commitSHA) +
+                "; message: " + msg + "; took: " + Util.took(start));
             // Log.trace("GitHubUtil::processComment(..) - handling: " + JSON.stringify(commentEvent, null, 2));
             return commentEvent;
         } catch (err) {
             Log.error("GitHubUtil::processComment(..) - ERROR parsing: " + err);
             Log.error("GitHubUtil::processComment(..) - ERROR payload: ", payload);
-            return null;
+            throw err; // re-throw on error, null is "ignore comment"
         }
     }
 
@@ -213,61 +217,74 @@ export class GitHubUtil {
             const projectURL = payload.repository.html_url;
             const cloneURL = payload.repository.clone_url;
             const ref = payload.ref;
-            const pusher = await new ClassPortal().getPersonId(payload.pusher.name);
+
+            const cp = new ClassPortal();
+            const pusher = await cp.getPersonId(payload.pusher.name);
             let org;
             try {
                 org = payload.repository.full_name.substr(0,
-                    payload.repository.full_name.lastIndexOf(payload.repository.name) - 1);
-                Log.info("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
-                    "; name: " + payload.repository.name + "; org: " + org);
+                    payload.repository.full_name.lastIndexOf(repo) - 1);
+                Log.trace("GitHubUtil::processPush(..) - full_name: " + payload.repository.full_name +
+                    "; org: " + org + "; name: " + repo);
             } catch (err) {
                 Log.warn("GitHubUtil::processPush(..) - failed to parse org: " + err);
             }
-
-            Log.info("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
+            // Log.trace("GitHubUtil::processPush(..) - processing - repo: " + repo + "; ref: " + ref);
 
             if (payload.deleted === true && payload.head_commit === null) {
                 // commit deleted a branch, do nothing
-                Log.info("GitHubUtil::processPush(..) - branch removed; no further processing - URL: " + projectURL);
+                Log.info("GitHubUtil::processPush(..) - skipped; repo: " +
+                    repo + "; branch removed: " + projectURL);
                 return null;
             }
 
-            let commitURL = '';
-            let commitSHA = '';
+            let commitURL = "";
+            let commitSHA = "";
 
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
                 commitURL = payload.commits[payload.commits.length - 1].url;
-                Log.info("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
+                Log.trace("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
             } else {
                 // use this one when creating a new branch (may not have any commits)
                 commitSHA = payload.head_commit.id;
                 commitURL = payload.head_commit.url;
-                Log.info("GitHubUtil::processPush(..) - branch added; repo: " + repo);
+                Log.trace("GitHubUtil::processPush(..) - branch added; repo: " + repo);
             }
 
+            Log.info("GitHubUtil::processPush(..) - start; repo: " + repo +
+                "; person: " + pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA));
             Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
-            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
 
             // this gives the timestamp of the last commit (which could be forged), not the time of the push
             // const timestamp = payload.repository.pushed_at * 1000;
             const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
-
             const backendConfig = await portal.getConfiguration();
-
             if (backendConfig === null) {
                 Log.warn("GitHubUtil::processComment() - no default deliverable for course");
                 return null;
             }
 
+            let isAdmin = false;
+            if (pusher?.personId) {
+                // see if this pusher is an admin so their requests can be prioritized
+                // (many admin scripts cause push events, and we do not want these
+                // to be put on the low priority queue)
+                const perms = await cp.isStaff(pusher.personId);
+                if (perms.isStaff === true || perms.isAdmin === true) {
+                    isAdmin = true;
+                }
+            }
+
+            const postbackURL = payload.repository.commits_url.replace("{/sha}", "/" + commitSHA) + "/comments";
             const pushEvent: CommitTarget = {
                 delivId: backendConfig.defaultDeliverable,
                 repoId: repo,
                 orgId: org,
                 botMentioned: false, // not explicitly invoked
-                adminRequest: false, // all pushes are treated equally
+                adminRequest: isAdmin, // let us prioritize admin pushes
                 personId: pusher?.personId ?? null,
-                kind: 'push',
+                kind: "push",
                 cloneURL,
                 commitSHA,
                 commitURL,
@@ -276,18 +293,19 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo +
-                "; SHA: " + commitSHA + "; took: " + Util.took(start));
+            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo + "; person: " +
+                pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
             Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
             Log.error("GitHubUtil::processPush(..) - ERROR payload: " + JSON.stringify(payload, null, 2));
-            return null;
+            throw err; // re-throw on error, null is "ignore push"
         }
     }
 
     public static async postMarkdownToGithub(message: IGitHubMessage): Promise<boolean> {
+        const start = Date.now();
         try {
             // sanity checking
             if (message === null) {
@@ -303,17 +321,24 @@ export class GitHubUtil {
                 return false;
             }
 
-            // find a better short string for logging
-            let loggingMessage = message.message;
-            if (loggingMessage.indexOf('\n') > 0) {
-                loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf('\n'));
-            }
-            if (loggingMessage.length > 80) {
-                loggingMessage = loggingMessage.substr(0, 80) + "...";
-            }
+            try {
+                // find a better short string for logging
+                let loggingMessage = message.message;
+                if (loggingMessage.indexOf("\n") > 0) {
+                    loggingMessage = loggingMessage.substr(0, loggingMessage.indexOf("\n"));
+                }
+                if (loggingMessage.length > 80) {
+                    loggingMessage = loggingMessage.substr(0, 60) + "...";
+                }
 
-            Log.info("GitHubUtil::postMarkdownToGithub(..) - Posting markdown to url: " +
-                message.url + "; message: " + loggingMessage);
+                const sha = GitHubUtil.commitURLtoSHA(message.url);
+                const repo = GitHubUtil.commitURLtoRepoName(message.url);
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - posting to repo: " +
+                    repo + "; SHA: " + sha + "; message: " + loggingMessage);
+
+            } catch (err) {
+                Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err.message);
+            }
 
             const body: string = JSON.stringify({body: message.message});
             const options: RequestInit = {
@@ -329,18 +354,65 @@ export class GitHubUtil {
             if (Config.getInstance().getProp(ConfigKey.postback) === true) {
                 try {
                     await fetch(message.url, options);
-                    Log.info("GitHubUtil::postMarkdownToGithub(..) - success for url: " + message.url);
+                    const repo = GitHubUtil.commitURLtoRepoName(message.url);
+                    Log.info("GitHubUtil::postMarkdownToGithub(..) - posted to: " + repo + "; took: " + Util.took(start));
                 } catch (err) {
                     Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
                     return false;
                 }
             } else {
-                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.postback === false) for url: " + message.url);
+                Log.info("GitHubUtil::postMarkdownToGithub(..) - send skipped (config.AUTOTEST_POSTBACK === false)");
             }
         } catch (err) {
             Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err);
             return false;
         }
         return true;
+    }
+
+    /**
+     * Returns the repo name from a full commit url.
+     * If the parse does not work, the URL itself is returned again.
+     *
+     * Should work on URLs like:
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commit/47046cae35a31083761788d9fce80e85ca77f6d5
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
+     *
+     * @param commitURL
+     */
+    public static commitURLtoRepoName(commitURL: string): string {
+        try {
+            if (commitURL.indexOf("/commit") > 0) {
+                let repo = commitURL;
+                repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commit") - 1) + 1, repo.indexOf("/commit"));
+                return repo;
+            }
+        } catch (err) {
+            // ignored
+        }
+        return commitURL;
+    }
+
+    /**
+     * Returns the repo name from a full commit url.
+     * If the parse does not work, the URL itself is returned again.
+     *
+     * Should work on URLs like:
+     * https://github.students.cs.ubc.ca/CPSC310-2022W-T1/project_team094/commits/47046cae35a31083761788d9fce80e85ca77f6d5/comments
+     *
+     * @param commitURL
+     */
+    public static commitURLtoSHA(commitURL: string): string {
+        try {
+            if (commitURL.indexOf("commits/") > 0 && commitURL.indexOf("/comments") > 0) {
+                let sha = commitURL;
+                sha = sha.substring(sha.indexOf("/commits/") + 9, sha.indexOf("/comments"));
+                sha = Util.shaHuman(sha);
+                return sha;
+            }
+        } catch (err) {
+            // ignored
+        }
+        return commitURL;
     }
 }

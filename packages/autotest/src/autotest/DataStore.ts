@@ -1,11 +1,11 @@
 import {Collection, Db, MongoClient} from "mongodb";
-import Config, {ConfigKey} from "../../../common/Config";
+import Config, {ConfigKey} from "@common/Config";
 
-import Log from "../../../common/Log";
-import {AutoTestResult, IFeedbackGiven} from "../../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
+import Log from "@common/Log";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
 
-import Util from "../../../common/Util";
+import Util from "@common/Util";
 
 export interface IDataStore {
 
@@ -53,7 +53,7 @@ export interface IDataStore {
      *
      * @returns {Promise<{records: AutoTestResult[]; comments: CommitTarget[]; pushes: CommitTarget[]; feedback: IFeedbackGiven[]}>}
      */
-    getAllData(): Promise<{records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[]}>;
+    getAllData(): Promise<{ records: AutoTestResult[], comments: CommitTarget[], pushes: CommitTarget[], feedback: IFeedbackGiven[] }>;
 
     /**
      * Debugging only:
@@ -185,8 +185,9 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async saveComment(info: CommitTarget): Promise<void> {
-        Log.info("MongoDataStore::saveComment(..) - start; delivId: " +
-            info.delivId + "; repo: " + info.repoId + "; url: " + info.commitURL);
+        Log.trace("MongoDataStore::saveComment(..) - start" +
+            "; deliv: " + info.delivId +
+            "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
         try {
             const start = Date.now();
             await this.saveRecord(this.COMMENTCOLL, info);
@@ -198,10 +199,14 @@ export class MongoDataStore implements IDataStore {
     }
 
     public async getCommentRecord(commitURL: string, delivId: string, kind: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getCommentRecord(..) - start; delivId: " + delivId + "; url: " + commitURL + "; kind: " + kind);
+        Log.trace("MongoDataStore::getCommentRecord(..) - start; deliv: " + delivId + "; url: " + commitURL + "; kind: " + kind);
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.COMMENTCOLL, {delivId: delivId, commitURL: commitURL, kind: kind});
+            const res = await this.getSingleRecord(this.COMMENTCOLL, {
+                delivId: delivId,
+                commitURL: commitURL,
+                kind: kind
+            });
             if (res === null) {
                 Log.trace("MongoDataStore::getCommentRecord(..) - record not found for: " + commitURL);
             } else {
@@ -235,7 +240,7 @@ export class MongoDataStore implements IDataStore {
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
         try {
             await this.saveRecord(this.FEEDBACKCOLL, info);
-            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; delivId: " +
+            Log.trace("MongoDataStore::saveFeedbackGivenRecord(..) - done; deliv: " +
                 info.delivId + "; user: " + info.personId + "; commit: " + info.commitURL);
         } catch (err) {
             Log.error("MongoDataStore::saveFeedbackGivenRecord(..) - ERROR: " + err);
@@ -253,7 +258,7 @@ export class MongoDataStore implements IDataStore {
             } else {
                 // pick the most recent
                 let ret: IFeedbackGiven | null = null;
-                Math.max.apply(Math, res.map(function(o: IFeedbackGiven) {
+                Math.max.apply(Math, res.map(function (o: IFeedbackGiven) {
                     // Log.trace("MongoDataStore::getLatestFeedbackGivenRecord(..) - found; took: " + Util.took(start));
                     ret = o;
                 }));

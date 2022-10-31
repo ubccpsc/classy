@@ -1,7 +1,7 @@
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import {GradeReport} from "../../../../common/types/ContainerTypes";
+import {GradeReport} from "@common/types/ContainerTypes";
 import {
     AutoTestDashboardTransport,
     AutoTestGradeTransport,
@@ -13,8 +13,8 @@ import {
     RepositoryTransport,
     StudentTransport,
     TeamTransport,
-} from '../../../../common/types/PortalTypes';
-import Util from "../../../../common/Util";
+} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 import {Factory} from "../Factory";
 import {AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";
@@ -59,27 +59,27 @@ export class AdminController {
      * @returns {Promise<boolean>} Whether the new grade was saved
      */
     public async processNewAutoTestGrade(grade: AutoTestGradeTransport): Promise<boolean> {
-        Log.trace("AdminController::processNewAutoTestGrade( .. ) - start");
+        Log.trace("AdminController::processNewAutoTestGrade(..) - start");
 
         const cc = await Factory.getCourseController(this.gh);
 
         try {
-            Log.trace("AdminController::processNewAutoTestGrade( .. ) - payload: " + JSON.stringify(grade));
+            Log.trace("AdminController::processNewAutoTestGrade(..) - payload: " + JSON.stringify(grade));
             const repo = await this.rc.getRepository(grade.repoId);
             if (repo === null) {
                 // sanity check
-                Log.error("AdminController::processNewAutoTestGrade( .. ) - invalid repo name: " + grade.repoId);
+                Log.error("AdminController::processNewAutoTestGrade(..) - invalid repo name: " + grade.repoId);
                 return false;
             }
 
             const peopleIds = await this.rc.getPeopleForRepo(grade.repoId);
             if (peopleIds.length < 1) {
                 // sanity check
-                Log.error("AdminController::processNewAutoTestGrade( .. ) - no people to associate grade record with.");
+                Log.error("AdminController::processNewAutoTestGrade(..) - no people to associate grade record with.");
                 return false;
             }
 
-            Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting deliv"); // NOTE: for hangup debugging
+            Log.trace("AdminController::processNewAutoTestGrade(..) - getting deliv"); // NOTE: for hangup debugging
 
             const delivController = new DeliverablesController();
             const deliv = await delivController.getDeliverable(grade.delivId);
@@ -98,18 +98,18 @@ export class AdminController {
                     custom: grade.custom
                 };
 
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - getting grade for " + personId); // NOTE: for hangup debugging
+                Log.trace("AdminController::processNewAutoTestGrade(..) - getting grade for " + personId); // NOTE: for hangup debugging
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handling grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade(..) - handling grade for " + personId +
                     "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-                Log.trace("AdminController::processNewAutoTestGrade( .. ) - handled grade for " + personId +
+                Log.trace("AdminController::processNewAutoTestGrade(..) - handled grade for " + personId +
                     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
 
                 if (shouldSave === true) {
-                    Log.info("AdminController::processNewAutoTestGrade( .. ) - saving grade for delivId: "
+                    Log.info("AdminController::processNewAutoTestGrade(..) - saving grade for deliv: "
                         + newGrade.delivId + "; repo: " + grade.repoId);
-                    await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, 'AutoTest',
+                    await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, "AutoTest",
                         existingGrade, newGrade, {repoId: grade.repoId});
                     await this.gc.saveGrade(newGrade);
                     saved = true;
@@ -117,7 +117,7 @@ export class AdminController {
             }
             return saved;
         } catch (err) {
-            Log.error("AdminController::processNewAutoTestGrade( .. ) - ERROR: " + err);
+            Log.error("AdminController::processNewAutoTestGrade(..) - ERROR: " + err);
             return false;
         }
     }
@@ -141,8 +141,7 @@ export class AdminController {
         if (record !== null) {
             // merge the new with the old
             record.defaultDeliverableId = course.defaultDeliverableId;
-            const custom = Object.assign({}, record.custom, course.custom); // merge custom properties
-            record.custom = custom;
+            record.custom = Object.assign({}, record.custom, course.custom); // merge custom properties
         }
         return await this.dbc.writeCourseRecord(record);
     }
@@ -163,7 +162,7 @@ export class AdminController {
                     firstName: person.fName,
                     lastName: person.lName,
                     githubId: person.githubId,
-                    userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
+                    userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + person.githubId,
                     studentNum: person.studentNumber,
                     labId: person.labId
                 };
@@ -195,7 +194,7 @@ export class AdminController {
                     firstName: person.fName,
                     lastName: person.lName,
                     githubId: person.githubId,
-                    userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + person.githubId,
+                    userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + person.githubId,
                     studentNum: person.studentNumber,
                     labId: person.labId,
                     kind: person.kind,
@@ -266,7 +265,7 @@ export class AdminController {
             const p = await pc.getPerson(grade.personId); // TODO: slow action for just githubid
             const gradeTrans: GradeTransport = {
                 personId: grade.personId,
-                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/' + p.githubId,
+                personURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + p.githubId,
                 delivId: grade.delivId,
                 score: grade.score,
                 comment: grade.comment,
@@ -284,8 +283,8 @@ export class AdminController {
 
     /**
      * Gets the results associated with the course.
-     * @param reqDelivId ('any' for *)
-     * @param reqRepoId ('any' for *)
+     * @param reqDelivId ("any" for *)
+     * @param reqRepoId ("any" for *)
      * @param maxNumResults (optional, default 500)
      * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
@@ -307,7 +306,7 @@ export class AdminController {
             if (results.length < NUM_RESULTS) {
                 const resultTrans = await this.createDashboardTransport(result);
                 // just return the first result for a repo, unless they are specified
-                if (reqRepoId !== 'any' || repoIds.indexOf(repoId) < 0) {
+                if (reqRepoId !== "any" || repoIds.indexOf(repoId) < 0) {
                     results.push(resultTrans);
                     repoIds.push(repoId);
                 }
@@ -327,18 +326,18 @@ export class AdminController {
         let testSkip: string[] = [];
         let testError: string[] = [];
 
-        if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+        if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
             const report: GradeReport = result.output.report;
-            if (typeof report.passNames !== 'undefined') {
+            if (typeof report.passNames !== "undefined") {
                 testPass = report.passNames;
             }
-            if (typeof report.failNames !== 'undefined') {
+            if (typeof report.failNames !== "undefined") {
                 testFail = report.failNames;
             }
-            if (typeof report.skipNames !== 'undefined') {
+            if (typeof report.skipNames !== "undefined") {
                 testSkip = report.skipNames;
             }
-            if (typeof report.errorNames !== 'undefined') {
+            if (typeof report.errorNames !== "undefined") {
                 testError = report.errorNames;
             }
         }
@@ -356,11 +355,11 @@ export class AdminController {
     public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
         Log.trace("AdminController::matchResults(..) - start");
         const start = Date.now();
-        const WILDCARD = 'any';
+        const WILDCARD = "any";
 
         let allResults: Result[] = [];
         if (reqRepoId !== WILDCARD) {
-            // if both aren't 'any' just use this one too
+            // if both aren"t "any" just use this one too
             // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
@@ -395,7 +394,7 @@ export class AdminController {
     }
 
     /**
-     * Gets the list of GitHub ids associated with the 'students' team on GitHub
+     * Gets the list of GitHub ids associated with the "students" team on GitHub
      * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
      * does not exist or is empty.
      *
@@ -405,9 +404,9 @@ export class AdminController {
         Log.info("AdminController::performStudentWithdraw() - start");
         const gha = GitHubActions.getInstance(true);
         // const tc = new TeamController();
-        // const teamNum = await tc.getTeamNumber('students'); // await gha.getTeamNumber('students');
+        // const teamNum = await tc.getTeamNumber("students"); // await gha.getTeamNumber("students");
         // const registeredGithubIds = await gha.getTeamMembers(teamNum);
-        const registeredGithubIds = await gha.getTeamMembers('students');
+        const registeredGithubIds = await gha.getTeamMembers("students");
 
         if (registeredGithubIds.length > 0) {
             const pc = new PersonController();
@@ -415,14 +414,14 @@ export class AdminController {
             Log.info("AdminController::performStudentWithdraw() - done; msg: " + msg);
             return msg;
         } else {
-            throw new Error("No students specified in the 'students' team on GitHub; operation aborted.");
+            throw new Error("No students specified in the students team on GitHub; operation aborted.");
         }
     }
 
     /**
      * Gets the results associated with the course.
-     * @param reqDelivId ('any' for *)
-     * @param reqRepoId ('any' for *)
+     * @param reqDelivId ("any" for *)
+     * @param reqRepoId ("any" for *)
      * @param kind
      * @returns {Promise<AutoTestGradeTransport[]>}
      */
@@ -430,7 +429,7 @@ export class AdminController {
         reqDelivId: string,
         reqRepoId: string,
         kind: ResultsKind = ResultsKind.ALL): Promise<AutoTestResultSummaryTransport[]> {
-        Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + " ) - start");
+        Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + ", " + kind + " ) - start");
         const start = Date.now();
         const NUM_RESULTS = 1000; // max # of records
 
@@ -438,8 +437,7 @@ export class AdminController {
         const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
         for (const result of allResults) {
             // const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
-
-            const repoId = result.input.target.repoId;
+            // const repoId = result.input.target.repoId;
             if (results.length <= NUM_RESULTS) {
                 const resultTrans = await this.clipAutoTestResult(result);
                 results.push(resultTrans);
@@ -447,7 +445,8 @@ export class AdminController {
                 // result does not match filter
             }
         }
-        Log.info("AdminController::getResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+        Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + ", " + kind + ") - done; # results: " +
+            results.length + "; took: " + Util.took(start));
         return results;
     }
 
@@ -455,24 +454,23 @@ export class AdminController {
      * Transforms a Result into an AutoTestResultSummaryTransport
      */
     private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
-        const cc = await Factory.getCourseController(this.gh);
         const repoId = result.input.target.repoId;
-        const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + '/' +
-            Config.getInstance().getProp(ConfigKey.org) + '/' + repoId;
+        const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
+            Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
 
         let scoreOverall = null;
         let scoreCover = null;
         let scoreTest = null;
 
-        if (typeof result.output !== 'undefined' && typeof result.output.report !== 'undefined') {
+        if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
             const report = result.output.report;
-            if (typeof report.scoreOverall !== 'undefined') {
+            if (typeof report.scoreOverall !== "undefined") {
                 scoreOverall = report.scoreOverall;
             }
-            if (typeof report.scoreTest !== 'undefined') {
+            if (typeof report.scoreTest !== "undefined") {
                 scoreTest = report.scoreTest;
             }
-            if (typeof report.scoreCover !== 'undefined') {
+            if (typeof report.scoreCover !== "undefined") {
                 scoreCover = report.scoreCover;
             }
         }
@@ -502,10 +500,10 @@ export class AdminController {
     private selectState(result: Result): string {
         // if the VM state is SUCCESS, return the report state
         let state = "UNDEFINED";
-        if (typeof result.output !== 'undefined' && typeof result.output.state !== 'undefined') {
+        if (typeof result.output !== "undefined" && typeof result.output.state !== "undefined") {
             state = result.output.state.toString();
         }
-        if (state === 'SUCCESS' && typeof result.output.report.result !== 'undefined') {
+        if (state === "SUCCESS" && typeof result.output.report.result !== "undefined") {
             state = result.output.report.result;
         }
         return state;
@@ -541,33 +539,33 @@ export class AdminController {
      * Validates the CourseTransport object.
      *
      * @param {CourseTransport} courseTrans
-     * @returns {string | null} null if objct is valid; string description of error if not.
+     * @returns {string | null} null if object is valid; string description of error if not.
      */
     public static validateCourseTransport(courseTrans: CourseTransport): string | null {
-        if (typeof courseTrans === 'undefined' || courseTrans === null) {
-            const msg = 'Course not populated.';
-            Log.error('AdminController::validateCourseTransport(..) - ERROR: ' + msg);
+        if (typeof courseTrans === "undefined" || courseTrans === null) {
+            const msg = "Course not populated.";
+            Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
             throw new Error(msg);
         }
 
         // noinspection SuspiciousTypeOfGuard
-        if (typeof courseTrans.id !== 'string') {
-            const msg = 'Course.id not specified';
-            Log.error('AdminController::validateCourseTransport(..) - ERROR: ' + msg);
+        if (typeof courseTrans.id !== "string") {
+            const msg = "Course.id not specified";
+            Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
             throw new Error(msg);
         }
 
         // noinspection SuspiciousTypeOfGuard
-        if (typeof courseTrans.defaultDeliverableId !== 'string') {
-            const msg = 'defaultDeliverableId not specified';
-            Log.error('AdminController::validateCourseTransport(..) - ERROR: ' + msg);
+        if (typeof courseTrans.defaultDeliverableId !== "string") {
+            const msg = "defaultDeliverableId not specified";
+            Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
             return msg;
         }
 
         // noinspection SuspiciousTypeOfGuard
-        if (typeof courseTrans.custom !== 'object') {
-            const msg = 'custom not specified';
-            Log.error('AdminController::validateCourseTransport(..) - ERROR: ' + msg);
+        if (typeof courseTrans.custom !== "object") {
+            const msg = "custom not specified";
+            Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
             return msg;
         }
 
@@ -591,23 +589,23 @@ export class AdminController {
     //
     //     if (deliv.teamMaxSize === 1) {
     //         formSingleTeams = true;
-    //         Log.info("AdminController::provision( .. ) - team maxSize 1: formSingleTeams forced to true");
+    //         Log.info("AdminController::provision(..) - team maxSize 1: formSingleTeams forced to true");
     //     }
     //
     //     const delivTeams: Team[] = [];
     //     for (const team of allTeams) {
     //         if (team === null || deliv === null || team.id === null || deliv.id === null) {
     //             // seeing this during 310 provisioning, need to figure this out
-    //             Log.error("AdminController::provision( .. ) - ERROR! null team: " +
+    //             Log.error("AdminController::provision(..) - ERROR! null team: " +
     //                 JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
     //         } else {
     //             if (team.delivId === deliv.id) {
-    //                 Log.trace("AdminController::provision( .. ) - adding team: " + team.id + " to delivTeams");
+    //                 Log.trace("AdminController::provision(..) - adding team: " + team.id + " to delivTeams");
     //                 delivTeams.push(team);
     //             }
     //         }
     //     }
-    //     Log.trace("AdminController::provision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+    //     Log.trace("AdminController::provision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
     //
     //     // remove any people who are already on teams
     //     for (const team of delivTeams) {
@@ -623,7 +621,7 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # people not on teams: " + allPeople.length);
+    //     Log.trace("AdminController::provision(..) - # people not on teams: " + allPeople.length);
     //
     //     if (formSingleTeams === true) {
     //         // now create teams for individuals
@@ -635,14 +633,14 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+    //     Log.trace("AdminController::provision(..) - # delivTeams after individual teams added: " + delivTeams.length);
     //
     //     const reposToProvision: Repository[] = [];
     //     // now process the teams to create their repos
     //     for (const delivTeam of delivTeams) {
     //         // if (team.URL === null) { // this would be faster, but we are being more conservative here
     //
-    //         Log.trace('AdminController::provision( .. ) - preparing to provision team: ' + delivTeam.id);
+    //         Log.trace("AdminController::provision(..) - preparing to provision team: " + delivTeam.id);
     //
     //         const people: Person[] = [];
     //         for (const pId of delivTeam.personIds) {
@@ -650,8 +648,8 @@ export class AdminController {
     //         }
     //         const names = await this.cc.computeNames(deliv, people);
     //
-    //         Log.trace('AdminController::provision( .. ) - delivTeam: ' + delivTeam.id +
-    //             '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
+    //         Log.trace("AdminController::provision(..) - delivTeam: " + delivTeam.id +
+    //             "; computed team: " + names.teamName + "; computed repo: " + names.repoName);
     //
     //         const team = await this.tc.getTeam(names.teamName);
     //         let repo = await this.rc.getRepository(names.repoName);
@@ -681,7 +679,7 @@ export class AdminController {
     //         }
     //     }
     //
-    //     Log.trace("AdminController::provision( .. ) - # repos to provision: " + reposToProvision.length);
+    //     Log.trace("AdminController::provision(..) - # repos to provision: " + reposToProvision.length);
     //
     //     const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
     //     return provisionedRepos; // only returns provisioned this time; should it return all of them?
@@ -702,30 +700,30 @@ export class AdminController {
         const cc = await Factory.getCourseController(this.gh);
         let allPeople: Person[] = await this.pc.getAllPeople();
 
-        // remove all withdrawn people, we don't need to provision these
+        // remove all withdrawn people, we don"t need to provision these
         allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
 
         const allTeams: Team[] = await this.tc.getAllTeams();
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
-            Log.info("AdminController::planProvision( .. ) - team maxSize 1: formSingleTeams forced to true");
+            Log.info("AdminController::planProvision(..) - team maxSize 1: formSingleTeams forced to true");
         }
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::planProvision( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planProvision(..) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::planProvision( .. ) - adding team: " + team.id + " to delivTeams");
+                    Log.trace("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
         }
-        Log.trace("AdminController::planProvision( .. ) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+        Log.trace("AdminController::planProvision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -741,7 +739,7 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # people not on teams: " + allPeople.length);
+        Log.trace("AdminController::planProvision(..) - # people not on teams: " + allPeople.length);
 
         if (formSingleTeams === true) {
             // now create teams for individuals
@@ -753,12 +751,12 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # delivTeams after individual teams added: " + delivTeams.length);
+        Log.trace("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
-            Log.trace('AdminController::planProvision( .. ) - preparing to provision team: ' + delivTeam.id);
+            Log.trace("AdminController::planProvision(..) - preparing to provision team: " + delivTeam.id);
 
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
@@ -766,8 +764,8 @@ export class AdminController {
             }
             const names = await cc.computeNames(deliv, people);
 
-            Log.trace('AdminController::planProvision( .. ) - delivTeam: ' + delivTeam.id +
-                '; computed team: ' + names.teamName + '; computed repo: ' + names.repoName);
+            Log.trace("AdminController::planProvision(..) - delivTeam: " + delivTeam.id +
+                "; computed team: " + names.teamName + "; computed repo: " + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
             let repo = await this.rc.getRepository(names.repoName);
@@ -787,7 +785,7 @@ export class AdminController {
             }
 
             // /* istanbul ignore if */
-            // if (typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true && repo.URL === null) {
+            // if (typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true && repo.URL === null) {
             //     // HACK: this is just for dealing with inconsistent databases
             //     // This whole block should be removed in the future
             //     Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
@@ -799,7 +797,7 @@ export class AdminController {
             reposToProvision.push(repo);
         }
 
-        Log.trace("AdminController::planProvision( .. ) - # repos to provision: " + reposToProvision.length);
+        Log.trace("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
 
         const repoTrans: RepositoryTransport[] = [];
         for (const repo of reposToProvision) {
@@ -831,43 +829,43 @@ export class AdminController {
         const config = Config.getInstance();
         const dbc = DatabaseController.getInstance();
 
-        Log.info("AdminController::performProvision( .. ) - start; # repos: " +
+        Log.info("AdminController::performProvision(..) - start; # repos: " +
             repos.length + "; importURL: " + importURL);
         const provisionedRepos: Repository[] = [];
 
         for (const repo of repos) {
             try {
                 const start = Date.now();
-                Log.info("AdminController::performProvision( .. ) ***** START *****; repo: " + repo.id);
+                Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
                 if (repo.URL === null) { // key check: repo.URL is only set if the repo has been provisioned
                     const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
                     const teams: Team[] = await Promise.all(futureTeams);
-                    Log.trace("AdminController::performProvision( .. ) - about to provision: " + repo.id);
+                    Log.trace("AdminController::performProvision(..) - about to provision: " + repo.id);
                     let success = await ghc.provisionRepository(repo.id, teams, importURL);
                     success = success && await cc.finalizeProvisionedRepo(repo, teams);
-                    Log.trace("AdminController::performProvision( .. ) - provisioned: " + repo.id + "; success: " + success);
+                    Log.trace("AdminController::performProvision(..) - provisioned: " + repo.id + "; success: " + success);
 
                     if (success === true) {
                         repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
                         repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
                         await dbc.writeRepository(repo);
-                        Log.trace("AdminController::performProvision( .. ) - success: " + repo.id + "; URL: " + repo.URL);
+                        Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
                         provisionedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::performProvision( .. ) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
+                        Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    Log.trace("AdminController::performProvision( .. ) - done provisioning: " + repo.id + "; forced wait");
+                    Log.trace("AdminController::performProvision(..) - done provisioning: " + repo.id + "; forced wait");
                     await Util.delay(2 * 1000); // after any provisioning wait a bit
-                    // Log.info("AdminController::performProvision( .. ) - done for repo: " + repo.id + "; wait complete");
-                    Log.info("AdminController::performProvision( .. ) ***** DONE *****; repo: " +
+                    // Log.info("AdminController::performProvision(..) - done for repo: " + repo.id + "; wait complete");
+                    Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " +
                         repo.id + "; took: " + Util.took(start));
                 } else {
-                    Log.info("AdminController::performProvision( .. ) - skipped; already provisioned: " +
+                    Log.info("AdminController::performProvision(..) - skipped; already provisioned: " +
                         repo.id + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::performProvision( .. ) - FAILED: " +
+                Log.error("AdminController::performProvision(..) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -898,7 +896,7 @@ export class AdminController {
         for (const team of allTeams) {
             if (team === null || deliv === null || team.id === null || deliv.id === null) {
                 // seeing this during 310 provisioning, need to figure this out
-                Log.error("AdminController::planRelease( .. ) - ERROR! null team: " +
+                Log.error("AdminController::planRelease(..) - ERROR! null team: " +
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
@@ -922,9 +920,9 @@ export class AdminController {
                 const repo = await this.dbc.getRepository(names.repoName);
 
                 /* istanbul ignore else */
-                if (typeof team.custom.githubAttached === 'undefined' || team.custom.githubAttached === false) {
+                if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
                     /* istanbul ignore else */
-                    if (repo !== null && typeof repo.custom.githubCreated !== 'undefined' && repo.custom.githubCreated === true) {
+                    if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
                         // repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
                         // aka only release provisioned repos
                         reposToRelease.push(repo);
@@ -939,7 +937,7 @@ export class AdminController {
             } catch (err) {
                 /* istanbul ignore next: curlies needed for ignore */
                 {
-                    Log.error("AdminController::planRelease( .. ) - ERROR: " + err.message);
+                    Log.error("AdminController::planRelease(..) - ERROR: " + err.message);
                     Log.exception(err);
                 }
             }
@@ -950,7 +948,7 @@ export class AdminController {
         // we want to know all repos whether they are released or not
         const allRepos: Repository[] = reposAlreadyReleased;
         for (const toReleaseRepo of reposToRelease) {
-            toReleaseRepo.URL = null; // HACK, but denotes that it hasn't been relesed yet
+            toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
             allRepos.push(toReleaseRepo);
         }
         return allRepos;
@@ -960,7 +958,7 @@ export class AdminController {
         const gha = GitHubActions.getInstance(true);
         const ghc = new GitHubController(gha);
 
-        Log.info("AdminController::performRelease( .. ) - start; # repos: " + repos.length);
+        Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length);
         const start = Date.now();
 
         const releasedRepos = [];
@@ -977,20 +975,20 @@ export class AdminController {
                     const success = await ghc.releaseRepository(repo, teams, false);
 
                     if (success === true) {
-                        Log.info("AdminController::performRelease( .. ) - success: " + repo.id +
-                            '; took: ' + Util.took(startRepo));
+                        Log.info("AdminController::performRelease(..) - success: " + repo.id +
+                            "; took: " + Util.took(startRepo));
                         releasedRepos.push(repo);
                     } else {
-                        Log.warn("AdminController::performRelease( .. ) - FAILED: " + repo.id);
+                        Log.warn("AdminController::performRelease(..) - FAILED: " + repo.id);
                     }
 
                     await Util.delay(200); // after any releasing wait a short bit
                 } else {
-                    Log.info("AdminController::performRelease( .. ) - skipped; repo not yet provisioned: "
+                    Log.info("AdminController::performRelease(..) - skipped; repo not yet provisioned: "
                         + repo.id); // + "; URL: " + repo.URL);
                 }
             } catch (err) {
-                Log.error("AdminController::performRelease( .. ) - FAILED: " +
+                Log.error("AdminController::performRelease(..) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
             }
         }
@@ -999,7 +997,7 @@ export class AdminController {
         for (const repo of releasedRepos) {
             releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
         }
-        Log.info("AdminController::performRelease( .. ) - complete; # released: " +
+        Log.info("AdminController::performRelease(..) - complete; # released: " +
             releasedRepositoryTransport.length + "; took: " + Util.took(start));
 
         return releasedRepositoryTransport;
@@ -1042,25 +1040,25 @@ export class AdminController {
                 // make sure repo is consistent
                 repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
                 if (repo.custom.githubCreated !== true) {
-                    // can't be
+                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
                     repo.custom.githubCreated = true;
                 }
             } else {
                 if (repo.custom.githubCreated !== false) {
-                    // can't be
+                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
-                    repo.custom.githubCreated = false; // doesn't exist, must not be created
+                    repo.custom.githubCreated = false; // does not exist, must not be created
                 }
 
                 if (repo.custom.githubReleased !== false) {
-                    // can't be
+                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
-                    repo.custom.githubReleased = false; // doesn't exist, must not be released
+                    repo.custom.githubReleased = false; // does not exist, must not be released
                 }
 
                 if (repo.URL !== null) {
-                    // can't be
+                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
                     repo.URL = null;
                 }
@@ -1099,12 +1097,12 @@ export class AdminController {
             } else {
                 if (team.githubId !== null) {
                     Log.warn("AdminController::dbSanityCheck() - team.githubId should be null: " + team.id);
-                    team.githubId = null; // doesn't exist, must not have a number
+                    team.githubId = null; // does not exist, must not have a number
                 }
 
                 if (team.custom.githubAttached !== false) {
                     Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
-                    team.custom.githubAttached = false; // doesn't exist, must not be attached
+                    team.custom.githubAttached = false; // does not exist, must not be attached
                 }
             }
 
@@ -1153,9 +1151,9 @@ export class AdminController {
             }
 
             if (repoHasBeenChecked === false) {
-                // repos that weren't found to have teams must not be released
+                // repos that were not found to have teams must not be released
                 if (repo.custom.githubReleased !== false) {
-                    repo.custom.githubReleased = false; // wasn't found above, must be unreleased
+                    repo.custom.githubReleased = false; // was not found above, must be unreleased
                     Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be false: " + repo.id);
 
                     if (dryRun === false) {
@@ -1174,7 +1172,7 @@ export class AdminController {
                 }
             }
             if (checked === false) {
-                // teams that weren't found with repos must not be attached
+                // teams that were not found with repos must not be attached
                 if (team.custom.githubAttached !== false) {
                     team.custom.githubAttached = false;
                     Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be false: " + team.id);
@@ -1203,14 +1201,14 @@ export class AdminController {
     //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
     //     // it is correct to return those.
     //
-    //     let repoPrefix = '';
+    //     let repoPrefix = "";
     //     if (deliv.repoPrefix.length > 0) {
     //         repoPrefix = deliv.repoPrefix;
     //     } else {
     //         repoPrefix = deliv.id;
     //     }
     //
-    //     let teamPrefix = '';
+    //     let teamPrefix = "";
     //     if (deliv.teamPrefix.length > 0) {
     //         teamPrefix = deliv.teamPrefix;
     //     } else {
@@ -1224,13 +1222,13 @@ export class AdminController {
     //             repoCount++;
     //         }
     //     }
-    //     let repoName = '';
-    //     let teamName = '';
+    //     let repoName = "";
+    //     let teamName = "";
     //
     //     let ready = false;
     //     while (!ready) {
-    //         repoName = repoPrefix + '_' + repoCount;
-    //         teamName = teamPrefix + '_' + repoCount;
+    //         repoName = repoPrefix + "_" + repoCount;
+    //         teamName = teamPrefix + "_" + repoCount;
     //         const r = await this.dbc.getRepository(repoName);
     //         const t = await this.dbc.getTeam(teamName);
     //         if (r === null && t === null) {
@@ -1251,23 +1249,23 @@ export class AdminController {
      * @returns {ProvisionTransport | null}
      */
     public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
-        if (typeof obj === 'undefined' || obj === null) {
-            const msg = 'Transport not populated.';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+        if (typeof obj === "undefined" || obj === null) {
+            const msg = "Transport not populated.";
+            Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
             throw new Error(msg);
         }
 
         // noinspection SuspiciousTypeOfGuard
-        if (typeof obj.delivId !== 'string') {
-            const msg = 'Provision.id not specified';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+        if (typeof obj.delivId !== "string") {
+            const msg = "Provision.id not specified";
+            Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
             throw new Error(msg);
         }
 
         // noinspection SuspiciousTypeOfGuard
-        if (typeof obj.formSingle !== 'boolean') {
-            const msg = 'formSingle not specified';
-            Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+        if (typeof obj.formSingle !== "boolean") {
+            const msg = "formSingle not specified";
+            Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
             throw new Error(msg);
         }
 

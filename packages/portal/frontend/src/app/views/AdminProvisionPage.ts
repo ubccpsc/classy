@@ -20,9 +20,9 @@ export class AdminProvisionPage extends AdminPage {
 
     public async init(opts: any): Promise<void> {
         const that = this;
-        Log.info('AdminProvisionPage::init(..) - start');
+        Log.info("AdminProvisionPage::init(..) - start");
 
-        UI.showModal('Retrieving Deliverables.');
+        UI.showModal("Retrieving Deliverables.");
 
         this.deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
 
@@ -34,37 +34,37 @@ export class AdminProvisionPage extends AdminPage {
         });
 
         const delivOptions = [];
-        delivOptions.push('-None-');
+        delivOptions.push("-None-");
         for (const deliv of this.deliverables) {
             if (deliv.shouldProvision === true) {
                 delivOptions.push(deliv.id);
             }
         }
-        UI.setDropdownOptions('provisionRepoDeliverableSelect', delivOptions, null);
+        UI.setDropdownOptions("provisionRepoDeliverableSelect", delivOptions, null);
 
         this.clearLists();
 
-        (document.querySelector('#adminManageProvisionButton') as OnsButtonElement).onclick = function (evt) {
-            Log.info('AdminProvisionPage::manageProvisionButton(..) - button pressed');
+        (document.querySelector("#adminManageProvisionButton") as OnsButtonElement).onclick = function (evt) {
+            Log.info("AdminProvisionPage::manageProvisionButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handleProvisionPressed().then(function () {
                 // worked
             }).catch(function (err) {
-                // didn't
+                // did not
             });
         };
 
-        (document.querySelector('#adminManageReleaseButton') as OnsButtonElement).onclick = function (evt) {
-            Log.info('AdminProvisionPage::manageReleaseButton(..) - button pressed');
+        (document.querySelector("#adminManageReleaseButton") as OnsButtonElement).onclick = function (evt) {
+            Log.info("AdminProvisionPage::manageReleaseButton(..) - button pressed");
             evt.stopPropagation(); // prevents list item expansion
             that.handleReleasePressed().then(function () {
                 // worked
             }).catch(function (err) {
-                // didn't
+                // did not
             });
         };
 
-        const delivSelector = document.querySelector('#provisionRepoDeliverableSelect') as HTMLSelectElement;
+        const delivSelector = document.querySelector("#provisionRepoDeliverableSelect") as HTMLSelectElement;
         delivSelector.onchange = function (evt) {
             evt.stopPropagation(); // prevents list item expansion
 
@@ -84,29 +84,29 @@ export class AdminProvisionPage extends AdminPage {
         const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
         const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
 
-        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
-        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
+        const releaseButton = document.getElementById("adminManageReleaseButton") as HTMLButtonElement;
+        const provisionButton = document.getElementById("adminManageProvisionButton") as HTMLButtonElement;
         releaseButton.disabled = false;
         provisionButton.disabled = false;
 
-        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
         delivSelect.disabled = false;
 
         toProvisionSelect.disabled = false;
         toReleaseSelect.disabled = false;
 
-        toProvisionSelect.innerHTML = '';
-        provisionedUL.innerHTML = '';
-        toReleaseSelect.innerHTML = '';
-        releasedUL.innerHTML = '';
+        toProvisionSelect.innerHTML = "";
+        provisionedUL.innerHTML = "";
+        toReleaseSelect.innerHTML = "";
+        releasedUL.innerHTML = "";
     }
 
     private disableElements() {
         const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
         const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-        const releaseButton = document.getElementById('adminManageReleaseButton') as HTMLButtonElement;
-        const provisionButton = document.getElementById('adminManageProvisionButton') as HTMLButtonElement;
-        const delivSelect = document.getElementById('provisionRepoDeliverableSelect') as HTMLSelectElement;
+        const releaseButton = document.getElementById("adminManageReleaseButton") as HTMLButtonElement;
+        const provisionButton = document.getElementById("adminManageProvisionButton") as HTMLButtonElement;
+        const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
         delivSelect.disabled = true;
         releaseButton.disabled = true;
         provisionButton.disabled = true;
@@ -120,25 +120,25 @@ export class AdminProvisionPage extends AdminPage {
         const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
         const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
 
-        const val = UI.getDropdownValue('provisionRepoDeliverableSelect');
-        Log.info('AdminProvisionPage::init(..) - new deliverable selected: ' + val);
-        if (val !== '-None-') {
+        const val = UI.getDropdownValue("provisionRepoDeliverableSelect");
+        Log.info("AdminProvisionPage::init(..) - new deliverable selected: " + val);
+        if (val !== "-None-") {
             try {
                 this.clearLists();
 
                 // update provisioned
                 const provisionRepo = await this.getProvisionDetails(val);
-                Log.info('AdminProvisionPage::init(..) - planning provisioning worked: ' + provisionRepo);
+                Log.info("AdminProvisionPage::init(..) - planning provisioning worked: " + provisionRepo);
 
                 let provisioned = [];
                 let toProvision = [];
 
                 for (const repo of provisionRepo) {
                     if (repo.URL === null) {
-                        // Log.trace('Repo to provision: ' + repo.id + '; URL: ' + repo.URL);
+                        // Log.trace("Repo to provision: " + repo.id + "; URL: " + repo.URL);
                         toProvision.push(repo.id);
                     } else {
-                        // Log.trace('Repo already provisioned: ' + repo.id + '; URL: ' + repo.URL);
+                        // Log.trace("Repo already provisioned: " + repo.id + "; URL: " + repo.URL);
                         provisioned.push(repo.id);
                     }
                 }
@@ -147,7 +147,7 @@ export class AdminProvisionPage extends AdminPage {
                 toProvision = toProvision.sort();
 
                 if (provisioned.length === 0) {
-                    const li = document.createElement('li');
+                    const li = document.createElement("li");
                     li.appendChild(document.createTextNode("No provisioned repositories"));
                     provisionedUL.appendChild(li);
                 }
@@ -159,7 +159,7 @@ export class AdminProvisionPage extends AdminPage {
                 }
 
                 for (const provisionedName of provisioned) {
-                    const li = document.createElement('li');
+                    const li = document.createElement("li");
                     li.appendChild(document.createTextNode(provisionedName));
                     provisionedUL.appendChild(li);
                 }
@@ -174,7 +174,7 @@ export class AdminProvisionPage extends AdminPage {
 
                 // update provisioned
                 const reposToRelease = await this.getReleaseDetails(val);
-                Log.info('AdminProvisionPage::init(..) - planning releasing worked: ' + reposToRelease);
+                Log.info("AdminProvisionPage::init(..) - planning releasing worked: " + reposToRelease);
 
                 let released: string[] = [];
                 let toRelease: string[] = [];
@@ -192,7 +192,7 @@ export class AdminProvisionPage extends AdminPage {
                 toRelease = toRelease.sort();
 
                 if (released.length === 0) {
-                    const li = document.createElement('li');
+                    const li = document.createElement("li");
                     li.appendChild(document.createTextNode("No released repositories"));
                     releasedUL.appendChild(li);
                 }
@@ -204,7 +204,7 @@ export class AdminProvisionPage extends AdminPage {
                 }
 
                 for (const releasedName of released) {
-                    const li = document.createElement('li');
+                    const li = document.createElement("li");
                     li.appendChild(document.createTextNode(releasedName));
                     releasedUL.appendChild(li);
                 }
@@ -216,7 +216,7 @@ export class AdminProvisionPage extends AdminPage {
                 }
 
             } catch (err) {
-                Log.error('AdminProvisionPage::init(..) - ERROR planning provisioning / releasing: ' + err);
+                Log.error("AdminProvisionPage::init(..) - ERROR planning provisioning / releasing: " + err);
             }
         } else {
             // none selected; clear selects
@@ -225,36 +225,36 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async handleReleasePressed(): Promise<boolean> {
-        // Log.info('AdminProvisionPage::handleReleasePressed(..) - start');
+        // Log.info("AdminProvisionPage::handleReleasePressed(..) - start");
         //
-        // const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
+        // const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
         // const provision: ProvisionTransport = {delivId: delivId, formSingle: false};
         //
-        // const url = this.remote + '/portal/admin/release';
+        // const url = this.remote + "/portal/admin/release";
         // const options: any = AdminView.getOptions();
-        // options.method = 'post';
+        // options.method = "post";
         // options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
         //
         // UI.showModal("Releasing repositories for " + delivId + ". Please be patient.");
         //
         // const start = Date.now();
-        // Log.trace('AdminProvisionPage::handleReleasePressed(..) - GET from: ' + url);
+        // Log.trace("AdminProvisionPage::handleReleasePressed(..) - GET from: " + url);
         // const response = await fetch(url, options);
         // const json: Payload = await response.json();
-        // Log.trace('AdminProvisionPage::handleReleasePressed(..) - complete; took: ' + Util.took(start));
+        // Log.trace("AdminProvisionPage::handleReleasePressed(..) - complete; took: " + Util.took(start));
         //
         // UI.hideModal();
-        // UI.showSuccessToast('Repositories released.', {timeout: 10000, buttonLabel: 'Ok'});
+        // UI.showSuccessToast("Repositories released.", {timeout: 10000, buttonLabel: "Ok"});
         //
-        // if (typeof json.success !== 'undefined') {
-        //     Log.info('AdminProvisionPage::handleReleasePressed(..) - success'); // + json.success);
+        // if (typeof json.success !== "undefined") {
+        //     Log.info("AdminProvisionPage::handleReleasePressed(..) - success"); // + json.success);
         //     return json.success;
         // } else {
-        //     Log.error('AdminProvisionPage::handleReleasePressed(..) - ERROR: ' + json.failure);
+        //     Log.error("AdminProvisionPage::handleReleasePressed(..) - ERROR: " + json.failure);
         // }
         // return true;
 
-        Log.info('AdminProvisionPage::handleReleasePressed(..) - start');
+        Log.info("AdminProvisionPage::handleReleasePressed(..) - start");
 
         const releaseList = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
         const selected = [];
@@ -267,11 +267,11 @@ export class AdminProvisionPage extends AdminPage {
             }
         }
 
-        Log.info('AdminProvisionPage::handleReleasePressed(..) - start; # repos to provision: ' + selected.length);
+        Log.info("AdminProvisionPage::handleReleasePressed(..) - start; # repos to provision: " + selected.length);
         if (selected.length > 0) {
-            UI.showSuccessToast('Repo releasing in progress; this will take a while. Do not close this browser window.');
+            UI.showSuccessToast("Repo releasing in progress; this will take a while. Do not close this browser window.");
         } else {
-            UI.showErrorToast('No repos selected for releasing.');
+            UI.showErrorToast("No repos selected for releasing.");
         }
 
         // tslint:disable-next-line
@@ -280,19 +280,19 @@ export class AdminProvisionPage extends AdminPage {
             try {
                 const start = Date.now();
                 await this.releaseRepo(repoId);
-                Log.info('AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: ' + repoId +
-                    '; took: ' + Util.took(start));
-                UI.showSuccessToast('Repo released: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
-                    {timeout: 1000, animation: 'none'});
+                Log.info("AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId +
+                    "; took: " + Util.took(start));
+                UI.showSuccessToast("Repo released: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
+                    {timeout: 1000, animation: "none"});
             } catch (err) {
-                Log.error('AdminProvisionPage::handleReleasePressed(..) - releasing error for: ' + repoId + '; ERROR: ' + err.message);
-                UI.showErrorToast('Repo NOT released: ' + repoId + ' (see error console)');
+                Log.error("AdminProvisionPage::handleReleasePressed(..) - releasing error for: " + repoId + "; ERROR: " + err.message);
+                UI.showErrorToast("Repo NOT released: " + repoId + " (see error console)");
             }
         }
 
-        Log.info('AdminProvisionPage::handleReleasePressed(..) - done');
+        Log.info("AdminProvisionPage::handleReleasePressed(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository releasing complete.', {timeout: 20000, buttonLabel: 'Ok'});
+            UI.showSuccessToast("Repository releasing complete.", {timeout: 20000, buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
@@ -300,7 +300,7 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async handleProvisionPressed(): Promise<boolean> {
-        Log.info('AdminProvisionPage::handleProvisionPressed(..) - start');
+        Log.info("AdminProvisionPage::handleProvisionPressed(..) - start");
 
         const provisionList = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
         const selected = [];
@@ -313,34 +313,34 @@ export class AdminProvisionPage extends AdminPage {
             }
         }
 
-        Log.info('AdminProvisionPage::handleProvisionPressed(..) - start; # repos to provision: ' + selected.length);
+        Log.info("AdminProvisionPage::handleProvisionPressed(..) - start; # repos to provision: " + selected.length);
         if (selected.length > 0) {
-            UI.showSuccessToast('Repo provisioning in progress; this will take a while. Do not close this browser window.',
+            UI.showSuccessToast("Repo provisioning in progress; this will take a while. Do not close this browser window.",
                 {timeout: 10000});
         } else {
-            UI.showErrorToast('No repos selected for provisioning.');
+            UI.showErrorToast("No repos selected for provisioning.");
         }
 
         // tslint:disable-next-line
         for (let i = 0; i < selected.length; i++) {
             const repoId = selected[i];
             try {
-                const delivId = UI.getDropdownValue('provisionRepoDeliverableSelect');
+                const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
                 const start = Date.now();
                 await this.provisionRepo(delivId, repoId);
-                Log.info('AdminProvisionPage::handleProvision(..) - provisioning complete; repo: ' + repoId +
-                    '; took: ' + Util.took(start));
-                UI.showSuccessToast('Repo provisioned: ' + repoId + ' ( ' + (i + 1) + ' of ' + selected.length + ' )',
+                Log.info("AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId +
+                    "; took: " + Util.took(start));
+                UI.showSuccessToast("Repo provisioned: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
                     {timeout: 10000, force: true});
             } catch (err) {
-                Log.error('AdminProvisionPage::handleProvision(..) - provisioning error for: ' + repoId + '; ERROR: ' + err.message);
-                UI.showErrorToast('Repo NOT provisioned: ' + repoId + ' (see error console)');
+                Log.error("AdminProvisionPage::handleProvision(..) - provisioning error for: " + repoId + "; ERROR: " + err.message);
+                UI.showErrorToast("Repo NOT provisioned: " + repoId + " (see error console)");
             }
         }
 
-        Log.info('AdminProvisionPage::handleProvision(..) - done');
+        Log.info("AdminProvisionPage::handleProvision(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast('Repository provisioning complete.', {timeout: 20000, buttonLabel: 'Ok'});
+            UI.showSuccessToast("Repository provisioning complete.", {timeout: 20000, buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
@@ -348,45 +348,45 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async getProvisionDetails(delivId: any): Promise<RepositoryTransport[]> {
-        const url = this.remote + '/portal/admin/provision/' + delivId;
+        const url = this.remote + "/portal/admin/provision/" + delivId;
         const options: any = AdminView.getOptions();
-        options.method = 'get';
+        options.method = "get";
 
         UI.showModal("Retrieving provisioning details for " + delivId);
 
-        Log.trace('AdminProvisionPage::getProvisionDetails(..) - GET from: ' + url);
+        Log.trace("AdminProvisionPage::getProvisionDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
         UI.hideModal();
 
-        if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisionPage::getProvisionDetails(..) - success; took: ' + Util.took(start));
+        if (typeof json.success !== "undefined") {
+            Log.info("AdminProvisionPage::getProvisionDetails(..) - success; took: " + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminProvisionPage::getProvisionDetails(..) - ERROR: ' + json.failure);
+            Log.error("AdminProvisionPage::getProvisionDetails(..) - ERROR: " + json.failure);
         }
         return [];
     }
 
     private async getReleaseDetails(delivId: any): Promise<RepositoryTransport[]> {
-        const url = this.remote + '/portal/admin/release/' + delivId;
+        const url = this.remote + "/portal/admin/release/" + delivId;
         const options: any = AdminView.getOptions();
-        options.method = 'get';
+        options.method = "get";
 
         UI.showModal("Retrieving release details for " + delivId);
 
-        Log.trace('AdminProvisionPage::getReleaseDetails(..) - GET from: ' + url);
+        Log.trace("AdminProvisionPage::getReleaseDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
         UI.hideModal();
 
-        if (typeof json.success !== 'undefined') {
-            Log.info('AdminProvisionPage::getReleaseDetails(..) - success; took: ' + Util.took(start));
+        if (typeof json.success !== "undefined") {
+            Log.info("AdminProvisionPage::getReleaseDetails(..) - success; took: " + Util.took(start));
             return json.success;
         } else {
-            Log.error('AdminProvisionPage::getReleaseDetails(..) - ERROR: ' + json.failure);
+            Log.error("AdminProvisionPage::getReleaseDetails(..) - ERROR: " + json.failure);
         }
         return [];
     }
@@ -398,26 +398,26 @@ export class AdminProvisionPage extends AdminPage {
     private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
         Log.info("AdminProvisionPage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
 
-        const url = this.remote + '/portal/admin/provision/' + delivId + '/' + repoId;
+        const url = this.remote + "/portal/admin/provision/" + delivId + "/" + repoId;
         return await this.performAction(url);
     }
 
     private async releaseRepo(repoId: string): Promise<boolean> {
         Log.info("AdminProvisionPage::releaseRepo( " + repoId + " ) - start");
 
-        const url = this.remote + '/portal/admin/release/' + repoId;
+        const url = this.remote + "/portal/admin/release/" + repoId;
         return await this.performAction(url);
     }
 
     private async performAction(url: string): Promise<boolean> {
         const options: any = AdminView.getOptions();
-        options.method = 'post';
+        options.method = "post";
 
         this.disableElements();
 
         const response = await fetch(url, options);
         const body = await response.json();
-        if (typeof body.success !== 'undefined') {
+        if (typeof body.success !== "undefined") {
             return true;
         } else {
             Log.error("Provision ERROR: " + body.failure.message);

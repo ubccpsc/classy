@@ -1,13 +1,13 @@
 import {expect} from "chai";
 import "mocha";
 
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {GradeReport} from "@common/types/ContainerTypes";
 import {AutoTestResultTransport} from "@common/types/PortalTypes";
 
 import {ResultsController} from "@backend/controllers/ResultsController";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./AdminControllerSpec"; // make sure it runs before github controller (which should be last of the controllers)
 
 describe("ResultController", () => {
@@ -90,17 +90,12 @@ describe("ResultController", () => {
         expect(deliv).to.not.be.null;
         expect(deliv).to.be.an("string");
 
-        data = {delivId: "d0", repoId: "r1", commitURL: "url", commitSHA: "sha", input: {}} as AutoTestResultTransport;
-        deliv = await rc.validateAutoTestResult(data);
-        expect(deliv).to.not.be.null;
-        expect(deliv).to.be.an("string");
-
         data = {
             delivId: "d0",
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0"}
+            input: {target: {delivId: "d0"}}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -111,7 +106,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}}
+            input: {target: {delivId: "d0"}}
+            // input: {delivId: "d0"}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -122,7 +118,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}}
+            // input: {delivId: "d0", target: {}}
+            input: {target: {delivId: "d0"}}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
         expect(deliv).to.not.be.null;
@@ -133,7 +130,20 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}}
+            input: {target: {delivId: "d0"}}
+        } as AutoTestResultTransport;
+        deliv = await rc.validateAutoTestResult(data);
+        expect(deliv).to.not.be.null;
+        expect(deliv).to.be.an("string");
+
+        data = {
+            delivId: "d0",
+            repoId: "r1",
+            commitURL: "url",
+            commitSHA: "sha",
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -145,7 +155,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {timestamp: Date.now()}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -157,7 +168,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {timestamp: Date.now(), postbackOnComplete: false}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -169,7 +181,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: ""}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -181,7 +194,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: "", state: "SUCCESS"}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -193,7 +207,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {timestamp: Date.now(), postbackOnComplete: false, graderTaskId: "", state: "SUCCESS", custom: {}}
         } as AutoTestResultTransport;
         deliv = await rc.validateAutoTestResult(data);
@@ -205,7 +220,8 @@ describe("ResultController", () => {
             repoId: "r1",
             commitURL: "url",
             commitSHA: "sha",
-            input: {delivId: "d0", target: {}},
+            // input: {delivId: "d0", target: {}},
+            input: {target: {delivId: "d0"}},
             output: {
                 timestamp: Date.now(),
                 postbackOnComplete: false,

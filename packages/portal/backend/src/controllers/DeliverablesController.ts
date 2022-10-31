@@ -1,6 +1,6 @@
-import Config, {ConfigKey} from '../../../../common/Config';
-import Log from "../../../../common/Log";
-import {AutoTestConfigTransport, DeliverableTransport} from "../../../../common/types/PortalTypes";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestConfigTransport, DeliverableTransport} from "@common/types/PortalTypes";
 import {Deliverable} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";
@@ -12,37 +12,25 @@ export class DeliverablesController {
     public async getAllDeliverables(): Promise<Deliverable[]> {
         Log.trace("DeliverablesController::getAllGrades() - start");
 
-        const delivs = await this.db.getDeliverables();
-        return delivs;
+        return await this.db.getDeliverables();
     }
 
     public async getDeliverable(delivId: string): Promise<Deliverable | null> {
         Log.trace("DeliverablesController::getDeliverable( " + delivId + " ) - start");
 
-        const deliv = await this.db.getDeliverable(delivId);
-        return deliv;
+        return await this.db.getDeliverable(delivId);
     }
 
     public async saveDeliverable(deliv: Deliverable): Promise<Deliverable | null> {
         Log.info("DeliverableController::saveDeliverable( " + JSON.stringify(deliv) + " ) - start");
 
         // enforce minimum time constraints; the AutoTest infrastructure is resource constrained
-        // this prevents students from hammering against the service and causing it to become overloaded
-        // const allStudents = await this.db.getPeople();
-        // let numStudents = allStudents.length;
-        // if (numStudents < 60) {
-        //     numStudents = 60; // enforce a 60 student minumum in case the class list hasn't been uploaded yet
-        // }
-        // const MIN_DELAY_MULTIPLIER = 2; // number of minutes-per-student the platform can withstand (2-10 are reasonable values)
-        // const minDelay = (numStudents * MIN_DELAY_MULTIPLIER) * 60; // minimum delay in seconds
-        // if (minDelay < 12 * 60 * 60) { // only use this formula if the delay is less than N hours
-        //     if (deliv.autotest.studentDelay < minDelay) {
-        //         deliv.autotest.studentDelay = minDelay;
-        //     }
-        // }
+        let MIN_DELAY = 60 * 15; // 15 minutes by default
+        if (Config.getInstance().hasProp(ConfigKey.minimum_student_delay) === true) {
+            // can be overridden in .env, but this is an explicit choice
+            MIN_DELAY = Number(Config.getInstance().getProp(ConfigKey.minimum_student_delay));
+        }
 
-        // the above was pretty complicated
-        const MIN_DELAY = Config.getInstance().getProp(ConfigKey.minimum_student_delay) || 60 * 15; // ENV setting or 15 minutes
         if (deliv.autotest.studentDelay < MIN_DELAY) {
             deliv.autotest.studentDelay = MIN_DELAY;
         }
@@ -87,7 +75,7 @@ export class DeliverablesController {
         at.openTimestamp = deliv.openTimestamp;
         at.closeTimestamp = deliv.closeTimestamp;
 
-        const trans: DeliverableTransport = {
+        return {
             id: deliv.id,
             URL: deliv.URL,
 
@@ -115,13 +103,12 @@ export class DeliverablesController {
             autoTest: at,
             rubric: deliv.rubric,
             custom: deliv.custom
-        };
-        return trans;
+        } as DeliverableTransport;
     }
 
     public static transportToDeliverable(trans: DeliverableTransport): Deliverable {
 
-        const deliv: Deliverable = {
+        return {
             id: trans.id,
             URL: trans.URL,
 
@@ -147,8 +134,6 @@ export class DeliverablesController {
 
             rubric: trans.rubric,
             custom: trans.custom
-        };
-
-        return deliv;
+        } as Deliverable;
     }
 }

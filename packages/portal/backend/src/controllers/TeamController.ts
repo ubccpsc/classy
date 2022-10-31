@@ -1,23 +1,35 @@
-import Log from "../../../../common/Log";
+import Log from "@common/Log";
 
-import {TeamTransport} from "../../../../common/types/PortalTypes";
-import Util from "../../../../common/Util";
+import {TeamTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
+import Config, {ConfigKey} from "@common/Config";
+
 import {Deliverable, Person, PersonKind, Team} from "../Types";
-
-import Config, {ConfigKey} from "../../../../common/Config";
 import {DatabaseController} from "./DatabaseController";
 import {GitHubActions, IGitHubActions} from "./GitHubActions";
 
 export class TeamController {
 
-    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName) as string;
+    /**
+     * A special GitHub team that contains all admins for a course (instructors, lead TAs).
+     */
     public static readonly ADMIN_NAME = Config.getInstance().getProp(ConfigKey.adminTeamName) as string;
+
+    /**
+     * A special GitHub team for all other course staff (e.g., all TAs).
+     */
+    public static readonly STAFF_NAME = Config.getInstance().getProp(ConfigKey.staffTeamName) as string;
+
+    /**
+     * A special GitHub team that contains all students enrolled in a course.
+     */
+    public static readonly STUDENTS_NAME = "students";
 
     private db: DatabaseController = DatabaseController.getInstance();
     private gha: IGitHubActions;
 
     constructor(gha?: IGitHubActions) {
-        if (typeof gha === 'undefined') {
+        if (typeof gha === "undefined") {
             this.gha = GitHubActions.getInstance();
         } else {
             this.gha = gha;
@@ -35,12 +47,13 @@ export class TeamController {
         Log.trace("TeamController::getAllTeams() - start");
         const start = Date.now();
 
-        const teams = await this.db.getTeams();
-
         // remove special teams
         const teamsToReturn = [];
+        const teams = await this.db.getTeams();
         for (const team of teams) {
-            if (team.id === TeamController.ADMIN_NAME || team.id === TeamController.STAFF_NAME || team.id === 'students') {
+            if (team.id === TeamController.ADMIN_NAME ||
+                team.id === TeamController.STAFF_NAME ||
+                team.id === TeamController.STUDENTS_NAME) {
                 // do not include
             } else {
                 teamsToReturn.push(team);
@@ -56,7 +69,6 @@ export class TeamController {
         const start = Date.now();
 
         const team = await this.db.getTeam(name);
-
         Log.trace("TeamController::getTeam( " + name + " ) - done; took: " + Util.took(start));
         return team;
     }
@@ -74,14 +86,12 @@ export class TeamController {
         const start = Date.now();
 
         const team = await this.db.getTeam(name);
-
         if (team === null) {
-            // throw new Error("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
             Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist in database");
             return null;
         }
 
-        if (typeof team.githubId === 'undefined' || team.githubId === null) {
+        if (typeof team.githubId === "undefined" || team.githubId === null) {
             // teamId not known; get it & store it
             let teamNum: number | null = await this.gha.getTeamNumber(team.id);
             if (teamNum < 0) {
@@ -91,7 +101,7 @@ export class TeamController {
             team.githubId = teamNum;
             await this.saveTeam(team);
         } else {
-            // githubId is set, should we check to see if it's right?
+            // githubId is set, should we check to see if it"s right?
             // TODO: verify that the number is right?
             // could do it with this: this.gha.getTeam(team.githubId)
         }
@@ -124,7 +134,7 @@ export class TeamController {
             return a.delivId.localeCompare(b.delivId);
         });
 
-        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - done; # teams: " +
+        Log.info("TeamController::getTeamsForPerson( " + myPerson.id + " ) - # teams: " +
             myTeams.length + "; took: " + Util.took(start));
         return myTeams;
     }
@@ -154,12 +164,12 @@ export class TeamController {
             throw new Error("Team not created; some students not members of the course.");
         }
 
-        // make sure the team isn't too big
+        // make sure the team is not too large
         if (people.length > deliv.teamMaxSize && !adminOverride) {
             throw new Error("Team not created; too many team members specified for this deliverable.");
         }
 
-        // make sure the team isn't too small
+        // make sure the team is not too small
         if (people.length < deliv.teamMinSize && !adminOverride) {
             throw new Error("Team not created; too few team members specified for this deliverable.");
         }
@@ -223,34 +233,29 @@ export class TeamController {
      * @param {string} name
      * @param {Deliverable} deliv
      * @param {Person[]} people
-     * @param custom
+     * @param {any} custom
      * @returns {Promise<Team | null>}
      */
     public async createTeam(name: string, deliv: Deliverable, people: Person[], custom: any): Promise<Team | null> {
         Log.info("TeamController::teamCreate( " + name + ", ... ) - start");
 
-        try {
-            if (deliv === null) {
-                throw new Error("TeamController::teamCreate() - null deliverable provided.");
-            }
+        if (typeof name === "undefined" || name === null || name.length < 1) {
+            throw new Error("TeamController::teamCreate() - no team name provided.");
+        }
 
+        if (typeof deliv === "undefined" || deliv === null) {
+            throw new Error("TeamController::teamCreate() - no deliverable provided.");
+        }
+
+        // this constraint is not necessary
+        // if (Array.isArray(people) === false || people.length < 1) {
+        //     throw new Error("TeamController::teamCreate() - no people provided.");
+        // }
+
+        try {
             const existingTeam = await this.getTeam(name);
             if (existingTeam === null) {
                 const peopleIds: string[] = people.map((person) => person.id);
-
-                // let repoName: string = '';
-                // repoName += deliv.repoPrefix ? `${deliv.repoPrefix}_` : `${deliv.id}_`;
-                //
-                // if (people.length === 1) {
-                //     const kind = people[0].kind;
-                //     if (kind === PersonKind.ADMIN || kind === PersonKind.STAFF || kind === PersonKind.ADMINSTAFF) {
-                //         repoName += people[0].githubId;
-                //     } else {
-                //         repoName += `user${await this.db.getUniqueTeamNumber(deliv.id)}`;
-                //     }
-                // } else {
-                //     repoName += `team${await this.db.getUniqueTeamNumber(deliv.id)}`;
-                // }
 
                 const team: Team = {
                     id: name,
@@ -259,7 +264,7 @@ export class TeamController {
                     URL: null,
                     personIds: peopleIds,
                     custom: custom
-                    // repoName:  null, // repoName, // team counts above used repoName
+                    // repoName:  null,  // team counts above used repoName
                     // repoUrl:   null
                 };
                 await this.db.writeTeam(team);
@@ -267,8 +272,6 @@ export class TeamController {
                 Log.info("TeamController::teamCreate( " + name + ", ... ) - done");
                 return await this.db.getTeam(name);
             } else {
-                // Log.info("TeamController::teamCreate( " + name + ",.. ) - team exists: " + JSON.stringify(existingTeam));
-                // return await this.db.getTeam(name);
                 throw new Error("Duplicate team name: " + name);
             }
         } catch (err) {
@@ -277,8 +280,13 @@ export class TeamController {
         }
     }
 
+    /**
+     * Serialize team object to a TeamTransport.
+     *
+     * @param team
+     */
     public teamToTransport(team: Team): TeamTransport {
-        const t: TeamTransport = {
+        return {
             id: team.id,
             delivId: team.delivId,
             people: team.personIds,
@@ -286,8 +294,5 @@ export class TeamController {
             // repoName: team.repoName,
             // repoUrl:  team.repoUrl
         };
-
-        return t;
     }
-
 }

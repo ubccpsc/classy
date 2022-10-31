@@ -4,7 +4,7 @@ import fetch, {RequestInit} from "node-fetch";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
-import {CommitTarget} from "../../../common/types/ContainerTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
 import {
     AutoTestAuthPayload,
     AutoTestAuthTransport,
@@ -17,8 +17,8 @@ import {
     ClassyConfigurationPayload,
     ClassyConfigurationTransport,
     Payload
-} from "../../../common/types/PortalTypes";
-import Util from "../../../common/Util";
+} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 export interface IClassPortal {
 
@@ -72,7 +72,7 @@ export interface IClassPortal {
      *
      * POST /portal/at/result
      *
-     * @param {IAutoTestResult} result
+     * @param {AutoTestResult} result
      * @returns {Promise<Payload>}
      */
     sendResult(result: AutoTestResult): Promise<Payload>;
@@ -97,7 +97,7 @@ export interface IClassPortal {
     formatFeedback(res: AutoTestResultTransport): Promise<string | null>;
 
     /**
-     * Asks class portal if a commit should be promoted the the express queue without a comment event
+     * Asks class portal if a commit should be promoted to the express queue without a comment event
      * The default implementation in portal just sends false, but courses can extend this behaviour
      * using their CustomCourseController class.
      * @param {CommitTarget} info
@@ -116,7 +116,7 @@ export class ClassPortal implements IClassPortal {
 
         const url = this.host + ":" + this.port + "/portal/at/isStaff/" + userName;
         try {
-            Log.info("ClassPortal::isStaff(..) - requesting from: " + url);
+            Log.trace("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
@@ -129,7 +129,7 @@ export class ClassPortal implements IClassPortal {
             const json: AutoTestAuthPayload = await res.json() as AutoTestAuthPayload;
             Log.info("ClassPortal::isStaff( " + userName + " ) - success; isStaff: " +
                 json.success.isStaff + "; isAdmin: " + json.success.isAdmin);
-            if (typeof json.success !== 'undefined') {
+            if (typeof json.success !== "undefined") {
                 return json.success;
             } else {
                 Log.error("ClassPortal::isStaff(..) - inner ERROR; url: " + url + "; ERROR: " + JSON.stringify(json));
@@ -143,12 +143,11 @@ export class ClassPortal implements IClassPortal {
     }
 
     public async getPersonId(githubId: string): Promise<AutoTestPersonIdTransport> {
-        // const NO_ACCESS = {personId: userName, isStaff: false, isAdmin: false}; // if error, give no credentials
         const url = this.host + ":" + this.port + "/portal/at/personId/" + githubId;
         const start = Date.now();
 
         try {
-            Log.info("ClassPortal::personId(..) - requesting from: " + url);
+            Log.trace("ClassPortal::getPersonId( " + githubId + " ) - requesting from: " + url);
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
                 headers: {
@@ -157,18 +156,19 @@ export class ClassPortal implements IClassPortal {
             };
 
             const res = await fetch(url, opts);
-            Log.trace("ClassPortal::personId( " + githubId + " ) - success; payload: " + res + "; took: " + Util.took(start));
             const json: Payload = await res.json() as Payload;
-            if (typeof json.success !== 'undefined') {
+            if (typeof json.success !== "undefined") {
+                Log.info("ClassPortal::getPersonId( " + githubId + " ) - success; person: " +
+                    json.success?.personId + "; took: " + Util.took(start));
                 return json.success; // AutoTestPersonIdTransport
             } else {
-                Log.error("ClassPortal::personId(..) - ERROR: " + JSON.stringify(json));
+                Log.error("ClassPortal::getPersonId(..) - ERROR: " + JSON.stringify(json));
                 return null;
             }
         } catch (err) {
-            Log.error("ClassPortal::personId(..) - ERROR; url: " + url + "; ERROR: " + err);
-            return null;
+            Log.error("ClassPortal::getPersonId(..) - ERROR; url: " + url + "; ERROR: " + err);
         }
+        return null;
     }
 
     public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
@@ -187,7 +187,7 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
             Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
             const json: ClassyConfigurationPayload = await res.json() as ClassyConfigurationPayload;
-            if (typeof json.success !== 'undefined') {
+            if (typeof json.success !== "undefined") {
                 return json.success;
             } else {
                 Log.trace("ClassPortal::getConfiguration() - ERROR: " + JSON.stringify(json));
@@ -210,7 +210,7 @@ export class ClassPortal implements IClassPortal {
         };
         Log.trace("ClassPortal::getContainerDetails(..) - requesting from: " + url);
 
-        if (delivId === null || delivId === 'null') {
+        if (delivId === null || delivId === "null") {
             Log.trace("ClassPortal::getContainerDetails(..) - skipping request; null delivId");
             return null;
         } else {
@@ -219,7 +219,7 @@ export class ClassPortal implements IClassPortal {
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; took: " + Util.took(start));
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
                 const json: AutoTestConfigPayload = await res.json() as AutoTestConfigPayload;
-                if (typeof json.success !== 'undefined') {
+                if (typeof json.success !== "undefined") {
                     return json.success;
                 } else {
                     Log.warn("ClassPortal::getContainerDetails(..) - ERROR: " + JSON.stringify(json));
@@ -238,7 +238,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
-                method: 'POST',
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "token": Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -246,14 +246,14 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(grade)
             };
 
-            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + '; delivId: ' + grade.delivId +
-                '; repo: ' + grade.repoId + '; url: ' + grade.URL);
+            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + "; deliv: " + grade.delivId +
+                "; repo: " + grade.repoId + "; url: " + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
             const json = await res.json();
-            if (typeof json.success !== 'undefined') {
-                Log.info("ClassPortal::sendGrade(..) - grade accepted; delivId: " + grade.delivId +
+            if (typeof json.success !== "undefined") {
+                Log.info("ClassPortal::sendGrade(..) - grade accepted; deliv: " + grade.delivId +
                     "; repo: " + grade.repoId + "; took: " + Util.took(start));
                 return json;
             } else {
@@ -262,28 +262,28 @@ export class ClassPortal implements IClassPortal {
             }
         } catch (err) {
             Log.error("ClassPortal::sendGrade(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
-            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
-            return pay;
+            return {failure: {message: err.message, shouldLogout: false}} as Payload;
         }
     }
 
     public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         const start = Date.now();
 
-        Log.trace("ClassPortal::formatFeedback(..) - start; delivId: " +
+        Log.trace("ClassPortal::formatFeedback(..) - start; deliv: " +
             res.delivId + "; URL: " + res.commitURL);
 
-        let feedback: string = '';
+        let feedback: string = "";
         try {
-            if (res.input.target.kind === 'check') {
-                let state = '';
-                if (res.output.state === 'SUCCESS' && typeof res.output.report.result !== 'undefined') {
+            if (res.input.target.kind === "check") {
+                let state = "";
+                if (res.output.state === "SUCCESS" && typeof res.output.report.result !== "undefined") {
                     state = res.output.report.result;
                 } else {
                     state = res.output.state;
                 }
                 feedback = `AutoTest status for commit: **_${state}_**`;
-                Log.info("ClassPortal::formatFeedback(..) - check; URL: " + res.commitURL + "; status: " + state);
+                Log.info("ClassPortal::formatFeedback(..) - check; repo: " +
+                    res.repoId + "; SHA: " + Util.shaHuman(res.commitSHA) + "; status: " + state);
             } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
@@ -295,16 +295,20 @@ export class ClassPortal implements IClassPortal {
         }
 
         let msg = feedback;
-        if (msg !== null && msg.length > 40) {
-            msg = msg.substr(0, 40) + "...";
-            if (msg.indexOf('\n') > 0) {
-                msg = msg.substr(0, msg.indexOf('\n'));
+        if (msg !== null) {
+            const MAX_COMMENT_LENGTH = 40;
+            if (msg.length > MAX_COMMENT_LENGTH) {
+                // shorten long messages
+                msg = msg.substr(0, MAX_COMMENT_LENGTH) + "...";
             }
+            // replace newlines / line breaks with "; ", regardless of length
+            msg = msg.replace(/(?:\r\n|\r|\n)/g, "; ");
+            msg = msg.replace("; ; ", "; "); // replace a double new line
         }
 
-        Log.trace("ClassPortal::formatFeedback(..) - feedback generated; URL: " +
-            res.commitURL + "; feedback: " + msg + "; took: " + Util.took(start));
-        Log.info("ClassPortal::formatFeedback(..) - feedback generated; deliv: " +
+        Log.trace("ClassPortal::formatFeedback(..) - repo: " + res.repoId + "; SHA: " +
+            Util.shaHuman(res.commitSHA) + "; feedback: " + msg + "; took: " + Util.took(start));
+        Log.info("ClassPortal::formatFeedback(..) - deliv: " +
             res.delivId + "; repo: " + res.repoId + "; feedback: " + msg + "; took: " + Util.took(start));
         return feedback;
     }
@@ -316,7 +320,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
-                method: 'post',
+                method: "post",
                 headers: {
                     "Content-Type": "application/json",
                     "token": Config.getInstance().getProp(ConfigKey.autotestSecret)
@@ -324,14 +328,14 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(result)
             };
 
-            Log.trace("ClassPortal::sendResult(..) - sending to: " + url + ' for delivId: ' + result.delivId +
-                '; repoId: ' + result.repoId + '; SHA: ' + result.input.target.commitSHA);
+            Log.trace("ClassPortal::sendResult(..) - sending to: " + url + " for deliv: " + result.delivId +
+                "; repoId: " + result.repoId + "; SHA: " + result.input.target.commitSHA);
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
             const json = await res.json();
-            if (typeof json.success !== 'undefined') {
+            if (typeof json.success !== "undefined") {
                 Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " +
-                    result.input.target.commitSHA + "; took: " + Util.took(start));
+                    Util.shaHuman(result.input.target.commitSHA) + "; took: " + Util.took(start));
                 return json;
             } else {
                 Log.error("ClassPortal::sendResult(..) - ERROR; result not acccepted:  " + JSON.stringify(json));
@@ -339,28 +343,27 @@ export class ClassPortal implements IClassPortal {
             }
         } catch (err) {
             Log.error("ClassPortal::sendResult(..) - ERROR; url: " + url + "; ERROR: " + err + "; took: " + Util.took(start));
-            const pay: Payload = {failure: {message: err.message, shouldLogout: false}};
-            return pay;
+            return {failure: {message: err.message, shouldLogout: false}} as Payload;
         }
     }
 
     public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
-        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + sha + " ) - start");
+        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - start");
         const start = Date.now();
         const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
 
         try {
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
-                method: 'get',
+                method: "get",
                 headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
 
-            Log.info("ClassPortal::getResult(..) - requesting from: " + url);
+            Log.trace("ClassPortal::getResult(..) - requesting from: " + url);
             const res = await fetch(url, opts);
             // Log.trace("ClassPortal::getResult() - sent; returned payload: " + res);
             const json: AutoTestResultPayload = await res.json() as AutoTestResultPayload;
-            if (typeof json.success !== 'undefined') {
+            if (typeof json.success !== "undefined") {
                 Log.info("ClassPortal::getResult(..) - result received; length: " + json.success.length + "; took: " + Util.took(start));
                 const success = json.success as AutoTestResultTransport[];
                 if (success.length > 0) {
@@ -389,7 +392,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const opts: RequestInit = {
                 agent: new https.Agent({rejectUnauthorized: false}),
-                method: 'POST',
+                method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "token": Config.getInstance().getProp(ConfigKey.autotestSecret)

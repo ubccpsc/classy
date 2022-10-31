@@ -1,6 +1,7 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log from "../../../common/Log";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import Util from "@common/Util";
+
 import {GitHubActions} from "../src/controllers/GitHubActions";
 
 /**
@@ -19,12 +20,12 @@ export class WebhookUpdater {
     private DRY_RUN = true; // always true when committing
 
     /**
-     * The URL you wan the hooks to be updated to point to. The secret will be automatically calculated using the .env.
+     * The URL you want the hooks to be updated to point to. The secret will be automatically calculated using the .env.
      *
      * @type {string}
      */
-        // private HOOK_URL = 'https://localhost/portal/githubWebhook';
-    private HOOK_URL = 'https://sdmm.cs.ubc.ca/portal/githubWebhook';
+        // private HOOK_URL = "https://localhost/portal/githubWebhook";
+    private HOOK_URL = "https://sdmm.cs.ubc.ca/portal/githubWebhook";
 
     private gha = GitHubActions.getInstance(true);
 
@@ -47,8 +48,8 @@ export class WebhookUpdater {
     private async updateHooks(): Promise<void> {
         Log.info("WebhookUpdater::updateHooks() - start");
 
-        const REPOS_TO_IGNORE = ['PostTestDoNotDelete1', 'PostTestDoNotDelete', 'bootstrap',
-            'capstone', 'project_oracle', 'course-csv-dataset ', 'classy'];
+        const REPOS_TO_IGNORE = ["PostTestDoNotDelete1", "PostTestDoNotDelete", "bootstrap",
+            "capstone", "project_oracle", "course-csv-dataset ", "classy"];
 
         const reposToUpdate = [];
         const repos = await this.gha.listRepos();
@@ -63,8 +64,8 @@ export class WebhookUpdater {
 
         for (const repo of reposToUpdate) {
             const currentHooks = await this.gha.listWebhooks(repo.repoName) as any[];
-            let currHook = '_NOT-SET_';
-            if (currentHooks.length === 1 && typeof currentHooks[0].config !== 'undefined') {
+            let currHook = "_NOT-SET_";
+            if (currentHooks.length === 1 && typeof currentHooks[0].config !== "undefined") {
                 currHook = currentHooks[0].config.url;
             }
 

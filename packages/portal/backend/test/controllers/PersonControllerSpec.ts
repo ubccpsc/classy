@@ -1,11 +1,12 @@
 import {expect} from "chai";
 import "mocha";
 
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
+
 import {PersonController} from "@backend/controllers/PersonController";
 import {Person, PersonKind} from "@backend//Types";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./DeliverablesControllerSpec";
 
 describe("PersonController", () => {

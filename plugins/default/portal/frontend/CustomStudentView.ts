@@ -13,6 +13,7 @@ import {
     TeamFormationTransport,
     TeamTransport,
 } from "@common/types/PortalTypes";
+
 import {UI} from "@frontend/util/UI";
 import {AbstractStudentView} from "@frontend/views/AbstractStudentView";
 

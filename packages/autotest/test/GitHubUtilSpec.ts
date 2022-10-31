@@ -3,12 +3,11 @@ import "mocha";
 
 import Config from "@common/Config";
 import Log from "@common/Log";
-// noinspection ES6UnusedImports
-import {TestHarness} from "@common/test/TestHarness"; // included intentionally (loads TestHarness first)
+
 import Util from "@common/Util";
-import {GitHubUtil} from "../src/github/GitHubUtil";
-// const loadFirst = require("./GlobalSpec");
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
+
+import {GitHubUtil} from "@autotest/github/GitHubUtil";
 
 describe("GitHubUtil", () => {
     Config.getInstance();
@@ -59,7 +58,7 @@ describe("GitHubUtil", () => {
         expect(actual).to.deep.equal(["#forcefoo"]);
     });
 
-    it("Should be able to correctly create human durations", () => {
+    it("Should be able to correctly create human durations.", () => {
         const now = Date.now();
         const oneSecond = now - 1000;
         const twoSeconds = now - 1000 * 2;
@@ -81,5 +80,4 @@ describe("GitHubUtil", () => {
         expect(Util.tookHuman(oneHour)).to.equal("1 hour and 0 minutes");
         expect(Util.tookHuman(oneHourHalf)).to.equal("1 hour and 30 minutes");
     });
-
 });

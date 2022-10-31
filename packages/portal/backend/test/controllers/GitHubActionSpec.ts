@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import Util from "@common/Util";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
@@ -13,7 +13,7 @@ import {PersonController} from "@backend/controllers/PersonController";
 import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 
 describe("GitHubActions", () => {
 
@@ -863,19 +863,26 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to simulate a webhook.", async function () {
+        Config.getInstance().setProp(ConfigKey.postback, true); // if postback is false, calls will always fail
+        Log.test("call 1 start");
         let worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "SHA", "message");
+        Log.test("call 1 done: " + worked);
         expect(worked).to.be.false; // SHA is not right
 
         let ex = null;
         try {
             let msg = "message";
+            Log.test("call 2 start");
             worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            Log.test("call 2 done: " + worked);
 
             for (let i = 0; i < 10; i++) {
                 msg = msg + msg; // make a long message
             }
             msg = msg + "\n" + msg;
+            Log.test("call 3 start");
             worked = await gh.simulateWebhookComment(TestHarness.REPONAMEREAL_POSTTEST, "c35a0e5968338a9757813b58368f36ddd64b063e", msg);
+            Log.test("call 3 done: " + worked);
 
             // NOTE: worked not checked because githubWebhook needs to be active for this to work
             // expect(worked).to.be.true;
@@ -895,6 +902,7 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should be possible to make a comment.", async function () {
+        Config.getInstance().setProp(ConfigKey.postback, true); // if postback is false, calls will always fail
         const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
         let msg = "message";
         let url = githubAPI + "/repos/classytest/" + TestHarness.REPONAMEREAL_POSTTEST + "/commits/INVALIDSHA/comments";

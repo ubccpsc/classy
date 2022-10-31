@@ -1,29 +1,28 @@
 {
     "extends": "tslint:recommended",
     "rules": {
+        "interface-name": [
+            false,
+            "never-prefix"
+        ],
         "max-line-length": [
             true,
             140
         ],
-        "no-unused-expression": false,
         "member-ordering": [
             false,
             {
                 "order": "fields-first"
             }
         ],
-        "object-literal-shorthand": false,
-        "quotemark": false,
-        "trailing-comma": "never",
-        "interface-name": [
-            false,
-            "never-prefix"
-        ],
-        "only-arrow-functions": false,
-        "object-literal-sort-keys": false,
         "no-floating-promises": true,
         "no-string-literal": false,
+        "no-unused-expression": false,
+        "object-literal-shorthand": false,
+        "object-literal-sort-keys": false,
+        "only-arrow-functions": false,
         "ordered-imports": false,
+        "quotemark": false,
         "space-before-function-paren": [
             "error",
             {
@@ -31,6 +30,15 @@
                 "named": "never",
                 "asyncArrow": "always"
             }
-        ]
+        ],
+        "trailing-comma": "never",
+        "variable-name": {
+            "options": [
+                "ban-keywords",
+                "check-format",
+                "allow-pascal-case",
+                "allow-leading-underscore"
+            ]
+        }
     }
 }

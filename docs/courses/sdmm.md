@@ -10,7 +10,7 @@ To deploy new changes on SDMM, follow these steps:
 2. `cd /opt/classy`
 3. `git pull`
 4. `docker build -t classy:base .`
-5. `docker-compose -f docker-compose.yml -f docker-compose.sdmm.yml up --detach --build portal autotest`
+5. `docker compose -f docker compose.yml -f docker compose.sdmm.yml up --detach --build portal autotest`
 
 ### Configuration
 

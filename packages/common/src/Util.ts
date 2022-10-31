@@ -10,11 +10,34 @@ export default class Util {
         return Date.now() - start + " ms";
     }
 
-    public static tookHuman(start: number, end?: number): string {
-        if (typeof end === 'undefined') {
+    public static shaHuman(sha: string): string {
+        if (sha !== null && typeof sha === "string" && sha.length > 6) {
+            return sha.substr(0, 6);
+        }
+        return sha;
+    }
+
+    public static tookHuman(start: number, end?: number, shortForm?: boolean): string {
+        if (typeof end === "undefined") {
             end = Date.now();
         }
-        const delta = Math.floor((end - start) / 1000); // convert to seconds
+
+        if (typeof shortForm === "undefined") {
+            shortForm = false;
+        }
+
+        if (start > end) {
+            // swap, want end to be most recent
+            [start, end] = [end, start]; // es6 destructuring ftw
+        }
+
+        let delta = end - start;
+        if (delta < 1000) {
+            // just short circuit for really fast times
+            return delta + " ms";
+        }
+
+        delta = Math.floor(delta / 1000); // convert to seconds
         const hours = Math.floor(delta / 3600);
         const minutes = Math.floor((delta - (hours * 3600)) / 60);
         const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
@@ -27,14 +50,14 @@ export default class Util {
         }
 
         if (hours > 0) {
-            // won't have seconds
+            // will not show seconds
             if (minutes === 1) {
                 msg = msg + " and 1 minute";
             } else {
                 msg = msg + " and " + minutes + " minutes";
             }
         } else {
-            /// will have eseconds
+            /// will have seconds
             if (minutes === 1) {
                 msg = "1 minute";
             } else {
@@ -62,12 +85,22 @@ export default class Util {
             }
         }
 
+        if (shortForm === true) {
+            msg = msg.replace(" and ", " ");
+            msg = msg.replace("seconds", "secs");
+            msg = msg.replace("second", "sec");
+            msg = msg.replace("minutes", "mins");
+            msg = msg.replace("minute", "min");
+            msg = msg.replace("hours", "hrs");
+            msg = msg.replace("hour", "hr");
+        }
+
         return msg;
     }
 
     // just a useful delay function for when we need to wait for GH to do something
     // or we want a test to be able to slow itself down
-    public static delay(ms: number): Promise<{}> {
+    public static delay(ms: number): Promise<void> {
         // logger.info("GitHubActions::delay( " + ms + ") - start");
         const start = Date.now();
         return new Promise(function (resolve) {
@@ -90,8 +123,34 @@ export default class Util {
      * @returns {{}}
      */
     public static clone(obj: {}): {} {
-        const ret = Object.assign({}, obj);
-        return ret;
+        return Object.assign({}, obj);
     }
 
+    /**
+     * Converts a string value to a boolean.
+     *
+     * The following are True:
+     *
+     * true
+     * "true" (case-insensitive)
+     * "yes" (case-insensitive)
+     * 1
+     * "1"
+     *
+     * Every other thing is false, but most commonly:
+     *
+     * false
+     * "False" (case-insensitive)
+     * 0
+     * "0"
+     * null
+     * undefined
+     *
+     * @param value
+     */
+    public static toBoolean(value: any): boolean {
+        const strValue = String(value).toLowerCase().trim();
+
+        return strValue === "true" || strValue === "yes" || strValue === "1";
+    }
 }

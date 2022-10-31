@@ -3,7 +3,7 @@
  *
  * This is provided only for testing. Other courses should _not_ modify this but
  * instead build their own student views, as they need for their own courses. This
- * course-specific file must live in 'views/course/StudentView.ts'.
+ * course-specific file must live in "views/course/StudentView.ts".
  */
 
 import {OnsButtonElement} from "onsenui";
@@ -26,7 +26,7 @@ export class ClassyStudentView extends AbstractStudentView {
     }
 
     public renderPage(opts: {}) {
-        Log.info('ClassyStudentView::renderPage() - start; options: ' + opts);
+        Log.info("ClassyStudentView::renderPage() - start; options: " + opts);
         const that = this;
         const start = Date.now();
 
@@ -35,20 +35,20 @@ export class ClassyStudentView extends AbstractStudentView {
             // super render complete; do custom work
             return that.renderStudentPage();
         }).then(function () {
-            Log.info('ClassyStudentView::renderPage(..) - prep & render took: ' + UI.took(start));
+            Log.info("ClassyStudentView::renderPage(..) - prep & render took: " + UI.took(start));
             UI.hideModal();
         }).catch(function (err) {
-            Log.error('ClassyStudentView::renderPage() - ERROR: ' + err);
+            Log.error("ClassyStudentView::renderPage() - ERROR: " + err);
             UI.hideModal();
         });
     }
 
     private async renderStudentPage(): Promise<void> {
-        UI.showModal('Fetching Data');
+        UI.showModal("Fetching Data");
         try {
-            Log.info('ClassyStudentView::renderStudentPage(..) - start');
+            Log.info("ClassyStudentView::renderStudentPage(..) - start");
 
-            // grades renedered in AbstractStudentView
+            // grades rendered in AbstractStudentView
 
             // repos rendered in AbstractStudentView
 
@@ -57,9 +57,9 @@ export class ClassyStudentView extends AbstractStudentView {
             this.teams = teams;
             await this.renderTeams(teams);
 
-            Log.info('ClassyStudentView::renderStudentPage(..) - done');
+            Log.info("ClassyStudentView::renderStudentPage(..) - done");
         } catch (err) {
-            Log.error('Error encountered: ' + err.message);
+            Log.error("Error encountered: " + err.message);
         }
         UI.hideModal();
         return;
@@ -68,26 +68,26 @@ export class ClassyStudentView extends AbstractStudentView {
     private async fetchTeamData(): Promise<TeamTransport[]> {
         try {
             this.teams = null;
-            let data: TeamTransport[] = await this.fetchData('/portal/teams');
+            let data: TeamTransport[] = await this.fetchData("/portal/teams");
             if (data === null) {
                 data = [];
             }
             this.teams = data;
             return data;
         } catch (err) {
-            Log.error('ClassyStudentView::fetchTeamData(..) - ERROR: ' + err.message);
+            Log.error("ClassyStudentView::fetchTeamData(..) - ERROR: " + err.message);
             this.teams = [];
             return [];
         }
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
-        Log.trace('ClassyStudentView::renderTeams(..) - start');
+        Log.trace("ClassyStudentView::renderTeams(..) - start");
         const that = this;
 
         // make sure these are hidden
-        UI.hideSection('studentSelectPartnerDiv');
-        UI.hideSection('studentPartnerDiv');
+        UI.hideSection("studentSelectPartnerDiv");
+        UI.hideSection("studentPartnerDiv");
 
         // skip this all for now; we will redeploy when teams can be formed
         // if (Date.now() > 0) {
@@ -104,27 +104,27 @@ export class ClassyStudentView extends AbstractStudentView {
         if (projectTeam === null) {
             // no team yet
 
-            const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+            const button = document.querySelector("#studentSelectPartnerButton") as OnsButtonElement;
             button.onclick = function (evt: any) {
-                Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick');
+                Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick");
                 that.formTeam().then(function (team) {
-                    Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick::then - team created');
+                    Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick::then - team created");
                     that.teams.push(team);
                     if (team !== null) {
                         that.renderPage({}); // simulating refresh
                     }
                 }).catch(function (err) {
-                    Log.info('ClassyStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+                    Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: " + err);
                 });
             };
 
-            UI.showSection('studentSelectPartnerDiv');
+            UI.showSection("studentSelectPartnerDiv");
         } else {
             // already on team
-            UI.showSection('studentPartnerDiv');
+            UI.showSection("studentPartnerDiv");
 
-            const teamElement = document.getElementById('studentPartnerTeamName');
-            // const partnerElement = document.getElementById('studentPartnerTeammates');
+            const teamElement = document.getElementById("studentPartnerTeamName");
+            // const partnerElement = document.getElementById("studentPartnerTeammates");
             const team = projectTeam;
             teamElement.innerHTML = team.id;
         }
@@ -132,15 +132,15 @@ export class ClassyStudentView extends AbstractStudentView {
 
     private async formTeam(): Promise<TeamTransport> {
         Log.info("ClassyStudentView::formTeam() - start");
-        const otherId = UI.getTextFieldValue('studentSelectPartnerText');
+        const otherId = UI.getTextFieldValue("studentSelectPartnerText");
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
-            delivId: 'project', // only one team in cs310 (and it is always called project)
+            delivId: "project", // only one team in cs310 (and it is always called project)
             githubIds: [myGithubId, otherId]
         };
-        const url = this.remote + '/portal/team';
+        const url = this.remote + "/portal/team";
         const options: any = this.getOptions();
-        options.method = 'post';
+        options.method = "post";
         options.body = JSON.stringify(payload);
 
         Log.info("ClassyStudentView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
@@ -152,10 +152,10 @@ export class ClassyStudentView extends AbstractStudentView {
 
         Log.info("ClassyStudentView::formTeam() - response: " + JSON.stringify(body));
 
-        if (typeof body.success !== 'undefined') {
+        if (typeof body.success !== "undefined") {
             // worked
             return body.success as TeamTransport;
-        } else if (typeof body.failure !== 'undefined') {
+        } else if (typeof body.failure !== "undefined") {
             // failed
             UI.showError(body);
             return null;

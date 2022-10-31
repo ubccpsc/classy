@@ -1,5 +1,6 @@
-import Log from "../../../common/Log";
-import {AutoTestPersonIdTransport, ClassyConfigurationTransport} from "../../../common/types/PortalTypes";
+import Log from "@common/Log";
+import {AutoTestPersonIdTransport, ClassyConfigurationTransport} from "@common/types/PortalTypes";
+
 import {ClassPortal} from "../autotest/ClassPortal";
 
 export class EdXClassPortal extends ClassPortal {

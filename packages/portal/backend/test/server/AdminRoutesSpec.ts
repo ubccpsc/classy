@@ -5,7 +5,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {
     AutoTestConfigTransport,
     AutoTestResultPayload,
@@ -24,8 +24,6 @@ import Util from "@common/Util";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
 import {GitHubActions} from "@backend/controllers/GitHubActions";
-import {PersonController} from "@backend/controllers/PersonController";
-import {TeamController} from "@backend/controllers/TeamController";
 import BackendServer from "@backend/server/BackendServer";
 
 import "./AuthRoutesSpec";
@@ -573,7 +571,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.be.an("string");
         Log.test("update did not fail");
 
-        // check that the newtime was updated
+        // check that the new time was updated
         const allDelivs = await dc.getAllDeliverables();
         const d0updated = allDelivs[0];
         expect(d0updated.openTimestamp).to.equal(newTime);
@@ -707,7 +705,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.contain("Classlist upload successful");
     });
 
-    it("Should be able to upload a new grades", async function () {
+    it("Should be able to upload a new grades with CSV", async function () {
 
         let response = null;
         let body: Payload;
@@ -729,7 +727,7 @@ describe("Admin Routes", function () {
         expect(body.success.message).to.contain("3 grades");
     });
 
-    it("Should fail to upload a bad grades list", async function () {
+    it("Should fail to upload a bad grades CSV", async function () {
 
         let response = null;
         let body: Payload;
@@ -756,6 +754,27 @@ describe("Admin Routes", function () {
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an("string"); // test no records found
         expect(body.failure.message).to.contain("no grades");
+    });
+
+    it("Should be able to upload a new grades from prairielearn", async function () {
+        let response = null;
+        let body: Payload;
+        const url = "/portal/admin/grades/prairie";
+        try {
+            response = await request(app).post(url).attach("gradelist", __dirname + "/../data/prairieValid.csv").set({
+                user: userName,
+                token: userToken
+            });
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            expect.fail("should not happen");
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an("string");
+        expect(body.success.message).to.contain("3 grades");
     });
 
     it("Should be able to get the course object", async function () {
@@ -855,8 +874,8 @@ describe("Admin Routes", function () {
 
             const ghCache = GitHubActions.getInstance(false);
             const ghReal = GitHubActions.getInstance(true);
-            const tcCache = new TeamController(ghCache);
-            const tcReal = new TeamController(ghReal);
+            // const tcCache = new TeamController(ghCache);
+            // const tcReal = new TeamController(ghReal);
 
             for (const repoName of repoNames) {
                 await ghCache.deleteRepo(repoName);
@@ -954,8 +973,8 @@ describe("Admin Routes", function () {
         it("Should be able to perform a withdraw task", async function () {
             // This is tricky because the live github data will have a different team id than we"re using locally
 
-            const pc = new PersonController();
-            const dc = DatabaseController.getInstance();
+            // const pc = new PersonController();
+            // const dc = DatabaseController.getInstance();
 
             let response = null;
             let body: Payload;
@@ -1222,6 +1241,117 @@ describe("Admin Routes", function () {
 
     }).timeout(TestHarness.TIMEOUT);
 
+    /**
+     * Team membership tests
+     */
+
+    it("Should be able to add a member to a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).post(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.not.be.undefined;
+        expect(body.success.message).to.contain(TestHarness.REALUSER1.github);
+    });
+
+    it("Should be able to remove a member from a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.not.be.undefined;
+        expect(body.success.message).to.not.contain(TestHarness.REALUSER1.github);
+    });
+
+    it("Should not be able to remove a person who is not already a member from a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + TestHarness.REALUSER3.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it("Should not be able to remove a member from a team that does not exist.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + TestHarness.TEAMNAME1 + "/members/" + "INVALIDPERSON";
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
+    it("Should not be able to remove an invalid member from a team.", async function () {
+
+        let response = null;
+        let body: Payload;
+        // server.post('/portal/admin/team/:teamId/members/:memberId', AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+        const url = "/portal/admin/team/" + "INVALIDTEAMNAME" + "/members/" + TestHarness.REALUSER1.github;
+        let ex = null;
+        try {
+            response = await request(app).del(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+            ex = err;
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(ex).to.be.null;
+        expect(response.status).to.equal(400);
+        expect(body.success).to.be.undefined;
+        expect(body.failure).to.not.be.undefined;
+    });
+
     it("Should be able to delete a deliverable", async function () {
         const url = "/portal/admin/deliverable/" + TestHarness.DELIVID0;
         let response = null;
@@ -1247,7 +1377,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1265,7 +1395,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.DELIVIDPROJ).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.DELIVIDPROJ).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1273,6 +1406,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
@@ -1306,7 +1440,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1324,7 +1458,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.REPONAME1).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.REPONAME1).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1332,6 +1469,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
@@ -1362,7 +1500,7 @@ describe("Admin Routes", function () {
         let body: Payload;
         let ex = null;
         try {
-            // delivId doesn"t exist
+            // delivId does not exist
             response = await request(app).del(url + Date.now()).set({user: userName, token: userToken});
             body = response.body;
         } catch (err) {
@@ -1380,7 +1518,10 @@ describe("Admin Routes", function () {
         ex = null;
         try {
             // token is invalid
-            response = await request(app).del(url + TestHarness.TEAMNAME1).set({user: userName, token: TestHarness.FAKETOKEN});
+            response = await request(app).del(url + TestHarness.TEAMNAME1).set({
+                user: userName,
+                token: TestHarness.FAKETOKEN
+            });
             body = response.body;
         } catch (err) {
             Log.test("ERROR: " + err);
@@ -1388,6 +1529,7 @@ describe("Admin Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(401);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
         expect(ex).to.be.null;
@@ -1429,4 +1571,48 @@ describe("Admin Routes", function () {
 
         expect(body).to.haveOwnProperty("failure");
     });
+
+    it("Should be able to initiate a class list update request", async function () {
+
+        let response = null;
+        let body: Payload;
+        const url = "/portal/admin/classlist";
+        try {
+            response = await request(app).put(url).send().set({user: userName, token: userToken});
+            body = response.body;
+        } catch (err) {
+            Log.test("ERROR: " + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(body));
+        expect(response.status).to.equal(200);
+        expect(body.success).to.not.be.undefined;
+        expect(body.success.message).to.be.an("string");
+    });
+
+    // /**
+    //  * PATCH TESTS
+    //  */
+    //
+    // it.only("Should be able to list patches", async function () {
+    //
+    //     let response = null;
+    //     let body: Payload;
+    //
+    //     const url = "/portal/admin/listPatches";
+    //     try {
+    //         response = await request(app).get(url).send().set({user: userName, token: userToken});
+    //         body = response.body;
+    //     } catch (err) {
+    //         Log.test("ERROR: " + err);
+    //     }
+    //     Log.test(response.status + " -> " + JSON.stringify(body));
+    //     expect(response.status).to.equal(200);
+    //     expect(body.success).to.not.be.undefined;
+    //     expect(body.success.message).to.be.an("string");
+    // });
+    //
+    // server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
+    // server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+    // server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
+    // server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
 });

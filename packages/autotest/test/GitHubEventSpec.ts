@@ -2,10 +2,10 @@ import {expect} from "chai";
 import * as fs from "fs";
 import "mocha";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import {DeliverablesController} from "@backend/controllers/DeliverablesController";
@@ -20,8 +20,8 @@ import {GitHubUtil} from "@autotest/github/GitHubUtil";
 describe("GitHub Event Parser", () => {
     Config.getInstance();
 
-    const PERSONID = 'rthse2ID';
-    const GITHUBID = 'rthse2';
+    const PERSONID = "rthse2ID";
+    const GITHUBID = "rthse2";
     const TIMEOUT = 1000;
 
     let backend: BackendServer = null;
@@ -32,15 +32,14 @@ describe("GitHub Event Parser", () => {
 
         const pc = new PersonController();
         const id = PERSONID;
-        const githubId = GITHUBID;
         const p: Person = {
             id: id,
             csId: id,
-            githubId: githubId,
+            githubId: GITHUBID,
             studentNumber: null,
 
-            fName: 'f' + id,
-            lName: 'l' + id,
+            fName: "f" + id,
+            lName: "l" + id,
             kind: null,
             URL: null,
 
@@ -55,28 +54,28 @@ describe("GitHub Event Parser", () => {
         const dc = new DeliverablesController();
 
         const deliv: Deliverable = {
-            id: 'd4',
+            id: "d4",
 
-            URL: 'http://NOTSET',
+            URL: "http://NOTSET",
             openTimestamp: new Date(1400000000000).getTime(),
             closeTimestamp: new Date(1500000000000).getTime(),
             gradesReleased: false,
 
             shouldProvision: true,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + '/classytest/' + TestHarness.REPONAMEREAL_POSTTEST + '.git',
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/" + TestHarness.REPONAMEREAL_POSTTEST + ".git",
             teamMinSize: 2,
             teamMaxSize: 2,
             teamSameLab: true,
             teamStudentsForm: true,
-            teamPrefix: 't',
-            repoPrefix: '',
+            teamPrefix: "t",
+            repoPrefix: "",
 
             visibleToStudents: true,
 
             lateAutoTest: false,
             shouldAutoTest: true,
             autotest: {
-                dockerImage: 'testImage',
+                dockerImage: "testImage",
                 studentDelay: 60 * 60 * 12, // 12h
                 maxExecTime: 300,
                 regressionDelivIds: [],
@@ -99,12 +98,25 @@ describe("GitHub Event Parser", () => {
     });
 
     it("Should fail gracefully with a bad push.", async () => {
+        let actual = null;
+        let ex = null;
+        try {
+            actual = await GitHubUtil.processPush(null, new MockClassPortal());
+        } catch (err) {
+            ex = err;
+        }
+        expect(actual).to.be.null;
+        expect(ex).to.not.be.null;
 
-        let actual = await GitHubUtil.processPush(null, new MockClassPortal());
-        expect(actual).to.deep.equal(null);
-
-        actual = await GitHubUtil.processPush(undefined, new MockClassPortal());
-        expect(actual).to.deep.equal(null);
+        actual = null;
+        ex = null;
+        try {
+            actual = await GitHubUtil.processPush(undefined, new MockClassPortal());
+        } catch (err) {
+            ex = err;
+        }
+        expect(actual).to.be.null;
+        expect(ex).to.not.be.null;
     });
 
     it("Should be able to parse a standard push.", async () => {
@@ -192,7 +204,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on a master commit with one deliverable and a mention.", async function () {
         const content = JSON.parse(readFile("comment_master_bot_one-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        content.comment.body = content.comment.body.replace("ubcbot", botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
@@ -220,7 +232,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on a master commit with multiple deliverables and a mention.", async () => {
         const content = JSON.parse(readFile("comment_master_bot_two-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        content.comment.body = content.comment.body.replace("ubcbot", botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 
@@ -274,7 +286,7 @@ describe("GitHub Event Parser", () => {
     it("Should be able to parse a comment on another branch with one deliverable and a mention.", async () => {
         const content = JSON.parse(readFile("comment_other-branch_bot_one-deliv.json"));
         const botname = Config.getInstance().getProp(ConfigKey.botName);
-        content.comment.body = content.comment.body.replace('ubcbot', botname);
+        content.comment.body = content.comment.body.replace("ubcbot", botname);
         const actual = await GitHubUtil.processComment(content);
         Log.test(JSON.stringify(actual));
 

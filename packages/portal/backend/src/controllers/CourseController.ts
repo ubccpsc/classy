@@ -1,7 +1,7 @@
-import Log from "../../../../common/Log";
-import {Deliverable, Grade, Person, Repository, Team} from "../Types";
+import Log from "@common/Log";
+import {CommitTarget} from "@common/types/ContainerTypes";
 
-import {CommitTarget} from "../../../../common/types/ContainerTypes";
+import {Deliverable, Grade, Person, Repository, Team} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 import {IGitHubController} from "./GitHubController";
 import {GradesController} from "./GradesController";
@@ -57,7 +57,7 @@ export interface ICourseController {
      * @returns {{teamName: string | null; repoName: string | null}}
      */
     computeNames(deliv: Deliverable, people: Person[], adminOverride?: boolean):
-        Promise<{teamName: string | null; repoName: string | null}>;
+        Promise<{ teamName: string | null; repoName: string | null }>;
 
     /**
      * For adding any finishing touches to a newly made repo
@@ -146,7 +146,7 @@ export class CourseController implements ICourseController {
         }
     }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null; repoName: string | null}> {
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{ teamName: string | null; repoName: string | null }> {
         if (deliv === null) {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }

@@ -1,6 +1,6 @@
-import Log from "../../../../common/Log";
-import {RepositoryTransport} from "../../../../common/types/PortalTypes";
-import Util from "../../../../common/Util";
+import Log from "@common/Log";
+import {RepositoryTransport} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 import {Deliverable, Person, Repository, Team} from "../Types";
 
 import {DatabaseController} from "./DatabaseController";

@@ -1,14 +1,14 @@
 import {expect} from "chai";
 import * as Docker from "dockerode";
-import {TestHarness} from "@common/test/TestHarness";
+
 import {GradingJob} from "@autotest/autotest/GradingJob";
 
 class ContainerMock extends Docker.Container {
     public timer: any;
     public waitTime: number = 0;
     private resolveWait: any;
-    private isRunning: boolean = false;
-    private isWaiting: boolean = false;
+    // private isRunning: boolean = false;
+    // private isWaiting: boolean = false;
 
     public start(options?: {}): Promise<any> {
         return null;
@@ -44,7 +44,7 @@ describe("GradingJob", function() {
             container = new ContainerMock(null, "test-container");
         });
 
-        it("Should return the exit code for the container", async function() {
+        it("Should return the exit code for the container.", async function() {
             let result: any;
             try {
                 result = await GradingJob.runContainer(container, containerMaxExecTime);
@@ -55,7 +55,7 @@ describe("GradingJob", function() {
             }
         });
 
-        it("Should return -1 if the container is stopped", async function() {
+        it("Should return -1 if the container is stopped.", async function() {
             container.waitTime = containerMaxExecTime + 0.05;
             let result: any;
             try {

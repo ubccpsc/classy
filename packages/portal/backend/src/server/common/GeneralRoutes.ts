@@ -1,8 +1,8 @@
 import * as fs from "fs-extra";
 import * as restify from "restify";
 
-import Config, {ConfigKey} from '../../../../../common/Config';
-import Log from "../../../../../common/Log";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 import {
     ConfigTransportPayload,
     GradeTransport,
@@ -14,7 +14,7 @@ import {
     TeamFormationTransport,
     TeamTransport,
     TeamTransportPayload
-} from "../../../../../common/types/PortalTypes";
+} from "@common/types/PortalTypes";
 
 import {AuthController} from "../../controllers/AuthController";
 import {DatabaseController} from "../../controllers/DatabaseController";
@@ -32,40 +32,42 @@ import {ClasslistAgent} from "./ClasslistAgent";
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
 import {AuthRoutes} from "./AuthRoutes";
+import Util from "@common/Util";
 
 export default class GeneralRoutes implements IREST {
 
     public registerRoutes(server: restify.Server) {
-        Log.trace('GeneralRoutes::registerRoutes() - start');
+        Log.trace("GeneralRoutes::registerRoutes() - start");
 
         // returns the org that the backend is currently configured to serve
         // mainly used by the frontend so it uses the correct UI
-        server.get('/portal/config', GeneralRoutes.getConfig);
+        server.get("/portal/config", GeneralRoutes.getConfig);
 
         // used to get student-specific data
-        server.get('/portal/person', GeneralRoutes.getPerson);
+        server.get("/portal/person", GeneralRoutes.getPerson);
 
         // used by students to get their (released) grades
-        server.get('/portal/grades', GeneralRoutes.getGrades);
+        server.get("/portal/grades", GeneralRoutes.getGrades);
 
         // used by students to get their teams
-        server.get('/portal/teams', GeneralRoutes.getTeams);
+        server.get("/portal/teams", GeneralRoutes.getTeams);
 
         // used by students to get their repos
-        server.get('/portal/repos', GeneralRoutes.getRepos);
+        server.get("/portal/repos", GeneralRoutes.getRepos);
 
         // used by students to create their teams
-        server.post('/portal/team', GeneralRoutes.postTeam);
+        server.post("/portal/team", GeneralRoutes.postTeam);
 
-        // server.get('/portal/resource/:path', GeneralRoutes.getResource);
-        server.get('/portal/resource/*', GeneralRoutes.getResource);
+        // server.get("/portal/resource/:path", GeneralRoutes.getResource);
+        server.get("/portal/resource/*", GeneralRoutes.getResource);
 
         // IP restricted
-        server.put('/portal/classlist', GeneralRoutes.updateClasslist);
+        server.put("/portal/classlist", GeneralRoutes.updateClasslist);
     }
 
     public static async getConfig(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::getConfig(..) - start');
+        Log.trace("GeneralRoutes::getConfig(..) - start");
+        const start = Date.now();
 
         const org = Config.getInstance().getProp(ConfigKey.org);
         const name = Config.getInstance().getProp(ConfigKey.name);
@@ -77,11 +79,12 @@ export default class GeneralRoutes implements IREST {
         let payload: ConfigTransportPayload;
         if (org !== null) {
             payload = {success: {org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds}};
-            Log.trace('GeneralRoutes::getConfig(..) - sending: ' + JSON.stringify(payload));
+            Log.trace("GeneralRoutes::getConfig(..) - done; took: " + Util.took(start));
+            Log.trace("GeneralRoutes::getConfig(..) - sending: " + JSON.stringify(payload));
             res.send(200, payload);
             return next(false);
         } else {
-            payload = {failure: {message: 'Unable to retrieve config (server error)', shouldLogout: false}};
+            payload = {failure: {message: "Unable to retrieve config (server error)", shouldLogout: false}};
             res.send(400, payload);
             return next(false);
         }
@@ -91,14 +94,14 @@ export default class GeneralRoutes implements IREST {
 
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.trace('GeneralRoutes::getPerson(..) - start; user: ' + user);
+        Log.trace("GeneralRoutes::getPerson(..) - start; user: " + user);
 
-        GeneralRoutes.performGetPerson(user, token).then(function(personTrans) {
+        GeneralRoutes.performGetPerson(user, token).then(function (personTrans) {
             const payload: Payload = {success: personTrans};
             res.send(200, payload);
             return next(false);
-        }).catch(function(err) {
-            Log.info('GeneralRoutes::getPerson(..) - ERROR: ' + err.message); // intentionally info
+        }).catch(function (err) {
+            Log.info("GeneralRoutes::getPerson(..) - ERROR: " + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -109,8 +112,8 @@ export default class GeneralRoutes implements IREST {
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
-            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
-            throw new Error('Invalid credentials');
+            Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
+            throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
             const person = await pc.getPerson(user);
@@ -118,8 +121,7 @@ export default class GeneralRoutes implements IREST {
                 return null;
             }
 
-            const personTrans: StudentTransport = PersonController.personToTransport(person);
-            return personTrans;
+            return PersonController.personToTransport(person);
         }
     }
 
@@ -127,14 +129,14 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
-        Log.trace('GeneralRoutes::getGrades(..) - start; user: ' + user);
+        Log.trace("GeneralRoutes::getGrades(..) - start; user: " + user);
 
-        GeneralRoutes.performGetGrades(user, token).then(function(grades) {
+        GeneralRoutes.performGetGrades(user, token).then(function (grades) {
             const payload: GradeTransportPayload = {success: grades};
             res.send(200, payload);
             return next(false);
-        }).catch(function(err) {
-            Log.info('GeneralRoutes::getGrades(..) - ERROR: ' + err.message); // intentionally info
+        }).catch(function (err) {
+            Log.info("GeneralRoutes::getGrades(..) - ERROR: " + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -144,14 +146,17 @@ export default class GeneralRoutes implements IREST {
     public static getTeams(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.info('GeneralRoutes::getTeams(..) - start; user: ' + user);
+        Log.trace("GeneralRoutes::getTeams(..) - start; user: " + user);
+        const start = Date.now();
 
-        GeneralRoutes.performGetTeams(user, token).then(function(teams) {
+        GeneralRoutes.performGetTeams(user, token).then(function (teams) {
+            Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " +
+                teams.length + "; took: " + Util.took(start));
             const payload: TeamTransportPayload = {success: teams};
             res.send(200, payload);
             return next(false);
-        }).catch(function(err) {
-            Log.info('GeneralRoutes::getTeams(..) - ERROR: ' + err.message); // intentionally info
+        }).catch(function (err) {
+            Log.info("GeneralRoutes::getTeams(..) - ERROR: " + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -159,7 +164,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static getResource(req: any, res: any, next: any) {
-        Log.trace('GeneralRoutes::getResource(..) - start; user: ' + req.headers.user);
+        Log.trace("GeneralRoutes::getResource(..) - start; user: " + req.headers.user);
 
         const auth = AdminRoutes.processAuth(req);
         // const user = req.headers.user;
@@ -168,17 +173,17 @@ export default class GeneralRoutes implements IREST {
         const path = req.url.substring(16);  // this strips off the route prefix (i.e., /portal/resource)
 
         // right now this means requests _must_ be by an authorized user (admin, staff, or student)
-        if (auth === null || typeof auth.user === 'undefined' || typeof auth.token === 'undefined') {
-            Log.warn('GeneralRoutes::isAdmin(..) - undefined user or token for resource: ' + path);
-            // If the requestor is not authenticated forward them back to the front page.
+        if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
+            Log.warn("GeneralRoutes::isAdmin(..) - undefined user or token for resource: " + path);
+            // If the requester is not authenticated forward them back to the front page.
             // TODO: use ref for forwarding the user to their original resource once they have logged in
-            const loc = Config.getInstance().getProp(ConfigKey.publichostname) + '?ref=' + path;
+            const loc = Config.getInstance().getProp(ConfigKey.publichostname) + "?ref=" + path;
             return res.redirect(loc, next);
         }
 
-        Log.info('GeneralRoutes::getResource(..) - user: ' + auth.user + '; token: ' + auth.token + '; path: ' + path);
+        Log.info("GeneralRoutes::getResource(..) - user: " + auth.user + "; token: " + auth.token + "; path: " + path);
 
-        GeneralRoutes.performGetResource(auth, path).then(function(resource: any) {
+        GeneralRoutes.performGetResource(auth, path).then(function (resource: any) {
 
             const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
             Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
@@ -188,8 +193,8 @@ export default class GeneralRoutes implements IREST {
                     Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
                     const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
                     res.writeHead(200, {
-                        'Content-Length': Buffer.byteLength(html),
-                        'Content-Type': 'text/html'
+                        "Content-Length": Buffer.byteLength(html),
+                        "Content-Type": "text/html"
                     });
                     res.write(html);
                     res.end();
@@ -198,7 +203,7 @@ export default class GeneralRoutes implements IREST {
                     rs.on("error", (err: any) => {
                         if (err.code === "ENOENT") {
                             Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist. " +
-                                "This really shouldn't have reached here: " + path);
+                                "This really should not have reached here: " + path);
                             res.send(404, err.message);
                         } else {
                             Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
@@ -217,44 +222,28 @@ export default class GeneralRoutes implements IREST {
             }
 
             return next();
-        }).catch(function(err) {
-            Log.error('GeneralRoutes::getResource(..) - ERROR: ' + err);
+        }).catch(function (err) {
+            Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
             if (err.message === "401") {
-                return GeneralRoutes.handleError(401, 'Authorization error; unknown user/token.', res, next);
+                return GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res, next);
             } else {
-                Log.info('GeneralRoutes::getResource(..) - ERROR: ' + err.message); // intentionally info
-                return GeneralRoutes.handleError(400, 'Problem encountered getting resource: ' + err.message, res, next);
+                Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
+                return GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res, next);
             }
         });
     }
 
     public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
         const directoryAddress: string = Config.getInstance().getProp(ConfigKey.publichostname) + baseUrl.replace(/\/$/, "");
-        let body = `<html><body><p><strong>${relativePath}</strong></p>`;
+        let body = `<html lang="en"><body><p><strong>${relativePath}</strong></p>`;
         body += [".."].concat(fs.readdirSync(absolutePath))
             .map((file) => `<p><a href="${directoryAddress}/${file}">${file}</a></p>`).join("");
         body += "</body></html>";
         return body;
     }
 
-    public static async performGetResource(auth: {user: string, token: string}, path: string): Promise<boolean> {
+    public static async performGetResource(auth: { user: string, token: string }, path: string): Promise<boolean> {
         Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
-
-        const host = Config.getInstance().getProp(ConfigKey.autotestUrl);
-        const port = Config.getInstance().getProp(ConfigKey.autotestPort);
-        const uri = host + ':' + port + '/resource' + path;
-
-        // const options = {
-        //     uri:    uri,
-        //     method: 'GET'
-        //     // headers: {
-        //     //     'Content-Type': 'application/json',
-        //     //     'User-Agent':   'Portal',
-        //     //     'user':         auth.user, // NOTE: can change to a different representation
-        //     //     'token':        auth.token, // NOTE: can change to a different representation
-        //     //     'path':         path // NOTE: can change to a different representation
-        //     // }
-        // };
 
         let proceed = false;
         // if user/token does not have access to resource request should return 401
@@ -300,14 +289,14 @@ export default class GeneralRoutes implements IREST {
     public static getRepos(req: any, res: any, next: any) {
         const user = req.headers.user;
         const token = req.headers.token;
-        Log.trace('GeneralRoutes::getRepos(..) - start; user: ' + user);
+        Log.trace("GeneralRoutes::getRepos(..) - start; user: " + user);
 
-        GeneralRoutes.performGetRepos(user, token).then(function(repos) {
+        GeneralRoutes.performGetRepos(user, token).then(function (repos) {
             const payload: RepositoryPayload = {success: repos};
             res.send(200, payload);
             return next(false);
-        }).catch(function(err) {
-            Log.info('GeneralRoutes::getRepos(..) - ERROR: ' + err.message); // intentionally info
+        }).catch(function (err) {
+            Log.info("GeneralRoutes::getRepos(..) - ERROR: " + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -318,16 +307,16 @@ export default class GeneralRoutes implements IREST {
         const user = req.headers.user;
         const token = req.headers.token;
 
-        Log.info('GeneralRoutes::teamCreate(..) - start; user: ' + user);
+        Log.info("GeneralRoutes::teamCreate(..) - start; user: " + user);
 
         const teamTrans: TeamFormationTransport = req.params;
-        GeneralRoutes.performPostTeam(user, token, teamTrans).then(function(team) {
-            Log.info('GeneralRoutes::teamCreate(..) - done; team: ' + JSON.stringify(team));
-            const payload: TeamTransportPayload = {success: [team]}; // really shouldn't be an array, but it beats having another type
+        GeneralRoutes.performPostTeam(user, token, teamTrans).then(function (team) {
+            Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
+            const payload: TeamTransportPayload = {success: [team]}; // really shouldn"t be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
-        }).catch(function(err) {
-            Log.info('GeneralRoutes::teamCreate(..) - ERROR: ' + err.message); // intentionally info
+        }).catch(function (err) {
+            Log.info("GeneralRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
             const payload: Payload = {failure: {message: err.message, shouldLogout: false}};
             res.send(400, payload);
             return next(false);
@@ -335,15 +324,14 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static async updateClasslist(req: any, res: any, next: any) {
-        Log.info('GeneralRoutes::updateClasslist(..) - start');
-        const pc = new PersonController();
+        Log.info("GeneralRoutes::updateClasslist(..) - start");
         const ca = new ClasslistAgent();
-        const ipAddr = req.headers['x-forwarded-for'] || req.connection.remoteAddress;
+        const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
         const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
         let auditInfo: string;
 
         if (ipReg.test(ipAddr) === false) {
-            return await GeneralRoutes.handleError(403, 'Forbidden error; user not privileged', res, next);
+            return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res, next);
         }
 
         auditInfo = req.headers.user || ipAddr;
@@ -355,34 +343,38 @@ export default class GeneralRoutes implements IREST {
             let payload: Payload;
 
             if (classlistChanges.classlist.length) {
-                payload = {success: {message: 'Classlist upload successful. '
-                 + (classlistChanges.classlist.length) + ' students processed.'}};
+                payload = {
+                    success: {
+                        message: "Classlist upload successful. "
+                            + (classlistChanges.classlist.length) + " students processed."
+                    }
+                };
                 res.send(200, payload);
-                Log.info('GeneralRoutes::updateClasslist(..) - done: ' + payload.success.message);
+                Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
             } else {
-                const msg = 'Classlist upload not successful; no students were processed from CSV.';
+                const msg = "Classlist upload not successful; no students were processed from CSV.";
                 return GeneralRoutes.handleError(400, msg, res, next);
             }
         } catch (err) {
-            const msg = 'Classlist upload not successful; no students were processed from CSV.';
+            const msg = "Classlist upload not successful; no students were processed from CSV.";
             return GeneralRoutes.handleError(400, msg, res, next);
         }
     }
 
     private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
-        Log.info('GeneralRoutes::performPostTeam(..) - team: ' + JSON.stringify(requestedTeam));
+        Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
-            Log.trace('GeneralRoutes::performPostTeam(..) - in isValid: ' + isValid);
-            throw new Error('Invalid credentials');
+            Log.trace("GeneralRoutes::performPostTeam(..) - in isValid: " + isValid);
+            throw new Error("Invalid credentials");
         } else {
             const tc = new TeamController();
             const dc = new DeliverablesController();
             const pc = new PersonController();
 
             // remove duplicate names
-            const nameIds = requestedTeam.githubIds.filter(function(item, pos, self) {
+            const nameIds = requestedTeam.githubIds.filter(function (item, pos, self) {
                 return self.indexOf(item) === pos;
             });
             if (nameIds.length !== requestedTeam.githubIds.length) {
@@ -403,18 +395,18 @@ export default class GeneralRoutes implements IREST {
                 }
             }
 
-            // make sure the requestor is one of the teammates!
+            // make sure the requester is one of the teammates!
             // we have to do this here because the TeamController does not actually know who made the request
             if (requestor === null) {
-                throw new Error('Users cannot form teams they are not going to join.');
+                throw new Error("Users cannot form teams they are not going to join.");
             }
 
-            // make sure all users aren't already on teams
+            // make sure all users aren"t already on teams
             for (const person of people) {
                 const teams = await tc.getTeamsForPerson(person);
                 for (const aTeam of teams) {
                     if (aTeam.delivId === requestedTeam.delivId) {
-                        throw new Error('User is already on a team for this deliverable ( ' + person.id + ' is on ' + aTeam.id + ' ).');
+                        throw new Error("User is already on a team for this deliverable ( " + person.id + " is on " + aTeam.id + " ).");
                     }
                 }
             }
@@ -433,13 +425,13 @@ export default class GeneralRoutes implements IREST {
             await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
 
             const teamTrans: TeamTransport = {
-                id:      team.id,
+                id: team.id,
                 delivId: team.delivId,
-                people:  team.personIds,
-                URL:     team.URL
+                people: team.personIds,
+                URL: team.URL
             };
 
-            Log.info('GeneralRoutes::performPostTeam(..) - team created: ' + team.id);
+            Log.info("GeneralRoutes::performPostTeam(..) - team created: " + team.id);
             return teamTrans;
         }
     }
@@ -448,8 +440,8 @@ export default class GeneralRoutes implements IREST {
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
-            Log.trace('GeneralRoutes::performGetGrades(..) - in isValid: ' + isValid);
-            throw new Error('Invalid credentials');
+            Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
+            throw new Error("Invalid credentials");
         } else {
             const gc: GradesController = new GradesController();
             const grades = await gc.getReleasedGradesForPerson(user);
@@ -466,7 +458,7 @@ export default class GeneralRoutes implements IREST {
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
-            Log.error('GeneralRoutes::performGetTeams(..) - isValid === false');
+            Log.error("GeneralRoutes::performGetTeams(..) - isValid === false");
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
@@ -474,7 +466,7 @@ export default class GeneralRoutes implements IREST {
 
             const tc: TeamController = new TeamController();
             const teams = await tc.getTeamsForPerson(person);
-            Log.trace('GeneralRoutes::performGetTeams(..) - in teams: ' + teams);
+            Log.trace("GeneralRoutes::performGetTeams(..) - in teams: " + teams);
             const teamTrans: TeamTransport[] = [];
             for (const team of teams) {
                 teamTrans.push(tc.teamToTransport(team));
@@ -487,7 +479,7 @@ export default class GeneralRoutes implements IREST {
         const ac = new AuthController();
         const isValid = await ac.isValid(user, token);
         if (isValid === false) {
-            Log.error('GeneralRoutes::performGetRepos(..) - isValid === false');
+            Log.error("GeneralRoutes::performGetRepos(..) - isValid === false");
             throw new Error("Invalid credentials");
         } else {
             const pc = new PersonController();
@@ -495,7 +487,7 @@ export default class GeneralRoutes implements IREST {
 
             const rc = new RepositoryController();
             const repos = await rc.getReposForPerson(person);
-            Log.trace('GeneralRoutes::performGetRepos(..) - repos: ' + repos);
+            Log.trace("GeneralRoutes::performGetRepos(..) - repos: " + repos);
             const repoTrans: RepositoryTransport[] = [];
             for (const repo of repos) {
                 if (repo.URL !== null) {
@@ -509,7 +501,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
-        Log.error('GeneralRoutes::handleError(..) - ERROR: ' + msg);
+        Log.error("GeneralRoutes::handleError(..) - ERROR: " + msg);
         res.send(code, {failure: {message: msg, shouldLogout: false}});
         return next(false);
     }

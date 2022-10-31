@@ -19,13 +19,13 @@ export class AdminGradesTab extends AdminPage {
 
     // called by reflection in renderPage
     public async init(opts: any): Promise<void> {
-        Log.info('AdminGradesTab::init(..) - start');
+        Log.info("AdminGradesTab::init(..) - start");
 
-        // NOTE: this could consider if studentListTable has children, and if they do, don't refresh
-        document.getElementById('gradesListTable').innerHTML = ''; // clear target
-        document.getElementById('gradesSummaryTable').innerHTML = ''; // clear target
+        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
+        document.getElementById("gradesListTable").innerHTML = ""; // clear target
+        document.getElementById("gradesSummaryTable").innerHTML = ""; // clear target
 
-        UI.showModal('Retrieving grades.');
+        UI.showModal("Retrieving grades.");
         const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
         const students = await AdminStudentsTab.getStudents(this.remote);
         const grades = await AdminGradesTab.getGrades(this.remote);
@@ -39,52 +39,52 @@ export class AdminGradesTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id: 'githubId',
-                text: 'GitHub Id',
+                id: "githubId",
+                text: "GitHub Id",
                 sortable: true,
                 defaultSort: true,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'id',
-                text: 'Internal Id',
+                id: "id",
+                text: "CSID",
                 sortable: true,
                 defaultSort: true,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'snum',
-                text: 'SNUM',
+                id: "snum",
+                text: "SNUM",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'fName',
-                text: 'First Name',
+                id: "fName",
+                text: "First Name",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'lName',
-                text: 'Last Name',
+                id: "lName",
+                text: "Last Name",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             },
             {
-                id: 'labId',
-                text: 'Lab',
+                id: "labId",
+                text: "Lab",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em;'
+                style: "padding-left: 1em; padding-right: 1em;"
             }
 
             // more sections dynamically added
@@ -97,22 +97,22 @@ export class AdminGradesTab extends AdminPage {
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: right;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: right;"
             };
             headers.push(col);
         }
 
-        const st = new SortableTable(headers, '#gradesListTable');
+        const st = new SortableTable(headers, "#gradesListTable");
 
-        // this loop couldn't possibly be less efficient
+        // this loop could not possibly be less efficient
         for (const student of students) {
             const row: TableCell[] = [
                 {
                     value: student.githubId,
-                    html: '<a class="selectable" href="' + student.userUrl + '">' + student.githubId + '</a>'
+                    html: "<a class='selectable' href='" + student.userUrl + "'>" + student.githubId + "</a>"
                 },
-                {value: student.id, html: student.id + ''},
-                {value: student.studentNum, html: student.studentNum + ''},
+                {value: student.id, html: student.id + ""},
+                {value: student.studentNum, html: student.studentNum + ""},
                 {value: student.firstName, html: student.firstName},
                 {value: student.lastName, html: student.lastName},
                 {value: student.labId, html: student.labId}
@@ -123,9 +123,9 @@ export class AdminGradesTab extends AdminPage {
                     if (grade.personId === student.id) {
                         if (grade.delivId === deliv.id) {
                             const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
-                            // let score = '';
-                            let scoreText: string = '';
-                            let scorePrepend = '';
+                            // let score = "";
+                            let scoreText: string = "";
+                            let scorePrepend = "";
                             if (grade.score !== null && grade.score >= 0) {
                                 scoreText = grade.score.toFixed(2);
                                 if (grade.score < 100) {
@@ -139,9 +139,9 @@ export class AdminGradesTab extends AdminPage {
                                 }
                             }
                             let html;
-                            if (scoreText !== '' && grade.URL !== null) {
+                            if (scoreText !== "" && grade.URL !== null) {
                                 html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${scoreText}</a>`;
-                            } else if (scoreText !== '' && grade.URL === null) {
+                            } else if (scoreText !== "" && grade.URL === null) {
                                 html = `<div title="${hoverComment}">${scoreText}</div>`;
                             } else {
                                 html = scoreText;
@@ -151,8 +151,8 @@ export class AdminGradesTab extends AdminPage {
                     }
                 }
                 if (tableCell === null) {
-                    // tableCell = {value: 'N/A', html: 'N/A'}; // N/A for missing cells
-                    tableCell = {value: '', html: ''}; // blanks for missing cells
+                    // tableCell = {value: "N/A", html: "N/A"}; // N/A for missing cells
+                    tableCell = {value: "", html: ""}; // blanks for missing cells
                 }
                 row.push(tableCell);
             }
@@ -162,13 +162,13 @@ export class AdminGradesTab extends AdminPage {
         st.generate();
 
         if (st.numRows() > 0) {
-            UI.showSection('gradesListTable');
-            UI.showSection('gradesSummaryTable');
-            UI.hideSection('gradesListTableNone');
+            UI.showSection("gradesListTable");
+            UI.showSection("gradesSummaryTable");
+            UI.hideSection("gradesListTableNone");
         } else {
-            UI.hideSection('gradesListTable');
-            UI.hideSection('gradesSummaryTable');
-            UI.showSection('gradesListTableNone');
+            UI.hideSection("gradesListTable");
+            UI.hideSection("gradesSummaryTable");
+            UI.showSection("gradesListTableNone");
         }
 
         this.renderSummary(grades, delivs, students);
@@ -179,116 +179,116 @@ export class AdminGradesTab extends AdminPage {
 
         const headers: TableHeader[] = [
             {
-                id: 'delivId',
-                text: 'Deliv Id',
+                id: "delivId",
+                text: "Deliv Id",
                 sortable: true,
                 defaultSort: true,
                 sortDown: false,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: 'avg',
-                text: 'Average',
+                id: "avg",
+                text: "Average",
                 sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
                 defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
                 sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: 'median',
-                text: 'Median',
+                id: "median",
+                text: "Median",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '009',
-                text: '0-9',
+                id: "009",
+                text: "0-9",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '1019',
-                text: '10-19',
+                id: "1019",
+                text: "10-19",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '2029',
-                text: '20-29',
+                id: "2029",
+                text: "20-29",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '3039',
-                text: '30-39',
+                id: "3039",
+                text: "30-39",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '4049',
-                text: '40-49',
+                id: "4049",
+                text: "40-49",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '5059',
-                text: '50-59',
+                id: "5059",
+                text: "50-59",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '6069',
-                text: '60-69',
+                id: "6069",
+                text: "60-69",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '7079',
-                text: '70-79',
+                id: "7079",
+                text: "70-79",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '8089',
-                text: '80-89',
+                id: "8089",
+                text: "80-89",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '9099',
-                text: '90-99',
+                id: "9099",
+                text: "90-99",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             },
             {
-                id: '100',
-                text: '100',
+                id: "100",
+                text: "100",
                 sortable: true,
                 defaultSort: false,
                 sortDown: true,
-                style: 'padding-left: 1em; padding-right: 1em; text-align: center;'
+                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
             }
 
         ];
@@ -300,25 +300,25 @@ export class AdminGradesTab extends AdminPage {
         //         sortable:    true,
         //         defaultSort: false,
         //         sortDown:    true,
-        //         style:       'padding-left: 1em; padding-right: 1em;'
+        //         style:       "padding-left: 1em; padding-right: 1em;"
         //     };
         //     headers.push(col);
         // }
 
-        const st = new SortableTable(headers, '#gradesSummaryTable');
+        const st = new SortableTable(headers, "#gradesSummaryTable");
 
-        // this loop couldn't possibly be less efficient
+        // this loop could not possibly be less efficient
         const gradeMap: { [delivId: string]: number[] } = {};
 
         for (const grade of grades) {
-            if (grade !== null && typeof grade.score !== 'undefined' && typeof grade.score === 'number') {
-                if (typeof gradeMap[grade.delivId] === 'undefined') {
+            if (grade !== null && typeof grade.score !== "undefined" && typeof grade.score === "number") {
+                if (typeof gradeMap[grade.delivId] === "undefined") {
                     gradeMap[grade.delivId] = [];
                 }
                 // ignore grades for withdrawn students in the summary table
                 let inc = false;
                 for (const student of students) {
-                    if (student.id === grade.personId && student.labId !== 'W') {
+                    if (student.id === grade.personId && student.labId !== "W") {
                         inc = true;
                     }
                 }
@@ -358,19 +358,19 @@ export class AdminGradesTab extends AdminPage {
 
                 const row: TableCell[] = [
                     {value: delivId, html: delivId},
-                    {value: avg + '', html: avg + ''},
-                    {value: median + '', html: median + ''}
+                    {value: avg + "", html: avg + ""},
+                    {value: median + "", html: median + ""}
                 ];
 
                 for (let i = 0; i < 10; i++) {
                     const lower = i * 10;
                     const upper = lower + 9;
                     const numInBin = inBin(delivGrades, lower, upper);
-                    Log.info('inBin( [..], ' + lower + ', ' + upper + '; #: ' + numInBin);
-                    row.push({value: numInBin + '', html: numInBin + ''});
+                    Log.info("inBin( [..], " + lower + ", " + upper + "; #: " + numInBin);
+                    row.push({value: numInBin + "", html: numInBin + ""});
                 }
                 const numPerfect = inBin(delivGrades, 100, 100);
-                row.push({value: numPerfect + '', html: numPerfect + ''});
+                row.push({value: numPerfect + "", html: numPerfect + ""});
                 st.addRow(row);
             }
         }
@@ -382,23 +382,23 @@ export class AdminGradesTab extends AdminPage {
         Log.info("AdminGradesTab::getGrades( .. ) - start");
         try {
             const start = Date.now();
-            const url = remote + '/portal/admin/grades';
+            const url = remote + "/portal/admin/grades";
             const options = AdminView.getOptions();
 
             const response = await fetch(url, options);
             if (response.status === 200) {
-                Log.trace('AdminGradesTab::getGrades(..) - 200 received');
+                Log.trace("AdminGradesTab::getGrades(..) - 200 received");
                 const json: GradeTransportPayload = await response.json();
-                // Log.trace('AdminView::handleStudents(..)  - payload: ' + JSON.stringify(json));
-                if (typeof json.success !== 'undefined' && Array.isArray(json.success)) {
-                    Log.trace('AdminGradesTab::getGrades(..)  - worked; took: ' + UI.took(start));
+                // Log.trace("AdminView::handleStudents(..)  - payload: " + JSON.stringify(json));
+                if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
+                    Log.trace("AdminGradesTab::getGrades(..)  - worked; took: " + UI.took(start));
                     return json.success;
                 } else {
-                    Log.trace('AdminGradesTab::getGrades(..)  - ERROR: ' + json.failure.message);
+                    Log.trace("AdminGradesTab::getGrades(..)  - ERROR: " + json.failure.message);
                     AdminView.showError(json.failure); // FailurePayload
                 }
             } else {
-                Log.trace('AdminGradesTab::getGrades(..)  - !200 received: ' + response.status);
+                Log.trace("AdminGradesTab::getGrades(..)  - !200 received: " + response.status);
                 const text = await response.text();
                 AdminView.showError(text);
             }
@@ -411,9 +411,9 @@ export class AdminGradesTab extends AdminPage {
     private static makeHTMLSafe(text: string): string {
         // https://stackoverflow.com/questions/14129953/how-to-encode-a-string-in-javascript-for-displaying-in-html/14130005
         return text
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
     }
 }

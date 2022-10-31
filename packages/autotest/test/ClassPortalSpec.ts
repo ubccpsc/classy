@@ -3,7 +3,7 @@ import "mocha";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
 import {AutoTestGradeTransport} from "@common/types/PortalTypes";
@@ -14,7 +14,7 @@ import {Course} from "@backend/Types";
 
 import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
 
-import "@common/test/GlobalSpec";
+import "@common/GlobalSpec";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();
@@ -234,7 +234,7 @@ describe("ClassPortal Service", () => {
                 closeTimestamp: 10000,
                 lateAutoTest: true,
             },
-            delivId: delivId,
+            // delivId: delivId,
         };
 
         const result: AutoTestResult = {
@@ -261,7 +261,7 @@ describe("ClassPortal Service", () => {
 
     it("Should not be able to send an invalid result.", async () => {
         const result = getResult("d0", "TESTrepo1", 50);
-        delete result.delivId; // REQUIRED field
+        delete result.input.target.delivId; // REQUIRED field
         const actual = await cp.sendResult(result);
         Log.test("Actual: " + JSON.stringify(actual));
 

@@ -1,7 +1,9 @@
 import * as dotenv from "dotenv";
-import Log, {LogLevel} from "./Log";
 
-const envLoadResult = dotenv.config({path: __dirname + '/../../.env'});
+import Log, {LogLevel} from "./Log";
+import Util from "@common/Util";
+
+const envLoadResult = dotenv.config({path: __dirname + "/../../../.env"});
 
 if (envLoadResult.error) {
     Log.error("Failed to parse .env " + envLoadResult.error);
@@ -56,6 +58,7 @@ export enum ConfigKey {
     autotestUrl = "autotestUrl",
     autotestPort = "autotestPort",
     autotestSecret = "autotestSecret",
+    autotestJobs = "autotestJobs",
 
     sslKeyPath = "sslKeyPath",
     sslCertPath = "sslCertPath",
@@ -110,7 +113,7 @@ export default class Config {
                 publichostname: process.env.PUBLICHOSTNAME,
 
                 hostDir: process.env.HOST_DIR,
-                postback: Boolean(process.env.AUTOTEST_POSTBACK),
+                postback: Util.toBoolean(process.env.AUTOTEST_POSTBACK),
                 persistDir: process.env.PERSIST_DIR,
                 dockerUid: process.env.UID,
                 hostsAllow: process.env.HOSTS_ALLOW,
@@ -160,7 +163,7 @@ export default class Config {
             // This is not a great place to sniff for the CI environment
             // but at least it should happen near the start of any execution.
             const ci = process.env.CI;
-            if (typeof ci !== 'undefined' && Boolean(ci) === true) {
+            if (typeof ci !== 'undefined' && Util.toBoolean(ci) === true) {
                 // CI instances should be INFO always
                 // trace emits too much text so the CI buffer does not save it all
                 Log.info("Config - Log::<init> - CI detected; changing to INFO");
@@ -176,6 +179,19 @@ export default class Config {
 
         } catch (err) {
             Log.error("Config::<init> - fatal error reading configuration file: " + err);
+        }
+    }
+
+    /**
+     * Checks if a property has been defined in in the current configuration.
+     *
+     * @param prop
+     */
+    public hasProp(prop: ConfigKey): boolean {
+        if (typeof this.config[prop] === "undefined") {
+            return false;
+        } else {
+            return true;
         }
     }
 

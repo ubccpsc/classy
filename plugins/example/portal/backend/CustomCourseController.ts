@@ -1,6 +1,7 @@
 import {CourseController} from "@backend/controllers/CourseController";
 import {IGitHubController} from "@backend/controllers/GitHubController";
 import {Deliverable, Person} from "@backend/Types";
+
 import Log from "@common/Log";
 
 import * as restify from "restify";

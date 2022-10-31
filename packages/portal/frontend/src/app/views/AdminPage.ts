@@ -19,14 +19,14 @@ export abstract class AdminPage implements IView {
      * @param opts
      * @returns {Promise<void>}
      */
-    public abstract async init(opts: any): Promise<void>;
+    public abstract init(opts: any): Promise<void>;
 
     public renderPage(pageName: string, opts: {}): void {
         Log.info("AdminPage::renderPage( " + pageName + ", ... ) - default implementation");
     }
 
     /**
-     * Pushes the page. If the page starts with ./ HTMLprefix is not added.
+     * Pushes the page. If the page starts with ./ HTML prefix is not added.
      *
      * @param {string} pageName
      * @param {{}} opts
@@ -34,7 +34,7 @@ export abstract class AdminPage implements IView {
      */
     public pushPage(pageName: string, opts: {}): Promise<void> {
         Log.info("AdminPage::pushPage( " + pageName + ", ... ) - start");
-        if (typeof opts !== 'object') {
+        if (typeof opts !== "object") {
             opts = {};
         }
         if (pageName.startsWith("./")) {
@@ -42,7 +42,7 @@ export abstract class AdminPage implements IView {
             return UI.pushPage(pageName, opts);
         } else {
             const prefix = Factory.getInstance().getHTMLPrefix();
-            return UI.pushPage(prefix + '/' + pageName, opts);
+            return UI.pushPage(prefix + "/" + pageName, opts);
         }
 
     }

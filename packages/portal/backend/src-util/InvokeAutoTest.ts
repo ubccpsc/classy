@@ -1,6 +1,6 @@
-import Config, {ConfigKey} from "../../../common/Config";
-import Log, {LogLevel} from "../../../common/Log";
-import Util from "../../../common/Util";
+import Config, {ConfigKey} from "@common/Config";
+import Log, {LogLevel} from "@common/Log";
+import Util from "@common/Util";
 
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {GitHubActions} from "../src/controllers/GitHubActions";

@@ -2,8 +2,8 @@
  * Created by rtholmes on 2018-02-23.
  */
 
-import Config from "../../../common/Config";
-import Log from "../../../common/Log";
+import Config from "@common/Config";
+import Log from "@common/Log";
 
 import BackendServer from "./server/BackendServer";
 

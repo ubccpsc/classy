@@ -6,7 +6,7 @@ import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 import {
     AutoTestAuthPayload,
     AutoTestConfigPayload,
@@ -73,6 +73,7 @@ describe("AutoTest Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(body));
         expect(response.status).to.equal(400);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
@@ -126,6 +127,7 @@ describe("AutoTest Routes", function () {
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
+        expect(body).to.not.be.null;
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
@@ -141,6 +143,7 @@ describe("AutoTest Routes", function () {
         } catch (err) {
             Log.test("ERROR: " + err);
         }
+        expect(response).to.not.be.null;
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(200);
         expect(response.body.success).to.not.be.undefined;
@@ -168,6 +171,7 @@ describe("AutoTest Routes", function () {
         } catch (err) {
             Log.test("ERROR: " + err);
         }
+        expect(response).to.not.be.null;
         Log.test(response.status + " -> " + JSON.stringify(response.body));
         expect(response.status).to.equal(400);
         expect(response.body.success).to.be.undefined;
@@ -207,6 +211,48 @@ describe("AutoTest Routes", function () {
         expect(body.success).to.be.undefined;
         expect(body.failure).to.not.be.undefined;
     });
+
+    it("Should accept a valid promotePush request", async function () {
+
+        let response = null;
+        const url = "/portal/at/promotePush";
+
+        const input = TestHarness.createContainerInput();
+        // input.delivId = TestHarness.DELIVID1;
+        // input.target.delivId = TestHarness.DELIVID1;
+        // input.target.repoId = TestHarness.DELIVIDPROJ;
+
+        const body = JSON.stringify(input);
+
+        try {
+            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+        } catch (err) {
+            Log.test("ERROR: " + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(200);
+        expect(response.body.success).to.not.be.undefined;
+        expect(response.body.success.shouldPromote).to.not.be.undefined;
+        // this is not great, but the default controller always returns false
+        expect(response.body.success.shouldPromote).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should not accept an invalid promotePush request", async function () {
+
+        let response = null;
+        const url = "/portal/at/promotePush";
+
+        const input = TestHarness.createContainerInput();
+        const body = JSON.stringify(input);
+
+        try {
+            response = await request(app).post(url).send(body).set("token", "BAD_TOKEN");
+        } catch (err) {
+            Log.test("ERROR: " + err);
+        }
+        Log.test(response.status + " -> " + JSON.stringify(response.body));
+        expect(response.status).to.equal(400);
+    }).timeout(TIMEOUT);
 
     it("Should reject an unauthorized isStaff request", async function () {
 

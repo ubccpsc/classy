@@ -72,8 +72,8 @@ All prior essential Classy server configurations, installations, and operations 
 3. Update the `PLUGIN` variable in the .env with the plugin name. (eg. `PLUGIN=default` becomes`PLUGIN=myPlugin`).
 4. Run `./helper-scripts/bootstrap-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.rconf` files into appropriate locations.
 5. Run `./opt/classy-scripts/fix-permissions`
-6. Run `docker-compose build` from root Classy directory to build Dockerized production project.
-7. Run `docker-compose up -d` to run Classy project in detatched mode in production.
+6. Run `docker compose build` from root Classy directory to build Dockerized production project.
+7. Run `docker compose up -d` to run Classy project in detatched mode in production.
 
 ## Portal Customization
 
@@ -183,7 +183,7 @@ SSH access must be requested to modify the .env file manually. Alternatively, th
 ```ascii
 
 
-                 `docker-compose up`
+                 `docker compose up`
            |---------------------------------
            |                                |
            |                                |
@@ -200,11 +200,11 @@ SSH access must be requested to modify the .env file manually. Alternatively, th
 
 ### Customizations
 
-If a docker-compose.override.yml file exists, it will be read on the `docker-compose build` and `docker-compose up` commands. Services will be overridden and/or extended from defaults.
+If a docker-compose.override.yml file exists, it will be read on the `docker compose build` and `docker compose up` commands. Services will be overridden and/or extended from defaults.
 
 ```ascii
 
-                 `docker-compose up`
+                 `docker compose up`
            |---------------------------------
            |                                |
            |                          -------------

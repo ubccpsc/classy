@@ -1,11 +1,9 @@
-import * as fs from "fs-extra";
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
+import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
+import {CommitTarget} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
-import Config, {ConfigKey} from "../../../../common/Config";
-import Log from "../../../../common/Log";
-
-import {AutoTestResult, IFeedbackGiven} from "../../../../common/types/AutoTestTypes";
-import {CommitTarget} from "../../../../common/types/ContainerTypes";
-import Util from "../../../../common/Util";
 import {IDataStore} from "../DataStore";
 
 /**
@@ -19,10 +17,15 @@ export class MockDataStore implements IDataStore {
 
     // NOTE: this creates temp space but does not use the files in autotest/test/githubAutoTestData
     private readonly dir = Config.getInstance().getProp(ConfigKey.persistDir);
-    private readonly RECORD_PATH = this.dir + "/outputRecords.json";
-    private readonly COMMENT_PATH = this.dir + "/commentRecords.json";
-    private readonly PUSH_PATH = this.dir + "/pushRecords.json";
-    private readonly FEEDBACK_PATH = this.dir + "/feedbackRecords.json";
+    // private readonly RECORD_PATH = this.dir + "/outputRecords.json";
+    // private readonly COMMENT_PATH = this.dir + "/commentRecords.json";
+    // private readonly PUSH_PATH = this.dir + "/pushRecords.json";
+    // private readonly FEEDBACK_PATH = this.dir + "/feedbackRecords.json";
+
+    private results: AutoTestResult[];
+    private comments: CommitTarget[];
+    private pushes: CommitTarget[];
+    private feedback: IFeedbackGiven[];
 
     constructor() {
         Log.info("MockDataStore::<init> - start; dir: " + this.dir);
@@ -32,22 +35,28 @@ export class MockDataStore implements IDataStore {
                 throw new Error("DataStore::<init> - persistDir must be specified in Config");
             }
 
-            fs.ensureDirSync(this.dir);
+            // fs.ensureDirSync(this.dir);
+            //
+            // // these are terrible, but .ensureFileSync doesn't tell us if we just created a new file
+            // // write an empty array to each file if it was just created above
+            // if (!fs.existsSync(this.RECORD_PATH)) {
+            //     fs.writeJSONSync(this.RECORD_PATH, []);
+            // }
+            // if (!fs.existsSync(this.COMMENT_PATH)) {
+            //     fs.writeJSONSync(this.COMMENT_PATH, []);
+            // }
+            // if (!fs.existsSync(this.PUSH_PATH)) {
+            //     fs.writeJSONSync(this.PUSH_PATH, []);
+            // }
+            // if (!fs.existsSync(this.FEEDBACK_PATH)) {
+            //     fs.writeJSONSync(this.FEEDBACK_PATH, []);
+            // }
+            // this.clearData();
 
-            // these are terrible, but .ensureFileSync doesn't tell us if we just created a new file
-            // write an empty array to each file if it was just created above
-            if (!fs.existsSync(this.RECORD_PATH)) {
-                fs.writeJSONSync(this.RECORD_PATH, []);
-            }
-            if (!fs.existsSync(this.COMMENT_PATH)) {
-                fs.writeJSONSync(this.COMMENT_PATH, []);
-            }
-            if (!fs.existsSync(this.PUSH_PATH)) {
-                fs.writeJSONSync(this.PUSH_PATH, []);
-            }
-            if (!fs.existsSync(this.FEEDBACK_PATH)) {
-                fs.writeJSONSync(this.FEEDBACK_PATH, []);
-            }
+            this.results = [];
+            this.comments = [];
+            this.pushes = [];
+            this.feedback = [];
         } catch (err) {
             Log.info("MockDataStore::<init> - ERROR: " + err);
         }
@@ -61,7 +70,8 @@ export class MockDataStore implements IDataStore {
         try {
             const start = Date.now();
             // read
-            const outRecords: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
+            // const outRecords: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
+            const outRecords: CommitTarget[] = this.pushes; // await fs.readJSON(this.PUSH_PATH);
 
             // find and return
             for (const record of outRecords) {
@@ -80,15 +90,18 @@ export class MockDataStore implements IDataStore {
     }
 
     public async savePush(info: CommitTarget): Promise<void> {
-        Log.info("MockDataStore::savePush(..) - start");
+        Log.info("MockDataStore::savePush(..) - repo: " + info.repoId +
+            "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA));
+
         try {
             const start = Date.now();
             // read
-            const records = await fs.readJSON(this.PUSH_PATH);
+            // const records = await fs.readJSON(this.PUSH_PATH);
+            const records = this.pushes; // await fs.readJSON(this.PUSH_PATH);
             // append
             records.push(info);
             // write
-            await fs.writeJSON(this.PUSH_PATH, records);
+            // await fs.writeJSON(this.PUSH_PATH, records);
             Log.info("MockDataStore::savePush(..) - done; #: " + records.length + "; took: " + Util.took(start));
         } catch (err) {
             Log.error("MockDataStore::savePush(..) - ERROR: " + err);
@@ -96,16 +109,20 @@ export class MockDataStore implements IDataStore {
     }
 
     public async saveComment(info: CommitTarget): Promise<void> {
-        // Log.info("MockDataStore::saveComment(..) - start");
+        Log.info("MockDataStore::saveComment(..) - repo: " + info.repoId +
+            "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA));
+
         try {
             const start = Date.now();
 
             // read
-            const records = await fs.readJSON(this.COMMENT_PATH);
+            // const records = await fs.readJSON(this.COMMENT_PATH);
+            // const records = this.comments; //await fs.readJSON(this.COMMENT_PATH);
             // append
-            records.push(info);
+            // records.push(info);
+            this.comments.push(info);
             // write
-            await fs.writeJSON(this.COMMENT_PATH, records);
+            // await fs.writeJSON(this.COMMENT_PATH, records);
 
             Log.info("MockDataStore::saveComment(..) - done; took: " + Util.took(start));
         } catch (err) {
@@ -118,7 +135,8 @@ export class MockDataStore implements IDataStore {
         try {
             const start = Date.now();
             // read
-            const outRecords: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
+            // const outRecords: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
+            const outRecords: CommitTarget[] = this.comments; // await fs.readJSON(this.COMMENT_PATH);
 
             // find and return
             for (const record of outRecords) {
@@ -138,15 +156,19 @@ export class MockDataStore implements IDataStore {
     }
 
     public async saveResult(outputInfo: AutoTestResult): Promise<void> {
-        Log.info("MockDataStore::saveResult(..) - start");
+        Log.info("MockDataStore::saveResult(..) - repo: " + outputInfo.repoId +
+            "; deliv: " + outputInfo.delivId + "; sha: " + Util.shaHuman(outputInfo.commitSHA));
+
         try {
             const start = Date.now();
             // read
-            const outRecords = await fs.readJSON(this.RECORD_PATH);
+            // const outRecords = await fs.readJSON(this.RECORD_PATH);
+            // const outRecords = this.records; // await fs.readJSON(this.RECORD_PATH);
             // append
-            outRecords.push(outputInfo);
+            // outRecords.push(outputInfo);
+            this.results.push(outputInfo);
             // write
-            await fs.writeJSON(this.RECORD_PATH, outRecords);
+            // await fs.writeJSON(this.RECORD_PATH, outRecords);
 
             Log.info("MockDataStore::saveResult(..) - done; took: " + Util.took(start));
         } catch (err) {
@@ -160,11 +182,13 @@ export class MockDataStore implements IDataStore {
             const start = Date.now();
 
             // read
-            const outRecords: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            // const outRecords: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            const outRecords: AutoTestResult[] = this.results;
             Log.info("MockDataStore::getResult(..) - # records: " + outRecords.length);
             // find and return
             for (const record of outRecords) {
-                if (record !== null && typeof record.delivId !== "undefined" && record.delivId === delivId && record.repoId === repoId) {
+                if (record !== null && typeof record.delivId !== "undefined" &&
+                    record.delivId === delivId && record.repoId === repoId) {
                     Log.info("MockDataStore::getResult(..) - found; took: " + Util.took(start));
                     return record;
                 }
@@ -178,15 +202,19 @@ export class MockDataStore implements IDataStore {
     }
 
     public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
-        // Log.info("MockDataStore::saveFeedbackGivenRecord(..) - start");
+        Log.info("MockDataStore::saveFeedbackGivenRecord(..) - start" +
+            "; deliv: " + info.delivId + "; commit: " + info.commitURL);
+
         try {
             const start = Date.now();
             // read
-            const records = await fs.readJSON(this.FEEDBACK_PATH);
+            // const records = await fs.readJSON(this.FEEDBACK_PATH);
+            // const records = this.feedback; // await fs.readJSON(this.FEEDBACK_PATH);
             // append
-            records.push(info);
+            // records.push(info);
+            this.feedback.push(info);
             // write
-            await fs.writeJSON(this.FEEDBACK_PATH, records);
+            // await fs.writeJSON(this.FEEDBACK_PATH, records);
 
             Log.info("MockDataStore::saveFeedbackGivenRecord(..) - done; took: " + Util.took(start));
         } catch (err) {
@@ -199,7 +227,8 @@ export class MockDataStore implements IDataStore {
         let ret: IFeedbackGiven | null = null;
         try {
             const start = Date.now();
-            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            // const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            const records: IFeedbackGiven[] = this.feedback;
             const shortList: IFeedbackGiven[] = [];
             for (const req of records) {
                 if (req !== null && req.delivId === delivId && req.personId === userName && req.kind === kind) {
@@ -226,6 +255,9 @@ export class MockDataStore implements IDataStore {
 
     public async getFeedbackGivenRecordForCommit(target: CommitTarget): Promise<IFeedbackGiven | null> {
         // Log.trace("MockDataStore::getFeedbackGivenRecordForCommit(..) - start");
+        Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - repo: " + target.repoId +
+            "; deliv: " + target.delivId + "; sha: " + Util.shaHuman(target.commitSHA));
+
         let ret: IFeedbackGiven | null = null;
         try {
             const commitURL = target.commitURL;
@@ -233,7 +265,8 @@ export class MockDataStore implements IDataStore {
             const userName = target.personId;
 
             const start = Date.now();
-            const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            // const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            const records: IFeedbackGiven[] = this.feedback;
             for (const feedback of records) {
                 if (feedback !== null && feedback.commitURL === commitURL &&
                     feedback.personId === userName && feedback.delivId === delivId) {
@@ -243,7 +276,7 @@ export class MockDataStore implements IDataStore {
                 }
             }
             if (ret === null) {
-                Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - not found in disk record; took: " + Util.took(start));
+                Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - not found; took: " + Util.took(start));
             }
         } catch (err) {
             Log.error("MockDataStore::getFeedbackGivenRecordForCommit(..) - ERROR: " + err);
@@ -262,14 +295,18 @@ export class MockDataStore implements IDataStore {
 
         try {
             Log.info("MockDataStore::getAllData() - before records");
-            const records: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
-            Log.info("MockDataStore::getAllData() - before comments; # records: " + records.length);
-            const comments: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
-            Log.info("MockDataStore::getAllData() - before pushes; # comments: " + comments.length);
-            const pushes: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
-            Log.info("MockDataStore::getAllData() - before feedback; # pushes: " + pushes.length);
-            const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
-            Log.info("MockDataStore::getAllData() - after all reading; # feedback: " + feedback.length);
+            // const records: AutoTestResult[] = await fs.readJSON(this.RECORD_PATH);
+            const records: AutoTestResult[] = this.results;
+            Log.info("MockDataStore::getAllData() - # results: " + records.length);
+            // const comments: CommitTarget[] = await fs.readJSON(this.COMMENT_PATH);
+            const comments: CommitTarget[] = this.comments;
+            Log.info("MockDataStore::getAllData() - # comments: " + comments.length);
+            // const pushes: CommitTarget[] = await fs.readJSON(this.PUSH_PATH);
+            const pushes: CommitTarget[] = this.pushes;
+            Log.info("MockDataStore::getAllData() -  # pushes: " + pushes.length);
+            // const feedback: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
+            const feedback: IFeedbackGiven[] = this.feedback;
+            Log.info("MockDataStore::getAllData() - # feedback: " + feedback.length);
             return {records, comments, pushes, feedback};
         } catch (err) {
             throw new Error("MockDataStore::getAllData() - error populating data: " + err.message);
@@ -281,25 +318,29 @@ export class MockDataStore implements IDataStore {
         const testname = Config.getInstance().getProp(ConfigKey.testname);
         if (Config.getInstance().getProp(ConfigKey.name) === testname) {
             // do it
-            fs.removeSync(this.RECORD_PATH);
-            fs.removeSync(this.COMMENT_PATH);
-            fs.removeSync(this.PUSH_PATH);
-            fs.removeSync(this.FEEDBACK_PATH);
+            // fs.removeSync(this.RECORD_PATH);
+            // fs.removeSync(this.COMMENT_PATH);
+            // fs.removeSync(this.PUSH_PATH);
+            // fs.removeSync(this.FEEDBACK_PATH);
+            //
+            // if (!fs.existsSync(this.RECORD_PATH)) {
+            //     fs.writeJSONSync(this.RECORD_PATH, []);
+            // }
+            // if (!fs.existsSync(this.COMMENT_PATH)) {
+            //     fs.writeJSONSync(this.COMMENT_PATH, []);
+            // }
+            // if (!fs.existsSync(this.PUSH_PATH)) {
+            //     fs.writeJSONSync(this.PUSH_PATH, []);
+            // }
+            // if (!fs.existsSync(this.FEEDBACK_PATH)) {
+            //     fs.writeJSONSync(this.FEEDBACK_PATH, []);
+            // }
 
-            if (!fs.existsSync(this.RECORD_PATH)) {
-                fs.writeJSONSync(this.RECORD_PATH, []);
-            }
-            if (!fs.existsSync(this.COMMENT_PATH)) {
-                fs.writeJSONSync(this.COMMENT_PATH, []);
-            }
-            if (!fs.existsSync(this.PUSH_PATH)) {
-                fs.writeJSONSync(this.PUSH_PATH, []);
-            }
-            if (!fs.existsSync(this.FEEDBACK_PATH)) {
-                fs.writeJSONSync(this.FEEDBACK_PATH, []);
-            }
-
-            Log.info("MockDataStore::clearData() - files removed");
+            this.results = [];
+            this.comments = [];
+            this.pushes = [];
+            this.feedback = [];
+            Log.info("MockDataStore::clearData() - all data files removed");
         } else {
             throw new Error("MockDataStore::clearData() - can only be called on test configurations");
         }

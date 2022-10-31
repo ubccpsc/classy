@@ -5,27 +5,18 @@ import * as request from "supertest";
 
 import Log from "@common/Log";
 import {AuthTransportPayload} from "@common/types/PortalTypes";
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";
 
-// const loadFirst = require("../xRunLast/TestDatasetGeneratorSpec");
-
 describe("Auth Routes", function () {
 
-    // const TIMEOUT = 1000 * 10;
-
     let app: restify.Server = null;
-
     let server: BackendServer = null;
 
-    // let oldOrg: string | null = null;
     before(async () => {
         Log.test("AuthRoutes::before - start");
-
-        // oldOrg = Config.getInstance().getProp(ConfigKey.org);
-        // Config.getInstance().setProp(ConfigKey.name, ConfigCourses.classytest); // force testing environment
 
         await TestHarness.suiteBefore("Auth Routes");
 

@@ -1,19 +1,17 @@
 import {expect} from "chai";
 import "mocha";
 
-import {TestHarness} from "@common/test/TestHarness";
+import {TestHarness} from "@common/TestHarness";
 
 import {AuthController} from "@backend/controllers/AuthController";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {Auth} from "@backend/Types";
 
-import "@common/test/GlobalSpec"; // load first
+import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
 describe("AuthController", () => {
-
-    const TIMEOUT = 10000;
 
     let ac: AuthController;
 
@@ -38,6 +36,50 @@ describe("AuthController", () => {
     it("Should not validate a user who does not exist.", async () => {
         const isValid = await ac.isValid("aUserwhoDoesNotExist_sadmewnmdsv", ""); // not registered
         expect(isValid).to.be.false;
+    });
+
+    it("Should be able to get a student with an unknown kind.", async () => {
+        const person = TestHarness.getPerson(TestHarness.REALUSER1.id);
+        person.kind = null; // set to null intentionally
+
+        const priv = await ac.personPriviliged(person);
+        expect(priv.isAdmin).to.not.be.undefined;
+        expect(priv.isStaff).to.not.be.undefined;
+        expect(priv.isAdmin).to.be.false;
+        expect(priv.isStaff).to.be.false;
+    });
+
+    it("Should be able to get an admin with an unknown kind.", async () => {
+        const person = TestHarness.getPerson(TestHarness.ADMIN1.github);
+        person.kind = null; // set to null intentionally
+
+        const priv = await ac.personPriviliged(person);
+        expect(priv.isAdmin).to.not.be.undefined;
+        expect(priv.isStaff).to.not.be.undefined;
+        expect(priv.isAdmin).to.be.true;
+        expect(priv.isStaff).to.be.false;
+    });
+
+    it("Should be able to get a staff with an unknown kind.", async () => {
+        const person = TestHarness.getPerson(TestHarness.STAFF1.github);
+        person.kind = null; // set to null intentionally
+
+        const priv = await ac.personPriviliged(person);
+        expect(priv.isAdmin).to.not.be.undefined;
+        expect(priv.isStaff).to.not.be.undefined;
+        expect(priv.isAdmin).to.be.false;
+        expect(priv.isStaff).to.be.true;
+    });
+
+    it("Should be able to get an adminstaff with an unknown kind.", async () => {
+        const person = TestHarness.getPerson(TestHarness.ADMINSTAFF1.github);
+        person.kind = null; // set to null intentionally
+
+        const priv = await ac.personPriviliged(person);
+        expect(priv.isAdmin).to.not.be.undefined;
+        expect(priv.isStaff).to.not.be.undefined;
+        expect(priv.isAdmin).to.be.true;
+        expect(priv.isStaff).to.be.true;
     });
 
     it("Should not validate a user who exists but does not have a valid token.", async () => {
@@ -122,7 +164,7 @@ describe("AuthController", () => {
         const isPriv = await ac.isPrivileged(TestHarness.USER1.id, TestHarness.REALTOKEN);
         expect(isPriv.isAdmin).to.be.false;
         expect(isPriv.isStaff).to.be.false;
-    }).timeout(TIMEOUT);
+    }).timeout(TestHarness.TIMEOUT);
 
     it("Should be able to logout an admin user.", async () => {
         const dc = DatabaseController.getInstance();
@@ -169,62 +211,4 @@ describe("AuthController", () => {
         workedEnough = await ac.removeAuthentication("totallyMADEUPname12388291900d");
         expect(workedEnough).to.be.false; // can"t
     });
-
-    // TODO: implement auth controller tests
-    /*
-    let rc: RepositoryController;
-    let tc: TeamController;
-    let pc: PersonController;
-
-    before(async () => {
-    });
-
-    beforeEach(() => {
-        tc = new TeamController();
-        rc = new RepositoryController();
-        pc = new PersonController();
-    });
-
-    it("Should be able to get all repositories, even if there are none.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(0);
-    });
-
-    it("Should be able to create a repo.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(0);
-
-        let team = await tc.getTeam(Test.ORGNAME, Test.TEAMNAME1);
-        expect(team).to.not.be.null;
-
-        let repo = await rc.createRepository(Test.ORGNAME, Test.REPONAME1, [team], {});
-        expect(repo).to.not.be.null;
-
-        repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-    });
-
-    it("Should not create a repo a second time.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-
-        let team = await tc.getTeam(Test.ORGNAME, Test.TEAMNAME1);
-        expect(team).to.not.be.null;
-
-        let repo = await rc.createRepository(Test.ORGNAME, Test.REPONAME1, [team], {});
-        expect(repo).to.not.be.null;
-
-        repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-    });
-
-    it("Should be able to find all repos for a user.", async () => {
-        let repos = await rc.getAllRepos(Test.ORGNAME);
-        expect(repos).to.have.lengthOf(1);
-
-        const person = await pc.getPerson(Test.ORGNAME, Test.USERNAME1);
-        repos = await rc.getReposForPerson(person);
-        expect(repos).to.have.lengthOf(1);
-    });
-    */
 });

@@ -1,12 +1,12 @@
-import * as parse from 'csv-parse';
-import * as fs from 'fs';
-import * as https from 'https';
+import * as parse from "csv-parse";
+import * as fs from "fs";
+import * as https from "https";
 import fetch, { RequestInit } from "node-fetch";
 
-import Config, {ConfigKey} from "../../../../../common/Config";
-import Log from '../../../../../common/Log';
+import Config, {ConfigKey} from "@common/Config";
+import Log from "@common/Log";
 
-import {ClasslistChangesTransport, ClasslistTransport, StudentTransport} from "../../../../../common/types/PortalTypes";
+import {ClasslistChangesTransport, ClasslistTransport, StudentTransport} from "@common/types/PortalTypes";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {PersonController} from "../../controllers/PersonController";
 import {AuditLabel, Grade, Person, PersonKind} from "../../Types";

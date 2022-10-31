@@ -42,7 +42,7 @@ export class Factory {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
-                // NOTE: we can't reference Config here because this is run client side
+                // NOTE: we can"t reference Config here because this is run client side
                 // which does not have access to the .env file
                 // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
 
@@ -118,12 +118,12 @@ export class Factory {
      * Returns the prefix directory for the HTML files specific to the course.
      *
      * The required approach is to just put your html files in the
-     * 'html/<courseName>' directory. You will also need to create a
+     * "html/<courseName>" directory. You will also need to create a
      * CustomCourseController (even just an empty one that extends
      * DefaultCourseController).
      *
      * Examples of what these files can look like can be found in the test
-     * implementations found in 'html/custom/' by looking at Default files.
+     * implementations found in "html/custom/" by looking at Default files.
      *
      * While you can have many files in this directory, several are required:
      *   - landing.html - This is the main course-specific landing page
