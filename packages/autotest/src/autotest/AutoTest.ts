@@ -377,7 +377,7 @@ export abstract class AutoTest implements IAutoTest {
     protected isCommitExecuting(input: ContainerInput): boolean {
         try {
             for (const execution of this.jobs) {
-                if (execution.target.commitURL === input.target.commitURL &&
+                if (execution.target.commitSHA === input.target.commitSHA &&
                     execution.target.delivId === input.target.delivId) {
                     return true;
                 }

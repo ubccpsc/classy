@@ -109,7 +109,7 @@ export class Queue {
     public indexOf(info: ContainerInput): number {
         for (let i = 0; i < this.data.length; i++) {
             const queued = this.data[i];
-            if (queued.target.commitURL === info.target.commitURL && queued.target.delivId === info.target.delivId) {
+            if (queued.target.commitSHA === info.target.commitSHA && queued.target.delivId === info.target.delivId) {
                 return i;
             }
         }
