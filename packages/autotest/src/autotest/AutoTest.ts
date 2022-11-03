@@ -369,7 +369,10 @@ export abstract class AutoTest implements IAutoTest {
     protected abstract processExecution(data: AutoTestResult): Promise<void>;
 
     /**
-     * Returns whether the <commitURL, delivId> is currently executing.
+     * Returns whether the <commitSHA, delivId> is currently executing.
+     *
+     * Note: it is possible for the same commitSHA to come from two different
+     * branches simultaneously (e.g., this often happens with merge commits).
      *
      * @param {ContainerInput} input
      * @returns {boolean} true if a commit is executing on any of the queues

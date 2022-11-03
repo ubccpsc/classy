@@ -3,6 +3,7 @@ import * as fs from "fs-extra";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {ContainerInput} from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
 export class Queue {
 
@@ -101,7 +102,8 @@ export class Queue {
     }
 
     /**
-     * Returns the index of a given container.
+     * Returns the index of a given container where equality is
+     * determined by identical <commitSHA, delivId>.
      *
      * @param {ContainerInput} info
      * @returns {number} index of the provided SHA, or -1 if not present
@@ -109,7 +111,8 @@ export class Queue {
     public indexOf(info: ContainerInput): number {
         for (let i = 0; i < this.data.length; i++) {
             const queued = this.data[i];
-            if (queued.target.commitSHA === info.target.commitSHA && queued.target.delivId === info.target.delivId) {
+            if (queued.target.commitSHA === info.target.commitSHA &&
+                queued.target.delivId === info.target.delivId) {
                 return i;
             }
         }
@@ -198,15 +201,15 @@ export class Queue {
             // put executions that were running but not done on the front of the queue
             for (const slot of store.slots) {
                 Log.info("Queue::load() - queue: " + this.name +
-                    "; add executing to HEAD; repo: " + slot.target.repoId + "; SHA: " + slot.target.commitSHA);
-                this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true anyways)
+                    "; add executing to HEAD; repo: " + slot.target.repoId + "; SHA: " + Util.shaHuman(slot.target.commitSHA));
+                this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true)
             }
 
-            // push all other planned executions to the end of the queue
+            // push all remaining executions to the end of the queue
             for (const data of store.data) {
                 Log.info("Queue::load() - queue: " + this.name +
-                    "; add queued to TAIL: " + data.target.commitURL);
-                this.push(data); // add to the head of the queued list (if we are restarting this will always be true anyways)
+                    "; add queued to TAIL: " + Util.shaHuman(data.target.commitSHA));
+                this.push(data); // add to the head of the queued list (if we are restarting this will always be true)
             }
             // Log.info("Queue::load() - rehydrating: " + this.name + " - done");
         } catch (err) {
