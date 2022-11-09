@@ -1108,11 +1108,12 @@ export default class AdminRoutes implements IREST {
 
         const userName = AdminRoutes.getUser(req);
         AdminRoutes.handleTeamAddMember(userName, teamId, memberId).then(function (success) {
-            Log.trace("AdminRoutes::deleteTeam(..) - done; success", success);
+            const addedMembers = JSON.stringify(success.people);
+            Log.info("AdminRoutes::teamAddMember(..) - done; team: " + teamId + "; members: " + addedMembers);
 
             const payload: Payload = {
                 success: {
-                    message: "Team " + teamId + " updated; members: " + JSON.stringify(success.people)
+                    message: "Team " + teamId + " updated; members: " + addedMembers
                 }
             };
             res.send(200, payload); // return as text rather than json
@@ -1181,7 +1182,7 @@ export default class AdminRoutes implements IREST {
 
         const userName = AdminRoutes.getUser(req);
         AdminRoutes.handleTeamRemoveMember(userName, teamId, memberId).then(function (success) {
-            Log.trace("AdminRoutes::teamRemoveMember(..) - done; success:", success);
+            Log.info("AdminRoutes::teamRemoveMember(..) - done; team: " + teamId + "; member: " + memberId); // + "; success:", success);
 
             const payload: Payload = {
                 success: {

@@ -100,10 +100,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
                 const sha = Util.shaHuman(info.commitSHA);
                 if (shouldPromotePush === true) {
-                    Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to exp queue`);
+                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to exp queue`);
                     this.addToExpressQueue(input);
                 } else {
-                    Log.info(`GitHubAutoTest::handlePushEvent(${sha}) - Adding to std queue`);
+                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to std queue`);
                     this.addToStandardQueue(input);
                 }
 
@@ -597,7 +597,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 // intentionally skips calling saveFeedback (because the request should be free)
                 if (futureTarget === true) {
                     Log.info(`GitHubAutoTest::processExecution() - postback true for futureTarget` +
-                        `removing ${data.input.target.personId} from scheduleQueue.`);
+                        `removing: ${data.input.target.personId} from scheduleQueue.`);
                 }
                 // do this first, does not count against quota
                 Log.trace("GitHubAutoTest::processExecution() - postback: true; deliv: " +
