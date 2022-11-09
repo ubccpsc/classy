@@ -1,4 +1,5 @@
-import {parse} from "csv-parse";
+import * as parse from "csv-parse";
+// import {parse} from "csv-parse";
 import * as fs from "fs";
 
 import Log from "@common/Log";
