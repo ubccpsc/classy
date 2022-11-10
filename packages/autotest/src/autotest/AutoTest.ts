@@ -356,11 +356,10 @@ export abstract class AutoTest implements IAutoTest {
             this.lowQueue.load();
             this.expressQueue.load();
             const numQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
-            Log.info("AutoTest::loadQueues() - done; numJobs loaded: " + numQueued);
+            Log.info("AutoTest::loadQueues() - queues loaded; # queued: " + numQueued);
 
             // read the executing jobs and push onto the head of the express queue so they will start right away
             const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
-
             const store = fs.readJSONSync(slotsFName, {throws: false});
             if (store?.data?.length === undefined) {
                 // read failed; skip hydrating
@@ -368,11 +367,11 @@ export abstract class AutoTest implements IAutoTest {
             } else {
 
                 // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
-                Log.info("AutoTest::loadQueues() - rehydrating executions; #jobs: " + store.data.length);
+                Log.info("AutoTest::loadQueues() - jobs loaded; # jobs: " + store.data.length);
 
                 // put executions that were running but not done on the front of the queue
                 for (const job of store.data) {
-                    Log.info("AutoTest::loadQueues() - rehydrating; add job to HEAD; repo: " +
+                    Log.info("AutoTest::loadQueues() - adding job to HEAD; repo: " +
                         job.target.repoId + "; SHA: " + Util.shaHuman(job.target.commitSHA));
                     this.expressQueue.pushFirst(job);
                 }
@@ -381,6 +380,7 @@ export abstract class AutoTest implements IAutoTest {
             Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
         }
         this.tick(); // start any jobs that were loaded
+        Log.info("AutoTest::loadQueues() - done");
     }
 
     /**
