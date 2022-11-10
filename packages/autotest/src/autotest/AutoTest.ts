@@ -12,6 +12,7 @@ import {IDataStore} from "./DataStore";
 import {GradingJob} from "./GradingJob";
 import {MockGradingJob} from "./mocks/MockGradingJob";
 import {Queue} from "./Queue";
+import * as fs from "fs-extra";
 
 export interface IAutoTest {
 
@@ -333,6 +334,13 @@ export abstract class AutoTest implements IAutoTest {
                 this.expressQueue.persist() // await in Promise.all
             ];
             await Promise.all(writing);
+
+            // we have persisted the queues, but not the executing jobs
+            fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + "/queues");
+            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
+            const jobs = {data: this.jobs};
+            await fs.writeJSON(slotsFName, jobs);
+
             Log.trace("AutoTest::persistQueues() - done; took: " + Util.took(start));
             return true;
         } catch (err) {
@@ -348,7 +356,27 @@ export abstract class AutoTest implements IAutoTest {
             this.lowQueue.load();
             this.expressQueue.load();
             const numQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
-            Log.info("AutoTest::loadQueues() - done; numJobs: " + numQueued);
+            Log.info("AutoTest::loadQueues() - done; numJobs loaded: " + numQueued);
+
+            // read the executing jobs and push onto the head of the express queue so they will start right away
+            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
+
+            const store = fs.readJSONSync(slotsFName, {throws: false});
+            if (store?.data?.length === undefined) {
+                // read failed; skip hydrating
+                Log.info("AutoTest::loadQueues() - rehydrating jobs skipped");
+            } else {
+
+                // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
+                Log.info("AutoTest::loadQueues() - rehydrating executions; #jobs: " + store.data.length);
+
+                // put executions that were running but not done on the front of the queue
+                for (const job of store.data) {
+                    Log.info("AutoTest::loadQueues() - rehydrating; add job to HEAD; repo: " +
+                        job.target.repoId + "; SHA: " + Util.shaHuman(job.target.commitSHA));
+                    this.expressQueue.pushFirst(job);
+                }
+            }
         } catch (err) {
             Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
         }

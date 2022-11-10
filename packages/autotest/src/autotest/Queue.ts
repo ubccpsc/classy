@@ -139,7 +139,7 @@ export class Queue {
      * Does _NOT_ include executing jobs, as these could be placed
      * there by the scheduler, not by the requester (e.g., a standard
      * job could be placed on the express queue because there is a free
-     * slot, this placement should not stop the requester from having
+     * job, this placement should not stop the requester from having
      * a future request be put on the express queue while the non-requested
      * one is evaluated).
      *
@@ -171,13 +171,8 @@ export class Queue {
 
     public async persist(): Promise<boolean> {
         try {
-            // Log.trace("Queue::persist() - saving: " + this.name + " to: " + this.persistDir +
-            //     " # slots: " + this.slots.length + "; # data: " + this.data.length);
-
-            // push current elements back onto the front of the stack
             const store = {data: this.data};
             await fs.writeJSON(this.persistDir, store);
-
             return true;
         } catch (err) {
             Log.error("Queue::persist() - ERROR: " + err.message);
@@ -187,25 +182,16 @@ export class Queue {
 
     public load() {
         try {
-            // this happens so infrequently, we will do it synchronously
+            // loading happens infrequently, do it synchronously
             const store = fs.readJSONSync(this.persistDir, {throws: false});
-            if (store?.slots?.length === undefined) {
+            if (store?.data?.length === undefined) {
                 // read failed; skip hydrating
                 Log.info("Queue::load() - rehydrating: " + this.name + " skipped");
                 return;
             }
-            // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
-            Log.info("Queue::load() - rehydrating: " +
-                this.name + "; # slots: " + store.slots.length + "; # data: " + store.data.length);
+            Log.info("Queue::load() - rehydrating: " + this.name + "; # data: " + store.data.length);
 
-            // put executions that were running but not done on the front of the queue
-            for (const slot of store.slots) {
-                Log.info("Queue::load() - queue: " + this.name +
-                    "; add executing to HEAD; repo: " + slot.target.repoId + "; SHA: " + Util.shaHuman(slot.target.commitSHA));
-                this.pushFirst(slot); // add to the head of the queued list (if we are restarting this will always be true)
-            }
-
-            // push all remaining executions to the end of the queue
+            // push all loaded executions on the end of the queue
             for (const data of store.data) {
                 Log.info("Queue::load() - queue: " + this.name +
                     "; add queued to TAIL: " + Util.shaHuman(data.target.commitSHA));
