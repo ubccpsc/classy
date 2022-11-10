@@ -291,7 +291,7 @@ export class GitHubActions implements IGitHubActions {
 
         if (forceReal === true) {
             Log.test("GitHubActions::getInstance( true ) - returning live GitHubActions");
-            return new GitHubActions(); // don"t need to cache this since it is backed by GitHub instead of an in-memory cache
+            return new GitHubActions(); // do not need to cache this since it is backed by GitHub instead of an in-memory cache
         }
 
         if (GitHubActions.instance === null) {
@@ -762,7 +762,7 @@ export class GitHubActions implements IGitHubActions {
         try {
             await GitHubActions.checkDatabase(null, teamName);
 
-            const teamNum = await this.getTeamNumber(teamName); // be conservative, don"t use TeamController on purpose
+            const teamNum = await this.getTeamNumber(teamName); // be conservative, do not use TeamController on purpose
             if (teamNum > 0) {
                 Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - success; exists: " + teamNum);
                 return {teamName: teamName, githubTeamNumber: teamNum};
@@ -1123,7 +1123,7 @@ export class GitHubActions implements IGitHubActions {
         const that = this;
         const start = Date.now();
 
-        // if we don"t need to do this step, just skip it rather than crashing later on
+        // if we do not need to do this step, just skip it rather than crashing later on
         if (typeof importRepo === "undefined" || typeof studentRepo === "undefined" ||
             importRepo === null || studentRepo === null ||
             importRepo === "" || studentRepo === "") {
@@ -1513,7 +1513,7 @@ export class GitHubActions implements IGitHubActions {
 
         try {
             // Check if permission is one of: {push, pull}
-            // We don"t want to be able to grant a team admin access!
+            // We do not want to be able to grant a team admin access!
             if (permission !== "pull" && permission !== "push") {
                 const msg = "GitHubAction::setRepoPermission(..) - ERROR, Invalid permission: " + permission;
                 Log.error(msg);
@@ -1543,7 +1543,7 @@ export class GitHubActions implements IGitHubActions {
                 const body = await response.json() as any;
                 Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
                 for (const team of body) {
-                    // Don"t change teams that have admin permission
+                    // Do not change teams that have admin permission
                     if (team.permission !== "admin") {
                         Log.info("GitHubAction::setRepoPermission(..) - set team: " + team.name + " to " + permission);
                         const permissionUri = this.apiPath + "/teams/" + team.id + "/repos/" + this.org + "/" + repoName;

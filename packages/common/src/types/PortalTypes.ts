@@ -264,6 +264,13 @@ export interface ClassyConfigurationTransport {
     deliverableIds: string[];
 }
 
+export interface AutoTestStatus {
+    executing: number;
+    exp: number;
+    std: number;
+    low: number;
+}
+
 export interface AutoTestPersonIdTransport {
     personId: string | null;
 }

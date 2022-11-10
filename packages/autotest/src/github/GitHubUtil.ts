@@ -136,7 +136,7 @@ export class GitHubUtil {
 
             Log.trace("GitHubUtil::processComment(..) - 3");
 
-            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they can"t add requests to a past comment
+            // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they cannot add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
 
             // need to get this from portal backend (this is a gitHubId, not a personId)

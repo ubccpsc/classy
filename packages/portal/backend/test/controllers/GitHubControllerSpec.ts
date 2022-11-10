@@ -193,7 +193,7 @@ describe("GitHubController", () => {
         expect(success).to.be.true;
     }).timeout(TestHarness.TIMEOUTLONG);
 
-    // doesn"t actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
+    // does not actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
     // it("Should not be able to create a repo with an invalid name.", async function() {
     //     const name = ""; // // repo names must have length 1 on github
     //     const importURL = "https://github.com/SECapstone/capstone";
@@ -316,7 +316,7 @@ describe("GitHubController", () => {
         ex = null;
         try {
             const team: any = {id: TestHarness.TEAMNAME3, personIds: [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id]};
-            // try to release a repo with a team that doesn"t exist
+            // try to release a repo with a team that does not exist
             res = await gc.releaseRepository(allRepos[1], [team], false);
             expect(res).to.be.false;
         } catch (err) {

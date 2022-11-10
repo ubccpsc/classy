@@ -300,7 +300,7 @@ export default class GeneralRoutes implements IREST {
         const teamTrans: TeamFormationTransport = req.params;
         GeneralRoutes.performPostTeam(user, token, teamTrans).then(function (team) {
             Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-            const payload: TeamTransportPayload = {success: [team]}; // really shouldn"t be an array, but it beats having another type
+            const payload: TeamTransportPayload = {success: [team]}; // really should not be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function (err) {
@@ -389,7 +389,7 @@ export default class GeneralRoutes implements IREST {
                 throw new Error("Users cannot form teams they are not going to join.");
             }
 
-            // make sure all users aren"t already on teams
+            // make sure all users are not already on teams
             for (const person of people) {
                 const teams = await tc.getTeamsForPerson(person);
                 for (const aTeam of teams) {

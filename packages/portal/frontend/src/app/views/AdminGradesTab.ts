@@ -21,7 +21,7 @@ export class AdminGradesTab extends AdminPage {
     public async init(opts: any): Promise<void> {
         Log.info("AdminGradesTab::init(..) - start");
 
-        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
+        // NOTE: this could consider if studentListTable has children, and if they do, do not refresh
         document.getElementById("gradesListTable").innerHTML = ""; // clear target
         document.getElementById("gradesSummaryTable").innerHTML = ""; // clear target
 

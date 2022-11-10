@@ -34,22 +34,22 @@ export default class BackendServer {
      * @returns {Server}
      */
     public getServer(): restify.Server {
-        Log.trace('BackendServer::getServer()');
+        Log.trace("BackendServer::getServer()");
         return this.rest;
     }
 
     /**
-     * Stops the server. Again returns a promise so we know when the connections have
-     * actually been fully closed and the port has been released.
+     * Stops the server. Returns a promise so that we know when the connections
+     * have actually been fully closed and the port has been released.
      *
      * @returns {Promise<boolean>}
      */
     public stop(): Promise<boolean> {
-        Log.info('BackendServer::stop() - start');
+        Log.info("BackendServer::stop() - start");
         const that = this;
-        return new Promise(function(fulfill) {
-            that.rest.close(function() {
-                Log.info('BackendServer::stop() - done');
+        return new Promise(function (fulfill) {
+            that.rest.close(function () {
+                Log.info("BackendServer::stop() - done");
                 fulfill(true);
             });
         });
@@ -57,30 +57,30 @@ export default class BackendServer {
 
     /**
      * Starts the server. Returns a promise with a boolean value. Promises are used
-     * here because starting the server takes some time and we want to know when it
+     * here because starting the server takes some time, and we want to know when it
      * is done (and if it worked).
      *
      * @returns {Promise<boolean>}
      */
     public start(): Promise<boolean> {
-        Log.info('BackendServer::start() - start');
+        Log.info("BackendServer::start() - start");
 
         const that = this;
-        return new Promise(function(fulfill, reject) {
+        return new Promise(function (fulfill, reject) {
 
             // noinspection TsLint
             const httpsOptions: any = {
-                name: 'backend'
+                name: "backend"
             };
 
             /* istanbul ignore else */
             if (that.useHttps === false) {
                 // test only
-                Log.warn('BackendServer::start() - disabling HTTPS; should only be used in testing!');
+                Log.warn("BackendServer::start() - disabling HTTPS; should only be used in testing!");
             } else {
                 // prod only
-                httpsOptions['key'] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
-                httpsOptions['certificate'] = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
+                httpsOptions["key"] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
+                httpsOptions["certificate"] = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
             }
 
             that.rest = restify.createServer(httpsOptions);
@@ -94,7 +94,7 @@ export default class BackendServer {
             });
 
             // Register handlers common between all classy instances
-            Log.info('BackendServer::start() - Registering common handlers');
+            Log.info("BackendServer::start() - Registering common handlers");
 
             // authentication
             new AuthRoutes().registerRoutes(that.rest);
@@ -108,37 +108,48 @@ export default class BackendServer {
             // admin
             new AdminRoutes().registerRoutes(that.rest);
 
-            Log.info('BackendServer::start() - Registering common handlers; done');
+            Log.info("BackendServer::start() - Registering common handlers; done");
 
             // Register custom route handler for specific classy instance
-            Log.info('BackendServer::start() - Registering custom handler');
+            Log.info("BackendServer::start() - Registering custom handler");
 
-            Factory.getCustomRouteHandler().then(function(handler) {
+            Factory.getCustomRouteHandler().then(function (handler) {
                 handler.registerRoutes(that.rest);
-                Log.info('BackendServer::start() - Registering custom handler; done');
+                Log.info("BackendServer::start() - Registering custom handler; done");
 
                 // serve up the static frontend resources
-                const frontendHTML = __dirname + '/../../../frontend/html';
-                Log.info('BackendServer::start() - Serving static from: ' + frontendHTML);
-                that.rest.get('/*/', restify.plugins.serveStatic({
+                const frontendHTML = __dirname + "/../../../frontend/html";
+                Log.info("BackendServer::start() - Serving static from: " + frontendHTML);
+                that.rest.get("/*/", restify.plugins.serveStatic({
                     directory: frontendHTML,
-                    default:   'index.html'
+                    default: "index.html"
                 }));
 
                 const port = that.config.getProp(ConfigKey.backendPort);
-                that.rest.listen(port, function() {
-                    Log.info('BackendServer::start() - restify listening: ' + that.rest.url + "; on port: " + port);
+                that.rest.listen(port, function () {
+                    Log.info("BackendServer::start() - restify listening: " + that.rest.url + "; on port: " + port);
+
+                    // after the Classy backend is up, check AutoTest
+                    // (Docker should load AutoTest first, but the delay should not hurt)
+                    setTimeout(() => {
+                        AutoTestRoutes.checkATStatus().then(function (_result) {
+                            Log.trace("BackendServer::start() - AT status: success");
+                        }).catch(function (err) {
+                            Log.trace("BackendServer::start() - AT status: failure; ERROR: " + err.message);
+                        });
+                    }, 500);
+
                     fulfill(true);
                 });
 
                 /* istanbul ignore next */
-                that.rest.on('error', function(err: string) {
+                that.rest.on("error", function (err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                    Log.error('BackendServer::start() - restify ERROR: ' + err);
+                    Log.error("BackendServer::start() - restify ERROR: " + err);
                     reject(err);
                 });
-            }).catch(function(err) {
-                Log.error('BackendServer::start() - Registering custom ERROR: ' + err);
+            }).catch(function (err) {
+                Log.error("BackendServer::start() - Registering custom ERROR: " + err);
             });
 
         });

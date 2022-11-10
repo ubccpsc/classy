@@ -143,7 +143,7 @@ describe("Auth Routes", function () {
      * This one is a bit controversial:
      *
      * While this means students _could_ log each other out, it also means that we
-     * don"t get into states where people can"t logout on their own. Better safe
+     * do not get into states where people cannot log out on their own. Better safe
      * than sorry in this dimension.
      */
     it("Should be able to logout even if token is bad.", async function () {
@@ -195,7 +195,7 @@ describe("Auth Routes", function () {
      * This one is a bit controversial:
      *
      * While this means students _could_ log each other out, it also means that we
-     * don"t get into states where people can"t logout on their own. Better safe
+     * do not get into states where people cannot log out on their own. Better safe
      * than sorry in this dimension.
      */
     it("Should fail to logout if user is bad.", async function () {
