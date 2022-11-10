@@ -261,7 +261,7 @@ export class GitHubController implements IGitHubController {
         const repoExists = await this.gha.repoExists(repoName);
         Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo exists: " + repoExists);
         if (repoExists === true) {
-            // this is fatal, we can"t provision a repo that already exists
+            // this is fatal, we cannot provision a repo that already exists
             Log.error("GitHubController::provisionRepository( " + repoName + " ) - repo already exists on GitHub; provisioning failed");
             throw new Error("provisionRepository( " + repoName + " ) failed; Repository " + repoName + " already exists.");
         }

@@ -359,7 +359,7 @@ export class AdminController {
 
         let allResults: Result[] = [];
         if (reqRepoId !== WILDCARD) {
-            // if both aren"t "any" just use this one too
+            // if both are not "any" just use this one too
             // ResultsKind not supported for getAllResults(..)
             allResults = await this.resC.getResultsForRepo(reqRepoId);
         } else if (reqDelivId !== WILDCARD) {
@@ -700,7 +700,7 @@ export class AdminController {
         const cc = await Factory.getCourseController(this.gh);
         let allPeople: Person[] = await this.pc.getAllPeople();
 
-        // remove all withdrawn people, we don"t need to provision these
+        // remove all withdrawn people, we do not need to provision these
         allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
 
         const allTeams: Team[] = await this.tc.getAllTeams();
@@ -1040,25 +1040,21 @@ export class AdminController {
                 // make sure repo is consistent
                 repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
                 if (repo.custom.githubCreated !== true) {
-                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
                     repo.custom.githubCreated = true;
                 }
             } else {
                 if (repo.custom.githubCreated !== false) {
-                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
                     repo.custom.githubCreated = false; // does not exist, must not be created
                 }
 
                 if (repo.custom.githubReleased !== false) {
-                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
                     repo.custom.githubReleased = false; // does not exist, must not be released
                 }
 
                 if (repo.URL !== null) {
-                    // can"t be
                     Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
                     repo.URL = null;
                 }

@@ -11,6 +11,7 @@ import {
     AutoTestGradeTransport,
     AutoTestResultPayload,
     AutoTestResultTransport,
+    AutoTestStatus,
     ClassyConfigurationPayload,
     Payload
 } from "@common/types/PortalTypes";
@@ -25,13 +26,11 @@ import {GitHubController} from "@backend/controllers/GitHubController";
 import {GradesController} from "@backend/controllers/GradesController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {ResultsController} from "@backend/controllers/ResultsController";
-
 import {Factory} from "@backend/Factory";
-
 import IREST from "@backend/server/IREST";
 
 /**
- * Just a large body of static methods for translating between restify and the remainder of the system.
+ * Handle the REST interactions between AutoTest and Classy.
  */
 export class AutoTestRoutes implements IREST {
 
@@ -100,7 +99,7 @@ export class AutoTestRoutes implements IREST {
                     res.send(200, payload);
                     return next(true);
                 } else {
-                    // This is more like a warning; if a deliverable isn"t configured this is going to happen
+                    // This is more like a warning; if a deliverable is not configured this is going to happen
                     return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res, next);
                 }
             }).catch(function () { // err
@@ -229,8 +228,8 @@ export class AutoTestRoutes implements IREST {
             const deliv = await dc.getDeliverable(result.delivId);
             // if results should only be saved during the marking range, use the first line; otherwise the second
             // if (deliv !== null && result.input.pushInfo.timestamp < deliv.closeTimestamp && deliv.gradesReleased === false) {
-            // saving results is always open, but saving grades (in performPostGrades) probably won"t be
-            // NOTE: this allows AutoTest to request the cached results for later access which won"t be possible if saving is prohibited
+            // saving results is always open, but saving grades (in performPostGrades) probably will not be
+            // NOTE: this allows AutoTest to request the cached results for later access which will not be possible if saving is prohibited
             if (deliv !== null) {
                 const success = await rc.createResult(result);
                 Log.info("AutoTestRoutes::performPostResult(..) - done; valid result && valid secret; deliv: " +
@@ -502,5 +501,39 @@ export class AutoTestRoutes implements IREST {
             res.send(400);
         }
         return next();
+    }
+
+    /**
+     * This is not actually a route, but calls the AutoTest backend
+     * to get the current size of all queues. It has the side effect
+     * of making sure the AutoTest server has started running.
+     */
+    public static async checkATStatus(): Promise<AutoTestStatus> {
+        Log.info("AutoTestRoutes::checkATStatus(..) - start");
+        const start = Date.now();
+
+        const config = Config.getInstance();
+        const atHost = config.getProp(ConfigKey.autotestUrl);
+        const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/status";
+        const options: RequestInit = {
+            method: "GET"
+        };
+        const res = await fetch(url, options);
+        /* istanbul ignore next: braces needed for ignore (not reachable except when deployed) */
+        {
+            if (res.ok) {
+                Log.trace("AutoTestRoutes::checkATStatus(..) - success: " + JSON.stringify(res.ok));
+                Log.trace("AutoTestRoutes::checkATStatus(..) - done; took: " + Util.took(start));
+                const result = await res.json();
+                Log.info("AutoTestRoutes::checkATStatus(..) - done; # jobs: " + result.executing +
+                    "; # exp: " + result.exp + "; # std: " + result.std + "; # low: " + result.low);
+                return result;
+            } else {
+                const err = await res.json();
+                const msg = "AutoTestRoutes::checkATStatus(..) - ERROR: " + JSON.stringify(err);
+                Log.error(msg);
+                throw new Error(msg);
+            }
+        }
     }
 }

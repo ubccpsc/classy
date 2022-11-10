@@ -4,7 +4,7 @@ import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput} from "@common/types/ContainerTypes";
-import {AutoTestGradeTransport} from "@common/types/PortalTypes";
+import {AutoTestGradeTransport, AutoTestStatus} from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
 import {IClassPortal} from "./ClassPortal";
@@ -599,4 +599,15 @@ export abstract class AutoTest implements IAutoTest {
         return removed;
     }
 
+    /**
+     * Returns the AutoTest queue status.
+     */
+    public getStatus(): AutoTestStatus {
+        return {
+            executing: this.jobs.length,
+            exp: this.expressQueue.length(),
+            std: this.standardQueue.length(),
+            low: this.lowQueue.length()
+        };
+    }
 }

@@ -42,7 +42,7 @@ export class AdminDashboardTab extends AdminPage {
     public async init(opts: any): Promise<void> {
         Log.info("AdminDashboardTab::init(..) - start");
         const that = this;
-        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
+        // NOTE: this could consider if studentListTable has children, and if they do, do not refresh
         document.getElementById("dashboardListTable").innerHTML = ""; // clear target
 
         UI.showModal("Retrieving results.");

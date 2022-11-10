@@ -42,7 +42,7 @@ export class Factory {
             if (this.studentView === null) {
                 Log.info("Factory::getView() - instantiating new student view for: " + this.name);
 
-                // NOTE: we can"t reference Config here because this is run client side
+                // NOTE: we cannot reference Config here because this is run client side
                 // which does not have access to the .env file
                 // Instead, CustomStudentView is copied in by webpack, if it exists in the configuration
 

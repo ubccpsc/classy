@@ -17,7 +17,7 @@ export class CSVParser {
     }
 
     /**
-     * Use CSV-Parse to turn a file path into an array of rows. Since we don"t know anything
+     * Use CSV-Parse to turn a file path into an array of rows. Since we do not know anything
      * about each row, we"re just returning it as an array of any. Clients should check to
      * make sure the right properties exist on each row (e.g., that all the columns are there).
      *

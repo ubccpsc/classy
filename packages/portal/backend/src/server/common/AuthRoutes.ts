@@ -187,7 +187,7 @@ export class AuthRoutes implements IREST {
      * really think on it over a weekend before deciding to make any edits to _anything_
      * in this method.
      *
-     * Coverage won"t happen because of GitHub dependencies.
+     * Coverage will not happen because of GitHub dependencies.
      *
      * @param req
      * @param res
@@ -265,7 +265,7 @@ export class AuthRoutes implements IREST {
             // insecure:           true
         };
 
-        // this extra check isn"t strictly required, but means we can
+        // this extra check is not strictly required, but means we can
         // associate a GitHub username with a token on the backend
         const ans = await fetch(uri, options);
 

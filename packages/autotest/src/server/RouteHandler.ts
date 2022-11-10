@@ -23,7 +23,7 @@ export default class RouteHandler {
     public static getDocker(): Docker {
         if (RouteHandler.docker === null) {
             if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-                // Running tests; don"t need to connect to the Docker daemon
+                // Running tests; do not need to connect to the Docker daemon
                 this.docker = null;
             } else {
                 // Connect to the Docker socket using defaults
@@ -49,6 +49,34 @@ export default class RouteHandler {
             RouteHandler.autoTest = new GitHubAutoTest(dataStore, portal, docker);
         }
         return RouteHandler.autoTest;
+    }
+
+    /**
+     * Makes sure the AutoTest server is started
+     */
+    public static getAutoTestStatus(req: restify.Request, res: restify.Response, next: restify.Next) {
+        try {
+            Log.info("RouteHanlder::getAutoTestStatus(..) - start");
+
+            // should load AutoTest, if it has not been loaded already
+            // if it is loading for the first time the queue will tick itself
+            const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
+
+            // tick the queue again, in case it was not being loaded for the first time
+            // feels odd to tick on status, but it might as well be up-to-date
+            // and tick is idempotent
+            at.tick();
+
+            // get the status
+            const status = at.getStatus();
+
+            Log.info("RouteHanlder::getAutoTestStatus(..) - done");
+            res.json(200, status);
+        } catch (err) {
+            Log.info("RouteHanlder::getAutoTestStatus(..) - ERROR: " + err);
+            res.json(400, "Failed to check AutoTest: " + err.message);
+        }
+        return next();
     }
 
     /**

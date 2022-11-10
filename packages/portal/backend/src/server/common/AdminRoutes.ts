@@ -140,7 +140,7 @@ export default class AdminRoutes implements IREST {
                     }
                     Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user + "; token: " + token);
                 } else {
-                    // we"re here because user or token aren"t defined, but we don"t have them here either
+                    // we are here because user or token are not defined, but we do not have them here either
                     Log.info("AdminRoutes::processAuth(..) - cookies parsing failed; tokenString: " + tokenString);
                 }
             }
@@ -927,7 +927,7 @@ export default class AdminRoutes implements IREST {
         const cc = new AdminController(AdminRoutes.ghc);
         cc.performStudentWithdraw().then(function (msg) {
             Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
-            const payload: Payload = {success: {message: msg}}; // really shouldn"t be an array, but it beats having another type
+            const payload: Payload = {success: {message: msg}}; // really should not be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function (err) {
@@ -967,7 +967,7 @@ export default class AdminRoutes implements IREST {
         const teamTrans: TeamFormationTransport = req.params;
         AdminRoutes.handleTeamCreate(userName, teamTrans).then(function (team) {
             Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-            const payload: TeamTransportPayload = {success: [team]}; // really shouldn"t be an array, but it beats having another type
+            const payload: TeamTransportPayload = {success: [team]}; // really should not be an array, but it beats having another type
             res.send(200, payload);
             return next(true);
         }).catch(function (err) {
@@ -1008,7 +1008,7 @@ export default class AdminRoutes implements IREST {
             }
         }
 
-        // make sure all users aren"t already on teams
+        // make sure all users are not already on teams
         for (const person of people) {
             const teams = await tc.getTeamsForPerson(person);
             for (const aTeam of teams) {
@@ -1154,7 +1154,7 @@ export default class AdminRoutes implements IREST {
             Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to GitHub team");
         }
 
-        // do this after github (if applicable) so if github fails, the db isn"t updated either
+        // do this after github (if applicable) so if github fails, the db is not updated either
         team.personIds.push(person.id);
         await dbc.writeTeam(team);
 
@@ -1225,7 +1225,7 @@ export default class AdminRoutes implements IREST {
             Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from GitHub team");
         }
 
-        // do this after github (if applicable) so if github fails, the db isn"t updated either
+        // do this after github (if applicable) so if github fails, the db is not updated either
         team.personIds = team.personIds.filter((e) => e !== person.id);
         await dbc.writeTeam(team);
 

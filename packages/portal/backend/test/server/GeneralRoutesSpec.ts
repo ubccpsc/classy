@@ -670,7 +670,7 @@ describe("General Routes", function () {
         expect(body.success).to.not.be.undefined;
         expect(body.success.length).to.equal(0);
 
-        // create a team, but don"t release it
+        // create a team, but do not release it
         const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
         const team = await dc.getTeam("t_project_" + TestHarness.USER1.csId + "_" + TestHarness.USER2.csId);
         const rc = new RepositoryController();

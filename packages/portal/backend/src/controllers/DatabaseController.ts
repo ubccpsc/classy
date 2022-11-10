@@ -554,7 +554,7 @@ export class DatabaseController {
                 // Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " +
                 // records.length + "; took: " + Util.took(start));
                 const record = records[0];
-                delete record._id; // remove the record id, just so we can"t use it
+                delete record._id; // remove the record id, just so we cannot use it
                 return record;
             }
         } catch (err) {
@@ -603,7 +603,7 @@ export class DatabaseController {
                 return [];
             } else {
                 for (const r of records) {
-                    delete r._id; // remove the record id, just so we can"t use it
+                    delete r._id; // remove the record id, just so we cannot use it
                 }
                 Log.trace("DatabaseController::readRecords(..) - done; query: " + JSON.stringify(query) + "; # records: " +
                     records.length + ". took: " + Util.took(start));
@@ -701,7 +701,7 @@ export class DatabaseController {
                 throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
             }
 
-            // create indexes if they don"t exist (idempotent operation; even if index exists this is ok)
+            // create indexes if they do not exist (idempotent operation; even if index exists this is ok)
             // https://stackoverflow.com/a/35020346
 
             // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)

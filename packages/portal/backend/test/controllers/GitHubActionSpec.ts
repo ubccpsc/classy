@@ -466,7 +466,7 @@ describe("GitHubActions", () => {
 
     it("Should be able to add a team to a repo.", async function () {
         // TODO: work on this more; does the new style work with this?
-        gh.setPageSize(100); // page size isn"t important for this test
+        gh.setPageSize(100); // page size is not important for this test
         this.timeout(TIMEOUT * 1000);
         await deleteStale(); // cleanup
 
@@ -775,7 +775,7 @@ describe("GitHubActions", () => {
         expect(ex).to.not.be.null;
     }).timeout(TIMEOUT);
 
-    // this test wasn"t failing for the right reasons and was disabled until we can figure out what is going on
+    // this test was not failing for the right reasons and was disabled until we can figure out what is going on
     // it("Should not be able to bulk edit permissions to admins", async function() {
     //     const githubTeam = await gh.teamCreate(TEAMNAME, "push");
     //     expect(githubTeam.teamName).to.be.equal(TEAMNAME);
@@ -890,7 +890,7 @@ describe("GitHubActions", () => {
         } catch (err) {
             ex = err;
         }
-        expect(ex).to.be.null; // at least don"t throw an exception
+        expect(ex).to.be.null; // at least do not throw an exception
     }).timeout(TIMEOUT);
 
     it("Should not be possible to make a comment with invalid params.", async function () {
