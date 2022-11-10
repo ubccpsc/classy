@@ -186,7 +186,7 @@ export class Queue {
             const store = fs.readJSONSync(this.persistDir, {throws: false});
             if (store?.data?.length === undefined) {
                 // read failed; skip hydrating
-                Log.info("Queue::load() - rehydrating: " + this.name + " skipped");
+                Log.info("Queue::load() - rehydrating " + this.name + " skipped");
                 return;
             }
             Log.info("Queue::load() - rehydrating: " + this.name + "; # data: " + store.data.length);
