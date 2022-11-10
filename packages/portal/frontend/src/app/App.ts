@@ -274,7 +274,7 @@ export class App {
         const token = localStorage.getItem("token"); // null if missing
 
         if (user !== null) {
-            // if user is null there"s no point really; backend won"t know who to logout
+            // if user is null there"s no point really; backend will not know who to logout
 
             const url = this.backendURL + "/portal/logout";
             Log.trace("App::clearCredentials( " + user + "...) - start; url: " + url);
@@ -476,7 +476,7 @@ export class App {
 
     private readCookie(name: string) {
         Log.trace("App::readCookie( " + name + " ) - start; cookie string: " + document.cookie);
-        // this used to work but isn"t now
+        // this used to work but is not now
         const s: string[] = decodeURI(document.cookie).split(";");
         // tslint:disable-next-line
         for (let i = 0; i < s.length; i++) {

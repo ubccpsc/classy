@@ -35,7 +35,7 @@ export class AdminResultsTab extends AdminPage {
         Log.info("AdminResultsTab::init(..) - start");
         const that = this;
 
-        // NOTE: this could consider if studentListTable has children, and if they do, don"t refresh
+        // NOTE: this could consider if studentListTable has children, and if they do, do not refresh
         document.getElementById("resultsListTable").innerHTML = ""; // clear target
 
         UI.showModal("Retrieving results.");

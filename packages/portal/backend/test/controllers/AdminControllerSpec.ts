@@ -500,7 +500,7 @@ describe("AdminController", () => {
                     numWithrdrawnBefore++;
                 }
             }
-            expect(numWithrdrawnBefore).to.equal(0); // shouldn"t have any withdrawn students before
+            expect(numWithrdrawnBefore).to.equal(0); // should not have any withdrawn students before
 
             const res = await ac.performStudentWithdraw();
             Log.test("Result: " + JSON.stringify(res));

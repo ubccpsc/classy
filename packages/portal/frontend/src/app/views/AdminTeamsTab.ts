@@ -205,13 +205,13 @@ export class AdminTeamsTab extends AdminPage {
             }
             let repoDisplay = "<a class='selectable' href='" + repoURL + "'>" + repoName + "</a>";
             if (repoURL === null) {
-                // repo not yet provisioned; don"t show anything
+                // repo not yet provisioned; do not show anything
                 repoDisplay = "";
             }
 
             let teamDisplay = "<a class='selectable' href='" + team.URL + "'>" + team.id + "</a>";
             if (team.URL === null) {
-                // team not yet provisioned, don"t turn this into a link
+                // team not yet provisioned, do not turn this into a link
                 teamDisplay = team.id;
             }
 

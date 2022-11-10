@@ -20,7 +20,7 @@ export class ClassyAdminView extends AdminView {
         if (name === "AdminRoot") {
             Log.info("ClassyAdminView::renderPage(..) - augmenting tabs");
 
-            // this does not seem to work; it creates the tab on the menu, but it isn"t clickable
+            // this does not seem to work; it creates the tab on the menu, but it is not clickable
             // const tab = document.createElement("ons-tab");
             // tab.setAttribute("page", "dashboard.html");
             // tab.setAttribute("label", "Foo");

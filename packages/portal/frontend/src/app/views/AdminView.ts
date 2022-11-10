@@ -90,7 +90,7 @@ export class AdminView implements IView {
         this.configTab.setAdmin(this.isAdmin);
 
         if (this.isAdmin === false) {
-            // hide the config tab if we aren"t an admin
+            // hide the config tab if we are not an admin
             Log.info("AdminView::renderPage(..) - !admin; hiding config tab");
             this.setTabVisibility("AdminConfigTab", false);
         }

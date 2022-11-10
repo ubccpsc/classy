@@ -593,7 +593,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
         expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
         expect(allData.comments.length).to.equal(1);
-        expect(allData.feedback.length).to.equal(0); // don"t charge for feedback until it is given
+        expect(allData.feedback.length).to.equal(0); // do not charge for feedback until it is given
         Log.test("test one done");
 
         await Util.timeout(WAIT); // wait for job to complete

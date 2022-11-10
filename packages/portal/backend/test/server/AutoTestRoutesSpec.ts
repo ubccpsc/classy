@@ -501,7 +501,7 @@ describe("AutoTest Routes", function () {
             Log.test("ERROR: " + err);
         }
         Log.test(response.status + " -> " + JSON.stringify(response.body));
-        expect(response.status).to.equal(400); // really should be 200, but AutoTest isn"t running so it will return this error
+        expect(response.status).to.equal(400); // really should be 200, but AutoTest is not running so it will return this error
         const text = response.text;
         if (autotestUrl.indexOf("localhost") > -1) {
             expect(text.indexOf("ECONNREFUSED")).to.be.greaterThan(0); // at least make sure it fails for the right reason

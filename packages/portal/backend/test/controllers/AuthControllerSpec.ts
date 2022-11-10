@@ -177,7 +177,7 @@ describe("AuthController", () => {
         expect(workedEnough).to.be.true;
 
         const auth = await dc.getAuth(TestHarness.ADMIN1.id);
-        expect(auth).to.be.null; // shouldn"t exist for a logged out person
+        expect(auth).to.be.null; // should not exist for a logged out person
 
         person = await pc.getPerson(TestHarness.ADMIN1.id);
         expect(person.kind).to.be.null; // should be null after being logged out
@@ -194,7 +194,7 @@ describe("AuthController", () => {
         expect(workedEnough).to.be.true;
 
         const auth = await dc.getAuth(TestHarness.USER1.id);
-        expect(auth).to.be.null; // shouldn"t exist for a logged out person
+        expect(auth).to.be.null; // should not exist for a logged out person
 
         person = await pc.getPerson(TestHarness.USER1.id);
         expect(person.kind).to.equal("student"); // students should stay students after logging out
@@ -209,6 +209,6 @@ describe("AuthController", () => {
         expect(workedEnough).to.be.false;
 
         workedEnough = await ac.removeAuthentication("totallyMADEUPname12388291900d");
-        expect(workedEnough).to.be.false; // can"t
+        expect(workedEnough).to.be.false;
     });
 });

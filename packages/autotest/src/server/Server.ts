@@ -17,7 +17,7 @@ export default class Server {
     }
 
     /**
-     * Stops the server. Returns a promise so we know when the connections have
+     * Stops the server. Returns a promise, so we know when the connections have
      * actually been fully closed and the port has been released.
      *
      * @returns {Promise<boolean>}
@@ -25,8 +25,8 @@ export default class Server {
     public async stop(): Promise<boolean> {
         Log.info("Server::close()");
         const that = this;
-        return new Promise<boolean>(function(fulfill) {
-            that.rest.close(function() {
+        return new Promise<boolean>(function (fulfill) {
+            that.rest.close(function () {
                 fulfill(true);
             });
         });
@@ -43,14 +43,14 @@ export default class Server {
 
     /**
      * Starts the server. Returns a promise with a boolean value. Promises are used
-     * here because starting the server takes some time and we want to know when it
+     * here because starting the server takes some time, and we want to know when it
      * is done (and if it worked).
      *
      * @returns {Promise<boolean>}
      */
     public start(): Promise<boolean> {
         const that = this;
-        return new Promise(function(fulfill, reject) {
+        return new Promise(function (fulfill, reject) {
             try {
                 Log.info("Server::start() - start");
 
@@ -68,8 +68,8 @@ export default class Server {
                         return next();
                     });
 
-                // Return the test queue stats
-                // that.rest.get("/queue", restify.bodyParser(), RouteHandler.queueStats);
+                // Return the queue stats (also makes sure the server is running)
+                that.rest.get("/status", restify.plugins.queryParser(), RouteHandler.getAutoTestStatus);
 
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
@@ -81,12 +81,12 @@ export default class Server {
                 // Resource endpoint
                 // that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
 
-                that.rest.listen(that.port, function() {
+                that.rest.listen(that.port, function () {
                     Log.info("Server::start() - restify listening: " + that.rest.url);
                     fulfill(true);
                 });
 
-                that.rest.on("error", function(err: string) {
+                that.rest.on("error", function (err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
                     Log.info("Server::start() - restify ERROR: " + err);
                     reject(err);

@@ -684,7 +684,7 @@ describe("Admin Routes", function () {
     it("Should be able to update a classlist on restricted IP", async function () {
 
         if (TestHarness.isCI() === false) {
-            // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
+            // skip locally; requires credentials devs should not have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
             return;
         }
@@ -1537,7 +1537,7 @@ describe("Admin Routes", function () {
 
     it("Should be able to update a classlist if authorized as admin", async function () {
         if (TestHarness.isCI() === false) {
-            // skip locally; requires credentials devs shouldn"t have (but are encrypted for CI)
+            // skip locally; requires credentials devs should not have (but are encrypted for CI)
             Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
             return;
         }
