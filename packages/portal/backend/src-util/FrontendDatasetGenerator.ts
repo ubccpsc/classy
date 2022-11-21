@@ -52,8 +52,8 @@ export class FrontendDatasetGenerator {
         deliv = TestHarness.getDeliverable(TestHarness.DELIVIDPROJ);
         deliv.shouldProvision = true;
         deliv.gradesReleased = true;
-        deliv.repoPrefix = '';
-        deliv.teamPrefix = 'team';
+        deliv.repoPrefix = "";
+        deliv.teamPrefix = "team";
         await this.dc.writeDeliverable(deliv);
     }
 
@@ -83,7 +83,7 @@ export class FrontendDatasetGenerator {
         await this.dc.writePerson(person);
 
         for (let i = 0; i < 50; i++) {
-            person = TestHarness.getPerson('student-' + i);
+            person = TestHarness.getPerson("student-" + i);
             person.kind = PersonKind.STUDENT;
             await this.dc.writePerson(person);
         }
@@ -98,8 +98,8 @@ export class FrontendDatasetGenerator {
 
         for (let i = 0; i < 50; i++) {
             // try i times to make a team
-            const p1 = TestHarness.getPerson('student-' + this.getRandomInt(50));
-            const p2 = TestHarness.getPerson('student-' + this.getRandomInt(50));
+            const p1 = TestHarness.getPerson("student-" + this.getRandomInt(50));
+            const p2 = TestHarness.getPerson("student-" + this.getRandomInt(50));
             if (p1.id !== p2.id) {
 
                 const p1Teams = await tc.getTeamsForPerson(p1);
@@ -155,7 +155,7 @@ export class FrontendDatasetGenerator {
         // 100 random scores
         const delivnames = [TestHarness.DELIVID0, TestHarness.DELIVID1, TestHarness.DELIVID3];
         for (let i = 0; i < 100; i++) {
-            const user = 'student-' + this.getRandomInt(50);
+            const user = "student-" + this.getRandomInt(50);
             const deliv = delivnames[this.getRandomInt(3)];
             const score = this.getRandomInt(100);
 
@@ -234,14 +234,14 @@ export class FrontendDatasetGenerator {
     }
 }
 
-if (typeof it === 'function') {
+if (typeof it === "function") {
     Log.warn("Frontend data not generated (test suite execution)");
 } else {
     const fedg = new FrontendDatasetGenerator();
     fedg.create().then(function () { // done
-        Log.info('create done');
+        Log.info("create done");
         process.exit();
     }).catch(function (err) {
-        Log.error('create ERROR: ' + err);
+        Log.error("create ERROR: " + err);
     });
 }

@@ -12,8 +12,8 @@ import {TeamController} from "../src/controllers/TeamController";
  * delete database objects _AND_ their corresponding Github pieces resulting in unrecoverable
  * data loss.
  *
- * I'd really recommend closing this file now. Doing the wrong thing will ruin your
- * _whole_ day. And that's probably underestimating things.
+ * I"d really recommend closing this file now. Doing the wrong thing will ruin your
+ * _whole_ day. And that is probably underestimating things.
  */
 export class GitHubCleaner {
 
@@ -43,7 +43,7 @@ export class GitHubCleaner {
     private async cleanTeams(): Promise<void> {
         Log.info("GitHubCleaner::cleanTeams() - start");
 
-        const TEAMS_TO_KEEP = ['admin', 'staff', 'testrunners', 'students'];
+        const TEAMS_TO_KEEP = ["admin", "staff", "testrunners", "students"];
         TEAMS_TO_KEEP.push(TeamController.ADMIN_NAME, TeamController.STAFF_NAME);
         const teams = await this.gha.listTeams();
         const teamsToRemove = [];
@@ -73,7 +73,7 @@ export class GitHubCleaner {
     private async cleanRepositories(): Promise<void> {
         Log.info("GitHubCleaner::cleanRepositories() - start");
 
-        const REPOS_TO_KEEP = ['PostTestDoNotDelete', 'PostTestDoNotDelete1'];
+        const REPOS_TO_KEEP = ["PostTestDoNotDelete", "PostTestDoNotDelete1"];
 
         const reposToRemove = [];
         const repos = await this.gha.listRepos();

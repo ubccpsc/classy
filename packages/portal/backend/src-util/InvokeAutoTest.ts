@@ -13,13 +13,13 @@ import {Grade} from "../src/Types";
  * This file shows how you can accomplish this.
  *
  * NOTE: the queue needs to drain from all of a deliverable before scheduling another.
- * AKA don't run this multiple times in a row until the previous run has finished (e.g., d1, d2, and d4)
+ * AKA do not run this multiple times in a row until the previous run has finished (e.g., d1, d2, and d4)
  *
  * To run this locally you need to have a .env configured with the production values
  * and a ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the UBC VPN.
- * 2) Make sure you don't have a local mongo instance running.
+ * 2) Make sure you do not have a local mongo instance running.
  * 3) Ensure your .env corresponds to the production values.
  * 4) ssh user@host -L 27017:127.0.0.1:27017
  * 5) Run this script.
@@ -40,7 +40,7 @@ export class InvokeAutoTest {
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
      * @type {string}
      */
-    private readonly TEST_USERS: string[] = []; // ['r5t0b']; // ['w8j0b', 'l7m1b']; // ['w8j0b', 'r5t0b'];
+    private readonly TEST_USERS: string[] = []; // ["r5t0b"]; // ["w8j0b", "l7m1b"]; // ["w8j0b", "r5t0b"];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
@@ -50,7 +50,7 @@ export class InvokeAutoTest {
     private INVISIBLE = true;
 
     // for d4 we use the d3 grade to select the commit to run against
-    private readonly DELIVID = 'd3';
+    private readonly DELIVID = "d3";
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
@@ -59,8 +59,8 @@ export class InvokeAutoTest {
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = 'https://github.students.cs.ubc.ca/orgs/CPSC310-2019W-T1/';
-    private readonly PREFIXNEW = 'https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T1/';
+    private readonly PREFIXOLD = "https://github.students.cs.ubc.ca/orgs/CPSC310-2019W-T1/";
+    private readonly PREFIXNEW = "https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T1/";
 
     // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
@@ -122,20 +122,20 @@ export class InvokeAutoTest {
             if (this.DRY_RUN === false || this.TEST_USERS.indexOf(grade.personId) >= 0) {
                 if (this.MSG !== null) {
                     if (this.INVISIBLE === true) {
-                        const org = c.getProp(ConfigKey.org) + '/';
+                        const org = c.getProp(ConfigKey.org) + "/";
                         // this is brittle; should probably have a better way to extract this from a grade record
-                        const projectId = url.substring(url.lastIndexOf(org) + org.length, url.lastIndexOf('/commit/'));
-                        const sha = url.substring(url.lastIndexOf('/commit/') + 8);
-                        Log.info("Making invisible request for project: " + projectId + '; sha: ' + sha + '; URL: ' + url);
+                        const projectId = url.substring(url.lastIndexOf(org) + org.length, url.lastIndexOf("/commit/"));
+                        const sha = url.substring(url.lastIndexOf("/commit/") + 8);
+                        Log.info("Making invisible request for project: " + projectId + "; sha: " + sha + "; URL: " + url);
                         await gha.simulateWebhookComment(projectId, sha, this.MSG);
                     } else {
                         let u = url;
                         // update prefix from: https://HOST/CPSC310-2018W-T1/ --> https://HOST/api/v3/repos/CPSC310-2018W-T1/
                         u = u.replace(this.PREFIXOLD, this.PREFIXNEW);
                         // change path from /commit/ -> /commits/
-                        u = u.replace('/commit/', '/commits/');
+                        u = u.replace("/commit/", "/commits/");
                         // specify endpoint; append /comments
-                        u = u + '/comments';
+                        u = u + "/comments";
 
                         Log.info("Making comment request for url: " + u);
                         await gha.makeComment(u, this.MSG);

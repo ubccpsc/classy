@@ -14,10 +14,10 @@ import {Grade} from "../src/Types";
 
 /**
  * To run this locally you need to have a .env configured with the production values
- * and a ssh tunnel configured to the server you want the database to come from.
+ * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the VPN
- * 2) Make sure you don't have a local mongo instance running
+ * 2) Make sure you do not have a local mongo instance running
  * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  *      * specifically, make sure DB_URL contains the mongo username and password
  * 4) ssh user@host -L 27017:127.0.0.1:27017
@@ -39,14 +39,14 @@ export class TraverseResults {
      *
      * @type {string}
      */
-    private readonly TEST_USER = 'XXXXX';
+    private readonly TEST_USER = "XXXXX";
 
     /**
      * The delivId we are updating grades for.
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd3';
+    private readonly DELIVID: string = "d3";
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
@@ -55,8 +55,8 @@ export class TraverseResults {
      *
      * @type {string}
      */
-    // private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
-    // private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
+    // private readonly PREFIXOLD = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/";
+    // private readonly PREFIXNEW = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/";
 
     constructor() {
         Log.info("TraverseResults::<init> - start");
@@ -134,7 +134,7 @@ export class TraverseResults {
 
             // see if the highest one is the one we have recorded
             if (highestGradeBeforeDeadline.commitURL === url) {
-                // don't need to do anything; grade record is correct
+                // do not need to do anything; grade record is correct
                 Log.info("Grade URL matches highest result URL for deliv: " + deliv.id + "; repo: " + repoId + "; url: " + url);
             } else {
                 // need to update the grade record
@@ -151,7 +151,7 @@ export class TraverseResults {
                         delivId:  deliv.id, // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
 
                         score:     highestGradeBeforeDeadline.output.report.scoreOverall,
-                        comment:   '',
+                        comment:   "",
                         timestamp: highestGradeBeforeDeadline.output.timestamp,
 
                         urlName: repoId,
