@@ -100,18 +100,17 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private
      */
-    private readonly MAX_STANDARD_JOBS: number = 3;
+    private readonly MAX_STANDARD_JOBS: number = 2;
 
     /**
      * The maximum number of jobs a single user can have on the low queue
      * before we refrain from scheduling them at all.
      *
-     * NOTE: not currently used.
+     * NOTE: not currently enforced, just logging to see if this happens in practice.
      *
      * @private
      */
-    // noinspection JSUnusedLocalSymbols
-    // private readonly MAX_JOBS: number = 100;
+    private readonly MAX_LOW_JOBS: number = 50;
 
     /**
      * Max number of execution jobs.
@@ -238,6 +237,13 @@ export abstract class AutoTest implements IAutoTest {
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToLowQueue(..) - not added; commit already executing");
                 return;
+            }
+
+            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
+            // not currently used, except for this warning
+            if (lowJobCount > this.MAX_LOW_JOBS) {
+                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ queued jobs, " +
+                    "possible DOS?; repo: " + input.target.repoId + "; person: " + input.target.personId);
             }
 
             // add to the low queue if it is not already on express or standard

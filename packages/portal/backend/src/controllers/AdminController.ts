@@ -389,7 +389,7 @@ export class AdminController {
             }
         }
 
-        Log.trace("AdminController::matchResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+        Log.info("AdminController::matchResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
         return results;
     }
 
