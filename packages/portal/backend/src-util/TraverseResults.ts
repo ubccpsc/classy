@@ -5,10 +5,8 @@ import Util from "@common/Util";
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
 import {GradesController} from "../src/controllers/GradesController";
-import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {ResultsController} from "../src/controllers/ResultsController";
-import {TeamController} from "../src/controllers/TeamController";
 
 import {Grade} from "../src/Types";
 
@@ -35,13 +33,6 @@ export class TraverseResults {
     private DRY_RUN = true;
 
     /**
-     * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
-     *
-     * @type {string}
-     */
-    private readonly TEST_USER = "XXXXX";
-
-    /**
      * The delivId we are updating grades for.
      *
      * @type {string}
@@ -50,7 +41,7 @@ export class TraverseResults {
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
-     * Having to hard-code these is not pretty, but it makes the code much simpler. The format
+     * Having to hard-code prefixes is not pretty, but it makes the code much simpler. The format
      * you need should be pretty easy to infer from what is present here.
      *
      * @type {string}
@@ -66,9 +57,6 @@ export class TraverseResults {
     public async process(): Promise<void> {
         Log.info("TraverseResults::process() - start for delivId: " + this.DELIVID);
 
-        const dbc = DatabaseController.getInstance();
-        const teamsC = new TeamController();
-        const personC = new PersonController();
         const reposC = new RepositoryController();
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
@@ -104,7 +92,7 @@ export class TraverseResults {
             if (resultsForRepo === null || resultsForRepo.length < 1) {
                 throw new Error("Should have results deliv: " + deliv.id + "; and repo: " + repoId);
             }
-            resultsForRepo = resultsForRepo.sort(function(a, b) {
+            resultsForRepo = resultsForRepo.sort(function (a, b) {
                 if (a.input.target.timestamp < b.input.target.timestamp) {
                     return -1;
                 } else {
@@ -148,14 +136,14 @@ export class TraverseResults {
                     const g: Grade = {
                         // this should be the personId associated with the repo, not a staff who invoked it!
                         personId: person,
-                        delivId:  deliv.id, // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
+                        delivId: deliv.id, // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
 
-                        score:     highestGradeBeforeDeadline.output.report.scoreOverall,
-                        comment:   "",
+                        score: highestGradeBeforeDeadline.output.report.scoreOverall,
+                        comment: "",
                         timestamp: highestGradeBeforeDeadline.output.timestamp,
 
                         urlName: repoId,
-                        URL:     highestGradeBeforeDeadline.commitURL,
+                        URL: highestGradeBeforeDeadline.commitURL,
 
                         // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
                         custom: {}
@@ -178,10 +166,10 @@ export class TraverseResults {
 const ppt = new TraverseResults();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-ppt.process().then(function() {
+ppt.process().then(function () {
     Log.info("TraverseResults::process() - complete; took: " + Util.took(start));
     process.exit();
-}).catch(function(err) {
+}).catch(function (err) {
     Log.error("TraverseResults::process() - ERROR: " + err.message);
     process.exit();
 });

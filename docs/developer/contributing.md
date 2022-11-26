@@ -25,7 +25,7 @@ For new features, forks are also encouraged to issue PRs _during_ the term for c
 * It makes sense for the functionality to be in `ubccpsc/classy` rather than the course-specific fork (e.g., the feature should have broad appeal to many other course instances).
 * The feature is well tested and the code of high quality.
 * Any additional tests do not overly burden the overall test suite execution duration, and should be resilient to future changes.
-* The contribution must lint before it can be accepted (e.g., `\cd classy/; yarn run lint`).
+* The contribution must lint before it can be accepted (e.g., `cd classy/; yarn run lint`).
 
 We will do our best to merge new features as long as they make sense for `ubccpsc/classy`, but if a feature is not merged it can exist as a long-lived feature in a course's fork. These features can also be merged between forks via PR as well if it makes sense to do so.
 
@@ -44,7 +44,7 @@ The following guidelines can be helpful for evaluating any PRs on a local fork (
 
 The test coverage of the system must be maintained; the expected coverage rate for any given file should be greater than 90%. We require tests be provided for any new contributions as without these it is extremely challenging to ensure that future development for other courses will not break your new contribution.
 
-CircleCI testing [docs/cirleCI.md](can be setup) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
+CircleCI testing [can be setup](docs/cirleCI.md) on a fork to ensure that coverage, test, and linting requirements are met. Constant notification of whether tests pass on each pushed change to your repository will help you discover and resolve conflicts between `ubccpsc` and the business logic of your fork quickly.
 
 ### Requirements
 
@@ -88,7 +88,7 @@ This only needs to happen once per fork, so if you already have a configured for
 
 ## Remote Setup of a Fork
 
-Technical staff will setup a fork of ([ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
+Technical staff will setup a fork of [ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
 
 ## Modifying Classy on Your Fork
 
@@ -125,7 +125,7 @@ On `fork`:
 
 On `fork`:
 
-This is ***not*** likely to happen during the term, except for critical patches but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `master` branch. Instead, try to create a testing or release branch to run your modified code in.
+This is ***not*** likely to happen during the term, except for critical patches, but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `master` branch. Instead, try to create a testing or release branch to run your modified code in.
 
 <img src="../assets/pull-request-to-upstream.svg"/>
 
@@ -135,3 +135,21 @@ Please minimize external package dependencies. Classy has been configured to use
 You should add global dependencies to the root `package.json` and package-specific dependencies in the package-level `package.json`.
 
 Specific development instructions are included in [`packages/portal/backend/README.md`](packages/portal/backend/README.md), [`packages/portal/frontend/README.md`](packages/portal/frontend/README.md), and [`packages/autotest/README.md`](packages/autotest/README.md).
+
+### Examining a remote Mongo store
+
+You should not need to check the deployed mongo database, but if you do it is possible to examine. The easiest way is using Robo3T. Configure a connection as follows:
+
+* Connection_Type: `direct`
+* Connection_Address: `localhost`
+* Connection_Port: `27017`
+* Authentication_Database: `admin`
+* Authentication_UserName: `<from .env>`
+* Authentication_Password: `<from .env>`
+* SSH_Tunnel: `<check>`
+* SSH_Address: `<deployed host>`
+* SSH_User: `<your username>`
+* SSH_Auth: `Private key` (needs to be configured on server)
+* SSH_Private: `<path to private key>`
+
+After this configuration, 'Test config' should tell you that it is working. This skips the need to configure SSH tunnels, but you may need to be on the appropriate VPN for this to all work.

@@ -9,7 +9,7 @@ import {AuditLabel, Grade} from "../src/Types";
 
 /**
  * To run this locally you need to have a .env configured with the production values
- * and a ssh tunnel configured to the server you want the database to come from.
+ * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the VPN
  * 2) Make sure you do not have a local mongo instance running

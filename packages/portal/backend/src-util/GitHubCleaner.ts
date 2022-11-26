@@ -9,7 +9,7 @@ import {TeamController} from "../src/controllers/TeamController";
  * DANGER: You almost certainly do not use this file.
  *
  * This is an executable for munging GitHub orgs and the classy backend database. It will
- * delete database objects _AND_ their corresponding Github pieces resulting in unrecoverable
+ * delete database objects _AND_ their corresponding GitHub pieces resulting in unrecoverable
  * data loss.
  *
  * I"d really recommend closing this file now. Doing the wrong thing will ruin your
