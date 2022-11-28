@@ -161,6 +161,9 @@ describe("GitHubAutoTest", () => {
     // }).timeout(WAIT * 6);
 
     it("Rapid requests should go to the low queue.", async () => {
+        // test is sensitive; pause to make sure nothing else is running first
+        await Util.timeout(WAIT * 2);
+
         let jobs = at["jobs"];
         expect(jobs).to.have.length(0);
 
@@ -195,16 +198,16 @@ describe("GitHubAutoTest", () => {
         expect(allData.pushes.length).to.equal(9);
         const eq = (at["expressQueue"] as any);
         const sq = (at["standardQueue"] as any);
-        const rq = (at["lowQueue"] as any);
+        const lq = (at["lowQueue"] as any);
         Log.test("about to check values");
 
-        Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + rq.data.length + "; #jobs: " + jobs.length);
+        Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + lq.data.length + "; #jobs: " + jobs.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
-        expect(sq.data).to.have.length(3); // three should be waiting on standard
+        expect(sq.data).to.have.length(2); // three should be waiting on standard
         // this is the main check: if this all worked, a job should have been pushed onto the regression queue
-        expect(rq.data).to.have.length(1); // one should be queued on regression
+        expect(lq.data).to.have.length(2); // one should be queued on low
         Log.test("values checked");
-    }).timeout(WAIT * 3);
+    }).timeout(WAIT * 10);
 
     it("Should fail gracefully with bad comments.", async () => {
         let res = await at.handleCommentEvent(null);
@@ -402,7 +405,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         expect(allData.comments.length).to.equal(1);
         expect(gitHubMessages).to.have.length(1);
-        expect(gitHubMessages[0].message).to.contain("has been queued");
+        expect(gitHubMessages[0].message).to.contain("queued");
     });
 
     it("Should be able to process a comment, even if the push event is missing.", async () => {
