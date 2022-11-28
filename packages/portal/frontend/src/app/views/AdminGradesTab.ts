@@ -140,11 +140,19 @@ export class AdminGradesTab extends AdminPage {
                             }
                             let html;
                             if (scoreText !== "" && grade.URL !== null) {
-                                html = scorePrepend + `<a class="selectable" title="${hoverComment}" href="${grade.URL}">${scoreText}</a>`;
+                                // html = scorePrepend + `<a class="selectable" title="${hoverComment}"
+                                // href="${grade.URL}">${scoreText}</a>`;
+                                html = scorePrepend + `<a class="selectable" href="${grade.URL}">${scoreText}</a>`;
                             } else if (scoreText !== "" && grade.URL === null) {
-                                html = `<div title="${hoverComment}">${scoreText}</div>`;
+                                // html = `<div title="${hoverComment}">${scoreText}</div>`;
+                                html = `${scoreText}`;
                             } else {
                                 html = scoreText;
+                            }
+
+                            // make comment-containing fields bold
+                            if (hoverComment !== null && hoverComment.length > 1) {
+                                html = `<strong title="${hoverComment}">${html}</strong>`;
                             }
                             tableCell = {value: scoreText, html};
                         }
@@ -366,7 +374,7 @@ export class AdminGradesTab extends AdminPage {
                     const lower = i * 10;
                     const upper = lower + 9;
                     const numInBin = inBin(delivGrades, lower, upper);
-                    Log.info("inBin( [..], " + lower + ", " + upper + "; #: " + numInBin);
+                    Log.trace("inBin( [..], " + lower + ", " + upper + "; #: " + numInBin);
                     row.push({value: numInBin + "", html: numInBin + ""});
                 }
                 const numPerfect = inBin(delivGrades, 100, 100);

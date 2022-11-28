@@ -15,7 +15,8 @@ import {AuditLabel, Deliverable, Grade} from "@backend/Types";
  *
  * 1) For a PrairieLearn grade to be written to the Classy database, Classy
  *    needs to be told it is coming. Create a deliverable for each column
- *    from the CSV you want imported.
+ *    from the CSV you want imported. The case of the deliverable in Classy
+ *    needs to be the same as the case of the grade column in the CSV.
  *
  * 2) Any column header name from the CSV that matches a Classy Deliverable ID
  *    will be overwritten. Be _SURE_ there are no clashes.
