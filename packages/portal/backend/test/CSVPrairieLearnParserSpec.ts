@@ -52,7 +52,7 @@ describe("CSVPrairieLearnParser", function () {
         // validate outcome
         Log.test("check grades after");
         grade = await gc.getGrade(TestHarness.USER1.id, TestHarness.DELIVID1);
-        expect(grade.score).to.equal(79.375);
+        expect(grade.score).to.equal(79.38);
         grade = await gc.getGrade(TestHarness.USER2.id, TestHarness.DELIVID1);
         expect(grade.score).to.equal(65);
         grade = await gc.getGrade(TestHarness.USER3.id, TestHarness.DELIVID1);

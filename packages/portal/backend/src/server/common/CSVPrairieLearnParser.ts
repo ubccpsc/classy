@@ -26,7 +26,7 @@ import {AuditLabel, Deliverable, Grade} from "@backend/Types";
  *
  * 4) PrairieLearn only shows scores to the nearest percentage in the UI but the
  *    CSV contains scores to many decimal places. Imported scores are truncated
- *    to the nearest 0.1%.
+ *    to the nearest 0.01%.
  *
  * 5) At minimum, the CSV must contain the UID, UIN, and Role columns.
  */
@@ -135,7 +135,7 @@ export class CSVPrairieLearnParser {
                             let score = row[deliv.id]; // string
                             if (score !== "") {
                                 score = Number(score);
-                                score = Number(score.toFixed(1)); // number, nearest 10th
+                                score = Number(score.toFixed(2)); // number, nearest 100th
                                 const g: Grade = {
                                     personId: person.id,
                                     delivId: deliv.id,
