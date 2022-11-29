@@ -10,6 +10,26 @@ import {GradesController} from "@backend/controllers/GradesController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {AuditLabel, Deliverable, Grade} from "@backend/Types";
 
+/**
+ * This uploads PrairieLearn grades into Classy. Things to note:
+ *
+ * 1) For a PrairieLearn grade to be written to the Classy database, Classy
+ *    needs to be told it is coming. Create a deliverable for each column
+ *    from the CSV you want imported. The case of the deliverable in Classy
+ *    needs to be the same as the case of the grade column in the CSV.
+ *
+ * 2) Any column header name from the CSV that matches a Classy Deliverable ID
+ *    will be overwritten. Be _SURE_ there are no clashes.
+ *
+ * 3) Only non-empty rows will be written (e.g., blanks will be blank, not 0).
+ *    If you want a 0 written in Classy, put a 0 in the CSV for empty cells.
+ *
+ * 4) PrairieLearn only shows scores to the nearest percentage in the UI but the
+ *    CSV contains scores to many decimal places. Imported scores are truncated
+ *    to the nearest 0.01%.
+ *
+ * 5) At minimum, the CSV must contain the UID, UIN, and Role columns.
+ */
 export class CSVPrairieLearnParser {
 
     constructor() {
@@ -112,12 +132,14 @@ export class CSVPrairieLearnParser {
                 if (person !== null) {
                     for (const deliv of potentialDelivs) {
                         if (typeof row[deliv.id] !== "undefined") {
-                            const score = row[deliv.id];
+                            let score = row[deliv.id]; // string
                             if (score !== "") {
+                                score = Number(score);
+                                score = Number(score.toFixed(2)); // number, nearest 100th
                                 const g: Grade = {
                                     personId: person.id,
                                     delivId: deliv.id,
-                                    score: Number(score),
+                                    score: score,
                                     comment: "PrairieLearn Upload",
                                     timestamp: Date.now(),
                                     urlName: "CSV Upload",

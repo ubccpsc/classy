@@ -5,19 +5,17 @@ import Util from "@common/Util";
 import {DatabaseController} from "../src/controllers/DatabaseController";
 import {DeliverablesController} from "../src/controllers/DeliverablesController";
 import {GradesController} from "../src/controllers/GradesController";
-import {PersonController} from "../src/controllers/PersonController";
 import {RepositoryController} from "../src/controllers/RepositoryController";
 import {ResultsController} from "../src/controllers/ResultsController";
-import {TeamController} from "../src/controllers/TeamController";
 
 import {Grade} from "../src/Types";
 
 /**
  * To run this locally you need to have a .env configured with the production values
- * and a ssh tunnel configured to the server you want the database to come from.
+ * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the VPN
- * 2) Make sure you don't have a local mongo instance running
+ * 2) Make sure you do not have a local mongo instance running
  * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  *      * specifically, make sure DB_URL contains the mongo username and password
  * 4) ssh user@host -L 27017:127.0.0.1:27017
@@ -35,28 +33,21 @@ export class TraverseResults {
     private DRY_RUN = true;
 
     /**
-     * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
-     *
-     * @type {string}
-     */
-    private readonly TEST_USER = 'XXXXX';
-
-    /**
      * The delivId we are updating grades for.
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd3';
+    private readonly DELIVID: string = "d3";
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
-     * Having to hard-code these is not pretty, but it makes the code much simpler. The format
+     * Having to hard-code prefixes is not pretty, but it makes the code much simpler. The format
      * you need should be pretty easy to infer from what is present here.
      *
      * @type {string}
      */
-    // private readonly PREFIXOLD = 'https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/';
-    // private readonly PREFIXNEW = 'https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/';
+    // private readonly PREFIXOLD = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/";
+    // private readonly PREFIXNEW = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/";
 
     constructor() {
         Log.info("TraverseResults::<init> - start");
@@ -66,9 +57,6 @@ export class TraverseResults {
     public async process(): Promise<void> {
         Log.info("TraverseResults::process() - start for delivId: " + this.DELIVID);
 
-        const dbc = DatabaseController.getInstance();
-        const teamsC = new TeamController();
-        const personC = new PersonController();
         const reposC = new RepositoryController();
         const gradesC = new GradesController();
         const resultsC = new ResultsController();
@@ -104,7 +92,7 @@ export class TraverseResults {
             if (resultsForRepo === null || resultsForRepo.length < 1) {
                 throw new Error("Should have results deliv: " + deliv.id + "; and repo: " + repoId);
             }
-            resultsForRepo = resultsForRepo.sort(function(a, b) {
+            resultsForRepo = resultsForRepo.sort(function (a, b) {
                 if (a.input.target.timestamp < b.input.target.timestamp) {
                     return -1;
                 } else {
@@ -134,7 +122,7 @@ export class TraverseResults {
 
             // see if the highest one is the one we have recorded
             if (highestGradeBeforeDeadline.commitURL === url) {
-                // don't need to do anything; grade record is correct
+                // do not need to do anything; grade record is correct
                 Log.info("Grade URL matches highest result URL for deliv: " + deliv.id + "; repo: " + repoId + "; url: " + url);
             } else {
                 // need to update the grade record
@@ -148,14 +136,14 @@ export class TraverseResults {
                     const g: Grade = {
                         // this should be the personId associated with the repo, not a staff who invoked it!
                         personId: person,
-                        delivId:  deliv.id, // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
+                        delivId: deliv.id, // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
 
-                        score:     highestGradeBeforeDeadline.output.report.scoreOverall,
-                        comment:   '',
+                        score: highestGradeBeforeDeadline.output.report.scoreOverall,
+                        comment: "",
                         timestamp: highestGradeBeforeDeadline.output.timestamp,
 
                         urlName: repoId,
-                        URL:     highestGradeBeforeDeadline.commitURL,
+                        URL: highestGradeBeforeDeadline.commitURL,
 
                         // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
                         custom: {}
@@ -178,10 +166,10 @@ export class TraverseResults {
 const ppt = new TraverseResults();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-ppt.process().then(function() {
+ppt.process().then(function () {
     Log.info("TraverseResults::process() - complete; took: " + Util.took(start));
     process.exit();
-}).catch(function(err) {
+}).catch(function (err) {
     Log.error("TraverseResults::process() - ERROR: " + err.message);
     process.exit();
 });

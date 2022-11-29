@@ -9,10 +9,10 @@ import {AuditLabel, Grade} from "../src/Types";
 
 /**
  * To run this locally you need to have a .env configured with the production values
- * and a ssh tunnel configured to the server you want the database to come from.
+ * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the VPN
- * 2) Make sure you don't have a local mongo instance running
+ * 2) Make sure you do not have a local mongo instance running
  * 3) Ensure your .env corresponds to the production values; change DB_URL connection string to use 127.0.0.1
  *      * specifically, make sure DB_URL contains the mongo username and password
  * 4) ssh user@host -L 27017:127.0.0.1:27017
@@ -34,14 +34,14 @@ export class TransformGrades {
      *
      * @type {string}
      */
-    private readonly TEST_USER = 'XXXXX';
+    private readonly TEST_USER = "XXXXX";
 
     /**
      * The delivId we are updating grades for.
      *
      * @type {string}
      */
-    private readonly DELIVID: string = 'd3';
+    private readonly DELIVID: string = "d3";
 
     constructor() {
         Log.info("TransformGrades::<init> - start");
@@ -78,17 +78,17 @@ export class TransformGrades {
                 Log.info("Considering grade for " + this.DELIVID + " for url: " + url);
 
                 // make sure row is valid
-                if (typeof result.output === 'undefined' ||
-                    typeof result.output.report === 'undefined' ||
-                    typeof result.output.report.scoreTest === 'undefined' ||
-                    typeof result.output.report.scoreOverall === 'undefined' ||
-                    typeof result.output.report.custom === 'undefined'
+                if (typeof result.output === "undefined" ||
+                    typeof result.output.report === "undefined" ||
+                    typeof result.output.report.scoreTest === "undefined" ||
+                    typeof result.output.report.scoreOverall === "undefined" ||
+                    typeof result.output.report.custom === "undefined"
                 ) {
                     Log.error("FATAL: NO GRADE RECORD");
                     break;
                 }
-                if (typeof (result.output.report.custom as any).private === 'undefined' ||
-                    typeof (result.output.report.custom as any).private.scoreTest === 'undefined'
+                if (typeof (result.output.report.custom as any).private === "undefined" ||
+                    typeof (result.output.report.custom as any).private.scoreTest === "undefined"
                 ) {
                     Log.warn("WARNING: NO PRIVATE RECORD; filling with 0s");
 
@@ -104,46 +104,46 @@ export class TransformGrades {
                 const scorePubOverall = Number(result.output.report.scoreOverall);
 
                 let finalScore = 0;
-                if (this.DELIVID === 'd1') {
+                if (this.DELIVID === "d1") {
                     // 25% private tests
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + "; original: " +
                         scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
-                    // if there's a big difference, print a warning
+                    // if there"s a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
                             scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
                     }
                 }
-                if (this.DELIVID === 'd2') {
+                if (this.DELIVID === "d2") {
                     // 25% private tests
                     finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + "; original: " +
                         scorePubOverall + "; new: " + finalScore);
 
-                    // if there's a big difference, print a warning
+                    // if there"s a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
                             scorePubOverall + "; new: " + finalScore);
                     }
-                } else if (this.DELIVID === 'd3') {
+                } else if (this.DELIVID === "d3") {
                     // 50% private tests
                     finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
                     finalScore = Number(finalScore.toFixed(2));
                     Log.info("Updating grade for " + this.DELIVID + "; original: " +
                         scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
-                    // if there's a big difference, print a warning
+                    // if there"s a big difference, print a warning
                     if ((scorePub - scorePriv) > 20) {
                         Log.warn("Divergent score between public and private; original: " +
                             scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
                     }
                 }
 
-                const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which doesn't work here
+                const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which does not work here
                 (newGrade.custom as any).publicGrade = grade; // keep the old grad record around in the grade.custom field
                 newGrade.timestamp = Date.now(); // TS for when we updated the grade record
 
@@ -159,7 +159,7 @@ export class TransformGrades {
                     // publish grade
                     Log.info("Grade update for: " + newGrade.personId);
                     await gradesC.saveGrade(newGrade);
-                    await dbc.writeAudit(AuditLabel.GRADE_CHANGE, 'ProcessPrivateTest', grade, newGrade, {});
+                    await dbc.writeAudit(AuditLabel.GRADE_CHANGE, "ProcessPrivateTest", grade, newGrade, {});
                 } else {
                     Log.info("Dry run grade update for: " + newGrade.personId);
                 }
@@ -169,7 +169,7 @@ export class TransformGrades {
             }
         }
 
-        // Log.trace('gradeDeltas: ' + JSON.stringify(gradeDeltas));
+        // Log.trace("gradeDeltas: " + JSON.stringify(gradeDeltas));
         let gradeIncreased = 0;
         let gradeDecreased = 0;
         let gradeUnchanged = 0;
