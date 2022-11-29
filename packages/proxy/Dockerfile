@@ -1,4 +1,4 @@
-FROM node:lts-alpine
+FROM nginx:stable-alpine
 
 # This is essentially just the official NGINX
 # image execpt we add a step to compile template
