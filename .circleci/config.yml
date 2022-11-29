@@ -8,7 +8,7 @@ jobs:
     docker:
       # specify the version you desire here
       - image: cimg/node:18.12.0
-      - image: circleci/mongo:3.6
+      - image: mongo:latest
 
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
