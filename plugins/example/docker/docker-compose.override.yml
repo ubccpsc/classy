@@ -30,7 +30,7 @@ services:
           - MONGO_INITDB_ROOT_PASSWORD
         ports:
             - "27017:27017"
-        image: mongo:latest
+        image: mongo:5.0.14
         restart: always
         user: "${UID}"
         volumes:
