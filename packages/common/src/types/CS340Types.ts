@@ -19,14 +19,14 @@ export interface AssignmentGrade {
     questions: QuestionGrade[];         // SubQuestions
 }
 
-// Represents the Question's grade, comprised of an arbitrary amount of subQuestions
+// Represents the grade for a question, comprised of an arbitrary amount of subQuestions
 export interface QuestionGrade {
     questionName: string;
     commentName: string;
     subQuestion: SubQuestionGrade[];
 }
 
-// Represents the subQuestion's grade
+// Represents the grade for the subQuestion
 export interface SubQuestionGrade {
     sectionName: string;
     grade: number;

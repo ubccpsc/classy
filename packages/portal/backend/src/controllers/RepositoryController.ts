@@ -63,7 +63,7 @@ export class RepositoryController {
      * @returns {Promise<Repository>}
      */
     public async updateRepository(repo: Repository): Promise<Repository> {
-        if (typeof repo === 'undefined' || repo === null) {
+        if (typeof repo === "undefined" || repo === null) {
             return null;
         }
 
@@ -160,7 +160,7 @@ export class RepositoryController {
     }
 
     public static repositoryToTransport(repository: Repository): RepositoryTransport {
-        if (typeof repository === 'undefined' || repository === null) {
+        if (typeof repository === "undefined" || repository === null) {
             throw new Error("RepositoryController::repositoryToTransport( .. ) - ERROR: repository not provided.");
         }
 

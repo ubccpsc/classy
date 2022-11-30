@@ -22,13 +22,13 @@ import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../.
  * 2) List all teams and student members (easy, just join teams with people)
  * 3) List most recent results for a deliverable (easy, directly from results)
  * 3) List all results for a deliverable for each user
- *     Harder. Problem is we don't have a 1:1 mapping between repo and deliverable.
+ *     Harder. Problem is we do not have a 1:1 mapping between repo and deliverable.
  *     Or maybe we just need to roll with this:
  *          Join person with Teams (on Person.id -> Teams.members) as t and to Repositories
  *          (t.id ->  Repository.teams) as r
  *          Iterate through each person record.
  *              Find all results for the desired delivId for any r above. Return for each person.
- *              This doesn't combine teams, but makes it so people won't be missed.
+ *              This does not combine teams, but makes it so people will not be missed.
  *              Result: PersonRecord[]
  * 4) List most recent results for a team (3 above with date limit)
  * 5) List all people on a repo
@@ -53,7 +53,7 @@ export interface Person {
     fName: string;
     lName: string;
     kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
-    URL: string | null; // usually the person's GitHub profile URL; null when not yet validated
+    URL: string | null; // usually the GitHub profile URL for the person; null when not yet validated
 
     labId: string | null; // null for non-students
 
@@ -160,7 +160,7 @@ export interface Repository {
 
     // githubStatus: string; // NONE | CREATED
 
-    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+    custom: { // rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
         githubCreated?: boolean,
         githubReleased?: boolean,
 
@@ -191,19 +191,19 @@ export interface Course {
 }
 
 export enum AuditLabel {
-    COURSE = 'Course',
-    DELIVERABLE = 'Deliverable',
-    REPOSITORY = 'Repository',
-    TEAM = 'TEAM',
-    TEAM_ADMIN = 'TeamAdmin', // Created / updated by admin
-    TEAM_STUDENT = 'TeamStudent', // Created / updated by student
-    GRADE_ADMIN = 'GradeAdmin', // Created / updated by admin
-    GRADE_CHANGE = 'Grade_Change',
-    GRADE_AUTOTEST = 'GradeAutotest',
-    REPO_PROVISION = 'RepositoryProvision',
-    REPO_RELEASE = 'RepositoryRelease',
-    CLASSLIST_UPLOAD = 'Classlist_Upload',
-    CLASSLIST_PRUNE = 'Classlist_Prune'
+    COURSE = "Course",
+    DELIVERABLE = "Deliverable",
+    REPOSITORY = "Repository",
+    TEAM = "TEAM",
+    TEAM_ADMIN = "TeamAdmin", // Created / updated by admin
+    TEAM_STUDENT = "TeamStudent", // Created / updated by student
+    GRADE_ADMIN = "GradeAdmin", // Created / updated by admin
+    GRADE_CHANGE = "Grade_Change",
+    GRADE_AUTOTEST = "GradeAutotest",
+    REPO_PROVISION = "RepositoryProvision",
+    REPO_RELEASE = "RepositoryRelease",
+    CLASSLIST_UPLOAD = "Classlist_Upload",
+    CLASSLIST_PRUNE = "Classlist_Prune"
 }
 
 export interface AuditEvent {
@@ -229,7 +229,7 @@ export interface Grade {
 
     custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
     /*
-    custom: { // rather than having custom be .any, this allows courses to make sure they don't clash on their .custom parameters
+    custom: { // rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
         sdmmStatus?: boolean
 
         // questions?: any, // AssignmentController // TODO: make into assignment.questions

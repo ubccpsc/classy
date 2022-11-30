@@ -54,6 +54,7 @@ export interface ICourseController {
      *
      * @param {Deliverable} deliv
      * @param {Person[]} people
+     * @param {boolean} adminOverride
      * @returns {{teamName: string | null; repoName: string | null}}
      */
     computeNames(deliv: Deliverable, people: Person[], adminOverride?: boolean):
@@ -134,7 +135,7 @@ export class CourseController implements ICourseController {
             return Promise.resolve(false);
         }
 
-        // >= on purpose so 'last highest' is used
+        // >= on purpose so "last highest" is used
         const gradeIsLarger = (existingGrade === null || newGrade.score >= existingGrade.score);
 
         if (gradeIsLarger === true) {
@@ -151,7 +152,7 @@ export class CourseController implements ICourseController {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }
 
-        Log.trace('CourseController::computeNames( ' + deliv.id + ', ... ) - start');
+        Log.trace("CourseController::computeNames( " + deliv.id + ", ... ) - start");
         if (people.length < 1) {
             throw new Error("CourseController::computeNames( ... ) - must provide people");
         }
@@ -162,23 +163,23 @@ export class CourseController implements ICourseController {
             }
         );
 
-        let postfix = '';
+        let postfix = "";
         for (const person of people) {
             // NOTE: use CSID here to be more resilient if CWLs change
             // TODO: this would be even better if it was person.id
-            postfix = postfix + '_' + person.csId;
+            postfix = postfix + "_" + person.csId;
         }
 
-        let tName = '';
+        let tName = "";
         if (deliv.teamPrefix.length > 0) {
-            tName = deliv.teamPrefix + '_' + deliv.id + postfix;
+            tName = deliv.teamPrefix + "_" + deliv.id + postfix;
         } else {
             tName = deliv.id + postfix;
         }
 
-        let rName = '';
+        let rName = "";
         if (deliv.repoPrefix.length > 0) {
-            rName = deliv.repoPrefix + '_' + deliv.id + postfix;
+            rName = deliv.repoPrefix + "_" + deliv.id + postfix;
         } else {
             rName = deliv.id + postfix;
         }
@@ -188,7 +189,7 @@ export class CourseController implements ICourseController {
         const repo = await db.getRepository(rName);
 
         if (team === null && repo === null) {
-            Log.trace('CourseController::computeNames( ... ) - done; t: ' + tName); // + ', r: ' + rName);
+            Log.trace("CourseController::computeNames( ... ) - done; t: " + tName);
             return {teamName: tName, repoName: rName};
             // return tName;
         } else {
@@ -222,14 +223,14 @@ export class CourseController implements ICourseController {
     //     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
     //     // it is correct to return those.
     //
-    //     let repoPrefix = '';
+    //     let repoPrefix = "";
     //     if (deliv.repoPrefix.length > 0) {
     //         repoPrefix = deliv.repoPrefix;
     //     } else {
     //         repoPrefix = deliv.id;
     //     }
     //
-    //     let teamPrefix = '';
+    //     let teamPrefix = "";
     //     if (deliv.teamPrefix.length > 0) {
     //         teamPrefix = deliv.teamPrefix;
     //     } else {
@@ -243,13 +244,13 @@ export class CourseController implements ICourseController {
     //             repoCount++;
     //         }
     //     }
-    //     let repoName = '';
-    //     let teamName = '';
+    //     let repoName = "";
+    //     let teamName = "";
     //
     //     let ready = false;
     //     while (!ready) {
-    //         repoName = repoPrefix + '_' + repoCount;
-    //         teamName = teamPrefix + '_' + repoCount;
+    //         repoName = repoPrefix + "_" + repoCount;
+    //         teamName = teamPrefix + "_" + repoCount;
     //         const r = await this.dbc.getRepository(repoName);
     //         const t = await this.dbc.getTeam(teamName);
     //         if (r === null && t === null) {
@@ -264,31 +265,31 @@ export class CourseController implements ICourseController {
     // }
 
     // public static validateProvisionTransport(obj: ProvisionTransport) {
-    //     if (typeof obj === 'undefined' || obj === null) {
-    //         const msg = 'Transport not populated.';
-    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //     if (typeof obj === "undefined" || obj === null) {
+    //         const msg = "Transport not populated.";
+    //         Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
     //         throw new Error(msg);
     //     }
     //
     //     // noinspection SuspiciousTypeOfGuard
-    //     if (typeof obj.delivId !== 'string') {
-    //         const msg = 'Provision.id not specified';
-    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //     if (typeof obj.delivId !== "string") {
+    //         const msg = "Provision.id not specified";
+    //         Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
     //         throw new Error(msg);
     //     }
     //
     //     // noinspection SuspiciousTypeOfGuard
-    //     if (typeof obj.formSingle !== 'boolean') {
-    //         const msg = 'formSingle not specified';
-    //         Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //     if (typeof obj.formSingle !== "boolean") {
+    //         const msg = "formSingle not specified";
+    //         Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
     //         return msg;
     //     }
     //
     //     // const dc = new DeliverablesController();
     //     // const deliv = await dc.getDeliverable(obj.delivId);
-    //     // if (deliv === null && deliv.shouldProvision === true){
-    //     //     const msg = 'delivId does not correspond to a real deliverable or that deliverable is not provisionable';
-    //     //     Log.error('AdminController::validateProvisionTransport(..) - ERROR: ' + msg);
+    //     // if (deliv === null && deliv.shouldProvision === true) {
+    //     //     const msg = "delivId does not correspond to a real deliverable or that deliverable is not provisionable";
+    //     //     Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
     //     //     return msg;
     //     // }
     //

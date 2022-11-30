@@ -37,7 +37,7 @@ export class MockDataStore implements IDataStore {
 
             // fs.ensureDirSync(this.dir);
             //
-            // // these are terrible, but .ensureFileSync doesn't tell us if we just created a new file
+            // // these are terrible, but .ensureFileSync does not tell us if we just created a new file
             // // write an empty array to each file if it was just created above
             // if (!fs.existsSync(this.RECORD_PATH)) {
             //     fs.writeJSONSync(this.RECORD_PATH, []);

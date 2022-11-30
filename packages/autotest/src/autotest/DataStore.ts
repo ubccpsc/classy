@@ -69,10 +69,10 @@ export interface IDataStore {
 export class MongoDataStore implements IDataStore {
 
     private db: Db = null;
-    private readonly PUSHCOLL = 'pushes';
-    private readonly COMMENTCOLL = 'comments';
-    private readonly OUTPUTCOLL = 'output';
-    private readonly FEEDBACKCOLL = 'feedback';
+    private readonly PUSHCOLL = "pushes";
+    private readonly COMMENTCOLL = "comments";
+    private readonly OUTPUTCOLL = "output";
+    private readonly FEEDBACKCOLL = "feedback";
 
     constructor() {
         Log.info("MongoDataStore::<init> - start");
@@ -107,9 +107,6 @@ export class MongoDataStore implements IDataStore {
             if (query === null) {
                 query = {};
             }
-            // if (typeof key !== 'undefined' && key !== null && typeof value !== 'undefined' && value !== null) {
-            //    query[key] = value;
-            // }
             const records: any[] = await col.find(query).toArray() as any;
             if (records === null || records.length === 0) {
                 Log.trace("MongoDataStore::getSingleRecord( " + column + ", " + JSON.stringify(query) +
@@ -119,7 +116,7 @@ export class MongoDataStore implements IDataStore {
                 Log.trace("MongoDataStore::getSingleRecord( " + column + ", " + JSON.stringify(query) +
                     " ) - done; # records: " + records.length + "; took: " + Util.took(start));
                 const record = records[0];
-                delete record._id; // remove the record id, just so we can't use it
+                delete record._id; // remove the record id, just so we cannot use it
                 return record;
             }
         } catch (err) {
@@ -142,7 +139,7 @@ export class MongoDataStore implements IDataStore {
             } else {
                 Log.trace("MongoDataStore::getRecords(..) - done; # records: " + records.length);
                 for (const r of records) {
-                    delete r._id; // remove the record id, just so we can't use it
+                    delete r._id; // remove the record id, just so we cannot use it
                 }
                 return records;
             }
@@ -380,7 +377,7 @@ export class MongoDataStore implements IDataStore {
      *
      * Usage:
      *
-     *   (await getCollection('users')).find().toArray().then( ... )
+     *   (await getCollection("users")).find().toArray().then( ... )
      */
     private async getCollection(collectionName: string): Promise<Collection> {
         const db = await this.open();

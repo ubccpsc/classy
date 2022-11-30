@@ -56,9 +56,9 @@ export class SortableTable {
      */
     public addRow(row: TableCell[]) {
         for (const cell of row) {
-            if (cell.value === null || cell.value === 'null') {
-                cell.value = 'N/A';
-                cell.html = 'N/A';
+            if (cell.value === null || cell.value === "null") {
+                cell.value = "N/A";
+                cell.html = "N/A";
             }
         }
         this.rows.push(row);
@@ -72,9 +72,9 @@ export class SortableTable {
     public addRows(rows: TableCell[][]) {
         for (const row of rows) {
             for (const cell of row) {
-                if (cell.value === null || cell.value === 'null') {
-                    cell.value = 'N/A';
-                    cell.html = 'N/A';
+                if (cell.value === null || cell.value === "null") {
+                    cell.value = "N/A";
+                    cell.html = "N/A";
                 }
             }
         }
@@ -102,12 +102,12 @@ export class SortableTable {
     }
 
     public generate() {
-        Log.trace('SortableTable::generate() - start');
+        Log.trace("SortableTable::generate() - start");
 
         const that = this;
         this.performSort();
 
-        let table = '';
+        let table = "";
         table += this.startTable();
         let isOdd = false;
         for (const row of this.rows) {
@@ -118,18 +118,18 @@ export class SortableTable {
 
         const div = document.querySelector(this.divName);
         if (div !== null) {
-            div.innerHTML = '';
+            div.innerHTML = "";
             div.innerHTML = table;
-            const ths = div.getElementsByTagName('th');
+            const ths = div.getElementsByTagName("th");
             const thsArray = Array.prototype.slice.call(ths, 0);
             for (const th of thsArray) {
                 th.onclick = function () {
-                    const colName = this.getAttribute('col');
+                    const colName = this.getAttribute("col");
                     that.sort(colName);
                 };
             }
         } else {
-            Log.error('SortableTable::generate() - ' + this.divName + ' is null');
+            Log.error("SortableTable::generate() - " + this.divName + " is null");
         }
 
         this.attachDownload();
@@ -140,7 +140,7 @@ export class SortableTable {
         }, 100);
 
         // need to update the viewport so sticky headers keep working after resize events
-        window.addEventListener('resize', (evt) => {
+        window.addEventListener("resize", (evt) => {
             Log.info("SortableTable::generate()::resize - div: " + this.divName);
             this.updateTableHeight();
         }, true);
@@ -148,11 +148,11 @@ export class SortableTable {
 
     private startTable() {
         let tablePrefix = '<table class="sortableTable">';
-        tablePrefix += '<tr>';
+        tablePrefix += "<tr>";
 
         for (const header of this.headers) {
-            if (typeof header.style === 'undefined') {
-                header.style = '';
+            if (typeof header.style === "undefined") {
+                header.style = "";
             }
 
             // decorate this.sorCol appropriately
@@ -169,18 +169,18 @@ export class SortableTable {
                     '" col="' + header.id + '">' + header.text + '</th>';
             }
         }
-        tablePrefix += '</tr>';
+        tablePrefix += "</tr>";
 
         return tablePrefix;
     }
 
     private endTable() {
-        const tableSuffix = '</table>';
+        const tableSuffix = "</table>";
         return tableSuffix;
     }
 
     private generateRow(cols: any[], isOdd: boolean) {
-        let row = '';
+        let row = "";
 
         if (isOdd) {
             row = '<tr class="sortableTableRow" style="color: black; background: white;">';
@@ -193,7 +193,7 @@ export class SortableTable {
             row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + '</td>';
             i++;
         }
-        row += '</tr>';
+        row += "</tr>";
         return row;
     }
 
@@ -208,7 +208,6 @@ export class SortableTable {
         for (const head of this.headers) {
             if (head.id === this.sortHeader.id) {
                 if (head.sortable === false) {
-                    // Log.trace('SortableTable::sort() - no sort required; unsortable column: ' + head.id);
                     return;
                 } else {
                     sortHead = head;
@@ -225,15 +224,13 @@ export class SortableTable {
         if (sortHead.sortDown) {
             mult = 1;
         }
-        Log.trace('SortableTable::sort() - col: ' + sortHead.id + '; down: ' + sortHead.sortDown +
-            '; mult: ' + mult + '; index: ' + sortIndex);
+        Log.trace("SortableTable::sort() - col: " + sortHead.id + "; down: " + sortHead.sortDown +
+            "; mult: " + mult + "; index: " + sortIndex);
 
         this.rows = this.rows.sort(function (a, b) {
 
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
-
-            // Log.trace('sorting; aVal: ' + aVal + " ( " + typeof aVal + " ); bVal: " + bVal + " ( " + typeof bVal + " )");
 
             if (aVal === bVal) {
                 // get rid of equality from the start
@@ -243,12 +240,9 @@ export class SortableTable {
             // handle mismatches
             // mainly happens when one cell is empty
             if (typeof aVal !== typeof bVal) {
-                // console.log('comparing: ' + aVal + ' to: ' + bVal);
-                if (aVal === '' || aVal === null) {
-                    // console.log('bad aval');
+                if (aVal === "" || aVal === null) {
                     return -1 * mult;
-                } else if (bVal === '' || bVal === null) {
-                    // console.log('bad bval');
+                } else if (bVal === "" || bVal === null) {
                     return 1 * mult;
                 }
             }
@@ -258,13 +252,13 @@ export class SortableTable {
                 return (aVal.length - bVal.length) * mult;
             } else if (isNaN(aVal) === false) {
                 // as a number
-                // something that isn't an array or string
+                // something that is not an array or string
                 return (Number(aVal) - Number(bVal)) * mult;
-            } else if (typeof aVal === 'string') {
+            } else if (typeof aVal === "string") {
                 // as a string; tries to naturally sort w/ numeric & base
-                return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: 'base'}) * mult;
+                return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: "base"}) * mult;
             } else {
-                // something that isn't an array or string or number
+                // something that is not an array or string or number
                 return (aVal - bVal) * mult;
             }
         });
@@ -276,10 +270,10 @@ export class SortableTable {
         let downloadLink;
 
         // CSV file
-        csvFile = new Blob([csv], {type: 'text/csv'});
+        csvFile = new Blob([csv], {type: "text/csv"});
 
         // Download link
-        downloadLink = document.createElement('a');
+        downloadLink = document.createElement("a");
         downloadLink.innerHTML = linkName;
 
         const table = document.querySelector(this.divName);
@@ -292,8 +286,8 @@ export class SortableTable {
         downloadLink.href = window.URL.createObjectURL(csvFile);
 
         // Hide download link
-        downloadLink.style.display = 'block';
-        downloadLink.style.textAlign = 'center';
+        downloadLink.style.display = "block";
+        downloadLink.style.textAlign = "center";
 
         // Add the link to DOM
         // document.body.appendChild(downloadLink);
@@ -305,44 +299,44 @@ export class SortableTable {
     private exportTableToCSV() {
         const csv = [];
         const root = document.querySelector(this.divName);
-        const rows = root.querySelectorAll('table tr');
+        const rows = root.querySelectorAll("table tr");
 
         for (let i = 0; i < rows.length; i++) {
             const row = [];
-            const cols = rows[i].querySelectorAll('td, th');
+            const cols = rows[i].querySelectorAll("td, th");
 
             // tslint:disable-next-line
             for (let j = 0; j < cols.length; j++) {
                 if (i === 0) {
                     let text = (cols[j] as HTMLTableCellElement).innerText;
-                    text = text.replace(' ▼', '');
-                    text = text.replace(' ▲', '');
+                    text = text.replace(" ▼", "");
+                    text = text.replace(" ▲", "");
                     row.push(text);
                 } else {
                     row.push((cols[j] as HTMLTableCellElement).innerText);
                 }
             }
-            csv.push(row.join(','));
+            csv.push(row.join(","));
         }
 
-        return csv.join('\n');
+        return csv.join("\n");
     }
 
     private exportTableLinksToCSV() {
         const csv = [];
         const root = document.querySelector(this.divName);
-        const rows = root.querySelectorAll('table tr');
+        const rows = root.querySelectorAll("table tr");
 
         for (let i = 0; i < rows.length; i++) {
             const row = [];
-            const cols = rows[i].querySelectorAll('td, th');
+            const cols = rows[i].querySelectorAll("td, th");
 
             // tslint:disable-next-line
             for (let j = 0; j < cols.length; j++) {
                 if (i === 0) {
                     let text = (cols[j] as HTMLTableCellElement).innerText;
-                    text = text.replace(' ▼', '');
-                    text = text.replace(' ▲', '');
+                    text = text.replace(" ▼", "");
+                    text = text.replace(" ▲", "");
                     row.push(text);
                 } else {
                     const col = cols[j] as HTMLElement;
@@ -355,10 +349,10 @@ export class SortableTable {
                     }
                 }
             }
-            csv.push(row.join(','));
+            csv.push(row.join(","));
         }
 
-        return csv.join('\n');
+        return csv.join("\n");
     }
 
     public numRows(): number {
@@ -367,9 +361,9 @@ export class SortableTable {
 
     private attachDownload() {
         const csv = this.exportTableToCSV();
-        this.downloadCSV(csv, 'classy.csv', 'Download Values as CSV&nbsp;');
+        this.downloadCSV(csv, "classy.csv", "Download Values as CSV&nbsp;");
         const links = this.exportTableLinksToCSV();
-        this.downloadCSV(links, 'classyLinks.csv', '&nbsp;Download Links as CSV');
+        this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
     }
 
     /**
@@ -381,7 +375,7 @@ export class SortableTable {
         Log.info("SortableTable::updateTableHeight() - table: " + this.divName);
 
         if (this.numRows() < 20) {
-            // if the number of rows is low, don't bother doing this
+            // if the number of rows is low, do not bother doing this
             Log.info("SortableTable::updateTableHeight() - skipped; # rows: " +
                 this.numRows() + "; table: " + this.divName);
             return;

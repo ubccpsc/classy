@@ -28,7 +28,7 @@ export interface StatusPayload {
 export interface GradePayload {
     // delivId: string; // invariant; foreign key on Deliverable.id
     // personId: string; // TODO: who do we know who the grade is for?
-    score: number; // grade: < 0 will mean 'N/A' in the UI
+    score: number; // grade: < 0 will mean "N/A" in the UI
     comment: string;
 
     urlName: string; // name associated with url (e.g., project name)

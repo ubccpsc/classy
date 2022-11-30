@@ -5,7 +5,7 @@ export interface IFeedbackGiven {
     delivId: string;
     timestamp: number;
     commitURL: string; // for information only
-    kind: string; // 'standard', 'check'
+    kind: string; // "standard" | "check"
 }
 
 /**

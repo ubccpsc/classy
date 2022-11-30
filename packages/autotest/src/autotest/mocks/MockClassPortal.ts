@@ -75,7 +75,7 @@ export class MockClassPortal implements IClassPortal {
                 return null;
             }
         }
-        Log.error('MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: ' + name);
+        Log.error("MockClassPortal::getContainerDetails() - MockClassPortal should not be used with: " + name);
         return null;
     }
 
@@ -86,7 +86,7 @@ export class MockClassPortal implements IClassPortal {
         if (name === testname) {
             return {success: {worked: true}};
         } else {
-            return {failure: {message: 'did not work', shouldLogout: false}};
+            return {failure: {message: "did not work", shouldLogout: false}};
         }
     }
 
@@ -121,7 +121,7 @@ export class MockClassPortal implements IClassPortal {
 
     public async formatFeedback(res: AutoTestResultTransport): Promise<string | null> {
         // const cp = new ClassPortal();
-        // // using the real object here because CP isn't actually live for formatFeedback yet
+        // // using the real object here because CP is not actually live for formatFeedback yet
         // const msg = await cp.formatFeedback(res);
         // return msg;
         return Promise.resolve(res.output.report.feedback);

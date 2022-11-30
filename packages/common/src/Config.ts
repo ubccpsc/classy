@@ -163,7 +163,7 @@ export default class Config {
             // This is not a great place to sniff for the CI environment
             // but at least it should happen near the start of any execution.
             const ci = process.env.CI;
-            if (typeof ci !== 'undefined' && Util.toBoolean(ci) === true) {
+            if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
                 // CI instances should be INFO always
                 // trace emits too much text so the CI buffer does not save it all
                 Log.info("Config - Log::<init> - CI detected; changing to INFO");
@@ -229,10 +229,10 @@ export default class Config {
         const config = Config.getInstance();
         sensitiveKeys.forEach((sk) => {
             // HACK: replace() - edge case regarding token prefix in the config.
-            const value: string = config.getProp(sk).replace('token ', '');
+            const value: string = config.getProp(sk).replace("token ", "");
 
             const hint = value.substring(0, 4);
-            input = input.replace(new RegExp(value, 'g'), hint + '-xxxxxx');
+            input = input.replace(new RegExp(value, "g"), hint + "-xxxxxx");
         });
         return input;
     }

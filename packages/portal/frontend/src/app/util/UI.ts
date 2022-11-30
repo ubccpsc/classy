@@ -3,53 +3,47 @@
  */
 import Log from "@common/Log";
 
-// const OPEN_DELIV_KEY = 'open';
-// const CLOSE_DELIV_KEY = 'close';
-// const MAX_TEAM_DELIV_KEY = 'maxTeamSize';
-// const MIN_TEAM_DELIV_KEY = 'minTeamSize';
-// const MONGO_DB_ID_KEY = '_id';
-
-// import * as ons from 'onsenui'; // for dev
+// import * as ons from "onsenui"; // for dev
 declare var ons: any; // for release (or webpack bundling gets huge)
 
 export class UI {
-    public static inputTypes = {TIMEDATE: 'timeDate', NUMBER: 'number', TEXT: 'text'};
+    public static inputTypes = {TIMEDATE: "timeDate", NUMBER: "number", TEXT: "text"};
     public static ons = ons;
 
     /**
      * Onsen convenience functions
      */
     public static pushPage(pageId: string, options?: any): Promise<void> {
-        if (typeof options === 'undefined') {
+        if (typeof options === "undefined") {
             options = {};
         }
-        Log.trace('UI::pushPage( ' + pageId + ', ' + JSON.stringify(options) + ' )');
+        Log.trace("UI::pushPage( " + pageId + ", " + JSON.stringify(options) + " )");
 
-        const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
+        const nav = document.querySelector("#myNavigator") as any; // as ons.OnsNavigatorElement;
         if (nav !== null) {
             return nav.pushPage(pageId, options);
         } else {
-            Log.error('UI::pushPage(..) - WARN: nav is null');
+            Log.error("UI::pushPage(..) - WARN: nav is null");
             return nav.pushPage(pageId, options);
         }
     }
 
     public static getCurrentPage(): any {
-        const nav = document.querySelector('#myNavigator') as any;
+        const nav = document.querySelector("#myNavigator") as any;
         if (nav !== null) {
             //
             return nav.topPage;
-            // This doesn't seem to work anymore, there is no getCurrentPage function on the nav object
+            // This does not seem to work anymore, there is no getCurrentPage function on the nav object
             // return nav.getCurrentPage();
         }
     }
 
     public static popPage(options?: any) {
-        const nav = document.querySelector('#myNavigator') as any; // as ons.OnsNavigatorElement;
+        const nav = document.querySelector("#myNavigator") as any; // as ons.OnsNavigatorElement;
         if (nav !== null) {
             nav.popPage(options);
         } else {
-            Log.error('UI::popPage(..) - WARN: nav is null');
+            Log.error("UI::popPage(..) - WARN: nav is null");
         }
     }
 
@@ -75,7 +69,7 @@ export class UI {
     }
 
     public static showErrorToast(text: string) {
-        ons.notification.toast({message: text, buttonLabel: 'Ok', modifier: 'danger'});
+        ons.notification.toast({message: text, buttonLabel: "Ok", modifier: "danger"});
     }
 
     public static showSuccessToast(text: string, opts?: any) {
@@ -94,7 +88,7 @@ export class UI {
             opts.force = false;
         }
 
-        if (typeof opts.buttonLabel === 'undefined') {
+        if (typeof opts.buttonLabel === "undefined") {
             // do nothing; no button by default
         }
 
@@ -102,18 +96,18 @@ export class UI {
     }
 
     public static createOption(text: string, value: string): HTMLElement {
-        return ons.createElement('<option value=' + value + '>' + text + '</option>');
+        return ons.createElement("<option value=' + value + '>" + text + "</option>");
     }
 
     public static createListItem(text: string, subtext?: string, tappable?: boolean): HTMLElement {
 
         let prefix = '<ons-list-item style="display: table;">';
-        if (typeof tappable !== 'undefined' && tappable === true) {
+        if (typeof tappable !== "undefined" && tappable === true) {
             // right now only if subtext
             prefix = '<ons-list-item style="display: table;" modifier="chevron" tappable>';
         }
 
-        if (typeof subtext === 'undefined') {
+        if (typeof subtext === "undefined") {
             // simple list item
             const taskItem = ons.createElement('<ons-list-item>' + text + '</ons-list-item>') as HTMLElement;
             return taskItem;
@@ -136,37 +130,36 @@ export class UI {
 
     public static showModal(text?: string) {
         // https://onsen.io/v2/api/js/ons-modal.html
-        if (typeof text === 'undefined') {
+        if (typeof text === "undefined") {
             text = null;
         }
 
-        const modals = document.querySelectorAll('ons-modal') as any;
+        const modals = document.querySelectorAll("ons-modal") as any;
         for (const m of modals) {
             Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
             if (m !== null) {
                 if (text != null) {
-                    const content = document.querySelectorAll('#modalText') as any;
-                    const textFields = document.querySelectorAll('#modalText') as any;
+                    const content = document.querySelectorAll("#modalText") as any;
+                    const textFields = document.querySelectorAll("#modalText") as any;
                     for (const t of textFields) {
-                        // document.getElementById('modalText').innerHTML = text;
                         t.innerHTML = text;
                     }
                 }
                 if (m.visible === false) {
-                    // don't show a modal if it is already visible (causes flicker from the animation)
-                    m.show({animation: 'fade'});
+                    // do not show a modal if it is already visible (causes flicker from the animation)
+                    m.show({animation: "fade"});
                 }
             } else {
-                Log.error('UI::showModal(..) - Modal is null');
+                Log.error("UI::showModal(..) - Modal is null");
             }
         }
     }
 
     public static showError(failure: any) { // FailurePayload
         Log.error("UI::showError(..) - failure: " + JSON.stringify(failure));
-        if (typeof failure === 'string') {
+        if (typeof failure === "string") {
             return UI.showAlert(failure);
-        } else if (typeof failure.failure !== 'undefined') {
+        } else if (typeof failure.failure !== "undefined") {
             return UI.showAlert(failure.failure.message);
         } else {
             Log.error("Unknown message: " + JSON.stringify(failure));
@@ -175,34 +168,34 @@ export class UI {
     }
 
     public static getTextFieldValue(fieldName: string): string {
-        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        const field = document.querySelector("#" + fieldName) as HTMLTextAreaElement;
         if (field !== null) {
             return field.value;
         } else {
-            Log.error('UI::getTextFieldValue( ' + fieldName + ' ) - element does not exist');
+            Log.error("UI::getTextFieldValue( " + fieldName + " ) - element does not exist");
         }
     }
 
     public static getToggleValue(fieldName: string): boolean {
-        const field = document.querySelector('#' + fieldName) as HTMLInputElement;
+        const field = document.querySelector("#" + fieldName) as HTMLInputElement;
         if (field !== null) {
             return field.checked;
         } else {
-            Log.error('UI::getToggleValue( ' + fieldName + ' ) - element does not exist');
+            Log.error("UI::getToggleValue( " + fieldName + " ) - element does not exist");
         }
     }
 
     public static getDropdownValue(elementName: string): string {
-        const field = document.querySelector('#' + elementName) as HTMLSelectElement;
+        const field = document.querySelector("#" + elementName) as HTMLSelectElement;
         if (field !== null) {
             return field.options[field.selectedIndex].value;
         } else {
-            Log.error('UI::getDropdownValue( ' + elementName + ' ) - element does not exist');
+            Log.error("UI::getDropdownValue( " + elementName + " ) - element does not exist");
         }
     }
 
     public static setDropdownSelected(elementName: string, value: string | number, editable: boolean) {
-        const field = document.querySelector('#' + elementName) as HTMLSelectElement;
+        const field = document.querySelector("#" + elementName) as HTMLSelectElement;
         if (field !== null) {
             for (let i = 0; i < field.length; i++) {
                 const opt = field.options[i];
@@ -213,20 +206,20 @@ export class UI {
             }
 
             if (editable === false) {
-                field.setAttribute('readonly', '');
+                field.setAttribute("readonly", "");
             }
         } else {
-            Log.error('UI::setDropdownSelected( ' + elementName + ', ... ) - element does not exist');
+            Log.error("UI::setDropdownSelected( " + elementName + ", ... ) - element does not exist");
         }
     }
 
     public static setDropdownOptions(elementName: string, options: string[], selectedVal?: string | number | null) {
-        const selector = document.querySelector('#' + elementName) as HTMLSelectElement;
+        const selector = document.querySelector("#" + elementName) as HTMLSelectElement;
         if (selector !== null) {
-            selector.innerHTML = '';
+            selector.innerHTML = "";
             for (const opt of options) {
                 let selected = false;
-                if (typeof selectedVal !== 'undefined' && selectedVal === opt) {
+                if (typeof selectedVal !== "undefined" && selectedVal === opt) {
                     selected = true;
                 }
                 const o: HTMLOptionElement = new Option(opt, opt, false, selected);
@@ -241,7 +234,7 @@ export class UI {
         const inputField = ons.createElement(
             '<input type="text" style="margin: 0 0 0 15px" class="text-input text-input--underbar" value="">' +
             value +
-            '</input>') as HTMLElement;
+            "</input>") as HTMLElement;
 
         return inputField;
     }
@@ -276,15 +269,15 @@ export class UI {
 // </ons-page>
 
     public static hideModal() {
-        const modals = document.querySelectorAll('ons-modal') as any;
+        const modals = document.querySelectorAll("ons-modal") as any;
         for (const m of modals) {
             if (m !== null) {
-                m.hide({animation: 'fade'});
+                m.hide({animation: "fade"});
             } else {
-                Log.error('UI::hideModal(..) - Modal is null');
+                Log.error("UI::hideModal(..) - Modal is null");
             }
         }
-        // const modal = document.querySelector('ons-modal') as OnsModalElement;
+        // const modal = document.querySelector("ons-modal") as OnsModalElement;
 
     }
 
@@ -294,40 +287,40 @@ export class UI {
 
     public static templateConfirm(template: string, options: {header?: string, listContent?: Array<{text: string, subtext?: string}>}) {
         return ons.createElement(template, {append: true}).then(function(classlistDialog: any) {
-            const onsList = classlistDialog.querySelector('ons-list') as HTMLElement;
-            (classlistDialog.querySelector('ons-list-header') as HTMLElement).innerHTML = options.header;
-            classlistDialog.querySelector('ons-button').onclick = function() { classlistDialog.hide(); };
+            const onsList = classlistDialog.querySelector("ons-list") as HTMLElement;
+            (classlistDialog.querySelector("ons-list-header") as HTMLElement).innerHTML = options.header;
+            classlistDialog.querySelector("ons-button").onclick = function() { classlistDialog.hide(); };
             if (options && options.listContent) {
                 options.listContent.forEach(function(listItem) {
-                    onsList.appendChild(UI.createListItem(listItem.text, listItem.subtext || ''));
+                    onsList.appendChild(UI.createListItem(listItem.text, listItem.subtext || ""));
                 });
             }
             classlistDialog.show();
         })
         .catch(function(err: Error) {
-            Log.error('UI::prompt(..) - ERROR: ' + err);
+            Log.error("UI::prompt(..) - ERROR: " + err);
         });
     }
 
-    public static async templateDisplayText(template: string, text: string = ''): Promise<HTMLDivElement> {
+    public static async templateDisplayText(template: string, text: string = ""): Promise<HTMLDivElement> {
         return ons.createElement(template, {append: true}).then(function(textDialog: any) {
-            const textContentDiv = textDialog.querySelector('#adminDockerBuildDialog-logs-text') as HTMLDivElement;
+            const textContentDiv = textDialog.querySelector("#adminDockerBuildDialog-logs-text") as HTMLDivElement;
             textContentDiv.innerText = text;
             textDialog.show();
 
-            const saveButton = textDialog.querySelector('#adminDockerBuildDialog-footer-save');
-            const closeButton = textDialog.querySelector('#adminDockerBuildDialog-footer-close');
+            const saveButton = textDialog.querySelector("#adminDockerBuildDialog-footer-save");
+            const closeButton = textDialog.querySelector("#adminDockerBuildDialog-footer-close");
             closeButton.onclick = function() { textDialog.hide(); };
             saveButton.onclick = function() {
                 const dateTimeLocal = new Date((new Date().getTime() - new Date().getTimezoneOffset() * 60000)).toISOString();
-                saveButton['download'] = 'Build Log ' + dateTimeLocal + '.txt';
-                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+                saveButton["download"] = "Build Log " + dateTimeLocal + ".txt";
+                saveButton.href = "data:application/octet-stream," + encodeURIComponent(textContentDiv.innerText);
              };
-            saveButton['download'] = 'Classy Build Log';
+            saveButton["download"] = "Classy Build Log";
 
             // Updates data when right-clicked to choose custom save filename
             saveButton.oncontextmenu = function() {
-                saveButton.href = 'data:application/octet-stream,' + encodeURIComponent(textContentDiv.innerText);
+                saveButton.href = "data:application/octet-stream," + encodeURIComponent(textContentDiv.innerText);
             };
 
             return textContentDiv;
@@ -340,12 +333,12 @@ export class UI {
 
     // SDMM: move
     public static showD1TeamDialog() {
-        const dialog: any = document.getElementById('d1teamDialog');
+        const dialog: any = document.getElementById("d1teamDialog");
 
         if (dialog) {
             dialog.show();
         } else {
-            ons.createElement('d1team.html', {append: true}).then(function(diag: any) {
+            ons.createElement("d1team.html", {append: true}).then(function(diag: any) {
                 diag.show();
             });
         }
@@ -353,12 +346,12 @@ export class UI {
 
     // SDMM: move
     public static hideD1TeamDialog() {
-        const elem: any = document.getElementById('d1teamDialog');
+        const elem: any = document.getElementById("d1teamDialog");
         elem.hide();
     }
 
     public static took(start: number): string {
-        return (Date.now() - start) + ' ms';
+        return (Date.now() - start) + " ms";
     }
 
     public static showSection(id: string) {
@@ -367,7 +360,7 @@ export class UI {
         if (el === null) {
             Log.error("UI::showSection( " + id + " ) - unknown id");
         } else {
-            el.style.display = 'inherit'; // show the section
+            el.style.display = "inherit"; // show the section
         }
     }
 
@@ -377,22 +370,22 @@ export class UI {
         if (el === null) {
             Log.error("UI::hideSection( " + id + " ) - unknown id");
         } else {
-            el.style.display = 'none'; // show the section
+            el.style.display = "none"; // show the section
         }
     }
 
     public static injectCustomPage(path: string) {
-        Log.info('UI::injectCustomPage( ' + path + ' ) - start');
+        Log.info("UI::injectCustomPage( " + path + " ) - start");
 
         // Create a new import node
-        const importNode = document.createElement('link');
+        const importNode = document.createElement("link");
         importNode.href = path;
-        importNode.rel = 'import';
+        importNode.rel = "import";
         // Set the callback used when import is loaded. The line below is
         // adapted from importHref function in Polymer
         importNode.onload = function(importedNode: any, event: any) {
             // Put the document DOM tree in the import attribute as usual
-            Log.info('UI::injectCustomPage( ' + path + ' ) - loading complete');
+            Log.info("UI::injectCustomPage( " + path + " ) - loading complete");
             (importNode as any).import = event.target.import;
         }.bind(this, importNode);
 
@@ -414,7 +407,7 @@ export class UI {
         const customs = (document.querySelectorAll('link[rel="import"]'));
         for (const custom of Array.from(customs) as HTMLLinkElement[]) {
             if (custom !== null) {
-                const templates = (custom as any).import.querySelectorAll('template');
+                const templates = (custom as any).import.querySelectorAll("template");
                 for (const template of Array.from(templates) as HTMLTemplateElement[]) {
                     if (template !== null && template.id === id) {
                         const clone = document.importNode(template.content, true);
@@ -431,16 +424,16 @@ export class UI {
         if (el === null) {
             Log.error("UI::clearChildren( " + id + " ) - unknown id");
         } else {
-            el.innerHTML = '';
+            el.innerHTML = "";
         }
     }
 
     public static clearTextField(fieldName: string) {
-        const field = document.querySelector('#' + fieldName) as HTMLTextAreaElement;
+        const field = document.querySelector("#" + fieldName) as HTMLTextAreaElement;
         if (field !== null) {
-            field.value = '';
+            field.value = "";
         } else {
-            Log.error('UI::clearTextField( ' + fieldName + ' ) - element does not exist');
+            Log.error("UI::clearTextField( " + fieldName + " ) - element does not exist");
         }
     }
 }

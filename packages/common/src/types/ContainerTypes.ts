@@ -47,7 +47,7 @@ export interface CommitTarget {
     adminRequest: boolean; // true if requested by admin or staff
     botMentioned: boolean; // true if explicitly mentioned
     personId: string | null; // string is Person.id if explicitly invoked, null otherwise
-    kind: string; // kind of request (currently just 'push', 'standard' or 'check')
+    kind: string; // kind of request: "push" | "standard" | "check"
 
     cloneURL: string;
 
@@ -99,7 +99,7 @@ export interface GradeReport {
     skipNames: string[];
 
     // The container can list files it generates here. Paths will be relative
-    // to the container's mounted output directory; use ContainerOutput::graderTaskId
+    // to the mounted output directory for the container; use ContainerOutput::graderTaskId
     // to construct the URL path to retrieve the attachment from the Grader
     // service. Note: The Grader service may append additional attachments
     // after the container completes (e.g. stdio.txt).

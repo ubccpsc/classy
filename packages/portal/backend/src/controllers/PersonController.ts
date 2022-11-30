@@ -24,9 +24,7 @@ export class PersonController {
             await this.db.writePerson(personPrototype);
 
             Log.info("PersonController::createPerson( " + personPrototype.id + " ) - new person created");
-            const person = await this.db.getPerson(personPrototype.id);
-            return person;
-
+            return await this.db.getPerson(personPrototype.id);
         } else {
             // merge people
 
@@ -66,8 +64,7 @@ export class PersonController {
             await this.db.writePerson(existingPerson);
 
             Log.trace("PersonController::createPerson( " + existingPerson.id + " ) - updated");
-            const person = await this.db.getPerson(personPrototype.id);
-            return person;
+            return await this.db.getPerson(personPrototype.id);
         }
     }
 
@@ -82,8 +79,7 @@ export class PersonController {
     public async writePerson(person: Person): Promise<boolean> {
         Log.trace("PersonController::writePerson( " + person.id + " ) - start");
 
-        const successful = await this.db.writePerson(person);
-        return successful;
+        return await this.db.writePerson(person);
     }
 
     /**
@@ -163,10 +159,10 @@ export class PersonController {
     }
 
     public async getRepos(personId: string): Promise<Repository[] | null> {
-        Log.trace('PersonController::getRepos( ' + personId + ' ) - start');
+        Log.trace("PersonController::getRepos( " + personId + " ) - start");
         const start = Date.now();
         const repos = await this.db.getRepositoriesForPerson(personId);
-        Log.trace('PersonController::getRepos( ' + personId + ' ) - # repos: ' + repos.length + '; took: ' + Util.took(start));
+        Log.trace("PersonController::getRepos( " + personId + " ) - # repos: " + repos.length + "; took: " + Util.took(start));
         return repos;
     }
 
@@ -208,28 +204,27 @@ export class PersonController {
     }
 
     public static personToTransport(person: Person): StudentTransport {
-        if (typeof person === 'undefined' || person === null) {
+        if (typeof person === "undefined" || person === null) {
             throw new Error("PersonController::personToTransport( ... ) - ERROR: person not provided.");
         }
 
-        const student: StudentTransport = {
-            id:         person.id,
-            firstName:  person.fName,
-            lastName:   person.lName,
-            githubId:   person.githubId,
-            userUrl:    person.URL,
+        return {
+            id: person.id,
+            firstName: person.fName,
+            lastName: person.lName,
+            githubId: person.githubId,
+            userUrl: person.URL,
             studentNum: person.studentNumber,
-            labId:      person.labId
-        };
-        return student;
+            labId: person.labId
+        } as StudentTransport;
     }
 
     // /**
     //  * Updates people records from a CSV.
     //  *
     //  * If the CSV has someone new, they are added.
-    //  * If the CSV has an existin person, they are upated using their id with the details from the CSV.
-    //  * If a person exists who isn't in the CSV, nothing happens (e.g., no deletions).
+    //  * If the CSV has an existing person, they are updated using their id with the details from the CSV.
+    //  * If a person exists who is not in the CSV, nothing happens (e.g., no deletions).
     //  *
     //  * @returns {Promise<Person[]>}
     //  */
@@ -258,7 +253,7 @@ export class PersonController {
     //             lName:         row.lName,
     //             labId:         row.labId,
     //
-    //             kind:   'student', // only students are added via CSV
+    //             kind:   "student", // only students are added via CSV
     //             URL:    null,
     //             custom: {}
     //         };
@@ -269,7 +264,7 @@ export class PersonController {
     //             if (p.id === csvPerson.id) {
     //                 found = true;
     //
-    //                 // don't overwrite fields that can't change
+    //                 // do not overwrite fields that cannot change
     //                 csvPerson.custom = p.custom;
     //                 csvPerson.URL = p.URL;
     //                 await this.db.writePerson(csvPerson);
@@ -304,6 +299,6 @@ export class PersonController {
     //     // LNAME
     //     // LABID
     //
-    //     return '';
+    //     return "";
     // }
 }

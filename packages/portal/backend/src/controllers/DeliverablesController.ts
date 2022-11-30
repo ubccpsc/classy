@@ -46,27 +46,27 @@ export class DeliverablesController {
      * @returns {string|null} null if the deliverable is valid; string describing the error if there is one.
      */
     public validateDeliverableTransport(deliv: DeliverableTransport): string | null {
-        Log.trace('DeliverablesController::validateDeliverableTransport(..) - start');
+        Log.trace("DeliverablesController::validateDeliverableTransport(..) - start");
 
-        if (typeof deliv === 'undefined') {
-            const msg = 'object undefined';
-            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+        if (typeof deliv === "undefined") {
+            const msg = "object undefined";
+            Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + msg);
             return msg;
         }
 
         if (deliv === null) {
-            const msg = 'object null';
-            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+            const msg = "object null";
+            Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + msg);
             return msg;
         }
 
-        if (typeof deliv.id === 'undefined' || deliv.id === null || deliv.id.length < 2) {
-            const msg = 'invalid delivId: ' + deliv.id;
-            Log.error('DeliverableController::validateDeliverableTransport(..) - ERROR: ' + msg);
+        if (typeof deliv.id === "undefined" || deliv.id === null || deliv.id.length < 2) {
+            const msg = "invalid delivId: " + deliv.id;
+            Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + msg);
             return msg;
         }
 
-        Log.trace('DeliverablesController::validateDeliverableTransport(..) - done; object is valid');
+        Log.trace("DeliverablesController::validateDeliverableTransport(..) - done; object is valid");
         return null;
     }
 
@@ -93,8 +93,8 @@ export class DeliverablesController {
             studentsFormTeams: deliv.teamStudentsForm,
             importURL: deliv.importURL,
 
-            onOpenAction: '',
-            onCloseAction: '',
+            onOpenAction: "",
+            onCloseAction: "",
 
             gradesReleased: deliv.gradesReleased,
             visibleToStudents: deliv.visibleToStudents,

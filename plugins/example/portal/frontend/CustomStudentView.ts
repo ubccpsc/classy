@@ -28,7 +28,7 @@ export class CustomStudentView extends AbstractStudentView {
     }
 
     public renderPage(opts: {}) {
-        Log.info('CustomStudentView::renderPage() - start; options: ' + opts);
+        Log.info("CustomStudentView::renderPage() - start; options: " + opts);
         const that = this;
         const start = Date.now();
 
@@ -37,18 +37,18 @@ export class CustomStudentView extends AbstractStudentView {
             // super render complete; do Default work
             return that.renderStudentPage();
         }).then(function () {
-            Log.info('CustomStudentView::renderPage(..) - prep & render took: ' + UI.took(start));
+            Log.info("CustomStudentView::renderPage(..) - prep & render took: " + UI.took(start));
             UI.hideModal();
         }).catch(function (err) {
-            Log.error('CustomStudentView::renderPage() - ERROR: ' + err);
+            Log.error("CustomStudentView::renderPage() - ERROR: " + err);
             UI.hideModal();
         });
     }
 
     private async renderStudentPage(): Promise<void> {
-        UI.showModal('Fetching Data');
+        UI.showModal("Fetching Data");
         try {
-            Log.info('CustomStudentView::renderStudentPage(..) - start');
+            Log.info("CustomStudentView::renderStudentPage(..) - start");
 
             // custom feature rendered here
             await this.renderCustomFeature();
@@ -66,9 +66,9 @@ export class CustomStudentView extends AbstractStudentView {
             this.studentsFormTeamDelivIds = await this.fetchStudentFormTeamDelivs();
             await this.renderDeliverableSelectMenu(this.studentsFormTeamDelivIds);
 
-            Log.info('CustomStudentView::renderStudentPage(..) - done');
+            Log.info("CustomStudentView::renderStudentPage(..) - done");
         } catch (err) {
-            Log.error('Error encountered: ' + err.message);
+            Log.error("Error encountered: " + err.message);
         }
         UI.hideModal();
         return;
@@ -77,34 +77,34 @@ export class CustomStudentView extends AbstractStudentView {
     private async fetchStudentFormTeamDelivs(): Promise<string[]> {
         try {
             this.studentsFormTeamDelivIds = null;
-            const data: ConfigTransport = await this.fetchData('/portal/config');
-            Log.info('ClassyStudentView::fetchStudentFormTeamDelivs(..) - data', data);
+            const data: ConfigTransport = await this.fetchData("/portal/config");
+            Log.info("ClassyStudentView::fetchStudentFormTeamDelivs(..) - data", data);
             return data.studentsFormTeamDelivIds;
         } catch (err) {
-            Log.error('ClassyStudentView::fetchStudentFormTeamDelivs(..) - ERROR ', err);
+            Log.error("ClassyStudentView::fetchStudentFormTeamDelivs(..) - ERROR ", err);
         }
     }
 
     private async fetchTeamData(): Promise<TeamTransport[]> {
         try {
             this.teams = null;
-            let data: TeamTransport[] = await this.fetchData('/portal/teams');
+            let data: TeamTransport[] = await this.fetchData("/portal/teams");
             if (data === null) {
                 data = [];
             }
             this.teams = data;
             return data;
         } catch (err) {
-            Log.error('CustomStudentView::fetchTeamData(..) - ERROR: ' + err.message);
+            Log.error("CustomStudentView::fetchTeamData(..) - ERROR: " + err.message);
             this.teams = [];
             return [];
         }
     }
 
     private async renderCustomFeature(): Promise<void> {
-        Log.trace('CustomStudentView::renderTeams(..) - start');
-        const customFeatureDiv = document.getElementById('studentCustomFeature');
-        const {helloWorldData} = await this.fetchData('/portal/custom/helloWorld');
+        Log.trace("CustomStudentView::renderTeams(..) - start");
+        const customFeatureDiv = document.getElementById("studentCustomFeature");
+        const {helloWorldData} = await this.fetchData("/portal/custom/helloWorld");
 
         for (const str of helloWorldData) {
             const item = UI.createListItem(str);
@@ -113,34 +113,34 @@ export class CustomStudentView extends AbstractStudentView {
     }
 
     private async renderTeams(teams: TeamTransport[]): Promise<void> {
-        Log.trace('CustomStudentView::renderTeams(..) - start');
+        Log.trace("CustomStudentView::renderTeams(..) - start");
         const that = this;
 
         // configure team creation menus
-        const button = document.querySelector('#studentSelectPartnerButton') as OnsButtonElement;
+        const button = document.querySelector("#studentSelectPartnerButton") as OnsButtonElement;
         button.onclick = function (evt: any) {
-            Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick');
+            Log.info("CustomStudentView::renderTeams(..)::createTeam::onClick");
             that.formTeam().then(function (team) {
-                Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick::then - team created');
+                Log.info("CustomStudentView::renderTeams(..)::createTeam::onClick::then - team created");
                 that.teams.push(team);
                 if (team !== null) {
                     that.renderPage({}); // simulating refresh
                 }
             }).catch(function (err) {
-                Log.info('CustomStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: ' + err);
+                Log.info("CustomStudentView::renderTeams(..)::createTeam::onClick::catch - ERROR: " + err);
             });
         };
 
-        const teamsListDiv = document.getElementById('studentPartnerDiv');
-        const teamElement = document.getElementById('studentPartnerTeamName');
+        const teamsListDiv = document.getElementById("studentPartnerDiv");
+        const teamElement = document.getElementById("studentPartnerTeamName");
 
         if (teams.length) {
-            const studentNotOnTeamMsg = document.getElementById('studentNotOnTeamMsg');
+            const studentNotOnTeamMsg = document.getElementById("studentNotOnTeamMsg");
             if (studentNotOnTeamMsg) {
                 studentNotOnTeamMsg.remove();
             }
 
-            const teamItems = teamsListDiv.querySelectorAll('ons-list-item');
+            const teamItems = teamsListDiv.querySelectorAll("ons-list-item");
             // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < teamItems.length; i++) {
                 teamItems[i].remove();
@@ -154,17 +154,17 @@ export class CustomStudentView extends AbstractStudentView {
 
     private async formTeam(): Promise<TeamTransport> {
         Log.info("CustomStudentView::formTeam() - start");
-        const studentSelectPartner = document.getElementById('studentSelectPartnerText') as HTMLInputElement;
-        const otherIds = studentSelectPartner.value.replace(' ', '').split(',');
-        const delivMenu = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
+        const studentSelectPartner = document.getElementById("studentSelectPartnerText") as HTMLInputElement;
+        const otherIds = studentSelectPartner.value.replace(" ", "").split(",");
+        const delivMenu = document.getElementById("studentSelectDeliverable") as OnsSelectElement;
         const myGithubId = this.getStudent().githubId;
         const payload: TeamFormationTransport = {
             delivId: delivMenu.options[delivMenu.selectedIndex].value,
             githubIds: [myGithubId, ...otherIds]
         };
-        const url = this.remote + '/portal/team';
+        const url = this.remote + "/portal/team";
         const options: any = this.getOptions();
-        options.method = 'post';
+        options.method = "post";
         options.body = JSON.stringify(payload);
 
         Log.info("CustomStudentView::formTeam() - URL: " + url + "; payload: " + JSON.stringify(payload));
@@ -176,12 +176,12 @@ export class CustomStudentView extends AbstractStudentView {
 
         Log.info("CustomStudentView::formTeam() - response: " + JSON.stringify(body));
 
-        if (typeof body.success !== 'undefined') {
+        if (typeof body.success !== "undefined") {
             // worked
-            UI.notification('Team ' + body.success[0].id + ' created.');
-            studentSelectPartner.value = '';
+            UI.notification("Team " + body.success[0].id + " created.");
+            studentSelectPartner.value = "";
             return body.success as TeamTransport;
-        } else if (typeof body.failure !== 'undefined') {
+        } else if (typeof body.failure !== "undefined") {
             // failed
             UI.showError(body);
             return null;
@@ -191,8 +191,8 @@ export class CustomStudentView extends AbstractStudentView {
     }
 
     private async renderDeliverableSelectMenu(deliverableIds: string[]): Promise<void> {
-        Log.info('rendering deliverable select menu');
-        const delivSelect = document.getElementById('studentSelectDeliverable') as OnsSelectElement;
+        Log.info("rendering deliverable select menu");
+        const delivSelect = document.getElementById("studentSelectDeliverable") as OnsSelectElement;
         if (delivSelect.options.length === 0) {
             deliverableIds.forEach((id) => {
                 const opt = UI.createOption(id, id);

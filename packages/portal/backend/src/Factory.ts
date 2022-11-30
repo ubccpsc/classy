@@ -10,7 +10,7 @@ import IREST from "./server/IREST";
 export class Factory {
 
     /**
-     * This is a test variable, but can't be hosted in a test/ file because it breaks the Docker build process.
+     * This is a test variable, but cannot be hosted in a test/ file because it breaks the Docker build process.
      *
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
@@ -37,7 +37,7 @@ export class Factory {
             // plugin path can be substituted in .env for customization of routes
             let plug: any;
             Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + plugin);
-            plug = await require('../../../../plugins/' + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
+            plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
             Log.trace("Factory::getCustomRouteHandler() - handler loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
@@ -90,7 +90,7 @@ export class Factory {
 
             try {
                 // If a course wants to specialize the AdminView it should be in the file below.
-                // This is not required. But if it is added, it should never be pushed back to 'classy/master'
+                // This is not required. But if it is added, it should never be pushed back to "classy/main"
                 Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
                 plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseController");
             } catch (err) {

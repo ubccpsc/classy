@@ -514,7 +514,7 @@ describe("GitHubAutoTest", () => {
         expect(gitHubMessages[gitHubMessages.length - 1].message).to.contain("execution complete");
         expect(allData.comments.length).to.equal(1, "2 comments");
         expect(allData.feedback.length).to.equal(1, "2 feedback");
-        // NOTE: should #check feedback charge? it does, but I don't know if this is right.
+        // NOTE: should #check feedback charge? it does, but I do not know if this is right.
         Log.test("Test complete");
     }).timeout(WAIT * 10);
 

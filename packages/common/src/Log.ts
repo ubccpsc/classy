@@ -33,8 +33,8 @@ export default class Log {
                 // console.log("Log::parseLogLevel() - unchanged; current level: " + LOG_LEVEL);
                 return LOG_LEVEL;
             } else {
-                // if the value isn't a string, it must be a LogLevel already
-                // so we don't need to parse it again
+                // if the value is not a string, it must be a LogLevel already
+                // so we do not need to parse it again
                 switch (valToSwitch) {
                     case "TRACE":
                         LOG_LEVEL = LogLevel.TRACE;
