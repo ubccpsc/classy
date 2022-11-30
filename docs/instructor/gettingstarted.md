@@ -7,18 +7,18 @@ Classy requires some implementation work and learning before it can be used in a
 - [ ] Shadow a course that uses Classy before you begin to use it
 - [ ] Request [Classy for your Course](#requesting-classy-for-your-course) at least three weeks in advance of course start date.
 - [ ] Read about [Default Classy Plugin](#default-classy-plugin) and customization option.
-- [ ] Give tech staff a Github token to access [AutoGrade Dockerfile Repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
+- [ ] Give tech staff a GitHub token to access [AutoGrade Dockerfile Repository](/docs/instructor/autograde.md#autograde-dockerfile-repository).
 
 Nice-to-have's:
 
 - [ ] Retain a TA to build-out Docker AutoGrade container.
 - [ ] Add container logging that allows for quick debugging of container logic.
 
-Github is integrated with Classy and Github requires that you use Git version control. Syllabus and course instructions will need to be updated to work with *Git* version control.
+GitHub is integrated with Classy and GitHub requires that you use Git version control. Syllabus and course instructions will need to be updated to work with *Git* version control.
 
 ## Requesting Classy for Your Course
 
-You must formally request Classy by notifying *CPSC Technical Staff*. Classy takes approximately two weeks to setup because of software, hardware, and CPSC technical staff resources that are necessary to run the software while upholding privacy and data laws.
+You must formally request Classy by notifying *CPSC Technical Staff*. Classy takes approximately two weeks to set up because of software, hardware, and CPSC technical staff resources that are necessary to run the software while upholding privacy and data laws.
 
 Please start a discussion with CPSC Technical Staff as soon as you develop an interest in using Classy.
 
@@ -34,7 +34,7 @@ Classy comes with default MVC, course controller, and route logic. The default p
 
 ### Admin Results Panel
 
-*Displays basic the result recordd with the highest scores per single or team repository.*
+*Displays basic the result record with the highest scores per single or team repository.*
 
 <img src="../assets/admin-view-results.png/">
 
