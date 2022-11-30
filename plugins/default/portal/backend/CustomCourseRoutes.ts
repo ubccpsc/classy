@@ -11,6 +11,6 @@ import Log from "@common/Log";
  */
 export default class DefaultCourseRoutes implements IREST {
     public registerRoutes(server: restify.Server) {
-        Log.trace('DefaultCourseRoutes::registerRoutes()');
+        Log.info("DefaultCourseRoutes::registerRoutes()");
     }
 }

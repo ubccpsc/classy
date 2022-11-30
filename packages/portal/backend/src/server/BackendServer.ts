@@ -111,16 +111,17 @@ export default class BackendServer {
             Log.info("BackendServer::start() - Registering common handlers; done");
 
             // Register custom route handler for specific classy instance
-            Log.info("BackendServer::start() - Registering custom handler");
+            Log.info("BackendServer::start() - Registering custom handler; pre");
 
             Factory.getCustomRouteHandler().then(function (handler) {
+                Log.info("BackendServer::start() - Registering custom handler; start");
                 handler.registerRoutes(that.rest);
                 Log.info("BackendServer::start() - Registering custom handler; done");
 
                 // serve up the static frontend resources
                 const frontendHTML = __dirname + "/../../../frontend/html";
                 Log.info("BackendServer::start() - Serving static from: " + frontendHTML);
-                that.rest.get("/*/", restify.plugins.serveStatic({
+                that.rest.get("/*", restify.plugins.serveStatic({
                     directory: frontendHTML,
                     default: "index.html"
                 }));

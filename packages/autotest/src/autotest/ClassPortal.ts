@@ -251,7 +251,7 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
-            const json = await res.json();
+            const json = await res.json() as Payload;
             if (typeof json.success !== "undefined") {
                 Log.info("ClassPortal::sendGrade(..) - grade accepted; deliv: " + grade.delivId +
                     "; repo: " + grade.repoId + "; took: " + Util.took(start));
@@ -332,7 +332,7 @@ export class ClassPortal implements IClassPortal {
                 "; repoId: " + result.repoId + "; SHA: " + result.input.target.commitSHA);
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::sendResult() - sent; returned payload: " + JSON.stringify(res));
-            const json = await res.json();
+            const json = await res.json() as Payload;
             if (typeof json.success !== "undefined") {
                 Log.info("ClassPortal::sendResult(..) - result accepted; SHA: " +
                     Util.shaHuman(result.input.target.commitSHA) + "; took: " + Util.took(start));
@@ -401,7 +401,7 @@ export class ClassPortal implements IClassPortal {
             };
 
             const response = await fetch(url, opts);
-            const json = await response.json();
+            const json = await response.json() as Payload;
             if (json.success !== undefined && typeof json.success.shouldPromote === "boolean") {
                 shouldPromote = json.success.shouldPromote;
             } else {

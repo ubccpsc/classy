@@ -1,7 +1,5 @@
-import * as parse from "csv-parse";
-import * as fs from "fs";
 import * as https from "https";
-import fetch, { RequestInit } from "node-fetch";
+import fetch from "node-fetch";
 
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
@@ -9,7 +7,7 @@ import Log from "@common/Log";
 import {ClasslistChangesTransport, ClasslistTransport, StudentTransport} from "@common/types/PortalTypes";
 import {DatabaseController} from "../../controllers/DatabaseController";
 import {PersonController} from "../../controllers/PersonController";
-import {AuditLabel, Grade, Person, PersonKind} from "../../Types";
+import {AuditLabel, Person, PersonKind} from "../../Types";
 import {CSVParser} from "./CSVParser";
 
 export class ClasslistAgent {
@@ -27,12 +25,12 @@ export class ClasslistAgent {
             const uri = this.getClasslistUri();
             const options = {
                 headers: {
-                    'User-Agent': 'Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0' // for testing
+                    "User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0" // for testing
                 },
-                agent:              new https.Agent({ rejectUnauthorized: false })
+                agent: new https.Agent({rejectUnauthorized: false})
             };
             const res = await fetch(uri, options);
-            return res.json();
+            return await res.json() as ClasslistTransport[];
         } catch (err) {
             Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
             throw new Error("Could not fetch Classlist " + err.message);
@@ -41,13 +39,13 @@ export class ClasslistAgent {
 
     private getClasslistUri() {
         const config = Config.getInstance();
-        const auth = config.getProp(ConfigKey.classlist_username) + ':' + config.getProp(ConfigKey.classlist_password);
+        const auth = config.getProp(ConfigKey.classlist_username) + ":" + config.getProp(ConfigKey.classlist_password);
         const uri = config.getProp(ConfigKey.classlist_uri);
 
-        if (uri.indexOf('https://') === 0) {
-            return 'https://' + auth + '@' + uri.slice(8);
+        if (uri.indexOf("https://") === 0) {
+            return "https://" + auth + "@" + uri.slice(8);
         } else {
-            throw new Error('https:// protocol is required for API integration');
+            throw new Error("https:// protocol is required for API integration");
         }
     }
 
@@ -60,25 +58,30 @@ export class ClasslistAgent {
     private getClasslistChanges(beforePeople: Person[], afterPeople: Person[]): ClasslistChangesTransport {
         Log.info("ClasslistAgent::getClasslistChanges(..) - start");
         const that = this;
-        const beforeCSIDs = beforePeople.map(function(person) { return person.csId; });
-        const afterCSIDs = afterPeople.map(function(person) { return person.csId; });
-        const classlist: StudentTransport[] = afterPeople.map(function(person) { return PersonController.personToTransport(person);
+        const beforeCSIDs = beforePeople.map(function (person) {
+            return person.csId;
+        });
+        const afterCSIDs = afterPeople.map(function (person) {
+            return person.csId;
+        });
+        const classlist: StudentTransport[] = afterPeople.map(function (person) {
+            return PersonController.personToTransport(person);
         });
 
         const changeReport: ClasslistChangesTransport = {
-            message: 'Successfully uploaded classlist.',
+            message: "Successfully uploaded classlist.",
             created: [], // new registrations
             updated: [], // only students whose CWL or lab has changed
             removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
             classlist // created from list of people in the classlist upload returned from data layer
         };
 
-        afterPeople.forEach(function(afterPerson) {
+        afterPeople.forEach(function (afterPerson) {
             if (beforeCSIDs.indexOf(afterPerson.csId) === -1) {
                 const student = PersonController.personToTransport(afterPerson);
                 changeReport.created.push(student);
             } else {
-                const beforePerson = beforePeople.find(function(befPerson) {
+                const beforePerson = beforePeople.find(function (befPerson) {
                     if (befPerson.csId === afterPerson.csId) {
                         return true;
                     }
@@ -90,7 +93,7 @@ export class ClasslistAgent {
             }
         });
 
-        beforePeople.forEach(function(person) {
+        beforePeople.forEach(function (person) {
             if (afterCSIDs.indexOf(person.csId) === -1 && person.kind === PersonKind.STUDENT) {
                 const student = PersonController.personToTransport(person);
                 changeReport.removed.push(student);
@@ -101,7 +104,7 @@ export class ClasslistAgent {
         return changeReport;
     }
 
-    public async processClasslist(personId: string = null, path: string = null,  data: any): Promise<ClasslistChangesTransport> {
+    public async processClasslist(personId: string = null, path: string = null, data: any): Promise<ClasslistChangesTransport> {
         Log.trace("ClasslistAgent::processClasslist(...) - start");
         const peopleBefore: Person[] = await this.pc.getAllPeople();
 
@@ -109,35 +112,35 @@ export class ClasslistAgent {
             data = await new CSVParser().parsePath(path);
         }
 
-        this.duplicateDataCheck(data, ['ACCT', 'CWL']);
-        this.missingDataCheck(data, ['ACCT', 'CWL']);
+        this.duplicateDataCheck(data, ["ACCT", "CWL"]);
+        this.missingDataCheck(data, ["ACCT", "CWL"]);
         const peoplePromises: Array<Promise<Person>> = [];
 
         for (const row of data) {
             // Log.trace(JSON.stringify(row));
-            if (typeof row.ACCT !== 'undefined' && typeof row.CWL !== 'undefined' &&
-                typeof row.SNUM !== 'undefined' && typeof row.LAST !== 'undefined' &&
-                typeof row.LAB !== 'undefined' &&
-                (typeof row.FIRST !== 'undefined' || typeof row.PREF !== 'undefined')) {
+            if (typeof row.ACCT !== "undefined" && typeof row.CWL !== "undefined" &&
+                typeof row.SNUM !== "undefined" && typeof row.LAST !== "undefined" &&
+                typeof row.LAB !== "undefined" &&
+                (typeof row.FIRST !== "undefined" || typeof row.PREF !== "undefined")) {
                 const p: Person = {
-                    id:            row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
-                    csId:          row.ACCT.toLowerCase(),
+                    id: row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
+                    csId: row.ACCT.toLowerCase(),
                     // github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
-                    githubId:      row.CWL.toLowerCase(),
+                    githubId: row.CWL.toLowerCase(),
                     studentNumber: row.SNUM,
-                    fName:         row.PREF || row.FIRST,
-                    lName:         row.LAST,
-                    kind:   PersonKind.STUDENT,
-                    URL:    null,
-                    labId:  row.LAB,
+                    fName: row.PREF || row.FIRST,
+                    lName: row.LAST,
+                    kind: PersonKind.STUDENT,
+                    URL: null,
+                    labId: row.LAB,
                     custom: {}
                 };
                 peoplePromises.push(this.pc.createPerson(p));
             } else {
-                Log.error('ClasslistAgent::processClasslist(..) - column missing from: ' + JSON.stringify(row));
-                peoplePromises.push(Promise.reject('Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).'));
+                Log.error("ClasslistAgent::processClasslist(..) - column missing from: " + JSON.stringify(row));
+                peoplePromises.push(Promise.reject("Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB)."));
+            }
         }
-    }
         const peopleAfter = await Promise.all(peoplePromises);
         const classlistChanges = this.getClasslistChanges(peopleBefore, peopleAfter);
 
@@ -149,23 +152,23 @@ export class ClasslistAgent {
     }
 
     private duplicateDataCheck(data: any[], columnNames: string[]) {
-        Log.trace('ClasslistAgent::duplicateDataCheck -- start');
+        Log.trace("ClasslistAgent::duplicateDataCheck -- start");
         const that = this;
         const dupColumnData: any = {};
-        columnNames.forEach(function(column) {
+        columnNames.forEach(function (column) {
             Object.assign(dupColumnData, {[column]: that.getDuplicateRowsByColumn(data, column)});
         });
-        columnNames.forEach(function(column) {
+        columnNames.forEach(function (column) {
             if (dupColumnData[column].length) {
-                Log.error('ClasslistAgent::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error'
+                Log.error("ClasslistAgent::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error"
                     + JSON.stringify(dupColumnData));
-                throw new Error('Duplicate Data Check Error: ' + JSON.stringify(dupColumnData));
+                throw new Error("Duplicate Data Check Error: " + JSON.stringify(dupColumnData));
             }
         });
     }
 
     private getDuplicateRowsByColumn(data: any[], column: string): any[] {
-        Log.trace('ClasslistAgent::getDuplicateRowsByColumn -- start');
+        Log.trace("ClasslistAgent::getDuplicateRowsByColumn -- start");
         const set = new Set();
         return data.filter((row) => {
             if (set.has(row[column].toLowerCase())) {
@@ -177,9 +180,9 @@ export class ClasslistAgent {
     }
 
     private getMissingDataRowsByColumn(data: any[], column: string): any[] {
-        Log.trace('ClasslistAgent::getMissingDataRowsByColumn -- start');
+        Log.trace("ClasslistAgent::getMissingDataRowsByColumn -- start");
         return data.filter((row) => {
-            if (row[column] === '' || typeof row[column] === 'undefined') {
+            if (row[column] === "" || typeof row[column] === "undefined") {
                 return true;
             }
             return false;
@@ -187,7 +190,7 @@ export class ClasslistAgent {
     }
 
     private missingDataCheck(data: any[], columns: string[]) {
-        Log.trace('ClasslistAgent::missingDataCheck -- start');
+        Log.trace("ClasslistAgent::missingDataCheck -- start");
         const that = this;
         const missingData: any = {};
         columns.forEach((column) => {
@@ -195,9 +198,9 @@ export class ClasslistAgent {
         });
         columns.forEach((column) => {
             if (missingData[column].length) {
-                Log.error('ClasslistAgent::missingDataCheck(..) - ERROR: Certain fields cannot be empty: '
+                Log.error("ClasslistAgent::missingDataCheck(..) - ERROR: Certain fields cannot be empty: "
                     + JSON.stringify(missingData));
-                throw new Error('Certain fields cannot be empty: ' + JSON.stringify(missingData));
+                throw new Error("Certain fields cannot be empty: " + JSON.stringify(missingData));
             }
         });
     }

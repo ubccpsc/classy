@@ -524,7 +524,7 @@ export class AutoTestRoutes implements IREST {
             if (res.ok) {
                 Log.trace("AutoTestRoutes::checkATStatus(..) - success: " + JSON.stringify(res.ok));
                 Log.trace("AutoTestRoutes::checkATStatus(..) - done; took: " + Util.took(start));
-                const result = await res.json();
+                const result = await res.json() as AutoTestStatus;
                 Log.info("AutoTestRoutes::checkATStatus(..) - done; # jobs: " + result.executing +
                     "; # exp: " + result.exp + "; # std: " + result.std + "; # low: " + result.low);
                 return result;
