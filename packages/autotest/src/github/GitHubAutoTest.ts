@@ -68,9 +68,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                "repo: " + info.repoId + "; person: " + info.personId + "; SHA: " + Util.shaHuman(info.commitSHA) +
-                "; branch: " + info.ref);
-
+                "repo: " + info.repoId + "; person: " + info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
             const start = Date.now();
             await this.savePushInfo(info);
 
