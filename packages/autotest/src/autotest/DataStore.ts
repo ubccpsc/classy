@@ -10,7 +10,9 @@ import Util from "@common/Util";
 export interface IDataStore {
 
     /**
-     * Gets the push event record for a given commitURL
+     * Gets the push event record for a given commitURL. If more than
+     * one PushRecord is saved, return the one associated with the
+     * main/master branch.
      */
     getPushRecord(commitURL: string): Promise<CommitTarget | null>;
 
@@ -150,19 +152,34 @@ export class MongoDataStore implements IDataStore {
     }
 
     /**
-     * Gets the push event record for a given commitURL
+     * Gets the push event record for a given commitURL. If more than one exist,
+     * return the one for main/master.
      */
     public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
         Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
-            const res = await this.getSingleRecord(this.PUSHCOLL, {commitURL: commitURL});
+            const res = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
             } else {
                 Log.trace("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
+                if (res.length === 1) {
+                    // the usual case
+                    return res[0] as CommitTarget;
+                } else {
+                    // return main/master if exists
+                    for (const r of res as CommitTarget[]) {
+                        if (typeof r.ref !== "undefined" && (r.ref === "refs/heads/main" || r.ref === "refs/heads/master")) {
+                            return r as CommitTarget;
+                        }
+                    }
+                    // posit that this should never happen
+                    Log.warn("MongoDataStore::getPushRecord(..) - multiple push records, but no main/master; commitURL: " + commitURL);
+                    return null;
+                }
             }
-            return res as any;
+
         } catch (err) {
             Log.error("MongoDataStore::getPushRecord(..) - ERROR: " + err);
         }

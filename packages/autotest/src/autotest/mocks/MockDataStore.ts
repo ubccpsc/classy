@@ -74,10 +74,25 @@ export class MockDataStore implements IDataStore {
             const outRecords: CommitTarget[] = this.pushes; // await fs.readJSON(this.PUSH_PATH);
 
             // find and return
+            const candidates = [];
             for (const record of outRecords) {
                 if (record !== null && typeof record.commitURL !== "undefined" && record.commitURL === commitURL) {
                     Log.info("MockDataStore::getPushRecord(..) - found; took: " + Util.took(start));
-                    return record;
+                    candidates.push(record);
+                }
+            }
+            if (candidates.length === 0) {
+                Log.info("MockDataStore::getPushRecord(..) - not found; took: " + Util.took(start));
+                return null;
+            } else if (candidates.length === 1) {
+                Log.info("MockDataStore::getPushRecord(..) - one found; took: " + Util.took(start));
+                return candidates[0];
+            } else {
+                for (const c of candidates) {
+                    if (c.ref === "refs/heads/main" || c.ref === "refs/heads/master") {
+                        Log.info("MockDataStore::getPushRecord(..) - multiple found, main/master chosen; took: " + Util.took(start));
+                        return c;
+                    }
                 }
             }
 

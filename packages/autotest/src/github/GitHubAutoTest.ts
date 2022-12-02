@@ -68,7 +68,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
 
             Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                "repo: " + info.repoId + "; person: " + info.personId + "; SHA: " + Util.shaHuman(info.commitSHA));
+                "repo: " + info.repoId + "; person: " + info.personId +
+                "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref);
             const start = Date.now();
             await this.savePushInfo(info);
 
@@ -390,7 +391,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     Log.warn("GitHubAutoTest::processCommentNew(..) - push event was not present; adding now. URL: " +
                         info.commitURL + "; for: " + info.personId + "; SHA: " + info.commitSHA);
                     // store this push event for consistency in case we need it for anything else later
-                    await this.dataStore.savePush(info); // NEXT: add cloneURL to commentEvent (should be in github payload)
+                    await this.savePushInfo(info); // NEXT: add cloneURL to commentEvent (should be in github payload)
                 }
                 msg = "This commit has been queued for processing against " + info.delivId + ".";
                 msg += " Your results will be posted here as soon as they are ready.";

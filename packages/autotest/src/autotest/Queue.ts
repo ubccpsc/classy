@@ -115,8 +115,7 @@ export class Queue {
             const queued = this.data[i];
             if (queued.target.commitSHA === info.target.commitSHA &&
                 queued.target.delivId === info.target.delivId &&
-                queued.target.ref === info.target.ref
-            ) {
+                queued.target.ref === info.target.ref) {
                 return i;
             }
         }
