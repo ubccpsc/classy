@@ -521,9 +521,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
-        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - processing; deliv: " +
-            info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) + "; hasPush: " + (pushEvent !== null));
-
         if (typeof pushEvent?.ref === "string") {
             // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
             info.ref = pushEvent.ref;
@@ -542,6 +539,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // but that might feel overly restrictive.
             info.ref = "";
         }
+
+        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - processing; deliv: " +
+            info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) +
+            "; hasPush: " + (pushEvent !== null) + "; branch: " + info.ref);
 
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);

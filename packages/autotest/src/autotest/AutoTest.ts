@@ -403,7 +403,7 @@ export abstract class AutoTest implements IAutoTest {
     protected abstract processExecution(data: AutoTestResult): Promise<void>;
 
     /**
-     * Returns whether the <commitSHA, delivId, ref> is currently executing.
+     * Returns whether the <commitURL, delivId, ref> is currently executing.
      *
      * Note: it is possible for the same commitSHA to come from two different
      * branches simultaneously (e.g., this often happens with merge commits).
@@ -414,7 +414,7 @@ export abstract class AutoTest implements IAutoTest {
     protected isCommitExecuting(input: ContainerInput): boolean {
         try {
             for (const execution of this.jobs) {
-                if (execution.target.commitSHA === input.target.commitSHA &&
+                if (execution.target.commitURL === input.target.commitURL &&
                     execution.target.delivId === input.target.delivId &&
                     execution.target.ref === input.target.ref) {
                     return true;
@@ -584,10 +584,11 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     /**
-     * Removes a job (SHA:deliv tuple) from the jobs list.
+     * Removes a job <commitURL:deliv:ref tuple> from the jobs list.
      *
      * @param commitURL
      * @param delivId
+     * @param ref
      */
     private clearExecution(commitURL: string, delivId: string, ref: string | undefined): boolean {
         let removed = false;
