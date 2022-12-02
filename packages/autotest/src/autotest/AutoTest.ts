@@ -413,6 +413,11 @@ export abstract class AutoTest implements IAutoTest {
      */
     protected isCommitExecuting(input: ContainerInput): boolean {
         try {
+            Log.trace("AutoTest::isCommitExecuting(..) - " +
+                "repo: " + input.target.repoId + "; deiv: " + input.target.delivId +
+                "; SHA: " + Util.shaHuman(input.target.commitSHA) +
+                "; branch: " + input.target.ref);
+
             for (const execution of this.jobs) {
                 if (execution.target.commitSHA === input.target.commitSHA &&
                     execution.target.delivId === input.target.delivId &&
@@ -500,7 +505,8 @@ export abstract class AutoTest implements IAutoTest {
             // when done clear the execution job and schedule the next
             const commitURL = data.commitURL;
             const delivId = data.delivId;
-            this.clearExecution(commitURL, delivId);
+            const ref = data.input.target.ref;
+            this.clearExecution(commitURL, delivId, ref);
 
             // execution done, advance the clock
             this.tick();
@@ -588,12 +594,14 @@ export abstract class AutoTest implements IAutoTest {
      * @param commitURL
      * @param delivId
      */
-    private clearExecution(commitURL: string, delivId: string): boolean {
+    private clearExecution(commitURL: string, delivId: string, ref: string | undefined): boolean {
         let removed = false;
         for (let i = this.jobs.length - 1; i >= 0; i--) {
             const execution = this.jobs[i];
             if (execution !== null) {
-                if (execution.target.commitURL === commitURL && execution.target.delivId === delivId) {
+                if (execution.target.commitURL === commitURL &&
+                    execution.target.delivId === delivId &&
+                    execution.target.ref === ref) {
                     // remove this one
                     const lenBefore = this.jobs.length;
                     this.jobs.splice(i, 1);

@@ -508,12 +508,13 @@ describe("GitHubAutoTest", () => {
 
         await Util.timeout(WAIT); // Wait for job to finish
 
+        Log.test("Round 2 starting");
         allData = await data.getAllData();
         // Log.trace(JSON.stringify(gitHubMessages));
-        expect(gitHubMessages.length).to.equal(2, "2 messages");
+        expect(gitHubMessages.length).to.equal(3, "3 messages");
         expect(gitHubMessages[gitHubMessages.length - 1].message).to.contain("execution complete");
-        expect(allData.comments.length).to.equal(1, "2 comments");
-        expect(allData.feedback.length).to.equal(1, "2 feedback");
+        expect(allData.comments.length).to.equal(1, "1 comments");
+        expect(allData.feedback.length).to.equal(2, "2 feedback");
         // NOTE: should #check feedback charge? it does, but I do not know if this is right.
         Log.test("Test complete");
     }).timeout(WAIT * 10);
@@ -544,7 +545,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.feedback.length).to.equal(0); // no charge
     }).timeout(WAIT * 10);
 
-    it("Should give a user a response for free, even if requested before computed, for on a commit once it finishes if postback is true.", async () => {
+    it.only("Should give a user a response for free, even if requested before computed, for on a commit once it finishes if postback is true.", async () => {
         await at.handlePushEvent(TestData.pushEventPostback);
         let allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(0); // should not be any feedback yet
@@ -556,7 +557,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.contain("still queued for processing");
+        expect(gitHubMessages[0].message).to.contain("queued");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // do not charge for feedback until it is given
 
@@ -564,7 +565,7 @@ describe("GitHubAutoTest", () => {
         await Util.timeout(WAIT);
 
         allData = await data.getAllData();
-        expect(gitHubMessages.length).to.equal(2); // should post response
+        expect(gitHubMessages.length).to.equal(3); // should post response
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge
@@ -603,7 +604,7 @@ describe("GitHubAutoTest", () => {
 
         Log.test("test two ready");
         allData = await data.getAllData();
-        expect(gitHubMessages.length).to.equal(2); // should post response
+        expect(gitHubMessages.length).to.equal(3); // should post response
         expect(gitHubMessages[1].message).to.equal("Build Problem Encountered.");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // no charge

@@ -93,7 +93,9 @@ export class Queue {
         for (let i = this.data.length - 1; i >= 0; i--) {
             // count down instead of up so we do not miss anything after a removal
             const queued = this.data[i];
-            if (queued.target.commitURL === info.target.commitURL && queued.target.delivId === info.target.delivId) {
+            if (queued.target.commitURL === info.target.commitURL &&
+                queued.target.delivId === info.target.delivId &&
+                queued.target.ref === info.target.ref) {
                 this.data.splice(i, 1);
                 return info;
             }
@@ -103,7 +105,7 @@ export class Queue {
 
     /**
      * Returns the index of a given container where equality is
-     * determined by identical <commitSHA, delivId>.
+     * determined by identical <commitSHA, delivId, ref (branch)>.
      *
      * @param {ContainerInput} info
      * @returns {number} index of the provided SHA, or -1 if not present
@@ -112,16 +114,10 @@ export class Queue {
         for (let i = 0; i < this.data.length; i++) {
             const queued = this.data[i];
             if (queued.target.commitSHA === info.target.commitSHA &&
-                queued.target.delivId === info.target.delivId) {
-
-                // be extra careful and only return if they are on the same branch
-                if (queued.target.ref === info.target.ref) {
-                    return i;
-                } else {
-                    Log.trace("Queue::indexOf(..) - same sha/deliv, different branches; repo: " +
-                        queued.target.repoId + "; deliv: " + queued.target.delivId +
-                        "; SHA: " + Util.shaHuman(queued.target.commitSHA));
-                }
+                queued.target.delivId === info.target.delivId &&
+                queued.target.ref === info.target.ref
+            ) {
+                return i;
             }
         }
         return -1;
