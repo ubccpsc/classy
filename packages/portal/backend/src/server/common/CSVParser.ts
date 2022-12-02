@@ -53,11 +53,14 @@ export class CSVParser {
     /**
      * Process grades for a given deliverable.
      *
-     * The default Classy format should
-     * have three columns (each with a case-sensitive header):
+     * Classy grade upload CSVs require two
+     * columns (each with a case-sensitive header):
      *   * CSID
      *   * GRADE
-     *   * COMMENT
+     *
+     * One optional column is also considered, if present:
+     * * COMMENT
+     *
      * If CSID is absent but CWL or GITHUB is present, we map them to the CSID and proceed as needed.
      * The deliverable the CSV is applied to is specified by the upload page.
      *
@@ -103,15 +106,21 @@ export class CSVParser {
 
                 // Log.trace("grade row: " + JSON.stringify(row));
                 if (typeof row.CSID !== "undefined" &&
-                    typeof row.GRADE !== "undefined" &&
-                    typeof row.COMMENT !== "undefined") {
+                    typeof row.GRADE !== "undefined") {
+
+                    let comment = "CSV Upload";
+                    if (typeof row.COMMENT !== "undefined" &&
+                        typeof row.COMMENT === "string" &&
+                        row.COMMENT.length > 1) {
+                        comment = row.COMMENT;
+                    }
 
                     const personId = row.CSID;
                     const g: Grade = {
                         personId: personId,
                         delivId: delivId,
                         score: Number(row.GRADE),
-                        comment: row.COMMENT,
+                        comment: comment,
                         timestamp: Date.now(),
                         urlName: "CSV Upload",
                         URL: null, // set to null so GradesController can restore URL if needed
@@ -126,7 +135,7 @@ export class CSVParser {
                     }
 
                 } else {
-                    const msg = "Required column missing (required: CSID, GRADE, COMMENT).";
+                    const msg = "Required column missing (required: CSID, GRADE).";
                     Log.error("CSVParser::processGrades(..) - column missing from: " + JSON.stringify(row));
                     throw new Error(msg);
                 }
