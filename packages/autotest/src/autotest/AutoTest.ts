@@ -415,7 +415,8 @@ export abstract class AutoTest implements IAutoTest {
         try {
             for (const execution of this.jobs) {
                 if (execution.target.commitSHA === input.target.commitSHA &&
-                    execution.target.delivId === input.target.delivId) {
+                    execution.target.delivId === input.target.delivId &&
+                    execution.target.ref === input.target.ref) {
                     return true;
                 }
             }

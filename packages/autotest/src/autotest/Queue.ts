@@ -113,7 +113,15 @@ export class Queue {
             const queued = this.data[i];
             if (queued.target.commitSHA === info.target.commitSHA &&
                 queued.target.delivId === info.target.delivId) {
-                return i;
+
+                // be extra careful and only return if they are on the same branch
+                if (queued.target.ref === info.target.ref) {
+                    return i;
+                } else {
+                    Log.trace("Queue::indexOf(..) - same sha/deliv, different branches; repo: " +
+                        queued.target.repoId + "; deliv: " + queued.target.delivId +
+                        "; SHA: " + Util.shaHuman(queued.target.commitSHA));
+                }
             }
         }
         return -1;
