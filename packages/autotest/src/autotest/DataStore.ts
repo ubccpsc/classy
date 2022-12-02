@@ -12,7 +12,8 @@ export interface IDataStore {
     /**
      * Gets the push event record for a given commitURL. If more than
      * one PushRecord is saved, return the one associated with the
-     * main/master branch.
+     * main/master branch. If there isn't a main/master push, return the
+     * most recent one.
      */
     getPushRecord(commitURL: string): Promise<CommitTarget | null>;
 
@@ -153,13 +154,14 @@ export class MongoDataStore implements IDataStore {
 
     /**
      * Gets the push event record for a given commitURL. If more than one exist,
-     * return the one for main/master.
+     * return the one for main/master. If there isn't a main/master push, return the
+     * most recent one.
      */
     public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
         Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
-            const res = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL});
+            let res = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL});
             if (res === null) {
                 Log.trace("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
             } else {
@@ -174,9 +176,12 @@ export class MongoDataStore implements IDataStore {
                             return r as CommitTarget;
                         }
                     }
-                    // posit that this should never happen
-                    Log.warn("MongoDataStore::getPushRecord(..) - multiple push records, but no main/master; commitURL: " + commitURL);
-                    return null;
+
+                    // sort, should make the oldest record first
+                    res = res.sort(function (c1: CommitTarget, c2: CommitTarget) {
+                        return c1.timestamp - c2.timestamp;
+                    });
+                    return res[0] as CommitTarget;
                 }
             }
 
