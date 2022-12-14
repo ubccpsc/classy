@@ -494,6 +494,10 @@ export class AutoTestRoutes implements IREST {
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options).then(async (response) => {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - fetchComplete");
+                Log.trace("AutoTestRoutes::postDockerImage(..) - response: " + response.ok);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - response status: " + response.statusText);
+                const body = await response.json(); // not a real line, added for debugging
+                Log.trace("AutoTestRoutes::postDockerImage(..) - response body: " + JSON.stringify(body));
 
                 if (!response.ok) {
                     throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
