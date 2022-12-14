@@ -9,17 +9,17 @@
   - [Modifying Classy on Your Fork](#modifying-classy-on-your-fork)
   - [Main repos](#main-repos)
   - [Goals](#goals)
-    - [Pulling changes from `root/master` into `fork/master`](#pulling-changes-from-rootmaster-into-forkmaster)
-    - [Pull-Requests from `fork` to `root/master`](#pull-requests-from-fork-to-rootmaster)
+    - [Pulling changes from `root/main` into `fork/main`](#pulling-changes-from-rootmain-into-forkmain)
+    - [Pull-Requests from `fork` to `root/main`](#pull-requests-from-fork-to-rootmain)
     - [Node Library Dependencies](#node-library-dependencies)
 
 All core Classy development will take place on [ubccpsc/classy](https://github.com/ubccpsc/classy). This repository will contain the base Classy image, but will not contain any course-specific code. Reid Holmes will act as the `ubccpsc/classy` custodian for evaluating and merging bug fix PRs as well as the feature-based PRs below.
 
-A fork of the core Classy project, ([ubccpsc/classy](https://github.com/ubccpsc/classy), is required by any course that uses Classy. The fork is where custom development for a course can take place. If custom features are developed that suit the core project, the feature can be merged into the core project. Before setting up a pull-request, ensure that your code is in a feature branch and the branch is re-based to `ubccpsc/master`.
+A fork of the core Classy project, ([ubccpsc/classy](https://github.com/ubccpsc/classy), is required by any course that uses Classy. The fork is where custom development for a course can take place. If custom features are developed that suit the core project, the feature can be merged into the core project. Before setting up a pull-request, ensure that your code is in a feature branch and the branch is re-based to `ubccpsc/main`.
 
 Forks are highly encouraged to issue PRs from their fork to `ubccpsc/classy` for any bug fixes; please make sure these fixes also pass the Classy test suite. The quality bar for these fixes will be high because we need to ensure they will not negatively impact other classes when they pull from upstream.
 
-For new features, forks are also encouraged to issue PRs _during_ the term for consideration during the merging period. Again, since this code will be going into master, please make sure that:
+For new features, forks are also encouraged to issue PRs _during_ the term for consideration during the merging period. Again, since this code will be going into main, please make sure that:
 
 * The new feature should have been validated 'in production' in the fork's current course instance; we want to know for sure that code has worked for another class before adding it to `ubccpsc/classy`.
 * It makes sense for the functionality to be in `ubccpsc/classy` rather than the course-specific fork (e.g., the feature should have broad appeal to many other course instances).
@@ -50,8 +50,8 @@ CircleCI testing [can be setup](docs/cirleCI.md) on a fork to ensure that covera
 
 - [ ] Test coverage is over 90% with new features well-defined in test names
 - [ ] Code is in a feature branch (ie. `feature/my-new-feature`)
-- [ ] Code has been rebased to `ubccpsc/master`
-- [ ] A pull-request has been setup to `ubccpsc/master` from your feature branch
+- [ ] Code has been rebased to `ubccpsc/main`
+- [ ] A pull-request has been setup to `ubccpsc/main` from your feature branch
 - [ ] Any new feature has been tested on a working branch on your fork repository
 - [ ] Code passes all existing tests
 - [ ] Pull-request passes CircleCI tests
@@ -62,7 +62,7 @@ CircleCI testing [can be setup](docs/cirleCI.md) on a fork to ensure that covera
 
 - [ ] No new node libraries are introduced
 - [ ] No new line spacing introduced
-- [ ] Code has been reviewed in pull-request prior to pull-request to `ubccpsc/master`
+- [ ] Code has been reviewed in pull-request prior to pull-request to `ubccpsc/main`
 
 ```bash
 # if you made some changes and forgot to branch:
@@ -98,34 +98,34 @@ Custom changes can be made to code in your fork, but the custom changes should *
 
 ## Main repos
 
-* `ubccpsc/classy/master` (hereby `root`) is the core project that repos pull stable code from
-* `<user>/classy/master` (hereby `fork`) is where classes are going to want to work (there will be many of these `fork` repos)
+* `ubccpsc/classy/main` (hereby `root`) is the core project that repos pull stable code from
+* `<user>/classy/main` (hereby `fork`) is where classes are going to want to work (there will be many of these `fork` repos)
 
 ## Goals
 
-* `fork/master` needs be able to make any changes it needs during the term without impacting `root/master`
-* `fork/master` needs to be able to accept critical patches during the term from `root/master`
-* `fork/master` needs be able to accept new feature changes at the end of the term, but only a ***subset*** of commits
-* `fork/master` needs to be able to contribute changes to `root/master`
+* `fork/main` needs be able to make any changes it needs during the term without impacting `root/main`
+* `fork/main` needs to be able to accept critical patches during the term from `root/main`
+* `fork/main` needs be able to accept new feature changes at the end of the term, but only a ***subset*** of commits
+* `fork/main` needs to be able to contribute changes to `root/main`
 
-### Pulling changes from `root/master` into `fork/master`
+### Pulling changes from `root/main` into `fork/main`
 
-This can happen regularly, whenever there is a `root/master` change that fixes a bug or adds a feature that the fork might want.
+This can happen regularly, whenever there is a `root/main` change that fixes a bug or adds a feature that the fork might want.
 
 On `fork`:
 
-1. `git checkout master`
-2. `git fetch upstream` (pulls down the changes from `root/master` to your local repo).
-3. `git merge upstream/master` (merges the changes into your local repo).
+1. `git checkout main`
+2. `git fetch upstream` (pulls down the changes from `root/main` to your local repo).
+3. `git merge upstream/main` (merges the changes into your local repo).
 4. `git push` (pushes the changes from your local repo to its remote GitHub repo).
 
 <img src="../assets/pulling-changes-to-fork.svg"/>
 
-### Pull-Requests from `fork` to `root/master`
+### Pull-Requests from `fork` to `root/main`
 
 On `fork`:
 
-This is ***not*** likely to happen during the term, except for critical patches, but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `master` branch. Instead, try to create a testing or release branch to run your modified code in.
+This is ***not*** likely to happen during the term, except for critical patches, but it _is_ likely to happen at the end of the term when new features should be upstreamed to `root`. If you are doing a lot of development with multiple features, you should avoid merging your changes into your `main` branch. Instead, try to create a testing or release branch to run your modified code in.
 
 <img src="../assets/pull-request-to-upstream.svg"/>
 
