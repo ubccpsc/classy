@@ -428,6 +428,7 @@ export class AutoTestRoutes implements IREST {
 
     public static async getDockerImages(req: any, res: any, next: any) {
         try {
+            Log.trace("AutoTestRoutes::getDockerImages(..) - start");
             const config = Config.getInstance();
 
             const atHost = config.getProp(ConfigKey.autotestUrl);
@@ -448,6 +449,7 @@ export class AutoTestRoutes implements IREST {
             try {
                 const atResponse = await fetch(url, options);
                 const body = await atResponse.json();
+                Log.trace("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
                 if (atResponse.ok) {
                     return res.send(200, body);
                 }
@@ -466,6 +468,8 @@ export class AutoTestRoutes implements IREST {
 
     public static async postDockerImage(req: any, res: any, next: any) {
         try {
+            Log.trace("AutoTestRoutes::postDockerImage(..) - start");
+
             const config = Config.getInstance();
             const atHost = config.getProp(ConfigKey.autotestUrl);
             const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/docker/image";
@@ -480,6 +484,8 @@ export class AutoTestRoutes implements IREST {
                 headers: JSON.parse(headers)
             };
 
+            Log.trace("AutoTestRoutes::postDockerImage(..) - options: " + JSON.stringify(options));
+
             if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 return res.send(401);
@@ -487,6 +493,8 @@ export class AutoTestRoutes implements IREST {
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options).then(async (response) => {
+                Log.trace("AutoTestRoutes::postDockerImage(..) - fetchComplete");
+
                 if (!response.ok) {
                     throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
                         + response.status);

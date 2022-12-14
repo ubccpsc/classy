@@ -208,14 +208,17 @@ export default class RouteHandler {
 
     public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
+            Log.info("RouteHandler::getDockerImages(..) - start");
+
             const docker = RouteHandler.getDocker();
             const filtersStr = req.query.filters;
             const options: any = {};
             if (filtersStr) {
                 options["filters"] = JSON.parse(filtersStr);
             }
-            Log.trace("RouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
+            Log.trace("RouteHandler::getDockerImages(..) - calling listImages(..) with options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
+            Log.trace("RouteHandler::getDockerImages(..) - done; images: " + JSON.stringify(images));
             res.send(200, images);
         } catch (err) {
             Log.error("RouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
@@ -231,6 +234,9 @@ export default class RouteHandler {
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+        Log.info("RouteHandler::postDockerImage(..) - start");
+        Log.trace("RouteHandler::postDockerImage(..) - body: " + JSON.stringify(req.body));
+
         const docker = RouteHandler.getDocker();
         const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
         try {
@@ -248,13 +254,13 @@ export default class RouteHandler {
 
             const handler = (stream: any) => {
                 stream.on("data", (chunk: any) => {
-                    Log.trace("RouteHandler::postDockerImage(...) - " + chunk.toString());
+                    Log.trace("RouteHandler::postDockerImage(...) - onData: " + chunk.toString());
                 });
                 stream.on("end", (chunk: any) => {
-                    Log.info("RouteHandler::postDockerImage(...) - Closing Docker API Connection.");
+                    Log.info("RouteHandler::postDockerImage(...) - onEnd; Closing Docker API Connection.");
                 });
                 stream.on("error", (chunk: any) => {
-                    Log.error("RouteHandler::postDockerImage(...) Docker Stream ERROR: " + chunk);
+                    Log.error("RouteHandler::postDockerImage(...) - onError; Docker Stream ERROR: " + chunk);
                 });
                 stream.pipe(res);
             };
@@ -265,6 +271,7 @@ export default class RouteHandler {
             res.send(err.statusCode, err.message);
         }
 
+        Log.info("RouteHandler::postDockerImage(..) - atNext");
         return next();
     }
 }
