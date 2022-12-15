@@ -24,7 +24,7 @@
         "fs-extra": "5.0.0",
         "jszip": "^3.7.0",
         "mongodb": "^3.0.2",
-        "restify": "^8.4.0",
+        "restify": "8.5.1",
         "ts-node": "^7.0.0"
     },
     "devDependencies": {

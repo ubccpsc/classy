@@ -404,9 +404,9 @@
   integrity sha1-Hgyqk2TT/M0pMcPtlv2+ql1MyoM=
 
 "@types/formidable@*":
-  version "1.2.3"
-  resolved "https://registry.nlark.com/@types/formidable/download/@types/formidable-1.2.3.tgz#99ee5fd4eafbaa95448c8b670e5e8e389f2af380"
-  integrity sha1-me5f1Or7qpVEjItnDl6OOJ8q84A=
+  version "2.0.5"
+  resolved "https://registry.yarnpkg.com/@types/formidable/-/formidable-2.0.5.tgz#e54e31d242ef750ac2d05aa163fa0274c8e6ef9c"
+  integrity sha512-uvMcdn/KK3maPOaVUAc3HEYbCEhjaGFwww4EsX6IJfWIJ1tzHtDHczuImH3GKdusPnAAmzB07St90uabZeCKPA==
   dependencies:
     "@types/node" "*"
 
@@ -470,10 +470,10 @@
   resolved "https://registry.yarnpkg.com/@types/parse-link-header/-/parse-link-header-2.0.0.tgz#a94d86ac2d13e3cdef4429c977217084e32378e7"
   integrity sha512-KbqcQLdRaawDOfXnwqr6nvhe1MV+Uv/Ww+ViSx7Ujgw9X5qCgObLP52B1ZSJqZD8FK1y/4o+bJQTUrZOynegcg==
 
-"@types/restify@^8.4.1":
-  version "8.5.2"
-  resolved "https://registry.nlark.com/@types/restify/download/@types/restify-8.5.2.tgz#e4679d5ee7852f2a123b3e0c92ee1f72515c8a25"
-  integrity sha1-5GedXueFLyoSOz4Mku4fclFciiU=
+"@types/restify@8.5.1":
+  version "8.5.1"
+  resolved "https://registry.yarnpkg.com/@types/restify/-/restify-8.5.1.tgz#79096d69486956be83a40fb066323255f20a424f"
+  integrity sha512-Attj9MJ4A3zQayIt03R7T+rUNGfTjwgCX38XINWZMKwmTvqSQgc0sQp014KMG2fl57SI/isO32VWxhNT9wu0UA==
   dependencies:
     "@types/bunyan" "*"
     "@types/formidable" "*"
@@ -3702,10 +3702,39 @@ restify-errors@^8.0.2:
   optionalDependencies:
     safe-json-stringify "^1.0.4"
 
-restify@^8.4.0:
+restify@8.5.1:
   version "8.5.1"
-  resolved "https://registry.npm.taobao.org/restify/download/restify-8.5.1.tgz#1cbab41ef6a0990e7abac62a5b12182f591c1a0c"
-  integrity sha1-HLq0HvagmQ56usYqWxIYL1kcGgw=
+  resolved "https://registry.yarnpkg.com/restify/-/restify-8.5.1.tgz#1cbab41ef6a0990e7abac62a5b12182f591c1a0c"
+  integrity sha512-g+xciouvSDg2vmCZuCinztt2mvQynCfnGIE1y8vMjfcUrjBo4AP8DJ9RNheu0mdGpiI0cMoCHYA/GdZ3TEW+DA==
+  dependencies:
+    assert-plus "^1.0.0"
+    bunyan "^1.8.12"
+    csv "^5.1.1"
+    escape-regexp-component "^1.0.2"
+    ewma "^2.0.1"
+    find-my-way "^2.0.1"
+    formidable "^1.2.1"
+    http-signature "^1.2.0"
+    lodash "^4.17.11"
+    lru-cache "^5.1.1"
+    mime "^2.4.3"
+    negotiator "^0.6.2"
+    once "^1.4.0"
+    pidusage "^2.0.17"
+    qs "^6.7.0"
+    restify-errors "^8.0.2"
+    semver "^6.1.1"
+    send "^0.16.2"
+    spdy "^4.0.0"
+    uuid "^3.3.2"
+    vasync "^2.2.0"
+  optionalDependencies:
+    dtrace-provider "^0.8.1"
+
+restify@^8.5.1:
+  version "8.6.1"
+  resolved "https://registry.yarnpkg.com/restify/-/restify-8.6.1.tgz#728d391797e2fe20d6a748737da156a66575796f"
+  integrity sha512-I54/Geo2qN4K/2Ers+zNAU/A/nwPrcoTVBVeamw/sROv/kLLuMAzidLmO3f6842tKFxxQvcNhOMYoWZAhYr3vQ==
   dependencies:
     assert-plus "^1.0.0"
     bunyan "^1.8.12"
@@ -4559,7 +4588,7 @@ types@^0.1.1:
   resolved "https://registry.npm.taobao.org/types/download/types-0.1.1.tgz#860c6859d11366293f835d8c95aebcf95029838e"
   integrity sha1-hgxoWdETZik/g12Mla68+VApg44=
 
-typescript@^3.5.1, typescript@^3.7.2:
+typescript@^3.7.2:
   version "3.9.10"
   resolved "https://registry.nlark.com/typescript/download/typescript-3.9.10.tgz?cache=0&sync_timestamp=1629098628149&other_urls=https%3A%2F%2Fregistry.nlark.com%2Ftypescript%2Fdownload%2Ftypescript-3.9.10.tgz#70f3910ac7a51ed6bef79da7800690b19bf778b8"
   integrity sha1-cPORCselHta+952ngAaQsZv3eLg=
