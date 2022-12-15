@@ -470,13 +470,20 @@ export class AutoTestRoutes implements IREST {
         try {
             Log.trace("AutoTestRoutes::postDockerImage(..) - start");
 
-            const config = Config.getInstance();
-            const atHost = config.getProp(ConfigKey.autotestUrl);
-            const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/docker/image";
+            // needs to be admin, not just staff
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
+            if (!privileges.isAdmin) {
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                return res.send(401);
+            }
+
+            // prepare request
+            const config = Config.getInstance();
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + "/docker/image";
             const headers = JSON.stringify(req.headers);
             const options: RequestInit = {
                 method: "POST",
@@ -484,24 +491,21 @@ export class AutoTestRoutes implements IREST {
                 headers: JSON.parse(headers)
             };
 
+            Log.trace("AutoTestRoutes::postDockerImage(..) - url: " + url); // TODO: remove when fixed, leaks token to terminal
             Log.trace("AutoTestRoutes::postDockerImage(..) - options: " + JSON.stringify(options));
-
-            if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-                return res.send(401);
-            }
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options).then(async (response) => {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - fetchComplete");
                 Log.trace("AutoTestRoutes::postDockerImage(..) - response: " + response.ok);
-                Log.trace("AutoTestRoutes::postDockerImage(..) - response status: " + response.statusText);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - response status: " + response.status);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - response statusText: " + response.statusText);
                 // const body = await response.json(); // not a real line, added for debugging
                 // Log.trace("AutoTestRoutes::postDockerImage(..) - response body: " + JSON.stringify(body));
 
                 if (!response.ok) {
-                    throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
-                        + response.status);
+                    throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service;" +
+                        " code: " + response.status);
                 }
                 response.body.pipe(res);
             }).catch((err) => {
