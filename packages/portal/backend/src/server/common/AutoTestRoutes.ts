@@ -496,8 +496,8 @@ export class AutoTestRoutes implements IREST {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - fetchComplete");
                 Log.trace("AutoTestRoutes::postDockerImage(..) - response: " + response.ok);
                 Log.trace("AutoTestRoutes::postDockerImage(..) - response status: " + response.statusText);
-                const body = await response.json(); // not a real line, added for debugging
-                Log.trace("AutoTestRoutes::postDockerImage(..) - response body: " + JSON.stringify(body));
+                // const body = await response.json(); // not a real line, added for debugging
+                // Log.trace("AutoTestRoutes::postDockerImage(..) - response body: " + JSON.stringify(body));
 
                 if (!response.ok) {
                     throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "

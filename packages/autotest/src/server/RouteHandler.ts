@@ -218,7 +218,7 @@ export default class RouteHandler {
             }
             Log.trace("RouteHandler::getDockerImages(..) - calling listImages(..) with options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
-            Log.trace("RouteHandler::getDockerImages(..) - done; images: " + JSON.stringify(images));
+            Log.trace("RouteHandler::getDockerImages(..) - done;");
             res.send(200, images);
         } catch (err) {
             Log.error("RouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
