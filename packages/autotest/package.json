@@ -45,7 +45,8 @@
     "coverCI": "./node_modules/.bin/nyc --reporter html --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov yarn run testCI",
     "coveralls": "./node_modules/.bin/nyc report --report-dir ../../testOutput/autotest/coverage --reporter=text-lcov | ./node_modules/coveralls/bin/coveralls.js",
     "run:dev": "LOG_LEVEL=TRACE nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &",
-    "run:prod": "LOG_LEVEL=INFO nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &"
+    "run:prod": "LOG_LEVEL=INFO nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &", "run:dev": "LOG_LEVEL=TRACE nohup node --require tsconfig-paths/register ./src/AutoTestDaemon.js &> nohup.out &",
+    "autotest": "LOG_LEVEL=TRACE node --require tsconfig-paths/register ./src/AutoTestDaemon.js"
   },
   "devDependencies": {
     "@types/dockerode": "^3.3.14"

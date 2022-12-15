@@ -25,12 +25,12 @@ export default class RouteHandler {
             if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
                 // Running tests; do not need to connect to the Docker daemon
                 this.docker = null;
+                Log.warn("RouteHandler::getDocker() - returning null (fine for testing, unless you are testing docker)");
             } else {
                 // Connect to the Docker socket using defaults
                 RouteHandler.docker = new Docker();
             }
         }
-
         return RouteHandler.docker;
     }
 
@@ -264,8 +264,12 @@ export default class RouteHandler {
                 });
                 stream.pipe(res);
             };
+
+            Log.trace("RouteHandler::postDockerImage(..) - reqOptions: " +
+                JSON.stringify(reqOptions)); // TODO: remove when fixed, leaks token to terminal
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
+
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             res.send(err.statusCode, err.message);
