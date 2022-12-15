@@ -24,7 +24,16 @@
         "packages/portal/frontend",
         "packages/portal/backend"
     ],
+    "dependencies": {
+        "dotenv": "4.0.0",
+        "fs-extra": "5.0.0",
+        "jszip": "3.7.0",
+        "mongodb": "^3.0.2",
+        "node-fetch": "^2.6.7",
+        "restify": "^8.4.0"
+    },
     "devDependencies": {
+        "@types/bson": "^4.2.0",
         "@types/dotenv": "4.0.2",
         "@types/fs-extra": "5.0.0",
         "@types/jszip": "3.1.6",
@@ -40,16 +49,6 @@
         "tslint": "^5.11.0",
         "typescript": "^3.7.2",
         "webpack": "^5.38.1"
-    },
-    "dependencies": {
-        "@types/bson": "^4.2.0",
-        "@types/mongodb": "^3.0.5",
-        "dotenv": "4.0.0",
-        "fs-extra": "5.0.0",
-        "jszip": "3.7.0",
-        "mongodb": "^3.0.2",
-        "node-fetch": "^2.6.7",
-        "restify": "^8.4.0"
     },
     "resolutions": {
         "**/mem": "^4.0.0"
