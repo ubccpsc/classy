@@ -15,7 +15,7 @@
     "homepage": "https://github.com/ubccpsc/classy",
     "scripts": {
         "build": "tsc",
-        "frontend": "webpack --watch"
+        "frontend": "NODE_OPTIONS=--openssl-legacy-provider webpack --watch"
     },
     "dependencies": {
         "client-oauth2": "^4.1.0",
