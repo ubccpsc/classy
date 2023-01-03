@@ -199,22 +199,9 @@ export default class GeneralRoutes implements IREST {
                     res.write(html);
                     res.end();
                 } else {
-                    const rs = fs.createReadStream(filePath);
-                    rs.on("error", (err: any) => {
-                        if (err.code === "ENOENT") {
-                            Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist. " +
-                                "This really should not have reached here: " + path);
-                            res.send(404, err.message);
-                        } else {
-                            Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
-                            res.send(500, err.message);
-                        }
-                    });
-                    rs.on("end", () => {
-                        Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
-                        rs.close();
-                    });
-                    rs.pipe(res);
+                    Log.trace("GeneralRoutes::getResource(..) - reading file: " + filePath);
+                    const readFile = fs.readFileSync(filePath);
+                    res.send(200, readFile.toString());
                 }
             } catch (err) {
                 Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
