@@ -235,7 +235,6 @@ export default class RouteHandler {
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
         const docker = RouteHandler.getDocker();
-        const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
         try {
             if (typeof req.body.remote === "undefined") {
                 throw new Error("remote parameter missing");
@@ -248,9 +247,19 @@ export default class RouteHandler {
             }
 
             const body = req.body;
-            const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
             const tag = body.tag;
             const file = body.file;
+            let remote;
+
+            if (Config.getInstance().hasProp(ConfigKey.githubDockerToken) === true) {
+                // repo protected by the githubDockerToken from .env
+                const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
+                remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
+            } else {
+                // public repo
+                remote = body.remote;
+            }
+
             const dockerOptions = {remote, t: tag, dockerfile: file};
             const reqParams = querystring.stringify(dockerOptions);
             const reqOptions = {
