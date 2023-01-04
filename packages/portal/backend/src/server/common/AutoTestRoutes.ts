@@ -440,6 +440,10 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
 
+            if (typeof githubId === "undefined" || person === null) {
+                throw new Error("Valid user parameter not provided");
+            }
+
             if (!privileges.isAdmin) {
                 Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 return res.send(401);
@@ -473,6 +477,11 @@ export class AutoTestRoutes implements IREST {
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPriviliged(person);
+
+            if (typeof githubId === "undefined" || person === null) {
+                throw new Error("Valid user parameter not provided");
+            }
+
             const headers = JSON.stringify(req.headers);
             const options: RequestInit = {
                 method: "POST",
@@ -481,23 +490,23 @@ export class AutoTestRoutes implements IREST {
             };
 
             if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
                 return res.send(401);
             }
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options).then(async (response) => {
                 if (!response.ok) {
-                    throw Error("AutoTestRoutes::getDockerImages(..) - ERROR Fowarding body to AutoTest service, code: "
+                    throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Fowarding body to AutoTest service, code: "
                         + response.status);
                 }
                 response.body.pipe(res);
             }).catch((err) => {
-                Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Recieving response from AutoTest service. " + err);
+                Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Recieving response from AutoTest service. " + err);
                 res.send(500);
             });
         } catch (err) {
-            Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
+            Log.error("AutoTestRoutes::postDockerImage(..) - ERROR " + err);
             res.send(400);
         }
         return next();
