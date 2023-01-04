@@ -114,7 +114,7 @@ jobs:
             name: Configure local git
             when: on_success
 
-## WORKS
+     ## WORKS
       - run:
             command: |
                       set -e
@@ -130,7 +130,7 @@ jobs:
             name: Converting backend test results to HTML
             when: on_success
 
-# see if this makes docker.sock available to autotest
+      # Makes docker.sock available to AutoTest docker endpoint tests
       - setup_remote_docker:
             version: 20.10.14
 
