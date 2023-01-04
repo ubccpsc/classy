@@ -510,7 +510,12 @@ describe("AutoTest Routes", function () {
         }
     });
 
-    describe("Grading Image Docker Tasks", function () {
+    describe("Grading Image Docker Tasks (Portal side)", function () {
+        // NOTE: these only test the Portal side of the grading image endpoints.
+        // This is because AutoTest is not actually running here. Validating that
+        // the endpoints are working correctly should be tested more completely
+        // on the AutoTest side. This is specifically why success conditions are
+        // not validated here.
 
         describe("GET /portal/at/docker/images", function () {
             const url = "/portal/at/docker/images";
@@ -609,7 +614,7 @@ describe("AutoTest Routes", function () {
                     expect(res.status).to.eq(400);
                 }
             });
-            it("Should respond 500 if forwarding the request to AutoTest fails with body.", async function () {
+            it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
                 this.timeout(15000);
                 let res: any;
 

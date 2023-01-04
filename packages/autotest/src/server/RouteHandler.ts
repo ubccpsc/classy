@@ -22,13 +22,16 @@ export default class RouteHandler {
 
     public static getDocker(): Docker {
         if (RouteHandler.docker === null) {
-            if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-                // Running tests; do not need to connect to the Docker daemon
-                this.docker = null;
-            } else {
-                // Connect to the Docker socket using defaults
-                RouteHandler.docker = new Docker();
-            }
+            // NOTE: not sure what commenting this out will do in CI, but
+            // seems right for local dev and will be fine in production
+
+            // if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
+            //     // Running tests; do not need to connect to the Docker daemon
+            //     this.docker = null;
+            // } else {
+            // Connect to the Docker socket using defaults
+            RouteHandler.docker = new Docker();
+            // }
         }
 
         return RouteHandler.docker;
@@ -234,6 +237,16 @@ export default class RouteHandler {
         const docker = RouteHandler.getDocker();
         const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
         try {
+            if (typeof req.body.remote === "undefined") {
+                throw new Error("remote parameter missing");
+            }
+            if (typeof req.body.tag === "undefined") {
+                throw new Error("tag parameter missing");
+            }
+            if (typeof req.body.file === "undefined") {
+                throw new Error("file parameter missing");
+            }
+
             const body = req.body;
             const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
             const tag = body.tag;

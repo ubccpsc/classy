@@ -30,7 +30,8 @@ import {Factory} from "@backend/Factory";
 import IREST from "@backend/server/IREST";
 
 /**
- * Handle the REST interactions between AutoTest and Classy.
+ * Handle the REST interactions initiated by AutoTest
+ * to be served by the Classy backend.
  */
 export class AutoTestRoutes implements IREST {
 
@@ -47,12 +48,17 @@ export class AutoTestRoutes implements IREST {
         server.post("/portal/at/result", AutoTestRoutes.atPostResult);
         server.get("/portal/at/result/:delivId/:repoId/:sha", AutoTestRoutes.atGetResult);
 
-        server.post("/portal/githubWebhook", AutoTestRoutes.githubWebhook); // forward GitHub Webhooks to AutoTest
+        server.post("/portal/at/promotePush", AutoTestRoutes.atShouldPromotePush);
 
+        // The next three endpoints are not in the right place as they represent
+        // requests that do not arise from AutoTest.
+
+        // Receives GitHub webhook events (commit/push events) and forwards them to AutoTest
+        server.post("/portal/githubWebhook", AutoTestRoutes.githubWebhook);
+
+        // Receives Grading Image admin events, and forwards them to AutoTest
         server.get("/portal/at/docker/images", AutoTestRoutes.getDockerImages);
         server.post("/portal/at/docker/image", AutoTestRoutes.postDockerImage);
-
-        server.post("/portal/at/promotePush", AutoTestRoutes.atShouldPromotePush);
     }
 
     public static handleError(code: number, msg: string, res: any, next: any) {
@@ -497,12 +503,12 @@ export class AutoTestRoutes implements IREST {
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             fetch(url, options).then(async (response) => {
                 if (!response.ok) {
-                    throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Fowarding body to AutoTest service, code: "
+                    throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
                         + response.status);
                 }
                 response.body.pipe(res);
             }).catch((err) => {
-                Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Recieving response from AutoTest service. " + err);
+                Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
                 res.send(500);
             });
         } catch (err) {
