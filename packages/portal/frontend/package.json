@@ -32,7 +32,7 @@
         "source-map-loader": "^0.2.4",
         "ts-loader": "^9.2.3",
         "tslint": "^5.11.0",
-        "typescript": "^3.7.2",
+        "typescript": "^4.9.4",
         "webpack": "^5.38.1",
         "tsconfig-paths-webpack-plugin": "^3.3.0",
         "webpack-cli": "^4.7.2"
