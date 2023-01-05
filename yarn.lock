@@ -4526,10 +4526,10 @@ ts-expect@^1.1.0:
   resolved "https://registry.nlark.com/ts-expect/download/ts-expect-1.3.0.tgz#3f8d3966e0e22b5e2bb88337eb99db6816a4c1cf"
   integrity sha1-P405ZuDiK14ruIM365nbaBakwc8=
 
-ts-loader@^9.2.3:
-  version "9.2.5"
-  resolved "https://registry.nlark.com/ts-loader/download/ts-loader-9.2.5.tgz#127733a5e9243bf6dafcb8aa3b8a266d8041dca9"
-  integrity sha1-EnczpekkO/ba/LiqO4ombYBB3Kk=
+ts-loader@^9.4.2:
+  version "9.4.2"
+  resolved "https://registry.yarnpkg.com/ts-loader/-/ts-loader-9.4.2.tgz#80a45eee92dd5170b900b3d00abcfa14949aeb78"
+  integrity sha512-OmlC4WVmFv5I0PpaxYb+qGeGOdm5giHU7HwDDUjw59emP2UYMHy9fFSDcYgSNoH8sXcj4hGCSEhlDZ9ULeDraA==
   dependencies:
     chalk "^4.1.0"
     enhanced-resolve "^5.0.0"
