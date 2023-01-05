@@ -30,7 +30,7 @@
         "jszip": "3.7.0",
         "mongodb": "^3.0.2",
         "node-fetch": "^2.6.7",
-        "restify": "10.0.0"
+        "restify": "^10.0.0"
     },
     "devDependencies": {
         "@types/bson": "^4.2.0",
