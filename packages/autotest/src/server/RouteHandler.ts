@@ -273,13 +273,13 @@ export default class RouteHandler {
 
             const handler = (stream: any) => {
                 stream.on("data", (chunk: any) => {
-                    Log.trace("RouteHandler::postDockerImage(...) - " + chunk.toString());
+                    Log.trace("RouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
                 });
                 stream.on("end", (chunk: any) => {
-                    Log.info("RouteHandler::postDockerImage(...) - Closing Docker API Connection.");
+                    Log.info("RouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
                 });
                 stream.on("error", (chunk: any) => {
-                    Log.error("RouteHandler::postDockerImage(...) Docker Stream ERROR: " + chunk);
+                    Log.error("RouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
                 });
                 stream.pipe(res);
             };
