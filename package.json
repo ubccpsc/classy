@@ -17,7 +17,7 @@
     "license": "MIT",
     "version": "0.4.0",
     "engines": {
-        "node": ">= 16.19 < 17"
+        "node": ">= 18.12 < 19"
     },
     "workspaces": [
         "packages/*",

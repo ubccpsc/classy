@@ -1,5 +1,5 @@
 ## This can be any Docker image library. Does not have to be Node JS based.
-FROM node:16-alpine
+FROM node:18-alpine
 
 ARG PLUGIN=example
 
