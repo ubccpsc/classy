@@ -4,7 +4,7 @@ import * as restify from "restify";
 import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
-import Log from "@common/Log";
+import Log, {LogLevel} from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
 import Server from "@autotest/server/Server";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
@@ -17,6 +17,7 @@ describe.only("AutoTest Server", function () {
 
     before(async () => {
         Log.test("AutoTestServerSpec::before - start");
+        Log.Level = LogLevel.TRACE; // be more verbose for debugging
 
         await TestHarness.suiteBefore("AutoTestServerSpec");
         await TestHarness.prepareAll();
@@ -60,7 +61,7 @@ describe.only("AutoTest Server", function () {
 
     it("Should be able to create a docker image", async function () {
         const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/minidocks/base.git", tag: "", file: ""};
+        const reqBody = {remote: "https://github.com/minidocks/base.git", tag: "tagname", file: "Dockerfile"};
 
         let output = "";
 
@@ -69,8 +70,6 @@ describe.only("AutoTest Server", function () {
             streamRes.on("data", function (chunk: any) {
                 chunk = chunk.toString();
                 Log.test("Chunk received: " + chunk);
-                // const chunkLines = chunk.split("\n");
-                // output += chunkLines.join("");
                 output = output + chunk;
 
             });
@@ -101,7 +100,7 @@ describe.only("AutoTest Server", function () {
 
     it("Should fail to create a docker image for a bad remote", async function () {
         const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/INVALID/base.git", tag: "", file: ""};
+        const reqBody = {remote: "https://github.com/INVALID/base.git", tag: "tagname", file: "Dockerfile"};
 
         let output = "";
 
