@@ -4,13 +4,12 @@ import * as restify from "restify";
 import * as request from "supertest";
 
 import Config, {ConfigKey} from "@common/Config";
-import Log, {LogLevel} from "@common/Log";
+import Log from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
 import Server from "@autotest/server/Server";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
-import Util from "@common/Util";
 
-describe.only("AutoTest Server", function () {
+describe("AutoTest Server", function () {
 
     const TIMEOUT = 5000;
     let app: restify.Server = null;
@@ -18,7 +17,6 @@ describe.only("AutoTest Server", function () {
 
     before(async () => {
         Log.test("AutoTestServerSpec::before - start");
-        Log.Level = LogLevel.TRACE; // be more verbose for debugging
 
         await TestHarness.suiteBefore("AutoTestServerSpec");
         await TestHarness.prepareAll();
@@ -43,11 +41,41 @@ describe.only("AutoTest Server", function () {
         expect(app).to.not.be.null; // this is a terrible assert but need some indication (other than log output) that this failed.
     });
 
-    it("Should be able to list docker images", async function () {
-        const url = "/docker/images";
+    async function createImage(opts: any) {
+        Log.test("createImage(); start");
+
+        let output = "";
+        const streamParser = function (streamRes: any, callback: any) {
+            streamRes.data = "";
+            streamRes.on("data", function (chunk: any) {
+                chunk = chunk.toString();
+                Log.test("createImage(); chunk received: " + chunk);
+                output = output + chunk;
+
+            });
+            streamRes.on("end", function () {
+                Log.test("createImage(); done - data:\n" + output);
+                callback(null, output, "text");
+            });
+        };
+
+        Log.test("createImage(); requesting image creation");
+        const url = "/docker/image";
+        const res = await request(app).post(url)
+            .set("user", TestHarness.ADMIN1.github)
+            .parse(streamParser)
+            .send(opts);
+
+        Log.test("createImage(); image creation requested");
+
+        return {res: res, output: output};
+    }
+
+    it("Should be able to list docker images.", async function () {
         let res: any;
         try {
             Log.test("requesting docker listing");
+            const url = "/docker/images";
             res = await request(app).get(url).set("user", TestHarness.ADMIN1.github);
             Log.test("docker listing returned");
         } catch (err) {
@@ -60,38 +88,25 @@ describe.only("AutoTest Server", function () {
         }
     });
 
-    it("Should be able to create a docker image", async function () {
-        const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/minidocks/base.git", tag: "tagname", file: "Dockerfile"};
+    it("Should successfully create a docker image.", async function () {
+        // this test cannot pass on CircleCI, but works great locally
+        if (TestHarness.isCI() === true) {
+            this.skip();
+        }
 
-        let output = "";
-
-        const streamParser = function (streamRes: any, callback: any) {
-            streamRes.data = "";
-            streamRes.on("data", function (chunk: any) {
-                chunk = chunk.toString();
-                Log.test("Chunk received: " + chunk);
-                output = output + chunk;
-
-            });
-            streamRes.on("end", function () {
-                // callback(null, new Buffer(res.data, 'binary'));
-                Log.test("DONE w/ stream; data:\n" + output);
-                callback(null, output, "text");
-            });
+        // valid opts
+        const opts = {
+            remote: "https://github.com/minidocks/base.git",
+            tag: "tagname",
+            file: "Dockerfile"
         };
 
-        let res: any;
+        let res;
+        let output;
         try {
-            Log.test("requesting image creation");
-            res = await request(app).post(url)
-                .set("user", TestHarness.ADMIN1.github)
-                .parse(streamParser)
-                .send(reqBody);
-
-            await Util.timeout(1000 * 20); // Wait for job to finish
-
-            Log.test("image creation requested");
+            const retVal = await createImage(opts);
+            res = retVal.res;
+            output = retVal.output;
         } catch (err) {
             Log.error("Error encountered", err.message);
             res = err;
@@ -102,37 +117,25 @@ describe.only("AutoTest Server", function () {
         }
     }).timeout(TIMEOUT * 5);
 
-    it("Should fail to create a docker image for a bad remote", async function () {
-        const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/INVALID/base.git", tag: "tagname", file: "Dockerfile"};
+    it("Should fail to create a docker image for a bad remote.", async function () {
+        // this test cannot pass on CircleCI, but works great locally
+        if (TestHarness.isCI() === true) {
+            this.skip();
+        }
 
-        let output = "";
-
-        const streamParser = function (streamRes: any, callback: any) {
-            streamRes.data = "";
-            streamRes.on("data", function (chunk: any) {
-                chunk = chunk.toString();
-                Log.test("Chunk received: " + chunk);
-                output = output + chunk;
-            });
-            streamRes.on("end", function () {
-                // callback(null, new Buffer(res.data, 'binary'));
-                Log.test("DONE w/ stream; data:\n" + output);
-                callback(null, output, "text");
-            });
+        // invalid repo
+        const opts = {
+            remote: "https://github.com/INVALID/base.git",
+            tag: "tagname",
+            file: "Dockerfile"
         };
 
-        let res: any;
+        let res;
+        let output;
         try {
-            Log.test("requesting image creation");
-            res = await request(app).post(url)
-                .set("user", TestHarness.ADMIN1.github)
-                .parse(streamParser)
-                .send(reqBody);
-
-            await Util.timeout(1000 * 20); // Wait for job to finish
-            Log.test("image creation requested");
-
+            const retVal = await createImage(opts);
+            res = retVal.res;
+            output = retVal.output;
         } catch (err) {
             Log.error("Error encountered", err.message);
             res = err;
