@@ -249,7 +249,22 @@ export default class RouteHandler {
                 throw new Error("file parameter missing");
             }
 
-            const body = req.body;
+            const handler = (stream: any) => {
+                stream.on("data", (chunk: any) => {
+                    Log.trace("RouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+                });
+                stream.on("end", (chunk: any) => {
+                    Log.info("RouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
+                    return next();
+                });
+                stream.on("error", (chunk: any) => {
+                    Log.error("RouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
+                    return next();
+                });
+                stream.pipe(res);
+            };
+
+            const body = req.body as any;
             const tag = body.tag;
             const file = body.file;
             let remote;
@@ -271,28 +286,14 @@ export default class RouteHandler {
                 method: "POST"
             };
 
-            const handler = (stream: any) => {
-                stream.on("data", (chunk: any) => {
-                    Log.trace("RouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
-                });
-                stream.on("end", (chunk: any) => {
-                    Log.info("RouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
-                });
-                stream.on("error", (chunk: any) => {
-                    Log.error("RouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
-                });
-                stream.pipe(res);
-            };
-
             Log.info("RouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
             Log.info("RouteHandler::postDockerImage(..) - request made");
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
-            res.send(err.statusCode, err.message);
+            return res.send(err.statusCode, err.message);
         }
-
-        return next();
+        // next not here on purpose, must be in stream handler or socket will close early
     }
 }

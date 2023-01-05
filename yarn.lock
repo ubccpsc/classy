@@ -3702,36 +3702,7 @@ restify-errors@^8.0.2:
   optionalDependencies:
     safe-json-stringify "^1.0.4"
 
-restify@8.5.1:
-  version "8.5.1"
-  resolved "https://registry.yarnpkg.com/restify/-/restify-8.5.1.tgz#1cbab41ef6a0990e7abac62a5b12182f591c1a0c"
-  integrity sha512-g+xciouvSDg2vmCZuCinztt2mvQynCfnGIE1y8vMjfcUrjBo4AP8DJ9RNheu0mdGpiI0cMoCHYA/GdZ3TEW+DA==
-  dependencies:
-    assert-plus "^1.0.0"
-    bunyan "^1.8.12"
-    csv "^5.1.1"
-    escape-regexp-component "^1.0.2"
-    ewma "^2.0.1"
-    find-my-way "^2.0.1"
-    formidable "^1.2.1"
-    http-signature "^1.2.0"
-    lodash "^4.17.11"
-    lru-cache "^5.1.1"
-    mime "^2.4.3"
-    negotiator "^0.6.2"
-    once "^1.4.0"
-    pidusage "^2.0.17"
-    qs "^6.7.0"
-    restify-errors "^8.0.2"
-    semver "^6.1.1"
-    send "^0.16.2"
-    spdy "^4.0.0"
-    uuid "^3.3.2"
-    vasync "^2.2.0"
-  optionalDependencies:
-    dtrace-provider "^0.8.1"
-
-restify@^8.5.1:
+restify@8.6.1, restify@^8.6.1:
   version "8.6.1"
   resolved "https://registry.yarnpkg.com/restify/-/restify-8.6.1.tgz#728d391797e2fe20d6a748737da156a66575796f"
   integrity sha512-I54/Geo2qN4K/2Ers+zNAU/A/nwPrcoTVBVeamw/sROv/kLLuMAzidLmO3f6842tKFxxQvcNhOMYoWZAhYr3vQ==
