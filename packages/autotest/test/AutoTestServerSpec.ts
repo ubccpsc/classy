@@ -8,6 +8,7 @@ import Log, {LogLevel} from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
 import Server from "@autotest/server/Server";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
+import Util from "@common/Util";
 
 describe.only("AutoTest Server", function () {
 
@@ -87,6 +88,9 @@ describe.only("AutoTest Server", function () {
                 .set("user", TestHarness.ADMIN1.github)
                 .parse(streamParser)
                 .send(reqBody);
+
+            await Util.timeout(1000 * 20); // Wait for job to finish
+
             Log.test("image creation requested");
         } catch (err) {
             Log.error("Error encountered", err.message);
@@ -125,7 +129,10 @@ describe.only("AutoTest Server", function () {
                 .set("user", TestHarness.ADMIN1.github)
                 .parse(streamParser)
                 .send(reqBody);
+
+            await Util.timeout(1000 * 20); // Wait for job to finish
             Log.test("image creation requested");
+
         } catch (err) {
             Log.error("Error encountered", err.message);
             res = err;
