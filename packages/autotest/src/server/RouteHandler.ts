@@ -234,7 +234,10 @@ export default class RouteHandler {
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const docker = RouteHandler.getDocker();
+        Log.info("RouteHandler::postDockerImage(..) - start");
+
+        RouteHandler.getDocker(); // make sure docker is configured
+
         try {
             if (typeof req.body.remote === "undefined") {
                 throw new Error("remote parameter missing");
@@ -280,8 +283,11 @@ export default class RouteHandler {
                 });
                 stream.pipe(res);
             };
+
+            Log.info("RouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
+            Log.info("RouteHandler::postDockerImage(..) - request made");
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             res.send(err.statusCode, err.message);

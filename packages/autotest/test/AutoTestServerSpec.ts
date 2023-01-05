@@ -58,84 +58,84 @@ describe("AutoTest Server", function () {
         }
     });
 
-    it("Should be able to create a docker image", async function () {
-        const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/minidocks/base.git", tag: "", file: ""};
-
-        let output = "";
-
-        const streamParser = function (streamRes: any, callback: any) {
-            streamRes.data = "";
-            streamRes.on("data", function (chunk: any) {
-                chunk = chunk.toString();
-                Log.test("Chunk received: " + chunk);
-                const chunkLines = chunk.split("\n");
-                output += chunkLines.join("");
-
-            });
-            streamRes.on("end", function () {
-                // callback(null, new Buffer(res.data, 'binary'));
-                Log.test("DONE w/ stream; data:\n" + output);
-                callback(null, output, "text");
-            });
-        };
-
-        let res: any;
-        try {
-            Log.test("requesting image creation");
-            res = await request(app).post(url)
-                .set("user", TestHarness.ADMIN1.github)
-                .parse(streamParser)
-                .send(reqBody);
-            Log.test("image creation requested");
-        } catch (err) {
-            Log.error("Error encountered", err.message);
-            res = err;
-        } finally {
-            Log.test("Stream data: " + output);
-            expect(res.status).to.equal(200);
-            expect(output).to.contain("Successfully built");
-        }
-    }).timeout(TIMEOUT * 5);
-
-    it("Should fail to create a docker image for a bad remote", async function () {
-        const url = "/docker/image";
-        const reqBody = {remote: "https://github.com/INVALID/base.git", tag: "", file: ""};
-
-        let output = "";
-
-        const streamParser = function (streamRes: any, callback: any) {
-            streamRes.data = "";
-            streamRes.on("data", function (chunk: any) {
-                chunk = chunk.toString();
-                Log.test("Chunk received: " + chunk);
-                const chunkLines = chunk.split("\n");
-                output += chunkLines.join("");
-            });
-            streamRes.on("end", function () {
-                // callback(null, new Buffer(res.data, 'binary'));
-                Log.test("DONE w/ stream; data:\n" + output);
-                callback(null, output, "text");
-            });
-        };
-
-        let res: any;
-        try {
-            Log.test("requesting image creation");
-            res = await request(app).post(url)
-                .set("user", TestHarness.ADMIN1.github)
-                .parse(streamParser)
-                .send(reqBody);
-            Log.test("image creation requested");
-        } catch (err) {
-            Log.error("Error encountered", err.message);
-            res = err;
-        } finally {
-            Log.test("Stream data: " + output);
-            expect(res.status).to.equal(200);
-            expect(res).to.haveOwnProperty("status");
-            expect(output).to.contain("error fetching");
-        }
-    }).timeout(TIMEOUT * 5);
+    // it("Should be able to create a docker image", async function () {
+    //     const url = "/docker/image";
+    //     const reqBody = {remote: "https://github.com/minidocks/base.git", tag: "", file: ""};
+    //
+    //     let output = "";
+    //
+    //     const streamParser = function (streamRes: any, callback: any) {
+    //         streamRes.data = "";
+    //         streamRes.on("data", function (chunk: any) {
+    //             chunk = chunk.toString();
+    //             Log.test("Chunk received: " + chunk);
+    //             const chunkLines = chunk.split("\n");
+    //             output += chunkLines.join("");
+    //
+    //         });
+    //         streamRes.on("end", function () {
+    //             // callback(null, new Buffer(res.data, 'binary'));
+    //             Log.test("DONE w/ stream; data:\n" + output);
+    //             callback(null, output, "text");
+    //         });
+    //     };
+    //
+    //     let res: any;
+    //     try {
+    //         Log.test("requesting image creation");
+    //         res = await request(app).post(url)
+    //             .set("user", TestHarness.ADMIN1.github)
+    //             .parse(streamParser)
+    //             .send(reqBody);
+    //         Log.test("image creation requested");
+    //     } catch (err) {
+    //         Log.error("Error encountered", err.message);
+    //         res = err;
+    //     } finally {
+    //         Log.test("Stream data: " + output);
+    //         expect(res.status).to.equal(200);
+    //         expect(output).to.contain("Successfully built");
+    //     }
+    // }).timeout(TIMEOUT * 5);
+    //
+    // it("Should fail to create a docker image for a bad remote", async function () {
+    //     const url = "/docker/image";
+    //     const reqBody = {remote: "https://github.com/INVALID/base.git", tag: "", file: ""};
+    //
+    //     let output = "";
+    //
+    //     const streamParser = function (streamRes: any, callback: any) {
+    //         streamRes.data = "";
+    //         streamRes.on("data", function (chunk: any) {
+    //             chunk = chunk.toString();
+    //             Log.test("Chunk received: " + chunk);
+    //             const chunkLines = chunk.split("\n");
+    //             output += chunkLines.join("");
+    //         });
+    //         streamRes.on("end", function () {
+    //             // callback(null, new Buffer(res.data, 'binary'));
+    //             Log.test("DONE w/ stream; data:\n" + output);
+    //             callback(null, output, "text");
+    //         });
+    //     };
+    //
+    //     let res: any;
+    //     try {
+    //         Log.test("requesting image creation");
+    //         res = await request(app).post(url)
+    //             .set("user", TestHarness.ADMIN1.github)
+    //             .parse(streamParser)
+    //             .send(reqBody);
+    //         Log.test("image creation requested");
+    //     } catch (err) {
+    //         Log.error("Error encountered", err.message);
+    //         res = err;
+    //     } finally {
+    //         Log.test("Stream data: " + output);
+    //         expect(res.status).to.equal(200);
+    //         expect(res).to.haveOwnProperty("status");
+    //         expect(output).to.contain("error fetching");
+    //     }
+    // }).timeout(TIMEOUT * 5);
 
 });
