@@ -290,6 +290,9 @@ export default class RouteHandler {
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
             Log.info("RouteHandler::postDockerImage(..) - request made");
+
+            // write something to the response to keep it alive until the stream is emitting
+            res.write(""); // NOTE: this is required, if odd
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             return res.send(err.statusCode, err.message);
