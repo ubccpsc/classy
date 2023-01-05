@@ -461,7 +461,6 @@ export class AutoTestRoutes implements IREST {
                 Log.trace("AutoTestRoutes::getDockerImages(..) - requesting; options: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
                 Log.trace("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
-                Log.trace("AutoTestRoutes::getDockerImages(..) - done; status: " + atResponse.status);
 
                 if (!atResponse.ok) {
                     throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" +
@@ -478,7 +477,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             return res.send(400);
         }
-        return next();
+        // return next();
     }
 
     public static async postDockerImage(req: any, res: any, next: any) {
@@ -513,6 +512,7 @@ export class AutoTestRoutes implements IREST {
             try {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
+
                 Log.trace("AutoTestRoutes::postDockerImage(..) - responded");
 
                 if (!atResponse.ok) {
@@ -520,6 +520,9 @@ export class AutoTestRoutes implements IREST {
                         + atResponse.status);
                 }
                 atResponse.body.pipe(res);
+                // Need this line to keep the connection to the browser
+                // alive until the stream has responded
+                res.write(""); // keep alive
             } catch (err) {
                 Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
                 return res.send(500);
@@ -528,7 +531,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::postDockerImage(..) - ERROR " + err);
             return res.send(400);
         }
-        return next();
+        // return next();
     }
 
     /**
