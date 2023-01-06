@@ -6,14 +6,14 @@ import * as request from "supertest";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
-import Server from "@autotest/server/Server";
+import AutoTestServer from "@autotest/server/AutoTestServer";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 
-describe("AutoTest Server", function () {
+describe("AutoTest AutoTestServer", function () {
 
     const TIMEOUT = 5000;
     let app: restify.Server = null;
-    let server: Server = null;
+    let server: AutoTestServer = null;
 
     before(async () => {
         Log.test("AutoTestServerSpec::before - start");
@@ -28,7 +28,7 @@ describe("AutoTest Server", function () {
         // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
-        server = new Server();
+        server = new AutoTestServer();
 
         try {
             await server.start();

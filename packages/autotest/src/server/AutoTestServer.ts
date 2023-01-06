@@ -8,7 +8,7 @@ import RouteHandler from "./RouteHandler";
 /**
  * This configures the endpoints for the AutoTest REST server.
  */
-export default class Server {
+export default class AutoTestServer {
     private rest: restify.Server;
     private port: number;
 
@@ -23,7 +23,7 @@ export default class Server {
      * @returns {Promise<boolean>}
      */
     public async stop(): Promise<boolean> {
-        Log.info("Server::close()");
+        Log.info("AutoTestServer::close()");
         const that = this;
         return new Promise<boolean>(function (fulfill) {
             that.rest.close(function () {
@@ -37,7 +37,7 @@ export default class Server {
      * @returns {void}
      */
     public setPort(portNum: number) {
-        Log.info("Server::setPort()");
+        Log.info("AutoTestServer::setPort()");
         this.port = portNum;
     }
 
@@ -52,7 +52,7 @@ export default class Server {
         const that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                Log.info("Server::start() - start");
+                Log.info("AutoTestServer::start() - start");
 
                 that.rest = restify.createServer({
                     name: "AutoTest"
@@ -82,18 +82,18 @@ export default class Server {
                 // that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
 
                 that.rest.listen(that.port, function () {
-                    Log.info("Server::start() - restify listening: " + that.rest.url);
+                    Log.info("AutoTestServer::start() - restify listening: " + that.rest.url);
                     fulfill(true);
                 });
 
                 that.rest.on("error", function (err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                    Log.info("Server::start() - restify ERROR: " + err);
+                    Log.info("AutoTestServer::start() - restify ERROR: " + err);
                     reject(err);
                 });
 
             } catch (err) {
-                Log.error("Server::start() - ERROR: " + err);
+                Log.error("AutoTestServer::start() - ERROR: " + err);
                 reject(err);
             }
         });
@@ -102,10 +102,10 @@ export default class Server {
     /**
      * Used in tests.
      *
-     * @returns {Server}
+     * @returns {AutoTestServer}
      */
     public getServer(): restify.Server {
-        Log.trace("Server::getServer()");
+        Log.trace("AutoTestServer::getServer()");
         return this.rest;
     }
 }
