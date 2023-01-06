@@ -3,7 +3,7 @@ import * as restify from "restify";
 import Config from "@common/Config";
 import Log from "@common/Log";
 
-import RouteHandler from "./RouteHandler";
+import AutoTestRouteHandler from "./AutoTestRouteHandler";
 
 /**
  * This configures the endpoints for the AutoTest REST server.
@@ -69,17 +69,17 @@ export default class AutoTestServer {
                     });
 
                 // Return the queue stats (also makes sure the server is running)
-                that.rest.get("/status", restify.plugins.queryParser(), RouteHandler.getAutoTestStatus);
+                that.rest.get("/status", restify.plugins.queryParser(), AutoTestRouteHandler.getAutoTestStatus);
 
                 // GitHub Webhook endpoint
-                that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
+                that.rest.post("/githubWebhook", restify.plugins.bodyParser(), AutoTestRouteHandler.postGithubHook);
 
                 // AutoTest image creation / listing endpoints
-                that.rest.post("/docker/image", restify.plugins.bodyParser(), RouteHandler.postDockerImage);
-                that.rest.get("/docker/images", restify.plugins.queryParser(), RouteHandler.getDockerImages);
+                that.rest.post("/docker/image", restify.plugins.bodyParser(), AutoTestRouteHandler.postDockerImage);
+                that.rest.get("/docker/images", restify.plugins.queryParser(), AutoTestRouteHandler.getDockerImages);
 
                 // Resource endpoint
-                // that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
+                // that.rest.get("/resource/.*", restify.plugins.bodyParser(), AutoTestRouteHandler.getResource);
 
                 that.rest.listen(that.port, function () {
                     Log.info("AutoTestServer::start() - restify listening: " + that.rest.url);
