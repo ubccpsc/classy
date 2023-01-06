@@ -42,7 +42,7 @@ describe("AuthController", () => {
         const person = TestHarness.getPerson(TestHarness.REALUSER1.id);
         person.kind = null; // set to null intentionally
 
-        const priv = await ac.personPriviliged(person);
+        const priv = await ac.personPrivileged(person);
         expect(priv.isAdmin).to.not.be.undefined;
         expect(priv.isStaff).to.not.be.undefined;
         expect(priv.isAdmin).to.be.false;
@@ -53,7 +53,7 @@ describe("AuthController", () => {
         const person = TestHarness.getPerson(TestHarness.ADMIN1.github);
         person.kind = null; // set to null intentionally
 
-        const priv = await ac.personPriviliged(person);
+        const priv = await ac.personPrivileged(person);
         expect(priv.isAdmin).to.not.be.undefined;
         expect(priv.isStaff).to.not.be.undefined;
         expect(priv.isAdmin).to.be.true;
@@ -64,7 +64,7 @@ describe("AuthController", () => {
         const person = TestHarness.getPerson(TestHarness.STAFF1.github);
         person.kind = null; // set to null intentionally
 
-        const priv = await ac.personPriviliged(person);
+        const priv = await ac.personPrivileged(person);
         expect(priv.isAdmin).to.not.be.undefined;
         expect(priv.isStaff).to.not.be.undefined;
         expect(priv.isAdmin).to.be.false;
@@ -75,7 +75,7 @@ describe("AuthController", () => {
         const person = TestHarness.getPerson(TestHarness.ADMINSTAFF1.github);
         person.kind = null; // set to null intentionally
 
-        const priv = await ac.personPriviliged(person);
+        const priv = await ac.personPrivileged(person);
         expect(priv.isAdmin).to.not.be.undefined;
         expect(priv.isStaff).to.not.be.undefined;
         expect(priv.isAdmin).to.be.true;

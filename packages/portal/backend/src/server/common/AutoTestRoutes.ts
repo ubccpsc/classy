@@ -272,7 +272,7 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             if (person !== null) {
                 const ac = new AuthController();
-                const priv = await ac.personPriviliged(person);
+                const priv = await ac.personPrivileged(person);
                 payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
                 Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " +
                     JSON.stringify(payload) + "; took: " + Util.took(start));
@@ -440,7 +440,7 @@ export class AutoTestRoutes implements IREST {
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges = await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPrivileged(person);
 
             if (typeof githubId === "undefined" || person === null) {
                 throw new Error("Valid user parameter not provided");
@@ -486,7 +486,7 @@ export class AutoTestRoutes implements IREST {
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges = await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPrivileged(person);
 
             if (typeof githubId === "undefined" || person === null) {
                 throw new Error("Valid user parameter not provided");
