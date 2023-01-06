@@ -43,7 +43,7 @@ describe("ClassPortal Service", () => {
         cp = new ClassPortal();
     });
 
-    // NOTE: if this fails it could be because the ClassPortal Backend has not been started yet
+    // NOTE: if this fails it could be because the ClassPortal BackendDaemon has not been started yet
     it("Should be able for a adminstaff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);

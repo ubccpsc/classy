@@ -1,5 +1,5 @@
 
-# Portal Backend
+# Portal BackendDaemon
 
 ## Dev Instructions
 
@@ -33,7 +33,7 @@ Follow the one-time instructions below. Once those are done do the following:
 * When configuring a WebStorm Run config:
 
 	* Node parameters: `--require dotenv/config`.
-	* JavaScript File: `src/server/Backend.js`.
+	* JavaScript File: `src/server/BackendDaemon.js`.
 
 
 ## Configuring Webstorm
@@ -49,4 +49,4 @@ Follow the one-time instructions below. Once those are done do the following:
     * Create `Node.js` execution profile
     * Node options: `-r dotenv/config -r tsconfig-paths/register`
     * Working directory: `<classy-dir>/packages/portal/backend`
-    * JavaScript file: `src/Backend.js`
+    * JavaScript file: `src/BackendDaemon.js`

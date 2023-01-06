@@ -7,17 +7,17 @@ import Log from "@common/Log";
 
 import BackendServer from "./server/BackendServer";
 
-export class Backend {
+export class BackendDaemon {
 
     private server: BackendServer = null;
 
     constructor() {
-        Log.info("Backend::<init> - start");
+        Log.info("BackendDaemon::<init> - start");
         //  App.config = <IConfig>Config;
     }
 
     public async start(): Promise<boolean> {
-        Log.info("Backend::start() - start");
+        Log.info("BackendDaemon::start() - start");
 
         // handle any config changes (specifically dev vs prod)
         if (this.server === null) {
@@ -26,57 +26,57 @@ export class Backend {
 
         try {
             await this.server.start();
-            Log.info("Backend::start() - server started");
+            Log.info("BackendDaemon::start() - server started");
             return true;
         } catch (err) {
-            Log.info("Backend::start() - server staring - ERROR: " + err);
+            Log.info("BackendDaemon::start() - server staring - ERROR: " + err);
             return false;
         }
     }
 
     public async stop(): Promise<boolean> {
-        Log.info("Backend::stop() - start");
+        Log.info("BackendDaemon::stop() - start");
 
         // handle any config changes (specifically dev vs prod)
         if (this.server !== null) {
             return this.server.stop().then(function () {
-                Log.info("Backend::stop() - server stopped");
+                Log.info("BackendDaemon::stop() - server stopped");
                 return true;
             }).catch(function (err) {
-                Log.info("Backend::stop() - server stopping - ERROR: " + err);
+                Log.info("BackendDaemon::stop() - server stopping - ERROR: " + err);
                 return false;
             });
         } else {
-            Log.info("Backend::stop() - server not defined");
+            Log.info("BackendDaemon::stop() - server not defined");
             return false;
         }
     }
 }
 
 // This ends up starting the whole system
-Log.info("Backend - starting");
+Log.info("BackendDaemon - starting");
 Config.getInstance();
-const app = new Backend();
+const app = new BackendDaemon();
 app.start().then(function (success) {
     if (success === true) {
-        Log.info("Backend - start success");
+        Log.info("BackendDaemon - start success");
     } else {
-        Log.info("Backend - start failure");
+        Log.info("BackendDaemon - start failure");
     }
 }).catch(function (err) {
-    Log.info("Backend - start ERROR: " + err);
+    Log.info("BackendDaemon - start ERROR: " + err);
 });
 
 // Unhandled rejection checking code; this is not great, but is better than being surprised
-Log.info("Backend - registering unhandled rejection");
+Log.info("BackendDaemon - registering unhandled rejection");
 process.on("unhandledRejection", (reason) => { // , p
     try {
-        Log.error("Backend - unhandled promise"); // in case next line fails
-        // console.log("Backend - unhandled rejection at: ", p, "; reason:", reason);
-        Log.error("Backend - unhandled promise: " + (JSON.stringify(reason)));
+        Log.error("BackendDaemon - unhandled promise"); // in case next line fails
+        // console.log("BackendDaemon - unhandled rejection at: ", p, "; reason:", reason);
+        Log.error("BackendDaemon - unhandled promise: " + (JSON.stringify(reason)));
     } catch (err) {
         // eat any error
     }
 });
-Log.info("Backend - registering unhandled rejection; done");
+Log.info("BackendDaemon - registering unhandled rejection; done");
 // Promise.reject("foo");

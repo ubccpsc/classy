@@ -43,7 +43,7 @@ There are a variety of services you may want to run independently while developi
 Most will require configuring mongo to run in dev mode (see `DB_URL` in `.env`). 
 The most common of these services can be invoked from the `classy/` directory through either the terminal or IDE:
 
-* Classy backend: `node -r tsconfig-paths/register packages/portal/backend/src/Backend.js`
+* Classy backend: `node -r tsconfig-paths/register packages/portal/backend/src/BackendDaemon.js`
 * Classy frontend: Instructions in `packages/portal/frontend/README.md`
 * Autotest backend: `node packages/autotest/src/AutoTestDaemon.js`
  
