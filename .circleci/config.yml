@@ -32,9 +32,9 @@ jobs:
           command: |
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
-     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+     # openssl aes-256-cbc -e -iter 100000 -md sha512 -in ../.env -out env.enc -k $ENVKEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+            command: cd .circleci && openssl aes-256-cbc -d -iter 100000 -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
             name: Configuring .env
             when: always
 
@@ -64,14 +64,12 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
 
       - run:
-            command: cd .circleci && mkdir -p ../packages/portal-backend/ssl && openssl aes-256-cbc -d -md sha512 -in fullchain.enc -out ../packages/portal/backend/ssl/fullchain.pem -k $ENVKEY
-            name: Configuring SSL-1
-            when: always
-
-      - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in privkey.enc -out ../packages/portal/backend/ssl/privkey.pem -k $ENVKEY
-            name: Configuring SSL-2
-            when: always
+          name: Generate self-signed certs
+          command: |
+            set -x
+            SSL_PATH=~/project/packages/portal/backend/ssl
+            mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
+          when: always
 
       - run:
             command: cd plugins/default && yarn run build
@@ -191,10 +189,10 @@ jobs:
             set -x
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
-     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+     # openssl aes-256-cbc -e -iter 100000 -md sha512 -in ../.env -out env.enc -k $ENVKEY
       - run:
           name: Configuring .env
-          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+          command: cd .circleci && openssl aes-256-cbc -d -iter 100000 -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
           when: always
 
      # CircleCI runs in root, which is 0 for UID & GID. Must do after file unencrypted.
