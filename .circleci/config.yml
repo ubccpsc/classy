@@ -32,9 +32,9 @@ jobs:
           command: |
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
-     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+     # openssl aes-256-cbc -e -iter 100000 -md sha512 -in ../.env -out env.enc -k $ENVKEY
       - run:
-            command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+            command: cd .circleci && openssl aes-256-cbc -d -iter 100000 -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
             name: Configuring .env
             when: always
 
@@ -189,10 +189,10 @@ jobs:
             set -x
             echo 'export ENV_ENC_FILE="${ENCRYPT_ENV:-env}"' >> $BASH_ENV # Redirect ENCRYPT_ENV into $BASH_ENV
 
-     # openssl aes-256-cbc -e -md sha512 -in ../.env -out .config -k $KEY
+     # openssl aes-256-cbc -e -iter 100000 -md sha512 -in ../.env -out env.enc -k $ENVKEY
       - run:
           name: Configuring .env
-          command: cd .circleci && openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
+          command: cd .circleci && openssl aes-256-cbc -d -iter 100000 -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY
           when: always
 
      # CircleCI runs in root, which is 0 for UID & GID. Must do after file unencrypted.
