@@ -275,7 +275,7 @@ workflows:
           filters:
             branches:
               only:
-                - master
+                - main
     jobs:
       # Can add any jobs you want to run at 5am here
       - build_run_stop
