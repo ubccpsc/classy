@@ -425,8 +425,7 @@ export class AutoTestRoutes implements IREST {
                 return res.ok;
             } else {
                 const err = await res.json();
-                const msg = "AutoTestRoutes::handleWebhook(..) - ERROR: " + err;
-                Log.error(msg);
+                const msg = "AutoTestRoutes::handleWebhook(..) - ERROR: " + JSON.stringify(err);
                 throw new Error(msg);
             }
         }
