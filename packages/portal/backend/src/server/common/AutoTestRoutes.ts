@@ -511,17 +511,20 @@ export class AutoTestRoutes implements IREST {
             try {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
-
                 Log.trace("AutoTestRoutes::postDockerImage(..) - responded");
+                Log.trace("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
                 if (!atResponse.ok) {
                     throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
                         + atResponse.status);
                 }
+                Log.trace("AutoTestRoutes::postDockerImage(..) - before pipe");
                 atResponse.body.pipe(res);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - after pipe");
                 // Need this line to keep the connection to the browser
                 // alive until the stream has responded
                 res.write(""); // keep alive
+                Log.trace("AutoTestRoutes::postDockerImage(..) - after write");
             } catch (err) {
                 Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
                 return res.send(500);

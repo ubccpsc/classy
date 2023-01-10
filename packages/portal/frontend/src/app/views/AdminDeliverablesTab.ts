@@ -550,6 +550,8 @@ export class AdminDeliverablesTab extends AdminPage {
                 xhr.onprogress = function () {
                     try {
                         const currIndex = xhr.responseText.length;
+                        output.innerText += "Prog: " + Date.now() + " len: " + currIndex;
+
                         if (lastIndex === currIndex) {
                             return;
                         }
@@ -557,26 +559,41 @@ export class AdminDeliverablesTab extends AdminPage {
                         lastIndex = currIndex;
 
                         Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
-                        output.innerText += "Chunk! " + Date.now() + " " + chunk;
+                        output.innerText += "Chunk: " + Date.now() + " " + chunk;
 
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
                             .map((s) => JSON.parse(s))
                             .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("message") || s.hasOwnProperty("error"))
                             .map((s) => s.stream || s.message || "\n\nError code: " + s.errorDetail.code + "\n\nError Message: " + s.error);
-                        output.innerText += chunkLines.join("");
+                        output.innerText += "Split: " + Date.now() + " " + chunkLines.join("");
                         lines = lines.concat(chunkLines);
                     } catch (err) {
                         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
                     }
                 };
+
+                let seenBytes = 0;
+                xhr.onreadystatechange = function () {
+                    if (xhr.readyState === 3) {
+
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - state change.. state: " + xhr.readyState);
+                        const newData = xhr.response.substr(seenBytes);
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - newData: <<" + newData + ">>");
+                        // document.body.innerHTML += "New data: <<" +newData+ ">><br />";
+
+                        seenBytes = xhr.responseText.length;
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - seenBytes: " + seenBytes);
+                    }
+                };
+
                 xhr.onload = function () {
                     if (xhr.status >= 400) {
                         return reject(new Error(xhr.responseText));
                     }
 
                     // add padding at the bottom of the output to make final line easier to read
-                    output.innerText += "\n";
+                    output.innerText += "Done: " + Date.now() + "\n";
                     output.innerText += "\n";
                     output.innerText += "\n";
 

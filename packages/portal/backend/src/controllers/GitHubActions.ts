@@ -604,6 +604,13 @@ export class GitHubActions implements IGitHubActions {
                 }
             }
 
+            if (typeof (results as any).message !== "undefined" &&
+                (results as any).message === "Bad credentials") {
+                Log.warn("GitHubActions::handlePagination(..) - Bad Credentials encountered");
+                // unclear exactly what this means when it happens
+                return [];
+            }
+
             Log.trace("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
             return results;
         } catch (err) {
