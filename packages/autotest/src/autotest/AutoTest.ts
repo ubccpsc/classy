@@ -526,7 +526,8 @@ export abstract class AutoTest implements IAutoTest {
         const input = job.input;
         input.target.tsJobStart = start;
         Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId +
-            "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+            "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(
+                input.target.commitSHA) + "; container: " + input.containerConfig.dockerImage);
 
         try {
             await job.prepare();
@@ -602,7 +603,8 @@ export abstract class AutoTest implements IAutoTest {
                     const lenBefore = this.jobs.length;
                     this.jobs.splice(i, 1);
                     const lenAfter = this.jobs.length;
-                    Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore + "; # after: " + lenAfter + "; commitURL: " + commitURL);
+                    Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore +
+                        "; # after: " + lenAfter + "; commitURL: " + commitURL);
                     removed = true;
                 }
             }

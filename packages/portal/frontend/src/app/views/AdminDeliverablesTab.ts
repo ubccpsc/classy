@@ -214,7 +214,7 @@ export class AdminDeliverablesTab extends AdminPage {
             defaultDate: new Date()
         };
 
-        let selectedDockerImage: string;
+        let selectedDockerImage: string = "";
 
         if (deliv === null) {
             // new deliverable, set defaults
@@ -299,7 +299,7 @@ export class AdminDeliverablesTab extends AdminPage {
             options: AdminView.getOptions()
         };
         const state = {
-            checkedItemTag: selectedDockerImage
+            checkedItemSha: selectedDockerImage
         };
         new DockerListImageView(list).bind(dataSource, state).catch(function (err: Error) {
             UI.showErrorToast("Docker images: " + err);

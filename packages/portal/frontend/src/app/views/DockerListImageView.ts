@@ -17,13 +17,20 @@ export class DockerListImageView {
         this.list = list;
     }
 
+    private imageMatches(checkedId: string, imageId: string) {
+        if (checkedId.indexOf(imageId) > 0) {
+            return true;
+        }
+        return false;
+    }
+
     public async bind(dataSource: any, state: any) {
         try {
             const data = await this.getDockerImages(dataSource.url, dataSource.options);
             const dockerImages: DockerImage[] = data.map((d) => {
                 return {
                     id: d.Id.substring(7, 19), // Strip off "sha256:" and show first 12 characters
-                    tag: d.RepoTags[0], // Only use the first tag (they are sorted alphabetically)
+                    tag: JSON.stringify(d.RepoTags), // d.RepoTags[0], // Only use the first tag (they are sorted alphabetically)
                     created: new Date(d.Created * 1000) // Convert the Unix timestamp in seconds to milliseconds
                 };
             });
@@ -31,19 +38,23 @@ export class DockerListImageView {
             const listItems = this.list.querySelectorAll("ons-list-item:not(:first-child)");
 
             for (const image of dockerImages) {
+                Log.trace("DockerListImageView::bind(..) - checkedSha: " + state.checkedItemSha + "; id: " + image.id +
+                    "; match: " + this.imageMatches(state.checkedItemSha, image.id));
                 let exists = false;
                 for (const item of listItems) {
                     const id = item.querySelector("label[for] > ons-row > ons-col").innerText;
+                    Log.trace("DockerListImageView::bind(..) - loop candidate; id: " + image.id + "; innerText: " + id);
                     if (image.id.startsWith(id)) {
                         exists = true;
-                        if (image.tag === state.checkedItemTag) {
-                            this.setCheckedItem(item);
+                        if (this.imageMatches(state.checkedItemSha, image.id)) {
+                            Log.trace("DockerListImageView::bind(..) - loop candidate check match; checked: " +
+                                state.checkedItemSha + "; id: " + image.id);
                         }
                         break;
                     }
                 }
                 if (!exists) {
-                    const item = DockerListImageView.generateListItem(image, image.tag === state.checkedItemTag);
+                    const item = DockerListImageView.generateListItem(image, this.imageMatches(state.checkedItemSha, image.id));
                     pendingAdditionsFragment.appendChild(item);
                 }
             }
