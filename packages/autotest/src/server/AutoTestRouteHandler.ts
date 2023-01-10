@@ -220,6 +220,7 @@ export default class AutoTestRouteHandler {
             }
             Log.trace("AutoTestRouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
+            Log.trace("AutoTestRouteHandler::getDockerImages(..) - Returning Docker images: " + JSON.stringify(images));
             res.send(200, images);
         } catch (err) {
             Log.error("AutoTestRouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
@@ -230,8 +231,7 @@ export default class AutoTestRouteHandler {
                 res.send(400, err.message);
             }
         }
-
-        return next();
+        // return next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {

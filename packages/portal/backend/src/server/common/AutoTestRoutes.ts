@@ -476,14 +476,14 @@ export class AutoTestRoutes implements IREST {
                 }
 
                 const body = await atResponse.json();
-                return res.send(200, body);
+                res.send(200, body);
             } catch (err) {
                 Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                return res.send(500);
+                res.send(500);
             }
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
-            return res.send(400);
+            res.send(400);
         }
         // return next();
     }
