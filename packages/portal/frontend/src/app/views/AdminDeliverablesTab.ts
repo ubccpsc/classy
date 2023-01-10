@@ -508,7 +508,7 @@ export class AdminDeliverablesTab extends AdminPage {
             return null;
         }
         const label = document.querySelector("label[for=" + checkedRadio.id + "]");
-        return label.firstElementChild.children[1].innerHTML;
+        return label.firstElementChild.children[0].innerHTML; // image sha
     }
 
     public static async getDeliverables(remote: string): Promise<DeliverableTransport[]> {

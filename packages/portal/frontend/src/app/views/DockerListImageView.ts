@@ -18,7 +18,8 @@ export class DockerListImageView {
     }
 
     private imageMatches(checkedId: string, imageId: string) {
-        if (checkedId.indexOf(imageId) > 0) {
+        // could be an exact match, but this is safer
+        if (checkedId.indexOf(imageId) >= 0) {
             return true;
         }
         return false;
@@ -93,6 +94,12 @@ export class DockerListImageView {
     }
 
     public static generateListItem(image: DockerImage, checked: boolean): DocumentFragment {
+        Log.trace("DockerListImageView::generateListItem( " + image.id + ", " + checked + " )");
+
+        let tagString = image.tag;
+        tagString = tagString.replace(",", ",<br/>");
+        let dString = image.created.toLocaleString();
+        dString = dString.replace(", ", " @ <br/>");
 
         return document.createRange().createContextualFragment(`
                 <ons-list-item tappable>
@@ -102,8 +109,8 @@ export class DockerListImageView {
                     <label for="radio-${image.id}" class="center">
                         <ons-row>
                             <ons-col>${image.id}</ons-col>
-                            <ons-col>${image.tag}</ons-col>
-                            <ons-col>${image.created}</ons-col>
+                            <ons-col style="text-align: center">${tagString}</ons-col>
+                            <ons-col style="text-align: center">${dString}</ons-col>
                         </ons-row>
                     </label>
                 </ons-list-item>
