@@ -566,9 +566,10 @@ export class AdminDeliverablesTab extends AdminPage {
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
 
             // tslint:disable-next-line
-            let route = 1;
+            let route = 2;
             const atResponse = await fetch(url, options);
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - sent");
+            let lines: any = [];
             try {
                 if (route === 1) {
                     Log.info("AdminDeliverablesTab::buildDockerImage(..) - json path");
@@ -579,13 +580,64 @@ export class AdminDeliverablesTab extends AdminPage {
                     const reader = (atResponse.body as any).getReader();
                     while (true) {
                         const {done, value} = await reader.read();
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - Just read a chunk: " + value);
+
+                        // const utf8Decoder = new TextDecoder("utf-8");
+                        // let str = utf8Decoder.decode(value, {stream: true});
+
+                        // let str = await new Blob(value).text();
+                        // let str2 = await new Response(value).text();
+
+                        const str = new TextDecoder().decode(value);
+                        const str2 = new TextDecoder().decode(value, {stream: true});
+
+                        // output.innerText += "Chunk: " + Date.now() + " " + str2;
+                        // let strJSON = JSON.parse(str2);
+                        // let msg = strJSON.stream;
+                        // output.innerText = msg; // "OUTERChunk: " + Date.now() + " " + msg;
+
+                        // setTimeout(function () {
+                        //     // Log.info("updating innertext");
+                        //     output.innerText = "INNERChunk: " + Date.now() + "\n";
+                        // }, 0);
+
+                        const chunkLines = str2.split("\n")
+                            .filter((s) => s !== "")
+                            .map((s) => JSON.parse(s))
+                            .filter((s) => s.hasOwnProperty("stream") ||
+                                s.hasOwnProperty("message") || s.hasOwnProperty("error"))
+                            .map((s) => s.stream || s.message || "\n\nError code: " +
+                                s.errorDetail.code + "\n\nError Message: " + s.error);
+                        output.innerText += chunkLines.join("");
+                        lines = lines.concat(chunkLines);
+
+                        output.scrollTop = output.scrollHeight; // keep scrolled to bottom
+
+                        // Log.info("AdminDeliverablesTab::buildDockerImage(..) - Just read a chunk: " + value);
+                        Log.info(
+                            "AdminDeliverablesTab::buildDockerImage(..) - Just read a chunk str: " + chunkLines.join(
+                                ""));
+
                         if (done) {
                             Log.info("AdminDeliverablesTab::buildDockerImage(..) - The stream is done.");
                             break;
                         }
                     }
                     Log.info("AdminDeliverablesTab::buildDockerImage(..) - reader path done");
+
+                    // add padding at the bottom of the output to make final line easier to read
+                    // output.innerText += "Done: " + Date.now() + "\n";
+                    output.innerText += "\n";
+                    output.innerText += "\n";
+                    output.scrollTop = output.scrollHeight; // scroll to bottom
+
+                    if (lines.length > 3 && lines[lines.length - 3].startsWith("Successfully built")) {
+                        const sha = lines[lines.length - 3].replace("Successfully built ", "").trim();
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - final sha: " + sha);
+                        return Promise.resolve(sha);
+                    } else {
+                        return Promise.reject(new Error("Failed to read image SHA from build log. " +
+                            "If the image was built successfully, you can manually select it on the previous screen."));
+                    }
                 }
 
                 // for await (const myChunk of atResponse.body) {
@@ -593,9 +645,9 @@ export class AdminDeliverablesTab extends AdminPage {
                 //     output.innerText += "Chunk: " + Date.now() + " " + myChunk;
                 // }
                 Log.trace("AdminDeliverablesTab::buildDockerImage(..) - closing");
-                output.innerText += "Done: " + Date.now() + "\n";
-                output.innerText += "\n";
-                output.innerText += "\n";
+                // output.innerText += "Done: " + Date.now() + "\n";
+                // output.innerText += "\n";
+                // output.innerText += "\n";
             } catch (err) {
                 Log.error("AdminDeliverablesTab::buildDockerImage(..) - myChunk ERROR: " + err);
             }
@@ -606,86 +658,86 @@ export class AdminDeliverablesTab extends AdminPage {
             //     }
             //     xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
 
-            return new Promise<string>(function (resolve, reject) {
-                Log.info("AdminDeliverablesTab::buildDockerImage(..) - in promise");
-                // const xhr = new XMLHttpRequest();
-                // let lines: string[] = [];
-                // let lastIndex = 0;
-                // xhr.onprogress = function () {
-                //     try {
-                //         const currIndex = xhr.responseText.length;
-                //         output.innerText += "Prog: " + Date.now() + " len: " + currIndex;
-                //
-                //         if (lastIndex === currIndex) {
-                //             return;
-                //         }
-                //         const chunk = xhr.responseText.substring(lastIndex, currIndex);
-                //         lastIndex = currIndex;
-                //
-                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
-                //         output.innerText += "Chunk: " + Date.now() + " " + chunk;
-                //
-                //         const chunkLines = chunk.split("\n")
-                //             .filter((s) => s !== "")
-                //             .map((s) => JSON.parse(s))
-                //             .filter((s) => s.hasOwnProperty("stream") ||
-                //                 s.hasOwnProperty("message") || s.hasOwnProperty("error"))
-                //             .map((s) => s.stream || s.message || "\n\nError code: " +
-                //                 s.errorDetail.code + "\n\nError Message: " + s.error);
-                //         output.innerText += "Split: " + Date.now() + " " + chunkLines.join("");
-                //         lines = lines.concat(chunkLines);
-                //     } catch (err) {
-                //         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
-                //     }
-                // };
-                //
-                // let seenBytes = 0;
-                // xhr.onreadystatechange = function () {
-                //     if (xhr.readyState === 3) {
-                //
-                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - state change.. state: " + xhr.readyState);
-                //         const newData = xhr.response.substr(seenBytes);
-                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - newData: <<" + newData + ">>");
-                //         // document.body.innerHTML += "New data: <<" +newData+ ">><br />";
-                //
-                //         seenBytes = xhr.responseText.length;
-                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - seenBytes: " + seenBytes);
-                //     }
-                // };
-                //
-                // xhr.onload = function () {
-                //     if (xhr.status >= 400) {
-                //         return reject(new Error(xhr.responseText));
-                //     }
-                //
-                //     // add padding at the bottom of the output to make final line easier to read
-                //     output.innerText += "Done: " + Date.now() + "\n";
-                //     output.innerText += "\n";
-                //     output.innerText += "\n";
-                //
-                //     if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
-                //         const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
-                //         // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-                //         resolve(sha);
-                //     } else {
-                //         reject(new Error("Failed to read image SHA from build log. " +
-                //             "If the image was built successfully, you can manually select it on the previous screen."));
-                //     }
-                // };
-                // xhr.onerror = function () {
-                //     reject(new Error(xhr.responseText));
-                // };
-                //
-                // try {
-                //     xhr.open("POST", remote + "/portal/at/docker/image");
-                //     for (const [header, value] of Object.entries(headers)) {
-                //         xhr.setRequestHeader(header, value);
-                //     }
-                //     xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
-                // } catch (err) {
-                //     Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
-                // }
-            });
+            // return new Promise<string>(function (resolve, reject) {
+            //     Log.info("AdminDeliverablesTab::buildDockerImage(..) - in promise");
+            //     // const xhr = new XMLHttpRequest();
+            //     // let lines: string[] = [];
+            //     // let lastIndex = 0;
+            //     // xhr.onprogress = function () {
+            //     //     try {
+            //     //         const currIndex = xhr.responseText.length;
+            //     //         output.innerText += "Prog: " + Date.now() + " len: " + currIndex;
+            //     //
+            //     //         if (lastIndex === currIndex) {
+            //     //             return;
+            //     //         }
+            //     //         const chunk = xhr.responseText.substring(lastIndex, currIndex);
+            //     //         lastIndex = currIndex;
+            //     //
+            //     //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
+            //     //         output.innerText += "Chunk: " + Date.now() + " " + chunk;
+            //     //
+            //     //         const chunkLines = chunk.split("\n")
+            //     //             .filter((s) => s !== "")
+            //     //             .map((s) => JSON.parse(s))
+            //     //             .filter((s) => s.hasOwnProperty("stream") ||
+            //     //                 s.hasOwnProperty("message") || s.hasOwnProperty("error"))
+            //     //             .map((s) => s.stream || s.message || "\n\nError code: " +
+            //     //                 s.errorDetail.code + "\n\nError Message: " + s.error);
+            //     //         output.innerText += "Split: " + Date.now() + " " + chunkLines.join("");
+            //     //         lines = lines.concat(chunkLines);
+            //     //     } catch (err) {
+            //     //         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
+            //     //     }
+            //     // };
+            //     //
+            //     // let seenBytes = 0;
+            //     // xhr.onreadystatechange = function () {
+            //     //     if (xhr.readyState === 3) {
+            //     //
+            //     //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - state change.. state: " + xhr.readyState);
+            //     //         const newData = xhr.response.substr(seenBytes);
+            //     //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - newData: <<" + newData + ">>");
+            //     //         // document.body.innerHTML += "New data: <<" +newData+ ">><br />";
+            //     //
+            //     //         seenBytes = xhr.responseText.length;
+            //     //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - seenBytes: " + seenBytes);
+            //     //     }
+            //     // };
+            //     //
+            //     // xhr.onload = function () {
+            //     //     if (xhr.status >= 400) {
+            //     //         return reject(new Error(xhr.responseText));
+            //     //     }
+            //     //
+            //     //     // add padding at the bottom of the output to make final line easier to read
+            //     //     output.innerText += "Done: " + Date.now() + "\n";
+            //     //     output.innerText += "\n";
+            //     //     output.innerText += "\n";
+            //     //
+            //     //     if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
+            //     //         const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
+            //     //         // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+            //     //         resolve(sha);
+            //     //     } else {
+            //     //         reject(new Error("Failed to read image SHA from build log. " +
+            //     //             "If the image was built successfully, you can manually select it on the previous screen."));
+            //     //     }
+            //     // };
+            //     // xhr.onerror = function () {
+            //     //     reject(new Error(xhr.responseText));
+            //     // };
+            //     //
+            //     // try {
+            //     //     xhr.open("POST", remote + "/portal/at/docker/image");
+            //     //     for (const [header, value] of Object.entries(headers)) {
+            //     //         xhr.setRequestHeader(header, value);
+            //     //     }
+            //     //     xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
+            //     // } catch (err) {
+            //     //     Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
+            //     // }
+            // });
         } catch (err) {
             AdminView.showError("An error occurred making request: " + err.message);
         }
