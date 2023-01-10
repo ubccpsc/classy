@@ -558,6 +558,7 @@ export class AdminDeliverablesTab extends AdminPage {
             for (const [header, value] of Object.entries(headers)) {
                 options[header] = value;
             }
+            options.body = {remote: context, tag: tag, file: file};
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
 
