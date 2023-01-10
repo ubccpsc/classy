@@ -8,7 +8,6 @@ import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 import {DockerListImageView} from "./DockerListImageView";
-import fetch from "node-fetch";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -146,8 +145,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
         const shouldAutoTest = document.querySelector("#adminEditDeliverablePage-shouldAutoTest") as OnsSwitchElement;
         const autoTestValue = shouldAutoTest.checked; // (shouldAutoTest.checkbox as any).checked;
-        Log.info(
-            "AdminView::renderEditDeliverablePage(..)::updateHiddenBlocks::shouldAutoTest; value: " + autoTestValue);
+        Log.info("AdminView::renderEditDeliverablePage(..)::updateHiddenBlocks::shouldAutoTest; value: " + autoTestValue);
 
         const autoTestList = document.querySelector("#shouldAutoTestList") as HTMLElement;
         if (autoTestValue === true) {
@@ -558,19 +556,20 @@ export class AdminDeliverablesTab extends AdminPage {
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
             Log.trace("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
 
+            let lines: any = [];
             const atResponse = await fetch(url, options);
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - sent");
-            let lines: any = [];
-            try {
-                const reader = (atResponse.body as any).getReader();
-                Log.info("AdminDeliverablesTab::buildDockerImage(..) - reading");
+            const reader = atResponse.body.getReader();
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - reading");
 
+            try {
                 while (true) {
                     const {done, value} = await reader.read();
-                    const str2 = new TextDecoder().decode(value, {stream: true});
+                    const valueString = new TextDecoder().decode(value, {stream: true});
+                    Log.trace("AdminDeliverablesTab::buildDockerImage(..) - chunk raw: " + valueString);
 
                     // turn chunk into strings
-                    const chunkLines = str2.split("\n")
+                    const chunkLines = valueString.split("\n")
                         .filter((s) => s !== "")
                         .map((s) => JSON.parse(s))
                         .filter((s) => s.hasOwnProperty("stream") ||
@@ -582,33 +581,36 @@ export class AdminDeliverablesTab extends AdminPage {
                     const newLines = chunkLines.join("");
                     output.innerText += newLines;
                     output.scrollTop = output.scrollHeight; // keep scrolled to bottom
-                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - Just read a chunk str: " + newLines);
+                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk string: " + newLines);
 
                     if (done) {
                         Log.info("AdminDeliverablesTab::buildDockerImage(..) - stream done");
                         break;
                     }
                 }
-                Log.info("AdminDeliverablesTab::buildDockerImage(..) - reading complete");
-
-                // add padding at the bottom of the output to make final line easier to read
-                output.innerText += "\n";
-                output.innerText += "\n";
-                output.scrollTop = output.scrollHeight; // scroll to bottom
-
-                if (lines.length > 3 && lines[lines.length - 3].startsWith("Successfully built")) {
-                    const sha = lines[lines.length - 3].replace("Successfully built ", "").trim();
-                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - final sha: " + sha);
-                    // success, pop back to deliverable page
-                    // overlay with container details will still be visible
-                    UI.popPage({data: {sha: sha}});
-                    return Promise.resolve(sha);
-                } else {
-                    return Promise.reject(new Error("Failed to read image SHA from build log. " +
-                        "If the image was built successfully, you can manually select it on the previous screen."));
-                }
             } catch (err) {
-                Log.error("AdminDeliverablesTab::buildDockerImage(..) - myChunk ERROR: " + err);
+                // catch network problems to let dialog cleanup finish
+                Log.info("AdminDeliverablesTab::buildDockerImage(..) - stream ERROR: " + err.message);
+            }
+
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - reading complete");
+
+            // add padding at the bottom of the output to make final line easier to read
+            output.innerText += "\n";
+            output.innerText += "\n";
+            output.scrollTop = output.scrollHeight; // scroll to bottom
+
+            const SUCCESS_LINE = 2;
+            if (lines.length > SUCCESS_LINE && lines[lines.length - SUCCESS_LINE].startsWith("Successfully built")) {
+                const sha = lines[lines.length - SUCCESS_LINE].replace("Successfully built ", "").trim();
+                Log.info("AdminDeliverablesTab::buildDockerImage(..) - final sha: " + sha);
+                // success, pop back to deliverable page
+                // overlay with container details will still be visible
+                UI.popPage({data: {sha: sha}});
+                return Promise.resolve(sha);
+            } else {
+                return Promise.reject(new Error("Failed to read image SHA from build log. " +
+                    "If the image was built successfully, you can manually select it on the previous screen."));
             }
         } catch (err) {
             AdminView.showError("An error occurred making request: " + err.message);

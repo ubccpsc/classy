@@ -531,7 +531,8 @@ export class AutoTestRoutes implements IREST {
                 try {
                     for await (const myChunk of atResponse.body) {
                         Log.trace("AutoTestRoutes::postDockerImage(..) - myChunk: " + myChunk.toString());
-                        res.write(myChunk.toString());
+                        // This was a red herring, moving pipe up was enough
+                        // res.write(myChunk.toString());
                     }
                     Log.trace("AutoTestRoutes::postDockerImage(..) - closing");
                 } catch (err) {
