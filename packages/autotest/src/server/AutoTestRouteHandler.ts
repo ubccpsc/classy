@@ -103,7 +103,7 @@ export default class AutoTestRouteHandler {
 
         const handleError = function (msg: string) {
             Log.error("AutoTestRouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            res.json(400, "Failed to process commit: " + msg);
+            return res.json(400, "Failed to process commit: " + msg);
         };
 
         let secretVerified = false;
@@ -143,15 +143,15 @@ export default class AutoTestRouteHandler {
             if (githubEvent === "ping") {
                 // github test packet; use to let the webhooks know we are listening
                 Log.info("AutoTestRouteHandler::postGithubHook() - <200> pong.");
-                res.json(200, "pong");
+                return res.json(200, "pong");
             } else {
                 AutoTestRouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
                     if (commitEvent !== null) {
                         Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
-                        res.json(200, commitEvent); // report back our interpretation of the hook
+                        return res.json(200, commitEvent); // report back our interpretation of the hook
                     } else {
                         Log.info("AutoTestRouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
-                        res.json(204, {}); // report back that nothing happened
+                        return res.json(204, {}); // report back that nothing happened
                     }
                 }).catch(function (err) {
                     Log.error("AutoTestRouteHandler::postGithubHook() - ERROR: " + err);
