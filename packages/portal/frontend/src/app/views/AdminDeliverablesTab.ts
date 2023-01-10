@@ -8,6 +8,7 @@ import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 import {DockerListImageView} from "./DockerListImageView";
+import fetch from "node-fetch";
 
 // import flatpickr from "flatpickr";
 declare var flatpickr: any;
@@ -133,7 +134,8 @@ export class AdminDeliverablesTab extends AdminPage {
     private updateHiddenBlocks() {
         const shouldProvision = document.querySelector("#adminEditDeliverablePage-shouldProvision") as OnsSwitchElement;
         const provisionValue = shouldProvision.checked; // (shouldProvision.checkbox as any).checked;
-        Log.info("AdminView::renderEditDeliverablePage(..)::updateHiddenBocks::shouldProvision; value: " + provisionValue);
+        Log.info(
+            "AdminView::renderEditDeliverablePage(..)::updateHiddenBocks::shouldProvision; value: " + provisionValue);
 
         const provisionList = document.querySelector("#shouldProvisionList") as HTMLElement;
         if (provisionValue === true) {
@@ -144,7 +146,8 @@ export class AdminDeliverablesTab extends AdminPage {
 
         const shouldAutoTest = document.querySelector("#adminEditDeliverablePage-shouldAutoTest") as OnsSwitchElement;
         const autoTestValue = shouldAutoTest.checked; // (shouldAutoTest.checkbox as any).checked;
-        Log.info("AdminView::renderEditDeliverablePage(..)::updateHiddenBlocks::shouldAutoTest; value: " + autoTestValue);
+        Log.info(
+            "AdminView::renderEditDeliverablePage(..)::updateHiddenBlocks::shouldAutoTest; value: " + autoTestValue);
 
         const autoTestList = document.querySelector("#shouldAutoTestList") as HTMLElement;
         if (autoTestValue === true) {
@@ -169,7 +172,8 @@ export class AdminDeliverablesTab extends AdminPage {
                 that.save().then(function () {
                     // worked
                 }).catch(function (err) {
-                    Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
+                    Log.info(
+                        "AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
                 });
             };
         }
@@ -177,7 +181,8 @@ export class AdminDeliverablesTab extends AdminPage {
         const shouldProvision = document.querySelector("#adminEditDeliverablePage-shouldProvision") as OnsSwitchElement;
         shouldProvision.onchange = function (evt) {
             const value = (evt as any).value;
-            Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldProvision; change: " + value);
+            Log.info(
+                "AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldProvision; change: " + value);
             //
             // const list = document.querySelector("#shouldProvisionList") as HTMLElement;
             // if (value === true) {
@@ -191,7 +196,8 @@ export class AdminDeliverablesTab extends AdminPage {
         const shouldAutoTest = document.querySelector("#adminEditDeliverablePage-shouldAutoTest") as OnsSwitchElement;
         shouldAutoTest.onchange = function (evt) {
             const value = (evt as any).value;
-            Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldAutoTest; change: " + value);
+            Log.info(
+                "AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::shouldAutoTest; change: " + value);
             //
             // const list = document.querySelector("#shouldAutoTestList") as HTMLElement;
             // if (value === true) {
@@ -267,9 +273,12 @@ export class AdminDeliverablesTab extends AdminPage {
 
             this.setToggle("adminEditDeliverablePage-shouldAutoTest", deliv.shouldAutoTest, this.isAdmin);
             // this.setTextField("adminEditDeliverablePage-atDockerName", deliv.autoTest.dockerImage, this.isAdmin);
-            this.setTextField("adminEditDeliverablePage-atContainerTimeout", deliv.autoTest.maxExecTime + "", this.isAdmin);
-            this.setTextField("adminEditDeliverablePage-atStudentDelay", deliv.autoTest.studentDelay + "", this.isAdmin);
-            this.setTextField("adminEditDeliverablePage-atRegressionIds", deliv.autoTest.regressionDelivIds.toString(), this.isAdmin);
+            this.setTextField("adminEditDeliverablePage-atContainerTimeout", deliv.autoTest.maxExecTime + "",
+                this.isAdmin);
+            this.setTextField("adminEditDeliverablePage-atStudentDelay", deliv.autoTest.studentDelay + "",
+                this.isAdmin);
+            this.setTextField("adminEditDeliverablePage-atRegressionIds", deliv.autoTest.regressionDelivIds.toString(),
+                this.isAdmin);
             this.setTextField("adminEditDeliverablePage-atCustom", JSON.stringify(deliv.autoTest.custom), this.isAdmin);
 
             this.setTextField("adminEditDeliverablePage-rubric", JSON.stringify(deliv.rubric), this.isAdmin);
@@ -541,84 +550,117 @@ export class AdminDeliverablesTab extends AdminPage {
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
-            const output = await UI.templateDisplayText("dockerBuildDialog.html", "Initializing Docker build. Please wait...\n\n");
+            const output = await UI.templateDisplayText("dockerBuildDialog.html",
+                "Initializing Docker build. Please wait...\n\n");
+
+            const url = remote + "/portal/at/docker/image";
+            const options = {method: "POST"} as any;
+            for (const [header, value] of Object.entries(headers)) {
+                options[header] = value;
+            }
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
+
+            const atResponse = await fetch(url, options);
+
+            try {
+                for await (const myChunk of atResponse.body) {
+                    Log.trace("AdminDeliverablesTab::buildDockerImage(..) - myChunk: " + myChunk.toString());
+                    output.innerText += "Chunk: " + Date.now() + " " + myChunk;
+                }
+                Log.trace("AdminDeliverablesTab::buildDockerImage(..) - closing");
+                output.innerText += "Done: " + Date.now() + "\n";
+                output.innerText += "\n";
+                output.innerText += "\n";
+            } catch (err) {
+                Log.error("AdminDeliverablesTab::buildDockerImage(..) - myChunk ERROR: " + err);
+            }
+
+            //     xhr.open("POST", remote + "/portal/at/docker/image");
+            //     for (const [header, value] of Object.entries(headers)) {
+            //         xhr.setRequestHeader(header, value);
+            //     }
+            //     xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
 
             return new Promise<string>(function (resolve, reject) {
-                const xhr = new XMLHttpRequest();
-                let lines: string[] = [];
-                let lastIndex = 0;
-                xhr.onprogress = function () {
-                    try {
-                        const currIndex = xhr.responseText.length;
-                        output.innerText += "Prog: " + Date.now() + " len: " + currIndex;
-
-                        if (lastIndex === currIndex) {
-                            return;
-                        }
-                        const chunk = xhr.responseText.substring(lastIndex, currIndex);
-                        lastIndex = currIndex;
-
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
-                        output.innerText += "Chunk: " + Date.now() + " " + chunk;
-
-                        const chunkLines = chunk.split("\n")
-                            .filter((s) => s !== "")
-                            .map((s) => JSON.parse(s))
-                            .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("message") || s.hasOwnProperty("error"))
-                            .map((s) => s.stream || s.message || "\n\nError code: " + s.errorDetail.code + "\n\nError Message: " + s.error);
-                        output.innerText += "Split: " + Date.now() + " " + chunkLines.join("");
-                        lines = lines.concat(chunkLines);
-                    } catch (err) {
-                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
-                    }
-                };
-
-                let seenBytes = 0;
-                xhr.onreadystatechange = function () {
-                    if (xhr.readyState === 3) {
-
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - state change.. state: " + xhr.readyState);
-                        const newData = xhr.response.substr(seenBytes);
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - newData: <<" + newData + ">>");
-                        // document.body.innerHTML += "New data: <<" +newData+ ">><br />";
-
-                        seenBytes = xhr.responseText.length;
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - seenBytes: " + seenBytes);
-                    }
-                };
-
-                xhr.onload = function () {
-                    if (xhr.status >= 400) {
-                        return reject(new Error(xhr.responseText));
-                    }
-
-                    // add padding at the bottom of the output to make final line easier to read
-                    output.innerText += "Done: " + Date.now() + "\n";
-                    output.innerText += "\n";
-                    output.innerText += "\n";
-
-                    if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
-                        const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
-                        // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-                        resolve(sha);
-                    } else {
-                        reject(new Error("Failed to read image SHA from build log. " +
-                            "If the image was built successfully, you can manually select it on the previous screen."));
-                    }
-                };
-                xhr.onerror = function () {
-                    reject(new Error(xhr.responseText));
-                };
-
-                try {
-                    xhr.open("POST", remote + "/portal/at/docker/image");
-                    for (const [header, value] of Object.entries(headers)) {
-                        xhr.setRequestHeader(header, value);
-                    }
-                    xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
-                } catch (err) {
-                    Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
-                }
+                Log.info("AdminDeliverablesTab::buildDockerImage(..) - in promise");
+                // const xhr = new XMLHttpRequest();
+                // let lines: string[] = [];
+                // let lastIndex = 0;
+                // xhr.onprogress = function () {
+                //     try {
+                //         const currIndex = xhr.responseText.length;
+                //         output.innerText += "Prog: " + Date.now() + " len: " + currIndex;
+                //
+                //         if (lastIndex === currIndex) {
+                //             return;
+                //         }
+                //         const chunk = xhr.responseText.substring(lastIndex, currIndex);
+                //         lastIndex = currIndex;
+                //
+                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
+                //         output.innerText += "Chunk: " + Date.now() + " " + chunk;
+                //
+                //         const chunkLines = chunk.split("\n")
+                //             .filter((s) => s !== "")
+                //             .map((s) => JSON.parse(s))
+                //             .filter((s) => s.hasOwnProperty("stream") ||
+                //                 s.hasOwnProperty("message") || s.hasOwnProperty("error"))
+                //             .map((s) => s.stream || s.message || "\n\nError code: " +
+                //                 s.errorDetail.code + "\n\nError Message: " + s.error);
+                //         output.innerText += "Split: " + Date.now() + " " + chunkLines.join("");
+                //         lines = lines.concat(chunkLines);
+                //     } catch (err) {
+                //         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
+                //     }
+                // };
+                //
+                // let seenBytes = 0;
+                // xhr.onreadystatechange = function () {
+                //     if (xhr.readyState === 3) {
+                //
+                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - state change.. state: " + xhr.readyState);
+                //         const newData = xhr.response.substr(seenBytes);
+                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - newData: <<" + newData + ">>");
+                //         // document.body.innerHTML += "New data: <<" +newData+ ">><br />";
+                //
+                //         seenBytes = xhr.responseText.length;
+                //         Log.info("AdminDeliverablesTab::buildDockerImage(..) - 3 - seenBytes: " + seenBytes);
+                //     }
+                // };
+                //
+                // xhr.onload = function () {
+                //     if (xhr.status >= 400) {
+                //         return reject(new Error(xhr.responseText));
+                //     }
+                //
+                //     // add padding at the bottom of the output to make final line easier to read
+                //     output.innerText += "Done: " + Date.now() + "\n";
+                //     output.innerText += "\n";
+                //     output.innerText += "\n";
+                //
+                //     if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
+                //         const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
+                //         // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
+                //         resolve(sha);
+                //     } else {
+                //         reject(new Error("Failed to read image SHA from build log. " +
+                //             "If the image was built successfully, you can manually select it on the previous screen."));
+                //     }
+                // };
+                // xhr.onerror = function () {
+                //     reject(new Error(xhr.responseText));
+                // };
+                //
+                // try {
+                //     xhr.open("POST", remote + "/portal/at/docker/image");
+                //     for (const [header, value] of Object.entries(headers)) {
+                //         xhr.setRequestHeader(header, value);
+                //     }
+                //     xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
+                // } catch (err) {
+                //     Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
+                // }
             });
         } catch (err) {
             AdminView.showError("An error occurred making request: " + err.message);
