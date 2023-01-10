@@ -145,6 +145,7 @@ export default class AutoTestRouteHandler {
                 Log.info("AutoTestRouteHandler::postGithubHook() - <200> pong.");
                 return res.send(200, "pong");
             } else {
+                Log.trace("AutoTestRouteHandler::postGithubHook() - starting handle");
                 AutoTestRouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
                     if (commitEvent !== null) {
                         Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
@@ -163,7 +164,8 @@ export default class AutoTestRouteHandler {
         }
 
         Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
-        return next();
+        // no next here, .then clause above will finish the response chain
+        // return next();
     }
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
