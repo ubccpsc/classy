@@ -538,7 +538,7 @@ export class AdminDeliverablesTab extends AdminPage {
 
     private async buildDockerImage(context: string, tag: string, file: string): Promise<string> {
         try {
-            Log.info("AdminDeliverablesTab::buildDockerImage( .. ) - start");
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - start");
             const headers = AdminView.getOptions().headers;
             const remote = this.remote;
             const output = await UI.templateDisplayText("dockerBuildDialog.html", "Initializing Docker build. Please wait...\n\n");
@@ -555,6 +555,8 @@ export class AdminDeliverablesTab extends AdminPage {
                         }
                         const chunk = xhr.responseText.substring(lastIndex, currIndex);
                         lastIndex = currIndex;
+
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
 
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")

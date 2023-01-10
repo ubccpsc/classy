@@ -164,8 +164,7 @@ export default class AutoTestRouteHandler {
         }
 
         Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
-        // no next here, .then clause above will finish the response chain
-        // return next();
+        // no next() call here; .then clause above will finish the response
     }
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
