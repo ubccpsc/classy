@@ -101,12 +101,14 @@ export class AutoTestRoutes implements IREST {
                         lateAutoTest: deliv.lateAutoTest
                     };
                     payload = {success: at};
-                    Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; took: " + Util.took(start));
+                    Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; " +
+                        "took: " + Util.took(start));
                     res.send(200, payload);
                     return next(true);
                 } else {
                     // This is more like a warning; if a deliverable is not configured this is going to happen
-                    return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res, next);
+                    return AutoTestRoutes.handleError(400,
+                        "Could not retrieve container details for delivId: " + delivId, res, next);
                 }
             }).catch(function () { // err
                 return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res, next);
@@ -133,7 +135,8 @@ export class AutoTestRoutes implements IREST {
 
             cc.getCourse().then(function (course) {
                 defaultDeliverable = course.defaultDeliverableId;
-                Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable +
+                    "; took: " + Util.took(start));
                 return cc.getDeliverables();
             }).then(function (deliverables) {
                 const delivIds = [];
@@ -239,11 +242,12 @@ export class AutoTestRoutes implements IREST {
             if (deliv !== null) {
                 const success = await rc.createResult(result);
                 Log.info("AutoTestRoutes::performPostResult(..) - done; valid result && valid secret; deliv: " +
-                    result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA) + "; success: " + success);
+                    result.delivId + "; repo: " + result.repoId + "; SHA: " +
+                    Util.shaHuman(result.commitSHA) + "; success: " + success);
                 return success;
             } else {
-                Log.info("AutoTestRoutes::performPostResult(..) - not accepting new results for deliv: " + result.delivId +
-                    "; result ts: " + new Date(result.input.target.timestamp));
+                Log.info("AutoTestRoutes::performPostResult(..) - not accepting new results for deliv: " +
+                    result.delivId + "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
         }
@@ -328,7 +332,8 @@ export class AutoTestRoutes implements IREST {
             const repoId = req.params.repoId;
             const sha = req.params.sha;
 
-            Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha));
+            Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId +
+                "; SHA: " + Util.shaHuman(sha));
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {
@@ -357,7 +362,8 @@ export class AutoTestRoutes implements IREST {
                 const info: CommitTarget = req.body;
                 const courseController = await Factory.getCourseController();
                 const shouldPromote = await courseController.shouldPrioritizePushEvent(info);
-                Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote + "; took: " + Util.took(start));
+                Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote +
+                    "; took: " + Util.took(start));
                 const payload: Payload = {success: {shouldPromote}};
                 res.send(200, payload);
                 return next(true);
@@ -446,13 +452,16 @@ export class AutoTestRoutes implements IREST {
             }
 
             if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
                 return res.send(401);
             }
 
             try {
                 const atHost = config.getProp(ConfigKey.autotestUrl);
-                const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+                const url = atHost + ":" +
+                    config.getProp(ConfigKey.autotestPort) +
+                    req.href().replace("/portal/at", "");
                 const options: RequestInit = {
                     method: "GET"
                 };
@@ -479,10 +488,10 @@ export class AutoTestRoutes implements IREST {
         // return next();
     }
 
-    public static async postDockerImage(req: any, res: any, next: any) {
+    public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace("AutoTestRoutes::postDockerImage(..) - start");
         try {
-            const githubId = req.headers.user;
+            const githubId = req.headers.user as string;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
             const privileges = await new AuthController().personPrivileged(person);
@@ -499,7 +508,8 @@ export class AutoTestRoutes implements IREST {
             };
 
             if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
                 return res.send(401);
             }
 
@@ -511,22 +521,41 @@ export class AutoTestRoutes implements IREST {
             try {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
-                Log.trace("AutoTestRoutes::postDockerImage(..) - responded");
+
+                res.write(""); // keep alive
+                // seems odd to pipe _and_ do the writing below,
+                // but the pipe closes the connection while the
+                // writes seem to be required to actually send the data
+                atResponse.body.pipe(res);
+
+                try {
+                    for await (const myChunk of atResponse.body) {
+                        Log.trace("AutoTestRoutes::postDockerImage(..) - myChunk: " + myChunk.toString());
+                        res.write(myChunk.toString());
+                    }
+                    Log.trace("AutoTestRoutes::postDockerImage(..) - closing");
+                } catch (err) {
+                    Log.error("AutoTestRoutes::postDockerImage(..) - myChunk ERROR: " + err);
+                }
+
                 Log.trace("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
                 if (!atResponse.ok) {
-                    throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
+                    throw Error(
+                        "AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
                         + atResponse.status);
                 }
                 Log.trace("AutoTestRoutes::postDockerImage(..) - before pipe");
-                atResponse.body.pipe(res);
+                // atResponse.body.pipe(res);
                 Log.trace("AutoTestRoutes::postDockerImage(..) - after pipe");
                 // Need this line to keep the connection to the browser
                 // alive until the stream has responded
-                res.write(""); // keep alive
+                // res.write(""); // keep alive
+
                 Log.trace("AutoTestRoutes::postDockerImage(..) - after write");
             } catch (err) {
-                Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
+                Log.error(
+                    "AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
                 return res.send(500);
             }
         } catch (err) {

@@ -633,7 +633,7 @@ describe("AutoTest Routes", function () {
             // This is only for debugging, to work, an AutoTest instance must be running
             // on the host (that is why this is skipped by default)
             it.skip("Should be able to create a grading image, if AT is running.", async function () {
-                this.timeout(15000);
+                this.timeout(5 * 60 * 1000); // up to 5 mins
                 let res: any;
 
                 try {
@@ -643,15 +643,15 @@ describe("AutoTest Routes", function () {
                         file: "Dockerfile"
                     };
 
+                    let parserData = "";
                     const myParser = function (parserRes: any, callback: any) {
-                        parserRes.data = "";
                         parserRes.on("data", function (chunk: any) {
                             Log.info("AutoTestRoutesSpec::myParser chunk; ts: " + Date.now() + "; chunk: " + chunk);
-                            res.data += chunk;
+                            parserData += chunk;
                         });
-                        parserRes.on('end', function () {
+                        parserRes.on("end", function () {
                             Log.info("AutoTestRoutesSpec::myParser done");
-                            callback(null, parserRes.data);
+                            callback(null, parserData);
                         });
                     };
 
@@ -661,6 +661,7 @@ describe("AutoTest Routes", function () {
                 } catch (err) {
                     res = err;
                 } finally {
+                    Log.test("Response code: " + res.status);
                     const finalBody = res.body;
                     expect(res.status).to.equal(200);
                     expect(finalBody.indexOf("Successfully tagged tagname:latest")).to.be.greaterThan(0);
