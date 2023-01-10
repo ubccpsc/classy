@@ -555,8 +555,9 @@ export class AdminDeliverablesTab extends AdminPage {
 
             const url = remote + "/portal/at/docker/image";
             const options = {method: "POST"} as any;
+            options.headers = {};
             for (const [header, value] of Object.entries(headers)) {
-                options[header] = value;
+                options.headers[header] = value;
             }
             options.body = {remote: context, tag: tag, file: file};
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
