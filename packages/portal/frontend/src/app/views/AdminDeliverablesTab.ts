@@ -557,6 +557,7 @@ export class AdminDeliverablesTab extends AdminPage {
                         lastIndex = currIndex;
 
                         Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk: " + chunk);
+                        output.innerText += "Chunk! " + Date.now() + " " + chunk;
 
                         const chunkLines = chunk.split("\n")
                             .filter((s) => s !== "")
