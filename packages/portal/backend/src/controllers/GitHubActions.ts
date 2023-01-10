@@ -606,8 +606,10 @@ export class GitHubActions implements IGitHubActions {
 
             if (typeof (results as any).message !== "undefined" &&
                 (results as any).message === "Bad credentials") {
-                Log.warn("GitHubActions::handlePagination(..) - Bad Credentials encountered");
-                // unclear exactly what this means when it happens
+                // This is an odd place for this check, but seems like
+                // a good canary for uncovering credential problems
+                Log.error("GitHubActions::handlePagination(..) - Bad Credentials encountered");
+                Log.error("GitHubActions::handlePagination(..) - .env GH_BOT_TOKEN is incorrect"); // probably
                 return [];
             }
 
