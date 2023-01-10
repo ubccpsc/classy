@@ -554,22 +554,44 @@ export class AdminDeliverablesTab extends AdminPage {
                 "Initializing Docker build. Please wait...\n\n");
 
             const url = remote + "/portal/at/docker/image";
-            const options = {method: "POST"} as any;
-            options.headers = {};
-            for (const [header, value] of Object.entries(headers)) {
-                options.headers[header] = value;
-            }
-            options.body = {remote: context, tag: tag, file: file};
+            // const options = {method: "POST"} as any;
+            // options.headers = {};
+            // for (const [header, value] of Object.entries(headers)) {
+            //     options.headers[header] = value;
+            // }
+            const options: any = AdminView.getOptions();
+            options.method = "POST";
+            options.body = JSON.stringify({remote: context, tag: tag, file: file});
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
 
+            // tslint:disable-next-line
+            let route = 1;
             const atResponse = await fetch(url, options);
-
+            Log.info("AdminDeliverablesTab::buildDockerImage(..) - sent");
             try {
-                for await (const myChunk of atResponse.body) {
-                    Log.trace("AdminDeliverablesTab::buildDockerImage(..) - myChunk: " + myChunk.toString());
-                    output.innerText += "Chunk: " + Date.now() + " " + myChunk;
+                if (route === 1) {
+                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - json path");
+                    const json = await atResponse.json();
+                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - JSON: " + JSON.stringify(json));
+                } else {
+                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - reader path");
+                    const reader = (atResponse.body as any).getReader();
+                    while (true) {
+                        const {done, value} = await reader.read();
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - Just read a chunk: " + value);
+                        if (done) {
+                            Log.info("AdminDeliverablesTab::buildDockerImage(..) - The stream is done.");
+                            break;
+                        }
+                    }
+                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - reader path done");
                 }
+
+                // for await (const myChunk of atResponse.body) {
+                //     Log.trace("AdminDeliverablesTab::buildDockerImage(..) - myChunk: " + myChunk.toString());
+                //     output.innerText += "Chunk: " + Date.now() + " " + myChunk;
+                // }
                 Log.trace("AdminDeliverablesTab::buildDockerImage(..) - closing");
                 output.innerText += "Done: " + Date.now() + "\n";
                 output.innerText += "\n";
