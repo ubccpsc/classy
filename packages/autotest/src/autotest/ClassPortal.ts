@@ -185,7 +185,7 @@ export class ClassPortal implements IClassPortal {
         try {
             const res = await fetch(url, opts);
             Log.trace("ClassPortal::getConfiguration() - success; took: " + Util.took(start));
-            Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
+            // Log.trace("ClassPortal::getConfiguration() - success; payload:", res);
             const json: ClassyConfigurationPayload = await res.json() as ClassyConfigurationPayload;
             if (typeof json.success !== "undefined") {
                 return json.success;
@@ -217,7 +217,7 @@ export class ClassPortal implements IClassPortal {
             try {
                 const res = await fetch(url, opts);
                 Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; took: " + Util.took(start));
-                Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
+                // Log.trace("ClassPortal::getContainerDetails( " + delivId + " ) - success; payload:", res);
                 const json: AutoTestConfigPayload = await res.json() as AutoTestConfigPayload;
                 if (typeof json.success !== "undefined") {
                     return json.success;
