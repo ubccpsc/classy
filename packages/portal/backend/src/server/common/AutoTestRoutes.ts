@@ -479,6 +479,7 @@ export class AutoTestRoutes implements IREST {
                 res.send(200, body);
             } catch (err) {
                 Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
+                // TODO: this suggests a backend configuration problem and should be exposed to the user
                 res.send(500);
             }
         } catch (err) {
