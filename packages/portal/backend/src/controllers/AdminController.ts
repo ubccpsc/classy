@@ -98,10 +98,10 @@ export class AdminController {
                     custom: grade.custom
                 };
 
-                Log.trace("AdminController::processNewAutoTestGrade(..) - getting grade for " + personId); // NOTE: for hangup debugging
+                Log.trace("AdminController::processNewAutoTestGrade(..) - getting grade for " + personId);
                 const existingGrade = await this.gc.getGrade(personId, grade.delivId);
                 Log.trace("AdminController::processNewAutoTestGrade(..) - handling grade for " + personId +
-                    "; existingGrade: " + existingGrade); // NOTE: for hangup debugging
+                    "; newGrade: " + grade.score + "; existingGrade: " + existingGrade.score);
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
                 Log.trace("AdminController::processNewAutoTestGrade(..) - handled grade for " + personId +
                     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
