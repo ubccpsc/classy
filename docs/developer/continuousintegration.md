@@ -12,7 +12,7 @@ A pull-request MUST pass all tests in the continuous integration (CI) test suite
 
 There are three services that must be integrated to successfully setup CI for Classy: 
 
-- Github.com/Github Enterprise
+- GitHub.com/GitHub Enterprise
 - Circle CI
 - Coveralls
 
@@ -43,13 +43,13 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 
 - `ENVKEY` is private: you must ask a project owner for it.
 - `COVERALLS_REPO_TOKEN` is unique to each `classy` repository fork and found in the next step.
-- `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI Github Integration](#circleci-github-integration).
+- `ENCRYPT_ENV` variable is the filename of the CircleCI `.enc` integration file that you would like to use during CircleCI tests see [CircleCI GitHub Integration](#circleci-github-integration).
 
 #### CircleCI GitHub Integration
 
 Running Classy’s continuous integration test suite requires a live GitHub integration. github.com or GitHub Enterprise integrations are possible with Classy.
 
-The GitHub organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy `.env` file. Therefore, any modifications to a Github integration for CircleCI requires updating the `.env` file in Classy.
+The GitHub organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy `.env` file. Therefore, any modifications to a GitHub integration for CircleCI requires updating the `.env` file in Classy.
 
 <img src="../assets/circle-ci-key.png"/>
 

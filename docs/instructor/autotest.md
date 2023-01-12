@@ -1,6 +1,6 @@
 # Overview
 
-Explains how a student or admin interacts with AutoTest on Github.
+Explains how a student or admin interacts with AutoTest on GitHub.
 
 ## User Types
 

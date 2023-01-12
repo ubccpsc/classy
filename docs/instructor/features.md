@@ -4,7 +4,7 @@
 - [Overview](#overview)
   - [Portal](#portal)
   - [AutoTest](#autotest)
-  - [Github and AutoTest Examples](#github-and-autotest-examples)
+  - [GitHub and AutoTest Examples](#github-and-autotest-examples)
     - [Student Role Examples](#student-role-examples)
       - [Feedback for an Assignment](#feedback-for-an-assignment)
       - [Feedback for an Assignment that Fails to Compile](#feedback-for-an-assignment-that-fails-to-compile)
@@ -16,11 +16,11 @@
       - [Force Silent Re-Grade](#force-silent-re-grade)
 <!-- /TOC -->
 
-Classy helps automate the distribution and grading of assignments. Classy integrates with Github to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
+Classy helps automate the distribution and grading of assignments. Classy integrates with GitHub to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
 
-Classy's front-end consists of a front-end JavaScript framework and supporting RESTful API called *Portal*. *Portal* helps instructors manage course administration by automating tasks, such as setting up assignments, grading, and grade management for instructors. Classy has another RESTful API to manage complex back-end Github and grading logic called **AutoTest**. *AutoTest* integrates with Github to create an interactive grading experience.
+Classy's front-end consists of a front-end JavaScript framework and supporting RESTful API called *Portal*. *Portal* helps instructors manage course administration by automating tasks, such as setting up assignments, grading, and grade management for instructors. Classy has another RESTful API to manage complex back-end GitHub and grading logic called **AutoTest**. *AutoTest* integrates with GitHub to create an interactive grading experience.
 
-AutoTest's features include automated feedback to grade requests from students that they request on  `commit` comments on Github. Grade feedback is completely customizable and developed by an instructor to meet the requirements of their course. Feedback can be produced where a student code builds, fails to build, reaches a grade threshold, etc. and allows for additional reports to be included.
+AutoTest's features include automated feedback to grade requests from students that they request on  `commit` comments on GitHub. Grade feedback is completely customizable and developed by an instructor to meet the requirements of their course. Feedback can be produced where a student code builds, fails to build, reaches a grade threshold, etc. and allows for additional reports to be included.
 
 ## Portal
 
@@ -38,16 +38,16 @@ AutoTest's features include automated feedback to grade requests from students t
 
 ## AutoTest
 
-- Students receive grade feedback and build failure notifications when new *commits* are *pushed* to Github.
+- Students receive grade feedback and build failure notifications when new *commits* are *pushed* to GitHub.
 - Student grade feedback customizable time delays
 - Custom build Docker containers to grade code how you prefer
 - Access to container logs and grades by TAs get help support students
 - Docker containers can mark 1-to-many assignments and 1-to-1 assignments
 - Supports regression testing
 
-## Github and AutoTest Examples
+## GitHub and AutoTest Examples
 
-In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom built AutoGrade container. AutoTest runs the AutoGrade container each time a student pushes code to Github and marks the latest commit. The expected behaviour of AutoTest is demonstrated based on the student actions.
+In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom built AutoGrade container. AutoTest runs the AutoGrade container each time a student pushes code to GitHub and marks the latest commit. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
 ### Student Role Examples
 
