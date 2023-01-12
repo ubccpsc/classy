@@ -3,12 +3,12 @@ import * as restify from "restify";
 import Config from "@common/Config";
 import Log from "@common/Log";
 
-import RouteHandler from "./RouteHandler";
+import AutoTestRouteHandler from "./AutoTestRouteHandler";
 
 /**
  * This configures the endpoints for the AutoTest REST server.
  */
-export default class Server {
+export default class AutoTestServer {
     private rest: restify.Server;
     private port: number;
 
@@ -23,7 +23,7 @@ export default class Server {
      * @returns {Promise<boolean>}
      */
     public async stop(): Promise<boolean> {
-        Log.info("Server::close()");
+        Log.info("AutoTestServer::close()");
         const that = this;
         return new Promise<boolean>(function (fulfill) {
             that.rest.close(function () {
@@ -37,7 +37,7 @@ export default class Server {
      * @returns {void}
      */
     public setPort(portNum: number) {
-        Log.info("Server::setPort()");
+        Log.info("AutoTestServer::setPort()");
         this.port = portNum;
     }
 
@@ -52,7 +52,7 @@ export default class Server {
         const that = this;
         return new Promise(function (fulfill, reject) {
             try {
-                Log.info("Server::start() - start");
+                Log.info("AutoTestServer::start() - start");
 
                 that.rest = restify.createServer({
                     name: "AutoTest"
@@ -69,31 +69,31 @@ export default class Server {
                     });
 
                 // Return the queue stats (also makes sure the server is running)
-                that.rest.get("/status", restify.plugins.queryParser(), RouteHandler.getAutoTestStatus);
+                that.rest.get("/status", restify.plugins.queryParser(), AutoTestRouteHandler.getAutoTestStatus);
 
                 // GitHub Webhook endpoint
-                that.rest.post("/githubWebhook", restify.plugins.bodyParser(), RouteHandler.postGithubHook);
+                that.rest.post("/githubWebhook", restify.plugins.bodyParser(), AutoTestRouteHandler.postGithubHook);
 
                 // AutoTest image creation / listing endpoints
-                that.rest.post("/docker/image", restify.plugins.bodyParser(), RouteHandler.postDockerImage);
-                that.rest.get("/docker/images", restify.plugins.queryParser(), RouteHandler.getDockerImages);
+                that.rest.post("/docker/image", restify.plugins.bodyParser(), AutoTestRouteHandler.postDockerImage);
+                that.rest.get("/docker/images", restify.plugins.queryParser(), AutoTestRouteHandler.getDockerImages);
 
                 // Resource endpoint
-                // that.rest.get("/resource/.*", restify.plugins.bodyParser(), RouteHandler.getResource);
+                // that.rest.get("/resource/.*", restify.plugins.bodyParser(), AutoTestRouteHandler.getResource);
 
                 that.rest.listen(that.port, function () {
-                    Log.info("Server::start() - restify listening: " + that.rest.url);
+                    Log.info("AutoTestServer::start() - restify listening: " + that.rest.url);
                     fulfill(true);
                 });
 
                 that.rest.on("error", function (err: string) {
                     // catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-                    Log.info("Server::start() - restify ERROR: " + err);
+                    Log.info("AutoTestServer::start() - restify ERROR: " + err);
                     reject(err);
                 });
 
             } catch (err) {
-                Log.error("Server::start() - ERROR: " + err);
+                Log.error("AutoTestServer::start() - ERROR: " + err);
                 reject(err);
             }
         });
@@ -102,10 +102,10 @@ export default class Server {
     /**
      * Used in tests.
      *
-     * @returns {Server}
+     * @returns {AutoTestServer}
      */
     public getServer(): restify.Server {
-        Log.trace("Server::getServer()");
+        Log.trace("AutoTestServer::getServer()");
         return this.rest;
     }
 }

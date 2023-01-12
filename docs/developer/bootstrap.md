@@ -1,6 +1,6 @@
 # Bootstrapping Classy for Development
 
-Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two RESTful APIs and a JavaScript front-end application that is served by on one of the RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
+Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two REST-based projects and a JavaScript front-end application that is served by on one of the REST APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
 
 ## Software Dependencies
 
@@ -18,11 +18,11 @@ The software dependencies that are currently used in production and recommended 
 
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set. This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
 
-The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/master/.env.sample).
+The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/main/.env.sample).
 
 ## GitHub Setup
 
-Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. GitHub users on the `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
+Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. Users on the GitHub `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
 
 ## Install/Build
 
@@ -43,7 +43,7 @@ There are a variety of services you may want to run independently while developi
 Most will require configuring mongo to run in dev mode (see `DB_URL` in `.env`). 
 The most common of these services can be invoked from the `classy/` directory through either the terminal or IDE:
 
-* Classy backend: `node -r tsconfig-paths/register packages/portal/backend/src/Backend.js`
+* Classy backend: `node -r tsconfig-paths/register packages/portal/backend/src/BackendDaemon.js`
 * Classy frontend: Instructions in `packages/portal/frontend/README.md`
 * Autotest backend: `node packages/autotest/src/AutoTestDaemon.js`
  
@@ -75,4 +75,4 @@ More checks may need to be made depending on the nature of your work, but these 
 
 - Items 1-5 can all be fulfilled by CircleCI integration.
 - Item 6 can only be done manually at this time.
-- Item 6 requires a properly setup environmental file with SSL certificates.
+- Item 6 requires a properly-setup environmental file with SSL certificates.

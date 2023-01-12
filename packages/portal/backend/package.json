@@ -11,7 +11,7 @@
         "coveralls": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov | coveralls",
         "codecov": "./node_modules/.bin/nyc report --report-dir ../../../testOutput/backend/coverage --reporter=json > ../../../testOutput/backend/coverage/coverage.json && codecov --token=$CODECOV_TOKEN",
         "build": "tsc",
-        "backend": "node --require dotenv/config --require tsconfig-paths/register ./src/Backend.js"
+        "backend": "node --require dotenv/config --require tsconfig-paths/register ./src/BackendDaemon.js"
     },
     "repository": {
         "type": "git",

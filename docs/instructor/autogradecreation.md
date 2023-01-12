@@ -28,7 +28,7 @@ This checklist ensures that you have implemented key technical and business logi
     report.json grading file at the end of a grading run
     additional files that TAs and instructors need access to after the grading run
 - [ ] The report.json file is valid JSON that follows this Report Schema: https://github.com/ubccpsc/classy/blob/956e78328c14146e2246b89f1fe0c6e60cb689ed/packages/common/types/ContainerTypes.ts#L69-L106.
-- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, Classy will provide this default report.json file: https://github.com/ubccpsc/classy/blob/master/packages/autotest/src/autotest/GradingJob.ts#L28-L40.
+- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, Classy will provide this default report.json file: https://github.com/ubccpsc/classy/blob/main/packages/autotest/src/autotest/GradingJob.ts#L28-L40.
 - [ ] You container logic assumes that any data that is NOT output to the appropriate `/output` path WILL BE LOST FOREVER after a grading run finishes.
 
 ### Dockerfile
@@ -39,13 +39,13 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] `COPY` directive is declared to copy any files cloned from your Git repository to your container.
 - [ ] `CMD` directive is declared to trigger your AutoGrade grading logic each time the container is started by AutoTest
 
-Dockerfile Github Repository
+Dockerfile GitHub Repository
 
 - [ ] Dockerfile is named 'Dockerfile' by default or customized.
-- [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify sub-directories in Classy clone address is understood.
+- [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify subdirectories in Classy clone address is understood.
 - [ ] Choose one:
     Git repository is publicly accessible to be cloned by Classy
-    Git repository is privately accessible and a Github token has been given to technical staff to be added to the Classy environmental configuration file.
-- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same Github token to setup their AutoGrade containers**.
+    Git repository is privately accessible and a GitHub token has been given to technical staff to be added to the Classy environmental configuration file.
+- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to configure their AutoGrade containers**.
 
-    ** A Classy instance can only have a single Github clone token that clones AutoGrade repositories that contain Dockerfiles. Hence, this token must be shared by instructors of a course that offers more than one section within a single Classy instance.
+    ** A Classy instance can only have a single GitHub clone token that clones AutoGrade repositories that contain Dockerfiles. Hence, this token must be shared by instructors of a course that offers more than one section within a single Classy instance.

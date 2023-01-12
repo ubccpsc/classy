@@ -24,10 +24,10 @@ If more customizable classlist updates are necessary, a CSV may be uploaded with
 
 ## Deliverable Configuration
 
-A deliverable has many possible configurations that result in unique AutoTest behvaiour, but most AutoTest behaviour is impossible without a deliverable. Creating a deliverable is *necessary* before one can:
+A deliverable has many possible configurations that result in unique AutoTest behaviour, but most AutoTest behaviour is impossible without a deliverable. Creating a deliverable is *necessary* before one can:
 
 - provision repositories to students
-- recieve AutoTest feedback on `commit` and `push` events
+- receive AutoTest feedback on `commit` and `push` events
 - store grade information in Classy and display it on the Admin Grade Dashboard
 
 These prior three actions create the core scope of desirable AutoTest functionality. Hence, if you are learning how to use AutoTest and you are not sure where to start, always start by creating a deliverable. The **Admin Configuration Panel** will display the option of creating a deliverable:
@@ -55,7 +55,7 @@ Repository Provisioning Pre-Requisites:
 
 Once the pre-requisites have been met and your provisioning options have been configured, an option to **provision** and **release** repositories can be found under **Admin Configuration Panel** by clicking on **Manage Repositories**.
 
-*Provisioning* repositories will create the Github repositories and place starter code in the assignment. Due to Github limitations, it takes approximately 5 seconds to distribute a repository. If your class has many students, you must leave enough time to provision the repositories (ie. ~2 hours for a large class).
+*Provisioning* repositories will create the GitHub repositories and place starter code in the assignment. Due to GitHub limitations, it takes approximately 5 seconds to distribute a repository. If your class has many students, you must leave enough time to provision the repositories (i.e. ~2 hours for a large class).
 
-*Releasing* repositories gives a student or team access to read and write to their Github repositories. This action is much quicker than repository provisioning and will likely not take longer than 2 minutes for an entire class.
+*Releasing* repositories gives a student or team access to read and write to their GitHub repositories. This action is much quicker than repository provisioning and will likely not take longer than 2 minutes for an entire class.
 

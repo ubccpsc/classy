@@ -101,12 +101,14 @@ export class AutoTestRoutes implements IREST {
                         lateAutoTest: deliv.lateAutoTest
                     };
                     payload = {success: at};
-                    Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; took: " + Util.took(start));
+                    Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; " +
+                        "took: " + Util.took(start));
                     res.send(200, payload);
                     return next(true);
                 } else {
                     // This is more like a warning; if a deliverable is not configured this is going to happen
-                    return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res, next);
+                    return AutoTestRoutes.handleError(400,
+                        "Could not retrieve container details for delivId: " + delivId, res, next);
                 }
             }).catch(function () { // err
                 return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res, next);
@@ -133,7 +135,8 @@ export class AutoTestRoutes implements IREST {
 
             cc.getCourse().then(function (course) {
                 defaultDeliverable = course.defaultDeliverableId;
-                Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
+                Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable +
+                    "; took: " + Util.took(start));
                 return cc.getDeliverables();
             }).then(function (deliverables) {
                 const delivIds = [];
@@ -239,11 +242,12 @@ export class AutoTestRoutes implements IREST {
             if (deliv !== null) {
                 const success = await rc.createResult(result);
                 Log.info("AutoTestRoutes::performPostResult(..) - done; valid result && valid secret; deliv: " +
-                    result.delivId + "; repo: " + result.repoId + "; SHA: " + Util.shaHuman(result.commitSHA) + "; success: " + success);
+                    result.delivId + "; repo: " + result.repoId + "; SHA: " +
+                    Util.shaHuman(result.commitSHA) + "; success: " + success);
                 return success;
             } else {
-                Log.info("AutoTestRoutes::performPostResult(..) - not accepting new results for deliv: " + result.delivId +
-                    "; result ts: " + new Date(result.input.target.timestamp));
+                Log.info("AutoTestRoutes::performPostResult(..) - not accepting new results for deliv: " +
+                    result.delivId + "; result ts: " + new Date(result.input.target.timestamp));
                 return false;
             }
         }
@@ -272,7 +276,7 @@ export class AutoTestRoutes implements IREST {
             const person = await pc.getGitHubPerson(githubId);
             if (person !== null) {
                 const ac = new AuthController();
-                const priv = await ac.personPriviliged(person);
+                const priv = await ac.personPrivileged(person);
                 payload = {success: {personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin}};
                 Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " +
                     JSON.stringify(payload) + "; took: " + Util.took(start));
@@ -328,7 +332,8 @@ export class AutoTestRoutes implements IREST {
             const repoId = req.params.repoId;
             const sha = req.params.sha;
 
-            Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha));
+            Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId +
+                "; SHA: " + Util.shaHuman(sha));
 
             const rc = new ResultsController();
             rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {
@@ -357,7 +362,8 @@ export class AutoTestRoutes implements IREST {
                 const info: CommitTarget = req.body;
                 const courseController = await Factory.getCourseController();
                 const shouldPromote = await courseController.shouldPrioritizePushEvent(info);
-                Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote + "; took: " + Util.took(start));
+                Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote +
+                    "; took: " + Util.took(start));
                 const payload: Payload = {success: {shouldPromote}};
                 res.send(200, payload);
                 return next(true);
@@ -425,8 +431,7 @@ export class AutoTestRoutes implements IREST {
                 return res.ok;
             } else {
                 const err = await res.json();
-                const msg = "AutoTestRoutes::handleWebhook(..) - ERROR: " + err;
-                Log.error(msg);
+                const msg = "AutoTestRoutes::handleWebhook(..) - ERROR: " + JSON.stringify(err);
                 throw new Error(msg);
             }
         }
@@ -440,20 +445,23 @@ export class AutoTestRoutes implements IREST {
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges = await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPrivileged(person);
 
             if (typeof githubId === "undefined" || person === null) {
                 throw new Error("Valid user parameter not provided");
             }
 
             if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
                 return res.send(401);
             }
 
             try {
                 const atHost = config.getProp(ConfigKey.autotestUrl);
-                const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+                const url = atHost + ":" +
+                    config.getProp(ConfigKey.autotestPort) +
+                    req.href().replace("/portal/at", "");
                 const options: RequestInit = {
                     method: "GET"
                 };
@@ -468,25 +476,26 @@ export class AutoTestRoutes implements IREST {
                 }
 
                 const body = await atResponse.json();
-                return res.send(200, body);
+                res.send(200, body);
             } catch (err) {
                 Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
-                return res.send(500);
+                // TODO: this suggests a backend configuration problem and should be exposed to the user
+                res.send(500);
             }
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
-            return res.send(400);
+            res.send(400);
         }
         // return next();
     }
 
-    public static async postDockerImage(req: any, res: any, next: any) {
+    public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
         Log.trace("AutoTestRoutes::postDockerImage(..) - start");
         try {
-            const githubId = req.headers.user;
+            const githubId = req.headers.user as string;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
-            const privileges = await new AuthController().personPriviliged(person);
+            const privileges = await new AuthController().personPrivileged(person);
 
             if (typeof githubId === "undefined" || person === null) {
                 throw new Error("Valid user parameter not provided");
@@ -500,7 +509,8 @@ export class AutoTestRoutes implements IREST {
             };
 
             if (!privileges.isAdmin) {
-                Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
+                Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
                 return res.send(401);
             }
 
@@ -513,18 +523,41 @@ export class AutoTestRoutes implements IREST {
                 Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
 
-                Log.trace("AutoTestRoutes::postDockerImage(..) - responded");
+                res.write(""); // keep alive
+                // seems odd to pipe _and_ do the writing below,
+                // but the pipe closes the connection while the
+                // writes seem to be required to actually send the data
+                atResponse.body.pipe(res);
+
+                try {
+                    for await (const myChunk of atResponse.body) {
+                        Log.trace("AutoTestRoutes::postDockerImage(..) - myChunk: " + myChunk.toString());
+                        // This was a red herring, moving pipe up was enough
+                        // res.write(myChunk.toString());
+                    }
+                    Log.trace("AutoTestRoutes::postDockerImage(..) - closing");
+                } catch (err) {
+                    Log.error("AutoTestRoutes::postDockerImage(..) - myChunk ERROR: " + err);
+                }
+
+                Log.trace("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
                 if (!atResponse.ok) {
-                    throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
+                    throw Error(
+                        "AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: "
                         + atResponse.status);
                 }
-                atResponse.body.pipe(res);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - before pipe");
+                // atResponse.body.pipe(res);
+                Log.trace("AutoTestRoutes::postDockerImage(..) - after pipe");
                 // Need this line to keep the connection to the browser
                 // alive until the stream has responded
-                res.write(""); // keep alive
+                // res.write(""); // keep alive
+
+                Log.trace("AutoTestRoutes::postDockerImage(..) - after write");
             } catch (err) {
-                Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
+                Log.error(
+                    "AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
                 return res.send(500);
             }
         } catch (err) {
