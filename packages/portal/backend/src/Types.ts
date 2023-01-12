@@ -125,15 +125,28 @@ export interface Team {
      */
     readonly delivId: string; // invariant
 
-    URL: string | null; // null when not yet created
-    githubId: number | null; // null when not yet created
+    URL: string | null; // null when not yet created // TODO: remove
+    githubId: number | null; // null when not yet created // TODO: remove
     personIds: string[]; // Person.id[] - foreign key
-    // repoName: string | null;
-    // repoUrl: string | null;
+
+    /**
+     * Has the team been provisioned on GitHub.
+     *
+     * TODO: make this non-optional.
+     */
+    githubProvisioned?: boolean;
+
+    /**
+     * Is the team attached to a repo on GitHub.
+     *
+     * TODO: make this non-optional.
+     */
+    githubAttached?: boolean;
 
     // githubStatus: string; // NONE | CREATED | LINKED
     custom: {
-        githubAttached?: boolean,
+        githubProvisioned?: boolean, // TODO: remove
+        githubAttached?: boolean, // TODO: remove
 
         sdmmd0?: boolean,
         sdmmd1?: boolean,
@@ -154,27 +167,45 @@ export interface Repository {
      */
     readonly delivId: string; // invariant
 
-    URL: string | null; // URL for project in version control system; null if not yet created
-    cloneURL: string | null; // git clone URL for project; null if not yet created
+    /**
+     * URL for project in version control system; null if not yet created.
+     *
+     * TODO: remove; make githubProvisioned non-optional and use that instead.
+     */
+    URL: string | null;
+
+    /**
+     * git clone URL for project; null if not yet created
+     *
+     * TODO: make sure this is not used to check if a repo has been provisioned.
+     */
+    cloneURL: string | null;
     teamIds: string[]; // Team.id[] - foreign key
 
-    // githubStatus: string; // NONE | CREATED
+    /**
+     * Has the repo been provisioned on GitHub.
+     *
+     * TODO: make this non-optional.
+     */
+    githubProvisioned?: boolean;
+
+    /**
+     * Is the repo student-writeable on GitHub.
+     *
+     * TODO: make this non-optional.
+     */
+    githubWriteable?: boolean;
 
     custom: { // rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-        githubCreated?: boolean,
-        githubReleased?: boolean,
+        githubCreated?: boolean, // TODO: remove
+        githubReleased?: boolean, // TODO: remove
 
-        // status?: any, // AssignmentController // TODO: make into assignment.status
-        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
-
-        assignmentInfo?: AssignmentRepositoryInfo,
-
-        d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
-        d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled
-        d2enabled?: boolean, // SDMM // TODO: make sdmm.d2enabled
-        d3enabled?: boolean  // SDMM // TODO: make sdmm.d3enabled
-        sddmD3pr?: boolean, // SDMM // TODO: make sdmm.d3pr
+        // SDMM-specific; leave them until the SDMM is cancelled
+        d0enabled?: boolean, // SDMM
+        d1enabled?: boolean, // SDMM
+        d2enabled?: boolean, // SDMM
+        d3enabled?: boolean  // SDMM
+        sddmD3pr?: boolean, // SDMM
     };
 }
 
