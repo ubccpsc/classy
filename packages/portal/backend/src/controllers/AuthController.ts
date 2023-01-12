@@ -44,6 +44,11 @@ export class AuthController {
 
     public async personPriviliged(person: Person): Promise<{ isAdmin: boolean, isStaff: boolean }> {
 
+        if (person === null) {
+            Log.warn("AuthController::personPriviliged( null ) - not privileged");
+            return {isAdmin: false, isStaff: false};
+        }
+
         const personId = person.id;
         if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them

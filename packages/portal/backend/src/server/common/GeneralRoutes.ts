@@ -209,10 +209,12 @@ export default class GeneralRoutes implements IREST {
                             Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
                             res.send(500, err.message);
                         }
+                        return next();
                     });
                     rs.on("end", () => {
                         Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
                         rs.close();
+                        return next();
                     });
                     rs.pipe(res);
                 }
@@ -220,8 +222,6 @@ export default class GeneralRoutes implements IREST {
                 Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
                 res.send(404, err.message);
             }
-
-            return next();
         }).catch(function (err) {
             Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
             if (err.message === "401") {

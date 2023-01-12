@@ -98,4 +98,14 @@ export default class Server {
             }
         });
     }
+
+    /**
+     * Used in tests.
+     *
+     * @returns {Server}
+     */
+    public getServer(): restify.Server {
+        Log.trace("Server::getServer()");
+        return this.rest;
+    }
 }

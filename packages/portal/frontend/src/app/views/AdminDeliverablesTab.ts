@@ -572,6 +572,11 @@ export class AdminDeliverablesTab extends AdminPage {
                         return reject(new Error(xhr.responseText));
                     }
 
+                    // add padding at the bottom of the output to make final line easier to read
+                    output.innerText += "\n";
+                    output.innerText += "\n";
+                    output.innerText += "\n";
+
                     if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
                         const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
                         // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");

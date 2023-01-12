@@ -22,13 +22,16 @@ export default class RouteHandler {
 
     public static getDocker(): Docker {
         if (RouteHandler.docker === null) {
-            if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-                // Running tests; do not need to connect to the Docker daemon
-                this.docker = null;
-            } else {
-                // Connect to the Docker socket using defaults
-                RouteHandler.docker = new Docker();
-            }
+            // NOTE: not sure what commenting this out will do in CI, but
+            // seems right for local dev and will be fine in production
+
+            // if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
+            //     // Running tests; do not need to connect to the Docker daemon
+            //     this.docker = null;
+            // } else {
+            // Connect to the Docker socket using defaults
+            RouteHandler.docker = new Docker();
+            // }
         }
 
         return RouteHandler.docker;
@@ -231,13 +234,50 @@ export default class RouteHandler {
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        const docker = RouteHandler.getDocker();
-        const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
+        Log.info("RouteHandler::postDockerImage(..) - start");
+
+        RouteHandler.getDocker(); // make sure docker is configured
+
         try {
-            const body = req.body;
-            const remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
+            if (typeof req.body.remote === "undefined") {
+                throw new Error("remote parameter missing");
+            }
+            if (typeof req.body.tag === "undefined") {
+                throw new Error("tag parameter missing");
+            }
+            if (typeof req.body.file === "undefined") {
+                throw new Error("file parameter missing");
+            }
+
+            const handler = (stream: any) => {
+                stream.on("data", (chunk: any) => {
+                    Log.trace("RouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+                });
+                stream.on("end", (chunk: any) => {
+                    Log.info("RouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
+                    return next();
+                });
+                stream.on("error", (chunk: any) => {
+                    Log.error("RouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
+                    return next();
+                });
+                stream.pipe(res);
+            };
+
+            const body = req.body as any;
             const tag = body.tag;
             const file = body.file;
+            let remote;
+
+            if (Config.getInstance().hasProp(ConfigKey.githubDockerToken) === true) {
+                // repo protected by the githubDockerToken from .env
+                const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
+                remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
+            } else {
+                // public repo
+                remote = body.remote;
+            }
+
             const dockerOptions = {remote, t: tag, dockerfile: file};
             const reqParams = querystring.stringify(dockerOptions);
             const reqOptions = {
@@ -246,25 +286,17 @@ export default class RouteHandler {
                 method: "POST"
             };
 
-            const handler = (stream: any) => {
-                stream.on("data", (chunk: any) => {
-                    Log.trace("RouteHandler::postDockerImage(...) - " + chunk.toString());
-                });
-                stream.on("end", (chunk: any) => {
-                    Log.info("RouteHandler::postDockerImage(...) - Closing Docker API Connection.");
-                });
-                stream.on("error", (chunk: any) => {
-                    Log.error("RouteHandler::postDockerImage(...) Docker Stream ERROR: " + chunk);
-                });
-                stream.pipe(res);
-            };
+            Log.info("RouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
+            Log.info("RouteHandler::postDockerImage(..) - request made");
+
+            // write something to the response to keep it alive until the stream is emitting
+            res.write(""); // NOTE: this is required, if odd
         } catch (err) {
             Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
-            res.send(err.statusCode, err.message);
+            return res.send(err.statusCode, err.message);
         }
-
-        return next();
+        // next not here on purpose, must be in stream handler or socket will close early
     }
 }
