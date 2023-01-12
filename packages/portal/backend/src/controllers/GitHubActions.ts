@@ -221,6 +221,8 @@ export interface IGitHubActions {
      */
     getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
 
+    getTeamByName(teamName: string): Promise<GitTeamTuple | null>;
+
     getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
 
     addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
@@ -1046,6 +1048,45 @@ export class GitHubActions implements IGitHubActions {
             // just return empty [] rather than failing
             return [];
         }
+    }
+
+    /**
+     * Gets the team associated with the team name.
+     *
+     * Returns null if the team does not exist.
+     *
+     * @param {string} teamName
+     * @returns {Promise<number>}
+     */
+    public async getTeamByName(teamName: string): Promise<GitTeamTuple | null> {
+
+        if (teamName === null) {
+            throw new Error("GitHubAction::getTeamByName( null ) - null team requested");
+        }
+
+        const start = Date.now();
+        // /orgs/{org}/teams/{team_slug}
+        const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName;
+        const options: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/json"
+            }
+        };
+
+        const response = await fetch(uri, options);
+
+        if (response.status === 404) {
+            Log.warn("GitHubAction::getTeam( " + teamName + " ) - ERROR: Github Team " + response.status);
+            return null;
+        }
+
+        const body = await response.json();
+        const ret = {githubTeamNumber: body.id, teamName: body.name};
+        Log.info("GitHubAction::getTeam( " + teamName + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+        return ret;
     }
 
     /**
