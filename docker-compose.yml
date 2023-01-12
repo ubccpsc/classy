@@ -39,7 +39,9 @@ services:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
     db:
-        command: --quiet --slowms 250
+        # mongo logs are almost never interesting
+        # but if you have a problem, remove the logpath
+        command: --slowms 250 --quiet --logpath /dev/null
         container_name: db
         environment:
           - MONGO_INITDB_ROOT_USERNAME
