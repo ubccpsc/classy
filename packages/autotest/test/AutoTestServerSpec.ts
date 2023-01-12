@@ -11,7 +11,7 @@ import {DatabaseController} from "@backend/controllers/DatabaseController";
 
 describe("AutoTest AutoTestServer", function () {
 
-    const TIMEOUT = 5000;
+    const TIMEOUT = 1000;
     let app: restify.Server = null;
     let server: AutoTestServer = null;
 
@@ -89,7 +89,10 @@ describe("AutoTest AutoTestServer", function () {
     });
 
     it("Should successfully create a docker image.", async function () {
-        // this test cannot pass on CircleCI, but works great locally
+        // this will be slow the first time (~5 minutes), but fast thereafter (~5 seconds)
+        // once docker has cached the image
+
+        // this test cannot pass on CircleCI, and is for localhost testing only
         if (TestHarness.isCI() === true) {
             this.skip();
         }
@@ -115,7 +118,7 @@ describe("AutoTest AutoTestServer", function () {
             expect(res.status).to.equal(200);
             expect(output).to.contain("Successfully built");
         }
-    }).timeout(TIMEOUT * 5);
+    }).timeout(TIMEOUT * 60 * 10);
 
     it("Should fail to create a docker image for a bad remote.", async function () {
         // this test cannot pass on CircleCI, but works great locally
@@ -145,6 +148,6 @@ describe("AutoTest AutoTestServer", function () {
             expect(res).to.haveOwnProperty("status");
             expect(output).to.contain("error fetching");
         }
-    }).timeout(TIMEOUT * 5);
+    }).timeout(TIMEOUT * 10);
 
 });

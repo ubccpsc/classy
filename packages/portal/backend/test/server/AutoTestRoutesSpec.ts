@@ -532,7 +532,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(401);
+                    expect(res.status).to.equal(401);
                 }
             });
             it("Should respond 400 if the user is not in the request header.", async function () {
@@ -544,7 +544,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 400 if the user is not a GitHub person.", async function () {
@@ -556,7 +556,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
@@ -569,7 +569,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(500);
+                    expect(res.status).to.equal(500);
                 }
             });
             // it("Should respond 400 if the user privileges cannot be determined.");
@@ -590,7 +590,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(401);
+                    expect(res.status).to.equal(401);
                 }
             });
             it("Should respond 400 if the user is not in the request header.", async function () {
@@ -602,7 +602,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 400 if the user is not a GitHub person.", async function () {
@@ -614,7 +614,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
@@ -627,7 +627,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(500);
+                    expect(res.status).to.equal(500);
                 }
             });
             // This is only for debugging, to work, an AutoTest instance must be running
