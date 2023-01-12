@@ -661,7 +661,7 @@ export class DatabaseController {
                 }
 
                 Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
-                const client = await MongoClient.connect(dbHost);
+                const client = await MongoClient.connect(dbHost, {serverSelectionTimeoutMS: 500});
                 if (kind === "slow") {
                     Log.trace("DatabaseController::open() - creating slowDb");
                     this.slowDb = await client.db(dbName);

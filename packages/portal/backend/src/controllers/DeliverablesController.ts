@@ -10,7 +10,7 @@ export class DeliverablesController {
     private db: DatabaseController = DatabaseController.getInstance();
 
     public async getAllDeliverables(): Promise<Deliverable[]> {
-        Log.trace("DeliverablesController::getAllGrades() - start");
+        Log.trace("DeliverablesController::getAllDeliverables() - start");
 
         return await this.db.getDeliverables();
     }

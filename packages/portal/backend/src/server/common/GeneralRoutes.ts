@@ -466,7 +466,7 @@ export default class GeneralRoutes implements IREST {
 
             const tc: TeamController = new TeamController();
             const teams = await tc.getTeamsForPerson(person);
-            Log.trace("GeneralRoutes::performGetTeams(..) - in teams: " + teams);
+            Log.trace("GeneralRoutes::performGetTeams(..) - #teams: " + teams.length);
             const teamTrans: TeamTransport[] = [];
             for (const team of teams) {
                 teamTrans.push(tc.teamToTransport(team));
@@ -487,7 +487,7 @@ export default class GeneralRoutes implements IREST {
 
             const rc = new RepositoryController();
             const repos = await rc.getReposForPerson(person);
-            Log.trace("GeneralRoutes::performGetRepos(..) - repos: " + repos);
+            Log.trace("GeneralRoutes::performGetRepos(..) - #repos: " + repos.length);
             const repoTrans: RepositoryTransport[] = [];
             for (const repo of repos) {
                 if (repo.URL !== null) {

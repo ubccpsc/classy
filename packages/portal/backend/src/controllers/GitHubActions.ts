@@ -221,6 +221,8 @@ export interface IGitHubActions {
      */
     getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]>;
 
+    getTeamByName(teamName: string): Promise<GitTeamTuple | null>;
+
     getTeam(teamNumber: number): Promise<GitTeamTuple | null>;
 
     addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
@@ -604,6 +606,15 @@ export class GitHubActions implements IGitHubActions {
                 }
             }
 
+            if (typeof (results as any).message !== "undefined" &&
+                (results as any).message === "Bad credentials") {
+                // This is an odd place for this check, but seems like
+                // a good canary for uncovering credential problems
+                Log.error("GitHubActions::handlePagination(..) - Bad Credentials encountered");
+                Log.error("GitHubActions::handlePagination(..) - .env GH_BOT_TOKEN is incorrect"); // probably
+                return [];
+            }
+
             Log.trace("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
             return results;
         } catch (err) {
@@ -765,10 +776,10 @@ export class GitHubActions implements IGitHubActions {
         try {
             await GitHubActions.checkDatabase(null, teamName);
 
-            const teamNum = await this.getTeamNumber(teamName); // be conservative, do not use TeamController on purpose
-            if (teamNum > 0) {
-                Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - success; exists: " + teamNum);
-                return {teamName: teamName, githubTeamNumber: teamNum};
+            const team = await this.getTeamByName(teamName); // be conservative, do not use TeamController on purpose
+            if (team !== null) {
+                Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - already exists; returning");
+                return {teamName: teamName, githubTeamNumber: team.githubTeamNumber};
             } else {
                 Log.info("GitHubAction::teamCreate( " + teamName + ", ... ) - does not exist; creating");
                 const uri = this.apiPath + "/orgs/" + this.org + "/teams";
@@ -917,6 +928,16 @@ export class GitHubActions implements IGitHubActions {
 
         const start = Date.now();
         try {
+            const team = await this.getTeamByName(teamName);
+            if (team === null) {
+                throw new Error("GitHubAction::addTeamToRepo(..) - team does not exist: " + teamName);
+            }
+
+            const repoExists = await this.repoExists(repoName);
+            if (repoExists === false) {
+                throw new Error("GitHubAction::addTeamToRepo(..) - repo does not exist: " + repoName);
+            }
+
             // with teamId:
             // PUT /teams/:team_id/repos/:owner/:repo (OLD)
             // const uri = this.apiPath + "/teams/" + teamId + "/repos/" + this.org + "/" + repoName;
@@ -947,8 +968,8 @@ export class GitHubActions implements IGitHubActions {
             Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamName +
                 "; repo: " + repoName + "; took: " + Util.took(start));
 
-            const teamId = await this.getTeamNumber(teamName);
-            return {githubTeamNumber: teamId, teamName: "NOTSETHERE"};
+            // const teamId = await this.getTeamNumber(teamName);
+            return {githubTeamNumber: team.githubTeamNumber, teamName: "NOTSETHERE"}; // TODO: why NOTSETHERE?
         } catch (err) {
             Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
             throw err;
@@ -971,13 +992,10 @@ export class GitHubActions implements IGitHubActions {
         try {
 
             // NOTE: this cannot use TeamController::getTeamNumber because that causes an infinite loop
-
+            const team = await this.getTeamByName(teamName);
             let teamId = -1;
-            const teamList = await this.listTeams();
-            for (const team of teamList) {
-                if (team.teamName === teamName) {
-                    teamId = team.githubTeamNumber;
-                }
+            if (team !== null) {
+                teamId = team.githubTeamNumber;
             }
 
             if (teamId <= 0) {
@@ -1037,6 +1055,45 @@ export class GitHubActions implements IGitHubActions {
             // just return empty [] rather than failing
             return [];
         }
+    }
+
+    /**
+     * Gets the team associated with the team name.
+     *
+     * Returns null if the team does not exist.
+     *
+     * @param {string} teamName
+     * @returns {Promise<number>}
+     */
+    public async getTeamByName(teamName: string): Promise<GitTeamTuple | null> {
+
+        if (teamName === null) {
+            throw new Error("GitHubAction::getTeamByName( null ) - null team requested");
+        }
+
+        const start = Date.now();
+        // /orgs/{org}/teams/{team_slug}
+        const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName;
+        const options: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/json"
+            }
+        };
+
+        const response = await fetch(uri, options);
+
+        if (response.status === 404) {
+            Log.warn("GitHubAction::getTeam( " + teamName + " ) - ERROR: Github Team " + response.status);
+            return null;
+        }
+
+        const body = await response.json();
+        const ret = {githubTeamNumber: body.id, teamName: body.name};
+        Log.info("GitHubAction::getTeam( " + teamName + " ) - found: " + JSON.stringify(ret) + "; took: " + Util.took(start));
+        return ret;
     }
 
     /**

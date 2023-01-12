@@ -6,14 +6,14 @@ import * as request from "supertest";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
-import Server from "@autotest/server/Server";
+import AutoTestServer from "@autotest/server/AutoTestServer";
 import {DatabaseController} from "@backend/controllers/DatabaseController";
 
-describe("AutoTest Server", function () {
+describe("AutoTest AutoTestServer", function () {
 
-    const TIMEOUT = 5000;
+    const TIMEOUT = 1000;
     let app: restify.Server = null;
-    let server: Server = null;
+    let server: AutoTestServer = null;
 
     before(async () => {
         Log.test("AutoTestServerSpec::before - start");
@@ -28,7 +28,7 @@ describe("AutoTest Server", function () {
         // await db.clearData(); // nuke everything
 
         // NOTE: need to start up server WITHOUT HTTPS for testing or strange errors crop up
-        server = new Server();
+        server = new AutoTestServer();
 
         try {
             await server.start();
@@ -89,7 +89,10 @@ describe("AutoTest Server", function () {
     });
 
     it("Should successfully create a docker image.", async function () {
-        // this test cannot pass on CircleCI, but works great locally
+        // this will be slow the first time (~5 minutes), but fast thereafter (~5 seconds)
+        // once docker has cached the image
+
+        // this test cannot pass on CircleCI, and is for localhost testing only
         if (TestHarness.isCI() === true) {
             this.skip();
         }
@@ -115,7 +118,7 @@ describe("AutoTest Server", function () {
             expect(res.status).to.equal(200);
             expect(output).to.contain("Successfully built");
         }
-    }).timeout(TIMEOUT * 5);
+    }).timeout(TIMEOUT * 60 * 10);
 
     it("Should fail to create a docker image for a bad remote.", async function () {
         // this test cannot pass on CircleCI, but works great locally
@@ -145,6 +148,6 @@ describe("AutoTest Server", function () {
             expect(res).to.haveOwnProperty("status");
             expect(output).to.contain("error fetching");
         }
-    }).timeout(TIMEOUT * 5);
+    }).timeout(TIMEOUT * 10);
 
 });

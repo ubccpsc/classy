@@ -139,7 +139,8 @@ describe("AutoTest Routes", function () {
         const body = TestHarness.createResult(TestHarness.DELIVID0, TestHarness.REPONAME1, [TestHarness.USER1.id], 50);
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -167,7 +168,8 @@ describe("AutoTest Routes", function () {
         delete body.delivId; // remove required field
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -225,7 +227,8 @@ describe("AutoTest Routes", function () {
         const body = JSON.stringify(input);
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -529,7 +532,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(401);
+                    expect(res.status).to.equal(401);
                 }
             });
             it("Should respond 400 if the user is not in the request header.", async function () {
@@ -541,7 +544,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 400 if the user is not a GitHub person.", async function () {
@@ -553,7 +556,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
@@ -566,7 +569,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(500);
+                    expect(res.status).to.equal(500);
                 }
             });
             // it("Should respond 400 if the user privileges cannot be determined.");
@@ -587,7 +590,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(401);
+                    expect(res.status).to.equal(401);
                 }
             });
             it("Should respond 400 if the user is not in the request header.", async function () {
@@ -599,7 +602,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 400 if the user is not a GitHub person.", async function () {
@@ -611,7 +614,7 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(400);
+                    expect(res.status).to.equal(400);
                 }
             });
             it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
@@ -624,116 +627,47 @@ describe("AutoTest Routes", function () {
                     res = err;
                 } finally {
                     expect(res).to.haveOwnProperty("status");
-                    expect(res.status).to.eq(500);
+                    expect(res.status).to.equal(500);
                 }
             });
-            // it("Should respond 400 if the AutoTest service is malformed.");
-            // it("Should respond 400 if the user privileges cannot be determined.");
-        });
+            // This is only for debugging, to work, an AutoTest instance must be running
+            // on the host (that is why this is skipped by default)
+            it.skip("Should be able to create a grading image, if AT is running.", async function () {
+                this.timeout(5 * 60 * 1000); // up to 5 mins
+                let res: any;
 
-        // it.only("Should be able to build a new grading container image", async function () {
-        //
-        //     try {
-        //         const context = "BADURL";
-        //         const tag = "TEST_TAG";
-        //         const file = "Dockerfile";
-        //
-        //         let output = "";
-        //         //
-        //         // return new Promise<string>(function (resolve, reject) {
-        //         //     const xhr = new XMLHttpRequest();
-        //         //     let lines: string[] = [];
-        //         //     let lastIndex = 0;
-        //         //     xhr.onprogress = function () {
-        //         //         try {
-        //         //             const currIndex = xhr.responseText.length;
-        //         //             if (lastIndex === currIndex) {
-        //         //                 return;
-        //         //             }
-        //         //             const chunk = xhr.responseText.substring(lastIndex, currIndex);
-        //         //             lastIndex = currIndex;
-        //         //
-        //         //             const chunkLines = chunk.split("\n")
-        //         //                 .filter((s) => s !== "")
-        //         //                 .map((s) => JSON.parse(s))
-        //         //                 .filter((s) => s.hasOwnProperty("stream") || s.hasOwnProperty("message") || s.hasOwnProperty("error"))
-        //         //                 .map((s) => s.stream || s.message || "\n\nError code: " +
-        //         //                       s.errorDetail.code + "\n\nError Message: " + s.error);
-        //         //             output += chunkLines.join("");
-        //         //             lines = lines.concat(chunkLines);
-        //         //         } catch (err) {
-        //         //             Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR Processing build output log stream. " + err);
-        //         //         }
-        //         //     };
-        //         //     xhr.onload = function () {
-        //         //         if (xhr.status >= 400) {
-        //         //             return reject(new Error(xhr.responseText));
-        //         //         }
-        //         //
-        //         //         if (lines.length > 2 && lines[lines.length - 2].startsWith("Successfully built")) {
-        //         //             const sha = lines[lines.length - 2].replace("Successfully built ", "").trim();
-        //         //             // const tag = lines[lines.length - 1].replace("Successfully tagged ", "");
-        //         //             resolve(sha);
-        //         //         } else {
-        //         //             reject(new Error("Failed to read image SHA from build log. " +
-        //         //                 "If the image was built successfully, you can manually select it on the previous screen."));
-        //         //         }
-        //         //     };
-        //         //     xhr.onerror = function () {
-        //         //         reject(new Error(xhr.responseText));
-        //         //     };
-        //         //
-        //         //     try {
-        //         //         xhr.open("POST", "/portal/at/docker/image");
-        //         //         // for (const [header, value] of Object.entries(headers)) {
-        //         //         //     xhr.setRequestHeader(header, value);
-        //         //         // }
-        //         //         xhr.setRequestHeader("user", userName);
-        //         //         xhr.setRequestHeader("token", userToken);
-        //         //
-        //         //         xhr.send(JSON.stringify({remote: context, tag: tag, file: file}));
-        //         //     } catch (err) {
-        //         //         Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR With request: " + err);
-        //         //     }
-        //         // });
-        //
-        //
-        //         //         xhr.open("POST", "/portal/at/docker/image");
-        //         //         // for (const [header, value] of Object.entries(headers)) {
-        //         //         //     xhr.setRequestHeader(header, value);
-        //         //         // }
-        //         //         xhr.setRequestHeader("user", userName);
-        //         //         xhr.setRequestHeader("token", userToken);
-        //
-        //         const resp = await request(app)
-        //             .post("/portal/at/docker/image")
-        //             // .set({"user": userName, "token": userToken})
-        //             .send(JSON.stringify({remote: context, tag: tag, file: file}))
-        //             // .expect(200)
-        //             // .expect('Content-Type', 'image.png')
-        //             .buffer()
-        //             .send().set({user: userName, token: userToken});
-        //
-        //         // .parse(binaryParser)
-        //
-        //         // .end(function (err, res) {
-        //         //         if (err) {
-        //         //             throw new Error("stream err");
-        //         //         }
-        //         //
-        //         //         // binary response data is in res.body as a buffer
-        //         //         // assert.ok(Buffer.isBuffer(res.body));
-        //         //         // console.log("res=", res.body);
-        //         //         //
-        //         //         // done();
-        //         //         Promise.resolve();
-        //         //     });
-        //         Log.test(resp.body);
-        //     } catch (err) {
-        //         Log.error(err);
-        //         throw err;
-        //     }
-        // });
+                try {
+                    const validBody = {
+                        remote: "https://github.com/minidocks/base.git",
+                        tag: "tagname",
+                        file: "Dockerfile"
+                    };
+
+                    let parserData = "";
+                    const myParser = function (parserRes: any, callback: any) {
+                        parserRes.on("data", function (chunk: any) {
+                            Log.info("AutoTestRoutesSpec::myParser chunk; ts: " + Date.now() + "; chunk: " + chunk);
+                            parserData += chunk;
+                        });
+                        parserRes.on("end", function () {
+                            Log.info("AutoTestRoutesSpec::myParser done");
+                            callback(null, parserData);
+                        });
+                    };
+
+                    res = await request(app).post(url).set("user", TestHarness.ADMIN1.github)
+                        .set("connection", "keep-alive").parse(myParser).send(validBody);
+
+                } catch (err) {
+                    res = err;
+                } finally {
+                    Log.test("Response code: " + res.status);
+                    const finalBody = res.body;
+                    expect(res.status).to.equal(200);
+                    expect(finalBody.indexOf("Successfully tagged tagname:latest")).to.be.greaterThan(0);
+                }
+            });
+        });
     });
 
 });

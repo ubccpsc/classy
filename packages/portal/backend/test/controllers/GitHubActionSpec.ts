@@ -319,6 +319,12 @@ describe("GitHubActions", () => {
         expect(val).to.be.lessThan(0);
     }).timeout(TIMEOUT);
 
+    it("Should not be possible to get a team that does not exist.", async function () {
+        const val = await gh.getTeamByName(TestHarness.INVALIDTEAMNAME);
+        Log.test("Team # " + val);
+        expect(val).to.be.null;
+    }).timeout(TIMEOUT);
+
     it("Should be able to create a team, add users to it, and add it to the repo.", async function () {
         const val = await gh.createTeam(TEAMNAME, "push");
         Log.test("Team created; details: " + JSON.stringify(val));
@@ -352,13 +358,20 @@ describe("GitHubActions", () => {
 
     }).timeout(TIMEOUT);
 
-    it("Should be possible to get a team number for a team that does exist.", async function () {
+    it("Should be possible to get a team number for a team that exists.", async function () {
         const val = await gh.getTeamNumber(TestHarness.TEAMNAME1);
         Log.test("Team # " + val);
         expect(val).to.be.greaterThan(0);
 
         // let bool = await gh.teamExists(TEAMNAME);
         // expect(bool).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should be possible to get a team by name that exists.", async function () {
+        const val = await gh.getTeamByName(TestHarness.TEAMNAME1);
+        Log.test("Team # " + val.githubTeamNumber);
+        expect(val.teamName).to.be.equal(TestHarness.TEAMNAME1);
+        expect(val.githubTeamNumber).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
     it("Should fail to get team members for an invalid team number argument.", async function () {

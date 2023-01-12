@@ -16,12 +16,12 @@ import {EdXClassPortal} from "../edx/EdxClassPortal";
 import {GitHubAutoTest} from "../github/GitHubAutoTest";
 import {GitHubUtil} from "../github/GitHubUtil";
 
-export default class RouteHandler {
+export default class AutoTestRouteHandler {
     public static docker: Docker = null;
     public static autoTest: AutoTest = null;
 
     public static getDocker(): Docker {
-        if (RouteHandler.docker === null) {
+        if (AutoTestRouteHandler.docker === null) {
             // NOTE: not sure what commenting this out will do in CI, but
             // seems right for local dev and will be fine in production
 
@@ -30,17 +30,17 @@ export default class RouteHandler {
             //     this.docker = null;
             // } else {
             // Connect to the Docker socket using defaults
-            RouteHandler.docker = new Docker();
+            AutoTestRouteHandler.docker = new Docker();
             // }
         }
 
-        return RouteHandler.docker;
+        return AutoTestRouteHandler.docker;
     }
 
     public static getAutoTest(): AutoTest {
-        if (RouteHandler.autoTest === null) {
+        if (AutoTestRouteHandler.autoTest === null) {
             const dataStore = new MongoDataStore();
-            const docker = RouteHandler.getDocker();
+            const docker = AutoTestRouteHandler.getDocker();
             let portal: ClassPortal;
 
             if (Config.getInstance().getProp(ConfigKey.name) === "sdmm") {
@@ -49,9 +49,9 @@ export default class RouteHandler {
                 portal = new ClassPortal();
             }
 
-            RouteHandler.autoTest = new GitHubAutoTest(dataStore, portal, docker);
+            AutoTestRouteHandler.autoTest = new GitHubAutoTest(dataStore, portal, docker);
         }
-        return RouteHandler.autoTest;
+        return AutoTestRouteHandler.autoTest;
     }
 
     /**
@@ -63,7 +63,7 @@ export default class RouteHandler {
 
             // should load AutoTest, if it has not been loaded already
             // if it is loading for the first time the queue will tick itself
-            const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
+            const at: GitHubAutoTest = AutoTestRouteHandler.getAutoTest() as GitHubAutoTest;
 
             // tick the queue again, in case it was not being loaded for the first time
             // feels odd to tick on status, but it might as well be up-to-date
@@ -74,10 +74,10 @@ export default class RouteHandler {
             const status = at.getStatus();
 
             Log.info("RouteHanlder::getAutoTestStatus(..) - done");
-            res.json(200, status);
+            res.send(200, status);
         } catch (err) {
             Log.info("RouteHanlder::getAutoTestStatus(..) - ERROR: " + err);
-            res.json(400, "Failed to check AutoTest: " + err.message);
+            res.send(400, "Failed to check AutoTest: " + err.message);
         }
         return next();
     }
@@ -98,22 +98,22 @@ export default class RouteHandler {
             githubSecret = null;
         }
 
-        Log.info("RouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
+        Log.info("AutoTestRouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
         const body = req.body;
 
         const handleError = function (msg: string) {
-            Log.error("RouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-            res.json(400, "Failed to process commit: " + msg);
+            Log.error("AutoTestRouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
+            return res.send(400, "Failed to process commit: " + msg);
         };
 
         let secretVerified = false;
         if (githubSecret !== null) {
             try {
-                Log.trace("RouteHandler::postGithubHook(..) - trying to compute webhook secrets");
+                Log.trace("AutoTestRouteHandler::postGithubHook(..) - trying to compute webhook secrets");
 
                 const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
                 const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex"); // secret w/ sha256
-                // Log.info("RouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
+                // Log.info("AutoTestRouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
 
                 const computed = "sha1=" + crypto.createHmac("sha1", key) // payload w/ sha1
                     .update(JSON.stringify(body))
@@ -121,40 +121,41 @@ export default class RouteHandler {
 
                 secretVerified = (githubSecret === computed);
                 if (secretVerified === true) {
-                    Log.trace("RouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
+                    Log.trace("AutoTestRouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified +
                         "; took: " + Util.took(start));
                 } else {
-                    Log.warn("RouteHandler::postGithubHook(..) - webhook secrets do not match");
-                    Log.warn("RouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
+                    Log.warn("AutoTestRouteHandler::postGithubHook(..) - webhook secrets do not match");
+                    Log.warn("AutoTestRouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
                 }
             } catch (err) {
-                Log.error("RouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
+                Log.error("AutoTestRouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
             }
         } else {
-            Log.warn("RouteHandler::postGithubHook(..) - secret ignored (not present)");
+            Log.warn("AutoTestRouteHandler::postGithubHook(..) - secret ignored (not present)");
         }
 
         // leave this on for a while; would like to verify that this works so we can replace the hardcode below
-        Log.info("RouteHandler::postGithubHook(..) - hasSecret: " +
+        Log.info("AutoTestRouteHandler::postGithubHook(..) - hasSecret: " +
             (typeof githubSecret === "string") + "; secretVerified: " + secretVerified);
 
         secretVerified = true; // TODO: stop overwriting this
         if (secretVerified === true) {
             if (githubEvent === "ping") {
                 // github test packet; use to let the webhooks know we are listening
-                Log.info("RouteHandler::postGithubHook() - <200> pong.");
-                res.json(200, "pong");
+                Log.info("AutoTestRouteHandler::postGithubHook() - <200> pong.");
+                return res.send(200, "pong");
             } else {
-                RouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
+                Log.trace("AutoTestRouteHandler::postGithubHook() - starting handle");
+                AutoTestRouteHandler.handleWebhook(githubEvent, body).then(function (commitEvent) {
                     if (commitEvent !== null) {
-                        Log.info("RouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
-                        res.json(200, commitEvent); // report back our interpretation of the hook
+                        Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
+                        return res.send(200, commitEvent); // report back our interpretation of the hook
                     } else {
-                        Log.info("RouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
-                        res.json(204, {}); // report back that nothing happened
+                        Log.info("AutoTestRouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
+                        return res.send(204, {}); // report back that nothing happened
                     }
                 }).catch(function (err) {
-                    Log.error("RouteHandler::postGithubHook() - ERROR: " + err);
+                    Log.error("AutoTestRouteHandler::postGithubHook() - ERROR: " + err);
                     handleError(err);
                 });
             }
@@ -162,42 +163,42 @@ export default class RouteHandler {
             handleError("Invalid payload signature.");
         }
 
-        Log.trace("RouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
-        return next();
+        Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
+        // no next() call here; .then clause above will finish the response
     }
 
     private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
         // cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
-        const at: GitHubAutoTest = RouteHandler.getAutoTest() as GitHubAutoTest;
+        const at: GitHubAutoTest = AutoTestRouteHandler.getAutoTest() as GitHubAutoTest;
 
         switch (event) {
             case "commit_comment":
                 const commentEvent = await GitHubUtil.processComment(body);
-                Log.trace("RouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
+                Log.trace("AutoTestRouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
                 await at.handleCommentEvent(commentEvent);
                 return commentEvent;
             case "push":
                 const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
-                Log.trace("RouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
+                Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
                 await at.handlePushEvent(pushEvent);
                 return pushEvent;
             default:
-                Log.error("RouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
+                Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
         }
     }
 
     // public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
     //     const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
-    //     Log.info("RouteHandler::getResource(..) - start; fetching resource: " + path);
+    //     Log.info("AutoTestRouteHandler::getResource(..) - start; fetching resource: " + path);
     //
     //     const rs = fs.createReadStream(path);
     //     rs.on("error", (err: any) => {
     //         if (err.code === "ENOENT") {
-    //             Log.error("RouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
+    //             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
     //             res.send(404, err.message);
     //         } else {
-    //             Log.error("RouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
+    //             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
     //             res.send(500, err.message);
     //         }
     //     });
@@ -211,17 +212,18 @@ export default class RouteHandler {
 
     public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
         try {
-            const docker = RouteHandler.getDocker();
+            const docker = AutoTestRouteHandler.getDocker();
             const filtersStr = req.query.filters;
             const options: any = {};
             if (filtersStr) {
                 options["filters"] = JSON.parse(filtersStr);
             }
-            Log.trace("RouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
+            Log.trace("AutoTestRouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
+            Log.trace("AutoTestRouteHandler::getDockerImages(..) - Returning Docker images: " + JSON.stringify(images));
             res.send(200, images);
         } catch (err) {
-            Log.error("RouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
+            Log.error("AutoTestRouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
             if (err.statusCode) {
                 // Error from Docker daemon
                 res.send(err.statusCode, err.message);
@@ -229,14 +231,13 @@ export default class RouteHandler {
                 res.send(400, err.message);
             }
         }
-
-        return next();
+        // return next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.info("RouteHandler::postDockerImage(..) - start");
+        Log.info("AutoTestRouteHandler::postDockerImage(..) - start");
 
-        RouteHandler.getDocker(); // make sure docker is configured
+        AutoTestRouteHandler.getDocker(); // make sure docker is configured
 
         try {
             if (typeof req.body.remote === "undefined") {
@@ -251,14 +252,14 @@ export default class RouteHandler {
 
             const handler = (stream: any) => {
                 stream.on("data", (chunk: any) => {
-                    Log.trace("RouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+                    Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
                 });
                 stream.on("end", (chunk: any) => {
-                    Log.info("RouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
+                    Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
                     return next();
                 });
                 stream.on("error", (chunk: any) => {
-                    Log.error("RouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
+                    Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
                     return next();
                 });
                 stream.pipe(res);
@@ -286,15 +287,15 @@ export default class RouteHandler {
                 method: "POST"
             };
 
-            Log.info("RouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
+            Log.info("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
-            Log.info("RouteHandler::postDockerImage(..) - request made");
+            Log.info("AutoTestRouteHandler::postDockerImage(..) - request made");
 
             // write something to the response to keep it alive until the stream is emitting
             res.write(""); // NOTE: this is required, if odd
         } catch (err) {
-            Log.error("RouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
+            Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
             return res.send(err.statusCode, err.message);
         }
         // next not here on purpose, must be in stream handler or socket will close early

@@ -31,7 +31,7 @@ docker-compose build portal autotest
 
 Classy is a containerized application that requires containers are built before the application can be run. Building a container is necessary to make a copy of an image that Docker can run.
 
-If this is a new install of Classy OR code has been updated, it is necessary to build or re-build Classy. See [Building Classy](#building-classy) for instructions on how to build Classy.
+If this is a new instance of Classy OR code has been updated, it is necessary to build or re-build Classy. See [Building Classy](#building-classy) for instructions on how to build Classy.
 
 ```bash
 # docker-compose commands must be run from the following directory
