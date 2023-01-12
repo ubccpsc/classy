@@ -17,7 +17,7 @@ A bot user, *AutoBot* unless requested otherwise for a necessary use-case, will 
 
 ## Student AutoBot Commands
 
-AutoTest listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed so it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
+AutoTest listens for `push` and `comment` events in repositories managed by AutoTest. AutoTest has the ability to start a container to grade or analyze code based on logic that an instructor has programmed into a Docker container. Currently, AutoTest is tightly integrated with GitHub, although it has been designed such that it could also receive grading requests through other means (e.g., through some form of REST-based invoker). The document below describes the current GitHub-oriented version of AutoTest.
 
 AutoTest can compute feedback either when a GitHub push event (e.g., a `git push`) is received or when a user makes a comment on a commit (e.g., they use the GitHub web interface to make a comment that references the AutoTest bot). The name of the bot is configurable, but we will use `@autobot` for the remainder of this document. These messages should take the form `@autobot <delivId> [flags]`. For example `@autobot #d1` or `@autobot #d4`. Flags do not need to be provided unless needed; the complete list of flags includes:
 
@@ -41,10 +41,10 @@ When a queue pile-up occurs, AutoTest will continue to function. While AutoTest 
 
 To minimize the potential of a queue pile-up:
 
-1) An AutoGrade container should be optimized to perform grading as quickly as possible.
-  - Any internal container initialization should be done during the container BUILD step when possible.
-  - If possible, cache any upstream dependencies that require a download and installation.
-2) A minimum grade feedback delay should be set that is appropriate for your deliverable.
+1. An AutoGrade container should be optimized to perform grading as quickly as possible. 
+    - Any internal container initialization should be done during the container BUILD step when possible. 
+    - If possible, cache any upstream dependencies that require a download and installation. 
+2. A minimum grade feedback delay should be set that is appropriate for your deliverable.
 
 A minimum grade feedback delay is the amount of time that a student must wait between grade requests. Without modifying a container, the minimum delay is the easiest variable to change to minimize the chance of a queue pile-up. *The recommended minimum delay between grade requests is 15 minutes (300 seconds), but it most commonly set at 12 hours (43,200 seconds)*.
 

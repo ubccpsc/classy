@@ -47,17 +47,17 @@ Click on the `classy` project. Under the `classy` project view, click on the cog
 
 #### CircleCI GitHub Integration
 
-Running Classy’s continuous integration test suite requires a live GitHub integration. github.com or GitHub Enterprise integrations are possible with Classy.
+Running Classy’s continuous integration test suite requires a live GitHub integration.
 
 The GitHub organization, domain name, API endpoint, API key, and various test-user accounts can be defined in the Classy `.env` file. Therefore, any modifications to a GitHub integration for CircleCI requires updating the `.env` file in Classy.
 
 <img src="../assets/circle-ci-key.png"/>
 
-Testing CircleCI `.env` files have been pre-configured, encrypted, and stored in the Classy repository in the classy/.circleci directory. All CircleCI testing configuration files must be encrypted. CircleCI stores the encryption key, which it uses to unencrypt the files during the test runtime.
+Testing CircleCI `.env` files have been pre-configured, encrypted, and stored in the Classy repository in the classy/.circleci directory. All CircleCI testing configuration files must be encrypted. CircleCI stores the encryption key, which it uses to decrypt the files during the test runtime.
 
 You can choose what CircleCI GitHub pre-configuration to run by substituting the `ENCRYPT_ENV` variable filename without the filename extension (ie. `env-dev_students_cs`).  
 
-To unencrypt a configuration file, one must have the encryption key. The command to unencrypt the file is `openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY`. 
+To decrypt a configuration file, one must have the encryption key. The command to decrypt the file is `openssl aes-256-cbc -d -md sha512 -in "$ENV_ENC_FILE.enc" -out ../.env -k $ENVKEY`. 
 
 If you decide to create a new configuration file:
 

@@ -16,7 +16,7 @@
       - [Repo Retirement](#repo-retirement)
 <!-- /TOC -->
 
-*Classy is integrated with GitHub.com or GitHub Enterprise to provide a gamified and interactive learning experience for students. When a student pushes code to a GitHub repository, Classy gives feedback and a grade to the student. Classy, therefore, requires the appropriate permissions to access and interact with a student repository.*
+*Classy is integrated with GitHub.com or GitHub Enterprise to provide an interactive learning experience for students. When a student pushes code to a GitHub repository, Classy gives feedback and a grade to the student. Classy, therefore, requires the appropriate permissions to access and interact with a student repository.*
 
 This setup guide describes the appropriate GitHub organization setup steps from the appropriate user roles.
 
@@ -24,21 +24,21 @@ This setup guide describes the appropriate GitHub organization setup steps from 
 
 ### Add User as GitHub Organization Owner
 
-Professors and Technical Staff may be granted the organization `owner` role, which allows unlimited access to all entities and actions in the organization. The organization `owner` role is necessary to setup OAuth integration.
+Professors and Technical Staff may be granted the organization `owner` role, which allows unlimited access to all entities and actions in the organization. The organization `owner` role is necessary to configure OAuth integration.
 
 ### Add Students and Staff to GitHub Organization
 
-At the moment, **students** and **staff** are automatically added to the appropriate GitHub organization teams for a specific course. Contact Michael Sanderson each time a Classy configuration is setup for a class to verify that students for that course will automatically be added the appropriate GitHub organization. Michael Sanderson has implemented logic to continuously update the organization teams with the current class list registry. If a student drops the course, the student will automatically be removed by his logic.
+At the moment, **students** and **staff** are automatically added to the appropriate GitHub organization teams for a specific course. Contact Michael Sanderson each time a Classy configuration is configured for a class to verify that students for that course will automatically be added the appropriate GitHub organization. Michael Sanderson has implemented logic to continuously update the organization teams with the current class list registry. If a student drops the course, the student will automatically be removed by his logic.
 
 ### Add Admins to GitHub Organization
 
-Admins must be manually added to an organization team by an owner of the organization. Admin examples are course instructors, assistants (not TAs unless instructed by the course instructor), and technical staff from our department. There is no automated logic to add admin users in a GitHub organization anywhere. GitHub organization owners and GitHub admins have permission to add a user to the admin team.
+Admins must be manually added to an organization team by an owner of the organization. Admin examples are course instructors, assistants (not TAs unless instructed by the course instructor), and technical staff from our department. There is no automated logic to add admin users in a GitHub organization anywhere. The GitHub organization owners and GitHub admins have permission to add a user to the admin team.
 
 ### Setup GitHub OAuth
 
-A student can login to Classy by entering their CWL username password and credentials because Classy is integrated with GitHub Enterprise and GitHub is integrated with LDAP (aka. CWL usernames).
+A student can log in to Classy by entering their CWL username password and credentials because Classy is integrated with GitHub Enterprise and GitHub is integrated with LDAP (aka. CWL usernames).
 
-OAuth configuration is set in the **/opt/classy/.env** file by configuration two OAuth credential values.
+OAuth is configured in the `/opt/classy/.env` file by configuration two OAuth credential values.
 
 How To Produce OAuth Credentials:
 
@@ -68,14 +68,14 @@ TO DO: Screenshot of the GitHub access permissions for the token.
 
 ### Setup AutoGrade Integration
 
-**WARNING**: Classy can **ONLY** have one **GH_DOCKER_TOKEN** configured in the **/opt/classy/.env** file. If a course has multiple instructors who each would like to build an AutoGrade docker container to mark their assignments, they **MUST** share the token. Hence, the token should be generated from an user level that has permission to all of their AutoGrade container GitHub repositories. See [Instructor AutoGrade Creation Manual](/docs/instructor/autograde.md#overview) for more information on how to clone AutoGrade container repositories.
+**WARNING**: Classy can **ONLY** have one **GH_DOCKER_TOKEN** configured in the **/opt/classy/.env** file. If a course has multiple instructors who each would like to build an AutoGrade docker container to mark their assignments, they **MUST** share the token. Hence, the token should be generated from a user level that has permission to all of their AutoGrade container GitHub repositories. See [Instructor AutoGrade Creation Manual](/docs/instructor/autograde.md#overview) for more information on how to clone AutoGrade container repositories.
 
 - Login as user with permissions to view the AutoGrade repository when it is private.
 - Repeat the steps from [Classy Bot Token](#classy-bot-token-steps) generation above.
 
 TO DO: Screenshot of the GitHub access permissions for the token.
 
-<TO DO: Details on how the enviornmental config file should be updated should be included when you have your repository, users, and API keys created>
+<TO DO: Details on how the environment config file should be updated should be included when you have your repository, users, and API keys created>
 
 ## Debug GitHub
 
@@ -90,8 +90,7 @@ How to Debug:
   1. Login to GitHub through the UI.
   2. Visibly inspect the organization teams to confirm that the CWL user(s) who is experiencing this error has been added to an **admin**, **staff**, or **students** team.
     a. If an admin user is missing, add them manually.
-    b. If a staff or student user is missing, contact Michael Sanderson to determine why they are missing. He should fix it, as users will automatically be removed from the staff and admin teams if they are not in the class list registry. 
-
+    b. If a staff or student user is missing, contact Michael Sanderson to determine why they are missing. He should fix it, as users will automatically be removed from the staff and admin teams if they are not in the class list registry.
   After adding the user(s) to the appropriate team, reload the view to see if the issue is fixed, **OR** continue to the next debug step.
   3. If the CWL user has been added to a team, but this error persists, it is likely that Classy does not have permission to read the team to see what users exist underneath it.
 

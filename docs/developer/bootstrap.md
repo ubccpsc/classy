@@ -1,6 +1,6 @@
 # Bootstrapping Classy for Development
 
-Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two RESTful APIs and a JavaScript front-end application that is served by on one of the RESTful APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
+Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two REST-based projects and a JavaScript front-end application that is served by on one of the REST APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
 
 ## Software Dependencies
 
@@ -75,4 +75,4 @@ More checks may need to be made depending on the nature of your work, but these 
 
 - Items 1-5 can all be fulfilled by CircleCI integration.
 - Item 6 can only be done manually at this time.
-- Item 6 requires a properly setup environmental file with SSL certificates.
+- Item 6 requires a properly-setup environmental file with SSL certificates.

@@ -18,7 +18,7 @@
 
 Classy helps automate the distribution and grading of assignments. Classy integrates with GitHub to create an environment where students can gain real-world and practical hands-on experience with *Git* version control while getting real-time feedback on the quality of their code.
 
-Classy's front-end consists of a front-end JavaScript framework and supporting RESTful API called *Portal*. *Portal* helps instructors manage course administration by automating tasks, such as setting up assignments, grading, and grade management for instructors. Classy has another RESTful API to manage complex back-end GitHub and grading logic called **AutoTest**. *AutoTest* integrates with GitHub to create an interactive grading experience.
+Classy's front-end consists of a front-end JavaScript framework and supporting a REST-based API called *Portal*. *Portal* helps instructors manage course administration by automating tasks, such as setting up assignments, grading, and grade management for instructors. Classy has another REST-based API to manage complex back-end GitHub and grading logic called **AutoTest**. *AutoTest* integrates with GitHub to create an interactive grading experience.
 
 AutoTest's features include automated feedback to grade requests from students that they request on  `commit` comments on GitHub. Grade feedback is completely customizable and developed by an instructor to meet the requirements of their course. Feedback can be produced where a student code builds, fails to build, reaches a grade threshold, etc. and allows for additional reports to be included.
 
@@ -34,7 +34,7 @@ AutoTest's features include automated feedback to grade requests from students t
 - Distribute private repositories to teams of students
 - View/export grades in CSV format
 - Import/update Classlist information directly through API
-- Implement custom features using JavaScript MVC and RESTful APIs
+- Implement custom features using JavaScript MVC and REST-based APIs
 
 ## AutoTest
 
@@ -47,7 +47,7 @@ AutoTest's features include automated feedback to grade requests from students t
 
 ## GitHub and AutoTest Examples
 
-In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom built AutoGrade container. AutoTest runs the AutoGrade container each time a student pushes code to GitHub and marks the latest commit. The expected behaviour of AutoTest is demonstrated based on the student actions.
+In the following scenarios, an instructor has configured the `lab2` deliverable to be marked by a custom-built AutoGrade container. AutoTest runs the AutoGrade container each time a student pushes code to GitHub and marks the latest commit. The expected behaviour of AutoTest is demonstrated based on the student actions.
 
 ### Student Role Examples
 
@@ -55,7 +55,7 @@ In the following scenarios, an instructor has configured the `lab2` deliverable 
 
 <img src="../assets/commit-comment-feedback.png/">
 
-A student pushes code to a repository and requests feedback for the commit displayed in the view. The students requests the grade by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
+A student pushes code to a repository and requests feedback for the commit displayed in the view. Students request grading by commenting, `@autobot #deliverableName`. AutoBot begins to grade the assignment and gives the student a notification to wait for the grade result. Once the assignment is graded, the computed message programmed by the instructor in the Docker container is output in the commit SHA comment area.
 
 #### Feedback for an Assignment that Fails to Compile
 

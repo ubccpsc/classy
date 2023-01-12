@@ -32,11 +32,8 @@ We will do our best to merge new features as long as they make sense for `ubccps
 Main course forks:
 
 * [ubccpsc210/classy](https://github.com/ubccpsc210/classy)
-* [ubccpsc221/classy](https://github.com/ubccpsc221/classy)
 * [ubccpsc310/classy](https://github.com/ubccpsc310/classy)
-* [cpsc340/classy](https://github.com/CPSC340/classy)
 * [secapstone/classy](https://github.com/SECapstone/classy)
-* [MDS TBD](NOTSETYET)
 
 ## Developer Contribution Acceptance Criteria
 
@@ -51,7 +48,7 @@ CircleCI testing [can be setup](docs/cirleCI.md) on a fork to ensure that covera
 - [ ] Test coverage is over 90% with new features well-defined in test names
 - [ ] Code is in a feature branch (ie. `feature/my-new-feature`)
 - [ ] Code has been rebased to `ubccpsc/main`
-- [ ] A pull-request has been setup to `ubccpsc/main` from your feature branch
+- [ ] A pull-request has been created to `ubccpsc/main` from your feature branch
 - [ ] Any new feature has been tested on a working branch on your fork repository
 - [ ] Code passes all existing tests
 - [ ] Pull-request passes CircleCI tests
@@ -88,7 +85,7 @@ This only needs to happen once per fork, so if you already have a configured for
 
 ## Remote Setup of a Fork
 
-Technical staff will setup a fork of [ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is setup for your course by contacting your instructor. Your instructor will be able to request that a fork is setup for a course from technical staff.
+Technical staff will configure a fork of [ubccpsc/classy](https://github.com/ubccpsc/classy) for each course that uses Classy. If you do not have a fork for your course, please request that a fork is configured for your course by contacting your instructor. Your instructor will be able to request that a fork is configured for a course from technical staff.
 
 ## Modifying Classy on Your Fork
 

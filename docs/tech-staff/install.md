@@ -145,7 +145,7 @@ When certificates are being produced for the first time, configuration should al
      sudo certbot certonly -n --standalone --agree-tos -m sa-certs@cs.ubc.ca --no-eff-email -d $(hostname)
       ```
 
-4. Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deploy hook should have copied the certificate files to /opt/classy/ssl. If not, manually run (this only needs to be done once):
+4. Confirm that there are certificates in /etc/letsencrypt/live/$(hostname) (e.g. *.pem files). The deployment hook should have copied the certificate files to /opt/classy/ssl. If not, manually run (this only needs to be done once):
 
      ```bash
      sudo /etc/letsencrypt/renewal-hooks/deploy/copy-certs.sh

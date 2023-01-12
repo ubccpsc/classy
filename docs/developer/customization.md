@@ -2,7 +2,7 @@
 
 Out of the box, Classy's default behaviour should suit most courses; however, sometimes custom views and endpoints are necessary to support internal course operations.
 
-Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and a RESTful API backend application. Docker services and Nginx configuration can also be customized to provide new services on your Classy server that are accessible via HTTP (ie. https://cs999.students.cs.ubc.ca/my-new-docker-service).
+Classy consists of two TypeScript applications: AutoTest and Portal. Only Portal is customizable at this time. Portal consists of an MVC frontend and a REST-based API backend application. Docker services and Nginx configuration can also be customized to provide new services on your Classy server that are accessible via HTTP (ie. https://cs999.students.cs.ubc.ca/my-new-docker-service).
 
 The directory structure of a plugin:
 
@@ -33,7 +33,7 @@ myPlugin/
 
 ### Setup Remote Repository for New Plugin
 
-You are responsible for managing the new plugin code that you create. Be careful to namespace and develop your files to ensure that downstreaming changes from `ubccpsc/classy` is easy and effortless. You can assume that the same files in the `default` project will always continue exist.
+You are responsible for managing the new plugin code that you create. Be careful to namespace and develop your files to ensure that down streaming changes from `ubccpsc/classy` is easy and effortless. You can assume that the same files in the `default` project will always continue to exist.
 
 1. Create a new (empty) GitHub repository.
 2. Clone the repository onto your local filesystem: `git clone https://github.com/myUsername/myPlugin`
@@ -63,7 +63,7 @@ You may choose to remove the `nginx` and `docker` folder from the plugin project
 
 ### Run Classy with Plugin in Production
 
-These steps can be bypassed if your Classy plugin repository is public and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token to tech staff if your repository is private.
+These steps can be bypassed if your Classy plugin repository is public, and you have asked tech staff to implement your plugin after verifying that your plugin builds and runs successfully in your development environment. You alternatively may also provide an access token to tech staff if your repository is private.
 
 All prior essential Classy server configurations, installations, and operations are managed by tech staff. Contact tech staff to get Classy setup for the first time.
 
@@ -73,7 +73,7 @@ All prior essential Classy server configurations, installations, and operations 
 4. Run `./helper-scripts/bootstrap-plugin.sh` from root Classy directory to copy `docker-compose.override.yml` and `nginx.rconf` files into appropriate locations.
 5. Run `./opt/classy-scripts/fix-permissions`
 6. Run `docker compose build` from root Classy directory to build Dockerized production project.
-7. Run `docker compose up -d` to run Classy project in detatched mode in production.
+7. Run `docker compose up -d` to run Classy project in detached mode in production.
 
 ## Portal Customization
 
@@ -167,7 +167,7 @@ Never commit the .env to source control. Do not override .env file in the custom
 
 ### Implementing Docker-compose.override.yml Changes
 
-- [ ] Do not overrride the .env file location in the `docker-compose.override.yml` file, as it will break the default Classy build.
+- [ ] Do not override the .env file location in the `docker-compose.override.yml` file, as it will break the default Classy build.
 - [ ] Do not override the default services unless you know exactly what you are doing. Classy relies on the default configuration.
 - [ ] If adding services that require new .env variables, add them to the server via SSH (or ask tech-staff to do it).
 - [ ] Ensure that Docker-compose can build and run the Classy project locally.
@@ -223,11 +223,11 @@ If a docker-compose.override.yml file exists, it will be read on the `docker com
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/main/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
+The `nginx.rconf` has been modified to work with UBC operating requirements. Any customization requires that the [`nginx.rconf`](https://github.com/ubccpsctech/classy-plugin/blob/main/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
 
 ### Implementing Nginx.conf
 
-- [ ] Used the default nginx.rconf configuration as a basis for any customizations.
+- [ ] Used the default `nginx.rconf` configuration as a basis for any customizations.
 - [ ] Did NOT modify any of the SSL / Stapling rules without tech staff approval, which are required to ensure security.
 - [ ] Implemented your own changes.
 

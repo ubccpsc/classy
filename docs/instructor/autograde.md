@@ -69,7 +69,7 @@ This checklist ensures that you have implemented key technical and business logi
   - Git repository is publicly accessible to be cloned by Classy.
     OR
   - Git repository is privately accessible and a GitHub token has been given to technical staff to be added to the Classy environmental configuration file.
-- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to setup their AutoGrade containers.
+- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to configure their AutoGrade containers.
 
 **NOTE:** A Classy VM can only have a **ONE** GitHub clone token. All private Dockerfile repositories must ensure that this token authorizes access to all relevant repositories.
 
@@ -195,7 +195,7 @@ ie. `https://cs999.students.cs.ubc.ca/portal/resource/08dcb3a38c6aa3ccc556385b87
 
 The URL is a protected route accessible by authorized users. A student may only access files from the `student` folder, while admins may access all folders, etc.
 
-Output files that are created by your container should be documented in the `attachments` attribute in the `report.json` file, but it is optional to document the persistant files. The `attachments` attribute allows one to also document the user type that has access to files. If there is a need to do data analysis, these fields may be beneficial, as one does not have to look for files manually in the filesystem where persistant data is archived after the school semester ends.
+Output files that are created by your container should be documented in the `attachments` attribute in the `report.json` file, but it is optional to document the persistent files. The `attachments` attribute allows one to also document the user type that has access to files. If there is a need to do data analysis, these fields may be beneficial, as one does not have to look for files manually in the filesystem where persistent data is archived after the school semester ends.
 
 AutoTest provides input for your AutoGrade container, but it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A `stdio.txt` file will be produced automatically by AutoTest. If log information is output to the console in your container, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the `/output/admin` or `/output/staff` directories with a user role perspective in mind.
 
@@ -213,6 +213,6 @@ AutoTest needs access to the Dockerfile, with any additional supporting files, t
 
 <img src="../assets/dockerfile-classy-admin-portal.png"/>
 
-*Specify a sub-directory location of your Dockerfile with the following # syntax in 'GitHub URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
+*Specify a subdirectory location of your Dockerfile with the following # syntax in 'GitHub URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
 
 <img src="../assets/subdirectory-dockerfile-classy.png"/>

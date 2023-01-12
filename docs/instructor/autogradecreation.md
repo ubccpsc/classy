@@ -42,10 +42,10 @@ This checklist ensures that you have implemented key technical and business logi
 Dockerfile GitHub Repository
 
 - [ ] Dockerfile is named 'Dockerfile' by default or customized.
-- [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify sub-directories in Classy clone address is understood.
+- [ ] Dockerfile is located in the root path of the filesystem of the Git repository or syntax to specify subdirectories in Classy clone address is understood.
 - [ ] Choose one:
     Git repository is publicly accessible to be cloned by Classy
     Git repository is privately accessible and a GitHub token has been given to technical staff to be added to the Classy environmental configuration file.
-- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to setup their AutoGrade containers**.
+- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to configure their AutoGrade containers**.
 
     ** A Classy instance can only have a single GitHub clone token that clones AutoGrade repositories that contain Dockerfiles. Hence, this token must be shared by instructors of a course that offers more than one section within a single Classy instance.

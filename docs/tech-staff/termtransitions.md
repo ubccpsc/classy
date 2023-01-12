@@ -25,7 +25,7 @@ Two scripts can perform the database dump and grading run archive operations:
 - `/opt/classy-scripts/archive-classy-runs.sh`
 - `/opt/classy-scripts/backup-classy-db.sh`
 
-A CRON job is configured to automatically back-up the database and grading run data. After the end-date of the semester transition, it is no longer necessary to retain the back-ups created by the CRON jobs. Hence, delete all of the database and grading run back-ups *prior* to the last back-up and archive of the database.
+A CRON job is configured to automatically back up the database and grading run data. After the end-date of the semester transition, it is no longer necessary to retain the back-ups created by the CRON jobs. Hence, delete all the database and grading run back-ups *prior* to the last back-up and archive of the database.
 
 ## VM Term Transition Checklist
 
@@ -47,7 +47,7 @@ A CRON job is configured to automatically back-up the database and grading run d
 
 ## GitHub Term Transition Checklist
 
-- [ ] If another course is being offered next term, setup a new GitHub organization for the term
+- [ ] If another course is being offered next term, configure a new GitHub organization for the term
 - [ ] A new OAuth application has been created under the new GitHub organization and integrated in the `/opt/classy/.env` file
   - Instructions: [Setup GitHub OAuth](/docs/tech-staff/githubsetup.md#setup-github-oauth)
 - [ ] An instructor may request additional GitHub configuration steps, such as adding TAs as organization owners
