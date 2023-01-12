@@ -18,11 +18,11 @@ The software dependencies that are currently used in production and recommended 
 
 You will need to ensure the required environment variables, which you can see in `packages/common/Config.ts`, are set. This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
 
-The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/master/.env.sample).
+The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/main/.env.sample).
 
 ## GitHub Setup
 
-Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. GitHub users on the `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
+Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. Users on the GitHub `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
 
 ## Install/Build
 

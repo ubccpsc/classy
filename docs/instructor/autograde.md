@@ -49,9 +49,9 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] `/output/staff` sub-directory contains:
   - `report.json` grading file at the end of a successful grading run that exits with a success `0` exit code.
   - additional files that TAs and instructors need access to after the grading run.
-- [ ] The `report.json` file is valid JSON that follows the [Report Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L72-L115).
+- [ ] The `report.json` file is valid JSON that follows the [Report Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L72-L115).
 - [ ] References to attachments are recorded in the `attachments` property of the `report.json` following the [Attachment Schema](https://github.com/ubccpsc/classy/blob/20bbcc6bc3b3adde0b84a70803605e866ba1e10f/packages/common/types/ContainerTypes.ts#L123-131).
-- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, (non-0 exit code) Classy will provide this [default report.json file](https://github.com/ubccpsc/classy/blob/master/packages/autotest/src/autotest/GradingJob.ts#L123-L131).
+- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, (non-0 exit code) Classy will provide this [default report.json file](https://github.com/ubccpsc/classy/blob/main/packages/autotest/src/autotest/GradingJob.ts#L123-L131).
 - [ ] You container logic assumes that any data that is NOT output to the appropriate `/output` path WILL BE LOST FOREVER after a grading run finishes.
 
 ### [Dockerfile](#dockerfile-explained)
@@ -183,9 +183,9 @@ AutoTest also inputs two environment variables that you can use to customize or 
   - **ASSIGNMENT**: string = The name of the deliverable
   - **EXEC_ID**: string = The Docker container execution ID (long random SHA)
   - **INPUT**: string = JSON stringified input data
-    - **ContainerInput** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L14-L21)
-      - **CommitTarget** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L36-L59)
-      - **AutoTestConfigTransport** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/PortalTypes.ts#L183-L230)
+    - **ContainerInput** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L14-L21)
+      - **CommitTarget** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L36-L59)
+      - **AutoTestConfigTransport** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/PortalTypes.ts#L183-L230)
 
 ### Container Output Details
 

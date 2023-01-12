@@ -79,7 +79,7 @@ All prior essential Classy server configurations, installations, and operations 
 
 The application folder MUST contain a `backend` and `frontend` directory with the included necessary customized files. It is not possible to delete these files, as the application requires the files to be plugged into the application at runtime. You can, however, add additional TypeScript and HTML files to support your customization.
 
-It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/master/packages/portal/backend/src/controllers/CourseController.ts) file.
+It is advisable that one does not override or extend functionality until one has at least learned and used Classy's default logic. Documentation for default Course Controller methods exist in the [https://github.com/ubccpsc/classy/blob/main/packages/portal/backend/src/controllers/CourseController.ts](https://github.com/ubccpsc/classy/blob/main/packages/portal/backend/src/controllers/CourseController.ts) file.
 
 ### Build Information
 
@@ -157,7 +157,7 @@ It is up to you to expand and build upon the default templates, while naming new
 
 ## Docker Containers / Supporting Services
 
-See Classy's default docker-compose.yml configuration: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml).
+See Classy's default docker-compose.yml configuration: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/main/docker-compose.yml).
 
 Docker-compose will look in the `docker-compose.override.yml` file to override the default `docker-compose.yml` configuration. Docker-compose uses the `classy/.env` file to load stored environmental variable dependencies, which are needed during the Classy build process.
 
@@ -176,7 +176,7 @@ Never commit the .env to source control. Do not override .env file in the custom
 
 ### Defaults
 
-The `classy/.env` file contains environmental variable dependencies used to build the Docker containers. References to the environmental variables can be seen in the [docker-compose.yml](https://github.com/ubccpsc/classy/blob/master/docker-compose.yml) file.
+The `classy/.env` file contains environmental variable dependencies used to build the Docker containers. References to the environmental variables can be seen in the [docker-compose.yml](https://github.com/ubccpsc/classy/blob/main/docker-compose.yml) file.
 
 SSH access must be requested to modify the .env file manually. Alternatively, these variables can be provided to technical staff to ensure that any docker-compose.override.yml file can utilize environmental variables. The .env file path should not be overridden in the docker-compose.override.yml file, as it would not contain the default Classy environmental variable configurations.
 
@@ -223,7 +223,7 @@ If a docker-compose.override.yml file exists, it will be read on the `docker com
 ```
 ## Nginx / Services Routing
 
-The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/master/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
+The nginx.rconf has been modified to work with UBC operating requirements. Any customization requires that the [nginx.rconf](https://github.com/ubccpsctech/classy-plugin/blob/main/nginx/nginx.rconf) is used as the basis for any customizations to the nginx.conf file in your class-plugin project.
 
 ### Implementing Nginx.conf
 
