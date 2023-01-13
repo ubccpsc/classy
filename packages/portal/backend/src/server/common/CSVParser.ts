@@ -108,7 +108,8 @@ export class CSVParser {
                 if (typeof row.CSID !== "undefined" &&
                     typeof row.GRADE !== "undefined") {
 
-                    let comment = "CSV Upload";
+                    // let comment = "CSV Upload";
+                    let comment = ""; // only include a comment if one is given
                     if (typeof row.COMMENT !== "undefined" &&
                         typeof row.COMMENT === "string" &&
                         row.COMMENT.length > 1) {

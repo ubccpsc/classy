@@ -140,7 +140,7 @@ export class CSVPrairieLearnParser {
                                     personId: person.id,
                                     delivId: deliv.id,
                                     score: score,
-                                    comment: "PrairieLearn Upload",
+                                    comment: "", // no comment by default
                                     timestamp: Date.now(),
                                     urlName: "CSV Upload",
                                     URL: null, // set to null so GradesController can restore URL if needed
