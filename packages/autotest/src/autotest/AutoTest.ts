@@ -135,7 +135,7 @@ export abstract class AutoTest implements IAutoTest {
         const config = Config.getInstance();
         let numJobs = this.DEFAULT_NUM_JOBS;
         if (config.hasProp(ConfigKey.autotestJobs) === true) {
-            numJobs = Number.parseInt(config.getProp(ConfigKey.autotestJobs), 10);
+            numJobs = Util.toInteger(config.getProp(ConfigKey.autotestJobs), this.DEFAULT_NUM_JOBS);
         }
         this.numJobs = numJobs;
         Log.info("AutoTest::<init> - starting AutoTest; numJobs: " + this.numJobs);
