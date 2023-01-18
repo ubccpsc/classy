@@ -49,6 +49,8 @@ export class GradingJob {
 
     public async prepare(): Promise<void> {
         try {
+            Log.info("GradingJob::prepare() - start: " + this.id);
+
             await fs.emptyDir(this.path);
             await Promise.all([
                 fs.mkdirp(this.path + "/staff"),
@@ -66,7 +68,7 @@ export class GradingJob {
             await new Promise<void>((resolve, reject) => {
                 exec(`chown -R ${user} ${this.path}`, (error) => {
                     if (error) {
-                        Log.error("Execute::prepare() - Failed to change owner. " + error);
+                        Log.error("GradingJob::prepare() - Failed to change owner. " + error);
                         reject(error);
                     }
                     resolve();
@@ -77,9 +79,11 @@ export class GradingJob {
             Log.error(msg);
             throw Error(msg);
         }
+        Log.info("GradingJob::prepare() - done: " + this.id);
     }
 
     public async run(docker: Docker): Promise<AutoTestResult> {
+        Log.info("GradingJob::run() - start: " + this.id);
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
 
         const container = await docker.createContainer({
@@ -104,11 +108,15 @@ export class GradingJob {
         });
         const maxExecTime = this.input.containerConfig.maxExecTime;
 
+        Log.trace("GradingJob::run() - after container: " + this.id);
+
         const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
         container.modem.demuxStream(stream, stdio, stdio);
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
+
+        Log.trace("GradingJob::run() - after run: " + this.id);
 
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
@@ -129,9 +137,10 @@ export class GradingJob {
             }
         }
 
-        // cleanup
+        // NOTE: this might not happen if docker was restarted while the job was running
         await fs.remove(this.path + "/assn");
 
+        Log.info("GradingJob::run() - done: " + this.id);
         return this.record;
     }
 
