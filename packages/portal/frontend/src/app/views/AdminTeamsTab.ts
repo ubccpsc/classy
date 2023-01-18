@@ -56,6 +56,10 @@ export class AdminTeamsTab extends AdminPage {
             }
         }
 
+        if (typeof opts.labSection === "undefined") {
+            opts.labSection = "-All-";
+        }
+
         const dStr = ["-None-"];
         for (const deliv of provisionDelivs) {
             dStr.push(deliv.id);
@@ -76,10 +80,10 @@ export class AdminTeamsTab extends AdminPage {
 
             if (statusValue === "formed") {
                 Log.info("AdminTeamsTab::init(..)::updateTeamTable() - rendering formed");
-                that.renderTeams(that.teams, delivValue); // if cached data is ok
+                that.renderTeams(that.teams, delivValue, opts.labSection); // if cached data is ok
             } else {
                 Log.info("AdminTeamsTab::init(..)::updateTeamTable() - rendering unformed");
-                that.renderIndividuals(that.teams, that.students, delivValue); // if cached data is ok
+                that.renderIndividuals(that.teams, that.students, delivValue, opts.labSection); // if cached data is ok
             }
         };
 
@@ -96,17 +100,27 @@ export class AdminTeamsTab extends AdminPage {
             updateTeamTable();
         };
 
+        const labSelector = document.querySelector("#teamsListLabSelect") as HTMLSelectElement;
+        labSelector.onchange = function (evt) {
+            Log.info("AdminTeamsTab::init(..) - lab changed");
+            evt.stopPropagation(); // prevents list item expansion
+
+            const val = labSelector.value.valueOf();
+            opts.labSection = val;
+            updateTeamTable();
+        };
+
         updateTeamTable();
 
         UI.hideModal();
     }
 
-    private render(teams: TeamTransport[], delivId: string): void {
-        this.renderTeams(teams, delivId);
-    }
+    // private render(teams: TeamTransport[], delivId: string): void {
+    //     this.renderTeams(teams, delivId);
+    // }
 
-    private renderTeams(teams: TeamTransport[], delivId: string): void {
-        Log.trace("AdminTeamsTab::renderTeams(..) - start");
+    private renderTeams(teams: TeamTransport[], delivId: string, labSection: string): void {
+        Log.trace("AdminTeamsTab::renderTeams(.., " + delivId + ", " + labSection + ") - start");
         const headers: TableHeader[] = [
             {
                 id: "num",
@@ -166,7 +180,7 @@ export class AdminTeamsTab extends AdminPage {
             }
         ];
 
-        // let delivOptions = ["-None-"];
+        let labSectionsOptions = ["-All-", "-Unspecified-"];
         const st = new SortableTable(headers, "#teamsListTable");
         let listContainsStudents = false;
 
@@ -220,14 +234,28 @@ export class AdminTeamsTab extends AdminPage {
                 {value: p3, html: p3}
             ];
 
+            if (labSectionsOptions.indexOf(labs) < 0 && labs !== "" && labs !== null) {
+                labSectionsOptions.push(labs);
+            }
+
             if (delivId === team.delivId && team.people.length > 0) {
                 count++;
-                st.addRow(row);
+
+                if (labSection === labs ||
+                    labSection === "-All-" ||
+                    (labSection === "-Unspecified-" &&
+                        (labs === "" || labs === null))) {
+                    st.addRow(row);
+                }
+                // st.addRow(row);
                 listContainsStudents = true;
             }
         }
 
         st.generate();
+
+        labSectionsOptions = labSectionsOptions.sort();
+        UI.setDropdownOptions("teamsListLabSelect", labSectionsOptions, labSection); // TODO: last should be labSection
 
         // if (st.numRows() > 0) {
         //     UI.showSection("teamsListTable");
@@ -290,8 +318,8 @@ export class AdminTeamsTab extends AdminPage {
         return render;
     }
 
-    private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string): void {
-        Log.trace("AdminTeamsTab::renderIndividuals(..) - start");
+    private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string, labSection: string): void {
+        Log.trace("AdminTeamsTab::renderIndividuals(.., " + delivId + ", " + labSection + ") - start");
 
         const headers: TableHeader[] = [
             {
@@ -320,7 +348,7 @@ export class AdminTeamsTab extends AdminPage {
             }
         ];
 
-        // const st = new SortableTable(headers, "#teamsIndividualListTable");
+        let labSectionsOptions = ["-All-", "-Unspecified-"];
         const st = new SortableTable(headers, "#teamsListTable");
 
         const studentsOnTeams: string[] = [];
@@ -339,6 +367,11 @@ export class AdminTeamsTab extends AdminPage {
             if (studentsOnTeams.indexOf(student.id) < 0) {
 
                 const lab = student.labId ?? "";
+
+                if (labSectionsOptions.indexOf(lab) < 0 && lab !== "" && lab !== null) {
+                    labSectionsOptions.push(lab);
+                }
+
                 const studentHTML = student.firstName + " " + student.lastName +
                     " <a class='selectable' href='" + student.userUrl + "'>" +
                     student.githubId + "</a> (" + student.firstName + " " +
@@ -350,11 +383,21 @@ export class AdminTeamsTab extends AdminPage {
                     {value: student.id, html: studentHTML}
                 ];
                 if (delivId !== "-None-") {
-                    st.addRow(row);
+
+                    if (labSection === lab ||
+                        labSection === "-All-" ||
+                        (labSection === "-Unspecified-" &&
+                            (lab === "" || lab === null))) {
+                        st.addRow(row);
+                    }
+                    // st.addRow(row);
                     listContainsStudents = true;
                 }
             }
         }
+
+        labSectionsOptions = labSectionsOptions.sort();
+        UI.setDropdownOptions("teamsListLabSelect", labSectionsOptions, labSection);
 
         st.generate();
 

@@ -108,8 +108,10 @@ export class AdminStudentsTab {
             if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== "" && student.labId !== null) {
                 labSectionsOptions.push(student.labId);
             }
-            if (labSection === student.labId || labSection === "-All-" ||
-                (labSection === "-Unspecified-" && student.labId === "")) {
+            if (labSection === student.labId ||
+                labSection === "-All-" ||
+                (labSection === "-Unspecified-" &&
+                    (student.labId === "" || student.labId === null))) {
                 st.addRow(row);
             }
         }
@@ -122,7 +124,7 @@ export class AdminStudentsTab {
         const labSelector = document.querySelector("#studentsListSelect") as HTMLSelectElement;
         const that = this;
         labSelector.onchange = function (evt) {
-            Log.info("AdminStudentsTab::render(..) - upload pressed");
+            Log.info("AdminStudentsTab::render(..) - lab changed");
             evt.stopPropagation(); // prevents list item expansion
 
             const val = labSelector.value.valueOf();

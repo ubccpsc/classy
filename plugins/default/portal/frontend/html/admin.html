@@ -59,7 +59,7 @@
         <ons-page id="AdminStudents">
             <ons-list id="AdminStudentsList">
                 <div style="text-align:center; padding: 1em;">
-                    Select Lab (optional):
+                    Lab:
                     <select id="studentsListSelect" style="margin-left: 1em;">
                         <option>-All-</option>
                     </select></div>
@@ -79,15 +79,21 @@
             <ons-list id="AdminStudentsList">
                 <div style="display:flex; flex-direction: row; justify-content: center;">
                     <div style="text-align:center; padding: 1em;  display: flex;">
-                        Select Deliverable:
+                        Deliv:
                         <select id="teamsListSelect" style="margin-left: 1em;">
                             <option value="''">-None-</option>
                         </select></div>
                     <div style="text-align:center; padding: 1em; display: flex;">
-                        Team status:
+                        Status:
                         <select id="teamsListStatusSelect" style="margin-left: 1em;">
                             <option value="formed">Formed</option>
                             <option value="unformed">Unformed</option>
+                        </select></div>
+                    <div style="text-align:center; padding: 1em; display: flex;">
+                        Lab:
+                        <select id="teamsListLabSelect" style="margin-left: 1em;">
+                            <option>-All-</option>
+                            <option>-Unspecified-</option>
                         </select></div>
                 </div>
                 <ons-list-header>Team Results</ons-list-header>
