@@ -1,12 +1,6 @@
 import Log from "@common/Log";
 
-import {
-    CourseTransport,
-    RepositoryTransport,
-    StudentTransport,
-    TeamTransport,
-    TeamTransportPayload
-} from "@common/types/PortalTypes";
+import {CourseTransport, RepositoryTransport, StudentTransport, TeamTransport, TeamTransportPayload} from "@common/types/PortalTypes";
 
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
@@ -102,8 +96,7 @@ export class AdminTeamsTab extends AdminPage {
             updateTeamTable();
         };
 
-        this.renderTeams(this.teams, opts.delivId);
-        this.renderIndividuals(this.teams, this.students, opts.delivId);
+        updateTeamTable();
 
         UI.hideModal();
     }
