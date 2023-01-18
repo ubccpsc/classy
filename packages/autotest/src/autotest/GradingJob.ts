@@ -106,6 +106,10 @@ export class GradingJob {
                 NetworkMode: "grading_net"
             }
         });
+        Log.trace("GradingJob::run() - created: " + this.id);
+        const JOB_CORES = 1000000000; // 1 core
+        await container.update({NanoCpus: JOB_CORES});  // restrict each job to JOB_CORES cores (for more reliable scaling)
+        Log.trace("GradingJob::run() - updated: " + this.id);
         const maxExecTime = this.input.containerConfig.maxExecTime;
 
         Log.trace("GradingJob::run() - after container: " + this.id);
