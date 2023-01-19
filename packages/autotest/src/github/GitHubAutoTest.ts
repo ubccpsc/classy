@@ -439,10 +439,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // feedback given before; same as next case but logging is different
             // processComment will take of whether this is already in progress, etc.
             await this.processComment(target, res);
-            // } else if (target.flags.includes("#check")) {
-            // NOTE: this was not the real code, I was trying to figure out where this should be
-            //     Log.target("GitHubAutoTest::handleCommentStudent(..) - handling #check");
-            //     await this.handleCheck(target, res);
         } else {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " +
                 target.personId + "; SHA: " + Util.shaHuman(target.commitURL));
@@ -458,12 +454,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         if (typeof isStaff !== "undefined" && isStaff !== null &&
             (isStaff.isAdmin === true || isStaff.isStaff === true)) {
             Log.info("GitHubAutoTest::shouldCharge(..) - false (staff || admin): " + info.personId);
-            return false;
-        }
-
-        // always false for #check
-        if (typeof info.flags !== "undefined" && info.flags !== null && info.flags.indexOf("#check") >= 0) {
-            Log.info("GitHubAutoTest::shouldCharge(..) - false (#check)");
             return false;
         }
 
@@ -684,7 +674,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
-        // can hard-code standard because #check requests will not reach here
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");
         const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
         let testDelay = 0;
