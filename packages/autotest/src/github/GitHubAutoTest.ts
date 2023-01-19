@@ -373,7 +373,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const containerConfig = await this.classPortal.getContainerDetails(info.delivId);
         if (containerConfig !== null) {
-            const input: ContainerInput = {target: info, containerConfig};
+            const input: ContainerInput = {target: info, containerConfig: containerConfig};
 
             // not yet processed
             const onQueue = this.isOnQueue(input);
