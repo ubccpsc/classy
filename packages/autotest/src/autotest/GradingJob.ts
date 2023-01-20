@@ -125,9 +125,25 @@ export class GradingJob {
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
 
-        if (exitCode === -1) {
-            out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
+        // handle FAIL before TIMEOUT
+        if (exitCode === -10) {
+            if (typeof out.report.feedback === "undefined" || out.report.feedback === null || out.report.feedback === "") {
+                out.report.feedback = "Container failed for `" + this.input.target.delivId + "`.";
+            } else {
+                const msg = "Container failed for `" + this.input.target.delivId + ". " + out.report.feedback;
+                out.report.feedback = msg;
+            }
+            out.state = ContainerState.FAIL;
+            out.postbackOnComplete = true; // always send fail feedback
+        } else if (exitCode === -1) {
+            if (typeof out.report.feedback === "undefined" || out.report.feedback === null || out.report.feedback === "") {
+                out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
+            } else {
+                const msg = "Container did not complete for `" + this.input.target.delivId + ". " + out.report.feedback;
+                out.report.feedback = msg;
+            }
             out.state = ContainerState.TIMEOUT;
+            out.postbackOnComplete = true; // always send timeout feedback
         } else {
             try {
                 const shouldPostback: boolean = exitCode !== 0;
