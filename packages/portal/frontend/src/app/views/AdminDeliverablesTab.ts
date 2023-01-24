@@ -552,7 +552,7 @@ export class AdminDeliverablesTab extends AdminPage {
             const url = remote + "/portal/at/docker/image";
             const options: any = AdminView.getOptions();
             options.method = "POST";
-            options.timeout = 1000 * 60 * 10; // 10 minutes (unknown if this works)
+            options.keepalive = true; // timeout not directly supported
             options.body = JSON.stringify({remote: context, tag: tag, file: file});
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
             Log.trace("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
