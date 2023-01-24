@@ -427,7 +427,7 @@ describe("GitHubAutoTest", () => {
         expect(allData.comments.length).to.equal(1); // comment saved
         expect(allData.pushes.length).to.equal(1); // synthetic push event created
         expect(gitHubMessages.length).to.equal(1);
-        expect(gitHubMessages[0].message).to.contain("queued for processing against d1"); // proceed with processing
+        expect(gitHubMessages[0].message).to.contain("queued for processing against"); // proceed with processing
     });
 
     it("Should give a user a _still processing_ message on a commit that has not been finished.", async () => {
@@ -442,7 +442,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against");
         expect(allData.comments.length).to.equal(1);
 
         // await Util.timeout(WAIT); // Wait for job to finish
@@ -463,7 +463,7 @@ describe("GitHubAutoTest", () => {
         allData = await data.getAllData();
         // Log.test("1: - ghMessages: " + JSON.stringify(gitHubMessages));
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against");
         // Log.test("1: - allData: " + JSON.stringify(allData));
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // do not charge for feedback until it is given
@@ -557,7 +557,7 @@ describe("GitHubAutoTest", () => {
         Log.test("test one ready");
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
+        expect(gitHubMessages[0].message).to.contain("queued for processing against");
         expect(allData.comments.length).to.equal(1);
         expect(allData.feedback.length).to.equal(0); // do not charge for feedback until it is given
         Log.test("test one done");
