@@ -481,44 +481,6 @@ describe("GitHubAutoTest", () => {
         Log.test("Test complete");
     }).timeout(WAIT * 10);
 
-    // #check no longer supported
-    // it("Should give a user a response for on a commit once it finishes if they have previously requested a check on it.", async () => {
-    //     await at.handlePushEvent(TestData.pushEventA);
-    //     Log.test("Setup push complete");
-    //     let allData = await data.getAllData();
-    //     expect(gitHubMessages.length).to.equal(0, "setup messages"); // should not be any feedback yet
-    //     expect(allData.comments.length).to.equal(0, "setup comments");
-    //     expect(allData.pushes.length).to.equal(1, "setup pushes");
-    //     Log.test("Setup validated");
-    //
-    //     // do not wait; want to catch this push in flight
-    //
-    //     // TEST: send a comment (this is the previous test)
-    //     const req = Util.clone(TestData.commentRecordUserA) as CommitTarget;
-    //     req.flags = ["#check"];
-    //     req.kind = "check";
-    //     await at.handleCommentEvent(req);
-    //     Log.test("Test comment complete");
-    //
-    //     allData = await data.getAllData();
-    //     expect(gitHubMessages.length).to.equal(1, "1 messages");
-    //     expect(gitHubMessages[0].message).to.contain("queued for processing against d1");
-    //     expect(allData.comments.length).to.equal(1, "1 comment");
-    //     expect(allData.feedback.length).to.equal(0, "0 feedback"); // do not charge for feedback until it is given
-    //     Log.test("Round 1 complete");
-    //
-    //     await Util.timeout(WAIT); // Wait for job to finish
-    //
-    //     allData = await data.getAllData();
-    //     // Log.trace(JSON.stringify(gitHubMessages));
-    //     expect(gitHubMessages.length).to.equal(2, "2 messages");
-    //     expect(gitHubMessages[gitHubMessages.length - 1].message).to.contain("execution complete");
-    //     expect(allData.comments.length).to.equal(1, "1 comment");
-    //     expect(allData.feedback.length).to.equal(1, "1 feedback");
-    //     // NOTE: should #check feedback charge? it does, but I do not know if this is right.
-    //     Log.test("Test complete");
-    // }).timeout(WAIT * 10);
-
     it("Should give a user a response for free for on a commit once it finishes if postback is true.", async () => {
         await at.handlePushEvent(TestData.pushEventPostback);
         let allData = await data.getAllData();
