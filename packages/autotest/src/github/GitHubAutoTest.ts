@@ -566,8 +566,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const delivId = data.input.target.delivId;
 
             const standardFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "standard");
-            const checkFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "check");
-            const feedbackRequested = (standardFeedbackRequested !== null || checkFeedbackRequested !== null);
+            // const checkFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "check");
+            const feedbackRequested = (standardFeedbackRequested !== null); // || checkFeedbackRequested !== null);
 
             const personId = data.input.target.personId;
             const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
@@ -610,9 +610,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                         target.timestamp, data.commitURL, kind);
                     return;
                 };
-                if (checkFeedbackRequested !== null) {
-                    await giveFeedback(checkFeedbackRequested, "check");
-                }
+                // if (checkFeedbackRequested !== null) {
+                //     await giveFeedback(checkFeedbackRequested, "check");
+                // }
                 if (standardFeedbackRequested !== null) {
                     await giveFeedback(standardFeedbackRequested, "standard");
                 }

@@ -274,21 +274,21 @@ export class ClassPortal implements IClassPortal {
 
         let feedback: string = "";
         try {
-            if (res.input.target.kind === "check") {
-                let state = "";
-                if (res.output.state === "SUCCESS" && typeof res.output.report.result !== "undefined") {
-                    state = res.output.report.result;
-                } else {
-                    state = res.output.state;
-                }
-                feedback = `AutoTest status for commit: **_${state}_**`;
-                Log.info("ClassPortal::formatFeedback(..) - check; repo: " +
-                    res.repoId + "; SHA: " + Util.shaHuman(res.commitSHA) + "; status: " + state);
-            } else {
+            // if (res.input.target.kind === "check") {
+            //     let state = "";
+            //     if (res.output.state === "SUCCESS" && typeof res.output.report.result !== "undefined") {
+            //         state = res.output.report.result;
+            //     } else {
+            //         state = res.output.state;
+            //     }
+            //     feedback = `AutoTest status for commit: **_${state}_**`;
+            //     Log.info("ClassPortal::formatFeedback(..) - check; repo: " +
+            //         res.repoId + "; SHA: " + Util.shaHuman(res.commitSHA) + "; status: " + state);
+            // } else {
                 // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
                 const gradeRecord = res.output.report;
                 feedback = gradeRecord.feedback;
-            }
+            // }
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
             return null;
