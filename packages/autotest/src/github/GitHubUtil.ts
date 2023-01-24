@@ -148,14 +148,9 @@ export class GitHubUtil {
             if (authLevel.isStaff === true || authLevel.isAdmin === true) {
                 adminRequest = true;
             }
-
-            let kind = "standard"; // if #check, set that here
-            if (flags.indexOf("#check") >= 0) {
-                kind = "check";
-            }
-
             Log.trace("GitHubUtil::processComment(..) - 4");
 
+            const kind = "standard";
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
