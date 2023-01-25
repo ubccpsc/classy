@@ -139,7 +139,7 @@ export class GradingJob {
             if (typeof out.report.feedback === "undefined" || out.report.feedback === null || out.report.feedback === "") {
                 out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
             } else {
-                const msg = "Container did not complete for `" + this.input.target.delivId + ". " + out.report.feedback;
+                const msg = "Container did not complete for `" + this.input.target.delivId + "`. " + out.report.feedback;
                 out.report.feedback = msg;
             }
             out.state = ContainerState.TIMEOUT;
