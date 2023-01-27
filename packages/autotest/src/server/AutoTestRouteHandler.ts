@@ -250,6 +250,7 @@ export default class AutoTestRouteHandler {
                 throw new Error("file parameter missing");
             }
 
+            const start = Date.now();
             const handler = (stream: http.IncomingMessage) => {
                 let heartbeat: NodeJS.Timer = null;
                 stream.on("data", (chunk: any) => {
@@ -259,7 +260,8 @@ export default class AutoTestRouteHandler {
                     // start a new timer after every chunk to keep stream open
                     heartbeat = setInterval(function () {
                         Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
-                        stream.push('{"stream":"Working"}\n'); // send a heartbeat packet
+                        const dur = ((Date.now() - start) / 1000).toFixed(0);
+                        stream.push('{"stream":"Working (' + dur + ' seconds elapsed)\n"}\n'); // send a heartbeat packet
                     }, 1000); // time between heartbeats
 
                 });
