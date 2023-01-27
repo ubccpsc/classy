@@ -258,8 +258,9 @@ export default class AutoTestRouteHandler {
                     clearInterval(heartbeat); // if a timer exists, cancel it
                     // start a new timer after every chunk to keep stream open
                     heartbeat = setInterval(function () {
-                        stream.push(".\n"); // send a heartbeat packet
-                    }, 5000); // time between heartbeats
+                        Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
+                        stream.push('{"stream":"Working"}\n'); // send a heartbeat packet
+                    }, 1000); // time between heartbeats
 
                 });
                 stream.on("end", (chunk: any) => {

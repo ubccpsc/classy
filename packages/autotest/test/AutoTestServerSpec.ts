@@ -100,7 +100,7 @@ describe("AutoTest AutoTestServer", function () {
         // valid opts
         const opts = {
             remote: "https://github.com/minidocks/base.git",
-            tag: "tagname",
+            tag: "autotestserverspec",
             file: "Dockerfile"
         };
 
