@@ -250,16 +250,26 @@ export default class AutoTestRouteHandler {
                 throw new Error("file parameter missing");
             }
 
-            const handler = (stream: any) => {
+            const handler = (stream: http.IncomingMessage) => {
+                let heartbeat: NodeJS.Timer = null;
                 stream.on("data", (chunk: any) => {
                     Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+
+                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    // start a new timer after every chunk to keep stream open
+                    heartbeat = setInterval(function () {
+                        stream.push(".\n"); // send a heartbeat packet
+                    }, 5000); // time between heartbeats
+
                 });
                 stream.on("end", (chunk: any) => {
-                    Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
+                    Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
+                    clearInterval(heartbeat); // if a timer exists, cancel it
                     return next();
                 });
                 stream.on("error", (chunk: any) => {
                     Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
+                    clearInterval(heartbeat); // if a timer exists, cancel it
                     return next();
                 });
                 stream.pipe(res);
@@ -287,10 +297,11 @@ export default class AutoTestRouteHandler {
                 method: "POST"
             };
 
-            Log.info("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
+            Log.info("AutoTestRouteHandler::postDockerImage(..) - building tag: " + tag);
+            Log.trace("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
-            Log.info("AutoTestRouteHandler::postDockerImage(..) - request made");
+            Log.trace("AutoTestRouteHandler::postDockerImage(..) - request made");
 
             // write something to the response to keep it alive until the stream is emitting
             res.write(""); // NOTE: this is required, if odd
