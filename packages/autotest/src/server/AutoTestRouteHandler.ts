@@ -261,8 +261,8 @@ export default class AutoTestRouteHandler {
                     heartbeat = setInterval(function () {
                         Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
                         const dur = ((Date.now() - start) / 1000).toFixed(0);
-                        stream.push('{"stream":"Working (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
-                    }, 1000); // time between heartbeats
+                        stream.push('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
+                    }, 5000); // time between heartbeats
 
                 });
                 stream.on("end", (chunk: any) => {
