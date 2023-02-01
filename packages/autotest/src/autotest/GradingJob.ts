@@ -3,8 +3,9 @@ import * as Docker from "dockerode";
 import * as fs from "fs-extra";
 
 import Config, {ConfigKey} from "@common/Config";
-import {GitRepository} from "@common/commands/GitRepository";
 import Log from "@common/Log";
+import Util from "@common/Util";
+import {GitRepository} from "@common/commands/GitRepository";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerState} from "@common/types/ContainerTypes";
 
@@ -120,10 +121,17 @@ export class GradingJob {
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
 
-        Log.trace("GradingJob::run() - after run: " + this.id);
+        Log.trace("GradingJob::run() - after run: " + this.id + "; exit code: " + exitCode);
 
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
+
+        if (exitCode < 0) {
+            // start tracking what is coming out of the container better
+            Log.warn("GradingJob::run() - exitCode: " + exitCode +
+                "; repo: " + this.input.target.repoId + "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
+                "; state: " + out.state + "; result: " + out.report.result + "; feedback: " + out.report.feedback);
+        }
 
         // handle FAIL before TIMEOUT
         if (exitCode === -10) {
@@ -151,7 +159,7 @@ export class GradingJob {
                 out.postbackOnComplete = shouldPostback;
                 out.state = ContainerState.SUCCESS;
             } catch (err) {
-                Log.error("GradeWorker::execute() - ERROR Reading grade report. " + err);
+                Log.error("GradingJob::execute() - ERROR Reading grade report. " + err);
                 out.report.feedback = "Failed to read grade report.";
                 out.state = ContainerState.NO_REPORT;
             }
@@ -160,7 +168,7 @@ export class GradingJob {
         // NOTE: this might not happen if docker was restarted while the job was running
         await fs.remove(this.path + "/assn");
 
-        Log.info("GradingJob::run() - done: " + this.id);
+        Log.info("GradingJob::run() - done: " + this.id + "; code: " + exitCode);
         return this.record;
     }
 
