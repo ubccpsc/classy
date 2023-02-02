@@ -126,7 +126,7 @@ export class GradingJob {
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
 
-        if (exitCode < 0) {
+        if (exitCode !== 0) { // what is 98? // 1?
             // start tracking what is coming out of the container better
             Log.warn("GradingJob::run() - exitCode: " + exitCode +
                 "; repo: " + this.input.target.repoId + "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
