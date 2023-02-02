@@ -19,6 +19,8 @@ export class GradingJob {
         this.input = containerInput;
         this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
         this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
+
+        // populate record with default values in case the commit is timed out
         this.record = {
             delivId: this.input.target.delivId,
             repoId: this.input.target.repoId,
@@ -31,7 +33,7 @@ export class GradingJob {
                     scoreOverall: 0,
                     scoreCover: null,
                     scoreTest: null,
-                    feedback: "Internal error: The grading service failed to handle the request.",
+                    feedback: "Unable to grade commit; please make another commit and try again.",
                     passNames: [],
                     skipNames: [],
                     failNames: [],
@@ -123,50 +125,56 @@ export class GradingJob {
 
         Log.trace("GradingJob::run() - after run: " + this.id + "; exit code: " + exitCode);
 
+        // NOTE: out just contains default values; here we are just updating the timestamp
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
 
         if (exitCode !== 0) { // what is 98? // 1?
             // start tracking what is coming out of the container better
             Log.warn("GradingJob::run() - exitCode: " + exitCode +
-                "; repo: " + this.input.target.repoId + "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
-                "; state: " + out.state + "; result: " + out.report.result + "; feedback: " + out.report.feedback);
+                "; repo: " + this.input.target.repoId + "; sha: " + Util.shaHuman(this.input.target.commitSHA));
         }
 
         // handle FAIL before TIMEOUT
         if (exitCode === -10) {
-            if (typeof out.report.feedback === "undefined" || out.report.feedback === null || out.report.feedback === "") {
-                out.report.feedback = "Container failed for `" + this.input.target.delivId + "`.";
-            } else {
-                const msg = "Container failed for `" + this.input.target.delivId + ". " + out.report.feedback;
-                out.report.feedback = msg;
-            }
+            const msg = "Container failed for `" + this.input.target.delivId + ".";
+            out.report.feedback = msg;
+            out.report.result = ContainerState.FAIL;
+
             out.state = ContainerState.FAIL;
             out.postbackOnComplete = true; // always send fail feedback
         } else if (exitCode === -1) {
-            if (typeof out.report.feedback === "undefined" || out.report.feedback === null || out.report.feedback === "") {
-                out.report.feedback = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
-            } else {
-                const msg = "Container did not complete for `" + this.input.target.delivId + "`. " + out.report.feedback;
-                out.report.feedback = msg;
-            }
+            const msg = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
+            out.report.feedback = msg;
+            out.report.result = ContainerState.TIMEOUT;
+
             out.state = ContainerState.TIMEOUT;
             out.postbackOnComplete = true; // always send timeout feedback
         } else {
             try {
                 const shouldPostback: boolean = exitCode !== 0;
+                // this is the only place where the report is attached
+                // all failing commits will not have this data because
+                // we assume it was not written
                 out.report = await fs.readJson(this.path + "/staff/report.json");
+
                 out.postbackOnComplete = shouldPostback;
                 out.state = ContainerState.SUCCESS;
             } catch (err) {
                 Log.error("GradingJob::execute() - ERROR Reading grade report. " + err);
-                out.report.feedback = "Failed to read grade report.";
+                out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
+                out.report.result = ContainerState.NO_REPORT;
                 out.state = ContainerState.NO_REPORT;
             }
         }
 
-        // NOTE: this might not happen if docker was restarted while the job was running
-        await fs.remove(this.path + "/assn");
+        try {
+            // NOTE: this might not happen if docker was restarted while the job was running
+            await fs.removeSync(this.path + "/assn");
+        } catch (err) {
+            // really don't want to fail for this; report and continue
+            Log.error("GradingJob::execute() - ERROR removing /assn: " + err.message);
+        }
 
         Log.info("GradingJob::run() - done: " + this.id + "; code: " + exitCode);
         return this.record;
