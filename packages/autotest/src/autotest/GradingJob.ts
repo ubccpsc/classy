@@ -125,9 +125,19 @@ export class GradingJob {
 
         Log.trace("GradingJob::run() - after run: " + this.id + "; exit code: " + exitCode);
 
-        // NOTE: out just contains default values; here we are just updating the timestamp
+        // NOTE: at this point, out just contains default values
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
+
+        try {
+            const REPORT_PATH = this.path + "/staff/report.json";
+            const reportExists = await fs.pathExists(REPORT_PATH);
+            if (reportExists === true) {
+                out.report = await fs.readJson(REPORT_PATH);
+            }
+        } catch (err) {
+            Log.warn("GradingJob::run() - Problem reading report: " + err.message);
+        }
 
         if (exitCode !== 0) { // what is 98? // 1?
             // start tracking what is coming out of the container better
@@ -153,15 +163,17 @@ export class GradingJob {
         } else {
             try {
                 const shouldPostback: boolean = exitCode !== 0;
+
+                // MOVED EARLIER
                 // this is the only place where the report is attached
                 // all failing commits will not have this data because
                 // we assume it was not written
-                out.report = await fs.readJson(this.path + "/staff/report.json");
+                // out.report = await fs.readJson(this.path + "/staff/report.json");
 
                 out.postbackOnComplete = shouldPostback;
                 out.state = ContainerState.SUCCESS;
             } catch (err) {
-                Log.error("GradingJob::execute() - ERROR Reading grade report. " + err);
+                Log.error("GradingJob::run() - ERROR Reading grade report. " + err);
                 out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
                 out.report.result = ContainerState.NO_REPORT;
                 out.state = ContainerState.NO_REPORT;
@@ -173,7 +185,7 @@ export class GradingJob {
             await fs.removeSync(this.path + "/assn");
         } catch (err) {
             // really don't want to fail for this; report and continue
-            Log.error("GradingJob::execute() - ERROR removing /assn: " + err.message);
+            Log.warn("GradingJob::run() - Problem removing /assn: " + err.message);
         }
 
         Log.info("GradingJob::run() - done: " + this.id + "; code: " + exitCode);
