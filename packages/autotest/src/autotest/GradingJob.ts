@@ -20,7 +20,8 @@ export class GradingJob {
         this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
         this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
 
-        // populate record with default values in case the commit is timed out
+        // Populate record with default values in case the commit fails
+        // spectacularly, or is timed out by Docker itself
         this.record = {
             delivId: this.input.target.delivId,
             repoId: this.input.target.repoId,
@@ -38,7 +39,7 @@ export class GradingJob {
                     skipNames: [],
                     failNames: [],
                     errorNames: [],
-                    result: "FAIL",
+                    result: ContainerState.FAIL,
                     attachments: [],
                     custom: {}
                 },
@@ -122,18 +123,19 @@ export class GradingJob {
         container.modem.demuxStream(stream, stdio, stdio);
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
-
         Log.trace("GradingJob::run() - after run: " + this.id + "; exit code: " + exitCode);
 
         // NOTE: at this point, out just contains default values
         const out = this.record.output;
         out.timestamp = Date.now(); // update TS to when job actually finished
 
+        let reportRead = false;
         try {
             const REPORT_PATH = this.path + "/staff/report.json";
             const reportExists = await fs.pathExists(REPORT_PATH);
             if (reportExists === true) {
                 out.report = await fs.readJson(REPORT_PATH);
+                reportRead = true;
             }
         } catch (err) {
             Log.warn("GradingJob::run() - Problem reading report: " + err.message);
@@ -141,13 +143,14 @@ export class GradingJob {
 
         if (exitCode !== 0) { // what is 98? // 1?
             // start tracking what is coming out of the container better
-            Log.warn("GradingJob::run() - exitCode: " + exitCode +
-                "; repo: " + this.input.target.repoId + "; sha: " + Util.shaHuman(this.input.target.commitSHA));
+            Log.info("GradingJob::run() - repo: " + this.input.target.repoId +
+                "; delivId: " + this.input.target.delivId +
+                "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
+                "; exitCode: " + exitCode + "; reportRead: " + reportRead);
         }
 
-        // handle FAIL before TIMEOUT
         if (exitCode === -10) {
-            const msg = "Container failed for `" + this.input.target.delivId + ".";
+            const msg = "Container failed for `" + this.input.target.delivId + "`.";
             out.report.feedback = msg;
             out.report.result = ContainerState.FAIL;
 
@@ -160,31 +163,30 @@ export class GradingJob {
 
             out.state = ContainerState.TIMEOUT;
             out.postbackOnComplete = true; // always send timeout feedback
+        } else if (reportRead === false) {
+            Log.warn("GradingJob::run() - No grading report for repo: " + this.input.target.repoId +
+                "; delivId: " + this.input.target.delivId + "; SHA: " + Util.shaHuman(this.input.target.commitSHA));
+            out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
+            out.report.result = ContainerState.NO_REPORT;
+            out.state = ContainerState.NO_REPORT;
         } else {
-            try {
-                const shouldPostback: boolean = exitCode !== 0;
+            // handle SUCCESS cases last
 
-                // MOVED EARLIER
-                // this is the only place where the report is attached
-                // all failing commits will not have this data because
-                // we assume it was not written
-                // out.report = await fs.readJson(this.path + "/staff/report.json");
+            // Always postback feedback if the container does not
+            // exit with a 0 code; makes it easy for a container
+            // to provide 'free' feedback for many exit codes
+            out.postbackOnComplete = exitCode !== 0;
 
-                out.postbackOnComplete = shouldPostback;
-                out.state = ContainerState.SUCCESS;
-            } catch (err) {
-                Log.error("GradingJob::run() - ERROR Reading grade report. " + err);
-                out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
-                out.report.result = ContainerState.NO_REPORT;
-                out.state = ContainerState.NO_REPORT;
-            }
+            // NOTE: this just means the GradingJob exited successfully,
+            // not that the execution within the container was a success
+            out.state = ContainerState.SUCCESS;
         }
 
         try {
             // NOTE: this might not happen if docker was restarted while the job was running
             await fs.removeSync(this.path + "/assn");
         } catch (err) {
-            // really don't want to fail for this; report and continue
+            // do not want to fail for this; report and continue
             Log.warn("GradingJob::run() - Problem removing /assn: " + err.message);
         }
 
