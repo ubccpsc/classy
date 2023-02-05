@@ -53,7 +53,7 @@ export class GradingJob {
 
     public async prepare(): Promise<void> {
         try {
-            Log.info("GradingJob::prepare() - start: " + this.id);
+            Log.trace("GradingJob::prepare() - start: " + this.id);
 
             await fs.emptyDir(this.path);
             await Promise.all([
@@ -83,7 +83,7 @@ export class GradingJob {
             Log.error(msg);
             throw Error(msg);
         }
-        Log.info("GradingJob::prepare() - done: " + this.id);
+        Log.trace("GradingJob::prepare() - done: " + this.id);
     }
 
     public async run(docker: Docker): Promise<AutoTestResult> {
@@ -185,7 +185,7 @@ export class GradingJob {
         // report extra details about non-successful jobs
         if (out.state !== ContainerState.SUCCESS ||
             (reportRead === true && out.report.result !== ContainerState.SUCCESS)) {
-            const msg = "GradingJob::run() - repo: " + this.input.target.repoId +
+            const msg = "GradingJob::run() - after; repo: " + this.input.target.repoId +
                 "; delivId: " + this.input.target.delivId +
                 "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
                 "; exitCode: " + exitCode + "; cState: " + out.state;
