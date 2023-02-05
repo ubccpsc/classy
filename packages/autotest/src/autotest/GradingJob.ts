@@ -141,14 +141,6 @@ export class GradingJob {
             Log.warn("GradingJob::run() - Problem reading report: " + err.message);
         }
 
-        if (exitCode !== 0) { // what is 98? // 1?
-            // start tracking what is coming out of the container better
-            Log.info("GradingJob::run() - repo: " + this.input.target.repoId +
-                "; delivId: " + this.input.target.delivId +
-                "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
-                "; exitCode: " + exitCode + "; reportRead: " + reportRead);
-        }
-
         if (exitCode === -10) {
             const msg = "Container failed for `" + this.input.target.delivId + "`.";
             out.report.feedback = msg;
@@ -188,6 +180,20 @@ export class GradingJob {
         } catch (err) {
             // do not want to fail for this; report and continue
             Log.warn("GradingJob::run() - Problem removing /assn: " + err.message);
+        }
+
+        if (exitCode !== 0) {
+            // put this at the end so container state will be updated, if needed
+            const msg = "GradingJob::run() - repo: " + this.input.target.repoId +
+                "; delivId: " + this.input.target.delivId +
+                "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
+                "; exitCode: " + exitCode + "; cState: " + out.state;
+            if (reportRead === true) {
+                // only makes sense if there was a report to read
+                Log.info(msg + "; rState: " + out.report.result);
+            } else {
+                Log.info(msg + "; reportRead: " + reportRead);
+            }
         }
 
         Log.info("GradingJob::run() - done: " + this.id + "; code: " + exitCode);
