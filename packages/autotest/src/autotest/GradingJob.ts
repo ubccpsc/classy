@@ -182,8 +182,9 @@ export class GradingJob {
             Log.warn("GradingJob::run() - Problem removing /assn: " + err.message);
         }
 
-        if (exitCode !== 0) {
-            // put this at the end so container state will be updated, if needed
+        // report extra details about non-successful jobs
+        if (out.state !== ContainerState.SUCCESS ||
+            (reportRead === true && out.report.result !== ContainerState.SUCCESS)) {
             const msg = "GradingJob::run() - repo: " + this.input.target.repoId +
                 "; delivId: " + this.input.target.delivId +
                 "; sha: " + Util.shaHuman(this.input.target.commitSHA) +
