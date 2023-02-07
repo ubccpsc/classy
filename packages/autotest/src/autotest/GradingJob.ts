@@ -151,7 +151,7 @@ export class GradingJob {
         } else if (exitCode === -1) {
             let msg = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time. ";
             msg += "This likely means that _our_ tests exposed a slow or non-terminating path in _your_ implementation. ";
-            msg += "You should probably augment your test suite; a comprehensive local suite will uncover the problem.";
+            msg += "You should augment your tests; a comprehensive local suite will uncover the problem.";
 
             out.report.feedback = msg;
             out.report.result = ContainerState.TIMEOUT;
