@@ -149,7 +149,10 @@ export class GradingJob {
             out.state = ContainerState.FAIL;
             out.postbackOnComplete = true; // always send fail feedback
         } else if (exitCode === -1) {
-            const msg = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time.";
+            let msg = "Container did not complete for `" + this.input.target.delivId + "` in the allotted time. ";
+            msg += "This likely means that _our_ tests exposed a slow or non-terminating path in _your_ implementation. ";
+            msg += "You should probably augment your test suite; a comprehensive local suite will uncover the problem.";
+
             out.report.feedback = msg;
             out.report.result = ContainerState.TIMEOUT;
 
