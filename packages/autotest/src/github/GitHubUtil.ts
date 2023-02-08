@@ -91,23 +91,23 @@ export class GitHubUtil {
             // Log.trace("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
 
             const postbackURL = payload.issue.comments_url;
-            let markdown = null;
-            if (typeof payload?.issue?.pull_request === "object") {
-                // is pr comment
-                markdown = {
-                    url: postbackURL,
-                    message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
-                };
-            } else if (payload?.issue === "object") {
-                // is issue comment
-                markdown = {
-                    url: postbackURL,
-                    message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
-                };
-            } else {
-                // unknown comment type
-                Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
-            }
+            const markdown: any = null;
+            // if (typeof payload?.issue?.pull_request === "object") {
+            //     // is pr comment
+            //     markdown = {
+            //         url: postbackURL,
+            //         message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
+            //     };
+            // } else if (payload?.issue === "object") {
+            //     // is issue comment
+            //     markdown = {
+            //         url: postbackURL,
+            //         message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
+            //     };
+            // } else {
+            //     // unknown comment type
+            //     Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
+            // }
 
             if (markdown !== null) {
                 await this.postMarkdownToGithub(markdown);
