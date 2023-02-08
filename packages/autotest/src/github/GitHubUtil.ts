@@ -87,31 +87,48 @@ export class GitHubUtil {
      */
     public static async processIssueComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.info("GitHubUtil::processIssueComment(..) - start;");
+            Log.info("GitHubUtil::processIssueComment(..) - start");
             // Log.trace("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
 
-            const postbackURL = payload.issue.comments_url;
-            const markdown: any = null;
-            // if (typeof payload?.issue?.pull_request === "object") {
-            //     // is pr comment
-            //     markdown = {
-            //         url: postbackURL,
-            //         message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
-            //     };
-            // } else if (payload?.issue === "object") {
-            //     // is issue comment
-            //     markdown = {
-            //         url: postbackURL,
-            //         message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
-            //     };
-            // } else {
-            //     // unknown comment type
-            //     Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
-            // }
+            const postbackURL = payload?.issue?.comments_url;
+            let markdown: any = null;
+
+            // if bot not mentioned, do nothing (or else it will comment on all comments)
+            let message = payload?.issue?.comment?.body;
+            if (message === null) {
+                message = "";
+            }
+            const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
+            const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
+
+            Log.info("GitHubUtil::processIssueComment(..) - botMentioned: " + botMentioned + "; body: " + message);
+
+            if (botMentioned === false) {
+                return;
+            }
+
+            if (typeof payload?.issue?.pull_request === "object") {
+                // is pr comment
+                markdown = {
+                    url: postbackURL,
+                    message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
+                };
+            } else if (payload?.issue === "object") {
+                // is issue comment
+                markdown = {
+                    url: postbackURL,
+                    message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
+                };
+            } else {
+                // unknown comment type
+                Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
+            }
 
             if (markdown !== null) {
-                await this.postMarkdownToGithub(markdown);
-                return {} as CommitTarget; // TODO: fix this
+                Log.info("GitHubUtil::processIssueComment(..) - want to comment: " + markdown.message);
+                // disable commenting for now so we don't have infinite loops
+                // await this.postMarkdownToGithub(markdown);
+                return; // TODO: is this a good choice?
             }
         } catch (err) {
             Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message);

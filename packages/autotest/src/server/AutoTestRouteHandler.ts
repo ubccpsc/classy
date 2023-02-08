@@ -184,6 +184,7 @@ export default class AutoTestRouteHandler {
                 return pushEvent;
             case "issue_comment":
                 const prEvent = await GitHubUtil.processIssueComment(body);
+                return prEvent;
                 // no return for now, just fall through to error
             default:
                 Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
