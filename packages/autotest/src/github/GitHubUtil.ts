@@ -81,7 +81,20 @@ export class GitHubUtil {
     }
 
     /**
+     * Process a comment on an issue, and only returns if it is
+     * a comment on a PR.
      *
+     */
+    public static async processIssueComment(payload: any): Promise<CommitTarget> {
+        try {
+            Log.trace("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
+        } catch (err) {
+            Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message);
+        }
+        return null;
+    }
+
+    /**
      * Processes a comment on a commit. Sent by GitHub.
      *
      * https://developer.github.com/v3/activity/events/types/#commitcommentevent
