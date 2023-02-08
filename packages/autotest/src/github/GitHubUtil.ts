@@ -94,7 +94,7 @@ export class GitHubUtil {
             let markdown: any = null;
 
             // if bot not mentioned, do nothing (or else it will comment on all comments)
-            const message = payload?.issue?.comment?.body ?? ""; // "" if message does not exist
+            const message = payload?.comment?.body ?? ""; // "" if message does not exist
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
             const botMentioned = message.toLowerCase().indexOf(botName) >= 0;
 
