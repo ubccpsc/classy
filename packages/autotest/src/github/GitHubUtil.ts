@@ -87,7 +87,7 @@ export class GitHubUtil {
      */
     public static async processIssueComment(payload: any): Promise<CommitTarget> {
         try {
-            Log.trace("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
+            Log.info("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
         } catch (err) {
             Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message);
         }
