@@ -88,7 +88,6 @@ export class GitHubUtil {
     public static async processIssueComment(payload: any): Promise<CommitTarget> {
         try {
             Log.info("GitHubUtil::processIssueComment(..) - start");
-            // Log.trace("GitHubUtil::processIssueComment(..) - start; payload:\n" + JSON.stringify(payload));
 
             const postbackURL = payload?.issue?.comments_url;
             let markdown: any = null;
@@ -118,20 +117,18 @@ export class GitHubUtil {
                     message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
                 };
             } else {
-                // unknown comment type
+                // unknown kind of issue comment
                 Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
             }
 
             if (markdown !== null) {
-                Log.info("GitHubUtil::processIssueComment(..) - want to comment: " + markdown.message);
-                // disable commenting for now so we don't have infinite loops
-                // await this.postMarkdownToGithub(markdown);
-                return; // TODO: is this a good choice?
+                Log.info("GitHubUtil::processIssueComment(..) - comment: " + markdown.message);
+                await this.postMarkdownToGithub(markdown);
             }
         } catch (err) {
             Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message + "\n" + JSON.stringify(payload));
         }
-        return null;
+        return; // not null, which is treated differently (which also is not a good design choice)
     }
 
     /**
