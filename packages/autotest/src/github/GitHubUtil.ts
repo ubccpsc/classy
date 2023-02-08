@@ -94,27 +94,25 @@ export class GitHubUtil {
             let markdown: any = null;
 
             // if bot not mentioned, do nothing (or else it will comment on all comments)
-            let message = payload?.issue?.comment?.body;
-            if (message === null) {
-                message = "";
-            }
+            const message = payload?.issue?.comment?.body ?? ""; // "" if message does not exist
             const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
-            const botMentioned: boolean = message.toLowerCase().indexOf(botName) >= 0;
+            const botMentioned = message.toLowerCase().indexOf(botName) >= 0;
 
             Log.info("GitHubUtil::processIssueComment(..) - botMentioned: " + botMentioned + "; body: " + message);
 
             if (botMentioned === false) {
+                Log.info("GitHubUtil::processIssueComment(..) - skipped; bot not mentioned");
                 return;
             }
 
-            if (typeof payload?.issue?.pull_request === "object") {
+            if (payload?.issue?.pull_request) {
                 // is pr comment
                 markdown = {
                     url: postbackURL,
                     message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
                 };
-            } else if (payload?.issue === "object") {
-                // is issue comment
+            } else if (payload?.issue) {
+                // is issue comment (after PR, since that is an instance of a comment)
                 markdown = {
                     url: postbackURL,
                     message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
@@ -131,7 +129,7 @@ export class GitHubUtil {
                 return; // TODO: is this a good choice?
             }
         } catch (err) {
-            Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message);
+            Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message + "\n" + JSON.stringify(payload));
         }
         return null;
     }
