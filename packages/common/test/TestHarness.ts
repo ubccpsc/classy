@@ -754,7 +754,7 @@ export class TestHarness {
                 delivId: delivId,
                 repoId: repoId,
 
-                // branch:    "master",
+                ref: "refs/heads/main",
                 cloneURL: "cloneURL",
                 commitSHA: sha,
                 commitURL: commitURL,

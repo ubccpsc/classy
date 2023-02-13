@@ -46,7 +46,7 @@ export class AutoTestRoutes implements IREST {
         server.post("/portal/at/grade", AutoTestRoutes.atGrade);
 
         server.post("/portal/at/result", AutoTestRoutes.atPostResult);
-        server.get("/portal/at/result/:delivId/:repoId/:sha", AutoTestRoutes.atGetResult);
+        server.get("/portal/at/result/:delivId/:repoId/:sha/:ref", AutoTestRoutes.atGetResult);
 
         server.post("/portal/at/promotePush", AutoTestRoutes.atShouldPromotePush);
 
@@ -321,7 +321,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static atGetResult(req: any, res: any, next: any) {
-        Log.trace("AutoTestRoutes::atGetResult(..) - /at/result/:delivId/:repoId - start GET");
+        Log.trace("AutoTestRoutes::atGetResult(..) - /at/result/:delivId/:repoId/:sha/:ref - start GET");
 
         let payload: AutoTestResultPayload;
         const providedSecret = req.headers.token;
@@ -331,12 +331,18 @@ export class AutoTestRoutes implements IREST {
             const delivId = req.params.delivId;
             const repoId = req.params.repoId;
             const sha = req.params.sha;
+            let ref = req.params.ref;
+            ref = decodeURIComponent(ref);
+            if (ref === "<ANY>") {
+                // ref not specified
+                ref = null;
+            }
 
             Log.trace("AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId +
-                "; SHA: " + Util.shaHuman(sha));
+                "; SHA: " + Util.shaHuman(sha) + "; ref: " + ref);
 
             const rc = new ResultsController();
-            rc.getResult(delivId, repoId, sha).then(function (result: AutoTestResult) {
+            rc.getResult(delivId, repoId, sha, ref).then(function (result: AutoTestResult) {
                 if (result !== null) {
                     payload = {success: [result]};
                 } else {

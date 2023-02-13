@@ -534,7 +534,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) +
             "; hasPush: " + (pushEvent !== null) + "; branch: " + info.ref);
 
-        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA);
+        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA, info.ref);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             // staff request
