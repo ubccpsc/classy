@@ -9,14 +9,14 @@ import {GradesController} from "../src/controllers/GradesController";
 import {Grade} from "../src/Types";
 
 /**
- * Sometimes you want to invoke AutoTest on a series of repositories programmatically.
+ * Sometimes you want to programmatically invoke AutoTest many repositories.
  * This file shows how you can accomplish this.
  *
  * NOTE: the queue needs to drain from all of a deliverable before scheduling another.
- * AKA do not run this multiple times in a row until the previous run has finished (e.g., d1, d2, and d4)
+ * AKA do not run this multiple times in a row until the previous run has finished (e.g., c1, c2, and c3)
  *
  * To run this locally you need to have a .env configured with the production values
- * and a ssh tunnel configured to the server you want the database to come from.
+ * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the UBC VPN.
  * 2) Make sure you do not have a local mongo instance running.
@@ -24,10 +24,16 @@ import {Grade} from "../src/Types";
  * 4) ssh user@host -L 27017:127.0.0.1:27017
  * 5) Run this script.
  *
+ * Alternatively, this can be run on the production host, which saves you from
+ * having to configuring a .env.
+ *
+ * Regardless of how you are using this, running with DRY_RUN true
+ * is always recommended, so you can ensure the script is behaving
+ * as you expect.
+ *
  */
 export class InvokeAutoTest {
 
-    private dc: DatabaseController;
     /**
      * Only actually performs the action if DRY_RUN is false.
      * Otherwise, just show what _would_ happen.
@@ -50,26 +56,28 @@ export class InvokeAutoTest {
     private INVISIBLE = true;
 
     // for d4 we use the d3 grade to select the commit to run against
-    private readonly DELIVID = "d3";
+    private readonly DELIVID = "c1";
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
-     * Having to hard-code these is not pretty, but it makes the code much simpler. The format
+     * Having to hard-code this is not pretty, but it makes the code much simpler. The format
      * you need should be pretty easy to infer from what is present here.
      *
      * @type {string}
      */
-    private readonly PREFIXOLD = "https://github.students.cs.ubc.ca/orgs/CPSC310-2019W-T1/";
-    private readonly PREFIXNEW = "https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2019W-T1/";
+    private readonly PREFIXOLD = "https://github.students.cs.ubc.ca/orgs/CPSC310-2022W-T2/";
+    private readonly PREFIXNEW = "https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2022W-T2/";
 
     // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
     // private readonly MSG  = "@autobot #d1 #force #silent.";
     // private readonly MSG  = "@autobot #d2 #force #silent.";
-    private readonly MSG = "@autobot #d3 #force #silent.";
+    private readonly MSG = "@310-bot #c1 #force #silent.";
     // private readonly MSG = "@autobot #d4 #force #silent.";
     // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
     //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
     //     "by December 14 @ 0800; we will finalize all project grades that day.";
+
+    private dc: DatabaseController;
 
     constructor() {
         Log.info("InvokeAutoTest::<init> - start");
