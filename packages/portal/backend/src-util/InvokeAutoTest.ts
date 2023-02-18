@@ -38,42 +38,38 @@ export class InvokeAutoTest {
      * Only actually performs the action if DRY_RUN is false.
      * Otherwise, just show what _would_ happen.
      * NOTE: this is ignored for the TEST_USER user.
-     * @type {boolean}
      */
     private DRY_RUN = true;
 
     /**
      * Usernames to ignore DRY_RUN for (aka usually a TA or course repo for testing)
-     * @type {string}
      */
     private readonly TEST_USERS: string[] = []; // ["r5t0b"]; // ["w8j0b", "l7m1b"]; // ["w8j0b", "r5t0b"];
 
     /**
      * Invoke Autotest invisibly (aka by faking a webhook) or visibly (by making a public comment).
      *
-     * @type {boolean}
      */
     private INVISIBLE = true;
 
-    // for d4 we use the d3 grade to select the commit to run against
+    /**
+     * Specify the delivId we are running against.
+     */
     private readonly DELIVID = "c1";
 
     /**
      * To make this request we are actually transforming a commit URL into an API request URL.
      * Having to hard-code this is not pretty, but it makes the code much simpler. The format
      * you need should be pretty easy to infer from what is present here.
-     *
-     * @type {string}
      */
     private readonly PREFIXOLD = "https://github.students.cs.ubc.ca/orgs/CPSC310-2022W-T2/";
     private readonly PREFIXNEW = "https://github.students.cs.ubc.ca/api/v3/repos/CPSC310-2022W-T2/";
 
-    // private readonly MSG = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released.";
-    // private readonly MSG  = "@autobot #d1 #force #silent.";
-    // private readonly MSG  = "@autobot #d2 #force #silent.";
+    // private readonly MSG  = "@310-bot #d1 #force #silent.";
+    // private readonly MSG  = "@310-bot #d2 #force #silent.";
     private readonly MSG = "@310-bot #c1 #force #silent.";
-    // private readonly MSG = "@autobot #d4 #force #silent.";
-    // private readonly MSG  = "@autobot #d4 #force #silent. D4 results will be posted to the Classy grades view once they are released. " +
+    // private readonly MSG = "@310-bot #c4 #force #silent.";
+    // private readonly MSG  = "@310-bot #c3 #force #silent. C3 results will be posted to the Classy grades view once they are released. " +
     //     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
     //     "by December 14 @ 0800; we will finalize all project grades that day.";
 
@@ -91,7 +87,12 @@ export class InvokeAutoTest {
         const gha = GitHubActions.getInstance(true);
 
         // Find the commit you want to invoke the bot against.
-        // e.g., for cs310 d4, we run against the graded d3 commit.
+        // e.g., usually you want to run against the commit associated
+        // with the grade record, as that is the 'max' commit
+        // but it is conceivable you might want to instead get all
+        // result rows and run against the latest before the deadline
+        // or some other approach.
+        //
         // You might use some other approach here; any commit URL
         // will work with the code below.
         const gradesC = new GradesController();
