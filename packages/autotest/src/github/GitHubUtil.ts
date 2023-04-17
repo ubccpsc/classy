@@ -81,7 +81,57 @@ export class GitHubUtil {
     }
 
     /**
+     * Process a comment on an issue, and only returns if it is
+     * a comment on a PR.
      *
+     */
+    public static async processIssueComment(payload: any): Promise<CommitTarget> {
+        try {
+            Log.info("GitHubUtil::processIssueComment(..) - start");
+
+            const postbackURL = payload?.issue?.comments_url;
+            let markdown: any = null;
+
+            // if bot not mentioned, do nothing (or else it will comment on all comments)
+            const message = payload?.comment?.body ?? ""; // "" if message does not exist
+            const botName = "@" + Config.getInstance().getProp(ConfigKey.botName).toLowerCase();
+            const botMentioned = message.toLowerCase().indexOf(botName) >= 0;
+
+            Log.info("GitHubUtil::processIssueComment(..) - botMentioned: " + botMentioned + "; body: " + message);
+
+            if (botMentioned === false) {
+                Log.info("GitHubUtil::processIssueComment(..) - skipped; bot not mentioned");
+                return;
+            }
+
+            if (payload?.issue?.pull_request) {
+                // is pr comment
+                markdown = {
+                    url: postbackURL,
+                    message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
+                };
+            } else if (payload?.issue) {
+                // is issue comment (after PR, since that is an instance of a comment)
+                markdown = {
+                    url: postbackURL,
+                    message: "AutoTest cannot be invoked from issues. Please make a comment on a commit on GitHub."
+                };
+            } else {
+                // unknown kind of issue comment
+                Log.warn("GitHubUtil::processIssueComment(..) - unknown issue_comment type; payload:\n" + JSON.stringify(payload));
+            }
+
+            if (markdown !== null) {
+                Log.info("GitHubUtil::processIssueComment(..) - comment: " + markdown.message);
+                await this.postMarkdownToGithub(markdown);
+            }
+        } catch (err) {
+            Log.error("GitHubUtil::processIssueComment(..) - ERROR: " + err.message + "\n" + JSON.stringify(payload));
+        }
+        return; // not null, which is treated differently (which also is not a good design choice)
+    }
+
+    /**
      * Processes a comment on a commit. Sent by GitHub.
      *
      * https://developer.github.com/v3/activity/events/types/#commitcommentevent
@@ -148,14 +198,9 @@ export class GitHubUtil {
             if (authLevel.isStaff === true || authLevel.isAdmin === true) {
                 adminRequest = true;
             }
-
-            let kind = "standard"; // if #check, set that here
-            if (flags.indexOf("#check") >= 0) {
-                kind = "check";
-            }
-
             Log.trace("GitHubUtil::processComment(..) - 4");
 
+            const kind = "standard";
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,

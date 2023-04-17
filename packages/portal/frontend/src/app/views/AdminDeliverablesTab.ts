@@ -552,6 +552,7 @@ export class AdminDeliverablesTab extends AdminPage {
             const url = remote + "/portal/at/docker/image";
             const options: any = AdminView.getOptions();
             options.method = "POST";
+            options.keepalive = true; // timeout not directly supported
             options.body = JSON.stringify({remote: context, tag: tag, file: file});
             Log.info("AdminDeliverablesTab::buildDockerImage(..) - url: " + url);
             Log.trace("AdminDeliverablesTab::buildDockerImage(..) - options: " + JSON.stringify(options));
@@ -564,28 +565,33 @@ export class AdminDeliverablesTab extends AdminPage {
 
             try {
                 while (true) {
-                    const {done, value} = await reader.read();
-                    const valueString = new TextDecoder().decode(value, {stream: true});
-                    Log.trace("AdminDeliverablesTab::buildDockerImage(..) - chunk raw: " + valueString);
+                    try {
+                        const {done, value} = await reader.read();
+                        const valueString = new TextDecoder().decode(value, {stream: true});
+                        Log.trace("AdminDeliverablesTab::buildDockerImage(..) - chunk raw: " + valueString);
 
-                    // turn chunk into strings
-                    const chunkLines = valueString.split("\n")
-                        .filter((s) => s !== "")
-                        .map((s) => JSON.parse(s))
-                        .filter((s) => s.hasOwnProperty("stream") ||
-                            s.hasOwnProperty("message") || s.hasOwnProperty("error"))
-                        .map((s) => s.stream || s.message || "\n\nError code: " +
-                            s.errorDetail.code + "\n\nError Message: " + s.error);
+                        // turn chunk into strings
+                        const chunkLines = valueString.split("\n")
+                            .filter((s) => s !== "")
+                            .map((s) => JSON.parse(s))
+                            .filter((s) => s.hasOwnProperty("stream") ||
+                                s.hasOwnProperty("message") || s.hasOwnProperty("error"))
+                            .map((s) => s.stream || s.message || "\n\nError code: " +
+                                s.errorDetail.code + "\n\nError Message: " + s.error);
 
-                    lines = lines.concat(chunkLines);
-                    const newLines = chunkLines.join("");
-                    output.innerText += newLines;
-                    output.scrollTop = output.scrollHeight; // keep scrolled to bottom
-                    Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk string: " + newLines);
+                        lines = lines.concat(chunkLines);
+                        const newLines = chunkLines.join("");
+                        output.innerText += newLines;
+                        output.scrollTop = output.scrollHeight; // keep scrolled to bottom
+                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - chunk string: " + newLines);
 
-                    if (done) {
-                        Log.info("AdminDeliverablesTab::buildDockerImage(..) - stream done");
-                        break;
+                        if (done) {
+                            Log.info("AdminDeliverablesTab::buildDockerImage(..) - stream done");
+                            break;
+                        }
+                    } catch (err) {
+                        // do this inside the loop so we can keep processing additional messages
+                        Log.warn("AdminDeliverablesTab::buildDockerImage(..) - ERROR decoding stream: " + err.message);
                     }
                 }
             } catch (err) {
