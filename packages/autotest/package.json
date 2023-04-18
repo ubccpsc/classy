@@ -22,7 +22,7 @@
         "dockerode": "^2.5.7",
         "dotenv": "4.0.0",
         "fs-extra": "5.0.0",
-        "jszip": "^3.7.0",
+        "jszip": "^3.8.0",
         "mongodb": "^4.13.0",
         "restify": "^10.0.0",
         "ts-node": "^7.0.0"
