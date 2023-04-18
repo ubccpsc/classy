@@ -134,6 +134,16 @@ export class TestGitHubActions implements IGitHubActions {
         return -1;
     }
 
+    public async getTeamByName(teamName: string): Promise<GitTeamTuple | null> {
+        for (const name of this.teams.keys()) {
+            const team = this.teams.get(name);
+            if (team.teamName === teamName) {
+                return {githubTeamNumber: team.githubTeamNumber, teamName: team.teamName};
+            }
+        }
+        return null;
+    }
+
     public async getTeam(teamNumber: number): Promise<GitTeamTuple | null> {
         for (const teamName of this.teams.keys()) {
             const team = this.teams.get(teamName);

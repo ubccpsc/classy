@@ -23,7 +23,7 @@ export class AuthController {
         if (typeof personId === "undefined" || personId === null || typeof token === "undefined" || token === null) {
             // invalid person
             // these are never valid; this would be caught below, but this is just to be extra cautious
-            Log.trace("AuthController::isValid( " + personId + ", ... ) - false; undefined | null encoutered");
+            Log.trace("AuthController::isValid( " + personId + ", ... ) - false; undefined | null encountered");
             return false;
         }
 
@@ -42,14 +42,19 @@ export class AuthController {
         }
     }
 
-    public async personPriviliged(person: Person): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+    public async personPrivileged(person: Person): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+
+        if (person === null) {
+            Log.warn("AuthController::personPrivileged( null ) - not privileged");
+            return {isAdmin: false, isStaff: false};
+        }
 
         const personId = person.id;
         if (person.kind === null || person.kind === PersonKind.NONE) {
             // check github for credentials and cache them
             const isStaff = await GitHubActions.getInstance().isOnStaffTeam(person.githubId);
             const isAdmin = await GitHubActions.getInstance().isOnAdminTeam(person.githubId);
-            Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - github: " + person.githubId +
+            Log.trace("AuthController::personPrivileged( " + personId + ", ... ) - github: " + person.githubId +
                 " caching new credentials; admin: " + isAdmin + "; staff: " + isStaff);
 
             const dc = DatabaseController.getInstance();
@@ -68,7 +73,7 @@ export class AuthController {
             }
         }
 
-        Log.trace("AuthController::personPriviliged( " + personId + ", ... ) - " +
+        Log.trace("AuthController::personPrivileged( " + personId + ", ... ) - " +
             " cached kind: " + person.kind);
 
         if (person.kind === PersonKind.STUDENT) {
@@ -80,7 +85,7 @@ export class AuthController {
         } else if (person.kind === PersonKind.ADMINSTAFF) {
             return {isAdmin: true, isStaff: true};
         } else {
-            Log.error("AuthController::personPriviliged( " + personId + ", ... ) - unknown kind: " + person.kind);
+            Log.error("AuthController::personPrivileged( " + personId + ", ... ) - unknown kind: " + person.kind);
             return {isAdmin: false, isStaff: false};
         }
     }
@@ -94,7 +99,7 @@ export class AuthController {
             const valid = await this.isValid(personId, token);
             if (valid === true) {
                 Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
-                return await this.personPriviliged(person);
+                return await this.personPrivileged(person);
             }
         } else if (person === null && this.isLocalRequest(token)) {
             return {isAdmin: false, isStaff: true};

@@ -32,23 +32,27 @@ services:
         expose:
             - ${AUTOTEST_PORT}
         restart: always
+        # for localhost testing: comment out the next field (user)
+        # but ensure it is always UNCOMMENTED when committing
         user: "${UID}:${GID}"
         volumes:
             - "${HOST_DIR}:${PERSIST_DIR}"
             - "/var/run/docker.sock:/var/run/docker.sock"
     db:
-        command: --quiet --slowms 250
+        # mongo logs are almost never interesting
+        # but if you have a problem, remove the logpath
+        command: --slowms 250 --quiet --logpath /dev/null
         container_name: db
         environment:
           - MONGO_INITDB_ROOT_USERNAME
           - MONGO_INITDB_ROOT_PASSWORD
         ports:
             - "27017:27017"
-        image: mongo:3-jessie
+        image: mongo:5.0.14
         restart: always
         user: "${UID}"
         volumes:
-            - /var/opt/classy/db:/data/db
+             - "${HOST_DIR}/db:/data/db"
     portal:
         build:
             args:

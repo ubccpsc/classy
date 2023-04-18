@@ -17,33 +17,55 @@ export class DockerListImageView {
         this.list = list;
     }
 
+    private imageMatches(checkedId: string, imageId: string) {
+        if (checkedId === null || imageId === null) {
+            // fail fast; nulls never mach anyways
+            return false;
+        }
+
+        // could be an exact match, but this is safer
+        if (checkedId.indexOf(imageId) >= 0) {
+            return true;
+        }
+        return false;
+    }
+
     public async bind(dataSource: any, state: any) {
         try {
             const data = await this.getDockerImages(dataSource.url, dataSource.options);
             const dockerImages: DockerImage[] = data.map((d) => {
                 return {
                     id: d.Id.substring(7, 19), // Strip off "sha256:" and show first 12 characters
-                    tag: d.RepoTags[0], // Only use the first tag (they are sorted alphabetically)
+                    tag: JSON.stringify(d.RepoTags), // d.RepoTags[0], // Only use the first tag (they are sorted alphabetically)
                     created: new Date(d.Created * 1000) // Convert the Unix timestamp in seconds to milliseconds
                 };
             });
             const pendingAdditionsFragment = document.createDocumentFragment();
             const listItems = this.list.querySelectorAll("ons-list-item:not(:first-child)");
 
+            if (typeof state === "undefined" || state === null || typeof state.checkedItemSha !== "string") {
+                state = {checkedItemSha: "INVALIDSHATHATWILLNEVEREXIST"};
+            }
+
             for (const image of dockerImages) {
+                // Log.trace("DockerListImageView::bind(..) - checkedSha: " + state.checkedItemSha + "; id: " + image.id +
+                //     "; match: " + this.imageMatches(state.checkedItemSha, image.id));
+
                 let exists = false;
                 for (const item of listItems) {
                     const id = item.querySelector("label[for] > ons-row > ons-col").innerText;
+                    Log.trace("DockerListImageView::bind(..) - loop candidate; id: " + image.id + "; innerText: " + id);
                     if (image.id.startsWith(id)) {
                         exists = true;
-                        if (image.tag === state.checkedItemTag) {
-                            this.setCheckedItem(item);
+                        if (this.imageMatches(state.checkedItemSha, image.id)) {
+                            Log.trace("DockerListImageView::bind(..) - loop candidate check match; checked: " +
+                                state.checkedItemSha + "; id: " + image.id);
                         }
                         break;
                     }
                 }
                 if (!exists) {
-                    const item = DockerListImageView.generateListItem(image, image.tag === state.checkedItemTag);
+                    const item = DockerListImageView.generateListItem(image, this.imageMatches(state.checkedItemSha, image.id));
                     pendingAdditionsFragment.appendChild(item);
                 }
             }
@@ -82,6 +104,12 @@ export class DockerListImageView {
     }
 
     public static generateListItem(image: DockerImage, checked: boolean): DocumentFragment {
+        Log.trace("DockerListImageView::generateListItem( " + image.id + ", " + checked + " )");
+
+        let tagString = image.tag;
+        tagString = tagString.replace(",", ",<br/>");
+        let dString = image.created.toLocaleString();
+        dString = dString.replace(", ", " @ <br/>");
 
         return document.createRange().createContextualFragment(`
                 <ons-list-item tappable>
@@ -91,8 +119,8 @@ export class DockerListImageView {
                     <label for="radio-${image.id}" class="center">
                         <ons-row>
                             <ons-col>${image.id}</ons-col>
-                            <ons-col>${image.tag}</ons-col>
-                            <ons-col>${image.created}</ons-col>
+                            <ons-col style="text-align: center">${tagString}</ons-col>
+                            <ons-col style="text-align: center">${dString}</ons-col>
                         </ons-row>
                     </label>
                 </ons-list-item>

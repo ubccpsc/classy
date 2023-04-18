@@ -92,7 +92,7 @@ describe("DatabaseController", () => {
     });
 
     it("Should not be able to get an invalid result.", async () => {
-        const result = await dc.getResult("invalidDeliv", "invalidRepo", "invalidSHA" + Date.now());
+        const result = await dc.getResult("invalidDeliv", "invalidRepo", "invalidSHA" + Date.now(), null);
         expect(result).to.be.null;
     });
 

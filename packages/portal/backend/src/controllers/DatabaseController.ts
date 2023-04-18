@@ -313,7 +313,7 @@ export class DatabaseController {
     public async writeResult(record: Result): Promise<boolean> {
         Log.trace("DatabaseController::writeResult(..) - start");
 
-        const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA);
+        const resultExists = await this.getResult(record.delivId, record.repoId, record.commitSHA, record.input.target.ref);
         if (resultExists === null) {
             Log.trace("DatabaseController::writeResult(..) - new");
             return await this.writeRecord(this.RESULTCOLL, record);
@@ -661,7 +661,7 @@ export class DatabaseController {
                 }
 
                 Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
-                const client = await MongoClient.connect(dbHost);
+                const client = await MongoClient.connect(dbHost, {serverSelectionTimeoutMS: 500});
                 if (kind === "slow") {
                     Log.trace("DatabaseController::open() - creating slowDb");
                     this.slowDb = await client.db(dbName);
@@ -860,11 +860,14 @@ export class DatabaseController {
      * @param repoId
      * @param sha
      */
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<Result | null> {
+    public async getResult(delivId: string, repoId: string, sha: string, ref: string | null): Promise<Result | null> {
         const results = await this.getResults(delivId, repoId) as Result[];
         let result = null;
         for (const res of results) {
-            if (res.commitSHA === sha) {
+            if (ref !== null && ref === res?.input?.target?.ref && res.commitSHA === sha) {
+                // if the ref is specified, match that too
+                result = res;
+            } else if (res.commitSHA === sha) {
                 // there should only be one of these <delivId, SHA> tuples, but if there are more than one this will return the last one
                 result = res;
             }

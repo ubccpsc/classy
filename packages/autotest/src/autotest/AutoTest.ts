@@ -135,7 +135,7 @@ export abstract class AutoTest implements IAutoTest {
         const config = Config.getInstance();
         let numJobs = this.DEFAULT_NUM_JOBS;
         if (config.hasProp(ConfigKey.autotestJobs) === true) {
-            numJobs = Number.parseInt(config.getProp(ConfigKey.autotestJobs), 10);
+            numJobs = Util.toInteger(config.getProp(ConfigKey.autotestJobs), this.DEFAULT_NUM_JOBS);
         }
         this.numJobs = numJobs;
         Log.info("AutoTest::<init> - starting AutoTest; numJobs: " + this.numJobs);
@@ -524,9 +524,28 @@ export abstract class AutoTest implements IAutoTest {
         let gradePayload: AutoTestGradeTransport;
         let record = job.record;
         const input = job.input;
+
+        // update the containerInfo so it is current
+        // usually there will be no difference, but for long queues we would like
+        // to ensure the grading container is current (e.g., if the grader is changed
+        // while a job is on the queue, the current grader should be used, not the
+        // grade that was specified when the request was made)
+        try {
+            const containerConfig = await this.classPortal.getContainerDetails(input.target.delivId);
+            if (containerConfig !== null && input.containerConfig.dockerImage !== containerConfig.dockerImage) {
+                Log.info("AutoTest::handleTick(..) - stale job; old container: " +
+                    input.containerConfig.dockerImage + "; new container: " + containerConfig.dockerImage);
+                input.containerConfig = containerConfig;
+            }
+        } catch (err) {
+            Log.warn("AutoTest::handleTick(..) - problem updating container config: " + err.message);
+            // proceed without updating container config
+        }
+
         input.target.tsJobStart = start;
         Log.info("AutoTest::handleTick(..) - start; deliv: " + input.target.delivId +
-            "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
+            "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(
+                input.target.commitSHA) + "; container: " + input.containerConfig.dockerImage);
 
         try {
             await job.prepare();
@@ -602,7 +621,8 @@ export abstract class AutoTest implements IAutoTest {
                     const lenBefore = this.jobs.length;
                     this.jobs.splice(i, 1);
                     const lenAfter = this.jobs.length;
-                    Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore + "; # after: " + lenAfter + "; commitURL: " + commitURL);
+                    Log.trace("Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore +
+                        "; # after: " + lenAfter + "; commitURL: " + commitURL);
                     removed = true;
                 }
             }

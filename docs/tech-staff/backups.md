@@ -8,7 +8,7 @@
 
 ## Database
 
-Add a cron job to backup the database daily at 0400. MONGO_INITDB_ROOT_USERNAME and MONGO_INITDB_ROOT_PASSWORD should
+Add a cron job to back up the database daily at 0400. `MONGO_INITDB_ROOT_USERNAME` and `MONGO_INITDB_ROOT_PASSWORD` should
    match the values set in the .env file.
 
     ```bash

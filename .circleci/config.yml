@@ -6,14 +6,11 @@ version: 2
 jobs:
   build:
     docker:
-      # specify the version you desire here
-      - image: cimg/node:12.22.7
-      - image: circleci/mongo:3.6
-
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/mongo:3.4.4
+        # Specify service dependencies here if necessary
+        # CircleCI maintains a library of pre-built images
+        # documented at https://circleci.com/docs/2.0/circleci-images/
+      - image: cimg/node:18.12
+      - image: circleci/mongo:5.0
 
     working_directory: ~/project
 
@@ -112,7 +109,7 @@ jobs:
             name: Configure local git
             when: on_success
 
-            ## WORKS
+     ## WORKS
       - run:
             command: |
                       set -e
@@ -127,6 +124,10 @@ jobs:
             command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
             name: Converting backend test results to HTML
             when: on_success
+
+      # Makes docker.sock available to AutoTest docker endpoint tests
+      - setup_remote_docker:
+            version: 20.10.18
 
       - run:
             command: |

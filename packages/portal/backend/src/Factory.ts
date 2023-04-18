@@ -115,7 +115,7 @@ export class Factory {
     }
 
     /**
-     * Gets the name associated with the Backend instance from the .env file.
+     * Gets the name associated with the BackendDaemon instance from the .env file.
      *
      * @returns {string | null}
      */

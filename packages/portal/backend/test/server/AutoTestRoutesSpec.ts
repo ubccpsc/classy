@@ -139,7 +139,8 @@ describe("AutoTest Routes", function () {
         const body = TestHarness.createResult(TestHarness.DELIVID0, TestHarness.REPONAME1, [TestHarness.USER1.id], 50);
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -167,7 +168,8 @@ describe("AutoTest Routes", function () {
         delete body.delivId; // remove required field
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -181,7 +183,8 @@ describe("AutoTest Routes", function () {
     it("Should respond to a valid result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
+        const ref = encodeURIComponent("refs/heads/main");
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha/" + ref;
         let body = null;
         try {
             response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -198,7 +201,8 @@ describe("AutoTest Routes", function () {
     it("Should reject an unauthorized result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
+        const ref = encodeURIComponent("refs/heads/main");
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha/" + ref;
         let body = null;
         try {
             response = await request(app).get(url).set("token", "INVALID");
@@ -225,7 +229,8 @@ describe("AutoTest Routes", function () {
         const body = JSON.stringify(input);
 
         try {
-            response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+            response = await request(app).post(url).send(body).set("token",
+                Config.getInstance().getProp(ConfigKey.autotestSecret));
         } catch (err) {
             Log.test("ERROR: " + err);
         }
@@ -510,117 +515,161 @@ describe("AutoTest Routes", function () {
         }
     });
 
-    describe("GET /portal/at/docker/images", function () {
-        const url = "/portal/at/docker/images";
+    describe("Grading Image Docker Tasks (Portal side)", function () {
+        // NOTE: these only test the Portal side of the grading image endpoints.
+        // This is because AutoTest is not actually running here. Validating that
+        // the endpoints are working correctly should be tested more completely
+        // on the AutoTest side. This is specifically why success conditions are
+        // not validated here.
 
-        it("Should respond 401 if user is not an admin.", async function () {
-            let res: any;
+        describe("GET /portal/at/docker/images", function () {
+            const url = "/portal/at/docker/images";
 
-            try {
-                res = await request(app).get(url).set("user", TestHarness.REALUSER1.github);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(401);
-            }
+            it("Should respond 401 if user is not an admin.", async function () {
+                let res: any;
+
+                try {
+                    res = await request(app).get(url).set("user", TestHarness.REALUSER1.github);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(401);
+                }
+            });
+            it("Should respond 400 if the user is not in the request header.", async function () {
+                let res: any;
+
+                try {
+                    res = await request(app).get(url);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(400);
+                }
+            });
+            it("Should respond 400 if the user is not a GitHub person.", async function () {
+                let res: any;
+
+                try {
+                    res = await request(app).get(url).set("user", "fakeUser123");
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(400);
+                }
+            });
+            it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
+                this.timeout(15000);
+                let res: any;
+
+                try {
+                    res = await request(app).get(url).set("user", TestHarness.ADMIN1.github);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(500);
+                }
+            });
+            // it("Should respond 400 if the user privileges cannot be determined.");
+            // it("Should respond 400 if the AutoTest service is malformed.");
         });
-        it("Should respond 400 if the user is not in the request header.", async function () {
-            let res: any;
 
-            try {
-                res = await request(app).get(url);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(400);
-            }
-        });
-        it("Should respond 400 if the user is not a GitHub person.", async function () {
-            let res: any;
+        describe("POST /portal/at/docker/image", function () {
+            const url = "/portal/at/docker/image";
+            const body = {};
 
-            try {
-                res = await request(app).get(url).set("user", "fakeUser123");
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(400);
-            }
-        });
-        it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
-            this.timeout(15000);
-            let res: any;
+            it("Should respond 401 if user is not an admin.", async function () {
+                let res: any;
 
-            try {
-                res = await request(app).get(url).set("user", TestHarness.ADMIN1.github);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(500);
-            }
+                try {
+                    // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
+                    res = await request(app).post(url).set("user", TestHarness.REALUSER1.github).send(body);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(401);
+                }
+            });
+            it("Should respond 400 if the user is not in the request header.", async function () {
+                let res: any;
+
+                try {
+                    res = await request(app).post(url).send(body);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(400);
+                }
+            });
+            it("Should respond 400 if the user is not a GitHub person.", async function () {
+                let res: any;
+
+                try {
+                    res = await request(app).post(url).set("user", "fakeUser123").send(body);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(400);
+                }
+            });
+            it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
+                this.timeout(15000);
+                let res: any;
+
+                try {
+                    res = await request(app).post(url).set("user", TestHarness.ADMIN1.github).send(body);
+                } catch (err) {
+                    res = err;
+                } finally {
+                    expect(res).to.haveOwnProperty("status");
+                    expect(res.status).to.equal(500);
+                }
+            });
+            // This is only for debugging, to work, an AutoTest instance must be running
+            // on the host (that is why this is skipped by default)
+            it.skip("Should be able to create a grading image, if AT is running.", async function () {
+                this.timeout(5 * 60 * 1000); // up to 5 mins
+                let res: any;
+
+                try {
+                    const validBody = {
+                        remote: "https://github.com/minidocks/base.git",
+                        tag: "tagname",
+                        file: "Dockerfile"
+                    };
+
+                    let parserData = "";
+                    const myParser = function (parserRes: any, callback: any) {
+                        parserRes.on("data", function (chunk: any) {
+                            Log.info("AutoTestRoutesSpec::myParser chunk; ts: " + Date.now() + "; chunk: " + chunk);
+                            parserData += chunk;
+                        });
+                        parserRes.on("end", function () {
+                            Log.info("AutoTestRoutesSpec::myParser done");
+                            callback(null, parserData);
+                        });
+                    };
+
+                    res = await request(app).post(url).set("user", TestHarness.ADMIN1.github)
+                        .set("connection", "keep-alive").parse(myParser).send(validBody);
+
+                } catch (err) {
+                    res = err;
+                } finally {
+                    Log.test("Response code: " + res.status);
+                    const finalBody = res.body;
+                    expect(res.status).to.equal(200);
+                    expect(finalBody.indexOf("Successfully tagged tagname:latest")).to.be.greaterThan(0);
+                }
+            });
         });
-        // it("Should respond 400 if the user privileges cannot be determined.");
-        // it("Should respond 400 if the AutoTest service is malformed.");
     });
 
-    describe("POST /portal/at/docker/image", function () {
-        const url = "/portal/at/docker/image";
-        const body = {};
-
-        it("Should respond 401 if user is not an admin.", async function () {
-            let res: any;
-
-            try {
-                // Possibly NOT working as REALUSER1 is actually a fake user but test is still passing
-                res = await request(app).post(url).set("user", TestHarness.REALUSER1.github).send(body);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(401);
-            }
-        });
-        it("Should respond 400 if the user is not in the request header.", async function () {
-            let res: any;
-
-            try {
-                res = await request(app).post(url).send(body);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(400);
-            }
-        });
-        it("Should respond 400 if the user is not a GitHub person.", async function () {
-            let res: any;
-
-            try {
-                res = await request(app).post(url).set("user", "fakeUser123").send(body);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(400);
-            }
-        });
-        it("Should respond 500 if forwarding the request to AutoTest fails with body.", async function () {
-            this.timeout(15000);
-            let res: any;
-
-            try {
-                res = await request(app).post(url).set("user", TestHarness.ADMIN1.github).send(body);
-            } catch (err) {
-                res = err;
-            } finally {
-                expect(res).to.haveOwnProperty("status");
-                expect(res.status).to.eq(500);
-            }
-        });
-        // it("Should respond 400 if the AutoTest service is malformed.");
-        // it("Should respond 400 if the user privileges cannot be determined.");
-    });
 });

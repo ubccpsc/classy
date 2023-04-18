@@ -5,6 +5,10 @@ events {
 http {
     include    /etc/nginx/proxy.conf;
 
+    # Use simplified logging to better match standard Classy logs
+    log_format classy '$time_local; $remote_addr: $request $status';
+    access_log /dev/stdout classy;
+
     server {
         listen   8080 default_server;
         listen   [::]:8080;

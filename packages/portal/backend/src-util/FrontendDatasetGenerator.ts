@@ -82,9 +82,21 @@ export class FrontendDatasetGenerator {
         person.kind = PersonKind.STUDENT;
         await this.dc.writePerson(person);
 
+        const LABS = ['L1A', 'L1B'];
         for (let i = 0; i < 50; i++) {
             person = TestHarness.getPerson("student-" + i);
             person.kind = PersonKind.STUDENT;
+            const labV = this.getRandomInt(100);
+
+            if (labV < 33) {
+                person.labId = LABS[0];
+            }
+            // 33-66 remains unspecified
+            if (labV > 66) {
+                person.labId = LABS[1];
+            }
+            Log.info("lab value: " + labV + "; person lab: " + person.labId);
+
             await this.dc.writePerson(person);
         }
     }

@@ -5,7 +5,7 @@
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 
-import Server from "@autotest/server/Server";
+import AutoTestServer from "@autotest/server/AutoTestServer";
 
 /**
  * Starts the server; does not listen to whether the start was successful.
@@ -18,7 +18,7 @@ export class AutoTestDaemon {
         const portNum = Number(Config.getInstance().getProp(ConfigKey.autotestPort));
 
         // start server
-        const s = new Server();
+        const s = new AutoTestServer();
         s.setPort(portNum);
         s.start().then(function (val: boolean) {
             Log.info("AutoTestDaemon::initServer() - started: " + val);

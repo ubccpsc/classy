@@ -7,7 +7,7 @@
     - [Container Input](#container-input)
     - [Container Output](#container-output)
     - [Dockerfile](#dockerfile)
-    - [Dockerfile Github Repository](#dockerfile-github-repository)
+    - [Dockerfile GitHub Repository](#dockerfile-github-repository)
   - [QA Container Checklist](#qa-container-checklist)
     - [Development Environment](#development-environment)
     - [Staging Environment](#staging-environment)
@@ -23,7 +23,7 @@
 
 ## Overview
 
-`AutoTest` can grade an assignment each time a student pushes code to a Github repository. The student code is mounted to a constant location, inside the container, which allows customized scripts to execute tests against it. When the script produces grade output data based on instructor criteria, the grade information is taken by AutoTest to be stored in the database. The grade records accumulate in the database, as they are produced in every successful grading run. Grading runs can occur each time a student pushes code or only when a student requests a grade. If a grade is requested by a student for a commit, feedback for the student produced in the container, is posted to the student in their Github repository.
+`AutoTest` can grade an assignment each time a student pushes code to a GitHub repository. The student code is mounted to a constant location, inside the container, which allows customized scripts to execute tests against it. When the script produces grade output data based on instructor criteria, the grade information is taken by AutoTest to be stored in the database. The grade records accumulate in the database, as they are produced in every successful grading run. Grading runs can occur each time a student pushes code or only when a student requests a grade. If a grade is requested by a student for a commit, feedback for the student produced in the container, is posted to the student in their GitHub repository.
 
 <img src="../assets/autograde-flow.svg"/>
 
@@ -49,9 +49,9 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] `/output/staff` sub-directory contains:
   - `report.json` grading file at the end of a successful grading run that exits with a success `0` exit code.
   - additional files that TAs and instructors need access to after the grading run.
-- [ ] The `report.json` file is valid JSON that follows the [Report Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L72-L115).
+- [ ] The `report.json` file is valid JSON that follows the [Report Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L72-L115).
 - [ ] References to attachments are recorded in the `attachments` property of the `report.json` following the [Attachment Schema](https://github.com/ubccpsc/classy/blob/20bbcc6bc3b3adde0b84a70803605e866ba1e10f/packages/common/types/ContainerTypes.ts#L123-131).
-- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, (non-0 exit code) Classy will provide this [default report.json file](https://github.com/ubccpsc/classy/blob/master/packages/autotest/src/autotest/GradingJob.ts#L123-L131).
+- [ ] Your container logic assumes that if code stalls, encounters an infinite loop, or the container times out, (non-0 exit code) Classy will provide this [default report.json file](https://github.com/ubccpsc/classy/blob/main/packages/autotest/src/autotest/GradingJob.ts#L123-L131).
 - [ ] You container logic assumes that any data that is NOT output to the appropriate `/output` path WILL BE LOST FOREVER after a grading run finishes.
 
 ### [Dockerfile](#dockerfile-explained)
@@ -62,16 +62,16 @@ This checklist ensures that you have implemented key technical and business logi
 - [ ] **COPY** directive is declared to copy any files cloned from your Git repository to your container.
 - [ ] **CMD** directive is declared to trigger your AutoGrade grading logic each time the container is started by AutoTest.
 
-### [Dockerfile Github Repository](#autograde-dockerfile-repository)
+### [Dockerfile GitHub Repository](#autograde-dockerfile-repository)
 
 - [ ] Dockerfile is named `Dockerfile` and placed in root directory of repository by default or customized with [Build Syntax Suffix](https://docs.docker.com/engine/reference/commandline/build/)
 - [ ] Your Dockerfile and assets are stored in Git repository:
   - Git repository is publicly accessible to be cloned by Classy.
     OR
-  - Git repository is privately accessible and a Github token has been given to technical staff to be added to the Classy environmental configuration file.
-- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same Github token to setup their AutoGrade containers.
+  - Git repository is privately accessible and a GitHub token has been given to technical staff to be added to the Classy environmental configuration file.
+- [ ] If sharing a Classy instance with instructors, the other instructors can also use the same GitHub token to configure their AutoGrade containers.
 
-**NOTE:** A Classy VM can only have a **ONE** Github clone token. All private Dockerfile repositories must ensure that this token authorizes access to all relevant repositories.
+**NOTE:** A Classy VM can only have a **ONE** GitHub clone token. All private Dockerfile repositories must ensure that this token authorizes access to all relevant repositories.
 
 ## QA Container Checklist
 
@@ -118,7 +118,7 @@ Follow the steps from Staging in Production on your course Classy server (ie. cs
 
 A Dockerfile contains steps to build a container, which involves downloading dependencies, compiling and installing code, so that a built image is ready to perform a task during execution time. As an AutoGrade container is a Docker image, and a Dockerfile must be written to create a Docker image, a Dockerfile must be written to create an AutoGrade image.
 
-AutoTest listens for Github web-hooks to detect if a student has pushed code to their Github repository. If a deliverable, in Classy, is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest executes the Docker container. The `CMD` directive in your Dockerfile is the command that executes, in the pre-built image, each time that student code is ready to be graded.
+AutoTest listens for GitHub web-hooks to detect if a student has pushed code to their GitHub repository. If a deliverable, in Classy, is configured to run an AutoGrade container, and AutoTest receives a push notification, AutoTest executes the Docker container. The `CMD` directive in your Dockerfile is the command that executes, in the pre-built image, each time that student code is ready to be graded.
 
 The AutoGrade image that is built will NOT be modified during each grading run. The data produced during the container runtime will also NOT persist after the container completes its grading run, unless data to be persisted is moved to the correct filesystem path. The grading run ends as soon as the container encounters an unhandled exception, a timeout, or the CMD directive fails or successfully runs to completion. ONLY data that is moved to the Container Output path of your AutoGrade directory will persist after the container completes its run.
 
@@ -172,7 +172,7 @@ Example of a Dockerfile that builds a basic AutoGrade container to produce hardc
 
 ### Container Input Details
 
-AutoTest mounts and checks out student code to the latest commit, at the time when the code was pushed to Github, inside an AutoGrade container to make it accessible for marking. The assignment can be found in the `/assn` directory of the container every grading run. Therefore, your programming logic should assume that the `/assn` directory contains the student assignment. The `.git` folder is included in the assignment directory, which allows the instructor to use additional Git commands to access Git history. Remember to install Git in your container before using Git commands.
+AutoTest mounts and checks out student code to the latest commit, at the time when the code was pushed to GitHub, inside an AutoGrade container to make it accessible for marking. The assignment can be found in the `/assn` directory of the container every grading run. Therefore, your programming logic should assume that the `/assn` directory contains the student assignment. The `.git` folder is included in the assignment directory, which allows the instructor to use additional Git commands to access Git history. Remember to install Git in your container before using Git commands.
 
 AutoTest also inputs two environment variables that you can use to customize or automate features of your grading logic. These are optional environment variables that are not necessary to implement in your container.
 
@@ -183,9 +183,9 @@ AutoTest also inputs two environment variables that you can use to customize or 
   - **ASSIGNMENT**: string = The name of the deliverable
   - **EXEC_ID**: string = The Docker container execution ID (long random SHA)
   - **INPUT**: string = JSON stringified input data
-    - **ContainerInput** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L14-L21)
-      - **CommitTarget** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/ContainerTypes.ts#L36-L59)
-      - **AutoTestConfigTransport** [Schema](https://github.com/ubccpsc/classy/blob/master/packages/common/types/PortalTypes.ts#L183-L230)
+    - **ContainerInput** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L14-L21)
+      - **CommitTarget** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/ContainerTypes.ts#L36-L59)
+      - **AutoTestConfigTransport** [Schema](https://github.com/ubccpsc/classy/blob/main/packages/common/types/PortalTypes.ts#L183-L230)
 
 ### Container Output Details
 
@@ -195,7 +195,7 @@ ie. `https://cs999.students.cs.ubc.ca/portal/resource/08dcb3a38c6aa3ccc556385b87
 
 The URL is a protected route accessible by authorized users. A student may only access files from the `student` folder, while admins may access all folders, etc.
 
-Output files that are created by your container should be documented in the `attachments` attribute in the `report.json` file, but it is optional to document the persistant files. The `attachments` attribute allows one to also document the user type that has access to files. If there is a need to do data analysis, these fields may be beneficial, as one does not have to look for files manually in the filesystem where persistant data is archived after the school semester ends.
+Output files that are created by your container should be documented in the `attachments` attribute in the `report.json` file, but it is optional to document the persistent files. The `attachments` attribute allows one to also document the user type that has access to files. If there is a need to do data analysis, these fields may be beneficial, as one does not have to look for files manually in the filesystem where persistent data is archived after the school semester ends.
 
 AutoTest provides input for your AutoGrade container, but it is the responsibility of the instructor to provide output data for AutoTest to consume and persist. Data that is not properly managed will BE LOST FOREVER after a grading run is completed. At a bare minimum, the output data must contain a report.json file that tells AutoTest the grade results of the container run. A `stdio.txt` file will be produced automatically by AutoTest. If log information is output to the console in your container, AutoTest will automatically record the output data and store it for you. However, you may also choose to implement custom logging and output it to the `/output/admin` or `/output/staff` directories with a user role perspective in mind.
 
@@ -213,6 +213,6 @@ AutoTest needs access to the Dockerfile, with any additional supporting files, t
 
 <img src="../assets/dockerfile-classy-admin-portal.png"/>
 
-*Specify a sub-directory location of your Dockerfile with the following # syntax in 'Github URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
+*Specify a subdirectory location of your Dockerfile with the following # syntax in 'GitHub URL' (URL cutoff in UI example: ie. https://github.com/myRepositoryName/example.git#:myFilePath)*
 
 <img src="../assets/subdirectory-dockerfile-classy.png"/>

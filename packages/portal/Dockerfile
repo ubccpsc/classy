@@ -1,4 +1,4 @@
-FROM node:12-alpine
+FROM node:18-alpine
 
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
@@ -29,4 +29,4 @@ RUN chmod -R a+r /app \
 COPY ./plugins/"${PLUGIN}"/portal/backend ./plugins/"${PLUGIN}"/portal/backend
 RUN cd ./plugins/"${PLUGIN}"/portal/backend && yarn run build
 
-CMD ["node", "--require", "/app/node_modules/tsconfig-paths/register", "/app/packages/portal/backend/src/Backend.js"]
+CMD ["node", "--require", "/app/node_modules/tsconfig-paths/register", "/app/packages/portal/backend/src/BackendDaemon.js"]

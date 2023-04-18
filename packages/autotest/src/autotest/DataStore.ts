@@ -12,7 +12,7 @@ export interface IDataStore {
     /**
      * Gets the push event record for a given commitURL. If more than
      * one PushRecord is saved, return the one associated with the
-     * main/master branch. If there isn't a main/master push, return the
+     * main/master branch. If there is not a main/master push, return the
      * most recent one.
      */
     getPushRecord(commitURL: string): Promise<CommitTarget | null>;

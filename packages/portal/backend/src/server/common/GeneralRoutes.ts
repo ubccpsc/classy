@@ -209,10 +209,12 @@ export default class GeneralRoutes implements IREST {
                             Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
                             res.send(500, err.message);
                         }
+                        return next();
                     });
                     rs.on("end", () => {
                         Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
                         rs.close();
+                        return next();
                     });
                     rs.pipe(res);
                 }
@@ -220,8 +222,6 @@ export default class GeneralRoutes implements IREST {
                 Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
                 res.send(404, err.message);
             }
-
-            return next();
         }).catch(function (err) {
             Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
             if (err.message === "401") {
@@ -466,7 +466,7 @@ export default class GeneralRoutes implements IREST {
 
             const tc: TeamController = new TeamController();
             const teams = await tc.getTeamsForPerson(person);
-            Log.trace("GeneralRoutes::performGetTeams(..) - in teams: " + teams);
+            Log.trace("GeneralRoutes::performGetTeams(..) - #teams: " + teams.length);
             const teamTrans: TeamTransport[] = [];
             for (const team of teams) {
                 teamTrans.push(tc.teamToTransport(team));
@@ -487,7 +487,7 @@ export default class GeneralRoutes implements IREST {
 
             const rc = new RepositoryController();
             const repos = await rc.getReposForPerson(person);
-            Log.trace("GeneralRoutes::performGetRepos(..) - repos: " + repos);
+            Log.trace("GeneralRoutes::performGetRepos(..) - #repos: " + repos.length);
             const repoTrans: RepositoryTransport[] = [];
             for (const repo of repos) {
                 if (repo.URL !== null) {
