@@ -377,7 +377,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             // not yet processed
             const onQueue = this.isOnQueue(input);
-            let msg = "";
+            let msg;
             if (onQueue === true) {
                 msg = "This commit is still queued for processing against `#" + info.delivId + "`.";
                 msg += " Your results will be posted here as soon as they are ready.";
@@ -654,7 +654,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; no prior request, no delay");
                     return null; // no prior requests
                 } else {
-                    if (reqTimestamp > nextTimeslot) {
+                    // if within a buffered window, just be flexible and allow the request
+                    // this prevents feedback like 'you must wait 126 ms'
+                    const NEXT_BUFFER = 60 * 1000; // if within a minute, allow it
+                    if (reqTimestamp >= (nextTimeslot - NEXT_BUFFER)) {
                         Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; enough time passed, no delay");
                         return null; // enough time has passed
                     } else {
@@ -669,6 +672,14 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
+    /**
+     * Returns the timestamp in ms of the next valid execution timeslot.
+     *
+     * If no prior request has been made, this is null.
+     *
+     * @param delivId
+     * @param userName
+     */
     protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");
         const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
