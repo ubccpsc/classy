@@ -147,6 +147,7 @@ export default class Config {
                 autotestUrl: process.env.AUTOTEST_URL,
                 autotestPort: process.env.AUTOTEST_PORT,
                 autotestSecret: process.env.AUTOTEST_SECRET,
+                autotestJobs: process.env.AUTOTEST_JOBS,
 
                 patchId: process.env.PATCH_ID,
                 patchToolUrl: process.env.PATCH_TOOL_URL,

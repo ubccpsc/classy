@@ -67,9 +67,7 @@ packages/autotest/test/data/
 
 # SSL
 ssl/
-copy-certs.sh.log
-start-classy.sh.log
-stop-classy.sh.log
+ssl.log
 
 # Excludes plugins aside default plugin
 plugins/*

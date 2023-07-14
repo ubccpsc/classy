@@ -78,14 +78,18 @@ export interface IClassPortal {
     sendResult(result: AutoTestResult): Promise<Payload>;
 
     /**
-     * Get result for a given delivId / repoId pair. Will return null if a result does not exist.
+     * Get result for a given <delivId, repoId, SHA, ref?> tuple If
+     * ref is not specified, any ref will be matched.
+     *
+     * Return null if a result does not exist.
      *
      * @param {string} delivId
      * @param {string} repoId
      * @param {string} sha
+     * @param {string} ref?
      * @returns {Promise<AutoTestResultTransport | null>}
      */
-    getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null>;
+    getResult(delivId: string, repoId: string, sha: string, ref?: string): Promise<AutoTestResultTransport | null>;
 
     /**
      * Converts a grade report into the feedback returned by the container. The default implementation
@@ -274,21 +278,8 @@ export class ClassPortal implements IClassPortal {
 
         let feedback: string = "";
         try {
-            if (res.input.target.kind === "check") {
-                let state = "";
-                if (res.output.state === "SUCCESS" && typeof res.output.report.result !== "undefined") {
-                    state = res.output.report.result;
-                } else {
-                    state = res.output.state;
-                }
-                feedback = `AutoTest status for commit: **_${state}_**`;
-                Log.info("ClassPortal::formatFeedback(..) - check; repo: " +
-                    res.repoId + "; SHA: " + Util.shaHuman(res.commitSHA) + "; status: " + state);
-            } else {
-                // TODO: this could actually be sent to the frontend for consideration in the course-specific classy controller
-                const gradeRecord = res.output.report;
-                feedback = gradeRecord.feedback;
-            }
+            const gradeRecord = res.output.report;
+            feedback = gradeRecord.feedback;
         } catch (err) {
             Log.error("ClassPortal::formatFeedback(..) - ERROR; message: " + err.message);
             return null;
@@ -347,10 +338,16 @@ export class ClassPortal implements IClassPortal {
         }
     }
 
-    public async getResult(delivId: string, repoId: string, sha: string): Promise<AutoTestResultTransport | null> {
-        Log.info("ClassPortal::getResut( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + " ) - start");
+    public async getResult(delivId: string, repoId: string, sha: string, ref?: string): Promise<AutoTestResultTransport | null> {
+        if (!ref || ref === "") { // undefined, null, "" should match any result
+            ref = "<ANY>";
+        }
+
+        Log.info("ClassPortal::getResult( " + delivId + ", " + repoId + ", " + Util.shaHuman(sha) + ", " + ref + " ) - start");
         const start = Date.now();
-        const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha;
+
+        const refStr = encodeURIComponent(ref); // refs can have / in them, so they need to be encoded
+        const url = this.host + ":" + this.port + "/portal/at/result/" + delivId + "/" + repoId + "/" + sha + "/" + refStr;
 
         try {
             const opts: RequestInit = {

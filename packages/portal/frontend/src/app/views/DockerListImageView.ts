@@ -18,6 +18,11 @@ export class DockerListImageView {
     }
 
     private imageMatches(checkedId: string, imageId: string) {
+        if (checkedId === null || imageId === null) {
+            // fail fast; nulls never mach anyways
+            return false;
+        }
+
         // could be an exact match, but this is safer
         if (checkedId.indexOf(imageId) >= 0) {
             return true;
@@ -38,9 +43,14 @@ export class DockerListImageView {
             const pendingAdditionsFragment = document.createDocumentFragment();
             const listItems = this.list.querySelectorAll("ons-list-item:not(:first-child)");
 
+            if (typeof state === "undefined" || state === null || typeof state.checkedItemSha !== "string") {
+                state = {checkedItemSha: "INVALIDSHATHATWILLNEVEREXIST"};
+            }
+
             for (const image of dockerImages) {
-                Log.trace("DockerListImageView::bind(..) - checkedSha: " + state.checkedItemSha + "; id: " + image.id +
-                    "; match: " + this.imageMatches(state.checkedItemSha, image.id));
+                // Log.trace("DockerListImageView::bind(..) - checkedSha: " + state.checkedItemSha + "; id: " + image.id +
+                //     "; match: " + this.imageMatches(state.checkedItemSha, image.id));
+
                 let exists = false;
                 for (const item of listItems) {
                     const id = item.querySelector("label[for] > ons-row > ons-col").innerText;

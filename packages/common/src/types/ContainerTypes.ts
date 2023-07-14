@@ -1,14 +1,17 @@
 import {AutoTestConfigTransport} from "./PortalTypes";
 
 /**
- * The result of the grading container after it has run. Set by the Grader
- * service.
+ * These capture how a GraderJob completed. It is only a reflection
+ * of the container state; SUCCESS can mean that the container
+ * completed successfully but all the tests in the container failed.
+ *
+ * Use the 'result' field in the grade report to figure out how the
+ * Grader actually interpreted the execution.
  */
-
 export enum ContainerState {
-    SUCCESS = "SUCCESS",
-    FAIL = "FAIL",
-    TIMEOUT = "TIMEOUT",
+    SUCCESS = "SUCCESS", // Container exited (possibly with a non-zero code)
+    FAIL = "FAIL", // Container exited with -10
+    TIMEOUT = "TIMEOUT", // Container was killed by Docker for taking too long
     NO_REPORT = "NO_REPORT" // Container did not write report.json file
 }
 
@@ -47,7 +50,7 @@ export interface CommitTarget {
     adminRequest: boolean; // true if requested by admin or staff
     botMentioned: boolean; // true if explicitly mentioned
     personId: string | null; // string is Person.id if explicitly invoked, null otherwise
-    kind: string; // kind of request: "push" | "standard" | "check"
+    kind: "push" | "standard"; // kind of request
 
     cloneURL: string;
 

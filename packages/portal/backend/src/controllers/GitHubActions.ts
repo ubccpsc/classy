@@ -699,7 +699,7 @@ export class GitHubActions implements IGitHubActions {
             body: JSON.stringify({
                 name: "web",
                 active: true,
-                events: ["commit_comment", "push"],
+                events: ["commit_comment", "push", "issue_comment"],
                 config: {
                     url: webhookEndpoint,
                     secret: secret,
@@ -738,7 +738,7 @@ export class GitHubActions implements IGitHubActions {
                 body: JSON.stringify({
                     name: "web",
                     active: true,
-                    events: ["commit_comment", "push"],
+                    events: ["commit_comment", "push", "issue_comment"],
                     config: {
                         url: webhookEndpoint,
                         secret: secret,

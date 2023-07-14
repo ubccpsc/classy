@@ -183,7 +183,8 @@ describe("AutoTest Routes", function () {
     it("Should respond to a valid result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
+        const ref = encodeURIComponent("refs/heads/main");
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha/" + ref;
         let body = null;
         try {
             response = await request(app).get(url).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
@@ -200,7 +201,8 @@ describe("AutoTest Routes", function () {
     it("Should reject an unauthorized result request", async function () {
 
         let response = null;
-        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha";
+        const ref = encodeURIComponent("refs/heads/main");
+        const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/sha/" + ref;
         let body = null;
         try {
             response = await request(app).get(url).set("token", "INVALID");

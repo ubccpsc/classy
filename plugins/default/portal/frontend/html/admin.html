@@ -59,7 +59,7 @@
         <ons-page id="AdminStudents">
             <ons-list id="AdminStudentsList">
                 <div style="text-align:center; padding: 1em;">
-                    Select Lab (optional):
+                    Lab:
                     <select id="studentsListSelect" style="margin-left: 1em;">
                         <option>-All-</option>
                     </select></div>
@@ -79,15 +79,21 @@
             <ons-list id="AdminStudentsList">
                 <div style="display:flex; flex-direction: row; justify-content: center;">
                     <div style="text-align:center; padding: 1em;  display: flex;">
-                        Select Deliverable:
+                        Deliv:
                         <select id="teamsListSelect" style="margin-left: 1em;">
                             <option value="''">-None-</option>
                         </select></div>
                     <div style="text-align:center; padding: 1em; display: flex;">
-                        Team status:
+                        Status:
                         <select id="teamsListStatusSelect" style="margin-left: 1em;">
                             <option value="formed">Formed</option>
                             <option value="unformed">Unformed</option>
+                        </select></div>
+                    <div style="text-align:center; padding: 1em; display: flex;">
+                        Lab:
+                        <select id="teamsListLabSelect" style="margin-left: 1em;">
+                            <option>-All-</option>
+                            <option>-Unspecified-</option>
                         </select></div>
                 </div>
                 <ons-list-header>Team Results</ons-list-header>
@@ -159,13 +165,26 @@
     <template id="dockerBuildDialog.html">
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
-                <ons-list-header style="text-align: center; font-weight: 700">Build Logs</ons-list-header>
+                <ons-list-header style="text-align: center; font-weight: 700">
+                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
+                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
+                            Close
+                        </ons-button>
+                    </a>
+                    Build Logs
+                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
+                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
+                            Save
+                        </ons-button>
+                    </a>
+                </ons-list-header>
             </div>
             <ons-scroller id="adminDockerBuildDialog-logs-container" style="max-height: 70vh; overflow-y: auto">
                 <div id="adminDockerBuildDialog-logs-text">
                 </div>
             </ons-scroller>
             </div>
+            <!--
             <div id="adminDockerBuildDialog-footer-container">
                 <ons-bottom-toolbar>
                     <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
@@ -180,6 +199,7 @@
                     </a>
                 </ons-bottom-toolbar>
             </div>
+            -->
         </ons-dialog>
     </template>
 
@@ -1018,7 +1038,7 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 0 for no feedback limit (not recommended!), 43200 (12 hours), 86400 (24 hours).
+                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600 (6 hours), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 
@@ -1096,7 +1116,7 @@
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-context-input" type="url"
+                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-context-input" type="url"
                                        required></ons-input>
                         </div>
                         <div class="expandable-content">
@@ -1117,7 +1137,7 @@
                             Version
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-tag-input"></ons-input>
+                            <ons-input class="settingTextInput"  style="width: 20em;" id="docker-image-tag-input"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. You can include the Git revision (commit or tag) for traceability.
@@ -1132,7 +1152,7 @@
                             Dockerfile name
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" id="docker-image-file-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-file-input"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
