@@ -101,3 +101,4 @@ Instructions for getting started with Classy have been sorted into sections base
 ## License
 
 [MIT](LICENSE)
+
