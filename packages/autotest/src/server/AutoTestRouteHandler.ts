@@ -182,6 +182,10 @@ export default class AutoTestRouteHandler {
                 Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
                 await at.handlePushEvent(pushEvent);
                 return pushEvent;
+            case "issue_comment":
+                const prEvent = await GitHubUtil.processIssueComment(body);
+                return prEvent;
+                // no return for now, just fall through to error
             default:
                 Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
@@ -250,16 +254,29 @@ export default class AutoTestRouteHandler {
                 throw new Error("file parameter missing");
             }
 
-            const handler = (stream: any) => {
+            const start = Date.now();
+            const handler = (stream: http.IncomingMessage) => {
+                let heartbeat: NodeJS.Timer = null;
                 stream.on("data", (chunk: any) => {
                     Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+
+                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    // start a new timer after every chunk to keep stream open
+                    heartbeat = setInterval(function () {
+                        Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
+                        const dur = ((Date.now() - start) / 1000).toFixed(0);
+                        stream.push('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
+                    }, 5000); // time between heartbeats
+
                 });
                 stream.on("end", (chunk: any) => {
-                    Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Closing Docker API Connection.");
+                    Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
+                    clearInterval(heartbeat); // if a timer exists, cancel it
                     return next();
                 });
                 stream.on("error", (chunk: any) => {
                     Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
+                    clearInterval(heartbeat); // if a timer exists, cancel it
                     return next();
                 });
                 stream.pipe(res);
@@ -287,10 +304,11 @@ export default class AutoTestRouteHandler {
                 method: "POST"
             };
 
-            Log.info("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
+            Log.info("AutoTestRouteHandler::postDockerImage(..) - building tag: " + tag);
+            Log.trace("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
             const dockerReq = http.request(reqOptions, handler);
             dockerReq.end(0);
-            Log.info("AutoTestRouteHandler::postDockerImage(..) - request made");
+            Log.trace("AutoTestRouteHandler::postDockerImage(..) - request made");
 
             // write something to the response to keep it alive until the stream is emitting
             res.write(""); // NOTE: this is required, if odd

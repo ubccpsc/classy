@@ -153,4 +153,25 @@ export default class Util {
 
         return strValue === "true" || strValue === "yes" || strValue === "1";
     }
+
+    /**
+     * Converts any value to an integer. If the value is not
+     * an integer, the fallback is returned.
+     *
+     * @param value
+     * @param fallback
+     */
+    public static toInteger(value: any, fallback: number): number {
+        try {
+            const num = parseInt(value, 10);
+            if (isNaN(num) === false) {
+                return num;
+            }
+        } catch (err) {
+            // should not happen
+            Log.warn("Util::toInteger( " + value + ", " + fallback + " ) - ERROR: " + err.message);
+        }
+        Log.trace("Util::toInteger( " + value + ", " + fallback + " ) - value not an integer; returning fallback");
+        return fallback;
+    }
 }
