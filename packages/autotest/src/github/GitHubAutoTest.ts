@@ -443,7 +443,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " +
                 target.personId + "; SHA: " + Util.shaHuman(target.commitURL));
             // no time limitations. Because of this, queueing is the same as submitting now.
-            // processComment will take of whether this is already in progress, etc.
+            // processComment will take care of request whether this is already in progress, etc.
             await this.processComment(target, res);
         }
     }

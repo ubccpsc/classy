@@ -203,9 +203,9 @@ describe("GitHubAutoTest", () => {
 
         Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + lq.data.length + "; #jobs: " + jobs.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
-        expect(sq.data).to.have.length(2); // three should be waiting on standard
+        expect(sq.data).to.have.length(3); // three should be waiting on standard
         // this is the main check: if this all worked, a job should have been pushed onto the regression queue
-        expect(lq.data).to.have.length(2); // one should be queued on low
+        expect(lq.data).to.have.length(1); // one should be queued on low
         Log.test("values checked");
     }).timeout(WAIT * 10);
 

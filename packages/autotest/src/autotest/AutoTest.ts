@@ -100,17 +100,18 @@ export abstract class AutoTest implements IAutoTest {
      *
      * @private
      */
-    private readonly MAX_STANDARD_JOBS: number = 2;
+    private readonly MAX_STANDARD_JOBS: number = 3;
 
     /**
      * The maximum number of jobs a single user can have on the low queue
-     * before we refrain from scheduling them at all.
-     *
-     * NOTE: not currently enforced, just logging to see if this happens in practice.
+     * before we overwrite older requests with the newer requests. The
+     * intuition here is that if a student has more than MAX_LOW_JOBS
+     * on the queue, they probably care about the results of the most
+     * recent jobs more than the older jobs.
      *
      * @private
      */
-    private readonly MAX_LOW_JOBS: number = 50;
+    private readonly MAX_LOW_JOBS: number = 10;
 
     /**
      * Max number of execution jobs.
@@ -212,10 +213,13 @@ export abstract class AutoTest implements IAutoTest {
                         " standard jobs queued and # " + lowJobCount +
                         " low jobs queued");
 
-                    // NOTE: this _could_ post a warning back to the user
-                    // that their priority is lowered due to excess jobs
+                    const replacedJob = this.standardQueue.replaceOldestForPerson(input);
+                    // if job is on any other queue, remove it
+                    this.lowQueue.remove(input);
 
-                    this.addToLowQueue(input);
+                    if (replacedJob !== null) {
+                        this.addToLowQueue(replacedJob);
+                    }
                 }
             } else {
                 Log.info("AutoTest::addToStandardQueue(..) - skipped; " +
@@ -233,25 +237,32 @@ export abstract class AutoTest implements IAutoTest {
             "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
         try {
-
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToLowQueue(..) - not added; commit already executing");
                 return;
             }
 
-            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
-            // not currently used, except for this warning
-            if (lowJobCount > this.MAX_LOW_JOBS) {
-                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ queued jobs, " +
-                    "possible DOS?; repo: " + input.target.repoId + "; person: " + input.target.personId);
-            }
-
-            // add to the low queue if it is not already on express or standard
-            if (this.expressQueue.indexOf(input) < 0 && this.standardQueue.indexOf(input) < 0) {
-                this.lowQueue.push(input);
-            } else {
+            if (this.expressQueue.indexOf(input) >= 0 || this.standardQueue.indexOf(input) >= 0) {
+                // already on faster queue
                 Log.info("AutoTest::addToLowQueue(..) - skipped; " +
                     "job already on standard or express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
+                return;
+            }
+
+            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
+            if (lowJobCount > this.MAX_LOW_JOBS) {
+                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ queued jobs, " +
+                    "will replace oldest job with this job; repo: " + input.target.repoId + "; person: " + input.target.personId);
+                // Replace oldest job instead of adding.
+                // This can reduce the impact of DOS attacks
+                // or users that are pushing too rapidly.
+                // Students can always request the results on any job,
+                // even if has been replaced, so a replaced job can
+                // still be graded.
+                this.lowQueue.replaceOldestForPerson(input);
+            } else {
+                // add to the low queue
+                this.lowQueue.push(input);
             }
         } catch (err) {
             Log.error("AutoTest::addToLowQueue(..) - ERROR: " + err);

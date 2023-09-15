@@ -104,6 +104,53 @@ export class Queue {
     }
 
     /**
+     * Replace the oldest item on the queue for a given person.
+     *
+     * @param {ContainerInput} info
+     * @return {ContainerInput | null} the container input that was replaced, or null if no replacement occurred
+     */
+    public replaceOldestForPerson(info: ContainerInput): ContainerInput | null {
+
+        // find oldest index
+        let oldestIndex = -1;
+        let oldestJob: ContainerInput | null = null;
+        let oldestTime = Number.MAX_SAFE_INTEGER;
+        for (let i = 0; i < this.data.length; i++) {
+            const queued = this.data[i];
+            if (queued.target?.personId === info.target?.personId) {
+                if (queued.target?.timestamp < oldestTime) {
+                    oldestIndex = i;
+                    oldestJob = queued;
+                    oldestTime = queued.target.timestamp;
+                }
+            }
+        }
+
+        if (oldestIndex >= 0) {
+            if (info.target.timestamp < oldestJob.target.timestamp) {
+                // if a job is older than the oldest job, just add it to the queue
+                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                    "; job is older than the oldest job, adding to queue");
+                this.push(info);
+                return null;
+            } else {
+                // replace the oldest job with the current job
+                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                    "; replacing sha: " + Util.shaHuman(oldestJob.target.commitSHA) +
+                    "; with sha: " + Util.shaHuman(info.target.commitSHA));
+                this.data.splice(oldestIndex, 1, info);
+                return oldestJob;
+            }
+        } else {
+            // no jobs to replace, just add it to the queue
+            Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                "; no jobs to replace, adding to queue");
+            this.push(info);
+            return null;
+        }
+    }
+
+    /**
      * Returns the index of a given container where equality is
      * determined by identical <commitSHA, delivId, ref (branch)>.
      *
