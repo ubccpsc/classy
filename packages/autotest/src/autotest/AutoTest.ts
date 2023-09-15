@@ -27,8 +27,9 @@ export interface IAutoTest {
      * Adds a new job to be processed by the standard queue.
      *
      * @param {ContainerInput} element
+     * @param {boolean} force whether the element should ignore queue limits
      */
-    addToStandardQueue(element: ContainerInput): void;
+    addToStandardQueue(element: ContainerInput, force: boolean): void;
 
     /**
      * Adds a new job to be processed by the low queue.
@@ -71,6 +72,15 @@ export abstract class AutoTest implements IAutoTest {
      * Express queue. If this queue has jobs in it, no matter what is
      * going on in the other queues, these should be handled first.
      *
+     * All explicit requests go on the express queue. No implicit requests
+     * are added to this queue. Staff/Admin jobs are placed on the head
+     * of the express queue.
+     *
+     * While there is no threshold on the number of jobs a student can put
+     * on the express queue, the charging mechanism should ensure that only
+     * jobs the student is allowed to request (e.g., enough time has passed)
+     * are added to the queue.
+     *
      * @private {Queue}
      */
     private expressQueue = new Queue("exp");
@@ -78,6 +88,13 @@ export abstract class AutoTest implements IAutoTest {
     /**
      * Standard jobs. Always execute after Express jobs, but also always
      * before any low jobs.
+     *
+     * These slots exist so that students who push at a reasonable cadence
+     * have their jobs handled more quickly than those who push rapidly.
+     *
+     * To ensure feedback is timely, any scheduled standard job that exceeds
+     * the job threshold will be replaced (without losing its queue position)
+     * with the more recent job. Replaced jobs will be moved to the low queue.
      *
      * @private {Queue}
      */
@@ -87,6 +104,13 @@ export abstract class AutoTest implements IAutoTest {
      * Low priority jobs. These will happen whenever they can. Repos
      * that push too rapidly will have their jobs demoted to the
      * low queue.
+     *
+     * When the low queue threshold is passed the oldest jobs _will_ be
+     * removed and will not be graded. This should rarely happen. But if
+     * it does, any request on one of these old jobs will cause the job
+     * to run as it will be added to the express queue. As the deadline nears,
+     * the jobs will be newer than those previously requested so the jobs
+     * closest to any deadline will always be run.
      *
      * @private {Queue}
      */
@@ -165,27 +189,27 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            if (this.expressQueue.numberJobsForPerson(input) < 1) {
-                // add to express queue since they are not already on it
-                this.expressQueue.push(input);
+            // if (this.expressQueue.numberJobsForPerson(input) < 1) {
+            // add to express queue since they are not already on it
+            this.expressQueue.push(input);
 
-                // if job is on any other queue, remove it
-                this.standardQueue.remove(input);
-                this.lowQueue.remove(input);
-            } else {
-                Log.info("AutoTest::addToExpressQueue(..) - user: " +
-                    input.target.personId + " already has job on express queue" +
-                    "; adding SHA: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
-
-                // express queue already has a job for this user, move to standard
-                this.addToStandardQueue(input);
-            }
+            // if job is on any other queue, remove it
+            this.standardQueue.remove(input);
+            this.lowQueue.remove(input);
+            // } else {
+            //     Log.info("AutoTest::addToExpressQueue(..) - user: " +
+            //         input.target.personId + " already has job on express queue" +
+            //         "; adding SHA: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
+            //
+            //     // express queue already has a job for this user, move to standard
+            //     this.addToStandardQueue(input);
+            // }
         } catch (err) {
             Log.error("AutoTest::addToExpressQueue(..) - ERROR: " + err);
         }
     }
 
-    public addToStandardQueue(input: ContainerInput): void {
+    public addToStandardQueue(input: ContainerInput, forceAdd: boolean): void {
         Log.info("AutoTest::addToStandardQueue(..) - start" +
             "; deliv: " + input.target.delivId +
             "; repo: " + input.target.repoId +
@@ -198,37 +222,46 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             // only add job if it is not already on express
-            if (this.expressQueue.indexOf(input) < 0) {
-
-                const stdJobCount = this.standardQueue.numberJobsForPerson(input);
-                const lowJobCount = this.lowQueue.numberJobsForPerson(input);
-
-                // this is fairly permissive; only queued jobs (not executing jobs) are counted
-                if (stdJobCount < this.MAX_STANDARD_JOBS) {
-                    this.standardQueue.push(input);
-
-                    // if job is on any other queue, remove it
-                    this.lowQueue.remove(input);
-                } else {
-                    Log.warn("AutoTest::addToStandardQueue(..) - repo: " +
-                        input.target.repoId + "; has # " + stdJobCount +
-                        " standard jobs queued and # " + lowJobCount +
-                        " low jobs queued");
-
-                    // NOTE: requested jobs will not be replaced, they will just be added
-                    // so the user can end up with more than MAX_STANDARD_JOBS on the queue
-                    // this is ok because the user requested them
-                    const replacedJob = this.standardQueue.replaceOldestForPerson(input, input.target.botMentioned);
-                    // if job is on any other queue, remove it
-                    this.lowQueue.remove(input);
-
-                    if (replacedJob !== null) {
-                        this.addToLowQueue(replacedJob);
-                    }
-                }
-            } else {
+            if (this.expressQueue.indexOf(input) >= 0) {
                 Log.info("AutoTest::addToStandardQueue(..) - skipped; " +
                     "job already on express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
+                return;
+            }
+
+            const stdJobCount = this.standardQueue.numberJobsForPerson(input);
+            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
+
+            if (forceAdd === true) {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " std jobs queued and # " + lowJobCount +
+                    " low jobs queued; forceAdd === true, added to std");
+                this.standardQueue.push(input);
+                this.lowQueue.remove(input); // if job is on any other queue, remove it
+                return;
+            }
+
+            // this is fairly permissive; only queued jobs (not executing jobs) are counted
+            if (stdJobCount <= this.MAX_STANDARD_JOBS) {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " std jobs queued and # " + lowJobCount +
+                    " low jobs queued; added to std");
+                this.standardQueue.push(input);
+                this.lowQueue.remove(input); // if job is on any other queue, remove it
+            } else {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " standard jobs queued and # " + lowJobCount +
+                    " low jobs queued; old std job replaced and moved to low");
+
+                // forceAdd is false in this case because force was handled above
+                const replacedJob = this.standardQueue.replaceOldestForPerson(input, false);
+                this.lowQueue.remove(input); // if job is on any other queue, remove it
+
+                if (replacedJob !== null) {
+                    this.addToLowQueue(replacedJob);
+                }
             }
         } catch (err) {
             Log.error("AutoTest::addToStandardQueue(..) - ERROR: " + err);
@@ -265,7 +298,8 @@ export abstract class AutoTest implements IAutoTest {
                 // even if has been replaced, so a replaced job can
                 // still be graded.
 
-                // forceAdd should not matter but is a failsafe
+                // failsafe: forceAdd should not matter because there _must_ be
+                // an older job queued because requested jobs all go on express
                 this.lowQueue.replaceOldestForPerson(input, true);
             } else {
                 // add to the low queue

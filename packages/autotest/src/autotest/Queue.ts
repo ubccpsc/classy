@@ -106,10 +106,14 @@ export class Queue {
     /**
      * Replace the oldest item on the queue for a given person.
      *
-     * NOTE: this will not replace any job that mentions the bot.
-     * This is because users expect requests to the bot to run.
+     * NOTE: this will not replace any job that mentions the bot
+     * or that the course plugin designated for promotion.
+     *
+     * This is because users (or the course plugin) expect
+     * these requests to be run.
      *
      * @param {ContainerInput} info
+     * @param forceAdd boolean whether the job should be added even if there is not one to replace
      * @return {ContainerInput | null} the container input that was replaced, or null if no replacement occurred
      */
     public replaceOldestForPerson(info: ContainerInput, forceAdd: boolean): ContainerInput | null {
@@ -120,8 +124,8 @@ export class Queue {
             const queued = this.data[i];
             if (queued.target?.personId === info.target?.personId) {
                 // the right person
-                if (queued.target?.botMentioned === false) {
-                    // queued job was not put there by an explicit request
+                if (queued.target?.botMentioned === false && queued.target?.shouldPromote === false) {
+                    // queued job was not put there by an explicit request by the user or course plugin
                     if (queued.target?.timestamp < oldestTime) {
                         // queued job is older than the oldest job
                         oldestIndex = i;

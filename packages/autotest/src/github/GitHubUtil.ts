@@ -201,6 +201,7 @@ export class GitHubUtil {
             Log.trace("GitHubUtil::processComment(..) - 4");
 
             const kind = "standard";
+            const shouldPromote = false; // will be set later if needed
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
@@ -211,6 +212,7 @@ export class GitHubUtil {
                 postbackURL,
                 cloneURL,
                 adminRequest,
+                shouldPromote,
                 personId,
                 kind,
                 timestamp,
@@ -328,6 +330,7 @@ export class GitHubUtil {
                 orgId: org,
                 botMentioned: false, // not explicitly invoked
                 adminRequest: isAdmin, // let us prioritize admin pushes
+                shouldPromote: false, // will be set later if needed
                 personId: pusher?.personId ?? null,
                 kind: "push",
                 cloneURL,

@@ -761,6 +761,7 @@ export class TestHarness {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 
@@ -809,6 +810,7 @@ export class TestHarness {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 

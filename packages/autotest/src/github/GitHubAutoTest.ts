@@ -99,13 +99,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 const input: ContainerInput = {target: info, containerConfig};
                 const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
+                input.target.shouldPromote = shouldPromotePush;
                 const sha = Util.shaHuman(info.commitSHA);
-                if (shouldPromotePush === true) {
-                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to exp queue`);
+
+                if (info.botMentioned === true) {
+                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - bot mentioned; adding to exp queue`);
+                    // job will be on express
                     this.addToExpressQueue(input);
                 } else {
-                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to std queue`);
-                    this.addToStandardQueue(input);
+                    if (shouldPromotePush === true) {
+                        Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - shouldPromote; Force adding to std queue`);
+                        // job will be on standard
+                        this.addToStandardQueue(input, true);
+                    } else {
+                        // job will be on standard if space, otherwise low
+                        this.addToStandardQueue(input, false);
+                    }
                 }
 
                 if (Array.isArray(containerConfig.regressionDelivIds) && containerConfig.regressionDelivIds.length > 0) {
@@ -127,6 +136,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 containerConfig: regressionDetails
                             };
 
+                            regressionInput.target.shouldPromote = true; // plugin is expecting it, make sure it is added
                             Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
                             Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
                                 "; input: " + JSON.stringify(regressionInput));

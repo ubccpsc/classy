@@ -203,9 +203,9 @@ describe("GitHubAutoTest", () => {
 
         Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + lq.data.length + "; #jobs: " + jobs.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
-        expect(sq.data).to.have.length(2); // two should be waiting on standard
+        expect(sq.data).to.have.length(3); // three should be waiting on standard
         // this is the main check: if this all worked, a job should have been pushed onto the regression queue
-        expect(lq.data).to.have.length(2); // two should be queued on low
+        expect(lq.data).to.have.length(1); // one should be queued on low
         Log.test("values checked");
     }).timeout(WAIT * 10);
 
@@ -238,6 +238,7 @@ describe("GitHubAutoTest", () => {
             adminRequest: false,
             personId: Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
+            shouldPromote: false,
             delivId: "d1",
             kind: "standard",
             repoId: "repoId",
@@ -356,6 +357,7 @@ describe("GitHubAutoTest", () => {
             commitSHA: pe.commitSHA,
             commitURL: pe.commitURL,
             adminRequest: false,
+            shouldPromote: false,
             personId: "myUser",
             kind: "standard",
             repoId: "d1_project9999",
@@ -384,6 +386,7 @@ describe("GitHubAutoTest", () => {
             commitSHA: pe.commitSHA,
             commitURL: pe.commitURL,
             adminRequest: false,
+            shouldPromote: false,
             personId: "myUser",
             kind: "standard",
             repoId: "d1_project9999",

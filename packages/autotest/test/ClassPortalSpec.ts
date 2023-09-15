@@ -217,6 +217,7 @@ describe("ClassPortal Service", () => {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 
