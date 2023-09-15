@@ -94,13 +94,15 @@ export abstract class AutoTest implements IAutoTest {
 
     /**
      * The maximum number of jobs a single user can have on the standard queue
-     * before it will schedule on the low queue instead. This is to
-     * prevent DOS attacks because a single user could submit an unbounded number
-     * of requests preventing others from being graded.
+     * before it will schedule on the low queue instead.
+     *
+     * This threshold will be overridden by comment events, which will all be
+     * scheduled on the standard queue unless the user has space on the
+     * express queue.
      *
      * @private
      */
-    private readonly MAX_STANDARD_JOBS: number = 3;
+    private readonly MAX_STANDARD_JOBS: number = 2;
 
     /**
      * The maximum number of jobs a single user can have on the low queue
@@ -213,7 +215,10 @@ export abstract class AutoTest implements IAutoTest {
                         " standard jobs queued and # " + lowJobCount +
                         " low jobs queued");
 
-                    const replacedJob = this.standardQueue.replaceOldestForPerson(input);
+                    // NOTE: requested jobs will not be replaced, they will just be added
+                    // so the user can end up with more than MAX_STANDARD_JOBS on the queue
+                    // this is ok because the user requested them
+                    const replacedJob = this.standardQueue.replaceOldestForPerson(input, input.target.botMentioned);
                     // if job is on any other queue, remove it
                     this.lowQueue.remove(input);
 
@@ -259,7 +264,9 @@ export abstract class AutoTest implements IAutoTest {
                 // Students can always request the results on any job,
                 // even if has been replaced, so a replaced job can
                 // still be graded.
-                this.lowQueue.replaceOldestForPerson(input);
+
+                // forceAdd should not matter but is a failsafe
+                this.lowQueue.replaceOldestForPerson(input, true);
             } else {
                 // add to the low queue
                 this.lowQueue.push(input);

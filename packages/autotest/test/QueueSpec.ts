@@ -83,14 +83,34 @@ describe("Queue", () => {
         const r1 = Util.clone(TestData.inputRecordA) as ContainerInput;
         const r2 = Util.clone(TestData.inputRecordB) as ContainerInput;
         r1.target.personId = "person1";
+        r1.target.botMentioned = false;
         r2.target.personId = "person1";
+        r2.target.botMentioned = false;
 
         const res: number = q.push(r1);
         expect(res).to.equal(1);
         expect(q.length()).to.equal(1);
 
-        q.replaceOldestForPerson(r2);
+        q.replaceOldestForPerson(r2, false);
         expect(q.length()).to.equal(1); // should still be 1
+    });
+
+    it("Should not replace the oldest job for a person if the oldest job mentions the bot.", () => {
+        const r1 = Util.clone(TestData.inputRecordA) as ContainerInput;
+        const r2 = Util.clone(TestData.inputRecordB) as ContainerInput;
+        r1.target.personId = "person1";
+        r1.target.botMentioned = true;
+        r2.target.personId = "person1";
+        r2.target.botMentioned = true;
+
+        q.push(r1);
+        expect(q.length()).to.equal(1);
+        expect(q.numberJobsForPerson(r1)).to.equal(1);
+
+        const job = q.replaceOldestForPerson(r2, true);
+        expect(job).to.be.null;
+        expect(q.length()).to.equal(2);
+        expect(q.numberJobsForPerson(r1)).to.equal(2); // enqued rather than replaced
     });
 
     it("Should enqueue a job for a person when they do not have one yet.", () => {
@@ -103,7 +123,7 @@ describe("Queue", () => {
         expect(res).to.equal(1);
         expect(q.length()).to.equal(1);
 
-        q.replaceOldestForPerson(r2);
+        q.replaceOldestForPerson(r2, true);
         expect(q.length()).to.equal(2);
     });
 });

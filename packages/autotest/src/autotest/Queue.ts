@@ -106,22 +106,28 @@ export class Queue {
     /**
      * Replace the oldest item on the queue for a given person.
      *
+     * NOTE: this will not replace any job that mentions the bot.
+     * This is because users expect requests to the bot to run.
+     *
      * @param {ContainerInput} info
      * @return {ContainerInput | null} the container input that was replaced, or null if no replacement occurred
      */
-    public replaceOldestForPerson(info: ContainerInput): ContainerInput | null {
-
-        // find oldest index
+    public replaceOldestForPerson(info: ContainerInput, forceAdd: boolean): ContainerInput | null {
         let oldestIndex = -1;
         let oldestJob: ContainerInput | null = null;
         let oldestTime = Number.MAX_SAFE_INTEGER;
         for (let i = 0; i < this.data.length; i++) {
             const queued = this.data[i];
             if (queued.target?.personId === info.target?.personId) {
-                if (queued.target?.timestamp < oldestTime) {
-                    oldestIndex = i;
-                    oldestJob = queued;
-                    oldestTime = queued.target.timestamp;
+                // the right person
+                if (queued.target?.botMentioned === false) {
+                    // queued job was not put there by an explicit request
+                    if (queued.target?.timestamp < oldestTime) {
+                        // queued job is older than the oldest job
+                        oldestIndex = i;
+                        oldestJob = queued;
+                        oldestTime = queued.target.timestamp;
+                    }
                 }
             }
         }
@@ -129,10 +135,12 @@ export class Queue {
         if (oldestIndex >= 0) {
             if (info.target.timestamp < oldestJob.target.timestamp) {
                 // if a job is older than the oldest job, just add it to the queue
-                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
-                    "; job is older than the oldest job, adding to queue");
-                this.push(info);
-                return null;
+                if (forceAdd === true) {
+                    Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                        "; job is older than the oldest job, adding to queue");
+                    this.push(info);
+                    return null;
+                }
             } else {
                 // replace the oldest job with the current job
                 Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
@@ -143,11 +151,15 @@ export class Queue {
             }
         } else {
             // no jobs to replace, just add it to the queue
-            Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
-                "; no jobs to replace, adding to queue");
-            this.push(info);
-            return null;
+            if (forceAdd === true) {
+                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                    "; no jobs to replace, adding to queue");
+                this.push(info);
+                return null;
+            }
         }
+        // if we haven't returned then the job is not on the queue
+        return info;
     }
 
     /**
