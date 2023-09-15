@@ -115,8 +115,8 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should not be possible to find a team that does not exist.", async function () {
-        const val = await gh.getTeamNumber(TestHarness.INVALIDTEAMNAME);
-        expect(val).to.be.lessThan(0);
+        const team = await gh.getTeamByName(TestHarness.INVALIDTEAMNAME);
+        expect(team).to.be.null;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get the members of a team that does not exist.", async function () {
@@ -173,17 +173,17 @@ describe("GitHubActions", () => {
         expect(res.length).to.be.greaterThan(0);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find a repo that does exist.", async function () {
+    it("Should be possible to find a repo that exists.", async function () {
         const val = await gh.repoExists(REPONAME);
         expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should be possible to find a team that does exist.", async function () {
-        const val = await gh.getTeamNumber(TEAMNAME);
-        expect(val).to.be.greaterThan(0);
+    it("Should be possible to find a team that exists.", async function () {
+        const team = await gh.getTeamByName(TEAMNAME);
+        expect(team.teamName).to.be.equal(TEAMNAME);
     }).timeout(TIMEOUT);
 
-    it("Should be possible to add members to a team that does exist.", async function () {
+    it("Should be possible to add members to a team that exists.", async function () {
         const addMembers = await gh.addMembersToTeam(TEAMNAME,
             [TestHarness.GITHUB1.github, TestHarness.GITHUB2.github]);
         expect(addMembers.teamName).to.equal(TEAMNAME);
@@ -202,12 +202,14 @@ describe("GitHubActions", () => {
         expect(teamsOnRepo).to.be.an("array");
         expect(teamsOnRepo).to.have.length(0);
 
-        const teamNum = await gh.getTeamNumber(TEAMNAME);
-        expect(teamNum).to.be.greaterThan(0);
+        // const teamNum = await gh.getTeamNumber(TEAMNAME);
+        // expect(teamNum).to.be.greaterThan(0);
+        const team = await gh.getTeamByName(TEAMNAME);
+        expect(team.teamName).to.equal(TEAMNAME);
 
         // const teamAdd = await gh.addTeamToRepo(teamNum, REPONAME, "push");
         const teamAdd = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
-        expect(teamAdd.githubTeamNumber).to.equal(teamNum);
+        expect(teamAdd.githubTeamNumber).to.equal(team.githubTeamNumber);
 
         teamsOnRepo = await gh.getTeamsOnRepo(REPONAME);
         // make sure there is now a team on the repo
@@ -314,9 +316,8 @@ describe("GitHubActions", () => {
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get a team number for a team that does not exist.", async function () {
-        const val = await gh.getTeamNumber(TestHarness.INVALIDTEAMNAME);
-        Log.test("Team # " + val);
-        expect(val).to.be.lessThan(0);
+        const team = await gh.getTeamByName(TestHarness.INVALIDTEAMNAME);
+        expect(team).to.be.null;
     }).timeout(TIMEOUT);
 
     it("Should not be possible to get a team that does not exist.", async function () {
@@ -349,22 +350,19 @@ describe("GitHubActions", () => {
         expect(teamAdd.githubTeamNumber).to.equal(val.githubTeamNumber);
         Log.test("Team added to repo");
 
-        const staffTeamNumber = await gh.getTeamNumber("staff");
+        // const staffTeamNumber = await gh.getTeamNumber("staff");
+        const staffTeam = await gh.getTeamByName("staff");
         // Log.test("Team staff number: " + staffTeamNumber);
         // const staffAdd = await gh.addTeamToRepo(staffTeamNumber, REPONAME, "push");
         const staffAdd = await gh.addTeamToRepo("staff", REPONAME, "push");
-        expect(staffAdd.githubTeamNumber).to.equal(staffTeamNumber);
+        expect(staffAdd.githubTeamNumber).to.equal(staffTeam.githubTeamNumber);
         Log.test("Team staff added to repo");
 
     }).timeout(TIMEOUT);
 
     it("Should be possible to get a team number for a team that exists.", async function () {
-        const val = await gh.getTeamNumber(TestHarness.TEAMNAME1);
-        Log.test("Team # " + val);
-        expect(val).to.be.greaterThan(0);
-
-        // let bool = await gh.teamExists(TEAMNAME);
-        // expect(bool).to.be.true;
+        const team = await gh.getTeamByName(TestHarness.TEAMNAME1);
+        expect(team.teamName).to.equal(TestHarness.TEAMNAME1);
     }).timeout(TIMEOUT);
 
     it("Should be possible to get a team by name that exists.", async function () {
@@ -429,10 +427,10 @@ describe("GitHubActions", () => {
         for (let i = 0; i < NUM_TEAMS; i++) {
             const teamname = TEAMNAME + "_paging-" + i;
             await Util.delay(200);
-            const val = await gh.getTeamNumber(teamname);
-            Log.test("Team details: " + JSON.stringify(val));
-            expect(val).to.be.an("number");
-            expect(val).to.be.greaterThan(0);
+            // const val = await gh.getTeamNumber(teamname);
+            const team = await gh.getTeamByName(teamname);
+            // Log.test("Team details: " + JSON.stringify(val));
+            expect(team.teamName).to.equal(teamname);
         }
 
     }).timeout(TIMEOUT * 20);
@@ -508,16 +506,16 @@ describe("GitHubActions", () => {
         expect(githubTeam.githubTeamNumber).to.be.an("number");
         expect(githubTeam.githubTeamNumber > 0).to.be.true;
 
-        Log.test("Getting team number");
-        const teamNum = await gh.getTeamNumber(TEAMNAME);
-        Log.test("Team number: " + teamNum);
-        expect(teamNum).to.be.an("number");
-        expect(teamNum).to.be.greaterThan(0);
+        Log.test("Getting team name");
+        const team = await gh.getTeamByName(TEAMNAME);
+        Log.test("Team name: " + TEAMNAME);
+        expect(team.teamName).to.be.an("string");
+        expect(team.teamName).to.be.equal(TEAMNAME);
 
         // const teamSuccess = await gh.addTeamToRepo(teamNum, REPONAME, "push");
         const teamSuccess = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
         Log.test("Added team to repo: " + JSON.stringify(teamSuccess));
-        expect(teamSuccess.githubTeamNumber).to.equal(teamNum);
+        expect(teamSuccess.githubTeamNumber).to.be.greaterThan(0);
 
         // TODO: need gh.removeTeamFromRepo
     });

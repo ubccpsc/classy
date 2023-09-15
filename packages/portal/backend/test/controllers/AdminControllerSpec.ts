@@ -601,6 +601,7 @@ describe("AdminController", () => {
             expect(allRepos.length).to.equal(0);
             expect(allTeams.length).to.equal(1); // 1x project
 
+            // NOTE: this is one of those places teamNumber is being used to signal provisioning
             let teamNum = await gha.getTeamNumber(allTeams[0].id); // using GHA not TC because we want to check github
             expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 

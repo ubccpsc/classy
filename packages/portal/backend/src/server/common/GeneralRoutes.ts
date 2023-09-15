@@ -243,7 +243,7 @@ export default class GeneralRoutes implements IREST {
     }
 
     public static async performGetResource(auth: { user: string, token: string }, path: string): Promise<boolean> {
-        Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - start");
+        Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - start");
 
         let proceed = false;
         // if user/token does not have access to resource request should return 401
@@ -251,26 +251,26 @@ export default class GeneralRoutes implements IREST {
             const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
 
             if (/\/student(\/|$)/.test(path)) {
-                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - student resource; is valid");
+                Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - student resource; is valid");
                 // works for everyone (performGetCredentials would have thrown exception if not a valid user)
                 proceed = true;
             } else if (/\/admin(\/|$)/.test(path)) {
 
                 // works for admin only
                 if (priv.isAdmin === true) {
-                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; is valid");
+                    Log.trace("GeneralRoutes::performGetResource( ..," + path + " ) - admin resource; is valid");
                     proceed = true;
                 } else {
-                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - admin resource; NOT valid");
+                    Log.warn("GeneralRoutes::performGetResource( .., " + path + " ) - admin resource; NOT valid");
                 }
             } else if (/\/staff(\/|$)/.test(path)) {
-                Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource");
+                Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - staff resource");
                 // works for admin and staff
                 if (priv.isAdmin === true || priv.isStaff === true) {
-                    Log.trace("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; is valid");
+                    Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - staff resource; is valid");
                     proceed = true;
                 } else {
-                    Log.warn("GeneralRoutes::performGetResource( " + auth + ", " + path + " ) - staff resource; NOT valid");
+                    Log.warn("GeneralRoutes::performGetResource( .., " + path + " ) - staff resource; NOT valid");
                 }
             }
             if (proceed === false) {
