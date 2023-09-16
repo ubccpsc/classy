@@ -48,7 +48,7 @@ export interface CommitTarget {
     orgId?: string;
 
     adminRequest: boolean; // true if requested by admin or staff
-    botMentioned: boolean; // true if explicitly mentioned
+    botMentioned: boolean; // true if explicitly mentioned by a student
     shouldPromote: boolean; // true if course plugin calls for promotion
     personId: string | null; // string is Person.id if explicitly invoked, null otherwise
     kind: "push" | "standard"; // kind of request

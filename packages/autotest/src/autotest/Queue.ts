@@ -125,7 +125,7 @@ export class Queue {
             if (queued.target?.personId === info.target?.personId) {
                 // the right person
                 if (queued.target?.botMentioned === false && queued.target?.shouldPromote === false) {
-                    // queued job was not put there by an explicit request by the user or course plugin
+                    // queued job was not put there by an explicit request by a user or the course plugin
                     if (queued.target?.timestamp < oldestTime) {
                         // queued job is older than the oldest job
                         oldestIndex = i;
@@ -138,12 +138,15 @@ export class Queue {
 
         if (oldestIndex >= 0) {
             if (info.target.timestamp < oldestJob.target.timestamp) {
-                // if a job is older than the oldest job, just add it to the queue
+                // if a job being added is older than the oldest job, add it to the queue if it is being forced
                 if (forceAdd === true) {
                     Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
                         "; job is older than the oldest job, adding to queue");
                     this.push(info);
                     return null;
+                } else {
+                    Log.warn("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                        "; job is older than the oldest job, NOT adding to queue");
                 }
             } else {
                 // replace the oldest job with the current job
@@ -162,7 +165,7 @@ export class Queue {
                 return null;
             }
         }
-        // if we haven't returned then the job is not on the queue
+        // if we have not returned already, then the job is not on the queue
         return info;
     }
 

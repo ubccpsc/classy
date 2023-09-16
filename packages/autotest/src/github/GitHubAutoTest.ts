@@ -104,12 +104,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 if (info.botMentioned === true) {
                     Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - bot mentioned; adding to exp queue`);
-                    // job will be on express
+                    // requested jobs will always go on express
                     this.addToExpressQueue(input);
                 } else {
                     if (shouldPromotePush === true) {
                         Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - shouldPromote; Force adding to std queue`);
-                        // job will be on standard
+                        // promoted jobs should always go on standard
                         this.addToStandardQueue(input, true);
                     } else {
                         // job will be on standard if space, otherwise low

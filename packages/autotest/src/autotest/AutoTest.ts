@@ -172,9 +172,13 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     /**
-     * Adds a job to the express queue. A user can only ask for a single job to go on
-     * the express queue at a time. If the job is already executing on any other queue
-     * it will not be added.
+     * Adds a job to the express queue. There is not a limit to these requests so
+     * deliverables need to be configured to ensure that results cannot be requested
+     * too often.
+     *
+     * If the job is already executing on any other queue it will not be added, but
+     * if it is just sitting on another queue it will be added to express and removed
+     * from the lower priority queue.
      *
      * @param input
      */
@@ -189,26 +193,33 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            // if (this.expressQueue.numberJobsForPerson(input) < 1) {
             // add to express queue since they are not already on it
             this.expressQueue.push(input);
 
             // if job is on any other queue, remove it
             this.standardQueue.remove(input);
             this.lowQueue.remove(input);
-            // } else {
-            //     Log.info("AutoTest::addToExpressQueue(..) - user: " +
-            //         input.target.personId + " already has job on express queue" +
-            //         "; adding SHA: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
-            //
-            //     // express queue already has a job for this user, move to standard
-            //     this.addToStandardQueue(input);
-            // }
         } catch (err) {
             Log.error("AutoTest::addToExpressQueue(..) - ERROR: " + err);
         }
     }
 
+    /**
+     * Adds a job to the standard queue. Newer jobs will replace older jobs
+     * that are already on this queue and the older jobs will be moved to
+     * the low queue. This tries to maximize more recent feedback.
+     *
+     * While MAX_STANDARD_JOBS will manage the number of jobs on the queue for a
+     * single requester, this can be overridden by setting forceAdd to true.
+     *
+     * forceAdd ensures that jobs that have been prioritized by the course
+     * plugin (via shouldPromotePush) will be added to the standard queue so
+     * they can be preferentially executed before jobs on the low queue. This
+     * will ignore the MAX_STANDARD_JOBS argument.
+     *
+     * @param input
+     * @param forceAdd
+     */
     public addToStandardQueue(input: ContainerInput, forceAdd: boolean): void {
         Log.info("AutoTest::addToStandardQueue(..) - start" +
             "; deliv: " + input.target.delivId +
@@ -217,7 +228,8 @@ export abstract class AutoTest implements IAutoTest {
 
         try {
             if (this.isCommitExecuting(input)) {
-                Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing");
+                Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing; SHA: " +
+                    Util.shaHuman(input.target.commitSHA));
                 return;
             }
 
@@ -257,7 +269,10 @@ export abstract class AutoTest implements IAutoTest {
 
                 // forceAdd is false in this case because force was handled above
                 const replacedJob = this.standardQueue.replaceOldestForPerson(input, false);
-                this.lowQueue.remove(input); // if job is on any other queue, remove it
+                if (replacedJob !== null && replacedJob.target.commitSHA !== input.target.commitSHA) {
+                    // job must be on standard
+                    this.lowQueue.remove(input); // if job is on any other queue, remove it
+                }
 
                 if (replacedJob !== null) {
                     this.addToLowQueue(replacedJob);
