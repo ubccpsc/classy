@@ -348,6 +348,8 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async getProvisionDetails(delivId: any): Promise<RepositoryTransport[]> {
+        Log.info("AdminProvisionPage::getProvisionDetails( " + delivId + " ) - start");
+
         const url = this.remote + "/portal/admin/provision/" + delivId;
         const options: any = AdminView.getOptions();
         options.method = "get";
@@ -370,6 +372,8 @@ export class AdminProvisionPage extends AdminPage {
     }
 
     private async getReleaseDetails(delivId: any): Promise<RepositoryTransport[]> {
+        Log.info("AdminProvisionPage::getReleaseDetails( " + delivId + " ) - start");
+
         const url = this.remote + "/portal/admin/release/" + delivId;
         const options: any = AdminView.getOptions();
         options.method = "get";
