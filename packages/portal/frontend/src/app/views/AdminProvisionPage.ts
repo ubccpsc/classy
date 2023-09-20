@@ -121,14 +121,16 @@ export class AdminProvisionPage extends AdminPage {
         const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
 
         const val = UI.getDropdownValue("provisionRepoDeliverableSelect");
-        Log.info("AdminProvisionPage::init(..) - new deliverable selected: " + val);
+
+        Log.info("AdminProvisionPage::handleDelivChanged(..) - new deliverable selected: " + val);
+        UI.showModal("Retrieving provisioning/releasing details for " + val);
         if (val !== "-None-") {
             try {
                 this.clearLists();
 
                 // update provisioned
                 const provisionRepo = await this.getProvisionDetails(val);
-                Log.info("AdminProvisionPage::init(..) - planning provisioning worked: " + provisionRepo);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning provisioning worked: " + provisionRepo);
 
                 let provisioned = [];
                 let toProvision = [];
@@ -174,7 +176,7 @@ export class AdminProvisionPage extends AdminPage {
 
                 // update provisioned
                 const reposToRelease = await this.getReleaseDetails(val);
-                Log.info("AdminProvisionPage::init(..) - planning releasing worked: " + reposToRelease);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning releasing worked: " + reposToRelease);
 
                 let released: string[] = [];
                 let toRelease: string[] = [];
@@ -222,6 +224,8 @@ export class AdminProvisionPage extends AdminPage {
             // none selected; clear selects
             this.clearLists();
         }
+
+        UI.hideModal();
     }
 
     private async handleReleasePressed(): Promise<boolean> {
@@ -354,13 +358,13 @@ export class AdminProvisionPage extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = "get";
 
-        UI.showModal("Retrieving provisioning details for " + delivId);
+        // UI.showModal("Retrieving provisioning details for " + delivId);
 
         Log.trace("AdminProvisionPage::getProvisionDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
-        UI.hideModal();
+        // UI.hideModal();
 
         if (typeof json.success !== "undefined") {
             Log.info("AdminProvisionPage::getProvisionDetails(..) - success; took: " + Util.took(start));
@@ -378,13 +382,13 @@ export class AdminProvisionPage extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = "get";
 
-        UI.showModal("Retrieving release details for " + delivId);
+        // UI.showModal("Retrieving release details for " + delivId);
 
         Log.trace("AdminProvisionPage::getReleaseDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
-        UI.hideModal();
+        // UI.hideModal();
 
         if (typeof json.success !== "undefined") {
             Log.info("AdminProvisionPage::getReleaseDetails(..) - success; took: " + Util.took(start));
