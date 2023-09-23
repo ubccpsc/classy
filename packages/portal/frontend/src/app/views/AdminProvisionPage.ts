@@ -267,7 +267,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info("AdminProvisionPage::handleReleasePressed(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast("Repository releasing complete.", {timeout: 20000, buttonLabel: "Ok"});
+            UI.showSuccessToast("Repository releasing complete.", {timeout: (1000 * 60 * 60 * 24), buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
@@ -315,7 +315,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info("AdminProvisionPage::handleProvision(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast("Repository provisioning complete.", {timeout: 20000, buttonLabel: "Ok"});
+            UI.showSuccessToast("Repository provisioning complete.", {timeout: (1000 * 60 * 60 * 24), buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
