@@ -67,14 +67,14 @@ export class GradesController {
                 if (grade === null) {
                     // create empty grade
                     grade = {
-                        personId:  personId,
-                        delivId:   deliv.id,
-                        score:     null,
-                        comment:   null,
+                        personId: personId,
+                        delivId: deliv.id,
+                        score: null,
+                        comment: null,
                         timestamp: -1,
-                        URL:       null,
-                        urlName:   null,
-                        custom:    {}
+                        URL: null,
+                        urlName: null,
+                        custom: {}
                     };
                 }
                 if (grade.score !== null && grade.score < 0) {
@@ -87,7 +87,7 @@ export class GradesController {
         }
 
         // sort grades by delivid
-        grades = grades.sort(function(g1: Grade, g2: Grade): number {
+        grades = grades.sort(function (g1: Grade, g2: Grade): number {
             return g1.delivId.localeCompare(g2.delivId);
         });
 
@@ -110,6 +110,7 @@ export class GradesController {
         const start = Date.now();
         // Log.trace("GradesController::createGrade(..) - payload: " + JSON.stringify(grade));
 
+        let allSucceeded = true;
         // find all people on a repo
         const allPeopleIds: string[] = [];
         const repo = await this.db.getRepository(repoId);
@@ -138,14 +139,14 @@ export class GradesController {
             if (gradeRecord === null) {
                 // create new
                 gradeRecord = {
-                    personId:  personId,
-                    delivId:   delivId,
-                    score:     grade.score,
-                    comment:   grade.comment,
-                    urlName:   grade.urlName,
-                    URL:       grade.URL,
+                    personId: personId,
+                    delivId: delivId,
+                    score: grade.score,
+                    comment: grade.comment,
+                    urlName: grade.urlName,
+                    URL: grade.URL,
                     timestamp: grade.timestamp,
-                    custom:    grade.custom
+                    custom: grade.custom
                 };
                 Log.trace("GradesController::createGrade(..) - new grade; personId: " +
                     personId + "; grade: " + JSON.stringify(gradeRecord));
@@ -160,11 +161,14 @@ export class GradesController {
                 Log.trace("GradesController::createGrade(..) - updating grade; personId: " +
                     personId + "; grade: " + JSON.stringify(gradeRecord));
             }
-            await this.db.writeGrade(gradeRecord);
+            const succeeded = await this.db.writeGrade(gradeRecord);
+            if (succeeded === false) {
+                allSucceeded = false;
+            }
         }
 
         Log.info("GradesController::createGrade( " + repoId + ", " + delivId + ", ... ) - done; took: " + Util.took(start));
-        return true; // if an exception has not been thrown we must be ok
+        return allSucceeded; // if an exception has not been thrown we must be ok
     }
 
     public async saveGrade(grade: Grade): Promise<boolean> {
@@ -265,19 +269,19 @@ export class GradesController {
         const p = await pc.getPerson(grade.personId);
 
         const g: GradeTransport = {
-            personId:  grade.personId,
+            personId: grade.personId,
             personURL: config.getProp(ConfigKey.githubHost) + "/" + p.githubId, // grade.personId,
 
             delivId: grade.delivId,
 
-            score:   grade.score,
+            score: grade.score,
             comment: grade.comment,
 
             urlName: grade.urlName,
-            URL:     grade.URL,
+            URL: grade.URL,
 
             timestamp: grade.timestamp,
-            custom:    grade.custom
+            custom: grade.custom
         };
 
         return g;

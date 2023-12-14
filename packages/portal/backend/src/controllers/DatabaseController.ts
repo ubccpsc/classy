@@ -389,6 +389,11 @@ export class DatabaseController {
     }
 
     public async writeGrade(record: Grade): Promise<boolean> {
+        const p = await this.getPerson(record.personId);
+        if (p === null) {
+            Log.warn("DatabaseController::writeGrade(..) - trying to write a grade for a personId that does not exist");
+        }
+
         const gradeExists = await this.getGrade(record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
