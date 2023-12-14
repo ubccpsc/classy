@@ -87,7 +87,7 @@ export class GradingJob {
     }
 
     public async run(docker: Docker): Promise<AutoTestResult> {
-        Log.info("GradingJob::run() - start: " + this.id);
+        Log.info("GradingJob::run() - start; repo: " + this?.input?.target?.repoId + "; id: " + this.id);
         const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
 
         const container = await docker.createContainer({

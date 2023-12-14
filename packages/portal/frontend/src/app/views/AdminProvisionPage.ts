@@ -121,14 +121,16 @@ export class AdminProvisionPage extends AdminPage {
         const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
 
         const val = UI.getDropdownValue("provisionRepoDeliverableSelect");
-        Log.info("AdminProvisionPage::init(..) - new deliverable selected: " + val);
+
+        Log.info("AdminProvisionPage::handleDelivChanged(..) - new deliverable selected: " + val);
+        UI.showModal("Retrieving provisioning and releasing details for " + val + ".");
         if (val !== "-None-") {
             try {
                 this.clearLists();
 
                 // update provisioned
                 const provisionRepo = await this.getProvisionDetails(val);
-                Log.info("AdminProvisionPage::init(..) - planning provisioning worked: " + provisionRepo);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning provisioning worked: " + provisionRepo);
 
                 let provisioned = [];
                 let toProvision = [];
@@ -174,7 +176,7 @@ export class AdminProvisionPage extends AdminPage {
 
                 // update provisioned
                 const reposToRelease = await this.getReleaseDetails(val);
-                Log.info("AdminProvisionPage::init(..) - planning releasing worked: " + reposToRelease);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning releasing worked: " + reposToRelease);
 
                 let released: string[] = [];
                 let toRelease: string[] = [];
@@ -222,38 +224,11 @@ export class AdminProvisionPage extends AdminPage {
             // none selected; clear selects
             this.clearLists();
         }
+
+        UI.hideModal();
     }
 
     private async handleReleasePressed(): Promise<boolean> {
-        // Log.info("AdminProvisionPage::handleReleasePressed(..) - start");
-        //
-        // const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
-        // const provision: ProvisionTransport = {delivId: delivId, formSingle: false};
-        //
-        // const url = this.remote + "/portal/admin/release";
-        // const options: any = AdminView.getOptions();
-        // options.method = "post";
-        // options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
-        //
-        // UI.showModal("Releasing repositories for " + delivId + ". Please be patient.");
-        //
-        // const start = Date.now();
-        // Log.trace("AdminProvisionPage::handleReleasePressed(..) - GET from: " + url);
-        // const response = await fetch(url, options);
-        // const json: Payload = await response.json();
-        // Log.trace("AdminProvisionPage::handleReleasePressed(..) - complete; took: " + Util.took(start));
-        //
-        // UI.hideModal();
-        // UI.showSuccessToast("Repositories released.", {timeout: 10000, buttonLabel: "Ok"});
-        //
-        // if (typeof json.success !== "undefined") {
-        //     Log.info("AdminProvisionPage::handleReleasePressed(..) - success"); // + json.success);
-        //     return json.success;
-        // } else {
-        //     Log.error("AdminProvisionPage::handleReleasePressed(..) - ERROR: " + json.failure);
-        // }
-        // return true;
-
         Log.info("AdminProvisionPage::handleReleasePressed(..) - start");
 
         const releaseList = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
@@ -292,7 +267,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info("AdminProvisionPage::handleReleasePressed(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast("Repository releasing complete.", {timeout: 20000, buttonLabel: "Ok"});
+            UI.showSuccessToast("Repository releasing complete.", {timeout: (1000 * 60 * 60 * 24), buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
@@ -340,7 +315,7 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info("AdminProvisionPage::handleProvision(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast("Repository provisioning complete.", {timeout: 20000, buttonLabel: "Ok"});
+            UI.showSuccessToast("Repository provisioning complete.", {timeout: (1000 * 60 * 60 * 24), buttonLabel: "Ok"});
         }
         // refresh the page
         await this.init({});
@@ -354,13 +329,10 @@ export class AdminProvisionPage extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = "get";
 
-        UI.showModal("Retrieving provisioning details for " + delivId);
-
         Log.trace("AdminProvisionPage::getProvisionDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
-        UI.hideModal();
 
         if (typeof json.success !== "undefined") {
             Log.info("AdminProvisionPage::getProvisionDetails(..) - success; took: " + Util.took(start));
@@ -378,13 +350,10 @@ export class AdminProvisionPage extends AdminPage {
         const options: any = AdminView.getOptions();
         options.method = "get";
 
-        UI.showModal("Retrieving release details for " + delivId);
-
         Log.trace("AdminProvisionPage::getReleaseDetails(..) - GET from: " + url);
         const start = Date.now();
         const response = await fetch(url, options);
         const json: Payload = await response.json();
-        UI.hideModal();
 
         if (typeof json.success !== "undefined") {
             Log.info("AdminProvisionPage::getReleaseDetails(..) - success; took: " + Util.took(start));
