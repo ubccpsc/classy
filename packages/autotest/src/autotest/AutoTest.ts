@@ -121,8 +121,9 @@ export abstract class AutoTest implements IAutoTest {
      * before it will schedule on the low queue instead.
      *
      * This threshold will be overridden by comment events, which will all be
-     * scheduled on the standard queue unless the user has space on the
-     * express queue.
+     * scheduled on the express queue (which is why comment intervals need
+     * to be metered as it is the only way to avoid having a single person
+     * overwhelm AutoTest on their own).
      *
      * @private
      */
@@ -213,7 +214,7 @@ export abstract class AutoTest implements IAutoTest {
      * single requester, this can be overridden by setting forceAdd to true.
      *
      * forceAdd ensures that jobs that have been prioritized by the course
-     * plugin (via shouldPromotePush) will be added to the standard queue so
+     * plugin (via shouldPromotePush) will be added to the standard queue, so
      * they can be preferentially executed before jobs on the low queue. This
      * will ignore the MAX_STANDARD_JOBS argument.
      *
