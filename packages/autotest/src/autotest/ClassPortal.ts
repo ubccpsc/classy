@@ -101,15 +101,43 @@ export interface IClassPortal {
     formatFeedback(res: AutoTestResultTransport): Promise<string | null>;
 
     /**
-     * Asks class portal if a commit should be promoted to the express queue without a comment event
+     * Asks Classy if a commit should be placed on the standard queue without a comment event.
      * The default implementation in portal just sends false, but courses can extend this behaviour
      * using their CustomCourseController class.
+     *
      * @param {CommitTarget} info
      * @return {Promise<boolean>}
      */
     shouldPromotePush(info: CommitTarget): Promise<boolean>;
+
+    /**
+     * Asks Classy whether a person is allowed to make a request on a given deliverable.
+     * The timestamp of their request is also included.
+     *
+     * A null return means that a custom scheduling scheme is not implemented and the default
+     * time-based approach should be used.
+     *
+     * A non-null return means that a custom scheduling scheme is implemented;
+     * if accepted is true, the request should proceed. If accepted is false,
+     * the message should contain user-facing text about when their next request
+     * can be made.
+     *
+     * @param delivId
+     * @param personId
+     * @param timestamp
+     */
+    requestFeedbackDelay(delivId: string, personId: string, timestamp: number):
+        Promise<{ accepted: boolean, message: string } | null>;
 }
 
+/**
+ * This class is used to communicate with the Classy backend. This is required
+ * because AutoTest and Classy are separate services that need to communicate.
+ *
+ * The class exposes the aspects of Classy that AutoTest needs to know about.
+ * Some of these are extended by the CourseController class in a course's
+ * plugin, which enables per-course customization.
+ */
 export class ClassPortal implements IClassPortal {
     private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
     private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
@@ -410,5 +438,52 @@ export class ClassPortal implements IClassPortal {
 
         Log.trace(`ClassPortal::shouldPromotePush(${info.commitSHA}): ${shouldPromote}; Took: ${Util.took(start)}`);
         return shouldPromote;
+    }
+
+    public async requestFeedbackDelay(delivId: string, personId: string, timestamp: number): Promise<{
+        accepted: boolean;
+        message: string
+    } | null> {
+
+        const url = `${this.host}:${this.port}/portal/at/feedbackDelay`;
+        const start = Date.now();
+
+        Log.info(`ClassPortal::requestFeedbackDelay(..) - start; person: ${personId}; delivId: ${delivId}`);
+
+        // default to null
+        let resp: { accepted: boolean, message: string } | null = null;
+
+        try {
+            const opts: RequestInit = {
+                agent: new https.Agent({rejectUnauthorized: false}),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "token": Config.getInstance().getProp(ConfigKey.autotestSecret)
+                },
+                body: JSON.stringify(
+                    {delivId: delivId, personId: personId, timestamp: timestamp}
+                )
+            };
+
+            const response = await fetch(url, opts);
+            const json = await response.json();
+            if (typeof json?.success?.accepted === "boolean" && typeof json?.success?.message === "string") {
+                resp = {
+                    message: json.success.message,
+                    accepted: json.success.accepted
+                };
+            } else if (typeof json?.success?.notImplemented === "boolean") {
+                resp = null;
+            } else {
+                Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (bad response); Defaulting to no custom scheduler", json);
+                resp = null; // if something goes wrong, default to no custom scheduler
+            }
+        } catch (err) {
+            Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (making request); Defaulting to no promotion", err);
+        }
+
+        Log.info(`ClassPortal::requestFeedbackDelay(${delivId}, ${personId}): ${resp}; Took: ${Util.took(start)}`);
+        return resp;
     }
 }

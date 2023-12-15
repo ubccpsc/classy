@@ -50,6 +50,8 @@ export class AutoTestRoutes implements IREST {
 
         server.post("/portal/at/promotePush", AutoTestRoutes.atShouldPromotePush);
 
+        server.post("/portal/at/feedbackDelay", AutoTestRoutes.atFeedbackDelay);
+
         // The next three endpoints are not in the right place as they represent
         // requests that do not arise from AutoTest.
 
@@ -375,6 +377,36 @@ export class AutoTestRoutes implements IREST {
                 return next(true);
             } catch (err) {
                 return AutoTestRoutes.handleError(400, "Failed to find push promotion details", res, next);
+            }
+        }
+    }
+
+    public static async atFeedbackDelay(req: any, res: any, next: any) {
+        Log.info("AutoTestRoutes::atFeedbackDelay(..) - start");
+
+        const start = Date.now();
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res, next);
+        } else {
+            try {
+                const info: { delivId: string, personId: string, timestamp: number } = req.body;
+                const courseController = await Factory.getCourseController();
+                const feedbackDelay = await courseController.requestFeedbackDelay(info);
+                if (feedbackDelay === null) {
+                    // default implementation just says not implemented, although this is not an error
+                    res.send(204, {success: {notImplemented: true}});
+                    return next(true);
+                } else {
+                    Log.info("AutoTestRoutes::atFeedbackDelay(..) - done; feedbackDelay: " + JSON.stringify(feedbackDelay) +
+                        "; took: " + Util.took(start));
+                    const payload: Payload = {success: {feedbackDelay}};
+                    res.send(200, payload);
+                    return next(true);
+                }
+            } catch (err) {
+                return AutoTestRoutes.handleError(400, "Failed to determine feedback eligibility", res, next);
             }
         }
     }

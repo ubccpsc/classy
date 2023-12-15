@@ -132,4 +132,12 @@ export class MockClassPortal implements IClassPortal {
         return false;
     }
 
+    public async requestFeedbackDelay(delivId: string, personId: string, timestamp: number): Promise<{
+        accepted: boolean;
+        message: string
+    } | null> {
+        Log.info("MockClassPortal::requestFeedbackDelay(..) - delay: null");
+        return null;
+    }
+
 }

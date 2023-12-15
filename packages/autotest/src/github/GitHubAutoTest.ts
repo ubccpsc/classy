@@ -683,12 +683,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
-     * Returns the timestamp in ms of the next valid execution timeslot.
      *
-     * If no prior request has been made, this is null.
-     *
-     * @param delivId
-     * @param userName
      */
     protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");
