@@ -142,6 +142,11 @@ describe("DatabaseController", () => {
         expectEmptyArray(results);
     });
 
+    it("Should be able to get a list of feedback when there are none.", async () => {
+        const results = await dc.getLatestFeedbackGiven("c1", "project_team123", "standard");
+        expectEmptyArray(results);
+    });
+
     it("Should be able to get a list teams for a person who is invalid.", async () => {
         const teams = await dc.getTeamsForPerson(TestHarness.INVALIDUSER1.id);
         expectEmptyArray(teams);

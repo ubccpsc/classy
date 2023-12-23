@@ -4,7 +4,7 @@ import Config, {ConfigCourses, ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, FeedbackRecord, Grade, Person, Repository, Result, Team} from "../Types";
 import {TeamController} from "./TeamController";
 
 export class DatabaseController {
@@ -39,6 +39,8 @@ export class DatabaseController {
     private readonly AUTHCOLL = "auth";
     private readonly AUDITCOLL = "audit";
     private readonly TICKERCOLL = "ids";
+
+    private readonly FEEDBACKCOLL = "feedback";
 
     /**
      * use getInstance() instead.
@@ -250,6 +252,31 @@ export class DatabaseController {
             Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - not found");
         }
         return grade;
+    }
+
+    /**
+     * 
+     * @param delivId 
+     * @param personId 
+     * @param kind - "standard" or "check"
+     * @returns list of FeedbackRecords that have been shown to the personId
+     */
+    public async getLatestFeedbackGiven(delivId: string, personId: string, kind: string): Promise<FeedbackRecord[] | null> {
+        try {
+            const latestFirst = {"input.target.timestamp": -1};
+            const res = await this.readRecords(
+                this.FEEDBACKCOLL,
+                QueryKind.FAST,
+                true, // limit results to 400. We probably don't need that many, but there's no limit parameter for readRecords (yet)
+                { delivId, personId, kind },
+                latestFirst
+            ) as FeedbackRecord[];
+            Log.trace("DatabaseController::getLatestFeedbackGiven() - #: " + res.length);
+            return res;
+        } catch (err) {
+            Log.error("DatabaseController::getLatestFeedbackGiven(..) - ERROR: " + err);
+        }
+        return null;
     }
 
     /**
