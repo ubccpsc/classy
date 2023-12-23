@@ -255,9 +255,9 @@ export class DatabaseController {
     }
 
     /**
-     * 
-     * @param delivId 
-     * @param personId 
+     *
+     * @param delivId
+     * @param personId
      * @param kind - "standard" or "check"
      * @returns list of FeedbackRecords that have been shown to the personId
      */
