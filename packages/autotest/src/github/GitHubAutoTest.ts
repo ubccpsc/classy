@@ -546,6 +546,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA, info.ref);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
+
+        // Allows course staff to run commits as students with #student flag
+        // This is helpful for testing student workflows with the queue
+        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            if (typeof info.flags !== "undefined" && info.flags.indexOf("#student") >= 0) {
+                Log.info("GitHubAutoTest::handleCommentEvent(..) - running admin request as student");
+                isStaff.isStaff = false;
+                isStaff.isAdmin = false;
+            }
+        }
+
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             // staff request
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
