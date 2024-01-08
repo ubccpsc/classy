@@ -468,7 +468,12 @@ export class ClassPortal implements IClassPortal {
 
             const response = await fetch(url, opts);
             const json = await response.json();
-            Log.info(`ClassPortal::requestFeedbackDelay(..) - returned; payload: ${json}`);
+            Log.info("ClassPortal::requestFeedbackDelay(..) - returned; payload: " + JSON.stringify(json));
+
+            Log.info("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
+                "; json.success: " + typeof json?.success + "; json.success.accepted: " + typeof json?.success?.accepted +
+                "; json.success.message: " + typeof json?.success?.message +
+                "; json.success.notImplemented: " + typeof json?.success?.notImplemented);
 
             if (typeof json?.success?.accepted === "boolean" && typeof json?.success?.message === "string") {
                 resp = {
