@@ -474,7 +474,7 @@ export class ClassPortal implements IClassPortal {
             }
             Log.info("ClassPortal::requestFeedbackDelay(..) - returned; payload: " + JSON.stringify(json));
 
-            Log.info("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
+            Log.trace("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
                 "; json.accepted: " + typeof json?.accepted +
                 "; json.message: " + typeof json?.message +
                 "; json.notImplemented: " + typeof json?.notImplemented);
