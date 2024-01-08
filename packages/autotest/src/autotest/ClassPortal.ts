@@ -468,23 +468,23 @@ export class ClassPortal implements IClassPortal {
 
             const response = await fetch(url, opts);
             let json = await response.json();
-            if (json?.feedbackDelay) {
+            if (json?.success?.feedbackDelay) {
                 // strip outer wrapper
-                json = json.feedbackDelay;
+                json = json.success.feedbackDelay;
             }
             Log.info("ClassPortal::requestFeedbackDelay(..) - returned; payload: " + JSON.stringify(json));
 
             Log.info("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
-                "; json.success: " + typeof json?.success + "; json.success.accepted: " + typeof json?.success?.accepted +
-                "; json.success.message: " + typeof json?.success?.message +
-                "; json.success.notImplemented: " + typeof json?.success?.notImplemented);
+                "; json.accepted: " + typeof json?.accepted +
+                "; json.message: " + typeof json?.message +
+                "; json.notImplemented: " + typeof json?.notImplemented);
 
-            if (typeof json?.success?.accepted === "boolean" && typeof json?.success?.message === "string") {
+            if (typeof json?.accepted === "boolean" && typeof json?.message === "string") {
                 resp = {
-                    accepted: json.success.accepted,
-                    message: json.success.message
+                    accepted: json.accepted,
+                    message: json.message
                 };
-            } else if (typeof json?.success?.notImplemented === "boolean") {
+            } else if (typeof json?.notImplemented === "boolean" && json.notImplemented === true) {
                 resp = null;
             } else {
                 Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (bad response); Defaulting to no custom scheduler", json);
