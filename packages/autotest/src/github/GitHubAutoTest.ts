@@ -667,10 +667,11 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", ... ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
+            const feedbackDelay = await this.classPortal.requestFeedbackDelay(delivId, userName, reqTimestamp);
             const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
 
-            // If admin and NOT #student (for testing as student), then no delay
-            if ((typeof flags !== "undefined" && flags.indexOf("#student") < 0)) {
+            // Allow admins to run commits as students for testing delay feedback
+            if ((typeof flags !== "undefined" && flags.indexOf("#student") >= 0)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - forcing student");
                 if (isStaff !== null) {
                     isStaff.isStaff = false;
@@ -681,20 +682,36 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - staff; no delay");
                 return null; // staff can always request
+            }
+
+            if (feedbackDelay !== null) {
+                Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom feedback delay: " +
+                    JSON.stringify(feedbackDelay));
+                if (feedbackDelay.accepted === true) {
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can request feedback");
+                    return null;
+                } else {
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can NOT request feedback: " +
+                        feedbackDelay.message);
+                    return feedbackDelay.message;
+                }
             } else {
+                Log.info(
+                    "GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default feedback delay; next timeslot: " + nextTimeslot);
                 if (nextTimeslot === null) {
-                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; no prior request, no delay");
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; no prior request, no delay");
                     return null; // no prior requests
                 } else {
                     // if within a buffered window, just be flexible and allow the request
                     // this prevents feedback like 'you must wait 126 ms'
                     const NEXT_BUFFER = 60 * 1000; // if within a minute, allow it
                     if (reqTimestamp >= (nextTimeslot - NEXT_BUFFER)) {
-                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; enough time passed, no delay");
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; enough time passed, no delay");
                         return null; // enough time has passed
                     } else {
                         const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
-                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; NOT enough time passed, delay: " + msg);
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName +
+                            " ) - default done; NOT enough time passed, delay: " + msg);
                         return msg;
                     }
                 }
