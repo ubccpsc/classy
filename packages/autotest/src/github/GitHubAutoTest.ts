@@ -429,7 +429,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             target.personId + "; deliv: " + target.delivId + "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitSHA));
 
         const shouldCharge = await this.shouldCharge(target, null, res);
-        const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId, target.timestamp);
+        const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId,
+            target.timestamp, target.flags);
         const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(target);
 
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
@@ -590,7 +591,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackRequested = (standardFeedbackRequested !== null);
 
             const personId = data.input.target.personId;
-            const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
+            const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId,
+                data.input.target.timestamp, data.input.target.flags);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
 
             Log.info("GitHubAutoTest::processExecution() - " +
@@ -660,12 +662,21 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param reqTimestamp
      *
      */
-    private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
+    private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number, flags: string[]): Promise<string | null> {
         try {
             Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", ... ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
             const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
+
+            // If admin and NOT #student (for testing as student), then no delay
+            if ((typeof flags !== "undefined" && flags.indexOf("#student") < 0)) {
+                Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - forcing student");
+                if (isStaff !== null) {
+                    isStaff.isStaff = false;
+                    isStaff.isAdmin = false;
+                }
+            }
 
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - staff; no delay");
