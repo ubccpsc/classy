@@ -263,7 +263,7 @@ export class DatabaseController {
      */
     public async getLatestFeedbackGiven(delivId: string, personId: string, kind: string): Promise<FeedbackRecord[] | null> {
         try {
-            const latestFirst = {"timestamp": -1};
+            const latestFirst = {timestamp: -1};
             const res = await this.readRecords(
                 this.FEEDBACKCOLL,
                 QueryKind.FAST,
