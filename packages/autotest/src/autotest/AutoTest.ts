@@ -70,14 +70,14 @@ export abstract class AutoTest implements IAutoTest {
 
     /**
      * Express queue. If this queue has jobs in it, no matter what is
-     * going on in the other queues, these should be handled first.
+     * going on in the other queues, these will be executed first.
      *
      * All explicit requests go on the express queue. No implicit requests
      * are added to this queue. Staff/Admin jobs are placed on the head
      * of the express queue.
      *
      * While there is no threshold on the number of jobs a student can put
-     * on the express queue, the charging mechanism should ensure that only
+     * on the express queue, the 'charging' mechanism should ensure that only
      * jobs the student is allowed to request (e.g., enough time has passed)
      * are added to the queue.
      *
@@ -90,7 +90,7 @@ export abstract class AutoTest implements IAutoTest {
      * before any low jobs.
      *
      * These slots exist so that students who push at a reasonable cadence
-     * have their jobs handled more quickly than those who push rapidly.
+     * have their jobs handled more quickly than those who push too rapidly.
      *
      * To ensure feedback is timely, any scheduled standard job that exceeds
      * the job threshold will be replaced (without losing its queue position)
@@ -107,7 +107,7 @@ export abstract class AutoTest implements IAutoTest {
      *
      * When the low queue threshold is passed the oldest jobs _will_ be
      * removed and will not be graded. This should rarely happen. But if
-     * it does, any request on one of these old jobs will cause the job
+     * it does, any student request on one of these old jobs will cause the job
      * to run as it will be added to the express queue. As the deadline nears,
      * the jobs will be newer than those previously requested so the jobs
      * closest to any deadline will always be run.
@@ -120,10 +120,9 @@ export abstract class AutoTest implements IAutoTest {
      * The maximum number of jobs a single user can have on the standard queue
      * before it will schedule on the low queue instead.
      *
-     * This threshold will be overridden by comment events, which will all be
-     * scheduled on the express queue (which is why comment intervals need
-     * to be metered as it is the only way to avoid having a single person
-     * overwhelm AutoTest on their own).
+     * A push event will always schedule on the standard queue. If this push will
+     * cause the user to exceed this limit, the oldest job will be moved to the
+     * low queue and the newer job will be scheduled on the standard queue.
      *
      * @private
      */
@@ -135,6 +134,9 @@ export abstract class AutoTest implements IAutoTest {
      * intuition here is that if a student has more than MAX_LOW_JOBS
      * on the queue, they probably care about the results of the most
      * recent jobs more than the older jobs.
+     *
+     * This is key to ensuring a single user cannot DOS the AutoTest service
+     * by pushing too rapidly.
      *
      * @private
      */
@@ -255,7 +257,7 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             // this is fairly permissive; only queued jobs (not executing jobs) are counted
-            if (stdJobCount <= this.MAX_STANDARD_JOBS) {
+            if (stdJobCount < this.MAX_STANDARD_JOBS) {
                 Log.info("AutoTest::addToStandardQueue(..) - repo: " +
                     input.target.repoId + "; has # " + stdJobCount +
                     " std jobs queued and # " + lowJobCount +
@@ -304,7 +306,7 @@ export abstract class AutoTest implements IAutoTest {
             }
 
             const lowJobCount = this.lowQueue.numberJobsForPerson(input);
-            if (lowJobCount > this.MAX_LOW_JOBS) {
+            if (lowJobCount >= this.MAX_LOW_JOBS) {
                 Log.warn("AutoTest::addToLowQueue(..) - user has _many_ ( " + lowJobCount + ") queued jobs, " +
                     "will replace oldest job with this job; repo: " + input.target.repoId + "; person: " + input.target.personId);
                 // Replace oldest job instead of adding.
