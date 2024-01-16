@@ -305,7 +305,7 @@ export abstract class AutoTest implements IAutoTest {
 
             const lowJobCount = this.lowQueue.numberJobsForPerson(input);
             if (lowJobCount > this.MAX_LOW_JOBS) {
-                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ queued jobs, " +
+                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ ( " + lowJobCount + ") queued jobs, " +
                     "will replace oldest job with this job; repo: " + input.target.repoId + "; person: " + input.target.personId);
                 // Replace oldest job instead of adding.
                 // This can reduce the impact of DOS attacks
