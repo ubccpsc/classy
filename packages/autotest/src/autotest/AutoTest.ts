@@ -349,9 +349,9 @@ export abstract class AutoTest implements IAutoTest {
                     const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
-                        info.target.delivId + "; repo: " + info.target.repoId + "; SHA: " + Util.shaHuman(info.target.commitSHA) +
-                        "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued + " ( e: " + that.expressQueue.length() + ", s: " +
-                        that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
+                        (info.target.delivId + ";").padEnd(8, " ") + " repo: " + info.target.repoId + "; SHA: " +
+                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued +
+                        " ( e: " + that.expressQueue.length() + ", s: " + that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
 
                     let gradingJob: GradingJob;
                     // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
@@ -581,9 +581,9 @@ export abstract class AutoTest implements IAutoTest {
                 data.input.target.tsJobStart = data.input.target.timestamp;
             }
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
-                data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
-                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart, true) +
-                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp, true));
+                (data.delivId + ";").padEnd(8, " ") + " repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
+                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart, true).padStart(14, " ") +
+                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp, true).padStart(14, " "));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }
