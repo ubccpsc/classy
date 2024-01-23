@@ -630,7 +630,17 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== "undefined") {
-            UI.notificationToast("Classlist successfully updated.");
+            let msg = "Classlist successfully updated:";
+            if (typeof body.success.created !== "undefined") {
+                msg = msg + " " + body.success.created.length + " added,";
+            }
+            if (typeof body.success.updated !== "undefined") {
+                msg = msg + " " + body.success.updated.length + " updated,";
+            }
+            if (typeof body.success.removed !== "undefined") {
+                msg = msg + " " + body.success.removed.length + " removed.";
+            }
+            UI.notificationToast(msg);
             this.showClasslistChanges(body.success);
         } else {
             UI.showAlert(body.failure.message);
