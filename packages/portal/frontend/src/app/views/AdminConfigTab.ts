@@ -1,13 +1,7 @@
 import {OnsButtonElement} from "onsenui";
 
 import Log from "@common/Log";
-import {
-    CourseTransport,
-    Payload,
-    ProvisionTransport,
-    StudentTransport,
-    TeamFormationTransport
-} from "@common/types/PortalTypes";
+import {CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport} from "@common/types/PortalTypes";
 
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
@@ -644,6 +638,7 @@ export class AdminConfigTab extends AdminPage {
     }
 
     private showClasslistChanges(classlistChanges: any): void {
+        Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
         const mapToTextAndSubtext = function (people: StudentTransport[]) {
             return people.map(function (person) {
                 return {

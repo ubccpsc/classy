@@ -97,7 +97,7 @@ export class ClasslistAgent {
             }
         });
 
-        Log.trace("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(changeReport));
+        Log.info("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(changeReport));
         return changeReport;
     }
 
