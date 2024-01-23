@@ -260,7 +260,7 @@ export default class AutoTestRouteHandler {
                 stream.on("data", (chunk: any) => {
                     Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
 
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     // start a new timer after every chunk to keep stream open
                     heartbeat = setInterval(function () {
                         Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
@@ -271,12 +271,12 @@ export default class AutoTestRouteHandler {
                 });
                 stream.on("end", (chunk: any) => {
                     Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     return next();
                 });
                 stream.on("error", (chunk: any) => {
                     Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     return next();
                 });
                 stream.pipe(res);
