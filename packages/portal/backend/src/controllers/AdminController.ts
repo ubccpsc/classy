@@ -700,15 +700,19 @@ export class AdminController {
         Log.info("AdminController::planProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
         const cc = await Factory.getCourseController(this.gh);
         let allPeople: Person[] = await this.pc.getAllPeople();
+        Log.info("AdminController::planProvision( .. ) - # people (all): " + allPeople.length);
 
         // remove all withdrawn people, we do not need to provision these
         allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
+        Log.info("AdminController::planProvision( .. ) - # people (not withdrawn): " + allPeople.length);
 
         const allTeams: Team[] = await this.tc.getAllTeams();
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
             Log.info("AdminController::planProvision(..) - team maxSize 1: formSingleTeams forced to true");
+        } else {
+            Log.info("AdminController::planProvision(..) - team maxSize > 1: formSingleTeams not forced");
         }
 
         const delivTeams: Team[] = [];
@@ -744,12 +748,17 @@ export class AdminController {
 
         if (formSingleTeams === true) {
             // now create teams for individuals
+            Log.trace("AdminController::planProvision(..) - handling single teams");
             for (const individual of allPeople) {
-                const names = await cc.computeNames(deliv, [individual]);
-
-                const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
-                delivTeams.push(team);
+                try {
+                    const name = await cc.computeNames(deliv, [individual]);
+                    const team = await this.tc.formTeam(name.teamName, deliv, [individual], false);
+                    delivTeams.push(team);
+                } catch (err) {
+                    Log.error("AdminController::planProvision(..) - single team creation ERROR: " + err.message);
+                }
             }
+            Log.trace("AdminController::planProvision(..) - single teams done");
         }
 
         Log.trace("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
