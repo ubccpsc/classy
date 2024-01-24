@@ -687,6 +687,10 @@ export class AdminController {
     // }
 
     /**
+     * This plans the repo provisioning process. Planning is separated from doing so
+     * that course staff can look at the repos being proposed and have the opportunity
+     * to provision a subset of repos if they wish (e.g., for testing before creating
+     * all of them).
      *
      * @param {Deliverable} deliv
      * @param {boolean} formSingleTeams specify whether singletons should be allocated into teams.
@@ -707,6 +711,7 @@ export class AdminController {
         Log.info("AdminController::planProvision( .. ) - # people (not withdrawn): " + allPeople.length);
 
         const allTeams: Team[] = await this.tc.getAllTeams();
+        Log.info("AdminController::planProvision( .. ) - # teams: " + allTeams.length);
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
@@ -728,7 +733,7 @@ export class AdminController {
                 }
             }
         }
-        Log.trace("AdminController::planProvision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
+        Log.info("AdminController::planProvision(..) - # deliv teams: " + delivTeams.length);
 
         // remove any people who are already on teams
         for (const team of delivTeams) {
@@ -737,6 +742,7 @@ export class AdminController {
                     return p.id;
                 }).indexOf(personId);
                 if (index >= 0) {
+                    Log.trace("AdminController::planProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
                     allPeople.splice(index, 1);
                 } else {
                     Log.error("AdminController::planProvision(..) - allPeople does not contain: " + personId);
@@ -772,6 +778,11 @@ export class AdminController {
             for (const pId of delivTeam.personIds) {
                 people.push(await this.pc.getPerson(pId));
             }
+            Log.trace("AdminController::planProvision(..) - preparing to provision pIds: " + JSON.stringify(delivTeam.personIds));
+            if (delivTeam.personIds.length !== people.length) {
+                Log.warn("AdminController::planProvision(..) - preparing to provision missing people; people: " + JSON.stringify(people));
+            }
+
             const names = await cc.computeNames(deliv, people);
 
             Log.trace("AdminController::planProvision(..) - delivTeam: " + delivTeam.id +
