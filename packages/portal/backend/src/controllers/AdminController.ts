@@ -817,8 +817,20 @@ export class AdminController {
         Log.info("AdminController::planRelease( " + deliv.id + " ) - start");
         const cc = await Factory.getCourseController(this.gh);
 
-        const allTeams: Team[] = await this.tc.getAllTeams();
+        let allTeams: Team[] = await this.tc.getAllTeams();
         Log.trace("AdminController::planRelease( " + deliv.id + " ) - # teams: " + allTeams.length);
+
+        // remove teams that have no people as they don't need to be released
+        // just for logging, will remove with filter below
+        for (const team of allTeams) {
+            if (team.personIds.length < 1) {
+                Log.warn("AdminController::planRelease(..) - team has no people: " + team.id);
+            }
+        }
+
+        // remove teams that have no people
+        allTeams = allTeams.filter((team) => team.personIds.length > 0);
+        Log.info("AdminController::planRelease(..) - # teams after removing teams without people: " + allTeams.length);
 
         const delivTeams: Team[] = [];
         for (const team of allTeams) {
@@ -839,6 +851,8 @@ export class AdminController {
         const reposAlreadyReleased: Repository[] = [];
         for (const team of delivTeams) {
             try {
+                Log.trace("AdminController::planRelease( " + deliv.id + " ) - processing team: " + team.id);
+
                 // get repo for team
                 const people: Person[] = [];
                 for (const pId of team.personIds) {
@@ -869,6 +883,7 @@ export class AdminController {
                     Log.exception(err);
                 }
             }
+            Log.trace("AdminController::planRelease( " + deliv.id + " ) - done team processing: " + team.id);
         }
 
         Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
