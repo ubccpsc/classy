@@ -703,6 +703,7 @@ export class AdminController {
     public async planProvision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
         Log.info("AdminController::planProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
         const cc = await Factory.getCourseController(this.gh);
+
         let allPeople: Person[] = await this.pc.getAllPeople();
         Log.info("AdminController::planProvision( .. ) - # people (all): " + allPeople.length);
 
@@ -710,6 +711,8 @@ export class AdminController {
         allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
         Log.info("AdminController::planProvision( .. ) - # people (not withdrawn): " + allPeople.length);
 
+        // teams were either formed by students (or the admin in the UI)
+        // _or_ the deliv is for single students and we will form them below
         const allTeams: Team[] = await this.tc.getAllTeams();
         Log.info("AdminController::planProvision( .. ) - # teams: " + allTeams.length);
 
@@ -745,7 +748,13 @@ export class AdminController {
                     Log.trace("AdminController::planProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
                     allPeople.splice(index, 1);
                 } else {
-                    Log.error("AdminController::planProvision(..) - allPeople does not contain: " + personId);
+                    Log.warn("AdminController::planProvision(..) - allPeople does not contain: " + personId);
+                    const person = await this.pc.getPerson(personId);
+                    if (person !== null) {
+                        Log.warn("AdminController::planProvision(..) - person details: " + JSON.stringify(person));
+                    } else {
+                        Log.warn("AdminController::planProvision(..) - person is not in database");
+                    }
                 }
             }
         }
