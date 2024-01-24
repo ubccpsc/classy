@@ -573,119 +573,6 @@ export class AdminController {
         return null;
     }
 
-    // /**
-    //  *
-    //  * @param {Deliverable} deliv
-    //  * @param {boolean} formSingleTeams specify whether singletons should be allocated into teams.
-    //  * Choose false if you want to wait for the students to specify, choose true if you want to
-    //  * let them work individually. (Note: if your teams are of max size 1, you still need to say
-    //  * yes to make this happen.)
-    //  *
-    //  * @returns {Promise<RepositoryTransport[]>}
-    //  */
-    // public async provision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
-    //     Log.info("AdminController::provision( " + deliv.id + ", " + formSingleTeams + " ) - start");
-    //     const allPeople: Person[] = await this.pc.getAllPeople();
-    //     const allTeams: Team[] = await this.tc.getAllTeams();
-    //
-    //     if (deliv.teamMaxSize === 1) {
-    //         formSingleTeams = true;
-    //         Log.info("AdminController::provision(..) - team maxSize 1: formSingleTeams forced to true");
-    //     }
-    //
-    //     const delivTeams: Team[] = [];
-    //     for (const team of allTeams) {
-    //         if (team === null || deliv === null || team.id === null || deliv.id === null) {
-    //             // seeing this during 310 provisioning, need to figure this out
-    //             Log.error("AdminController::provision(..) - ERROR! null team: " +
-    //                 JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
-    //         } else {
-    //             if (team.delivId === deliv.id) {
-    //                 Log.trace("AdminController::provision(..) - adding team: " + team.id + " to delivTeams");
-    //                 delivTeams.push(team);
-    //             }
-    //         }
-    //     }
-    //     Log.trace("AdminController::provision(..) - # deliv teams: " + delivTeams.length + "; total people: " + allPeople.length);
-    //
-    //     // remove any people who are already on teams
-    //     for (const team of delivTeams) {
-    //         for (const personId of team.personIds) {
-    //             const index = allPeople.map(function(p: Person) {
-    //                 return p.id;
-    //             }).indexOf(personId);
-    //             if (index >= 0) {
-    //                 allPeople.splice(index, 1);
-    //             } else {
-    //                 Log.error("AdminController::provision(..) - allPeople does not contain: " + personId);
-    //             }
-    //         }
-    //     }
-    //
-    //     Log.trace("AdminController::provision(..) - # people not on teams: " + allPeople.length);
-    //
-    //     if (formSingleTeams === true) {
-    //         // now create teams for individuals
-    //         for (const individual of allPeople) {
-    //             const names = await this.cc.computeNames(deliv, [individual]);
-    //
-    //             const team = await this.tc.formTeam(names.teamName, deliv, [individual], false);
-    //             delivTeams.push(team);
-    //         }
-    //     }
-    //
-    //     Log.trace("AdminController::provision(..) - # delivTeams after individual teams added: " + delivTeams.length);
-    //
-    //     const reposToProvision: Repository[] = [];
-    //     // now process the teams to create their repos
-    //     for (const delivTeam of delivTeams) {
-    //         // if (team.URL === null) { // this would be faster, but we are being more conservative here
-    //
-    //         Log.trace("AdminController::provision(..) - preparing to provision team: " + delivTeam.id);
-    //
-    //         const people: Person[] = [];
-    //         for (const pId of delivTeam.personIds) {
-    //             people.push(await this.pc.getPerson(pId));
-    //         }
-    //         const names = await this.cc.computeNames(deliv, people);
-    //
-    //         Log.trace("AdminController::provision(..) - delivTeam: " + delivTeam.id +
-    //             "; computed team: " + names.teamName + "; computed repo: " + names.repoName);
-    //
-    //         const team = await this.tc.getTeam(names.teamName);
-    //         let repo = await this.rc.getRepository(names.repoName);
-    //
-    //         if (team === null) {
-    //             // sanity checking team must not be null given what we have done above (should never happen)
-    //             throw new Error("AdminController::provision(..) - team unexpectedly null: " + names.teamName);
-    //         }
-    //
-    //         if (repo === null) {
-    //             repo = await this.rc.createRepository(names.repoName, deliv, [team], {});
-    //         }
-    //
-    //         if (repo === null) {
-    //             // sanity checking repo must not be null given what we have done above (should never happen)
-    //             throw new Error("AdminController::provision(..) - repo unexpectedly null: " + names.repoName);
-    //         }
-    //
-    //         // teams and repos should be provisioned together; this makes sure this consistency is maintained
-    //         if (team.URL === null && repo.URL === null) {
-    //             // provision
-    //             reposToProvision.push(repo);
-    //         } else if (team.URL !== null && repo.URL !== null) {
-    //             // already provisioned
-    //         } else {
-    //             Log.error("AdminController::provision(..) - inconsistent repo/team; repo.URL: " + repo.URL + "; team.URL: " + team.URL);
-    //         }
-    //     }
-    //
-    //     Log.trace("AdminController::provision(..) - # repos to provision: " + reposToProvision.length);
-    //
-    //     const provisionedRepos = await this.provisionRepositories(reposToProvision, deliv.importURL);
-    //     return provisionedRepos; // only returns provisioned this time; should it return all of them?
-    // }
-
     /**
      * This plans the repo provisioning process. Planning is separated from doing so
      * that course staff can look at the repos being proposed and have the opportunity
@@ -713,8 +600,19 @@ export class AdminController {
 
         // teams were either formed by students (or the admin in the UI)
         // _or_ the deliv is for single students and we will form them below
-        const allTeams: Team[] = await this.tc.getAllTeams();
+        let allTeams: Team[] = await this.tc.getAllTeams();
         Log.info("AdminController::planProvision( .. ) - # teams: " + allTeams.length);
+
+        // just for logging, will remove with filter below
+        for (const team of allTeams) {
+            if (team.personIds.length < 1) {
+                Log.warn("AdminController::planProvision(..) - team has no people: " + team.id);
+            }
+        }
+
+        // remove teams that have no people
+        allTeams = allTeams.filter((team) => team.personIds.length > 0);
+        Log.info("AdminController::planProvision(..) - # teams after removing teams without people: " + allTeams.length);
 
         if (deliv.teamMaxSize === 1) {
             formSingleTeams = true;
@@ -758,7 +656,6 @@ export class AdminController {
                 }
             }
         }
-
         Log.trace("AdminController::planProvision(..) - # people not on teams: " + allPeople.length);
 
         if (formSingleTeams === true) {
@@ -825,6 +722,7 @@ export class AdminController {
             // }
 
             reposToProvision.push(repo);
+            Log.trace("AdminController::planProvision(..) - team planning done for team: " + delivTeam.id);
         }
 
         Log.trace("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
