@@ -342,6 +342,10 @@ export class GitHubActions implements IGitHubActions {
                     has_issues: true,
                     has_wiki: false,
                     has_downloads: false,
+                    // squash merging does not use ff causing branch problems in autotest
+                    allow_squash_merge: false,
+                    // rebase merging does not use ff causing branch problems in autotest
+                    allow_rebase_merge: false,
                     auto_init: false
                 })
             };
