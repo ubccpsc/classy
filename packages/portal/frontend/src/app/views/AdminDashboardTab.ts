@@ -296,6 +296,8 @@ export class AdminDashboardTab extends AdminPage {
             // sanitize for student tests that have < or > in the name which break the table rendering
             name = name.replace("<", "&lt;");
             name = name.replace(">", "&gt;");
+            name = name.replace('"', "&quot;");
+            name = name.replace("'", "&quot;");
             annotated.push({name: name, state: state, colour: colour});
         }
 
