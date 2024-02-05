@@ -568,6 +568,8 @@ export class DatabaseController {
     }
 
     /**
+     * Perform a query and return a single record. If the query matches more than one record, the first is
+     * returned; if no records are found, null is returned.
      *
      * @param {string} column
      * @param {{}} query
@@ -596,12 +598,15 @@ export class DatabaseController {
     }
 
     /**
+     * Perform a query on a collection. Support is provided for limiting the number of results returned,
+     * as all results are often not needed, but in busy courses the number of records can exceed 100,000
+     * which can take way too long to return.
      *
      * @param {string} column
      * @param {QueryKind} kind this is the kind of query ("slow", "write", or null)
-     * * @param {boolean} limitResults whether the full result list should be returned or just a subset
+     * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
-     * * @param {{}} sort? send only if a specific ordering is required
+     * @param {{}} sort send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
     public async readRecords(column: string, kind: QueryKind, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
@@ -667,14 +672,14 @@ export class DatabaseController {
     }
 
     /**
-     * Internal use only, do not use this method; use getCollection(..) instead.
+     * Internal use only, do not use this method; use getCollection instead.
      *
      * @returns {Promise<Db>}
      */
     private async open(kind: string): Promise<Db> {
         try {
             // Log.trace("DatabaseController::open() - start");
-            let db = null;
+            let db;
             if (kind === QueryKind.SLOW) {
                 db = this.slowDb;
             } else if (kind === QueryKind.WRITE) {
@@ -808,7 +813,8 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable and repo, find all the results.
+     * Find all results for a given <repoId, delivId>. This result list is not pruned,
+     * all results are returned.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -835,7 +841,8 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable, find all the results.
+     * Find all results for a given repoId. This is especially useful to get a complete list of all results for a repo,
+     * given that optimizations in the broader getResults* methods often prune results to enable better performance.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -864,7 +871,8 @@ export class DatabaseController {
      * For a given deliverable, find the most recent result for each <repoId, delivId> tuple. The repoId restriction
      * exists because in large terms the results collection can be quite large and ends up being too slow to retrieve.
      * But this version is better than just retrieving the last 400 results because it means the results and dashboard
-     * views will always have at least one row for each repo.
+     * views will always have at least one row for each repo. This query only includes one row per repoId, to see all
+     * the results for a given repoId, use getResultsForRepo.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -896,7 +904,6 @@ export class DatabaseController {
             }
             Log.trace("DatabaseController::readRecords(..) - done; # records: " +
                 records.length + ". took: " + Util.took(start));
-            return records;
         }
 
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - done; #: " +
@@ -906,11 +913,12 @@ export class DatabaseController {
     }
 
     /**
-     * Find the result for a given deliverable, repo, SHA tuple or null if such a result does not exist.
+     * Find the result for a given <deliverable, repo, SHA> tuple or null if such a result does not exist.
      *
      * @param delivId
      * @param repoId
      * @param sha
+     * @param ref the branch reference; if null, it is not considered
      */
     public async getResult(delivId: string, repoId: string, sha: string, ref: string | null): Promise<Result | null> {
         const results = await this.getResults(delivId, repoId) as Result[];
