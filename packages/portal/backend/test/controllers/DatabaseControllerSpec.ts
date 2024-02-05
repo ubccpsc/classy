@@ -408,7 +408,56 @@ describe("DatabaseController", () => {
         expect((res.custom as any).foo).to.be.true;
     });
 
-    // write new result
+    // write & read result
+    it("Should be able to write and read a result.", async () => {
+        // this test seems like it is tangling a lot of things together, but the backend implementation
+        // for most of these convenience methods defer to one another so this is a reasonable sanity check.
+
+        let res = await dc.getAllResults();
+        expect(res).to.have.lengthOf(0);
+
+        res = await dc.getResultsForRepo(TestHarness.REPONAME1);
+        expect(res).to.have.lengthOf(0);
+
+        res = await dc.getResultsForDeliverable(TestHarness.DELIVID0);
+        expect(res).to.have.lengthOf(0);
+
+        res = await dc.getBestResults(TestHarness.DELIVID0);
+        expect(res).to.have.lengthOf(0);
+
+        // add a record
+        const newRes = await TestHarness.createResult(TestHarness.DELIVID0, TestHarness.REPONAME1, [TestHarness.USER1.id], 70);
+        await dc.writeResult(newRes);
+
+        // make sure it can be found
+        res = await dc.getAllResults();
+        expect(res).to.have.lengthOf(1);
+
+        res = await dc.getResultsForRepo(TestHarness.REPONAME1);
+        expect(res).to.have.lengthOf(1);
+
+        res = await dc.getBestResults(TestHarness.DELIVID0);
+        expect(res).to.have.lengthOf(1);
+
+        res = await dc.getResultsForDeliverable(TestHarness.DELIVID0);
+        expect(res).to.have.lengthOf(1);
+
+        // inspect result to make sure it is reasonable
+        expect(res[0].delivId).to.equal(TestHarness.DELIVID0);
+        expect(res[0].repoId).to.equal(TestHarness.REPONAME1);
+        expect(res[0].output.report.scoreOverall).to.equal(70);
+        const url = res[0].commitURL;
+        const sha = res[0].commitSHA;
+
+        let singleRes = await dc.getResultFromURL(url, TestHarness.DELIVID0);
+        expect(singleRes).to.not.be.null;
+        expect(singleRes.commitSHA).to.equal(sha);
+
+        singleRes = await dc.getResult(TestHarness.DELIVID0, TestHarness.REPONAME1, sha, null);
+        expect(singleRes).to.not.be.null;
+        expect(singleRes.commitSHA).to.equal(sha);
+    });
+
     // write new grade
 
     // read existing course record

@@ -322,7 +322,7 @@ export class ResultsController {
     }
 
     public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
-        Log.trace("ResultsController::getResultsForDeliverable( " + delivId + " ) - start");
+        Log.trace("ResultsController::getResultsForDeliverable( " + delivId + ", " + kind + " ) - start");
         const start = Date.now();
 
         let outcome: Result[] = [];

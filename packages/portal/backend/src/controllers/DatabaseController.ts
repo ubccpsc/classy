@@ -268,7 +268,7 @@ export class DatabaseController {
                 this.FEEDBACKCOLL,
                 QueryKind.FAST,
                 true, // limit results to 400. We probably don't need that many, but there's no limit parameter for readRecords (yet)
-                { delivId, personId, kind },
+                {delivId, personId, kind},
                 latestFirst
             ) as FeedbackRecord[];
             Log.trace("DatabaseController::getLatestFeedbackGiven() - #: " + res.length);
@@ -622,6 +622,7 @@ export class DatabaseController {
             const start = Date.now();
             const col = await this.getCollection(column, kind);
 
+            // mongo query to find the most recent document for each team
             let records: any[];
             if (typeof sort === "undefined") {
                 records = await (col as any).find(query).limit(LIMITS).toArray();
@@ -860,7 +861,10 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable, find all the results.
+     * For a given deliverable, find the most recent result for each <repoId, delivId> tuple. The repoId restriction
+     * exists because in large terms the results collection can be quite large and ends up being too slow to retrieve.
+     * But this version is better than just retrieving the last 400 results because it means the results and dashboard
+     * views will always have at least one row for each repo.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -870,19 +874,35 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
 
-        const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, true, {delivId: delivId}, latestFirst) as Result[];
-        for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
-                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
-                result.input.target = (result.input as any).pushInfo;
+        const col = await this.getCollection(this.RESULTCOLL, QueryKind.FAST);
+        const records: any[] = await (col as any).aggregate([
+            {$match: {delivId: delivId}},
+            {$sort: {"input.target.timestamp": -1}},
+            {
+                $group: {
+                    _id: {delivId: "$delivId", repoId: "$repoId"},
+                    doc: {$first: "$$ROOT"},
+                }
+            },
+            {$replaceRoot: {newRoot: "$doc"}}
+        ]).toArray();
+
+        if (records === null || records.length === 0) {
+            Log.trace("DatabaseController::readRecords(..) - done; no records found");
+            return [];
+        } else {
+            for (const r of records) {
+                delete r._id; // remove the record id, just so we cannot use it
             }
+            Log.trace("DatabaseController::readRecords(..) - done; # records: " +
+                records.length + ". took: " + Util.took(start));
+            return records;
         }
 
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - done; #: " +
-            results.length + "; took: " + Util.took(start));
+            records.length + "; took: " + Util.took(start));
 
-        return results;
+        return records;
     }
 
     /**
@@ -921,10 +941,6 @@ export class DatabaseController {
      */
     public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
         return await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
-    }
-
-    public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
-        return await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
     }
 }
 
