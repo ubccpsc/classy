@@ -7,10 +7,18 @@ import {Result} from "../Types";
 import {DatabaseController} from "./DatabaseController";
 import {RepositoryController} from "./RepositoryController";
 
+/**
+ * This class is responsible for managing results in Classy. This includes creating,
+ * retrieving, and updating result records.
+ */
 export class ResultsController {
 
     private db: DatabaseController = DatabaseController.getInstance();
 
+    /**
+     * This returns absolutely _all_ results stored in the database. This can be slow as there can be a large
+     * number of total results.
+     */
     public async getAllResults(): Promise<Result[]> {
         Log.trace("ResultsController::getAllResults() - start");
         const start = Date.now();
@@ -41,7 +49,7 @@ export class ResultsController {
     }
 
     /**
-     * Gets the result from a commitURL.
+     * Gets the results associated with a <commitURL, delivId> tuple.
      *
      * @param {string} url
      * @param {string} delivId
@@ -57,6 +65,11 @@ export class ResultsController {
         return result;
     }
 
+    /**
+     * Create a Classy result record for a given AutoTest record and store it in the database.
+     *
+     * @param record
+     */
     public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start; deliv: " + record.delivId + "; repo: "
             + record.repoId + "; SHA: " + Util.shaHuman(record.commitSHA));
@@ -108,7 +121,7 @@ export class ResultsController {
     }
 
     /**
-     * Validates the AutoTest result object.
+     * Validates an AutoTest result object to ensure it is not missing any required fields.
      *
      * @param {AutoTestResult} record
      * @returns {string | null} String will contain a description of the error, null if successful.
@@ -236,6 +249,11 @@ export class ResultsController {
         return null;
     }
 
+    /**
+     * Validates a GradeReport object to ensure it is not missing any required fields.
+     *
+     * @param report
+     */
     public validateGradeReport(report: GradeReport): string | null {
         // Log.trace("ResultsController::validateGradeReport(..) - input: " + JSON.stringify(report));
 
@@ -321,6 +339,12 @@ export class ResultsController {
         return null; // everything is good
     }
 
+    /**
+     * Gets all the results for a given deliverable. Kind is usually ALL, but sometimes BEST is used.
+     *
+     * @param delivId
+     * @param kind
+     */
     public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
         Log.trace("ResultsController::getResultsForDeliverable( " + delivId + ", " + kind + " ) - start");
         const start = Date.now();
@@ -333,6 +357,8 @@ export class ResultsController {
             outcome = await dbc.getBestResults(delivId);
         } else if (kind === ResultsKind.GRADED) {
             outcome = await dbc.getGradedResults(delivId);
+        } else {
+            Log.warn("ResultsController::getResultsForDeliverable( " + delivId + " ) - unknown kind: " + kind);
         }
 
         Log.info("ResultsController::getResultsForDeliverable( " + delivId + " ) - done; # results: " +
@@ -341,12 +367,16 @@ export class ResultsController {
         return outcome;
     }
 
+    /**
+     * Gets all the results for a given repo.
+     *
+     * @param repoId
+     */
     public async getResultsForRepo(repoId: string) {
         Log.trace("ResultsController::getResultsForRepo( " + repoId + " ) - start");
         const start = Date.now();
 
         const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
-
         Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " +
             outcome.length + "; took: " + Util.took(start));
 
