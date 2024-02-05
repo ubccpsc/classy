@@ -275,7 +275,7 @@ export class AdminDashboardTab extends AdminPage {
         all = all.sort();
 
         const annotated: DetailRow[] = [];
-        for (const name of all) {
+        for (let name of all) {
             let state = "unknown";
             let colour = "black";
             if (failNames.indexOf(name) >= 0) {
@@ -293,6 +293,11 @@ export class AdminDashboardTab extends AdminPage {
             } else {
                 // unknown name
             }
+            // sanitize for student tests that have < or > in the name which break the table rendering
+            name = name.replace("<", "&lt;");
+            name = name.replace(">", "&gt;");
+            name = name.replace('"', "&quot;");
+            name = name.replace("'", "&quot;");
             annotated.push({name: name, state: state, colour: colour});
         }
 

@@ -71,7 +71,7 @@ export interface CommitTarget {
  * These can be specified per-deliverable in the Portal UI.
  */
 export interface AutoTestConfig {
-    dockerImage: string; // docker image that should be launchd
+    dockerImage: string; // docker image that should be launched
     studentDelay: number; // minimum interval between student requests in seconds
     maxExecTime: number; // maximum execution time for the container before it will be timed out in seconds
     regressionDelivIds: string[]; // other deliverables that should be run alongside any request

@@ -71,7 +71,7 @@ export default class Log {
 
     public static trace(...msg: any[]): void {
         if (Log.Level <= LogLevel.TRACE) {
-            console.log(`<T> ${new Date().toLocaleString()}:`, ...msg);
+            console.log(`<T> ${Log.getCurrentTS()}`, ...msg);
         }
     }
 
@@ -83,30 +83,38 @@ export default class Log {
 
     public static info(...msg: any[]): void {
         if (Log.Level <= LogLevel.INFO) {
-            console.info(`<I> ${new Date().toLocaleString()}:`, ...msg);
+            console.info(`<I> ${Log.getCurrentTS()}`, ...msg);
         }
     }
 
     public static warn(...msg: any[]): void {
         if (Log.Level <= LogLevel.WARN) {
-            console.warn(`<W> ${new Date().toLocaleString()}:`, ...msg);
+            console.warn(`<W> ${Log.getCurrentTS()}`, ...msg);
         }
     }
 
     public static error(...msg: any[]): void {
         if (Log.Level <= LogLevel.ERROR) {
-            console.error(`<E> ${new Date().toLocaleString()}:`, ...msg);
+            console.error(`<E> ${Log.getCurrentTS()}`, ...msg);
         }
     }
 
     public static exception(...err: any[]): void {
-        console.error(`<!> ${new Date().toLocaleString()}:`, ...err);
+        console.error(`<!> ${Log.getCurrentTS()}`, ...err);
     }
 
     public static test(...msg: any[]): void {
         if (Log.Level <= LogLevel.TEST) {
-            console.log(`<X> ${new Date().toLocaleString()}:`, ...msg);
+            console.log(`<X> ${Log.getCurrentTS()}`, ...msg);
         }
+
+    }
+
+    protected static getCurrentTS(): string {
+        // 11/31/2024, 11:27:00 AM
+        let dateStr = new Date().toLocaleString() + ":";
+        dateStr = dateStr.padEnd(25, " ");
+        return dateStr;
     }
 }
 
