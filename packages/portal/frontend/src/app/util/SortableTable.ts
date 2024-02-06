@@ -240,24 +240,31 @@ export class SortableTable {
             // handle mismatches
             // mainly happens when one cell is empty
             if (typeof aVal !== typeof bVal) {
-                if (aVal === "" || aVal === null) {
+                if (aVal === "" || aVal === null || typeof aVal === "undefined") {
                     return -1 * mult;
-                } else if (bVal === "" || bVal === null) {
+                } else if (bVal === "" || bVal === null || typeof bVal === "undefined") {
                     return 1 * mult;
                 }
             }
 
-            if (Array.isArray(aVal)) {
+            // aVal and bVal must have the same type now... but they might not both be numbers
+            if (Array.isArray(aVal)) { // aVal array
                 // an array
                 return (aVal.length - bVal.length) * mult;
-            } else if (isNaN(aVal) === false) {
-                // as a number
-                // something that is not an array or string
-                return (Number(aVal) - Number(bVal)) * mult;
-            } else if (typeof aVal === "string") {
+            } else if (!isNaN(aVal) && !isNaN(parseFloat(aVal))) { // aVal number
+
+                if (!isNaN(bVal) && !isNaN(parseFloat(bVal))) {
+                    // both are numbers
+                    return (parseFloat(aVal) - parseFloat(bVal)) * mult;
+                } else {
+                    // aVal is a number, but bVal is not
+                    return 1 * mult;
+                }
+
+            } else if (typeof aVal === "string") { // aVal string
                 // as a string; tries to naturally sort w/ numeric & base
                 return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: "base"}) * mult;
-            } else {
+            } else { // aVal other
                 // something that is not an array or string or number
                 return (aVal - bVal) * mult;
             }
