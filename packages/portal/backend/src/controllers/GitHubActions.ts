@@ -346,6 +346,8 @@ export class GitHubActions implements IGitHubActions {
                     allow_squash_merge: false,
                     // rebase merging does not use ff causing branch problems in autotest
                     allow_rebase_merge: false,
+                    merge_commit_title: "PR_TITLE",
+                    merge_commit_message: "PR_BODY",
                     auto_init: false
                 })
             };
