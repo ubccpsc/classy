@@ -236,6 +236,14 @@ export class DatabaseController {
         return deliv;
     }
 
+    /**
+     * Returns all grades in the system. To increase performance, each grade record is pruned
+     * and its `custom` parameter has been removed.
+     *
+     * If you need the `custom` parameter, use `getGrade` instead.
+     *
+     * @returns {Promise<Grade[]>} all grades, less their custom field
+     */
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
@@ -245,14 +253,14 @@ export class DatabaseController {
         // although it is not clear what part of this process is actually slow
         const col = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
         const grades = await col.aggregate([
+            {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
             {
                 $group: {
                     _id: {delivId: "$delivId", personId: "$personId"},
                     doc: {$first: "$$ROOT"}
                 }
             },
-            {$replaceRoot: {newRoot: "$doc"}},
-            {$project: {_id: 0, custom: 0}} // exclude _id and custom (custom.previousGrade is large)
+            {$replaceRoot: {newRoot: "$doc"}}
         ]).toArray() as Grade[];
 
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
