@@ -247,21 +247,22 @@ export class DatabaseController {
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
-        // const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
+        const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
+        grades.forEach((g) => delete g?.custom?.previousGrade); // remove the custom field
 
         // this query works, but is not any faster than the simple one above
         // although it does remove the custom field, which is recursive and can be large
-        const col = await this.getCollection(this.GRADECOLL, QueryKind.FAST);
-        const grades = await col.aggregate([
-            {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
-            {
-                $group: {
-                    _id: {delivId: "$delivId", personId: "$personId"},
-                    doc: {$first: "$$ROOT"}
-                }
-            },
-            {$replaceRoot: {newRoot: "$doc"}}
-        ]).toArray() as Grade[];
+        // const col = await this.getCollection(this.GRADECOLL, QueryKind.FAST);
+        // const grades = await col.aggregate([
+        //     {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
+        //     {
+        //         $group: {
+        //             _id: {delivId: "$delivId", personId: "$personId"},
+        //             doc: {$first: "$$ROOT"}
+        //         }
+        //     },
+        //     {$replaceRoot: {newRoot: "$doc"}}
+        // ]).toArray() as Grade[];
 
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
