@@ -48,14 +48,14 @@ export default class Util {
         if (hours > 1) {
             msg = hours + " hours"; // and " + minutes + " minutes";
         } else if (hours === 1) {
-            msg = hours + " hour"; // and " + minutes + " minutes";
+            msg = hours + " hour "; // and " + minutes + " minutes";
         }
         msg = msg.padStart(8, " ");
 
         if (hours > 0) {
             // will not show seconds
             if (minutes === 1) {
-                msg = msg + " and 1 minute";
+                msg = msg + " and 1 minute ";
             } else {
                 msg = msg + " and " + minutes + " minutes";
             }
@@ -63,7 +63,7 @@ export default class Util {
         } else {
             /// will have seconds
             if (minutes === 1) {
-                msg = "1 minute";
+                msg = "1 minute ";
             } else {
                 msg = minutes + " minutes";
             }
@@ -75,7 +75,7 @@ export default class Util {
                 if (seconds === 0) {
                     // say nothing
                 } else if (seconds === 1) {
-                    msg = msg + " and 1 second";
+                    msg = msg + " and 1 second ";
                 } else {
                     msg = msg + " and " + seconds + " seconds";
                 }
@@ -83,7 +83,7 @@ export default class Util {
                 if (seconds === 0) {
                     // say nothing
                 } else if (seconds === 1) {
-                    msg = "1 second";
+                    msg = "1 second ";
                 } else {
                     msg = seconds + " seconds";
                 }
