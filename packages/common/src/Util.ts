@@ -34,7 +34,9 @@ export default class Util {
         let delta = end - start;
         if (delta < 1000) {
             // just short circuit for really fast times
-            return delta + " ms";
+            let ret = delta + " ms";
+            ret = ret.padStart(6, " ");
+            return ret;
         }
 
         delta = Math.floor(delta / 1000); // convert to seconds
@@ -48,6 +50,7 @@ export default class Util {
         } else if (hours === 1) {
             msg = hours + " hour"; // and " + minutes + " minutes";
         }
+        msg = msg.padStart(8, " ");
 
         if (hours > 0) {
             // will not show seconds
@@ -56,6 +59,7 @@ export default class Util {
             } else {
                 msg = msg + " and " + minutes + " minutes";
             }
+            msg = msg.padStart(14, " ");
         } else {
             /// will have seconds
             if (minutes === 1) {
@@ -63,6 +67,7 @@ export default class Util {
             } else {
                 msg = minutes + " minutes";
             }
+            msg = msg.padStart(10, " ");
         }
 
         if (hours < 1) {
@@ -83,6 +88,7 @@ export default class Util {
                     msg = seconds + " seconds";
                 }
             }
+            msg = msg.padStart(16, " ");
         }
 
         if (shortForm === true) {
