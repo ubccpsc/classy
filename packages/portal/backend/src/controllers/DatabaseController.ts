@@ -249,9 +249,9 @@ export class DatabaseController {
         Log.trace("DatabaseController::getGrades() - start");
         // const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
 
-        // this query works, but is no faster (which on one hand makes sense)
-        // although it is not clear what part of this process is actually slow
-        const col = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
+        // this query works, but is not any faster than the simple one above
+        // although it does remove the custom field, which is recursive and can be large
+        const col = await this.getCollection(this.GRADECOLL, QueryKind.FAST);
         const grades = await col.aggregate([
             {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
             {
@@ -773,10 +773,34 @@ export class DatabaseController {
             // https://stackoverflow.com/a/35020346
 
             // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
-            const coll = await this.getCollection(this.RESULTCOLL);
+            let coll = await this.getCollection(this.RESULTCOLL);
             await coll.createIndex({
                 "input.target.timestamp": -1
             }, {name: "ts"});
+
+            // results needs a delivId index because we often query by delivId
+            await coll.createIndex({
+                delivId: 1
+            }, {name: "delivId"});
+            // results needs a repoId index because we often query by repoId
+            await coll.createIndex({
+                repoId: 1
+            }, {name: "repoId"});
+            await coll.createIndex({
+                repoId: 1, delivId: 1
+            }, {name: "delivAndRepoIds"});
+
+            // grades needs indexes because we group on <personId, delivId> tuples
+            coll = await this.getCollection(this.GRADECOLL);
+            await coll.createIndex({
+                personId: 1
+            }, {name: "personId"});
+            await coll.createIndex({
+                delivId: 1
+            }, {name: "delivId"});
+            await coll.createIndex({
+                delivId: 1, repoId: 1
+            }, {name: "delivAndRepoIds"});
 
             // Make sure required Team objects exist.
             // Cannot use TeamController because this would cause an infinite loop since
