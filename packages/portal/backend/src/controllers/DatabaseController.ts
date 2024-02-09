@@ -239,7 +239,19 @@ export class DatabaseController {
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
-        const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
+        // const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
+
+        const col = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
+        const grades = await col.aggregate([
+            {
+                $group: {
+                    _id: {delivId: "$delivId", personId: "$personId"},
+                    doc: {$first: "$$ROOT"},
+                }
+            },
+            {$replaceRoot: {newRoot: "$doc"}}
+        ]).toArray() as Grade[];
+
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
