@@ -256,14 +256,20 @@ export class AdminController {
      * @returns {Promise<GradeTransport[]>}
      */
     public async getGrades(): Promise<GradeTransport[]> {
-        const allGrades = await this.gc.getAllGrades();
         Log.info("AdminController::getGrades() - start");
         const start = Date.now();
+        const allGrades = await this.gc.getAllGrades();
+        Log.trace("AdminController::getGrades() - getting grades took: " + Util.took(start));
 
+        let part = Date.now();
         const grades: GradeTransport[] = [];
         const pc = new PersonController();
+        const allPeople = await pc.getAllPeople(); // just make this query once
+        Log.trace("AdminController::getGrades() - getting people took: " + Util.took(part));
+
+        part = Date.now();
         for (const grade of allGrades) {
-            const p = await pc.getPerson(grade.personId); // TODO: slow action for just githubid
+            const p = allPeople.find((person) => person.id === grade.personId);
             const gradeTrans: GradeTransport = {
                 personId: grade.personId,
                 personURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + p.githubId,
@@ -277,6 +283,8 @@ export class AdminController {
             };
             grades.push(gradeTrans);
         }
+
+        Log.trace("AdminController::getGrades() - post-processing took: " + Util.took(part));
 
         Log.info("AdminController::getGrades() - done; took: " + Util.took(start));
         return grades;
