@@ -4,7 +4,19 @@ import Config, {ConfigCourses, ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import {AuditEvent, AuditLabel, Auth, Course, Deliverable, FeedbackRecord, Grade, Person, Repository, Result, Team} from "../Types";
+import {
+    AuditEvent,
+    AuditLabel,
+    Auth,
+    Course,
+    Deliverable,
+    FeedbackRecord,
+    Grade,
+    Person,
+    Repository,
+    Result,
+    Team
+} from "../Types";
 import {TeamController} from "./TeamController";
 
 export class DatabaseController {
@@ -241,16 +253,22 @@ export class DatabaseController {
         Log.trace("DatabaseController::getGrades() - start");
         // const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
 
+        // this query works, but is no faster (which on one hand makes sense)
+        // although it is not clear what part of this process is actually slow
         const col = await this.getCollection(this.GRADECOLL, QueryKind.SLOW);
         const grades = await col.aggregate([
             {
                 $group: {
                     _id: {delivId: "$delivId", personId: "$personId"},
-                    doc: {$first: "$$ROOT"},
+                    doc: {$first: "$$ROOT"}
                 }
             },
             {$replaceRoot: {newRoot: "$doc"}}
         ]).toArray() as Grade[];
+
+        // most clients do not need custom.previousGrade
+        // id they do, they can call getGrade for each person/deliv individually
+        grades.forEach((r) => delete r?.custom?.previousGrade);
 
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
