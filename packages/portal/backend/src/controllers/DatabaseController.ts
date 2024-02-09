@@ -4,19 +4,7 @@ import Config, {ConfigCourses, ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import {
-    AuditEvent,
-    AuditLabel,
-    Auth,
-    Course,
-    Deliverable,
-    FeedbackRecord,
-    Grade,
-    Person,
-    Repository,
-    Result,
-    Team
-} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, FeedbackRecord, Grade, Person, Repository, Result, Team} from "../Types";
 import {TeamController} from "./TeamController";
 
 export class DatabaseController {
@@ -263,12 +251,9 @@ export class DatabaseController {
                     doc: {$first: "$$ROOT"}
                 }
             },
-            {$replaceRoot: {newRoot: "$doc"}}
+            {$replaceRoot: {newRoot: "$doc"}},
+            {$project: {_id: 0, custom: 0}} // exclude _id and custom (custom.previousGrade is large)
         ]).toArray() as Grade[];
-
-        // most clients do not need custom.previousGrade
-        // id they do, they can call getGrade for each person/deliv individually
-        grades.forEach((r) => delete r?.custom?.previousGrade);
 
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
