@@ -427,6 +427,13 @@ export class DatabaseController {
         }
     }
 
+    /**
+     * Writes a grade record. If a grade record (<delivId, personId> tuple) already exists, it is updated.
+     * This enforces that there will be at most one grade record per <delivId, personId> tuple.
+     *
+     * @param {Grade} record
+     * @returns {Promise<boolean>} whether the write was successful
+     */
     public async writeGrade(record: Grade): Promise<boolean> {
         const p = await this.getPerson(record.personId);
         if (p === null) {
