@@ -17,13 +17,17 @@ export default class Util {
         return sha;
     }
 
-    public static tookHuman(start: number, end?: number, shortForm?: boolean): string {
+    public static tookHuman(start: number, end?: number, shortForm?: boolean, pad?: boolean): string {
         if (typeof end === "undefined") {
             end = Date.now();
         }
 
         if (typeof shortForm === "undefined") {
             shortForm = false;
+        }
+
+        if (typeof pad === "undefined") {
+            pad = false;
         }
 
         if (start > end) {
@@ -43,31 +47,34 @@ export default class Util {
             if (delta < (1000 * 10)) {
                 // just short circuit for really fast times
                 let ret = delta + " ms";
-                if (delta < 100) {
-                    ret = ret.padStart(6, "0");
+                if (pad) {
+                    ret = ret.padStart(12, " ");
                 }
-                ret = ret.padStart(12, " ");
                 return ret;
             }
 
-            if (hours >= 100) {
+            if (hours > 0) {
                 msg = hours + "h";
-            } else if (hours >= 10) {
-                msg = " " + hours + "h";
-            } else {
-                msg = "  " + hours + "h";
+                // don't bother 0 padding hours
             }
 
-            if (minutes >= 10) {
-                msg = msg + " " + minutes + "m";
-            } else {
-                msg = msg + " 0" + minutes + "m";
+            if (hours > 0 || minutes > 0) {
+                // need mins
+                if (minutes < 10) {
+                    msg = msg + " 0" + minutes + "m";
+                } else {
+                    msg = msg + " " + minutes + "m";
+                }
             }
 
-            if (seconds >= 10) {
-                msg = msg + " " + seconds + "s";
-            } else {
-                msg = msg + " 0" + seconds + "s";
+            if (hours > 0 || minutes > 0 || seconds > 0) {
+                // need seconds
+                if (seconds < 10) {
+                    msg = msg + " 0" + seconds + "s";
+                } else {
+                    msg = msg + " " + seconds + "s";
+                }
+
             }
 
             // msg = msg.replace(" and ", " ");
@@ -78,6 +85,10 @@ export default class Util {
             // msg = msg.replace("hours", "hrs");
             // msg = msg.replace("hour", "hr");
 
+            // 100h 59m 59s
+            if (pad) {
+                msg = msg.padStart(12, " ");
+            }
         } else {
             if (delta < 1000) {
                 // just short circuit for really fast times
@@ -94,11 +105,11 @@ export default class Util {
                 // will not show seconds
                 if (minutes === 1) {
                     msg = msg + " and 1 minute";
-                } else {
+                } else if (minutes > 1) {
                     msg = msg + " and " + minutes + " minutes";
                 }
             } else {
-                /// will have seconds
+                // will have seconds
                 if (minutes === 1) {
                     msg = "1 minute";
                 } else {
@@ -124,6 +135,11 @@ export default class Util {
                         msg = seconds + " seconds";
                     }
                 }
+            }
+
+            // 999 hours and 59 minutes and 59 seconds
+            if (pad) {
+                msg = msg.padStart(40, " ");
             }
         }
 

@@ -45,25 +45,27 @@ describe("Util", function () {
     it.only("Should be able to took w/ padding.", () => {
         // sure, there should be some assertions here
         // but instead we were just eyeballing things
-        Log.info(Util.tookHuman(0, 1));
-        Log.info(Util.tookHuman(0, 10));
-        Log.info(Util.tookHuman(0, 100));
-        Log.info(Util.tookHuman(0, 999));
-
-        Log.info(Util.tookHuman(0, 1000));
-        Log.info(Util.tookHuman(0, 1000 * 59));
-        Log.info(Util.tookHuman(0, 1000 * 60));
-        Log.info(Util.tookHuman(0, 1000 * 61));
-        Log.info(Util.tookHuman(0, 1000 * 60 * 5));
-        Log.info(Util.tookHuman(0, 1000 * 60 * 30));
-        Log.info(Util.tookHuman(0, 1000 * 60 * 59));
-        Log.info(Util.tookHuman(0, 1000 * 60 * 60));
-        Log.info(Util.tookHuman(0, 1000 * 60 * 61));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 1));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 2));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 12));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 24));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 36));
-        Log.info(Util.tookHuman(0, 1000 * 3600 * 24 * 5));
+        Log.info(Util.tookHuman(0, 1, true, true));
+        Log.info(Util.tookHuman(0, 10, true, true));
+        Log.info(Util.tookHuman(0, 100, true, true));
+        Log.info(Util.tookHuman(0, 999, true, true));
+        Log.info(Util.tookHuman(0, 1000, true, true));
+        Log.info(Util.tookHuman(0, 9999, true, true));
+        Log.info(Util.tookHuman(0, 10000, true, true));
+        Log.info(Util.tookHuman(0, 11000, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 59, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 61, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 5, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 30, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 59, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 60, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 61, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 1, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 2, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 12, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 24, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 36, true, true));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 24 * 5, true, true));
     });
 });
