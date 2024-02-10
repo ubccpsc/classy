@@ -42,7 +42,7 @@ describe("Util", function () {
         expect(Util.toBoolean(1)).to.be.true;
     });
 
-    it.only("Should be able to took w/ padding.", () => {
+    it("Should be able to took w/ padding.", () => {
         // sure, there should be some assertions here
         // but instead we were just eyeballing things
         Log.info(Util.tookHuman(0, 1, true, true));
