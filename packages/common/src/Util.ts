@@ -32,10 +32,12 @@ export default class Util {
         }
 
         let delta = end - start;
-        if (delta < 1000) {
+        if (delta < (1000 * 10)) {
             // just short circuit for really fast times
             let ret = delta + " ms";
-            ret = ret.padStart(6, "0");
+            if (delta < 100) {
+                ret = ret.padStart(6, "0");
+            }
             ret = ret.padStart(12, " ");
             return ret;
         }
