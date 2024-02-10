@@ -31,51 +31,100 @@ export default class Util {
             [start, end] = [end, start]; // es6 destructuring ftw
         }
 
-        let delta = end - start;
-        if (delta < (1000 * 10)) {
-            // just short circuit for really fast times
-            let ret = delta + " ms";
-            if (delta < 100) {
-                ret = ret.padStart(6, "0");
-            }
-            ret = ret.padStart(12, " ");
-            return ret;
-        }
-
-        delta = Math.floor(delta / 1000); // convert to seconds
-        const hours = Math.floor(delta / 3600);
-        const minutes = Math.floor((delta - (hours * 3600)) / 60);
-        const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
-
         let msg = "";
-        if (hours >= 100) {
-            msg = hours + "h";
-        } else if (hours >= 10) {
-            msg = " " + hours + "h";
-        } else {
-            msg = "  " + hours + "h";
-        }
-
-        if (minutes >= 10) {
-            msg = msg + " " + minutes + "m";
-        } else {
-            msg = msg + " 0" + minutes + "m";
-        }
-
-        if (seconds >= 10) {
-            msg = msg + " " + seconds + "s";
-        } else {
-            msg = msg + " 0" + seconds + "s";
-        }
+        const delta = end - start;
+        const deltaSec = Math.floor(delta / 1000); // convert to seconds
+        const hours = Math.floor(deltaSec / 3600);
+        const minutes = Math.floor((deltaSec - (hours * 3600)) / 60);
+        const seconds = Math.floor(deltaSec - (hours * 3600) - (minutes * 60));
 
         if (shortForm === true) {
-            msg = msg.replace(" and ", " ");
-            msg = msg.replace("seconds", "secs");
-            msg = msg.replace("second", "sec");
-            msg = msg.replace("minutes", "mins");
-            msg = msg.replace("minute", "min");
-            msg = msg.replace("hours", "hrs");
-            msg = msg.replace("hour", "hr");
+
+            if (delta < (1000 * 10)) {
+                // just short circuit for really fast times
+                let ret = delta + " ms";
+                if (delta < 100) {
+                    ret = ret.padStart(6, "0");
+                }
+                ret = ret.padStart(12, " ");
+                return ret;
+            }
+
+            if (hours >= 100) {
+                msg = hours + "h";
+            } else if (hours >= 10) {
+                msg = " " + hours + "h";
+            } else {
+                msg = "  " + hours + "h";
+            }
+
+            if (minutes >= 10) {
+                msg = msg + " " + minutes + "m";
+            } else {
+                msg = msg + " 0" + minutes + "m";
+            }
+
+            if (seconds >= 10) {
+                msg = msg + " " + seconds + "s";
+            } else {
+                msg = msg + " 0" + seconds + "s";
+            }
+
+            // msg = msg.replace(" and ", " ");
+            // msg = msg.replace("seconds", "secs");
+            // msg = msg.replace("second", "sec");
+            // msg = msg.replace("minutes", "mins");
+            // msg = msg.replace("minute", "min");
+            // msg = msg.replace("hours", "hrs");
+            // msg = msg.replace("hour", "hr");
+
+        } else {
+            if (delta < 1000) {
+                // just short circuit for really fast times
+                return delta + " ms";
+            }
+
+            if (hours > 1) {
+                msg = hours + " hours"; // and " + minutes + " minutes";
+            } else if (hours === 1) {
+                msg = hours + " hour"; // and " + minutes + " minutes";
+            }
+
+            if (hours > 0) {
+                // will not show seconds
+                if (minutes === 1) {
+                    msg = msg + " and 1 minute";
+                } else {
+                    msg = msg + " and " + minutes + " minutes";
+                }
+            } else {
+                /// will have seconds
+                if (minutes === 1) {
+                    msg = "1 minute";
+                } else {
+                    msg = minutes + " minutes";
+                }
+            }
+
+            if (hours < 1) {
+                if (minutes > 0) {
+                    if (seconds === 0) {
+                        // say nothing
+                    } else if (seconds === 1) {
+                        msg = msg + " and 1 second";
+                    } else {
+                        msg = msg + " and " + seconds + " seconds";
+                    }
+                } else {
+                    if (seconds === 0) {
+                        // say nothing
+                    } else if (seconds === 1) {
+                        msg = "1 second";
+                    } else {
+                        msg = seconds + " seconds";
+                    }
+                }
+            }
         }
 
         return msg;
