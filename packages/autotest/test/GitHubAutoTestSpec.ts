@@ -645,7 +645,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
+        expect(gitHubMessages[0].message).to.equal("You must wait 6 hours before requesting feedback."); // would really be the whole message
         expect(allData.comments.length).to.equal(0); // does not count as a comment, user has to ask again once they are in-quota
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 
