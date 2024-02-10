@@ -113,7 +113,7 @@ export default class Log {
     protected static getCurrentTS(): string {
         // 11/31/2024, 11:27:00 AM
         let dateStr = new Date().toLocaleString() + ":";
-        dateStr = dateStr.padEnd(25, " ");
+        dateStr = dateStr.padEnd(20, " ");
         return dateStr;
     }
 }

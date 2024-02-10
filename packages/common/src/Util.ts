@@ -35,7 +35,8 @@ export default class Util {
         if (delta < 1000) {
             // just short circuit for really fast times
             let ret = delta + " ms";
-            ret = ret.padStart(6, " ");
+            ret = ret.padStart(6, "0");
+            ret = ret.padStart(12, " ");
             return ret;
         }
 
@@ -45,60 +46,24 @@ export default class Util {
         const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
 
         let msg = "";
-        if (hours >= 10) {
-            msg = hours + " hours";
-        } else if (hours > 1) {
-            msg = "0" + hours + " hours";
-        } else if (hours === 1) {
-            msg = hours + " hour ";
-        }
-        msg = msg.padStart(8, " ");
-
-        if (hours > 0) {
-            // will not show seconds
-            if (minutes === 1) {
-                msg = msg + " and 1 minute ";
-            } else if (minutes < 10) {
-                msg = msg + " and 0" + minutes + " minutes";
-            } else {
-                msg = msg + " and " + minutes + " minutes";
-            }
-            msg = msg.padStart(14, " ");
+        if (hours >= 100) {
+            msg = hours + "h";
+        } else if (hours >= 10) {
+            msg = " " + hours + "h";
         } else {
-            /// will have seconds
-            if (minutes === 1) {
-                msg = "1 minute ";
-            } else if (minutes < 10) {
-                msg = "0" + minutes + " minutes";
-            } else {
-                msg = minutes + " minutes";
-            }
-            msg = msg.padStart(10, " ");
+            msg = "  " + hours + "h";
         }
 
-        if (hours < 1) {
-            if (minutes > 0) {
-                if (seconds === 0) {
-                    // say nothing
-                } else if (seconds === 1) {
-                    msg = msg + " and 01 second ";
-                } else if (seconds < 10) {
-                    msg = msg + " and 0" + seconds + " seconds";
-                } else {
-                    msg = msg + " and " + seconds + " seconds";
-                }
-            } else {
-                if (seconds === 0) {
-                    // say nothing
-                } else if (seconds === 1) {
-                    msg = "01 second ";
-                } else if (seconds < 10) {
-                    msg = "0" + seconds + " seconds";
-                } else {
-                    msg = seconds + " seconds";
-                }
-            }
-            msg = msg.padStart(16, " ");
+        if (minutes >= 10) {
+            msg = msg + " " + minutes + "m";
+        } else {
+            msg = msg + " 0" + minutes + "m";
+        }
+
+        if (seconds >= 10) {
+            msg = msg + " " + seconds + "s";
+        } else {
+            msg = msg + " 0" + seconds + "s";
         }
 
         if (shortForm === true) {

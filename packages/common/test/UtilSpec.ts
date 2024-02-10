@@ -1,9 +1,9 @@
 import {expect} from "chai";
 import "mocha";
-
-import {TestHarness} from "@common/TestHarness";
 import "@common/GlobalSpec";
-import Util from "@common/Util"; // load first
+import Util from "@common/Util";
+import Log from "@common/Log";
+import {TestHarness} from "@common/TestHarness"; // load first
 
 describe("Util", function () {
 
@@ -42,4 +42,28 @@ describe("Util", function () {
         expect(Util.toBoolean(1)).to.be.true;
     });
 
+    it.only("Should be able to took w/ padding.", () => {
+        // sure, there should be some assertions here
+        // but instead we were just eyeballing things
+        Log.info(Util.tookHuman(0, 1));
+        Log.info(Util.tookHuman(0, 10));
+        Log.info(Util.tookHuman(0, 100));
+        Log.info(Util.tookHuman(0, 999));
+
+        Log.info(Util.tookHuman(0, 1000));
+        Log.info(Util.tookHuman(0, 1000 * 59));
+        Log.info(Util.tookHuman(0, 1000 * 60));
+        Log.info(Util.tookHuman(0, 1000 * 61));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 5));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 30));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 59));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 60));
+        Log.info(Util.tookHuman(0, 1000 * 60 * 61));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 1));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 2));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 12));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 24));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 36));
+        Log.info(Util.tookHuman(0, 1000 * 3600 * 24 * 5));
+    });
 });
