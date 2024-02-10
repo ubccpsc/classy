@@ -45,10 +45,12 @@ export default class Util {
         const seconds = Math.floor(delta - (hours * 3600) - (minutes * 60));
 
         let msg = "";
-        if (hours > 1) {
-            msg = hours + " hours"; // and " + minutes + " minutes";
+        if (hours >= 10) {
+            msg = hours + " hours";
+        } else if (hours > 1) {
+            msg = "0" + hours + " hours";
         } else if (hours === 1) {
-            msg = hours + " hour "; // and " + minutes + " minutes";
+            msg = hours + " hour ";
         }
         msg = msg.padStart(8, " ");
 
@@ -56,6 +58,8 @@ export default class Util {
             // will not show seconds
             if (minutes === 1) {
                 msg = msg + " and 1 minute ";
+            } else if (minutes < 10) {
+                msg = msg + " and 0" + minutes + " minutes";
             } else {
                 msg = msg + " and " + minutes + " minutes";
             }
@@ -64,6 +68,8 @@ export default class Util {
             /// will have seconds
             if (minutes === 1) {
                 msg = "1 minute ";
+            } else if (minutes < 10) {
+                msg = "0" + minutes + " minutes";
             } else {
                 msg = minutes + " minutes";
             }
@@ -75,7 +81,9 @@ export default class Util {
                 if (seconds === 0) {
                     // say nothing
                 } else if (seconds === 1) {
-                    msg = msg + " and 1 second ";
+                    msg = msg + " and 01 second ";
+                } else if (seconds < 10) {
+                    msg = msg + " and 0" + seconds + " seconds";
                 } else {
                     msg = msg + " and " + seconds + " seconds";
                 }
@@ -83,7 +91,9 @@ export default class Util {
                 if (seconds === 0) {
                     // say nothing
                 } else if (seconds === 1) {
-                    msg = "1 second ";
+                    msg = "01 second ";
+                } else if (seconds < 10) {
+                    msg = "0" + seconds + " seconds";
                 } else {
                     msg = seconds + " seconds";
                 }
