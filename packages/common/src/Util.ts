@@ -223,10 +223,21 @@ export default class Util {
         return fallback;
     }
 
+    /**
+     * Returns true if the value is a number.
+     *
+     * @param value
+     */
     public static isNumeric(value: any): boolean {
         return !isNaN(value - parseFloat(value));
     }
 
+    /**
+     * Compare two values for sorting.
+     *
+     * @param a
+     * @param b
+     */
     public static compare(a: any, b: any): number {
 
         // exactly equal

@@ -1,5 +1,6 @@
 import {expect} from "chai";
 import "mocha";
+
 import "@common/GlobalSpec";
 import Util from "@common/Util";
 import Log from "@common/Log";
@@ -70,6 +71,7 @@ describe("Util", function () {
     });
 
     it("Should be able to correctly assess whether something is numeric.", () => {
+        // numbers
         expect(Util.isNumeric(1)).to.be.true;
         expect(Util.isNumeric(-1)).to.be.true;
         expect(Util.isNumeric(1.11)).to.be.true;
@@ -81,6 +83,8 @@ describe("Util", function () {
         expect(Util.isNumeric("1.11")).to.be.true;
         expect(Util.isNumeric(" 1.11")).to.be.true;
         expect(Util.isNumeric("1.11 ")).to.be.true;
+
+        // not numbers
         expect(Util.isNumeric(undefined)).to.be.false;
         expect(Util.isNumeric(null)).to.be.false;
         expect(Util.isNumeric("x")).to.be.false;
