@@ -74,8 +74,9 @@ export default class AutoTestServer {
                 // GitHub Webhook endpoint
                 that.rest.post("/githubWebhook", restify.plugins.bodyParser(), AutoTestRouteHandler.postGithubHook);
 
-                // AutoTest image creation / listing endpoints
+                // AutoTest image creation / listing / removal endpoints
                 that.rest.post("/docker/image", restify.plugins.bodyParser(), AutoTestRouteHandler.postDockerImage);
+                that.rest.del("/docker/image/:tag", restify.plugins.queryParser(), AutoTestRouteHandler.removeDockerImage);
                 that.rest.get("/docker/images", restify.plugins.queryParser(), AutoTestRouteHandler.getDockerImages);
 
                 // Resource endpoint

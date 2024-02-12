@@ -100,7 +100,7 @@ describe("AutoTest AutoTestServer", function () {
         // valid opts
         const opts = {
             remote: "https://github.com/minidocks/base.git",
-            tag: "autotestserverspec",
+            tag: "grader",
             file: "Dockerfile"
         };
 
@@ -149,5 +149,47 @@ describe("AutoTest AutoTestServer", function () {
             expect(output).to.contain("error fetching");
         }
     }).timeout(TIMEOUT * 10);
+
+    xit("Should be able to remove a docker image.", async function () {
+        let res: any;
+        try {
+            Log.test("Requesting docker listing");
+            const getUrl = "/docker/images?filters={\"reference\":[\"grader\"]}";
+            res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
+            const dockerListing = res.body;
+            Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
+            expect(dockerListing.length).to.be.greaterThan(0);
+
+            const imgId = dockerListing[0].Id;
+            let delUrl = "/docker/image/";
+            const tagName = imgId;
+            delUrl = delUrl + tagName;
+            res = await request(app).del(delUrl).set("user", TestHarness.ADMIN1.github);
+            Log.test("Docker image removed");
+        } catch (err) {
+            res = err;
+        } finally {
+            const body = res.body;
+            Log.test("Docker image removal body: " + JSON.stringify(body));
+            expect(res.status).to.equal(200);
+            expect(body).to.be.an("Array");
+        }
+    });
+
+    xit("Should fail to remove a docker image for an invalid user.", async function () {
+        let res: any;
+        try {
+            const delUrl = "/docker/image/";
+            const tagName = "FOO"; // TODO: get from list above
+            res = await request(app).del(delUrl + tagName).set("user", TestHarness.USER1.github);
+            Log.test("docker image should not removed (invalid user)");
+        } catch (err) {
+            res = err;
+        } finally {
+            const body = res.body;
+            Log.test("Docker image removal body: " + JSON.stringify(body));
+            expect(res.status).to.equal(403);
+        }
+    });
 
 });

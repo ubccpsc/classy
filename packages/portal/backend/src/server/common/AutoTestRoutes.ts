@@ -60,6 +60,7 @@ export class AutoTestRoutes implements IREST {
 
         // Receives Grading Image admin events, and forwards them to AutoTest
         server.get("/portal/at/docker/images", AutoTestRoutes.getDockerImages);
+        server.del("/portal/at/docker/image/:tag", AutoTestRoutes.deleteDockerImage);
         server.post("/portal/at/docker/image", AutoTestRoutes.postDockerImage);
     }
 
@@ -522,6 +523,58 @@ export class AutoTestRoutes implements IREST {
             }
         } catch (err) {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
+            res.send(400);
+        }
+        // return next();
+    }
+
+    public static async deleteDockerImage(req: any, res: any, next: any) {
+        Log.trace("AutoTestRoutes::deleteDockerImage(..) - start");
+        try {
+            const config = Config.getInstance();
+
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges = await new AuthController().personPrivileged(person);
+
+            if (typeof githubId === "undefined" || person === null) {
+                throw new Error("Valid user parameter not provided");
+            }
+
+            if (!privileges.isAdmin) {
+                Log.warn("AutoTestRoutes::deleteDockerImage(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
+                return res.send(401);
+            }
+
+            try {
+                const atHost = config.getProp(ConfigKey.autotestUrl);
+                const url = atHost + ":" +
+                    config.getProp(ConfigKey.autotestPort) +
+                    req.href().replace("/portal/at", "");
+                const options: RequestInit = {
+                    method: "DELETE"
+                };
+
+                Log.trace("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
+                const atResponse = await fetch(url, options);
+                Log.trace("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
+
+                if (!atResponse.ok) {
+                    throw new Error("AutoTestRoutes::deleteDockerImage(..) - ERROR sending request to AutoTest service;" +
+                        " status: " + res.status);
+                }
+
+                const body = await atResponse.json();
+                res.send(200, body);
+            } catch (err) {
+                Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR Sending request to AutoTest service. " + err);
+                // TODO: this suggests a backend configuration problem and should be exposed to the user
+                res.send(500);
+            }
+        } catch (err) {
+            Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR " + err);
             res.send(400);
         }
         // return next();

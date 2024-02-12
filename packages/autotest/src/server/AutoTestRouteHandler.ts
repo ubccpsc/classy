@@ -185,7 +185,7 @@ export default class AutoTestRouteHandler {
             case "issue_comment":
                 const prEvent = await GitHubUtil.processIssueComment(body);
                 return prEvent;
-                // no return for now, just fall through to error
+            // no return for now, just fall through to error
             default:
                 Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
@@ -317,5 +317,49 @@ export default class AutoTestRouteHandler {
             return res.send(err.statusCode, err.message);
         }
         // next not here on purpose, must be in stream handler or socket will close early
+    }
+
+    public static async removeDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+        try {
+            const docker = AutoTestRouteHandler.getDocker();
+
+            const tag = req.params.tag;
+            Log.info("AutoTestRouteHandler::removeDockerImage(..) - Calling Docker removeDockerImage(..) with tag: " + tag);
+            let success = false;
+            try {
+                const images = await docker.listImages({filters: {reference: ["grader"]}});
+                let imageDescription: Docker.ImageInfo = null;
+                for (const img of images) {
+                    // tag often has extra details (sha256 etc)
+                    if (tag && tag.indexOf(img.Id) >= 0) {
+                        imageDescription = img;
+                    }
+                }
+
+                if (imageDescription !== null) {
+                    const image = docker.getImage(imageDescription.Id);
+                    const removeRes = await image.remove();
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - data returned: " + JSON.stringify(removeRes));
+                    success = true;
+                } else {
+                    Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
+                    return res.send(400, {success: false});
+                }
+            } catch (err) {
+                Log.error("AutoTestRouteHandler::removeDockerImage(..) - ERROR Removing docker image: " + err.message);
+            }
+            Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
+            res.send(200, {success: success});
+        } catch (err) {
+            // NOTE: this seems to happen a lot due to dependent child images in the testing environment
+            // it is unclear what happens with these in production
+            Log.error("AutoTestRouteHandler::removeDockerImage(..) - ERROR Removing docker image: " + err.message);
+            if (err.statusCode) {
+                // Error from Docker daemon
+                res.send(err.statusCode, err.message);
+            } else {
+                res.send(400, err.message);
+            }
+        }
     }
 }
