@@ -125,14 +125,16 @@ describe("Util", function () {
         expect(Util.compare("2", "1")).to.equal(1);
 
         // mixed with empty
-        expect(Util.compare(1, "")).to.equal(-1);
-        expect(Util.compare("", 1)).to.equal(1);
-        expect(Util.compare("1", "")).to.equal(-1);
-        expect(Util.compare("", "1")).to.equal(1);
+        expect(Util.compare(1, "")).to.equal(1);
+        expect(Util.compare("", 1)).to.equal(-1);
+        expect(Util.compare("1", "")).to.equal(1);
+        expect(Util.compare("", "1")).to.equal(-1);
 
         // mixed with N/A
-        expect(Util.compare(1, "N/A")).to.equal(-1);
-        expect(Util.compare("N/A", "1")).to.equal(1);
+        expect(Util.compare(1, "N/A")).to.equal(1);
+        expect(Util.compare("1", "N/A")).to.equal(1);
+        expect(Util.compare("N/A", 1)).to.equal(-1);
+        expect(Util.compare("N/A", "1")).to.equal(-1);
 
         // strings
         expect(Util.compare("", "")).to.equal(0);

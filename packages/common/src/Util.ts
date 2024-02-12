@@ -261,14 +261,14 @@ export default class Util {
             return 0;
         }
 
-        // no matter what, if a is a number and b is not, a is less
+        // no matter what, if a is a number and b is not, a is more
         if (Util.isNumeric(a) && !Util.isNumeric(b)) {
-            return -1;
+            return 1;
         }
 
-        // no matter what, if b is a number and a is not, b is less
+        // no matter what, if b is a number and a is not, a is less
         if (Util.isNumeric(b) && !Util.isNumeric(a)) {
-            return 1;
+            return -1;
         }
 
         // hopefully the most common case
