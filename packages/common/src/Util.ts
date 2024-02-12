@@ -222,4 +222,70 @@ export default class Util {
         Log.trace("Util::toInteger( " + value + ", " + fallback + " ) - value not an integer; returning fallback");
         return fallback;
     }
+
+    public static isNumeric(value: any): boolean {
+        return !isNaN(value - parseFloat(value));
+    }
+
+    public static compare(a: any, b: any): number {
+
+        // exactly equal
+        if ((typeof a === typeof b) && a === b) {
+            return 0;
+        }
+
+        // exactly nothing
+        if ((a === null || a === undefined) && (b === null || b === undefined)) {
+            return 0;
+        }
+
+        // a is nothing but b is something
+        if ((a === null || a === undefined) && (b !== null && b !== undefined)) {
+            return -1;
+        }
+
+        // b is nothing but a is something
+        if ((b === null || b === undefined) && (a !== null && a !== undefined)) {
+            return 1;
+        }
+
+        // punt on arrays
+        if (Array.isArray(a) || Array.isArray(b)) {
+            Log.trace("Util::compare( " + a + ", " + b + " ) - punt on arrays");
+            return 0;
+        }
+
+        // punt on objects
+        if (typeof a === "object" || typeof b === "object") {
+            Log.trace("Util::compare( " + a + ", " + b + " ) - punt on objects");
+            return 0;
+        }
+
+        // no matter what, if a is a number and b is not, a is less
+        if (Util.isNumeric(a) && !Util.isNumeric(b)) {
+            return -1;
+        }
+
+        // no matter what, if b is a number and a is not, b is less
+        if (Util.isNumeric(b) && !Util.isNumeric(a)) {
+            return 1;
+        }
+
+        // hopefully the most common case
+        if (Util.isNumeric(a) && Util.isNumeric(b)) {
+            // this is the most basic case
+            const numA = parseFloat(a);
+            const numB = parseFloat(b);
+            if (numA === numB) {
+                return 0;
+            } else if (numA < numB) {
+                return -1;
+            } else {
+                return 1;
+            }
+        }
+
+        // at the end of everything, just defer to localCompare
+        return ("" + a).localeCompare("" + b);
+    }
 }

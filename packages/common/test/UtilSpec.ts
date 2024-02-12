@@ -3,7 +3,7 @@ import "mocha";
 import "@common/GlobalSpec";
 import Util from "@common/Util";
 import Log from "@common/Log";
-import {TestHarness} from "@common/TestHarness"; // load first
+import {TestHarness} from "@common/TestHarness";
 
 describe("Util", function () {
 
@@ -67,5 +67,76 @@ describe("Util", function () {
         Log.info(Util.tookHuman(0, 1000 * 3600 * 24, true, true));
         Log.info(Util.tookHuman(0, 1000 * 3600 * 36, true, true));
         Log.info(Util.tookHuman(0, 1000 * 3600 * 24 * 5, true, true));
+    });
+
+    it("Should be able to correctly assess whether something is numeric.", () => {
+        expect(Util.isNumeric(1)).to.be.true;
+        expect(Util.isNumeric(-1)).to.be.true;
+        expect(Util.isNumeric(1.11)).to.be.true;
+        expect(Util.isNumeric(-1.11)).to.be.true;
+        expect(Util.isNumeric("1")).to.be.true;
+        expect(Util.isNumeric("-1")).to.be.true;
+        expect(Util.isNumeric(" 1")).to.be.true;
+        expect(Util.isNumeric("1 ")).to.be.true;
+        expect(Util.isNumeric("1.11")).to.be.true;
+        expect(Util.isNumeric(" 1.11")).to.be.true;
+        expect(Util.isNumeric("1.11 ")).to.be.true;
+        expect(Util.isNumeric(undefined)).to.be.false;
+        expect(Util.isNumeric(null)).to.be.false;
+        expect(Util.isNumeric("x")).to.be.false;
+        expect(Util.isNumeric("")).to.be.false;
+        expect(Util.isNumeric(" ")).to.be.false;
+    });
+
+    it("Should be able to convert number.", () => {
+        expect(parseFloat("" + 1)).to.equal(1);
+        expect(parseFloat("" + (-1))).to.equal(-1);
+        expect(parseFloat("" + 1.11)).to.equal(1.11);
+        expect(parseFloat("" + (-1.11))).to.equal(-1.11);
+        expect(parseFloat("1")).to.equal(1);
+        expect(parseFloat(" 1")).to.equal(1);
+        expect(parseFloat("1 ")).to.equal(1);
+        expect(parseFloat("1.11")).to.equal(1.11);
+        expect(parseFloat(" 1.11")).to.equal(1.11);
+        expect(parseFloat("1.11 ")).to.equal(1.11);
+    });
+
+    it("Should be able to compare values.", () => {
+        expect(Util.compare(1, 1)).to.equal(0);
+        expect(Util.compare("1", "1")).to.equal(0);
+        expect(Util.compare(null, null)).to.equal(0);
+        expect(Util.compare(undefined, undefined)).to.equal(0);
+        expect(Util.compare(null, undefined)).to.equal(0);
+        expect(Util.compare(undefined, null)).to.equal(0);
+
+        expect(Util.compare(null, 1)).to.equal(-1);
+        expect(Util.compare(1, null)).to.equal(1);
+
+        // mixed number equality
+        expect(Util.compare("1", 1)).to.equal(0);
+        expect(Util.compare(1, "1")).to.equal(0);
+
+        // mixed with values
+        expect(Util.compare(1, 2)).to.equal(-1);
+        expect(Util.compare(1, "2")).to.equal(-1);
+        expect(Util.compare("1", "2")).to.equal(-1);
+        expect(Util.compare(2, 1)).to.equal(1);
+        expect(Util.compare("2", 1)).to.equal(1);
+        expect(Util.compare("2", "1")).to.equal(1);
+
+        // mixed with empty
+        expect(Util.compare(1, "")).to.equal(-1);
+        expect(Util.compare("", 1)).to.equal(1);
+        expect(Util.compare("1", "")).to.equal(-1);
+        expect(Util.compare("", "1")).to.equal(1);
+
+        // mixed with N/A
+        expect(Util.compare(1, "N/A")).to.equal(-1);
+        expect(Util.compare("N/A", "1")).to.equal(1);
+
+        // strings
+        expect(Util.compare("", "")).to.equal(0);
+        expect(Util.compare("", "N/A")).to.equal(-1);
+        expect(Util.compare("N/A", "")).to.equal(1);
     });
 });
