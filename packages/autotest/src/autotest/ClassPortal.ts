@@ -19,6 +19,7 @@ import {
     Payload
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import * as http from "http";
 
 export interface IClassPortal {
 
@@ -150,7 +151,8 @@ export class ClassPortal implements IClassPortal {
         try {
             Log.trace("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 headers: {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
@@ -181,7 +183,8 @@ export class ClassPortal implements IClassPortal {
         try {
             Log.trace("ClassPortal::getPersonId( " + githubId + " ) - requesting from: " + url);
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 headers: {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
@@ -209,7 +212,9 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
 
         const opts: RequestInit = {
-            agent: new https.Agent({rejectUnauthorized: false}), headers: {
+            // agent: new https.Agent({rejectUnauthorized: false}),
+            agent: this.getAgent(),
+            headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
@@ -236,7 +241,9 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
 
         const opts: RequestInit = {
-            agent: new https.Agent({rejectUnauthorized: false}), headers: {
+            // agent: new https.Agent({rejectUnauthorized: false}),
+            agent: this.getAgent(),
+            headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
@@ -269,7 +276,8 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -338,7 +346,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "post",
                 headers: {
                     "Content-Type": "application/json",
@@ -379,7 +388,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "get",
                 headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
@@ -416,7 +426,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -455,7 +466,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -497,4 +509,17 @@ export class ClassPortal implements IClassPortal {
         Log.info(`ClassPortal::requestFeedbackDelay(${delivId}, ${personId}): ${resp}; Took: ${Util.took(start)}`);
         return resp;
     }
+
+    private getAgent() {
+        const url = this.host;
+        const isHttps = url.startsWith("https");
+        Log.trace("ClassPortal::getAgent() - isHttps: " + isHttps);
+        if (isHttps) {
+            return new https.Agent({rejectUnauthorized: false});
+        } else {
+            Log.warn("ClassPortal::getAgent() - using http agent, which should only be used in testing.");
+            new http.Agent();
+        }
+    }
+
 }

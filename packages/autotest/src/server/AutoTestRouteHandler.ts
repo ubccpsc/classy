@@ -333,6 +333,15 @@ export default class AutoTestRouteHandler {
                 throw new Error("Docker image tag not provided.");
             }
 
+            const providedSecret = req.headers.token;
+            if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+                res.send(403, {success: false, message: "Invalid request (secret mismatch)."});
+                next();
+                return;
+            } else {
+                Log.info("AutoTestRouteHandler::removeDockerImage(..) - valid request; token matched");
+            }
+
             const images = await docker.listImages({filters: {reference: ["grader"]}});
             Log.info("AutoTestRouteHandler::removeDockerImage(..) - # images: " + images.length);
 

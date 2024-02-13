@@ -164,7 +164,11 @@ describe("AutoTest AutoTestServer", function () {
             let delUrl = "/docker/image/";
             const tagName = imgId;
             delUrl = delUrl + tagName;
-            res = await request(app).del(delUrl).set("user", TestHarness.ADMIN1.github);
+
+            const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+            // NOTE: right now this test always fails because the image we have created has "dependent child images"
+            res = await request(app).del(delUrl).set("user", TestHarness.ADMIN1.github).set("token", atSecret);
             Log.test("Docker image removed");
         } catch (err) {
             res = err;
@@ -176,12 +180,19 @@ describe("AutoTest AutoTestServer", function () {
         }
     });
 
-    xit("Should fail to remove a docker image for an invalid user.", async function () {
+    it("Should fail to remove a docker image for an invalid user.", async function () {
         let res: any;
         try {
-            const delUrl = "/docker/image/";
-            const tagName = "FOO"; // TODO: get from list above
-            res = await request(app).del(delUrl + tagName).set("user", TestHarness.USER1.github);
+            Log.test("Requesting docker listing");
+            const getUrl = "/docker/images?filters={\"reference\":[\"grader\"]}";
+            res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
+            const dockerListing = res.body;
+            Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
+            expect(dockerListing.length).to.be.greaterThan(0);
+
+            const imgId = dockerListing[0].Id;
+            const delUrl = "/docker/image/" + imgId;
+            res = await request(app).del(delUrl).set("user", TestHarness.USER1.github);
             Log.test("docker image should not removed (invalid user)");
         } catch (err) {
             res = err;

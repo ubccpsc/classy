@@ -553,7 +553,8 @@ export class AutoTestRoutes implements IREST {
                 config.getProp(ConfigKey.autotestPort) +
                 req.href().replace("/portal/at", "");
             const options: RequestInit = {
-                method: "DELETE"
+                method: "DELETE",
+                headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
 
             Log.info("AutoTestRoutes::deleteDockerImage(..) - requesting; url: " + url);

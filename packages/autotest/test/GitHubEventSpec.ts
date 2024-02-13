@@ -27,7 +27,7 @@ describe("GitHub Event Parser", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("GitHubEventParserSpec::before() - start");
-        backend = new BackendServer();
+        backend = new BackendServer(false);
         await backend.start();
 
         const pc = new PersonController();
