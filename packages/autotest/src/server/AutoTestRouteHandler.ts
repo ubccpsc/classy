@@ -337,7 +337,7 @@ export default class AutoTestRouteHandler {
 
             let imageDescription: Docker.ImageInfo = null;
             for (const img of images) {
-                Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
+                // Log.trace("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
                 // tag often has extra details (sha256 etc)
                 if (img.Id.indexOf(tag) >= 0) {
                     Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id + "; match!");
@@ -349,9 +349,18 @@ export default class AutoTestRouteHandler {
                 const image = docker.getImage(imageDescription.Id);
                 // Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
                 const removeRes = await image.remove();
-                Log.info("AutoTestRouteHandler::removeDockerImage(..) - image removal result: " + JSON.stringify(removeRes));
-                success = true;
-                Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
+                // Log.trace("AutoTestRouteHandler::removeDockerImage(..) - image removal result: " + JSON.stringify(removeRes));
+                for (const imgRes of removeRes) {
+                    if (typeof imgRes.Deleted === "string" && imgRes.Deleted.indexOf(imageDescription.Id) >= 0) {
+                        Log.info("AutoTestRouteHandler::removeDockerImage(..) - image removed successfully: " + imageDescription.Id);
+                        success = true;
+                    }
+                }
+                if (success) {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
+                } else {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; removal not successful: " + JSON.stringify(removeRes));
+                }
             } else {
                 Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
                 errorMsg = "Docker tag does not map to known image.";

@@ -107,6 +107,7 @@ export class AdminDeleteGraderPage extends AdminPage {
     private async handleRemoveImagePressed() {
         Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - start");
         try {
+            UI.showModal("Removing Grader Images.");
             const selector = document.querySelector("#graderImagesSelect") as HTMLSelectElement;
             const selectedOptions = selector.selectedOptions;
             let removalCount = 0;
@@ -130,6 +131,7 @@ export class AdminDeleteGraderPage extends AdminPage {
             Log.error("AdminDeleteGraderPage::handleRemoveImagePressed(..) - ERROR: " + err);
             UI.showErrorToast("Grader image removal error: " + err);
         }
+        UI.hideModal();
         this.clearLists();
         void this.init({});
     }
