@@ -320,47 +320,47 @@ export default class AutoTestRouteHandler {
     }
 
     public static async removeDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+        let success = false;
+        let errorMsg = "";
+
         try {
             const docker = AutoTestRouteHandler.getDocker();
-
             const tag = req.params.tag;
             Log.info("AutoTestRouteHandler::removeDockerImage(..) - Calling Docker removeDockerImage(..) with tag: " + tag);
-            let success = false;
-            try {
-                const images = await docker.listImages({filters: {reference: ["grader"]}});
-                let imageDescription: Docker.ImageInfo = null;
-                for (const img of images) {
-                    // tag often has extra details (sha256 etc)
-                    if (tag && tag.indexOf(img.Id) >= 0) {
-                        imageDescription = img;
-                    }
-                }
 
-                if (imageDescription !== null) {
-                    const image = docker.getImage(imageDescription.Id);
-                    Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
-                    // const removeRes = await image.remove();
-                    // Log.info("AutoTestRouteHandler::removeDockerImage(..) - data returned: " + JSON.stringify(removeRes));
-                    success = true;
-                } else {
-                    Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
-                    return res.send(400, {success: false});
+            const images = await docker.listImages({filters: {reference: ["grader"]}});
+            let imageDescription: Docker.ImageInfo = null;
+            for (const img of images) {
+                // tag often has extra details (sha256 etc)
+                if (tag && tag.indexOf(img.Id) >= 0) {
+                    imageDescription = img;
                 }
-            } catch (err) {
-                Log.error("AutoTestRouteHandler::removeDockerImage(..) - ERROR Removing docker image: " + err.message);
             }
-            Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
-            res.send(200, {success: success});
+
+            if (imageDescription !== null) {
+                const image = docker.getImage(imageDescription.Id);
+                Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
+                // const removeRes = await image.remove();
+                // Log.info("AutoTestRouteHandler::removeDockerImage(..) - data returned: " + JSON.stringify(removeRes));
+                success = true;
+                Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
+            } else {
+                Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
+                success = false;
+                errorMsg = "Tag does not map to active image.";
+            }
+
         } catch (err) {
             // NOTE: this seems to happen a lot due to dependent child images in the testing environment
             // it is unclear what happens with these in production
             Log.error("AutoTestRouteHandler::removeDockerImage(..) - ERROR Removing docker image: " + err.message);
-            if (err.statusCode) {
-                // Error from Docker daemon
-                res.send(err.statusCode, err.message);
-            } else {
-                res.send(400, err.message);
-            }
+            errorMsg = err.message;
+        }
+
+        if (success === true) {
+            res.send(200, {success: success});
+        } else {
+            res.send(400, {success: false, message: errorMsg});
         }
     }
 }

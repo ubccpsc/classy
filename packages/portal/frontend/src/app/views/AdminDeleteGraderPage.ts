@@ -31,9 +31,9 @@ export class AdminDeleteGraderPage extends AdminPage {
         Log.info("AdminDeleteGraderPage::init(..) - image list retrieved; body: " + JSON.stringify(body));
 
         for (const image of body) {
-            const tag = image.tag;
-            const id = image.id;
-            const created = new Date(image.created);
+            const tag = image?.RepoTags[0];
+            const id = image.Id;
+            const created = new Date(image.Created);
             this.images.push({sha: id, tag: tag, created: created});
         }
 
@@ -43,7 +43,11 @@ export class AdminDeleteGraderPage extends AdminPage {
 
         const imgOptions = [];
         for (const deliv of this.images) {
-            imgOptions.push("_" + deliv.sha + "_ (" + deliv.tag + ") " + deliv.created.toLocaleString());
+            // strip sha256: prefix and shorten to 12 chars
+            let sha = deliv.sha.substring(7);
+            sha = sha.substring(0, 12);
+
+            imgOptions.push("_" + sha + "_ (" + deliv.tag + ") " + deliv.created.toLocaleString());
         }
         UI.setDropdownOptions("graderImagesSelect", imgOptions, null);
 
