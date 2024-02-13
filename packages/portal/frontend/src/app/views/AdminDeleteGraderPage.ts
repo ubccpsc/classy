@@ -1,4 +1,4 @@
-import {OnsButtonElement} from "onsenui";
+import {OnsButtonElement, OnsSelectElement} from "onsenui";
 
 import Log from "@common/Log";
 
@@ -7,6 +7,7 @@ import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
 import {Payload} from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import {AdminDeliverablesTab} from "@frontend/views/AdminDeliverablesTab";
 
 export class AdminDeleteGraderPage extends AdminPage {
 
@@ -16,11 +17,11 @@ export class AdminDeleteGraderPage extends AdminPage {
         super(remote);
     }
 
-    public async init(opts: any): Promise<void> {
-        const that = this;
-        Log.info("AdminDeleteGraderPage::init(..) - start");
-
-        UI.showModal("Retrieving Grader Images.");
+    /**
+     * Gets the list of grader images that are _not_ in use by any deliverable.
+     */
+    public async getGraderImages(remote: string): Promise<Array<{ sha: string, tag: string, created: Date }>> {
+        Log.info("AdminDeleteGraderPage::getGraderImages(..) - start");
 
         const url = this.remote + "/portal/at/docker/images?filters=" + JSON.stringify({reference: ["grader"]});
         const options = AdminView.getOptions();
@@ -30,16 +31,42 @@ export class AdminDeleteGraderPage extends AdminPage {
 
         Log.info("AdminDeleteGraderPage::init(..) - image list retrieved; body: " + JSON.stringify(body));
 
+        let images = [];
         for (const image of body) {
             const tag = image?.RepoTags[0];
             const id = image.Id;
             const created = new Date(image.Created * 1000);
-            this.images.push({sha: id, tag: tag, created: created});
+            images.push({sha: id, tag: tag, created: created});
         }
 
-        this.images.sort(function (a, b) {
+        images.sort(function (a, b) {
             return b.created.getTime() - a.created.getTime();
         });
+
+        // remove images used by deliverables
+        const deliverables = await AdminDeliverablesTab.getDeliverables(remote);
+
+        Log.info("AdminDeleteGraderPage::init(..) - # images before filtering: " + images.length);
+        images = images.filter(function (image) {
+            for (const deliv of deliverables) {
+                if (deliv?.autoTest?.dockerImage === image.sha) {
+                    return false;
+                }
+            }
+            return true;
+        });
+        Log.info("AdminDeleteGraderPage::init(..) - # images after filtering: " + images.length);
+
+        return images;
+    }
+
+    public async init(opts: any): Promise<void> {
+        const that = this;
+        Log.info("AdminDeleteGraderPage::init(..) - start");
+
+        UI.showModal("Retrieving Grader Images.");
+
+        this.images = await this.getGraderImages(this.remote);
 
         const imgOptions = [];
         for (const deliv of this.images) {
@@ -61,6 +88,12 @@ export class AdminDeleteGraderPage extends AdminPage {
                 // did not
                 Log.info("AdminDeleteGraderPage::adminRemoveGraderImagesButton(..) - ERROR: " + err);
             });
+        };
+
+        (document.querySelector("#graderImagesSelect") as OnsSelectElement).onchange = function (evt) {
+            // just try to stop clicking on elements in the list from expanding the help text
+            Log.info("AdminDeleteGraderPage::adminRemoveGraderImagesButton(..) - select changed");
+            evt.stopPropagation(); // prevents list item expansion
         };
 
         UI.hideModal();

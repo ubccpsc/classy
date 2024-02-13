@@ -477,7 +477,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {
-        Log.trace("AutoTestRoutes::getDockerImages(..) - start");
+        Log.info("AutoTestRoutes::getDockerImages(..) - start");
         try {
             const config = Config.getInstance();
 
@@ -507,7 +507,7 @@ export class AutoTestRoutes implements IREST {
 
                 Log.trace("AutoTestRoutes::getDockerImages(..) - requesting; options: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
-                Log.trace("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
+                Log.info("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
 
                 if (!atResponse.ok) {
                     throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" +
@@ -529,7 +529,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static async deleteDockerImage(req: any, res: any, next: any) {
-        Log.trace("AutoTestRoutes::deleteDockerImage(..) - start");
+        Log.info("AutoTestRoutes::deleteDockerImage(..) - start");
         try {
             const config = Config.getInstance();
 
@@ -556,9 +556,9 @@ export class AutoTestRoutes implements IREST {
                 method: "DELETE"
             };
 
-            Log.trace("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
             const atResponse = await fetch(url, options);
-            Log.trace("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
             const body = await atResponse.json();
             const status = atResponse.status;
 
@@ -579,7 +579,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.trace("AutoTestRoutes::postDockerImage(..) - start");
+        Log.info("AutoTestRoutes::postDockerImage(..) - start");
         try {
             const githubId = req.headers.user as string;
             const pc = new PersonController();
@@ -609,7 +609,7 @@ export class AutoTestRoutes implements IREST {
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             try {
-                Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
+                Log.info("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
 
                 res.write(""); // keep alive
@@ -629,7 +629,7 @@ export class AutoTestRoutes implements IREST {
                     Log.error("AutoTestRoutes::postDockerImage(..) - myChunk ERROR: " + err);
                 }
 
-                Log.trace("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
+                Log.info("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
                 if (!atResponse.ok) {
                     throw Error(
