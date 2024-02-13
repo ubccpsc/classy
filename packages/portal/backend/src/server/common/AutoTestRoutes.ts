@@ -529,10 +529,10 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static async deleteDockerImage(req: any, res: any, next: any) {
-        Log.info("AutoTestRoutes::deleteDockerImage(..) - start");
         try {
             const config = Config.getInstance();
 
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - start; tag: " + req.params.tag);
             const githubId = req.headers.user;
             const pc = new PersonController();
             const person = await pc.getGitHubPerson(githubId);
@@ -556,7 +556,7 @@ export class AutoTestRoutes implements IREST {
                 method: "DELETE"
             };
 
-            Log.info("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - requesting; url: " + url);
             const atResponse = await fetch(url, options);
             Log.info("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
             const body = await atResponse.json();
@@ -564,10 +564,10 @@ export class AutoTestRoutes implements IREST {
 
             if (!atResponse.ok) {
                 Log.warn("AutoTestRoutes::deleteDockerImage(..) - ERROR sending request to AutoTest service; " +
-                    "status: " + res.status + "; body: " + JSON.stringify(body));
+                    "status: " + status + "; body: " + JSON.stringify(body));
             } else {
                 Log.info("AutoTestRoutes::deleteDockerImage(..) - sending request to AutoTest service worked; " +
-                    "status: " + res.status + "; body: " + JSON.stringify(body));
+                    "status: " + status + "; body: " + JSON.stringify(body));
             }
 
             res.send(status, body);

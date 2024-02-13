@@ -330,6 +330,7 @@ export default class AutoTestRouteHandler {
             const images = await docker.listImages({filters: {reference: ["grader"]}});
             let imageDescription: Docker.ImageInfo = null;
             for (const img of images) {
+                Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
                 // tag often has extra details (sha256 etc)
                 if (tag && tag.indexOf(img.Id) >= 0) {
                     imageDescription = img;
