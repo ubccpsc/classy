@@ -224,7 +224,8 @@ export default class AutoTestRouteHandler {
             }
             Log.info("AutoTestRouteHandler::getDockerImages(..) - start; options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
-            Log.trace("AutoTestRouteHandler::getDockerImages(..) - done; images: " + JSON.stringify(images));
+            Log.trace("AutoTestRouteHandler::getDockerImages(..) - images: " + JSON.stringify(images));
+            Log.info("AutoTestRouteHandler::getDockerImages(..) - done; # images: " + (images as any)?.length);
             res.send(200, images);
         } catch (err) {
             Log.error("AutoTestRouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
@@ -340,7 +341,7 @@ export default class AutoTestRouteHandler {
                 // Log.trace("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
                 // tag often has extra details (sha256 etc)
                 if (img.Id.indexOf(tag) >= 0) {
-                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id + "; match!");
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - matched tag: " + tag + " to image: " + img.Id);
                     imageDescription = img;
                 }
             }

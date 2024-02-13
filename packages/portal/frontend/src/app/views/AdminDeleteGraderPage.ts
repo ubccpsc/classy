@@ -29,7 +29,8 @@ export class AdminDeleteGraderPage extends AdminPage {
         const response = await fetch(url, options);
         const body = await response.json();
 
-        Log.info("AdminDeleteGraderPage::init(..) - image list retrieved; body: " + JSON.stringify(body));
+        // Log.trace("AdminDeleteGraderPage::init(..) - image list retrieved; body: " + JSON.stringify(body));
+        Log.info("AdminDeleteGraderPage::init(..) - image list retrieved; # images: " + body?.length);
 
         let images = [];
         for (const image of body) {
