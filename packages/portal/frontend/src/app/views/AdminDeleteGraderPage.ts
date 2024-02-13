@@ -33,7 +33,7 @@ export class AdminDeleteGraderPage extends AdminPage {
         for (const image of body) {
             const tag = image?.RepoTags[0];
             const id = image.Id;
-            const created = new Date(image.Created);
+            const created = new Date(image.Created * 1000);
             this.images.push({sha: id, tag: tag, created: created});
         }
 

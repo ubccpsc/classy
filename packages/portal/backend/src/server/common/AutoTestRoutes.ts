@@ -548,34 +548,32 @@ export class AutoTestRoutes implements IREST {
                 return res.send(401);
             }
 
-            try {
-                const atHost = config.getProp(ConfigKey.autotestUrl);
-                const url = atHost + ":" +
-                    config.getProp(ConfigKey.autotestPort) +
-                    req.href().replace("/portal/at", "");
-                const options: RequestInit = {
-                    method: "DELETE"
-                };
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ":" +
+                config.getProp(ConfigKey.autotestPort) +
+                req.href().replace("/portal/at", "");
+            const options: RequestInit = {
+                method: "DELETE"
+            };
 
-                Log.trace("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
-                const atResponse = await fetch(url, options);
-                Log.trace("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
+            Log.trace("AutoTestRoutes::deleteDockerImage(..) - requesting; options: " + JSON.stringify(options));
+            const atResponse = await fetch(url, options);
+            Log.trace("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
+            const body = await atResponse.json();
+            const status = atResponse.status;
 
-                if (!atResponse.ok) {
-                    throw new Error("AutoTestRoutes::deleteDockerImage(..) - ERROR sending request to AutoTest service;" +
-                        " status: " + res.status);
-                }
-
-                const body = await atResponse.json();
-                res.send(200, body);
-            } catch (err) {
-                Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR Sending request to AutoTest service. " + err);
-                // TODO: this suggests a backend configuration problem and should be exposed to the user
-                res.send(500);
+            if (!atResponse.ok) {
+                Log.warn("AutoTestRoutes::deleteDockerImage(..) - ERROR sending request to AutoTest service; " +
+                    "status: " + res.status + "; body: " + JSON.stringify(body));
+            } else {
+                Log.info("AutoTestRoutes::deleteDockerImage(..) - sending request to AutoTest service worked; " +
+                    "status: " + res.status + "; body: " + JSON.stringify(body));
             }
+
+            res.send(status, body);
         } catch (err) {
             Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR " + err);
-            res.send(400);
+            res.send(500);
         }
         // return next();
     }
