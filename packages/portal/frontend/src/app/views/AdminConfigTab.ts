@@ -102,6 +102,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminSubmitDefaultDeliverable") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - default deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.defaultDeliverablePressed().then(function () {
                 // worked
@@ -113,6 +114,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminProvisionButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.provisionDeliverablePressed().then(function () {
                 // worked
@@ -124,6 +126,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReleaseButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.releaseDeliverablePressed().then(function () {
                 // worked
@@ -135,6 +138,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReadWriteButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.repoEnableWritePressed().then(function () {
                 // worked
@@ -146,6 +150,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReadOnlyButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.repoDisableWritePressed().then(function () {
                 // worked
@@ -157,6 +162,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamCreatePressed().then(function () {
                 // worked
@@ -170,6 +176,7 @@ export class AdminConfigTab extends AdminPage {
         // (document.querySelector("#adminDeleteTeamButton") as OnsButtonElement).onclick = function(evt) {
         //     Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
         //     evt.preventDefault();
+        //     evt.stopPropagation(); // prevents list item expansion
         //
         //     that.teamDeletePressed().then(function() {
         //         // worked
@@ -192,6 +199,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamAddMemberPressed().then(function () {
                 // worked
@@ -203,6 +211,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamRemoveMemberPressed().then(function () {
                 // worked
@@ -286,6 +295,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector("#adminPerformWithdrawButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed");
+            evt.stopPropagation(); // prevents list item expansion
             evt.preventDefault();
 
             that.performWithdraw().then(function () {
