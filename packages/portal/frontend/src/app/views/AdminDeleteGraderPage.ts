@@ -83,7 +83,7 @@ export class AdminDeleteGraderPage extends AdminPage {
     private async removeImage(sha: any): Promise<boolean> {
         Log.info("AdminDeleteGraderPage::removeImage( " + sha + " ) - start");
 
-        const url = this.remote + "/at/grader/images/" + sha;
+        const url = this.remote + "/portal/at/docker/image/" + sha;
         const options: any = AdminView.getOptions();
         options.method = "delete";
 
