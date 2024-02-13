@@ -171,23 +171,10 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
-        // This is from the admin page which is not currently supported:
-        //
-        // (document.querySelector("#adminDeleteTeamButton") as OnsButtonElement).onclick = function(evt) {
-        //     Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
-        //     evt.preventDefault();
-        //     evt.stopPropagation(); // prevents list item expansion
-        //
-        //     that.teamDeletePressed().then(function() {
-        //         // worked
-        //     }).catch(function(err) {
-        //         Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
-        //     });
-        // };
-
         (document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamDeletePressed().then(function () {
                 // worked
@@ -728,7 +715,7 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== "undefined") {
-            UI.showErrorToast("Default deliverable saved successfully.");
+            UI.showSuccessToast("Default deliverable saved successfully.");
         } else {
             UI.showAlert(body.failure.message);
         }
