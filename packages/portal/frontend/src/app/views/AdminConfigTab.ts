@@ -11,6 +11,7 @@ import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
 import {AdminView} from "./AdminView";
+import {AdminDeleteGraderPage} from "@frontend/views/AdminDeleteGraderPage";
 
 export class AdminConfigTab extends AdminPage {
 
@@ -252,7 +253,7 @@ export class AdminConfigTab extends AdminPage {
 
             that.pushPage("./adminGraderImages.html", {}).then(function () {
 
-                const deleteImagePage = new AdminDeletePage(that.remote);
+                const deleteImagePage = new AdminDeleteGraderPage(that.remote);
                 deleteImagePage.init({}).then(function () {
                     // success
                     Log.info("AdminConfigTab::handleAdminConfig(..) - image delete page init");
