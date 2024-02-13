@@ -49,6 +49,7 @@ export class AdminDeleteGraderPage extends AdminPage {
         Log.info("AdminDeleteGraderPage::init(..) - # images before filtering: " + images.length);
         images = images.filter(function (image) {
             for (const deliv of deliverables) {
+                Log.info("AdminDeleteGraderPage::init(..) - comparing: " + deliv?.autoTest?.dockerImage + "; to: " + image.sha);
                 if (deliv?.autoTest?.dockerImage === image.sha) {
                     return false;
                 }
