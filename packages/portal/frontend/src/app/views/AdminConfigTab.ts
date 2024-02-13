@@ -246,6 +246,25 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector("#adminRemoveGraderImagesPageButton") as OnsButtonElement).onclick = function (evt) {
+            Log.info("AdminConfigTab::handleAdminConfig(..) - remove grader images page pressed");
+            evt.preventDefault();
+
+            that.pushPage("./adminGraderImages.html", {}).then(function () {
+
+                const deleteImagePage = new AdminDeletePage(that.remote);
+                deleteImagePage.init({}).then(function () {
+                    // success
+                    Log.info("AdminConfigTab::handleAdminConfig(..) - image delete page init");
+                }).catch(function (err) {
+                    // error
+                    Log.error("AdminConfigTab::handleAdminConfig(..) - image delete page ERROR: " + err);
+                });
+            }).catch(function (err) {
+                Log.error("AdminConfigTab imageDelete ERROR: " + err.message);
+            });
+        };
+
         // (document.querySelector("#adminManagePullRequestsButton") as OnsButtonElement).onclick = function(evt) {
         //     Log.info("AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed");
         //     evt.preventDefault();
