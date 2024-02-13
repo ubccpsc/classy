@@ -49,8 +49,10 @@ export class AdminDeleteGraderPage extends AdminPage {
         Log.info("AdminDeleteGraderPage::init(..) - # images before filtering: " + images.length);
         images = images.filter(function (image) {
             for (const deliv of deliverables) {
-                Log.info("AdminDeleteGraderPage::init(..) - comparing: " + deliv?.autoTest?.dockerImage + "; to: " + image.sha);
-                if (deliv?.autoTest?.dockerImage === image.sha) {
+                Log.trace("AdminDeleteGraderPage::init(..) - comparing: " + deliv?.autoTest?.dockerImage + "; to: " + image.sha);
+                if (typeof deliv?.autoTest?.dockerImage === "string" && typeof image.sha === "string" &&
+                    image.sha.indexOf(deliv?.autoTest?.dockerImage) >= 0) {
+                    Log.info("AdminDeleteGraderPage::init(..) - matched: " + deliv?.autoTest?.dockerImage + "; and: " + image.sha);
                     return false;
                 }
             }
@@ -70,7 +72,8 @@ export class AdminDeleteGraderPage extends AdminPage {
         this.images = await this.getGraderImages(this.remote);
 
         const imgOptions = [];
-        for (const deliv of this.images) {
+        for (const deliv of this.images
+            ) {
             // strip sha256: prefix and shorten to 12 chars
             let sha = deliv.sha.substring(7);
             sha = sha.substring(0, 12);
