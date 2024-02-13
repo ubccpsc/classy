@@ -235,6 +235,7 @@ export default class AutoTestRouteHandler {
                 res.send(400, err.message);
             }
         }
+        next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
@@ -327,12 +328,19 @@ export default class AutoTestRouteHandler {
             const tag = req.params.tag;
             Log.info("AutoTestRouteHandler::removeDockerImage(..) - start; tag: " + tag);
 
+            if (tag === undefined || tag.length < 1) {
+                throw new Error("Docker image tag not provided.");
+            }
+
             const images = await docker.listImages({filters: {reference: ["grader"]}});
+            Log.info("AutoTestRouteHandler::removeDockerImage(..) - # images: " + images.length);
+
             let imageDescription: Docker.ImageInfo = null;
             for (const img of images) {
                 Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
                 // tag often has extra details (sha256 etc)
-                if (tag && tag.indexOf(img.Id) >= 0) {
+                if (img.Id.indexOf(tag) >= 0) {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id + "; match!");
                     imageDescription = img;
                 }
             }
@@ -346,8 +354,8 @@ export default class AutoTestRouteHandler {
                 Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
             } else {
                 Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
+                errorMsg = "Docker tag does not map to known image.";
                 success = false;
-                errorMsg = "Tag does not map to active image.";
             }
 
         } catch (err) {
@@ -362,5 +370,6 @@ export default class AutoTestRouteHandler {
         } else {
             res.send(400, {success: false, message: errorMsg});
         }
+        next();
     }
 }

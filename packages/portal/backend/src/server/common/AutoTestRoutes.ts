@@ -525,7 +525,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
-        // return next();
+        next();
     }
 
     public static async deleteDockerImage(req: any, res: any, next: any) {
@@ -575,7 +575,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR " + err);
             res.send(500);
         }
-        // return next();
+        next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
@@ -653,7 +653,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::postDockerImage(..) - ERROR " + err);
             return res.send(400);
         }
-        // return next();
+        // next(); // intentionally not calling next here because we do not want to close the streaming response
     }
 
     /**
