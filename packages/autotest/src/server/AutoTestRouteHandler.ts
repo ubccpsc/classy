@@ -338,8 +338,9 @@ export default class AutoTestRouteHandler {
 
                 if (imageDescription !== null) {
                     const image = docker.getImage(imageDescription.Id);
-                    const removeRes = await image.remove();
-                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - data returned: " + JSON.stringify(removeRes));
+                    Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
+                    // const removeRes = await image.remove();
+                    // Log.info("AutoTestRouteHandler::removeDockerImage(..) - data returned: " + JSON.stringify(removeRes));
                     success = true;
                 } else {
                     Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
