@@ -49,10 +49,11 @@ export class AdminDeleteGraderPage extends AdminPage {
         Log.info("AdminDeleteGraderPage::init(..) - # images before filtering: " + images.length);
         images = images.filter(function (image) {
             for (const deliv of deliverables) {
-                Log.trace("AdminDeleteGraderPage::init(..) - comparing: " + deliv?.autoTest?.dockerImage + "; to: " + image.sha);
+                // Log.trace("AdminDeleteGraderPage::init(..) - comparing: " + deliv?.autoTest?.dockerImage + "; to: " + image.sha);
                 if (typeof deliv?.autoTest?.dockerImage === "string" && typeof image.sha === "string" &&
                     image.sha.indexOf(deliv?.autoTest?.dockerImage) >= 0) {
-                    Log.info("AdminDeleteGraderPage::init(..) - matched: " + deliv?.autoTest?.dockerImage + "; and: " + image.sha);
+                    Log.info("AdminDeleteGraderPage::init(..) - matched and removed for delivId: " + deliv.id +
+                        "; sha: " + deliv?.autoTest?.dockerImage + "; and: " + image.sha);
                     return false;
                 }
             }
@@ -94,8 +95,8 @@ export class AdminDeleteGraderPage extends AdminPage {
             });
         };
 
-        (document.querySelector("#graderImagesSelect") as OnsSelectElement).onchange = function (evt) {
-            // just try to stop clicking on elements in the list from expanding the help text
+        (document.querySelector("#graderImagesSelect") as OnsSelectElement).onclick = function (evt) {
+            // stop clicking on elements in the list from expanding the help text
             Log.info("AdminDeleteGraderPage::adminRemoveGraderImagesButton(..) - select changed");
             evt.stopPropagation(); // prevents list item expansion
         };
@@ -108,17 +109,29 @@ export class AdminDeleteGraderPage extends AdminPage {
         try {
             const selector = document.querySelector("#graderImagesSelect") as HTMLSelectElement;
             const selectedOptions = selector.selectedOptions;
+            let removalCount = 0;
             /* tslint:disable-next-line */ // cannot for-of selectedOptions
             for (let i = 0; i < selectedOptions.length; i++) {
                 const value = selectedOptions[i].value;
-                Log.trace("AdminDeleteGraderPage::handleRemoveImagePressed(..) - selected: " + value);
+                Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - selected: " + value);
                 const sha = value.substring(1, value.indexOf("_ ("));
-                Log.trace("AdminDeleteGraderPage::handleRemoveImagePressed(..) - sha: " + sha);
-                await this.removeImage(sha);
+                Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - removing image sha: " + sha);
+                const success = await this.removeImage(sha);
+                Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - image sha removal success; sha: " + sha +
+                    "; success: " + success);
+                if (success) {
+                    removalCount++;
+                }
             }
+
+            Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - done; images removed.");
+            UI.showSuccessToast(removalCount + " grader images successfully removed.");
         } catch (err) {
             Log.error("AdminDeleteGraderPage::handleRemoveImagePressed(..) - ERROR: " + err);
+            UI.showErrorToast("Grader image removal error: " + err);
         }
+        this.clearLists();
+        void this.init({});
     }
 
     private async removeImage(sha: any): Promise<boolean> {
