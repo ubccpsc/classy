@@ -512,23 +512,24 @@ export class ClassPortal implements IClassPortal {
 
     private getAgent() {
         const url = this.host;
-        let isHttps = url.startsWith("https");
-        Log.trace("ClassPortal::getAgent() - isHttps: " + isHttps);
-
-        const ci = process.env.CI;
-        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
-            // This is a terrible check, but for now it enables ClassPortal top run on local machines (was already running in CI)
-            // in CI, just force https
-            isHttps = true;
-            Log.info("ClassPortal::getAgent() - forcing https for CI: " + isHttps);
-        }
-
-        if (isHttps) {
-            return new https.Agent({rejectUnauthorized: false});
-        } else {
-            Log.warn("ClassPortal::getAgent() - using http agent, which should only be used in testing.");
-            new http.Agent();
-        }
+        // let isHttps = url.startsWith("https");
+        // Log.trace("ClassPortal::getAgent() - isHttps: " + isHttps);
+        //
+        // const ci = process.env.CI;
+        // if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+        //     // This is a terrible check, but for now it enables ClassPortal top run on local machines (was already running in CI)
+        //     // in CI, just force https
+        //     isHttps = true;
+        //     Log.info("ClassPortal::getAgent() - forcing https for CI: " + isHttps);
+        // }
+        //
+        // if (isHttps) {
+        //     return new https.Agent({rejectUnauthorized: false});
+        // } else {
+        //     Log.warn("ClassPortal::getAgent() - using http agent, which should only be used in testing.");
+        //     new http.Agent();
+        // }
+        return new https.Agent({rejectUnauthorized: false});
     }
 
 }

@@ -24,11 +24,7 @@ describe("ClassPortal Service", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("ClassPortalSpec::before() - start");
-        if (TestHarness.isCI()) {
-            backend = new BackendServer();
-        } else {
-            backend = new BackendServer(false);
-        }
+        backend = new BackendServer(true);
 
         await backend.start();
         await TestHarness.prepareDeliverables();

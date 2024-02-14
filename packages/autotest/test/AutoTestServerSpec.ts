@@ -153,6 +153,11 @@ describe("AutoTest AutoTestServer", function () {
     xit("Should be able to remove a docker image.", async function () {
         let res: any;
         try {
+            // this test cannot pass on CircleCI (also not working locally though)
+            if (TestHarness.isCI() === true) {
+                this.skip();
+            }
+
             Log.test("Requesting docker listing");
             const getUrl = "/docker/images?filters={\"reference\":[\"grader\"]}";
             res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
@@ -182,6 +187,11 @@ describe("AutoTest AutoTestServer", function () {
 
     xit("Should fail to remove a docker image for an invalid user.", async function () {
         let res: any;
+        // this test cannot pass on CircleCI, but works great locally
+        if (TestHarness.isCI() === true) {
+            this.skip();
+        }
+
         try {
             Log.test("Requesting docker listing");
             const getUrl = "/docker/images?filters={\"reference\":[\"grader\"]}";

@@ -187,6 +187,106 @@ export class GitHubController implements IGitHubController {
     }
 
     /**
+     * Creates the given repository on GitHub. Returns the Repository object when it is done (or null if it failed).
+     *
+     * Repository.URL should be set once the repo is created successfully
+     * (this is how we can track that the repo exists on GitHub).
+     *
+     * @param {string} repoName: The name of the Repository.
+     * @param {string} importUrl: The repo it should be imported from (if null, no import will take place).
+     * @param {string} branchesToKeep?: The subset of the branches from the imported repo that should exist in the created repo.
+     * If undefined or [], all branches are retained.
+     * @returns {Promise<boolean>}
+     */
+    public async createRepositoryFromTemplate(repoName: string, importUrl: string, branchesToKeep?: string[]): Promise<boolean> {
+        Log.info("GitHubController::createRepositoryFromTemplate( " + repoName + ", ...) - start");
+
+        // make sure repoName already exists in the database
+        await this.checkDatabase(repoName, null);
+
+        const config = Config.getInstance();
+        const host = config.getProp(ConfigKey.publichostname);
+        const WEBHOOKADDR = host + "/portal/githubWebhook";
+
+        const startTime = Date.now();
+
+        if (typeof branchesToKeep === "undefined") {
+            branchesToKeep = [];
+        }
+
+        // const gh = GitHubActions.getInstance(true);
+
+        Log.trace("GitHubController::createRepositoryFromTemplate(..) - see if repo already exists");
+        const repoVal = await this.gha.repoExists(repoName);
+        if (repoVal === true) {
+            // unable to create a repository if it already exists!
+            Log.error("GitHubController::createRepositoryFromTemplate(..) - Error: Repository already exists;" +
+                " unable to create a new repository");
+            throw new Error("createRepositoryFromTemplate(..) failed; Repository " + repoName + " already exists.");
+        }
+
+        try {
+            // create the repository
+            Log.trace("GitHubController::createRepositoryFromTemplate() - create GitHub repo");
+            const repoCreateVal = await this.gha.createRepo(repoName);
+            Log.trace("GitHubController::createRepositoryFromTemplate(..) - success; repo: " + repoCreateVal);
+        } catch (err) {
+            /* istanbul ignore next: braces needed for ignore */
+            {
+                Log.error("GitHubController::createRepositoryFromTemplate(..) - create repo error: " + err);
+                // repo creation failed; remove if needed (requires createRepo be permissive if already exists)
+                const res = await this.gha.deleteRepo(repoName);
+                Log.info("GitHubController::createRepositoryFromTemplate(..) - repo removed: " + res);
+                throw new Error("createRepository(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message);
+            }
+        }
+
+        if (branchesToKeep.length > 0) {
+            // TODO: remove any branches we do not need
+        } else {
+            Log.info("GitHubController::createRepositoryFromTemplate(..) - all branches included");
+        }
+
+        try {
+            // still add staff team with push, just not students
+            Log.trace("GitHubController::createRepositoryFromTemplate() - add staff team to repo");
+            // const staffTeamNumber = await this.tc.getTeamNumber(TeamController.STAFF_NAME);
+            // Log.trace("GitHubController::createRepository(..) - staffTeamNumber: " + staffTeamNumber);
+            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, "admin");
+            const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin");
+            Log.trace("GitHubController::createRepositoryFromTemplate(..) - team name: " + staffAdd.teamName);
+
+            Log.trace("GitHubController::createRepositoryFromTemplate() - add admin team to repo");
+            // const adminTeamNumber = await this.tc.getTeamNumber(TeamController.ADMIN_NAME);
+            // Log.trace("GitHubController::createRepository(..) - adminTeamNumber: " + adminTeamNumber);
+            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, "admin");
+            const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin");
+            Log.trace("GitHubController::createRepositoryFromTemplate(..) - team name: " + adminAdd.teamName);
+
+            // add webhooks
+            Log.trace("GitHubController::createRepositoryFromTemplate() - add webhook");
+            const createHook = await this.gha.addWebhook(repoName, WEBHOOKADDR);
+            Log.trace("GitHubController::createRepositoryFromTemplate(..) - webook successful: " + createHook);
+
+            // perform import
+            const c = Config.getInstance();
+            const targetUrl = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
+
+            Log.trace("GitHubController::createRepositoryFromTemplate() - importing project (slow)");
+            const output = await this.gha.importRepoFS(importUrl, targetUrl);
+            Log.trace("GitHubController::createRepositoryFromTemplate(..) - import complete; success: " + output);
+
+            Log.trace("GithubController::createRepositoryFromTemplate(..) - successfully completed for: " +
+                repoName + "; took: " + Util.took(startTime));
+
+            return true;
+        } catch (err) {
+            Log.error("GithubController::createRepositoryFromTemplate(..) - ERROR: " + err);
+            return false;
+        }
+    }
+
+    /**
      * Releases a repository to a team.
      *
      * @param {Repository} repo: The repository to be released. This must be in the datastore.
