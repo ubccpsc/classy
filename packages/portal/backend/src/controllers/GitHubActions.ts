@@ -38,6 +38,15 @@ export interface IGitHubActions {
     createRepo(repoName: string): Promise<string>;
 
     /**
+     * Creates a repo from a template and returns its URL. If the repo exists, return the URL for that repo.
+     *
+     * @param repoName The name of the repo. Must be unique within the organization.
+     * @param templateOwner The org/owner of the template repo.
+     * @param templateRepo The name of the template repo. Must be readable by the bot user.
+     */
+    createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string>;
+
+    /**
      * Deletes a repo from the organization.
      *
      * @param repoName
@@ -237,7 +246,8 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private PAUSE = 5000;
+    // private PAUSE = 5000;
+    private PAUSE = 500;
 
     /**
      * Page size for requests. Should be a constant, but using a
@@ -372,6 +382,69 @@ export class GitHubActions implements IGitHubActions {
             return url;
         } catch (err) {
             Log.error("GitHubAction::createRepo(..) - ERROR: " + err);
+            throw new Error("Repository not created; " + err.message);
+        }
+    }
+
+    /**
+     * Creates a repo from a template and returns its URL. If the repo exists, return the URL for that repo.
+     *
+     * @param repoName
+     * @param templateRepo The org/repo to use as a template. (both owner (org) and repo name are required).
+     * @returns {Promise<string>} provisioned repo URL
+     */
+    public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
+        const start = Date.now();
+        try {
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + ", " + templateOwner + ", " + templateRepo + " ) - start");
+            await GitHubActions.checkDatabase(repoName, null);
+
+            const uri = this.apiPath + "/repos/" + templateOwner + "/" + templateRepo + "/generate";
+            // const uri = this.apiPath + "/orgs/" + this.org + "/repos/" + templateOwner + "/" + templateRepo + "/generate";
+            const options: RequestInit = {
+                method: "POST",
+                headers: {
+                    "Authorization": this.gitHubAuthToken,
+                    "User-Agent": this.gitHubUserName,
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                },
+                body: JSON.stringify({
+                    include_all_branches: true, // include all branches, will be post-processed after creation
+                    owner: this.org,
+                    name: repoName,
+                    // In Dev and Test, Github free Org Repos cannot be private.
+                    private: true
+                })
+            };
+
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - making request");
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri + "; options: " + JSON.stringify(options));
+            const response = await fetch(uri, options);
+            const body = await response.json();
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete");
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
+            if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
+                Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
+                throw new Error("Repository not created; no URL returned.");
+            }
+            const url = body.html_url;
+
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db start");
+            const repo = await this.dc.getRepository(repoName);
+            repo.URL = url; // only update this field in the existing Repository record
+            repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+            await this.dc.writeRepository(repo);
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
+
+            Log.info(
+                "GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
+            await Util.delay(this.PAUSE); // TODO: see if we can drop this
+            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying complete");
+
+            return url;
+        } catch (err) {
+            Log.error("GitHubAction::createRepoFromTemplate(..) - ERROR: " + err);
             throw new Error("Repository not created; " + err.message);
         }
     }

@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
+import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
@@ -13,9 +14,7 @@ import {PersonController} from "@backend/controllers/PersonController";
 import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
 
-import "@common/GlobalSpec"; // load first
-
-describe("GitHubActions", () => {
+describe.only("GitHubActions", () => {
 
     // TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
 
@@ -28,6 +27,7 @@ describe("GitHubActions", () => {
     const DELAY_SHORT = 200;
 
     const REPONAME = TestHarness.REPONAME1;
+    const REPONAME2 = TestHarness.REPONAME2;
     const REPONAME3 = TestHarness.REPONAME3;
     const TEAMNAME = TestHarness.TEAMNAME1;
 
@@ -140,6 +140,20 @@ describe("GitHubActions", () => {
         const val = await gh.createRepo(REPONAME);
         const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
             Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
+        expect(val).to.equal(name);
+    }).timeout(TIMEOUT);
+
+    it("Should be able to create a repo from a template.", async function () {
+        const rc = new RepositoryController();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+        await rc.createRepository(REPONAME2, deliv, [], {});
+
+        const owner = Config.getInstance().getProp(ConfigKey.org);
+        const repo = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+        const val = await gh.createRepoFromTemplate(REPONAME2, owner, repo);
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
+            Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME2;
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 

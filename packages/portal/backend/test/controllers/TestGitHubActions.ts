@@ -57,6 +57,19 @@ export class TestGitHubActions implements IGitHubActions {
         return this.repos[repoName];
     }
 
+    public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
+        Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + ", " + templateOwner + ", " + templateRepo + " ) - start");
+        await GitHubActions.checkDatabase(repoName, null);
+
+        if (typeof this.repos[repoName] === "undefined") {
+            Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + " ) - created");
+            const c = Config.getInstance();
+            this.repos[repoName] = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
+        }
+        Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
+        return this.repos[repoName];
+    }
+
     // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
     public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
         // if (typeof this.teams[teamName] === "undefined") {
