@@ -5,6 +5,7 @@ import "mocha";
 import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
+import Util from "@common/Util";
 import {TestHarness} from "@common/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
@@ -27,7 +28,17 @@ describe("GitHub Event Parser", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("GitHubEventParserSpec::before() - start");
-        backend = new BackendServer(false);
+
+        const ci = process.env.CI;
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+            Log.test("GitHubEventParserSpec::before() - running in CI; using https");
+            // CI uses https and certificates, but local testing does not
+            backend = new BackendServer(true);
+        } else {
+            Log.test("GitHubEventParserSpec::before() - not running in CI; using http");
+            backend = new BackendServer(false);
+        }
+
         await backend.start();
 
         const pc = new PersonController();
