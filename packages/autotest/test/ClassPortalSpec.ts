@@ -15,6 +15,7 @@ import {Course} from "@backend/Types";
 import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
 
 import "@common/GlobalSpec";
+import Util from "@common/Util";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();
@@ -24,7 +25,16 @@ describe("ClassPortal Service", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("ClassPortalSpec::before() - start");
-        backend = new BackendServer(true);
+
+        const ci = process.env.CI;
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+            Log.test("ClassPortalSpec::before() - running in CI; using https");
+            // CI uses https and certificates, but local testing does not
+            backend = new BackendServer(true);
+        } else {
+            Log.test("ClassPortalSpec::before() - not running in CI; using http");
+            backend = new BackendServer(false);
+        }
 
         await backend.start();
         await TestHarness.prepareDeliverables();
