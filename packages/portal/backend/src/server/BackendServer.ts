@@ -77,7 +77,6 @@ export default class BackendServer {
             if (that.useHttps === false) {
                 // test only
                 Log.warn("BackendServer::start() - disabling HTTPS; should only be used in testing!");
-                httpsOptions.rejectUnauthorized = false;
             } else {
                 // prod only
                 httpsOptions["key"] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));

@@ -24,7 +24,12 @@ describe("ClassPortal Service", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("ClassPortalSpec::before() - start");
-        backend = new BackendServer(false);
+        if (TestHarness.isCI()) {
+            backend = new BackendServer();
+        } else {
+            backend = new BackendServer(false);
+        }
+
         await backend.start();
         await TestHarness.prepareDeliverables();
         await TestHarness.preparePeople();
@@ -44,7 +49,7 @@ describe("ClassPortal Service", () => {
     });
 
     // NOTE: if this fails it could be because the ClassPortal BackendDaemon has not been started yet
-    it("Should be able for a adminstaff user to be staff.", async () => {
+    it("Should be able for an adminstaff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);
             Log.test("Actual: " + actual);

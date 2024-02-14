@@ -1,4 +1,5 @@
 import * as https from "https";
+import * as http from "http";
 import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "@common/Config";
@@ -19,7 +20,6 @@ import {
     Payload
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import * as http from "http";
 
 export interface IClassPortal {
 
