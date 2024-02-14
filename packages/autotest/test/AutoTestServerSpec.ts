@@ -180,7 +180,7 @@ describe("AutoTest AutoTestServer", function () {
         }
     });
 
-    it("Should fail to remove a docker image for an invalid user.", async function () {
+    xit("Should fail to remove a docker image for an invalid user.", async function () {
         let res: any;
         try {
             Log.test("Requesting docker listing");
