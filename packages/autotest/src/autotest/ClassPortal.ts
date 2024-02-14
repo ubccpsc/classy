@@ -529,7 +529,6 @@ export class ClassPortal implements IClassPortal {
             Log.warn("ClassPortal::getAgent() - using http agent, which should only be used in testing.");
             new http.Agent();
         }
-        // return new https.Agent({rejectUnauthorized: false});
     }
 
 }
