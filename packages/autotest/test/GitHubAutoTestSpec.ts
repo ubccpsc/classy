@@ -2,6 +2,9 @@ import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
 
+import "@common/GlobalSpec"; // load first
+import {TestData} from "./TestData";
+
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {IFeedbackGiven} from "@common/types/AutoTestTypes";
@@ -13,9 +16,6 @@ import {MockClassPortal} from "@autotest/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "@autotest/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "@autotest/github/GitHubAutoTest";
 import {IGitHubMessage} from "@autotest/github/GitHubUtil";
-
-import "@common/GlobalSpec"; // load first
-import {TestData} from "./TestData";
 import {MockGradingJob} from "@autotest/autotest/mocks/MockGradingJob";
 
 /* tslint:disable:max-line-length */

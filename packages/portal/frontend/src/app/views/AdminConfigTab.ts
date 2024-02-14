@@ -11,6 +11,7 @@ import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
 import {AdminView} from "./AdminView";
+
 import {AdminDeleteGraderPage} from "@frontend/views/AdminDeleteGraderPage";
 
 export class AdminConfigTab extends AdminPage {

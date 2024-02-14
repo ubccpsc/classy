@@ -1,8 +1,10 @@
 import {expect} from "chai";
 import "mocha";
 
+import "@common/GlobalSpec";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
+import Util from "@common/Util";
 import {TestHarness} from "@common/TestHarness";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
@@ -13,9 +15,6 @@ import BackendServer from "@backend/server/BackendServer";
 import {Course} from "@backend/Types";
 
 import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
-
-import "@common/GlobalSpec";
-import Util from "@common/Util";
 
 describe("ClassPortal Service", () => {
     Config.getInstance();

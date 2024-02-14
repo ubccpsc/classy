@@ -16,7 +16,7 @@ export interface IGitHubController {
      * @param {string} repoName
      * @param {Team[]} teams
      * @param {string} sourceRepo
-     * @param {boolean} shouldRelease; whether the student team should be added to the repo
+     * @param {boolean} shouldRelease whether the student team should be added to the repo
      * @returns {Promise<boolean>}
      */
     provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
@@ -96,9 +96,9 @@ export class GitHubController implements IGitHubController {
      * Repository.URL should be set once the repo is created successfully
      * (this is how we can track that the repo exists on GitHub).
      *
-     * @param {string} repoName: The name of the Repository
-     * @param {string} importUrl: The repo it should be imported from (if null, no import should take place)
-     * @param {string} path?: The subset of the importUrl repo that should be added to the root of the new repo.
+     * @param {string} repoName The name of the Repository
+     * @param {string} importUrl The repo it should be imported from (if null, no import should take place)
+     * @param {string} path The subset of the importUrl repo that should be added to the root of the new repo.
      * If this is null, undefined, or "", the whole importUrl is imported.
      * @returns {Promise<boolean>}
      */
@@ -192,9 +192,9 @@ export class GitHubController implements IGitHubController {
      * Repository.URL should be set once the repo is created successfully
      * (this is how we can track that the repo exists on GitHub).
      *
-     * @param {string} repoName: The name of the Repository.
-     * @param {string} importUrl: The repo it should be imported from (if null, no import will take place).
-     * @param {string} branchesToKeep?: The subset of the branches from the imported repo that should exist in the created repo.
+     * @param {string} repoName The name of the Repository.
+     * @param {string} importUrl The repo it should be imported from (if null, no import will take place).
+     * @param {string} branchesToKeep The subset of the branches from the imported repo that should exist in the created repo.
      * If undefined or [], all branches are retained.
      * @returns {Promise<boolean>}
      */
@@ -289,9 +289,9 @@ export class GitHubController implements IGitHubController {
     /**
      * Releases a repository to a team.
      *
-     * @param {Repository} repo: The repository to be released. This must be in the datastore.
-     * @param {Team[]} teams: The teams to be added. These must be in the datastore.
-     * @param {boolean} asCollaborators: Whether the team members should be added as a collaborators
+     * @param {Repository} repo The repository to be released. This must be in the datastore.
+     * @param {Team[]} teams The teams to be added. These must be in the datastore.
+     * @param {boolean} asCollaborators Whether the team members should be added as a collaborators
      * or whether a GitHub team should be created for them.
      * @returns {Promise<Repository | null>}
      */
@@ -512,9 +512,9 @@ export class GitHubController implements IGitHubController {
 
     /**
      * Calls the patch tool
-     * @param {Repository} repo: Repo to be patched
-     * @param {string} prName: Name of the patch to apply
-     * @param {boolean} dryrun: Whether to do a practice patch
+     * @param {Repository} repo Repo to be patched
+     * @param {string} prName Name of the patch to apply
+     * @param {boolean} dryrun Whether to do a practice patch
      *        i.e.: if dryrun is false  -> patch is applied to repo
      *              elif dryrun is true -> patch is not applied,
      *                   but otherwise will behave as if it was

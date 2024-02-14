@@ -87,7 +87,7 @@ export interface IClassPortal {
      * @param {string} delivId
      * @param {string} repoId
      * @param {string} sha
-     * @param {string} ref?
+     * @param {string} ref
      * @returns {Promise<AutoTestResultTransport | null>}
      */
     getResult(delivId: string, repoId: string, sha: string, ref?: string): Promise<AutoTestResultTransport | null>;
@@ -326,7 +326,7 @@ export class ClassPortal implements IClassPortal {
             const MAX_COMMENT_LENGTH = 40;
             if (msg.length > MAX_COMMENT_LENGTH) {
                 // shorten long messages
-                msg = msg.substr(0, MAX_COMMENT_LENGTH) + "...";
+                msg = msg.substring(0, MAX_COMMENT_LENGTH) + "...";
             }
             // replace newlines / line breaks with "; ", regardless of length
             msg = msg.replace(/(?:\r\n|\r|\n)/g, "; ");
@@ -514,21 +514,11 @@ export class ClassPortal implements IClassPortal {
         const url = this.host;
         const isHttps = url.startsWith("https");
         Log.trace("ClassPortal::getAgent() - isHttps: " + isHttps);
-
-        // const ci = process.env.CI;
-        // if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
-        //     // This is a terrible check, but for now it enables ClassPortal top run on local machines (was already running in CI)
-        //     // in CI, just force https
-        //     isHttps = true;
-        //     Log.info("ClassPortal::getAgent() - forcing https for CI: " + isHttps);
-        // }
-
         if (isHttps) {
             return new https.Agent({rejectUnauthorized: false});
         } else {
-            Log.warn("ClassPortal::getAgent() - using http agent, which should only be used in testing.");
+            Log.warn("ClassPortal::getAgent() - using http agent, this should only be used in testing environments.");
             new http.Agent();
         }
     }
-
 }

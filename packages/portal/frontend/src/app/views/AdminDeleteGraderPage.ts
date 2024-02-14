@@ -1,12 +1,12 @@
 import {OnsButtonElement, OnsSelectElement} from "onsenui";
 
 import Log from "@common/Log";
+import {Payload} from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import {UI} from "../util/UI";
 import {AdminPage} from "./AdminPage";
 import {AdminView} from "./AdminView";
-import {Payload} from "@common/types/PortalTypes";
-import Util from "@common/Util";
 import {AdminDeliverablesTab} from "@frontend/views/AdminDeliverablesTab";
 
 export class AdminDeleteGraderPage extends AdminPage {
