@@ -24,6 +24,8 @@ export interface IGitHubActions {
      */
     setPageSize(size: number): void;
 
+    getRepo(repoName: string): Promise<GitRepoTuple>;
+
     /**
      * Creates a given repo and returns its URL. If the repo exists, return the URL for that repo.
      *
@@ -236,6 +238,16 @@ export interface IGitHubActions {
     makeIssue(repoId: string, issue: Issue): Promise<boolean>;
 
     /**
+     * Lists the branches in a repo.
+     *
+     * This is used mainly to detect an incompltelty provisioned repo (the repo may return with getRepo, but it will have no branches).
+     *
+     * @param repoId
+     * @returns {Promise<string[]} If [], the repo may not be fully provisioned yet.
+     */
+    listRepoBranches(repoId: string): Promise<string[]>;
+
+    /**
      * Deletes all branches in a repo except for the ones listed in branchesToKeep.
      *
      * @param repoId
@@ -261,7 +273,7 @@ export class GitHubActions implements IGitHubActions {
     private readonly org: string | null = null;
 
     private LONG_PAUSE = 5000; // was deployed previously
-    private SHORT_PAUSE = 1000;
+    // private SHORT_PAUSE = 1000;
 
     /**
      * Page size for requests. Should be a constant, but using a
@@ -389,9 +401,12 @@ export class GitHubActions implements IGitHubActions {
             await this.dc.writeRepository(repo);
             Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
-            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; took: " + Util.took(start));
+
+            // checking branch status or repo status does not work here because this is a bare repo that does not have any branches yet
             await Util.delay(this.LONG_PAUSE);
-            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying complete");
+
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
 
             return url;
         } catch (err) {
@@ -453,8 +468,21 @@ export class GitHubActions implements IGitHubActions {
 
             Log.info(
                 "GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
-            await Util.delay(this.SHORT_PAUSE);
-            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying complete");
+
+            let doesNotExist = true;
+            while (doesNotExist) {
+                Log.info("GitHubAction::createRepoFromTemplate(..) - checking if repo is ready");
+                const repoBranches = await this.listRepoBranches(repoName);
+                if (repoBranches !== null && repoBranches.length > 0) {
+                    Log.info("GitHubAction::createRepoFromTemplate(..) - repo is ready");
+                    doesNotExist = false;
+                } else {
+                    Log.info("GitHubAction::createRepoFromTemplate(..) - repo is NOT ready");
+                    await Util.delay(10);
+                }
+            }
+
+            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
 
             return url;
         } catch (err) {
@@ -586,7 +614,42 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
+     * Gets a repo. If the repo does not exist, returns null.
      *
+     * @returns {Promise<GitRepoTuple | null}
+     */
+    public async getRepo(repoName: string): Promise<GitRepoTuple | null> {
+        Log.info("GitHubActions::getRepo(..) - start");
+        const start = Date.now();
+
+        // /repos/{owner}/{repo}
+        const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
+        Log.trace("GitHubActions::getRepo(..) - URI: " + uri);
+        const options: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const response = await fetch(uri, options);
+        if (response.status === 200) {
+            Log.info("GitHubActions::getRepo(..) - repo exists; took: " + Util.took(start));
+            const entry = await response.json();
+            const id = entry.id;
+            const name = entry.name;
+            const url = entry.html_url;
+            return {repoName: name, githubRepoNumber: id, url: url};
+        } else {
+            Log.info("GitHubActions::getRepo(..) - repo does not exist; took: " + Util.took(start));
+            return null;
+        }
+    }
+
+    /**
      * Gets all repos in an org.
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<GitRepoTuple[]}
@@ -1271,8 +1334,55 @@ export class GitHubActions implements IGitHubActions {
         return teamMembers;
     }
 
+    public async listRepoBranches(repoId: string): Promise<string[]> {
+        const start = Date.now();
+        const repo = await this.getRepo(repoId); // ensure the repo exists
+        if (repo === null) {
+            Log.error("GitHubAction::listRepoBranches(..) - failed; repo does not exist");
+            return null;
+        }
+
+        // get branches
+        // GET /repos/{owner}/{repo}/branches
+        const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
+        Log.info("GitHubAction::listRepoBranches(..) - list branch uri: " + listUri);
+        const listOptions: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const listResp = await fetch(listUri, listOptions);
+        Log.trace("GitHubAction::listRepoBranches(..) - list response code: " + listResp.status); // 201 success
+        const listRespBody = await listResp.json();
+
+        if (listResp.status !== 200) {
+            Log.warn("GitHubAction::listRepoBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
+            return null;
+        }
+
+        Log.trace("GitHubAction::listRepoBranches(..) - branch list: " + JSON.stringify(listRespBody));
+
+        const branches: string[] = [];
+        for (const githubBranch of listRespBody) {
+            branches.push(githubBranch.name);
+        }
+        Log.trace("GitHubAction::listRepoBranches(..) - branches: " + JSON.stringify(branches) + "; took: " + Util.took(start));
+        return branches;
+    }
+
     public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
         const start = Date.now();
+
+        const repo = await this.getRepo(repoId); // ensure the repo exists
+        if (repo === null) {
+            Log.error("GitHubAction::deleteBranches(..) - failed; repo does not exist");
+            return false;
+        }
 
         // get branches
         // GET /repos/{owner}/{repo}/branches
@@ -1296,6 +1406,8 @@ export class GitHubActions implements IGitHubActions {
             Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
             return false;
         }
+
+        Log.trace("GitHubAction::deleteBranches(..) - branch list: " + JSON.stringify(listRespBody));
 
         const branchesToKeepThatExist: string[] = [];
         const branchesToDelete: string[] = [];
@@ -1351,7 +1463,11 @@ export class GitHubActions implements IGitHubActions {
     public async renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
         Log.info("GitHubAction::renameBranch( " + repoId + ", " + oldName + ", " + newName + " ) - start");
 
-        // just assume the params are not null and actually exist
+        const repo = await this.getRepo(repoId); // ensure the repo exists
+        if (repo === null) {
+            Log.error("GitHubAction::renameBranch(..) - failed; repo does not exist");
+            return false;
+        }
 
         const start = Date.now();
         // /repos/{owner}/{repo}/branches/{branch}/rename

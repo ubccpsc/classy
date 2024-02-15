@@ -18,6 +18,14 @@ export class TestGitHubActions implements IGitHubActions {
         this.teams.set(TeamController.ADMIN_NAME, {teamName: TeamController.ADMIN_NAME, githubTeamNumber: 1001});
     }
 
+    public listRepoBranches(repoId: string): Promise<string[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    public getRepo(repoName: string): Promise<GitRepoTuple> {
+        throw new Error("Method not implemented.");
+    }
+
     public deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
