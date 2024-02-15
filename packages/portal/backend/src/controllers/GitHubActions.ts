@@ -68,7 +68,7 @@ export interface IGitHubActions {
      * NOTE: this used to take a number, but GitHub deprecated this API:
      * https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
      *
-     * @param teamName: string
+     * @param teamName string
      * @returns {Promise<boolean>}
      */
     deleteTeam(teamName: string): Promise<boolean>;
@@ -76,7 +76,7 @@ export interface IGitHubActions {
     /**
      * Gets all repos in an org.
      *
-     * @returns {Promise<{GitRepoTuple[]>}
+     * @returns {Promise<{GitRepoTuple}[]>}
      */
     listRepos(): Promise<GitRepoTuple[]>;
 
@@ -93,7 +93,7 @@ export interface IGitHubActions {
      *
      * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
      *
-     * @returns {Promise<{GitTeamTuple[]>}
+     * @returns {Promise<{GitTeamTuple}[]>}
      */
     listTeams(): Promise<GitTeamTuple[]>;
 
@@ -124,7 +124,7 @@ export interface IGitHubActions {
      * Add a list of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param memberGithubIds: string[] // github usernames
+     * @param memberGithubIds github usernames
      * @returns {Promise<GitTeamTuple>}
      */
     addMembersToTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
@@ -133,7 +133,7 @@ export interface IGitHubActions {
      * Removes a list of GitHub members (their usernames) from a given team.
      *
      * @param teamName
-     * @param memberGithubIds: string[] // github usernames
+     * @param memberGithubIds github usernames
      * @returns {Promise<GitTeamTuple>}
      */
     removeMembersFromTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
@@ -240,7 +240,7 @@ export interface IGitHubActions {
     /**
      * Lists the branches in a repo.
      *
-     * This is used mainly to detect an incompltelty provisioned repo (the repo may return with getRepo, but it will have no branches).
+     * This is used mainly to detect an incomplete provisioned repo (the repo may return with getRepo, but it will have no branches).
      *
      * @param repoId
      * @returns {Promise<string[]} If [], the repo may not be fully provisioned yet.
@@ -274,7 +274,7 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private LONG_PAUSE = 5000; // was deployed previously
+    // private LONG_PAUSE = 5000; // was deployed previously
     // private SHORT_PAUSE = 1000;
 
     /**
@@ -442,7 +442,8 @@ export class GitHubActions implements IGitHubActions {
      * If you want a completely empty repo, just use createRepo instead.
      *
      * @param repoName
-     * @param templateRepo The org/repo to use as a template. (both owner (org) and repo name are required)
+     * @param templateOwner The org / owner of the template repo
+     * @param templateRepo The repo to use as a template. (both owner (org) and repo name are required)
      * @returns {Promise<string>} provisioned repo URL
      */
     public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
@@ -590,7 +591,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * NOTE: if you are deleting the "admin", "staff", or "students" teams, you are doing something terribly wrong.
      *
-     * @param teamName: string
+     * @param teamName name of the team to delete
      */
     public async deleteTeam(teamName: string): Promise<boolean> {
 
@@ -995,7 +996,7 @@ export class GitHubActions implements IGitHubActions {
      * Add a set of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param members: string[] // github usernames
+     * @param members GitHub usernames to add to the team
      * @returns {Promise<GitTeamTuple>}
      */
     public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -1045,7 +1046,7 @@ export class GitHubActions implements IGitHubActions {
      * Remove a set of GitHub members (their usernames) from a given team.
      *
      * @param teamName
-     * @param members: string[] // GitHub usernames to remove from the team
+     * @param members GitHub usernames to remove from the team
      * @returns {Promise<GitTeamTuple>}
      */
     public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -1759,7 +1760,7 @@ export class GitHubActions implements IGitHubActions {
     public addGithubAuthToken(url: string) {
         const startAppend = url.indexOf("//") + 2;
         const token = this.gitHubAuthToken;
-        const authKey = token.substr(token.indexOf("token ") + 6) + "@";
+        const authKey = token.substring(token.indexOf("token ") + 6) + "@";
         // creates "longokenstring@githuburi"
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
@@ -2127,10 +2128,10 @@ export class GitHubActions implements IGitHubActions {
             // find a better short string for logging
             let messageToPrint = message;
             if (messageToPrint.indexOf("\n") > 0) {
-                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf("\n"));
+                messageToPrint = messageToPrint.substring(0, messageToPrint.indexOf("\n"));
             }
             if (messageToPrint.length > 80) {
-                messageToPrint = messageToPrint.substr(0, 80) + "...";
+                messageToPrint = messageToPrint.substring(0, 80) + "...";
             }
 
             Log.info("GitHubActions::simulateWebhookComment(..) - Simulating comment to project: " +
@@ -2209,10 +2210,10 @@ export class GitHubActions implements IGitHubActions {
             // find a better short string for logging
             let messageToPrint = message;
             if (messageToPrint.indexOf("\n") > 0) {
-                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf("\n"));
+                messageToPrint = messageToPrint.substring(0, messageToPrint.indexOf("\n"));
             }
             if (messageToPrint.length > 80) {
-                messageToPrint = messageToPrint.substr(0, 80) + "...";
+                messageToPrint = messageToPrint.substring(0, 80) + "...";
             }
 
             Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +

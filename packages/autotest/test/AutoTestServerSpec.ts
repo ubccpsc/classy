@@ -167,8 +167,7 @@ describe("AutoTest AutoTestServer", function () {
 
             const imgId = dockerListing[0].Id;
             let delUrl = "/docker/image/";
-            const tagName = imgId;
-            delUrl = delUrl + tagName;
+            delUrl = delUrl + imgId;
 
             const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
 
