@@ -251,7 +251,8 @@ export interface IGitHubActions {
      * Deletes all branches in a repo except for the ones listed in branchesToKeep.
      *
      * @param repoId
-     * @param branchesToKeep Must be an array of at least one branch name that already exists on the repo.
+     * @param branchesToKeep Must be an array of at least one branch name that already exists on the repo
+     * @returns {Promise<boolean>} true if the only remaining branches are the ones listed in branchesToKeep
      */
     deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean>;
 
@@ -261,6 +262,7 @@ export interface IGitHubActions {
      * @param repoId
      * @param oldName This branch must exist.
      * @param newName
+     * @returns {Promise<boolean>} true if the old branch existed and was successfully updated to the new name
      */
     renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean>;
 }
@@ -403,8 +405,27 @@ export class GitHubActions implements IGitHubActions {
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; took: " + Util.took(start));
 
-            // checking branch status or repo status does not work here because this is a bare repo that does not have any branches yet
-            await Util.delay(this.LONG_PAUSE);
+            // would prefer to avoid this long pause
+            // try a more dynamic approach below; this works for template repos, but has not been verified for normal repos
+            // await Util.delay(this.LONG_PAUSE);
+
+            // listing branches is not sufficient because they are often [] for an initial repo
+            // whether listing teams is sufficient has not been tested in prod yet (23W2)
+            let doesNotExist = true;
+            let existCount = 0; // only try 10 times to avoid spinning forever
+            while (doesNotExist && existCount < 10) {
+                Log.info("GitHubAction::createRepo(..) - checking if repo is ready");
+                const repoData = await this.getTeamsOnRepo(repoName);
+                Log.info("GitHubAction::createRepo(..) - repoData: " + JSON.stringify(repoData));
+                if (repoData !== null) {
+                    Log.info("GitHubAction::createRepo(..) - repo is ready");
+                    doesNotExist = false;
+                } else {
+                    Log.info("GitHubAction::createRepo(..) - repo is NOT ready");
+                    existCount++;
+                    await Util.delay(250); // wait a bit longer
+                }
+            }
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
 
@@ -417,9 +438,11 @@ export class GitHubActions implements IGitHubActions {
 
     /**
      * Creates a repo from a template and returns its URL. If the repo exists, return the URL for that repo.
+     * The template repo _must_ have a branch for this to work (essentially it cannot be a completely empty repo).
+     * If you want a completely empty repo, just use createRepo instead.
      *
      * @param repoName
-     * @param templateRepo The org/repo to use as a template. (both owner (org) and repo name are required).
+     * @param templateRepo The org/repo to use as a template. (both owner (org) and repo name are required)
      * @returns {Promise<string>} provisioned repo URL
      */
     public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
@@ -465,12 +488,11 @@ export class GitHubActions implements IGitHubActions {
             repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
             await this.dc.writeRepository(repo);
             Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
-
-            Log.info(
-                "GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
+            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; took: " + Util.took(start));
 
             let doesNotExist = true;
-            while (doesNotExist) {
+            let existCount = 0; // only try 10 times to avoid spinning forever
+            while (doesNotExist && existCount < 10) {
                 Log.info("GitHubAction::createRepoFromTemplate(..) - checking if repo is ready");
                 const repoBranches = await this.listRepoBranches(repoName);
                 if (repoBranches !== null && repoBranches.length > 0) {
@@ -478,7 +500,8 @@ export class GitHubActions implements IGitHubActions {
                     doesNotExist = false;
                 } else {
                     Log.info("GitHubAction::createRepoFromTemplate(..) - repo is NOT ready");
-                    await Util.delay(10);
+                    existCount++;
+                    await Util.delay(250); // wait a bit longer
                 }
             }
 
@@ -2250,16 +2273,17 @@ export class GitHubActions implements IGitHubActions {
         try {
             const response = await fetch(uri, options);
             const results = await response.json();
-            Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - response received");
 
             const toReturn: GitTeamTuple[] = [];
             for (const result of results) {
                 toReturn.push({teamName: result.name, githubTeamNumber: result.id});
             }
 
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - done; # teams: " + toReturn.length + "; took: " + Util.took(start));
             return toReturn;
         } catch (err) {
-            Log.trace("GitHubAction::repoExists( " + repoId + " ) - false; took: " + Util.took(start));
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - failed; took: " + Util.took(start));
             return [];
         }
     }
