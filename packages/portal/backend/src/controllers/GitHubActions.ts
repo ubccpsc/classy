@@ -2,7 +2,6 @@ import * as crypto from "crypto";
 import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
-// cannot use @common here as this is referenced from TestHarness and ends up being circular
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
@@ -11,8 +10,6 @@ import {Factory} from "../Factory";
 import {DatabaseController} from "./DatabaseController";
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
-
-// import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
 
 // tslint:disable-next-line
 const tmp = require("tmp-promise");
@@ -237,6 +234,23 @@ export interface IGitHubActions {
     addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
 
     makeIssue(repoId: string, issue: Issue): Promise<boolean>;
+
+    /**
+     * Deletes all branches in a repo except for the ones listed in branchesToKeep.
+     *
+     * @param repoId
+     * @param branchesToKeep Must be an array of at least one branch name that already exists on the repo.
+     */
+    deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean>;
+
+    /**
+     * Renames a branch in a repo.
+     *
+     * @param repoId
+     * @param oldName This branch must exist.
+     * @param newName
+     */
+    renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -246,8 +260,8 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    // private PAUSE = 5000;
-    private PAUSE = 500;
+    private LONG_PAUSE = 5000; // was deployed previously
+    private SHORT_PAUSE = 1000;
 
     /**
      * Page size for requests. Should be a constant, but using a
@@ -376,7 +390,7 @@ export class GitHubActions implements IGitHubActions {
             Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
-            await Util.delay(this.PAUSE);
+            await Util.delay(this.LONG_PAUSE);
             Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying complete");
 
             return url;
@@ -439,7 +453,7 @@ export class GitHubActions implements IGitHubActions {
 
             Log.info(
                 "GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
-            await Util.delay(this.PAUSE); // TODO: see if we can drop this
+            await Util.delay(this.SHORT_PAUSE);
             Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; delaying complete");
 
             return url;
@@ -1255,6 +1269,118 @@ export class GitHubActions implements IGitHubActions {
         const teamMembers = await gh.getTeamMembers(teamName);
 
         return teamMembers;
+    }
+
+    public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
+        const start = Date.now();
+
+        // get branches
+        // GET /repos/{owner}/{repo}/branches
+        const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
+        Log.info("GitHubAction::deleteBranches(..) - list branch uri: " + listUri);
+        const listOptions: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const listResp = await fetch(listUri, listOptions);
+        Log.trace("GitHubAction::deleteBranches(..) - list response code: " + listResp.status); // 201 success
+        const listRespBody = await listResp.json();
+
+        if (listResp.status !== 200) {
+            Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
+            return false;
+        }
+
+        const branchesToKeepThatExist: string[] = [];
+        const branchesToDelete: string[] = [];
+        for (const githubBranch of listRespBody) {
+            if (branchesToKeep.indexOf(githubBranch.name) < 0) {
+                branchesToDelete.push(githubBranch.name);
+            } else {
+                branchesToKeepThatExist.push(githubBranch.name);
+            }
+        }
+        Log.info("GitHubAction::deleteBranches(..) - branches to delete: " + JSON.stringify(branchesToDelete));
+
+        // make sure there will be at least one branch left on the repo
+        // requires a real branchToKeep or that all of the existing branches are not in branchesToKeep
+        if (branchesToKeepThatExist.length < 1) {
+            Log.error("GitHubAction::deleteBranches(..) - none of the branchesToKeep actually exist (one must remain)");
+            return false;
+        }
+
+        // delete branches we do not want
+        let deleteSucceeded = true;
+        for (const branch of branchesToDelete) {
+            // DELETE /repos/{owner}/{repo}/git/refs/{ref}
+            const delUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/git/refs/" + "heads/" + branch;
+            Log.info("GitHubAction::deleteBranches(..) - delete branch uri: " + delUri);
+
+            const delOptions: RequestInit = {
+                method: "DELETE",
+                headers: {
+                    "Authorization": this.gitHubAuthToken,
+                    "User-Agent": this.gitHubUserName,
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                }
+            };
+
+            const deleteResp = await fetch(delUri, delOptions);
+            Log.trace("GitHubAction::deleteBranches(..) - delete response code: " + deleteResp.status);
+
+            if (deleteResp.status !== 204) {
+                const delRespBody = await deleteResp.json();
+                Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " + JSON.stringify(delRespBody));
+                deleteSucceeded = false;
+            } else {
+                Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " + branch + " from repo: " + repoId);
+            }
+        }
+
+        Log.info("GitHubAction::deleteBranches(..) - done; success: " + deleteSucceeded + "; took: " + Util.took(start));
+        return deleteSucceeded;
+    }
+
+    public async renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
+        Log.info("GitHubAction::renameBranch( " + repoId + ", " + oldName + ", " + newName + " ) - start");
+
+        // just assume the params are not null and actually exist
+
+        const start = Date.now();
+        // /repos/{owner}/{repo}/branches/{branch}/rename
+        const uri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches/" + oldName + "/rename";
+        Log.info("GitHubAction::renameBranch(..) - uri: " + uri);
+        const options: RequestInit = {
+            method: "POST",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            },
+            body: JSON.stringify({
+                new_name: newName
+            })
+        };
+
+        const response = await fetch(uri, options);
+        Log.trace("GitHubAction::renameBranch(..) - response code: " + response.status); // 201 success
+
+        if (response.status === 201) {
+            Log.info("GitHubAction::renameBranch(..) - success; took: " + Util.took(start));
+            return true;
+        } else {
+            const body = await response.json();
+            Log.warn("GitHubAction::renameBranch(..) - failed; response: " + JSON.stringify(body));
+            return false;
+        }
     }
 
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
