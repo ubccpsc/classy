@@ -131,15 +131,14 @@ describe("GitHubActions", () => {
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
-    it("Should be able to get a repo.", async function () {
-        const val = await gh.getRepo(TestHarness.REPONAMEREAL_TESTINGSAMPLE);
-        expect(val).to.not.be.null;
-        expect(val.repoName).to.equal(TestHarness.REPONAMEREAL_TESTINGSAMPLE);
+    it("Should be able to check if a repo exists.", async function () {
+        const val = await gh.repoExists(TestHarness.REPONAMEREAL_TESTINGSAMPLE);
+        expect(val).to.be.true;
     }).timeout(TIMEOUT);
 
-    it("Should not be able to get a repo that does not exist.", async function () {
-        const val = await gh.getRepo("REPO_THAT_DOES_NOT_EXIST");
-        expect(val).to.be.null;
+    it("Should be able to check if a repo exists when it does not.", async function () {
+        const val = await gh.repoExists("REPO_THAT_DOES_NOT_EXIST");
+        expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a repo.", async function () {

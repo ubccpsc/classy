@@ -24,8 +24,6 @@ export interface IGitHubActions {
      */
     setPageSize(size: number): void;
 
-    getRepo(repoName: string): Promise<GitRepoTuple>;
-
     /**
      * Creates a given repo and returns its URL. If the repo exists, return the URL for that repo.
      *
@@ -634,42 +632,6 @@ export class GitHubActions implements IGitHubActions {
             // just warn because 404 throws an error like this
             Log.warn("GitHubAction::deleteTeam(..) - failed; ERROR: " + err.message);
             return false;
-        }
-    }
-
-    /**
-     * Gets a repo. If the repo does not exist, returns null.
-     *
-     * @returns {Promise<GitRepoTuple | null}
-     */
-    public async getRepo(repoName: string): Promise<GitRepoTuple | null> {
-        Log.info("GitHubActions::getRepo(..) - start");
-        const start = Date.now();
-
-        // /repos/{owner}/{repo}
-        const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
-        Log.trace("GitHubActions::getRepo(..) - URI: " + uri);
-        const options: RequestInit = {
-            method: "GET",
-            headers: {
-                "Authorization": this.gitHubAuthToken,
-                "User-Agent": this.gitHubUserName,
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28"
-            }
-        };
-
-        const response = await fetch(uri, options);
-        if (response.status === 200) {
-            Log.info("GitHubActions::getRepo(..) - repo exists; took: " + Util.took(start));
-            const entry = await response.json();
-            const id = entry.id;
-            const name = entry.name;
-            const url = entry.html_url;
-            return {repoName: name, githubRepoNumber: id, url: url};
-        } else {
-            Log.info("GitHubActions::getRepo(..) - repo does not exist; took: " + Util.took(start));
-            return null;
         }
     }
 
@@ -1360,8 +1322,8 @@ export class GitHubActions implements IGitHubActions {
 
     public async listRepoBranches(repoId: string): Promise<string[]> {
         const start = Date.now();
-        const repo = await this.getRepo(repoId); // ensure the repo exists
-        if (repo === null) {
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
             Log.error("GitHubAction::listRepoBranches(..) - failed; repo does not exist");
             return null;
         }
@@ -1402,8 +1364,8 @@ export class GitHubActions implements IGitHubActions {
     public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
         const start = Date.now();
 
-        const repo = await this.getRepo(repoId); // ensure the repo exists
-        if (repo === null) {
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
             Log.error("GitHubAction::deleteBranches(..) - failed; repo does not exist");
             return false;
         }
@@ -1487,8 +1449,8 @@ export class GitHubActions implements IGitHubActions {
     public async renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
         Log.info("GitHubAction::renameBranch( " + repoId + ", " + oldName + ", " + newName + " ) - start");
 
-        const repo = await this.getRepo(repoId); // ensure the repo exists
-        if (repo === null) {
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
             Log.error("GitHubAction::renameBranch(..) - failed; repo does not exist");
             return false;
         }

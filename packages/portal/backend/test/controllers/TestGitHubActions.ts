@@ -22,13 +22,10 @@ export class TestGitHubActions implements IGitHubActions {
         throw new Error("Method not implemented.");
     }
 
-    public getRepo(repoName: string): Promise<GitRepoTuple> {
-        throw new Error("Method not implemented.");
-    }
-
     public deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
+
     public renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
