@@ -23,7 +23,7 @@ export class Factory {
      * Returns a custom route handler for a course. This will be used to configure
      * Restify with any custom routes required for the course backend. Only one
      * custom handler is permitted per instance.
-     * @param {string} name? optional name (for testing or overriding the default; usually not needed)
+     * @param {string} name optional name (for testing or overriding the default; usually not needed)
      * @returns {IREST}
      */
     public static async getCustomRouteHandler(name?: string): Promise<IREST> {
@@ -59,7 +59,7 @@ export class Factory {
     /**
      *
      * @param {IGitHubController} ghController
-     * @param {string} name? optional name (for testing or overriding the default; usually not needed)
+     * @param {string} name optional name (for testing or overriding the default; usually not needed)
      * @returns {AdminController}
      */
     public static async getCourseController(ghController?: IGitHubController, name?: string): Promise<ICourseController> {

@@ -791,8 +791,9 @@ export class AdminController {
                         Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
                     }
 
-                    Log.trace("AdminController::performProvision(..) - done provisioning: " + repo.id + "; forced wait");
-                    await Util.delay(2 * 1000); // after any provisioning wait a bit
+                    // forced wait unnecessary with the transition to creating repo from template
+                    // Log.trace("AdminController::performProvision(..) - done provisioning: " + repo.id + "; forced wait");
+                    // await Util.delay(2 * 1000); // after any provisioning wait a bit
                     // Log.info("AdminController::performProvision(..) - done for repo: " + repo.id + "; wait complete");
                     Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " +
                         repo.id + "; took: " + Util.took(start));

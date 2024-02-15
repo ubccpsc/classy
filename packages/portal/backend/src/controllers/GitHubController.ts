@@ -370,7 +370,66 @@ export class GitHubController implements IGitHubController {
         try {
             // create a repo
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - creating GitHub repo");
-            repoVal = await this.gha.createRepo(repoName);
+            // this is the create and import w/ fs flow
+            // repoVal = await this.gha.createRepo(repoName); // only creates repo, contents are added later
+
+            // this is the create and import w/ template flow
+            // this string munging feels unfortunate, but the data is all there and should always be structured this way
+            // if there is a problem, fail fast
+            let importOwner = "";
+            let importRepo = "";
+            const importBranchesToKeep = [];
+            try {
+                importOwner = importUrl.split("/")[3];
+                importRepo = importUrl.split("/")[4];
+                // remove branch from the end of the repo name
+                if (importRepo.includes("#")) {
+                    importRepo = importRepo.split("#")[0];
+                }
+                // remove .git from the end of the repo name
+                if (importRepo.endsWith(".git")) {
+                    importRepo = importRepo.substring(0, importRepo.length - 4);
+                }
+
+                if (importUrl.includes("#")) {
+                    // if a branch is specified in the import URL, we need to keep only it
+                    const splitUrl = importUrl.split("#");
+                    importBranchesToKeep.push(splitUrl[1]);
+                }
+
+                // fail if problem encountered
+                if (importOwner.length < 1) {
+                    throw new Error("Owner name is empty");
+                }
+                if (importRepo.length < 1) {
+                    throw new Error("Repo name is empty");
+                }
+                if (importBranchesToKeep.length > 0 && importBranchesToKeep[0].length < 1) {
+                    throw new Error("Invalid branches to keep: " + JSON.stringify(importBranchesToKeep));
+                }
+            } catch (err) {
+                Log.error("GitHubController::provisionRepository( " + repoName + " ) - error parsing import URL: " +
+                    importUrl + "; err: " + err.message);
+                throw new Error("provisionRepository( " + repoName + " ) creating repo failed; ERROR: " + err.message);
+            }
+
+            Log.info("GitHubController::provisionRepository( " + repoName + " ) - importing: " + importOwner + "/" + importRepo +
+                "; branchesToKeep: " + JSON.stringify(importBranchesToKeep));
+
+            repoVal = await this.gha.createRepoFromTemplate(repoName, importOwner, importRepo); // creates repo and imports contents
+
+            if (importBranchesToKeep.length > 0) {
+                // prune branches
+                const branchRemovalSuccess = await this.gha.deleteBranches(repoName, importBranchesToKeep);
+                Log.info("GitHubController::provisionRepository( " + repoName + " ) - branch removal success: " + branchRemovalSuccess);
+
+                // rename branches
+                // since we are only keeping one branch, make sure it is renamed to main
+                if (importBranchesToKeep[0] !== "main") {
+                    const branchRenameSuccess = await this.gha.renameBranch(repoName, importBranchesToKeep[0], "main");
+                    Log.info("GitHubController::provisionRepository( " + repoName + " ) - branch rename success: " + branchRenameSuccess);
+                }
+            }
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
             // we consider the repo to be provisioned once the whole flow is done
@@ -460,15 +519,15 @@ export class GitHubController implements IGitHubController {
             const WEBHOOKADDR = host + "/portal/githubWebhook";
             Log.trace("GitHubController::provisionRepository() - add webhook to: " + WEBHOOKADDR);
             const createHook = await this.gha.addWebhook(repoName, WEBHOOKADDR);
-            Log.trace("GitHubController::provisionRepository(..) - webook successful: " + createHook);
+            Log.trace("GitHubController::provisionRepository(..) - webhook successful: " + createHook);
 
+            // this was the import from fs flow which is not needed if we are using import from template instead
             // perform import
-            const c = Config.getInstance();
-            const targetUrl = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
-
-            Log.trace("GitHubController::provisionRepository() - importing project (slow)");
-            const output = await this.gha.importRepoFS(importUrl, targetUrl);
-            Log.trace("GitHubController::provisionRepository(..) - import complete; success: " + output);
+            // const c = Config.getInstance();
+            // const targetUrl = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
+            // Log.trace("GitHubController::provisionRepository() - importing project (slow)");
+            // const output = await this.gha.importRepoFS(importUrl, targetUrl);
+            // Log.trace("GitHubController::provisionRepository(..) - import complete; success: " + output);
 
             Log.trace("GitHubController::provisionRepository(..) - successfully completed for: " +
                 repoName + "; took: " + Util.took(start));
