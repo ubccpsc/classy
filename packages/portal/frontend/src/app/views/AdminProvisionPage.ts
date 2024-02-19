@@ -51,6 +51,7 @@ export class AdminProvisionPage extends AdminPage {
                 // worked
             }).catch(function (err) {
                 // did not
+                Log.info("AdminProvisionPage::manageProvisionButton(..) - ERROR: " + err);
             });
         };
 
@@ -61,6 +62,7 @@ export class AdminProvisionPage extends AdminPage {
                 // worked
             }).catch(function (err) {
                 // did not
+                Log.warn("AdminProvisionPage::manageReleaseButton(..) - ERROR: " + err);
             });
         };
 
@@ -71,7 +73,7 @@ export class AdminProvisionPage extends AdminPage {
             that.handleDelivChanged().then(function () {
                 //
             }).catch(function (err) {
-                //
+                Log.warn("AdminProvisionPage::init(..) - handleDelivChanged ERROR: " + err);
             });
         };
 
@@ -254,11 +256,17 @@ export class AdminProvisionPage extends AdminPage {
             const repoId = selected[i];
             try {
                 const start = Date.now();
-                await this.releaseRepo(repoId);
-                Log.info("AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId +
-                    "; took: " + Util.took(start));
-                UI.showSuccessToast("Repo released: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
-                    {timeout: 1000, animation: "none"});
+                const success = await this.releaseRepo(repoId);
+                if (success) {
+                    Log.info("AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId +
+                        "; took: " + Util.took(start));
+                    UI.showSuccessToast("Repo released: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
+                        {timeout: 1000, animation: "none"});
+                } else {
+                    // should have already displayed an error
+                    Log.warn("AdminProvisionPage::handleReleasePressed(..) - releasing failed; repo: " + repoId +
+                        "; took: " + Util.took(start));
+                }
             } catch (err) {
                 Log.error("AdminProvisionPage::handleReleasePressed(..) - releasing error for: " + repoId + "; ERROR: " + err.message);
                 UI.showErrorToast("Repo NOT released: " + repoId + " (see error console)");
@@ -302,11 +310,17 @@ export class AdminProvisionPage extends AdminPage {
             try {
                 const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
                 const start = Date.now();
-                await this.provisionRepo(delivId, repoId);
-                Log.info("AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId +
-                    "; took: " + Util.took(start));
-                UI.showSuccessToast("Repo provisioned: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
-                    {timeout: 10000, force: true});
+                const success = await this.provisionRepo(delivId, repoId);
+                if (success) {
+                    Log.info("AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId +
+                        "; took: " + Util.took(start));
+                    UI.showSuccessToast("Repo provisioned: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )",
+                        {timeout: 10000, force: true});
+                } else {
+                    // should have already shown an error so just log
+                    Log.warn("AdminProvisionPage::handleProvision(..) - provisioning failed; repo: " + repoId +
+                        "; took: " + Util.took(start));
+                }
             } catch (err) {
                 Log.error("AdminProvisionPage::handleProvision(..) - provisioning error for: " + repoId + "; ERROR: " + err.message);
                 UI.showErrorToast("Repo NOT provisioned: " + repoId + " (see error console)");
@@ -315,7 +329,10 @@ export class AdminProvisionPage extends AdminPage {
 
         Log.info("AdminProvisionPage::handleProvision(..) - done");
         if (selected.length > 0) {
-            UI.showSuccessToast("Repository provisioning complete.", {timeout: (1000 * 60 * 60 * 24), buttonLabel: "Ok"});
+            UI.showSuccessToast("Repository provisioning complete.", {
+                timeout: (1000 * 60 * 60 * 24),
+                buttonLabel: "Ok"
+            });
         }
         // refresh the page
         await this.init({});

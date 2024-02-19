@@ -477,7 +477,7 @@ export class GitHubActions implements IGitHubActions {
             Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
             if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
                 Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-                throw new Error("Repository not created; no URL returned. Is the import repo (" + templateOwner + "/" + templateRepo +
+                throw new Error("Is the import repo (" + templateOwner + "/" + templateRepo +
                     ") configured in GitHub as a template repository?");
             }
             const url = body.html_url;
