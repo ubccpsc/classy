@@ -1229,7 +1229,7 @@ export class GitHubActions implements IGitHubActions {
         const response = await fetch(uri, options);
 
         if (response.status === 404) {
-            Log.warn("GitHubAction::getTeam( " + teamName + " ) - ERROR: Github Team " + response.status);
+            Log.warn("GitHubAction::getTeam( " + teamName + " ) - team does not exist; status: " + response.status);
             return null;
         }
 
