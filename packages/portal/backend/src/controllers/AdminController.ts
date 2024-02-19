@@ -769,6 +769,8 @@ export class AdminController {
             repos.length + "; importURL: " + importURL);
         const provisionedRepos: Repository[] = [];
 
+        const errors = [];
+
         for (const repo of repos) {
             try {
                 const start = Date.now();
@@ -804,6 +806,8 @@ export class AdminController {
             } catch (err) {
                 Log.error("AdminController::performProvision(..) - FAILED: " +
                     repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
+                // would prefer not to rethrow, but the extra logging can be helpful
+                throw err;
             }
         }
 
