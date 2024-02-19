@@ -119,7 +119,8 @@
     <template id="results.html">
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em;">Deliv:</span>
                     <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
@@ -142,7 +143,8 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em">Deliv:</span>
                     <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
@@ -166,17 +168,19 @@
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
                 <ons-list-header style="text-align: center; font-weight: 700">
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Close
-                        </ons-button>
-                    </a>
-                    Build Logs
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Save
-                        </ons-button>
-                    </a>
+                    <div style="display:flex; flex-direction: row; align-items: center; justify-content: center;">
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-close">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Close
+                            </ons-button>
+                        </a>
+                        <div style="display:flex; font-size: 125%;">Grader Build Logs</div>
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-save">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Save
+                            </ons-button>
+                        </a>
+                    </div>
                 </ons-list-header>
             </div>
             <ons-scroller id="adminDockerBuildDialog-logs-container" style="max-height: 70vh; overflow-y: auto">
@@ -303,8 +307,10 @@
 
                         <pre>CSID,GRADE,COMMENT</pre>
 
-                        If the CSID column is not present but a CWL or GITHUB column is present, Classy tries to map from the CWL/GITHUB
-                        column back to a CSID. This will overwrite any grade that exist for that the students listed in the CSV. This cannot
+                        If the CSID column is not present but a CWL or GITHUB column is present, Classy tries to map
+                        from the CWL/GITHUB
+                        column back to a CSID. This will overwrite any grade that exist for that the students listed in
+                        the CSV. This cannot
                         be undone.
                     </div>
                 </ons-list-item>
@@ -733,7 +739,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                            <span
+                                    title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
@@ -752,7 +759,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                            <span
+                                    title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
@@ -1053,7 +1061,8 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600 (6 hours), 43200 (12 hours), 86400 (24 hours).
+                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600
+                                (6 hours), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 
@@ -1082,12 +1091,12 @@
                                 Custom AutoTest parameters
                             </div>
                             <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"
+                                           spellcheck="false"></ons-input>
                             </div>
                             <div class="expandable-content">
                                 This field is a convenient way to pass custom parameters into a grading container for a
-                                specific
-                                deliverable. It must be a valid JSON object (or {}).
+                                specific deliverable. It must be a valid JSON object (or {}).
                             </div>
                         </ons-list-item>
                     </ons-list>
@@ -1131,7 +1140,9 @@
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-context-input" type="url"
+                            <ons-input class="settingTextInput" style="width: 40em;" id="docker-image-context-input"
+                                       type="url"
+                                       value="https://github.students.cs.ubc.ca/CPSC310/project-resources.git"
                                        required></ons-input>
                         </div>
                         <div class="expandable-content">
@@ -1152,7 +1163,8 @@
                             Version
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput"  style="width: 20em;" id="docker-image-tag-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-tag-input"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. You can include the Git revision (commit or tag) for traceability.
@@ -1167,7 +1179,9 @@
                             Dockerfile name
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-file-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-file-input"
+                                       value="grade.dockerfile"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
