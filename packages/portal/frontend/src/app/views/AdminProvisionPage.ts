@@ -132,7 +132,7 @@ export class AdminProvisionPage extends AdminPage {
 
                 // update provisioned
                 const provisionRepo = await this.getProvisionDetails(val);
-                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning provisioning worked: " + provisionRepo);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning provisioning worked");
 
                 let provisioned = [];
                 let toProvision = [];
@@ -178,7 +178,7 @@ export class AdminProvisionPage extends AdminPage {
 
                 // update provisioned
                 const reposToRelease = await this.getReleaseDetails(val);
-                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning releasing worked: " + reposToRelease);
+                Log.info("AdminProvisionPage::handleDelivChanged(..) - planning releasing worked");
 
                 let released: string[] = [];
                 let toRelease: string[] = [];
