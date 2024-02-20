@@ -1,6 +1,7 @@
 import {expect} from "chai";
 import "mocha";
 
+import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {TestHarness} from "@common/TestHarness";
@@ -12,8 +13,6 @@ import {GitHubActions, IGitHubActions} from "@backend/controllers/GitHubActions"
 import {PersonController} from "@backend/controllers/PersonController";
 import {RepositoryController} from "@backend/controllers/RepositoryController";
 import {TeamController} from "@backend/controllers/TeamController";
-
-import "@common/GlobalSpec"; // load first
 
 describe("GitHubActions", () => {
 
@@ -28,6 +27,7 @@ describe("GitHubActions", () => {
     const DELAY_SHORT = 200;
 
     const REPONAME = TestHarness.REPONAME1;
+    const REPONAME2 = TestHarness.REPONAME2;
     const REPONAME3 = TestHarness.REPONAME3;
     const TEAMNAME = TestHarness.TEAMNAME1;
 
@@ -131,6 +131,16 @@ describe("GitHubActions", () => {
         expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
+    it("Should be able to check if a repo exists.", async function () {
+        const val = await gh.repoExists(TestHarness.REPONAMEREAL_TESTINGSAMPLE);
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should be able to check if a repo exists when it does not.", async function () {
+        const val = await gh.repoExists("REPO_THAT_DOES_NOT_EXIST");
+        expect(val).to.be.false;
+    }).timeout(TIMEOUT);
+
     it("Should be able to create a repo.", async function () {
         const rc = new RepositoryController();
         const dc = new DeliverablesController();
@@ -141,6 +151,48 @@ describe("GitHubActions", () => {
         const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
             Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
         expect(val).to.equal(name);
+    }).timeout(TIMEOUT);
+
+    it("Should be able to create a repo from a template.", async function () {
+        const rc = new RepositoryController();
+        const dc = new DeliverablesController();
+        const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
+        const repoName = REPONAME2;
+        await rc.createRepository(repoName, deliv, [], {});
+
+        const owner = Config.getInstance().getProp(ConfigKey.org);
+        const repo = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+        const val = await gh.createRepoFromTemplate(repoName, owner, repo);
+
+        const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
+            Config.getInstance().getProp(ConfigKey.org) + "/" + repoName;
+        expect(val).to.equal(name);
+    }).timeout(TIMEOUT);
+
+    it("Should be able to rename a branch on a repo.", async function () {
+        const repoName = REPONAME2;
+        const val = await gh.renameBranch(repoName, "test-branch", "renamed-test-branch");
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should fail to rename an invalid branch on a repo.", async function () {
+        const repoName = REPONAME2;
+        const val = await gh.renameBranch(repoName, "BRANCH_THAT_DOES_NOT_EXIST", "renamed-test-branch");
+        expect(val).to.be.false;
+    }).timeout(TIMEOUT);
+
+    it("Should be able to delete a branch on a repo.", async function () {
+        const repoName = REPONAME2;
+        const val = await gh.deleteBranches(repoName, ["renamed-test-branch"]);
+        // TODO: check that branchesToKeep are all that is left (would require exposing another endpoint though)
+        expect(val).to.be.true;
+    }).timeout(TIMEOUT);
+
+    it("Should not be able to delete all the branches on a repo.", async function () {
+        const repoName = REPONAME2;
+        const val = await gh.deleteBranches(repoName, []);
+        // TODO: check that branchesToKeep are all that is left (would require exposing another endpoint though)
+        expect(val).to.be.false;
     }).timeout(TIMEOUT);
 
     it("Should be able to create a team.", async function () {

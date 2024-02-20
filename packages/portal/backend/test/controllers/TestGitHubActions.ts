@@ -18,6 +18,18 @@ export class TestGitHubActions implements IGitHubActions {
         this.teams.set(TeamController.ADMIN_NAME, {teamName: TeamController.ADMIN_NAME, githubTeamNumber: 1001});
     }
 
+    public listRepoBranches(repoId: string): Promise<string[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    public deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+
+    public renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+
     public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
         Log.info("TestGitHubActions::addMembersToTeam(..)");
         return {teamName: teamName, githubTeamNumber: 1};
@@ -54,6 +66,19 @@ export class TestGitHubActions implements IGitHubActions {
             this.repos[repoName] = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
         }
         Log.info("TestGitHubActions::createRepo( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
+        return this.repos[repoName];
+    }
+
+    public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
+        Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + ", " + templateOwner + ", " + templateRepo + " ) - start");
+        await GitHubActions.checkDatabase(repoName, null);
+
+        if (typeof this.repos[repoName] === "undefined") {
+            Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + " ) - created");
+            const c = Config.getInstance();
+            this.repos[repoName] = c.getProp(ConfigKey.githubHost) + "/" + c.getProp(ConfigKey.org) + "/" + repoName;
+        }
+        Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
         return this.repos[repoName];
     }
 

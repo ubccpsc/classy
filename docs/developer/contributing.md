@@ -7,6 +7,7 @@
   - [Local Development Fork Setup](#local-development-fork-setup)
   - [Remote Setup of a Fork](#remote-setup-of-a-fork)
   - [Modifying Classy on Your Fork](#modifying-classy-on-your-fork)
+  - [Running Local Tests](#running-local-tests)
   - [Main repos](#main-repos)
   - [Goals](#goals)
     - [Pulling changes from `root/main` into `fork/main`](#pulling-changes-from-rootmain-into-forkmain)
@@ -92,6 +93,15 @@ Technical staff will configure a fork of [ubccpsc/classy](https://github.com/ubc
 During the term, `ubccpsc/classy` will only receive critical bug fixes so courses should feel comfortable pulling these into their forks if the bug fixes are relevant to them. Major changes will only be made to `ubccpsc/classy` during exam breaks (e.g., December, April, and August).
 
 Custom changes can be made to code in your fork, but the custom changes should **NOT** be pushed back to the root `Classy` repository, unless it is a needed feature.
+
+## Running Local Tests
+
+Both AutoTest and Classy have extensive test suites. While these will be run by CI, during development you usually want to run them locally.
+To do this you need to do two things:
+1. Ensure you have a local mongo instance running (see `DB_URL` in `.env`).
+   In a terminal, run: `docker run -p 27017:27017 mongo`
+1. Have a test profile in your IDE that runs the tests. In Webstorm, this is done by creating a Mocha target with node options `--require dotenv/config -r tsconfig-paths/register` as the node options and the test directory pointed to the relevant test parent for the project. You will also want to set `Compile typescript` as a before launch action.
+1. Ensure you have a valid `.env` file in the root of the project. You can copy the `.env.example` file and fill in the values.
 
 ## Main repos
 

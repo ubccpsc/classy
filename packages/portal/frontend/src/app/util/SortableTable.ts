@@ -1,4 +1,5 @@
 import Log from "@common/Log";
+import Util from "@common/Util";
 
 /**
  * These correspond to the columns in the table.
@@ -232,35 +233,7 @@ export class SortableTable {
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
 
-            if (aVal === bVal) {
-                // get rid of equality from the start
-                return 0;
-            }
-
-            // handle mismatches
-            // mainly happens when one cell is empty
-            if (typeof aVal !== typeof bVal) {
-                if (aVal === "" || aVal === null) {
-                    return -1 * mult;
-                } else if (bVal === "" || bVal === null) {
-                    return 1 * mult;
-                }
-            }
-
-            if (Array.isArray(aVal)) {
-                // an array
-                return (aVal.length - bVal.length) * mult;
-            } else if (isNaN(aVal) === false) {
-                // as a number
-                // something that is not an array or string
-                return (Number(aVal) - Number(bVal)) * mult;
-            } else if (typeof aVal === "string") {
-                // as a string; tries to naturally sort w/ numeric & base
-                return aVal.localeCompare(bVal, undefined, {numeric: true, sensitivity: "base"}) * mult;
-            } else {
-                // something that is not an array or string or number
-                return (aVal - bVal) * mult;
-            }
+            return Util.compare(aVal, bVal) * mult;
         });
     }
 

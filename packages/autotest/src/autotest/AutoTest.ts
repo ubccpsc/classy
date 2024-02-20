@@ -27,8 +27,9 @@ export interface IAutoTest {
      * Adds a new job to be processed by the standard queue.
      *
      * @param {ContainerInput} element
+     * @param {boolean} force whether the element should ignore queue limits
      */
-    addToStandardQueue(element: ContainerInput): void;
+    addToStandardQueue(element: ContainerInput, force: boolean): void;
 
     /**
      * Adds a new job to be processed by the low queue.
@@ -69,7 +70,16 @@ export abstract class AutoTest implements IAutoTest {
 
     /**
      * Express queue. If this queue has jobs in it, no matter what is
-     * going on in the other queues, these should be handled first.
+     * going on in the other queues, these will be executed first.
+     *
+     * All explicit requests go on the express queue. No implicit requests
+     * are added to this queue. Staff/Admin jobs are placed on the head
+     * of the express queue.
+     *
+     * While there is no threshold on the number of jobs a student can put
+     * on the express queue, the 'charging' mechanism should ensure that only
+     * jobs the student is allowed to request (e.g., enough time has passed)
+     * are added to the queue.
      *
      * @private {Queue}
      */
@@ -78,6 +88,13 @@ export abstract class AutoTest implements IAutoTest {
     /**
      * Standard jobs. Always execute after Express jobs, but also always
      * before any low jobs.
+     *
+     * These slots exist so that students who push at a reasonable cadence
+     * have their jobs handled more quickly than those who push too rapidly.
+     *
+     * To ensure feedback is timely, any scheduled standard job that exceeds
+     * the job threshold will be replaced (without losing its queue position)
+     * with the more recent job. Replaced jobs will be moved to the low queue.
      *
      * @private {Queue}
      */
@@ -88,15 +105,24 @@ export abstract class AutoTest implements IAutoTest {
      * that push too rapidly will have their jobs demoted to the
      * low queue.
      *
+     * When the low queue threshold is passed the oldest jobs _will_ be
+     * removed and will not be graded. This should rarely happen. But if
+     * it does, any student request on one of these old jobs will cause the job
+     * to run as it will be added to the express queue. As the deadline nears,
+     * the jobs will be newer than those previously requested so the jobs
+     * closest to any deadline will always be run.
+     *
      * @private {Queue}
      */
     private lowQueue = new Queue("low");
 
     /**
      * The maximum number of jobs a single user can have on the standard queue
-     * before it will schedule on the low queue instead. This is to
-     * prevent DOS attacks because a single user could submit an unbounded number
-     * of requests preventing others from being graded.
+     * before it will schedule on the low queue instead.
+     *
+     * A push event will always schedule on the standard queue. If this push will
+     * cause the user to exceed this limit, the oldest job will be moved to the
+     * low queue and the newer job will be scheduled on the standard queue.
      *
      * @private
      */
@@ -104,13 +130,17 @@ export abstract class AutoTest implements IAutoTest {
 
     /**
      * The maximum number of jobs a single user can have on the low queue
-     * before we refrain from scheduling them at all.
+     * before we overwrite older requests with the newer requests. The
+     * intuition here is that if a student has more than MAX_LOW_JOBS
+     * on the queue, they probably care about the results of the most
+     * recent jobs more than the older jobs.
      *
-     * NOTE: not currently enforced, just logging to see if this happens in practice.
+     * This is key to ensuring a single user cannot DOS the AutoTest service
+     * by pushing too rapidly.
      *
      * @private
      */
-    private readonly MAX_LOW_JOBS: number = 50;
+    private readonly MAX_LOW_JOBS: number = 10;
 
     /**
      * Max number of execution jobs.
@@ -145,9 +175,13 @@ export abstract class AutoTest implements IAutoTest {
     }
 
     /**
-     * Adds a job to the express queue. A user can only ask for a single job to go on
-     * the express queue at a time. If the job is already executing on any other queue
-     * it will not be added.
+     * Adds a job to the express queue. There is not a limit to these requests so
+     * deliverables need to be configured to ensure that results cannot be requested
+     * too often.
+     *
+     * If the job is already executing on any other queue it will not be added, but
+     * if it is just sitting on another queue it will be added to express and removed
+     * from the lower priority queue.
      *
      * @param input
      */
@@ -162,27 +196,34 @@ export abstract class AutoTest implements IAutoTest {
                 return;
             }
 
-            if (this.expressQueue.numberJobsForPerson(input) < 1) {
-                // add to express queue since they are not already on it
-                this.expressQueue.push(input);
+            // add to express queue since they are not already on it
+            this.expressQueue.push(input);
 
-                // if job is on any other queue, remove it
-                this.standardQueue.remove(input);
-                this.lowQueue.remove(input);
-            } else {
-                Log.info("AutoTest::addToExpressQueue(..) - user: " +
-                    input.target.personId + " already has job on express queue" +
-                    "; adding SHA: " + Util.shaHuman(input.target.commitSHA) + " to standard queue");
-
-                // express queue already has a job for this user, move to standard
-                this.addToStandardQueue(input);
-            }
+            // if job is on any other queue, remove it
+            this.standardQueue.remove(input);
+            this.lowQueue.remove(input);
         } catch (err) {
             Log.error("AutoTest::addToExpressQueue(..) - ERROR: " + err);
         }
     }
 
-    public addToStandardQueue(input: ContainerInput): void {
+    /**
+     * Adds a job to the standard queue. Newer jobs will replace older jobs
+     * that are already on this queue and the older jobs will be moved to
+     * the low queue. This tries to maximize more recent feedback.
+     *
+     * While MAX_STANDARD_JOBS will manage the number of jobs on the queue for a
+     * single requester, this can be overridden by setting forceAdd to true.
+     *
+     * forceAdd ensures that jobs that have been prioritized by the course
+     * plugin (via shouldPromotePush) will be added to the standard queue, so
+     * they can be preferentially executed before jobs on the low queue. This
+     * will ignore the MAX_STANDARD_JOBS argument.
+     *
+     * @param input
+     * @param forceAdd
+     */
+    public addToStandardQueue(input: ContainerInput, forceAdd: boolean): void {
         Log.info("AutoTest::addToStandardQueue(..) - start" +
             "; deliv: " + input.target.delivId +
             "; repo: " + input.target.repoId +
@@ -190,36 +231,55 @@ export abstract class AutoTest implements IAutoTest {
 
         try {
             if (this.isCommitExecuting(input)) {
-                Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing");
+                Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing; SHA: " +
+                    Util.shaHuman(input.target.commitSHA));
                 return;
             }
 
             // only add job if it is not already on express
-            if (this.expressQueue.indexOf(input) < 0) {
-
-                const stdJobCount = this.standardQueue.numberJobsForPerson(input);
-                const lowJobCount = this.lowQueue.numberJobsForPerson(input);
-
-                // this is fairly permissive; only queued jobs (not executing jobs) are counted
-                if (stdJobCount < this.MAX_STANDARD_JOBS) {
-                    this.standardQueue.push(input);
-
-                    // if job is on any other queue, remove it
-                    this.lowQueue.remove(input);
-                } else {
-                    Log.warn("AutoTest::addToStandardQueue(..) - repo: " +
-                        input.target.repoId + "; has # " + stdJobCount +
-                        " standard jobs queued and # " + lowJobCount +
-                        " low jobs queued");
-
-                    // NOTE: this _could_ post a warning back to the user
-                    // that their priority is lowered due to excess jobs
-
-                    this.addToLowQueue(input);
-                }
-            } else {
+            if (this.expressQueue.indexOf(input) >= 0) {
                 Log.info("AutoTest::addToStandardQueue(..) - skipped; " +
                     "job already on express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
+                return;
+            }
+
+            const stdJobCount = this.standardQueue.numberJobsForPerson(input);
+            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
+
+            if (forceAdd === true) {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " std jobs queued and # " + lowJobCount +
+                    " low jobs queued; forceAdd === true, added to std");
+                this.standardQueue.push(input);
+                this.lowQueue.remove(input); // if job is on any other queue, remove it
+                return;
+            }
+
+            // this is fairly permissive; only queued jobs (not executing jobs) are counted
+            if (stdJobCount < this.MAX_STANDARD_JOBS) {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " std jobs queued and # " + lowJobCount +
+                    " low jobs queued; added to std");
+                this.standardQueue.push(input);
+                this.lowQueue.remove(input); // if job is on any other queue, remove it
+            } else {
+                Log.info("AutoTest::addToStandardQueue(..) - repo: " +
+                    input.target.repoId + "; has # " + stdJobCount +
+                    " standard jobs queued and # " + lowJobCount +
+                    " low jobs queued; old std job replaced and moved to low");
+
+                // forceAdd is false in this case because force was handled above
+                const replacedJob = this.standardQueue.replaceOldestForPerson(input, false);
+                if (replacedJob !== null && replacedJob.target.commitSHA !== input.target.commitSHA) {
+                    // job must be on standard
+                    this.lowQueue.remove(input); // if job is on any other queue, remove it
+                }
+
+                if (replacedJob !== null) {
+                    this.addToLowQueue(replacedJob);
+                }
             }
         } catch (err) {
             Log.error("AutoTest::addToStandardQueue(..) - ERROR: " + err);
@@ -233,25 +293,35 @@ export abstract class AutoTest implements IAutoTest {
             "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
         try {
-
             if (this.isCommitExecuting(input)) {
                 Log.info("AutoTest::addToLowQueue(..) - not added; commit already executing");
                 return;
             }
 
-            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
-            // not currently used, except for this warning
-            if (lowJobCount > this.MAX_LOW_JOBS) {
-                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ queued jobs, " +
-                    "possible DOS?; repo: " + input.target.repoId + "; person: " + input.target.personId);
-            }
-
-            // add to the low queue if it is not already on express or standard
-            if (this.expressQueue.indexOf(input) < 0 && this.standardQueue.indexOf(input) < 0) {
-                this.lowQueue.push(input);
-            } else {
+            if (this.expressQueue.indexOf(input) >= 0 || this.standardQueue.indexOf(input) >= 0) {
+                // already on faster queue
                 Log.info("AutoTest::addToLowQueue(..) - skipped; " +
                     "job already on standard or express queue; SHA: " + Util.shaHuman(input.target.commitSHA));
+                return;
+            }
+
+            const lowJobCount = this.lowQueue.numberJobsForPerson(input);
+            if (lowJobCount >= this.MAX_LOW_JOBS) {
+                Log.warn("AutoTest::addToLowQueue(..) - user has _many_ ( " + lowJobCount + ") queued jobs, " +
+                    "will replace oldest job with this job; repo: " + input.target.repoId + "; person: " + input.target.personId);
+                // Replace oldest job instead of adding.
+                // This can reduce the impact of DOS attacks
+                // or users that are pushing too rapidly.
+                // Students can always request the results on any job,
+                // even if has been replaced, so a replaced job can
+                // still be graded.
+
+                // failsafe: forceAdd should not matter because there _must_ be
+                // an older job queued because requested jobs all go on express
+                this.lowQueue.replaceOldestForPerson(input, true);
+            } else {
+                // add to the low queue
+                this.lowQueue.push(input);
             }
         } catch (err) {
             Log.error("AutoTest::addToLowQueue(..) - ERROR: " + err);
@@ -279,9 +349,9 @@ export abstract class AutoTest implements IAutoTest {
                     const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
-                        info.target.delivId + "; repo: " + info.target.repoId + "; SHA: " + Util.shaHuman(info.target.commitSHA) +
-                        "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued + " ( e: " + that.expressQueue.length() + ", s: " +
-                        that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
+                        (info.target.delivId + ";").padEnd(8, " ") + " repo: " + (info.target.repoId + ";").padEnd(18, " ") + " SHA: " +
+                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued +
+                        " ( e: " + that.expressQueue.length() + ", s: " + that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
 
                     let gradingJob: GradingJob;
                     // Use mocked GradingJob if testing; EMPTY and POSTBACK used by test environment
@@ -291,7 +361,6 @@ export abstract class AutoTest implements IAutoTest {
                     } else {
                         gradingJob = new GradingJob(info);
                     }
-
                     // noinspection ES6MissingAwait
                     // noinspection JSIgnoredPromiseFromCall
                     // tslint:disable-next-line
@@ -511,9 +580,10 @@ export abstract class AutoTest implements IAutoTest {
                 data.input.target.tsJobStart = data.input.target.timestamp;
             }
             Log.info("AutoTest::handleExecutionComplete(..) [JOB] - job complete;   deliv: " +
-                data.delivId + "; repo: " + data.repoId + "; SHA: " + Util.shaHuman(data.commitSHA) +
-                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart, true) +
-                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp, true));
+                (data.delivId + ";").padEnd(8, " ") + " repo: " + (data.repoId + ";").padEnd(18, " ") +
+                " SHA: " + Util.shaHuman(data.commitSHA) +
+                "; wait: " + Util.tookHuman(data.input.target.timestamp, data.input.target.tsJobStart, true, true) +
+                "; exec: " + Util.tookHuman(data.input.target.tsJobStart, data.output.timestamp, true, true));
         } catch (err) {
             Log.error("AutoTest::handleExecutionComplete(..) - ERROR: " + err.message);
         }

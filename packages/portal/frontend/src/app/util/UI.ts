@@ -136,7 +136,7 @@ export class UI {
 
         const modals = document.querySelectorAll("ons-modal") as any;
         for (const m of modals) {
-            Log.trace("UI::showModal( " + text + " ) - start; modal: " + m);
+            Log.trace("UI::showModal( " + text + " ) - start");
             if (m !== null) {
                 if (text != null) {
                     const content = document.querySelectorAll("#modalText") as any;
@@ -272,6 +272,7 @@ export class UI {
         const modals = document.querySelectorAll("ons-modal") as any;
         for (const m of modals) {
             if (m !== null) {
+                Log.info("UI::hideModal(..) - hiding modal");
                 m.hide({animation: "fade"});
             } else {
                 Log.error("UI::hideModal(..) - Modal is null");

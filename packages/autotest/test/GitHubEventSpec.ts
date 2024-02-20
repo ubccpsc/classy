@@ -5,6 +5,7 @@ import "mocha";
 import "@common/GlobalSpec"; // load first
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
+import Util from "@common/Util";
 import {TestHarness} from "@common/TestHarness";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
@@ -27,7 +28,17 @@ describe("GitHub Event Parser", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("GitHubEventParserSpec::before() - start");
-        backend = new BackendServer();
+
+        const ci = process.env.CI;
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+            Log.test("GitHubEventParserSpec::before() - running in CI; using https");
+            // CI uses https and certificates, but local testing does not
+            backend = new BackendServer(true);
+        } else {
+            Log.test("GitHubEventParserSpec::before() - not running in CI; using http");
+            backend = new BackendServer(false);
+        }
+
         await backend.start();
 
         const pc = new PersonController();
@@ -134,6 +145,7 @@ describe("GitHub Event Parser", () => {
             timestamp: 1516324553000,
             botMentioned: false,
             adminRequest: false,
+            shouldPromote: false,
             personId: null,
             orgId: "CPSC310-2017W-T2",
             kind: "push",
@@ -158,6 +170,7 @@ describe("GitHub Event Parser", () => {
             timestamp: 1516322017000,
             botMentioned: false,
             adminRequest: false,
+            shouldPromote: false,
             personId: null,
             orgId: "CPSC310-2017W-T2",
             kind: "push",
@@ -190,6 +203,7 @@ describe("GitHub Event Parser", () => {
             timestamp: 1516324487000,
             botMentioned: false,
             adminRequest: false,
+            shouldPromote: false,
             personId: null,
             orgId: "CPSC310-2017W-T2",
             kind: "push",
@@ -217,6 +231,7 @@ describe("GitHub Event Parser", () => {
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             timestamp: 1516324753000,
             adminRequest: false,
+            shouldPromote: false,
             personId: PERSONID,
             orgId: "CPSC310-2017W-T2",
             kind: "standard",
@@ -242,6 +257,7 @@ describe("GitHub Event Parser", () => {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/bbe3980fff47b7d6a921e9f89c6727bea639589c",
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/bbe3980fff47b7d6a921e9f89c6727bea639589c/comments",
             adminRequest: false,
+            shouldPromote: false,
             personId: PERSONID,
             orgId: "CPSC310-2017W-T2",
             kind: "standard",
@@ -268,6 +284,7 @@ describe("GitHub Event Parser", () => {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/6da86d2bdfe8fec9120b60e8d7b71c66077489b6",
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/6da86d2bdfe8fec9120b60e8d7b71c66077489b6/comments",
             adminRequest: false,
+            shouldPromote: false,
             personId: PERSONID,
             orgId: "CPSC310-2017W-T2",
             kind: "standard",
@@ -296,6 +313,7 @@ describe("GitHub Event Parser", () => {
             commitURL: "https://github.ugrad.cs.ubc.ca/CPSC310-2017W-T2/d1_project9999/commit/d5f2203cfa1ae43a45932511ce39b2368f1c72ed",
             postbackURL: "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2017W-T2/d1_project9999/commits/d5f2203cfa1ae43a45932511ce39b2368f1c72ed/comments",
             adminRequest: false,
+            shouldPromote: false,
             personId: PERSONID,
             orgId: "CPSC310-2017W-T2",
             kind: "standard",

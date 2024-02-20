@@ -74,6 +74,11 @@ export interface ICourseController {
      * @param info
      */
     shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean>;
+
+    requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
+        accepted: boolean,
+        message: string
+    } | null>;
 }
 
 /**
@@ -147,7 +152,10 @@ export class CourseController implements ICourseController {
         }
     }
 
-    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{ teamName: string | null; repoName: string | null }> {
+    public async computeNames(deliv: Deliverable, people: Person[]): Promise<{
+        teamName: string | null;
+        repoName: string | null
+    }> {
         if (deliv === null) {
             throw new Error("CourseController::computeNames( ... ) - null Deliverable");
         }
@@ -207,6 +215,14 @@ export class CourseController implements ICourseController {
     public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {
         Log.warn(`CourseController::shouldPrioritizePushEvent(${info.commitSHA}) - Default impl; returning false`);
         return false;
+    }
+
+    public async requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
+        accepted: boolean,
+        message: string
+    } | null> {
+        Log.warn(`CourseController::requestFeedbackDelay(${info}) - Default impl; returning null`);
+        return null;
     }
 
     // NOTE: the default implementation is currently broken; do not use it.

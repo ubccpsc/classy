@@ -428,7 +428,7 @@ export class TestHarness {
             gradesReleased: false,
 
             shouldProvision: true,
-            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/PostTestDoNotDelete.git",
+            importURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/classytest/PostTestDoNotDelete.git#master",
             teamMinSize: 2,
             teamMaxSize: 2,
             teamSameLab: true,
@@ -508,7 +508,7 @@ export class TestHarness {
      */
     public static runSlowTest() {
         if (Factory.OVERRIDE || TestHarness.isCI() === true) {
-            Log.test("Test::runSlowTest() - running in CI or overriden; not skipping");
+            Log.test("Test::runSlowTest() - running in CI or overridden; not skipping");
             return true;
         } else {
             Log.test("Test::runSlowTest() - skipping (not CI)");
@@ -761,6 +761,7 @@ export class TestHarness {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 
@@ -809,6 +810,7 @@ export class TestHarness {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 

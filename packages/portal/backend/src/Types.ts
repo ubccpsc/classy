@@ -244,3 +244,12 @@ export interface Grade {
 export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
     people: string[];
 }
+
+// same as IFeedbackGiven from AutoTestTypes
+export interface FeedbackRecord {
+    personId: string;
+    delivId: string;
+    timestamp: number;
+    commitURL: string; // for information only
+    kind: string; // "standard" | "check"
+}

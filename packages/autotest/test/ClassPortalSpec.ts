@@ -1,8 +1,10 @@
 import {expect} from "chai";
 import "mocha";
 
+import "@common/GlobalSpec";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
+import Util from "@common/Util";
 import {TestHarness} from "@common/TestHarness";
 import {AutoTestResult} from "@common/types/AutoTestTypes";
 import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
@@ -14,8 +16,6 @@ import {Course} from "@backend/Types";
 
 import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
 
-import "@common/GlobalSpec";
-
 describe("ClassPortal Service", () => {
     Config.getInstance();
 
@@ -24,7 +24,17 @@ describe("ClassPortal Service", () => {
     let backend: BackendServer = null;
     before(async function () {
         Log.test("ClassPortalSpec::before() - start");
-        backend = new BackendServer();
+
+        const ci = process.env.CI;
+        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+            Log.test("ClassPortalSpec::before() - running in CI; using https");
+            // CI uses https and certificates, but local testing does not
+            backend = new BackendServer(true);
+        } else {
+            Log.test("ClassPortalSpec::before() - not running in CI; using http");
+            backend = new BackendServer(false);
+        }
+
         await backend.start();
         await TestHarness.prepareDeliverables();
         await TestHarness.preparePeople();
@@ -44,7 +54,7 @@ describe("ClassPortal Service", () => {
     });
 
     // NOTE: if this fails it could be because the ClassPortal BackendDaemon has not been started yet
-    it("Should be able for a adminstaff user to be staff.", async () => {
+    it("Should be able for an adminstaff user to be staff.", async () => {
         try {
             const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);
             Log.test("Actual: " + actual);
@@ -217,6 +227,7 @@ describe("ClassPortal Service", () => {
 
                 botMentioned: false,
                 adminRequest: false,
+                shouldPromote: false,
                 personId: null,
                 kind: "push",
 

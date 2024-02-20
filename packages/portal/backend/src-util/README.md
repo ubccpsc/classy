@@ -14,4 +14,4 @@ The full list is given below, but the most commonly used batch utilities are `In
 
 * `TransformGrades`: Allows for post-hoc grade updates. This does modify the database, but can be helpful for changing grading rubrics etc.
 
-* `WebhookUpdater`: Updates the GitHub webhook adddresses and secrets. While uncommon, this can be handy.
+* `WebhookUpdater`: Updates the GitHub webhook addresses and secrets. While uncommon, this can be handy.

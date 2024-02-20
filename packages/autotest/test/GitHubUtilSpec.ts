@@ -69,6 +69,8 @@ describe("GitHubUtil", () => {
         const halfHourSeconds = now - (30 * 60 * 1000) - 2000;
         const oneHour = now - (60 * 60 * 1000);
         const oneHourHalf = now - (90 * 60 * 1000);
+        const twoDays = now - (48 * 60 * 60 * 1000);
+        const sixHundredHours = now - (600 * 60 * 60 * 1000);
 
         expect(Util.tookHuman(oneSecond)).to.equal("1 second");
         expect(Util.tookHuman(twoSeconds)).to.equal("2 seconds");
@@ -77,7 +79,9 @@ describe("GitHubUtil", () => {
         expect(Util.tookHuman(halfHour)).to.equal("30 minutes");
         expect(Util.tookHuman(halfHourSecond)).to.equal("30 minutes and 1 second");
         expect(Util.tookHuman(halfHourSeconds)).to.equal("30 minutes and 2 seconds");
-        expect(Util.tookHuman(oneHour)).to.equal("1 hour and 0 minutes");
+        expect(Util.tookHuman(oneHour)).to.equal("1 hour");
         expect(Util.tookHuman(oneHourHalf)).to.equal("1 hour and 30 minutes");
+        expect(Util.tookHuman(twoDays)).to.equal("48 hours");
+        expect(Util.tookHuman(sixHundredHours)).to.equal("600 hours");
     });
 });
