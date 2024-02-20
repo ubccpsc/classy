@@ -1,13 +1,7 @@
 import {OnsButtonElement} from "onsenui";
 
 import Log from "@common/Log";
-import {
-    CourseTransport,
-    Payload,
-    ProvisionTransport,
-    StudentTransport,
-    TeamFormationTransport
-} from "@common/types/PortalTypes";
+import {CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport} from "@common/types/PortalTypes";
 
 import {Network} from "../util/Network";
 import {UI} from "../util/UI";
@@ -17,6 +11,8 @@ import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
 import {AdminPage} from "./AdminPage";
 import {AdminProvisionPage} from "./AdminProvisionPage";
 import {AdminView} from "./AdminView";
+
+import {AdminDeleteGraderPage} from "@frontend/views/AdminDeleteGraderPage";
 
 export class AdminConfigTab extends AdminPage {
 
@@ -107,6 +103,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminSubmitDefaultDeliverable") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - default deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.defaultDeliverablePressed().then(function () {
                 // worked
@@ -118,6 +115,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminProvisionButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.provisionDeliverablePressed().then(function () {
                 // worked
@@ -129,6 +127,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReleaseButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.releaseDeliverablePressed().then(function () {
                 // worked
@@ -140,6 +139,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReadWriteButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.repoEnableWritePressed().then(function () {
                 // worked
@@ -151,6 +151,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminReadOnlyButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.repoDisableWritePressed().then(function () {
                 // worked
@@ -162,6 +163,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamCreatePressed().then(function () {
                 // worked
@@ -170,22 +172,10 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
-        // This is from the admin page which is not currently supported:
-        //
-        // (document.querySelector("#adminDeleteTeamButton") as OnsButtonElement).onclick = function(evt) {
-        //     Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
-        //     evt.preventDefault();
-        //
-        //     that.teamDeletePressed().then(function() {
-        //         // worked
-        //     }).catch(function(err) {
-        //         Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
-        //     });
-        // };
-
         (document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamDeletePressed().then(function () {
                 // worked
@@ -197,6 +187,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamAddMemberPressed().then(function () {
                 // worked
@@ -208,6 +199,7 @@ export class AdminConfigTab extends AdminPage {
         (document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
             evt.preventDefault();
+            evt.stopPropagation(); // prevents list item expansion
 
             that.teamRemoveMemberPressed().then(function () {
                 // worked
@@ -252,6 +244,25 @@ export class AdminConfigTab extends AdminPage {
             });
         };
 
+        (document.querySelector("#adminRemoveGraderImagesPageButton") as OnsButtonElement).onclick = function (evt) {
+            Log.info("AdminConfigTab::handleAdminConfig(..) - remove grader images page pressed");
+            evt.preventDefault();
+
+            that.pushPage("./adminGraderImages.html", {}).then(function () {
+
+                const deleteImagePage = new AdminDeleteGraderPage(that.remote);
+                deleteImagePage.init({}).then(function () {
+                    // success
+                    Log.info("AdminConfigTab::handleAdminConfig(..) - image delete page init");
+                }).catch(function (err) {
+                    // error
+                    Log.error("AdminConfigTab::handleAdminConfig(..) - image delete page ERROR: " + err);
+                });
+            }).catch(function (err) {
+                Log.error("AdminConfigTab imageDelete ERROR: " + err.message);
+            });
+        };
+
         // (document.querySelector("#adminManagePullRequestsButton") as OnsButtonElement).onclick = function(evt) {
         //     Log.info("AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed");
         //     evt.preventDefault();
@@ -272,6 +283,7 @@ export class AdminConfigTab extends AdminPage {
 
         (document.querySelector("#adminPerformWithdrawButton") as OnsButtonElement).onclick = function (evt) {
             Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed");
+            evt.stopPropagation(); // prevents list item expansion
             evt.preventDefault();
 
             that.performWithdraw().then(function () {
@@ -636,7 +648,17 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== "undefined") {
-            UI.notificationToast("Classlist successfully updated.");
+            let msg = "Classlist successfully updated:";
+            if (typeof body.success.created !== "undefined") {
+                msg = msg + " " + body.success.created.length + " added,";
+            }
+            if (typeof body.success.updated !== "undefined") {
+                msg = msg + " " + body.success.updated.length + " updated,";
+            }
+            if (typeof body.success.removed !== "undefined") {
+                msg = msg + " " + body.success.removed.length + " removed.";
+            }
+            UI.notificationToast(msg);
             this.showClasslistChanges(body.success);
         } else {
             UI.showAlert(body.failure.message);
@@ -644,6 +666,7 @@ export class AdminConfigTab extends AdminPage {
     }
 
     private showClasslistChanges(classlistChanges: any): void {
+        Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
         const mapToTextAndSubtext = function (people: StudentTransport[]) {
             return people.map(function (person) {
                 return {
@@ -693,7 +716,7 @@ export class AdminConfigTab extends AdminPage {
         const body = await response.json();
 
         if (typeof body.success !== "undefined") {
-            UI.showErrorToast("Default deliverable saved successfully.");
+            UI.showSuccessToast("Default deliverable saved successfully.");
         } else {
             UI.showAlert(body.failure.message);
         }

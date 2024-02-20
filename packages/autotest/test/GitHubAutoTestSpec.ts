@@ -2,6 +2,9 @@ import {expect} from "chai";
 import * as fs from "fs-extra";
 import "mocha";
 
+import "@common/GlobalSpec"; // load first
+import {TestData} from "./TestData";
+
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import {IFeedbackGiven} from "@common/types/AutoTestTypes";
@@ -13,9 +16,6 @@ import {MockClassPortal} from "@autotest/autotest/mocks/MockClassPortal";
 import {MockDataStore} from "@autotest/autotest/mocks/MockDataStore";
 import {GitHubAutoTest} from "@autotest/github/GitHubAutoTest";
 import {IGitHubMessage} from "@autotest/github/GitHubUtil";
-
-import "@common/GlobalSpec"; // load first
-import {TestData} from "./TestData";
 import {MockGradingJob} from "@autotest/autotest/mocks/MockGradingJob";
 
 /* tslint:disable:max-line-length */
@@ -203,9 +203,9 @@ describe("GitHubAutoTest", () => {
 
         Log.test("#exp: " + eq.data.length + "; #std: " + sq.data.length + "; #low: " + lq.data.length + "; #jobs: " + jobs.length);
         expect(eq.data).to.have.length(0); // nothing should be queued on express
-        expect(sq.data).to.have.length(2); // three should be waiting on standard
-        // this is the main check: if this all worked, a job should have been pushed onto the regression queue
-        expect(lq.data).to.have.length(2); // one should be queued on low
+        expect(sq.data).to.have.length(2); // two should be waiting on standard
+        // this is the main check: if this all worked, a job should have been pushed onto the low queue
+        expect(lq.data).to.have.length(2); // two should be queued on low
         Log.test("values checked");
     }).timeout(WAIT * 10);
 
@@ -238,6 +238,7 @@ describe("GitHubAutoTest", () => {
             adminRequest: false,
             personId: Config.getInstance().getProp(ConfigKey.botName),
             botMentioned: true,
+            shouldPromote: false,
             delivId: "d1",
             kind: "standard",
             repoId: "repoId",
@@ -356,6 +357,7 @@ describe("GitHubAutoTest", () => {
             commitSHA: pe.commitSHA,
             commitURL: pe.commitURL,
             adminRequest: false,
+            shouldPromote: false,
             personId: "myUser",
             kind: "standard",
             repoId: "d1_project9999",
@@ -384,6 +386,7 @@ describe("GitHubAutoTest", () => {
             commitSHA: pe.commitSHA,
             commitURL: pe.commitURL,
             adminRequest: false,
+            shouldPromote: false,
             personId: "myUser",
             kind: "standard",
             repoId: "d1_project9999",
@@ -642,7 +645,7 @@ describe("GitHubAutoTest", () => {
         await at.handleCommentEvent(TestData.commentRecordUserA);
         allData = await data.getAllData();
         expect(gitHubMessages.length).to.equal(1); // should generate a warning
-        expect(gitHubMessages[0].message).to.equal("You must wait 6 hours and 0 minutes before requesting feedback."); // would really be the whole message
+        expect(gitHubMessages[0].message).to.equal("You must wait 6 hours before requesting feedback."); // would really be the whole message
         expect(allData.comments.length).to.equal(0); // does not count as a comment, user has to ask again once they are in-quota
         expect(allData.feedback.length).to.equal(1); // no extra feedback records should be present
 

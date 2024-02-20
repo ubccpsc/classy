@@ -902,15 +902,15 @@ export default class AdminRoutes implements IREST {
         const rc = new RepositoryController();
 
         const repo = await rc.getRepository(repoId);
-        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - repo: " + repo);
+        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - start");
         if (repo !== null) {
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
 
             const ac = new AdminController(AdminRoutes.ghc);
             const releaseSucceeded = await ac.performRelease([repo]);
-            Log.info("AdminRoutes::performRelease() - success; # results: " + releaseSucceeded.length +
-                "; took: " + Util.took(start));
+            Log.info("AdminRoutes::performRelease() - done; repo: " + repoId +
+                ";  results: " + releaseSucceeded.length + "; took: " + Util.took(start));
             return releaseSucceeded;
 
         } else {
@@ -1069,7 +1069,10 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleTeamDelete(personId: string, teamId: string): Promise<{ deletedObject: boolean, deletedGithub: boolean }> {
+    private static async handleTeamDelete(personId: string, teamId: string): Promise<{
+        deletedObject: boolean,
+        deletedGithub: boolean
+    }> {
         Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - start");
 
         let deletedGithub = false;

@@ -269,6 +269,7 @@ export class MongoDataStore implements IDataStore {
 
     public async getLatestFeedbackGivenRecord(delivId: string, userName: string, kind: string): Promise<IFeedbackGiven | null> {
         try {
+            // NOTE: this has been implemented as getLatestFeedbackGiven in @backend and can be ported
             const res = await this.getRecords(this.FEEDBACKCOLL, {delivId: delivId, personId: userName, kind: kind});
             if (res === null) {
                 Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for deliv: " +

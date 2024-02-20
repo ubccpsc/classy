@@ -90,6 +90,9 @@
         function highlightKeywords(keywords) {
             // modified based on https://stackoverflow.com/a/43757653/2361752 {
             ace.define('ace/mode/custom', [], function (require, exports, module) {
+                // add other keywords we want to highlight
+                keywords.push("AssertionError");
+                keywords.push("TypeError");
                 var oop = require("ace/lib/oop");
                 var TextMode = require("ace/mode/text").Mode;
                 var Tokenizer = require("ace/tokenizer").Tokenizer;
@@ -108,7 +111,8 @@
                 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
                 var CustomHighlightRules = function () {
                     var keywordMapper = this.createKeywordMapper({
-                        "variable.language": "beforeEach",
+                        // "variable.language": "beforeEach",
+                        "variable.language": "",
                         "keyword":
                             keywords.join('|').replace(' ', '|'),
                         "constant.language":
@@ -194,7 +198,7 @@
         }
 
     });
-    
+
 </script>
 
 </body>

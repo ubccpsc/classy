@@ -93,11 +93,18 @@ export class TeamController {
 
         if (typeof team.githubId === "undefined" || team.githubId === null) {
             // teamId not known; get it & store it
-            let teamNum: number | null = await this.gha.getTeamNumber(team.id);
-            if (teamNum < 0) {
+            let teamNum = null;
+            const ghTeam = await this.gha.getTeamByName(name);
+            // NOTE: this is using teamNumber as a provisioning hint
+            if (ghTeam !== null && ghTeam.githubTeamNumber >= 0) {
                 Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist on GitHub; setting null.");
-                teamNum = null;
+                teamNum = ghTeam.githubTeamNumber;
             }
+            // let teamNum: number | null = await this.gha.getTeamNumber(team.id);
+            // if (teamNum < 0) {
+            //     Log.warn("TeamController::getTeamNumber( " + name + " ) - team does not exist on GitHub; setting null.");
+            //     teamNum = null;
+            // }
             team.githubId = teamNum;
             await this.saveTeam(team);
         } else {

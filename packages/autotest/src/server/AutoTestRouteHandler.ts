@@ -185,7 +185,7 @@ export default class AutoTestRouteHandler {
             case "issue_comment":
                 const prEvent = await GitHubUtil.processIssueComment(body);
                 return prEvent;
-                // no return for now, just fall through to error
+            // no return for now, just fall through to error
             default:
                 Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);
@@ -222,9 +222,10 @@ export default class AutoTestRouteHandler {
             if (filtersStr) {
                 options["filters"] = JSON.parse(filtersStr);
             }
-            Log.trace("AutoTestRouteHandler::getDockerImages(..) - Calling Docker listImages(..) with options: " + JSON.stringify(options));
+            Log.info("AutoTestRouteHandler::getDockerImages(..) - start; options: " + JSON.stringify(options));
             const images = await docker.listImages(options);
-            Log.trace("AutoTestRouteHandler::getDockerImages(..) - Returning Docker images: " + JSON.stringify(images));
+            Log.trace("AutoTestRouteHandler::getDockerImages(..) - images: " + JSON.stringify(images));
+            Log.info("AutoTestRouteHandler::getDockerImages(..) - done; # images: " + (images as any)?.length);
             res.send(200, images);
         } catch (err) {
             Log.error("AutoTestRouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
@@ -235,7 +236,7 @@ export default class AutoTestRouteHandler {
                 res.send(400, err.message);
             }
         }
-        // return next();
+        next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
@@ -260,7 +261,7 @@ export default class AutoTestRouteHandler {
                 stream.on("data", (chunk: any) => {
                     Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
 
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     // start a new timer after every chunk to keep stream open
                     heartbeat = setInterval(function () {
                         Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
@@ -271,12 +272,12 @@ export default class AutoTestRouteHandler {
                 });
                 stream.on("end", (chunk: any) => {
                     Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     return next();
                 });
                 stream.on("error", (chunk: any) => {
                     Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
-                    clearInterval(heartbeat); // if a timer exists, cancel it
+                    clearInterval(heartbeat as any); // if a timer exists, cancel it
                     return next();
                 });
                 stream.pipe(res);
@@ -317,5 +318,77 @@ export default class AutoTestRouteHandler {
             return res.send(err.statusCode, err.message);
         }
         // next not here on purpose, must be in stream handler or socket will close early
+    }
+
+    public static async removeDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+        let success = false;
+        let errorMsg = "";
+
+        try {
+            const docker = AutoTestRouteHandler.getDocker();
+            const tag = req.params.tag;
+            Log.info("AutoTestRouteHandler::removeDockerImage(..) - start; tag: " + tag);
+
+            if (tag === undefined || tag.length < 1) {
+                throw new Error("Docker image tag not provided.");
+            }
+
+            const providedSecret = req.headers.token;
+            if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+                res.send(403, {success: false, message: "Invalid request (secret mismatch)."});
+                next();
+                return;
+            } else {
+                Log.info("AutoTestRouteHandler::removeDockerImage(..) - valid request; token matched");
+            }
+
+            const images = await docker.listImages({filters: {reference: ["grader"]}});
+            Log.info("AutoTestRouteHandler::removeDockerImage(..) - # images: " + images.length);
+
+            let imageDescription: Docker.ImageInfo = null;
+            for (const img of images) {
+                // Log.trace("AutoTestRouteHandler::removeDockerImage(..) - comparing tag: " + tag + " to image: " + img.Id);
+                // tag often has extra details (sha256 etc)
+                if (img.Id.indexOf(tag) >= 0) {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - matched tag: " + tag + " to image: " + img.Id);
+                    imageDescription = img;
+                }
+            }
+
+            if (imageDescription !== null) {
+                const image = docker.getImage(imageDescription.Id);
+                // Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
+                const removeRes = await image.remove();
+                // Log.trace("AutoTestRouteHandler::removeDockerImage(..) - image removal result: " + JSON.stringify(removeRes));
+                for (const imgRes of removeRes) {
+                    if (typeof imgRes.Deleted === "string" && imgRes.Deleted.indexOf(imageDescription.Id) >= 0) {
+                        Log.info("AutoTestRouteHandler::removeDockerImage(..) - image removed successfully: " + imageDescription.Id);
+                        success = true;
+                    }
+                }
+                if (success) {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; success: " + success);
+                } else {
+                    Log.info("AutoTestRouteHandler::removeDockerImage(..) - done; removal not successful: " + JSON.stringify(removeRes));
+                }
+            } else {
+                Log.warn("AutoTestRouteHandler::removeDockerImage(..) - tag does not map to active image");
+                errorMsg = "Docker tag does not map to known image.";
+                success = false;
+            }
+
+        } catch (err) {
+            // NOTE: this seems to happen a lot due to dependent child images in the testing environment
+            // it is unclear what happens with these in production
+            Log.error("AutoTestRouteHandler::removeDockerImage(..) - ERROR Removing docker image: " + err.message);
+            errorMsg = err.message;
+        }
+
+        if (success === true) {
+            res.send(200, {success: success});
+        } else {
+            res.send(400, {success: false, message: errorMsg});
+        }
+        next();
     }
 }

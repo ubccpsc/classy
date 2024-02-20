@@ -38,7 +38,6 @@
         "@types/fs-extra": "5.0.0",
         "@types/jszip": "3.1.6",
         "@types/mocha": "2.2.44",
-        "@types/mongodb": "^3.6.20",
         "@types/node": "^18.11.18",
         "@types/node-fetch": "^2.5.5",
         "@types/restify": "8.5.5",

@@ -4,7 +4,7 @@ import Config, {ConfigCourses, ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import {AuditEvent, AuditLabel, Auth, Course, Deliverable, Grade, Person, Repository, Result, Team} from "../Types";
+import {AuditEvent, AuditLabel, Auth, Course, Deliverable, FeedbackRecord, Grade, Person, Repository, Result, Team} from "../Types";
 import {TeamController} from "./TeamController";
 
 export class DatabaseController {
@@ -39,6 +39,8 @@ export class DatabaseController {
     private readonly AUTHCOLL = "auth";
     private readonly AUDITCOLL = "audit";
     private readonly TICKERCOLL = "ids";
+
+    private readonly FEEDBACKCOLL = "feedback";
 
     /**
      * use getInstance() instead.
@@ -234,10 +236,34 @@ export class DatabaseController {
         return deliv;
     }
 
+    /**
+     * Returns all grades in the system. To increase performance, each grade record is pruned
+     * and its `custom` parameter has been removed.
+     *
+     * If you need the `custom` parameter, use `getGrade` instead.
+     *
+     * @returns {Promise<Grade[]>} all grades, less their custom field
+     */
     public async getGrades(): Promise<Grade[]> {
         const start = Date.now();
         Log.trace("DatabaseController::getGrades() - start");
         const grades = await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}) as Grade[];
+        grades.forEach((g) => delete g?.custom?.previousGrade); // remove the custom field
+
+        // this query works, but is not any faster than the simple one above
+        // although it does remove the custom field, which is recursive and can be large
+        // const col = await this.getCollection(this.GRADECOLL, QueryKind.FAST);
+        // const grades = await col.aggregate([
+        //     {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
+        //     {
+        //         $group: {
+        //             _id: {delivId: "$delivId", personId: "$personId"},
+        //             doc: {$first: "$$ROOT"}
+        //         }
+        //     },
+        //     {$replaceRoot: {newRoot: "$doc"}}
+        // ]).toArray() as Grade[];
+
         Log.trace("DatabaseController::getGrades() - done; #: " + grades.length + "; took: " + Util.took(start));
         return grades;
     }
@@ -250,6 +276,31 @@ export class DatabaseController {
             Log.trace("DatabaseController::getGrade( " + personId + ", " + delivId + " ) - not found");
         }
         return grade;
+    }
+
+    /**
+     *
+     * @param delivId
+     * @param personId
+     * @param kind - "standard" or "check"
+     * @returns list of FeedbackRecords that have been shown to the personId
+     */
+    public async getLatestFeedbackGiven(delivId: string, personId: string, kind: string): Promise<FeedbackRecord[] | null> {
+        try {
+            const latestFirst = {timestamp: -1};
+            const res = await this.readRecords(
+                this.FEEDBACKCOLL,
+                QueryKind.FAST,
+                true, // limit results to 400. We probably don't need that many, but there's no limit parameter for readRecords (yet)
+                {delivId, personId, kind},
+                latestFirst
+            ) as FeedbackRecord[];
+            Log.trace("DatabaseController::getLatestFeedbackGiven() - #: " + res.length);
+            return res;
+        } catch (err) {
+            Log.error("DatabaseController::getLatestFeedbackGiven(..) - ERROR: " + err);
+        }
+        return null;
     }
 
     /**
@@ -388,7 +439,19 @@ export class DatabaseController {
         }
     }
 
+    /**
+     * Writes a grade record. If a grade record (<delivId, personId> tuple) already exists, it is updated.
+     * This enforces that there will be at most one grade record per <delivId, personId> tuple.
+     *
+     * @param {Grade} record
+     * @returns {Promise<boolean>} whether the write was successful
+     */
     public async writeGrade(record: Grade): Promise<boolean> {
+        const p = await this.getPerson(record.personId);
+        if (p === null) {
+            Log.warn("DatabaseController::writeGrade(..) - trying to write a grade for a personId that does not exist");
+        }
+
         const gradeExists = await this.getGrade(record.personId, record.delivId);
         if (gradeExists === null) {
             return await this.writeRecord(this.GRADECOLL, record);
@@ -536,6 +599,8 @@ export class DatabaseController {
     }
 
     /**
+     * Perform a query and return a single record. If the query matches more than one record, the first is
+     * returned; if no records are found, null is returned.
      *
      * @param {string} column
      * @param {{}} query
@@ -564,12 +629,15 @@ export class DatabaseController {
     }
 
     /**
+     * Perform a query on a collection. Support is provided for limiting the number of results returned,
+     * as all results are often not needed, but in busy courses the number of records can exceed 100,000
+     * which can take way too long to return.
      *
      * @param {string} column
      * @param {QueryKind} kind this is the kind of query ("slow", "write", or null)
-     * * @param {boolean} limitResults whether the full result list should be returned or just a subset
+     * @param {boolean} limitResults whether the full result list should be returned or just a subset
      * @param {{}} query send {} if all results for that column are wanted
-     * * @param {{}} sort? send only if a specific ordering is required
+     * @param {{}} sort send only if a specific ordering is required
      * @returns {Promise<any[]>} An array of objects
      */
     public async readRecords(column: string, kind: QueryKind, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
@@ -590,6 +658,7 @@ export class DatabaseController {
             const start = Date.now();
             const col = await this.getCollection(column, kind);
 
+            // mongo query to find the most recent document for each team
             let records: any[];
             if (typeof sort === "undefined") {
                 records = await (col as any).find(query).limit(LIMITS).toArray();
@@ -634,14 +703,14 @@ export class DatabaseController {
     }
 
     /**
-     * Internal use only, do not use this method; use getCollection(..) instead.
+     * Internal use only, do not use this method; use getCollection instead.
      *
      * @returns {Promise<Db>}
      */
     private async open(kind: string): Promise<Db> {
         try {
             // Log.trace("DatabaseController::open() - start");
-            let db = null;
+            let db;
             if (kind === QueryKind.SLOW) {
                 db = this.slowDb;
             } else if (kind === QueryKind.WRITE) {
@@ -705,10 +774,34 @@ export class DatabaseController {
             // https://stackoverflow.com/a/35020346
 
             // results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
-            const coll = await this.getCollection(this.RESULTCOLL);
+            let coll = await this.getCollection(this.RESULTCOLL);
             await coll.createIndex({
                 "input.target.timestamp": -1
             }, {name: "ts"});
+
+            // results needs a delivId index because we often query by delivId
+            await coll.createIndex({
+                delivId: 1
+            }, {name: "delivId"});
+            // results needs a repoId index because we often query by repoId
+            await coll.createIndex({
+                repoId: 1
+            }, {name: "repoId"});
+            await coll.createIndex({
+                repoId: 1, delivId: 1
+            }, {name: "delivAndRepoIds"});
+
+            // grades needs indexes because we group on <personId, delivId> tuples
+            coll = await this.getCollection(this.GRADECOLL);
+            await coll.createIndex({
+                personId: 1
+            }, {name: "personId"});
+            await coll.createIndex({
+                delivId: 1
+            }, {name: "delivId"});
+            await coll.createIndex({
+                delivId: 1, repoId: 1
+            }, {name: "delivAndRepoIds"});
 
             // Make sure required Team objects exist.
             // Cannot use TeamController because this would cause an infinite loop since
@@ -775,7 +868,8 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable and repo, find all the results.
+     * Find all results for a given <repoId, delivId>. This result list is not pruned,
+     * all results are returned.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -802,7 +896,8 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable, find all the results.
+     * Find all results for a given repoId. This is especially useful to get a complete list of all results for a repo,
+     * given that optimizations in the broader getResults* methods often prune results to enable better performance.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -828,7 +923,11 @@ export class DatabaseController {
     }
 
     /**
-     * For a given deliverable, find all the results.
+     * For a given deliverable, find the most recent result for each <repoId, delivId> tuple. The repoId restriction
+     * exists because in large terms the results collection can be quite large and ends up being too slow to retrieve.
+     * But this version is better than just retrieving the last 400 results because it means the results and dashboard
+     * views will always have at least one row for each repo. This query only includes one row per repoId, to see all
+     * the results for a given repoId, use getResultsForRepo.
      *
      * NOTE: These are _all_ results, the deliverable deadlines are not considered.
      *
@@ -838,27 +937,43 @@ export class DatabaseController {
         const start = Date.now();
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
 
-        const latestFirst = {"input.target.timestamp": -1}; // most recent first
-        const results = await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, true, {delivId: delivId}, latestFirst) as Result[];
-        for (const result of results) {
-            if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
-                // this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
-                result.input.target = (result.input as any).pushInfo;
+        const col = await this.getCollection(this.RESULTCOLL, QueryKind.FAST);
+        const records: any[] = await (col as any).aggregate([
+            {$match: {delivId: delivId}},
+            {$sort: {"input.target.timestamp": -1}},
+            {
+                $group: {
+                    _id: {delivId: "$delivId", repoId: "$repoId"},
+                    doc: {$first: "$$ROOT"},
+                }
+            },
+            {$replaceRoot: {newRoot: "$doc"}}
+        ]).toArray();
+
+        if (records === null || records.length === 0) {
+            Log.trace("DatabaseController::readRecords(..) - done; no records found");
+            return [];
+        } else {
+            for (const r of records) {
+                delete r._id; // remove the record id, just so we cannot use it
             }
+            Log.trace("DatabaseController::readRecords(..) - done; # records: " +
+                records.length + ". took: " + Util.took(start));
         }
 
         Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - done; #: " +
-            results.length + "; took: " + Util.took(start));
+            records.length + "; took: " + Util.took(start));
 
-        return results;
+        return records;
     }
 
     /**
-     * Find the result for a given deliverable, repo, SHA tuple or null if such a result does not exist.
+     * Find the result for a given <deliverable, repo, SHA> tuple or null if such a result does not exist.
      *
      * @param delivId
      * @param repoId
      * @param sha
+     * @param ref the branch reference; if null, it is not considered
      */
     public async getResult(delivId: string, repoId: string, sha: string, ref: string | null): Promise<Result | null> {
         const results = await this.getResults(delivId, repoId) as Result[];
@@ -889,10 +1004,6 @@ export class DatabaseController {
      */
     public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
         return await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
-    }
-
-    public async getResultsForPerson(personId: string, delivId: string): Promise<Result | null> {
-        return await this.readSingleRecord(this.RESULTCOLL, {people: personId, delivId: delivId}) as Result;
     }
 }
 

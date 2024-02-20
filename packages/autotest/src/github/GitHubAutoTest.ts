@@ -99,13 +99,22 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                 const input: ContainerInput = {target: info, containerConfig};
                 const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
+                input.target.shouldPromote = shouldPromotePush;
                 const sha = Util.shaHuman(info.commitSHA);
-                if (shouldPromotePush === true) {
-                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to exp queue`);
+
+                if (info.botMentioned === true) {
+                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - bot mentioned; adding to exp queue`);
+                    // requested jobs will always go on express
                     this.addToExpressQueue(input);
                 } else {
-                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - Adding to std queue`);
-                    this.addToStandardQueue(input);
+                    if (shouldPromotePush === true) {
+                        Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - shouldPromote; Force adding to std queue`);
+                        // promoted jobs should always go on standard
+                        this.addToStandardQueue(input, true);
+                    } else {
+                        // job will be on standard if space, otherwise low
+                        this.addToStandardQueue(input, false);
+                    }
                 }
 
                 if (Array.isArray(containerConfig.regressionDelivIds) && containerConfig.regressionDelivIds.length > 0) {
@@ -127,6 +136,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                                 containerConfig: regressionDetails
                             };
 
+                            regressionInput.target.shouldPromote = true; // plugin is expecting it, make sure it is added
                             Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
                             Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
                                 "; input: " + JSON.stringify(regressionInput));
@@ -419,7 +429,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             target.personId + "; deliv: " + target.delivId + "; repo: " + target.repoId + "; SHA: " + Util.shaHuman(target.commitSHA));
 
         const shouldCharge = await this.shouldCharge(target, null, res);
-        const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId, target.timestamp);
+        const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId,
+            target.timestamp, target.flags);
         const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(target);
 
         Log.info("GitHubAutoTest::handleCommentStudent(..) - handling student request for: " +
@@ -443,7 +454,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - not too early; for: " +
                 target.personId + "; SHA: " + Util.shaHuman(target.commitURL));
             // no time limitations. Because of this, queueing is the same as submitting now.
-            // processComment will take of whether this is already in progress, etc.
+            // processComment will take care of request whether this is already in progress, etc.
             await this.processComment(target, res);
         }
     }
@@ -536,6 +547,17 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA, info.ref);
         const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
+
+        // Allows course staff to run commits as students with #student flag
+        // This is helpful for testing student workflows with the queue
+        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            if (typeof info.flags !== "undefined" && info.flags.indexOf("#student") >= 0) {
+                Log.info("GitHubAutoTest::handleCommentEvent(..) - running admin request as student");
+                isStaff.isStaff = false;
+                isStaff.isAdmin = false;
+            }
+        }
+
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             // staff request
             Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
@@ -569,7 +591,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const feedbackRequested = (standardFeedbackRequested !== null);
 
             const personId = data.input.target.personId;
-            const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId, data.input.target.timestamp);
+            const feedbackDelay: string | null = await this.requestFeedbackDelay(delivId, personId,
+                data.input.target.timestamp, data.input.target.flags);
             const futureTarget: boolean = standardFeedbackRequested !== null && (standardFeedbackRequested.timestamp > Date.now());
 
             Log.info("GitHubAutoTest::processExecution() - " +
@@ -639,30 +662,56 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param reqTimestamp
      *
      */
-    private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number): Promise<string | null> {
+    private async requestFeedbackDelay(delivId: string, userName: string, reqTimestamp: number, flags: string[]): Promise<string | null> {
         try {
             Log.info("GitHubAutoTest::requestFeedbackDelay( " + delivId + ", " + userName + ", ... ) - start");
             // async operations up front
             const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(userName);
+            const feedbackDelay = await this.classPortal.requestFeedbackDelay(delivId, userName, reqTimestamp);
             const nextTimeslot: number | null = await this.requestNextTimeslot(delivId, userName);
+
+            // Allow admins to run commits as students for testing delay feedback
+            if ((typeof flags !== "undefined" && flags.indexOf("#student") >= 0)) {
+                Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - forcing student");
+                if (isStaff !== null) {
+                    isStaff.isStaff = false;
+                    isStaff.isAdmin = false;
+                }
+            }
 
             if (isStaff !== null && (isStaff.isAdmin === true || isStaff.isStaff === true)) {
                 Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - staff; no delay");
                 return null; // staff can always request
+            }
+
+            if (feedbackDelay !== null) {
+                Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom feedback delay: " +
+                    JSON.stringify(feedbackDelay));
+                if (feedbackDelay.accepted === true) {
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can request feedback");
+                    return null;
+                } else {
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can NOT request feedback: " +
+                        feedbackDelay.message);
+                    return feedbackDelay.message;
+                }
             } else {
+                Log.info(
+                    "GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default feedback delay; next timeslot: " + nextTimeslot);
                 if (nextTimeslot === null) {
-                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; no prior request, no delay");
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; no prior request, no delay");
                     return null; // no prior requests
                 } else {
                     // if within a buffered window, just be flexible and allow the request
                     // this prevents feedback like 'you must wait 126 ms'
                     const NEXT_BUFFER = 60 * 1000; // if within a minute, allow it
                     if (reqTimestamp >= (nextTimeslot - NEXT_BUFFER)) {
-                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; enough time passed, no delay");
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; enough time passed, no delay");
                         return null; // enough time has passed
                     } else {
                         const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
-                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - done; NOT enough time passed, delay: " + msg);
+                        Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName +
+                            " ) - default done; NOT enough time passed, delay: " + msg);
                         return msg;
                     }
                 }
@@ -673,12 +722,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
     }
 
     /**
-     * Returns the timestamp in ms of the next valid execution timeslot.
      *
-     * If no prior request has been made, this is null.
-     *
-     * @param delivId
-     * @param userName
      */
     protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
         const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");

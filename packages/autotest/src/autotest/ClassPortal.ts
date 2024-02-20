@@ -1,4 +1,5 @@
 import * as https from "https";
+import * as http from "http";
 import fetch, {RequestInit} from "node-fetch";
 
 import Config, {ConfigKey} from "@common/Config";
@@ -86,7 +87,7 @@ export interface IClassPortal {
      * @param {string} delivId
      * @param {string} repoId
      * @param {string} sha
-     * @param {string} ref?
+     * @param {string} ref
      * @returns {Promise<AutoTestResultTransport | null>}
      */
     getResult(delivId: string, repoId: string, sha: string, ref?: string): Promise<AutoTestResultTransport | null>;
@@ -101,15 +102,43 @@ export interface IClassPortal {
     formatFeedback(res: AutoTestResultTransport): Promise<string | null>;
 
     /**
-     * Asks class portal if a commit should be promoted to the express queue without a comment event
+     * Asks Classy if a commit should be placed on the standard queue without a comment event.
      * The default implementation in portal just sends false, but courses can extend this behaviour
      * using their CustomCourseController class.
+     *
      * @param {CommitTarget} info
      * @return {Promise<boolean>}
      */
     shouldPromotePush(info: CommitTarget): Promise<boolean>;
+
+    /**
+     * Asks Classy whether a person is allowed to make a request on a given deliverable.
+     * The timestamp of their request is also included.
+     *
+     * A null return means that a custom scheduling scheme is not implemented and the default
+     * time-based approach should be used.
+     *
+     * A non-null return means that a custom scheduling scheme is implemented;
+     * if accepted is true, the request should proceed. If accepted is false,
+     * the message should contain user-facing text about when their next request
+     * can be made.
+     *
+     * @param delivId
+     * @param personId
+     * @param timestamp
+     */
+    requestFeedbackDelay(delivId: string, personId: string, timestamp: number):
+        Promise<{ accepted: boolean, message: string } | null>;
 }
 
+/**
+ * This class is used to communicate with the Classy backend. This is required
+ * because AutoTest and Classy are separate services that need to communicate.
+ *
+ * The class exposes the aspects of Classy that AutoTest needs to know about.
+ * Some of these are extended by the CourseController class in a course's
+ * plugin, which enables per-course customization.
+ */
 export class ClassPortal implements IClassPortal {
     private host: string = Config.getInstance().getProp(ConfigKey.backendUrl);
     private port: number = Config.getInstance().getProp(ConfigKey.backendPort);
@@ -122,7 +151,8 @@ export class ClassPortal implements IClassPortal {
         try {
             Log.trace("ClassPortal::isStaff( " + userName + " ) - requesting from: " + url);
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 headers: {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
@@ -153,7 +183,8 @@ export class ClassPortal implements IClassPortal {
         try {
             Log.trace("ClassPortal::getPersonId( " + githubId + " ) - requesting from: " + url);
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 headers: {
                     token: Config.getInstance().getProp(ConfigKey.autotestSecret)
                 }
@@ -181,7 +212,9 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
 
         const opts: RequestInit = {
-            agent: new https.Agent({rejectUnauthorized: false}), headers: {
+            // agent: new https.Agent({rejectUnauthorized: false}),
+            agent: this.getAgent(),
+            headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
@@ -208,7 +241,9 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
 
         const opts: RequestInit = {
-            agent: new https.Agent({rejectUnauthorized: false}), headers: {
+            // agent: new https.Agent({rejectUnauthorized: false}),
+            agent: this.getAgent(),
+            headers: {
                 token: Config.getInstance().getProp(ConfigKey.autotestSecret)
             }
         };
@@ -241,7 +276,8 @@ export class ClassPortal implements IClassPortal {
         const start = Date.now();
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -290,7 +326,7 @@ export class ClassPortal implements IClassPortal {
             const MAX_COMMENT_LENGTH = 40;
             if (msg.length > MAX_COMMENT_LENGTH) {
                 // shorten long messages
-                msg = msg.substr(0, MAX_COMMENT_LENGTH) + "...";
+                msg = msg.substring(0, MAX_COMMENT_LENGTH) + "...";
             }
             // replace newlines / line breaks with "; ", regardless of length
             msg = msg.replace(/(?:\r\n|\r|\n)/g, "; ");
@@ -310,7 +346,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "post",
                 headers: {
                     "Content-Type": "application/json",
@@ -351,7 +388,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "get",
                 headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
             };
@@ -388,7 +426,8 @@ export class ClassPortal implements IClassPortal {
 
         try {
             const opts: RequestInit = {
-                agent: new https.Agent({rejectUnauthorized: false}),
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -410,5 +449,76 @@ export class ClassPortal implements IClassPortal {
 
         Log.trace(`ClassPortal::shouldPromotePush(${info.commitSHA}): ${shouldPromote}; Took: ${Util.took(start)}`);
         return shouldPromote;
+    }
+
+    public async requestFeedbackDelay(delivId: string, personId: string, timestamp: number): Promise<{
+        accepted: boolean;
+        message: string
+    } | null> {
+
+        const url = `${this.host}:${this.port}/portal/at/feedbackDelay`;
+        const start = Date.now();
+
+        Log.info(`ClassPortal::requestFeedbackDelay(..) - start; person: ${personId}; delivId: ${delivId}`);
+
+        // default to null
+        let resp: { accepted: boolean, message: string } | null = null;
+
+        try {
+            const opts: RequestInit = {
+                // agent: new https.Agent({rejectUnauthorized: false}),
+                agent: this.getAgent(),
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "token": Config.getInstance().getProp(ConfigKey.autotestSecret)
+                },
+                body: JSON.stringify(
+                    {delivId: delivId, personId: personId, timestamp: timestamp}
+                )
+            };
+
+            const response = await fetch(url, opts);
+            let json = await response.json();
+            if (json?.success?.feedbackDelay) {
+                // strip outer wrapper
+                json = json.success.feedbackDelay;
+            }
+            Log.info("ClassPortal::requestFeedbackDelay(..) - returned; payload: " + JSON.stringify(json));
+
+            Log.trace("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
+                "; json.accepted: " + typeof json?.accepted +
+                "; json.message: " + typeof json?.message +
+                "; json.notImplemented: " + typeof json?.notImplemented);
+
+            if (typeof json?.accepted === "boolean" && typeof json?.message === "string") {
+                resp = {
+                    accepted: json.accepted,
+                    message: json.message
+                };
+            } else if (typeof json?.notImplemented === "boolean" && json.notImplemented === true) {
+                resp = null;
+            } else {
+                Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (bad response); Defaulting to no custom scheduler", json);
+                resp = null; // if something goes wrong, default to no custom scheduler
+            }
+        } catch (err) {
+            Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (making request); Defaulting to no promotion", err);
+        }
+
+        Log.info(`ClassPortal::requestFeedbackDelay(${delivId}, ${personId}): ${resp}; Took: ${Util.took(start)}`);
+        return resp;
+    }
+
+    private getAgent() {
+        const url = this.host;
+        const isHttps = url.startsWith("https");
+        Log.trace("ClassPortal::getAgent() - isHttps: " + isHttps);
+        if (isHttps) {
+            return new https.Agent({rejectUnauthorized: false});
+        } else {
+            Log.warn("ClassPortal::getAgent() - using http agent, this should only be used in testing environments.");
+            new http.Agent();
+        }
     }
 }
