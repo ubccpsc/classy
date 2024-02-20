@@ -264,19 +264,15 @@ jobs:
 workflows:
   version: 2
   ci_tests:
+    when:
+      not:
+        equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - build
-    # Uncomment if you want to run the Docker-compose workflow in regular pushes
-    #   - build_run_stop
   nightly:
-    triggers:
-      - schedule:
-          # 5am PST time in UTC
-          cron: "0 12 * * *"
-          filters:
-            branches:
-              only:
-                - main
+    when:
+      and:
+        - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
+        - equal: [ nightly_build, << pipeline.schedule.name >> ]
     jobs:
-      # Can add any jobs you want to run at 5am here
       - build_run_stop
