@@ -127,7 +127,6 @@ jobs:
 
       # Makes docker.sock available to AutoTest docker endpoint tests
       - setup_remote_docker:
-            version: 20.10.18
 
       - run:
             command: |
