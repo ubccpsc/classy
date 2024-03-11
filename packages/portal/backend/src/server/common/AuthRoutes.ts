@@ -83,7 +83,7 @@ export class AuthRoutes implements IREST {
             token = null;
         }
 
-        Log.trace("AuthRoutes::getLogout(..) - user: " + user + "; token: " + token);
+        Log.trace("AuthRoutes::getLogout(..) - user: " + user);
         let payload: Payload;
 
         const handleError = function (msg: string) {
@@ -145,7 +145,10 @@ export class AuthRoutes implements IREST {
         });
     }
 
-    public static async performGetCredentials(user: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+    public static async performGetCredentials(user: string, token: string): Promise<{
+        isAdmin: boolean,
+        isStaff: boolean
+    }> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
         Log.trace("AuthRoutes::performGetCredentials( " + user + " ) - in isValid(..)");
         if (isValid === false) {

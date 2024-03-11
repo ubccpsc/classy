@@ -138,7 +138,7 @@ export default class AdminRoutes implements IREST {
                         token = tokenParts[0];
                         user = tokenParts[1];
                     }
-                    Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user + "; token: " + token);
+                    Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user);
                 } else {
                     // we are here because user or token are not defined, but we do not have them here either
                     Log.info("AdminRoutes::processAuth(..) - cookies parsing failed; tokenString: " + tokenString);
