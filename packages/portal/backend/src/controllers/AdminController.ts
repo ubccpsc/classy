@@ -637,7 +637,7 @@ export class AdminController {
                     JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
             } else {
                 if (team.delivId === deliv.id) {
-                    Log.trace("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
+                    Log.info("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
                     delivTeams.push(team);
                 }
             }
@@ -651,7 +651,7 @@ export class AdminController {
                     return p.id;
                 }).indexOf(personId);
                 if (index >= 0) {
-                    Log.trace("AdminController::planProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
+                    Log.info("AdminController::planProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
                     allPeople.splice(index, 1);
                 } else {
                     Log.warn("AdminController::planProvision(..) - allPeople does not contain: " + personId);
@@ -668,7 +668,7 @@ export class AdminController {
 
         if (formSingleTeams === true) {
             // now create teams for individuals
-            Log.trace("AdminController::planProvision(..) - handling single teams");
+            Log.info("AdminController::planProvision(..) - handling single teams");
             for (const individual of allPeople) {
                 try {
                     const name = await cc.computeNames(deliv, [individual]);
@@ -678,15 +678,15 @@ export class AdminController {
                     Log.error("AdminController::planProvision(..) - single team creation ERROR: " + err.message);
                 }
             }
-            Log.trace("AdminController::planProvision(..) - single teams done");
+            Log.info("AdminController::planProvision(..) - single teams done");
         }
 
-        Log.trace("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
+        Log.info("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
 
         const reposToProvision: Repository[] = [];
         // now process the teams to create their repos
         for (const delivTeam of delivTeams) {
-            Log.trace("AdminController::planProvision(..) - preparing to provision team: " + delivTeam.id);
+            Log.info("AdminController::planProvision(..) - preparing to provision team: " + delivTeam.id);
 
             const people: Person[] = [];
             for (const pId of delivTeam.personIds) {
@@ -699,7 +699,7 @@ export class AdminController {
 
             const names = await cc.computeNames(deliv, people);
 
-            Log.trace("AdminController::planProvision(..) - delivTeam: " + delivTeam.id +
+            Log.info("AdminController::planProvision(..) - delivTeam: " + delivTeam.id +
                 "; computed team: " + names.teamName + "; computed repo: " + names.repoName);
 
             const team = await this.tc.getTeam(names.teamName);
@@ -730,10 +730,10 @@ export class AdminController {
             // }
 
             reposToProvision.push(repo);
-            Log.trace("AdminController::planProvision(..) - team planning done for team: " + delivTeam.id);
+            Log.info("AdminController::planProvision(..) - team planning done for team: " + delivTeam.id);
         }
 
-        Log.trace("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
+        Log.info("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
 
         const repoTrans: RepositoryTransport[] = [];
         for (const repo of reposToProvision) {
