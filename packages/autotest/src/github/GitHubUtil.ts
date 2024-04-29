@@ -77,7 +77,8 @@ export class GitHubUtil {
     }
 
     public static parseCommandsFromComment(message: string): string[] {
-        return [...new Set(message.match(/#[a-zA-Z0-9]+/g) || [])];
+        // original pattern: /#[a-zA-Z0-9]+/g
+        return [...new Set(message.match(/#[a-zA-Z0-9_:-]+/g) || [])];
     }
 
     /**
