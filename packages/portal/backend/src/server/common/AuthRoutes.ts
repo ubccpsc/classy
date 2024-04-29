@@ -83,7 +83,7 @@ export class AuthRoutes implements IREST {
             token = null;
         }
 
-        Log.trace("AuthRoutes::getLogout(..) - user: " + user + "; token: " + token);
+        Log.trace("AuthRoutes::getLogout(..) - user: " + user);
         let payload: Payload;
 
         const handleError = function (msg: string) {
@@ -145,7 +145,10 @@ export class AuthRoutes implements IREST {
         });
     }
 
-    public static async performGetCredentials(user: string, token: string): Promise<{ isAdmin: boolean, isStaff: boolean }> {
+    public static async performGetCredentials(user: string, token: string): Promise<{
+        isAdmin: boolean,
+        isStaff: boolean
+    }> {
         const isValid = await AuthRoutes.ac.isValid(user, token);
         Log.trace("AuthRoutes::performGetCredentials( " + user + " ) - in isValid(..)");
         if (isValid === false) {
@@ -211,6 +214,7 @@ export class AuthRoutes implements IREST {
             }
             res.redirect(redirectOptions, next);
         }).catch(function (err) {
+            Log.error("AuthRoutes::authCallback(..) - DB; typeof err: " + typeof err + "; err: " + err);
             if (typeof err === "string" && err.indexOf("incorrect or expired") >= 0) {
                 // just a warning for auth expiry
                 Log.warn("AuthRoutes::authCallback(..) - /authCallback - WARN: " + err);
@@ -299,12 +303,12 @@ export class AuthRoutes implements IREST {
 
         let feUrl = host; // req.headers.host;
         if (feUrl.indexOf("//") > 0) {
-            feUrl = feUrl.substr(feUrl.indexOf("//") + 2, feUrl.length);
+            feUrl = feUrl.substring(feUrl.indexOf("//") + 2, feUrl.length);
         }
         let fePort = 443; // default to ssl port
         if (feUrl.indexOf(":") > 0) {
-            fePort = Number(feUrl.substr(feUrl.indexOf(":") + 1, feUrl.length));
-            feUrl = feUrl.substr(0, feUrl.indexOf(":"));
+            fePort = Number(feUrl.substring(feUrl.indexOf(":") + 1, feUrl.length));
+            feUrl = feUrl.substring(0, feUrl.indexOf(":"));
         }
 
         if (person === null) {

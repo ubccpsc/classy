@@ -181,7 +181,7 @@ export default class GeneralRoutes implements IREST {
             return res.redirect(loc, next);
         }
 
-        Log.info("GeneralRoutes::getResource(..) - user: " + auth.user + "; token: " + auth.token + "; path: " + path);
+        Log.info("GeneralRoutes::getResource(..) - user: " + auth.user + "; path: " + path);
 
         GeneralRoutes.performGetResource(auth, path).then(function (resource: any) {
 

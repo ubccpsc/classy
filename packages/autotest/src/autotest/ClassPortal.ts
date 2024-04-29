@@ -506,7 +506,8 @@ export class ClassPortal implements IClassPortal {
             Log.error("ClassPortal::requestFeedbackDelay(..) - ERROR (making request); Defaulting to no promotion", err);
         }
 
-        Log.info(`ClassPortal::requestFeedbackDelay(${delivId}, ${personId}): ${resp}; Took: ${Util.took(start)}`);
+        const respStr = JSON.stringify(resp);
+        Log.info(`ClassPortal::requestFeedbackDelay(${delivId}, ${personId}): ${respStr}; Took: ${Util.took(start)}`);
         return resp;
     }
 
