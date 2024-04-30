@@ -344,7 +344,7 @@ export class SortableTable {
                 if (colsWithMetadata.indexOf(j) >= 0) {
                     if (i === 0) {
                         // header row
-                        row.push(row[j] + "_metadata"); // add metadata prior column name
+                        row.push(cols[j] + "_metadata"); // add metadata prior column name
                     } else {
                         // regular row
                         row.push(this.extractMetadata(cols[j] as HTMLElement));
@@ -357,38 +357,39 @@ export class SortableTable {
         return csv.join("\n");
     }
 
-    private exportTableLinksToCSV() {
-        const csv = [];
-        const root = document.querySelector(this.divName);
-        const rows = root.querySelectorAll("table tr");
-
-        for (let i = 0; i < rows.length; i++) {
-            const row = [];
-            const cols = rows[i].querySelectorAll("td, th");
-
-            // tslint:disable-next-line
-            for (let j = 0; j < cols.length; j++) {
-                if (i === 0) {
-                    let text = (cols[j] as HTMLTableCellElement).innerText;
-                    text = text.replace(" ▼", "");
-                    text = text.replace(" ▲", "");
-                    row.push(text);
-                } else {
-                    const col = cols[j] as HTMLElement;
-
-                    // this is super brittle
-                    if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
-                        row.push((col.children[0] as HTMLAnchorElement).href);
-                    } else {
-                        row.push(col.innerText);
-                    }
-                }
-            }
-            csv.push(row.join(","));
-        }
-
-        return csv.join("\n");
-    }
+    // no longer used
+    // private exportTableLinksToCSV() {
+    //     const csv = [];
+    //     const root = document.querySelector(this.divName);
+    //     const rows = root.querySelectorAll("table tr");
+    //
+    //     for (let i = 0; i < rows.length; i++) {
+    //         const row = [];
+    //         const cols = rows[i].querySelectorAll("td, th");
+    //
+    //         // tslint:disable-next-line
+    //         for (let j = 0; j < cols.length; j++) {
+    //             if (i === 0) {
+    //                 let text = (cols[j] as HTMLTableCellElement).innerText;
+    //                 text = text.replace(" ▼", "");
+    //                 text = text.replace(" ▲", "");
+    //                 row.push(text);
+    //             } else {
+    //                 const col = cols[j] as HTMLElement;
+    //
+    //                 // this is super brittle
+    //                 if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
+    //                     row.push((col.children[0] as HTMLAnchorElement).href);
+    //                 } else {
+    //                     row.push(col.innerText);
+    //                 }
+    //             }
+    //         }
+    //         csv.push(row.join(","));
+    //     }
+    //
+    //     return csv.join("\n");
+    // }
 
     public numRows(): number {
         return this.rows.length;
@@ -397,8 +398,9 @@ export class SortableTable {
     private attachDownload() {
         const csv = this.exportTableToCSV();
         this.downloadCSV(csv, "classy.csv", "Download Values as CSV&nbsp;");
-        const links = this.exportTableLinksToCSV();
-        this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
+        // no longer needed; regular csv now includes these
+        // const links = this.exportTableLinksToCSV();
+        // this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
     }
 
     /**
