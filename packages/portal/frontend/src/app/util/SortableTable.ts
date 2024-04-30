@@ -312,7 +312,7 @@ export class SortableTable {
         } else if (typeof (elem as any).children[0]?.title === "string") {
             out = this.escapeCSVValue((elem as any).children[0].title);
         }
-        Log.info("SortableTable::extractMetadata() - value: " + out); // remove after working
+        // Log.info("SortableTable::extractMetadata() - value: " + out); // remove after working
         return out;
     }
 
@@ -344,12 +344,7 @@ export class SortableTable {
                 if (colsWithMetadata.indexOf(j) >= 0) {
                     if (i === 0) {
                         // header row
-                        if (j > 0) {
-                            row.push(row[j - 1] + "_metadata"); // add metadata prior column name
-                        } else {
-                            // just leave blank
-                            row.push("");
-                        }
+                        row.push(row[j] + "_metadata"); // add metadata prior column name
                     } else {
                         // regular row
                         row.push(this.extractMetadata(cols[j] as HTMLElement));
