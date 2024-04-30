@@ -285,7 +285,7 @@ export class SortableTable {
                 // document.getElementById('gradesListTable').children[0]...children[0] instanceof HTMLAnchorElement  <-- true
                 // typeof document.getElementById('gradesListTable').children[0]...children[0].title === "string" <-- true
                 if (col.children.length > 0 &&
-                    (col.children[0] instanceof HTMLAnchorElement || typeof (col as any).children[0].title === "string")) {
+                    (col.children[0] instanceof HTMLAnchorElement || typeof (col as any).children[0]?.title === "string")) {
                     if (colsWithMetadata.indexOf(j) < 0) {
                         colsWithMetadata.push(j);
                     }
@@ -309,7 +309,7 @@ export class SortableTable {
         let out = "";
         if (elem.children[0] instanceof HTMLAnchorElement) {
             out = this.escapeCSVValue((elem.children[0] as HTMLAnchorElement).href);
-        } else if (typeof (elem as any).children[0].title === "string") {
+        } else if (typeof (elem as any).children[0]?.title === "string") {
             out = this.escapeCSVValue((elem as any).children[0].title);
         }
         Log.info("SortableTable::extractMetadata() - value: " + out); // remove after working
