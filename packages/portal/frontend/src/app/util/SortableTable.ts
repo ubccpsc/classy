@@ -342,7 +342,18 @@ export class SortableTable {
                 }
 
                 if (colsWithMetadata.indexOf(j) >= 0) {
-                    row.push(this.extractMetadata(cols[j] as HTMLElement));
+                    if (i === 0) {
+                        // header row
+                        if (j > 0) {
+                            row.push(row[j - 1] + "_metadata"); // add metadata prior column name
+                        } else {
+                            // just leave blank
+                            row.push("");
+                        }
+                    } else {
+                        // regular row
+                        row.push(this.extractMetadata(cols[j] as HTMLElement));
+                    }
                 }
             }
             csv.push(row.join(","));
