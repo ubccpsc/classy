@@ -344,7 +344,9 @@ export class SortableTable {
                 if (colsWithMetadata.indexOf(j) >= 0) {
                     if (i === 0) {
                         // header row
-                        row.push(cols[j] + "_metadata"); // add metadata prior column name
+                        // add metadata prior column name
+                        // strange math because we may have added columns to the left
+                        row.push(row[j + colsWithMetadata.indexOf(j)] + "_metadata");
                     } else {
                         // regular row
                         row.push(this.extractMetadata(cols[j] as HTMLElement));
