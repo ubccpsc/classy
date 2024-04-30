@@ -273,10 +273,10 @@ export class SortableTable {
     private findColsWithMetadata(divName: string): number[] {
         const root = document.querySelector(this.divName);
         const rows = root.querySelectorAll("table tr");
-        const colsWithMetadata: number[] = [];
+        let colsWithMetadata: number[] = [];
 
         // tslint:disable-next-line
-        for (let i = 0; i < rows.length; i++) {
+        for (let i = 1; i < rows.length; i++) { // skip the header row
             const cols = rows[i].querySelectorAll("td, th");
 
             // tslint:disable-next-line
@@ -292,6 +292,9 @@ export class SortableTable {
                 }
             }
         }
+
+        // sort numbers ascending
+        colsWithMetadata = colsWithMetadata.sort((a, b) => a - b);
 
         Log.info("SortableTable::findColsWithMetadata() - cols: " + JSON.stringify(colsWithMetadata));
         return colsWithMetadata;
