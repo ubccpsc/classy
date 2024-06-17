@@ -293,7 +293,7 @@ export class SortableTable {
             }
         }
 
-        // sort numbers ascending
+        // sort metadata columns
         colsWithMetadata = colsWithMetadata.sort((a, b) => a - b);
 
         Log.info("SortableTable::findColsWithMetadata() - cols: " + JSON.stringify(colsWithMetadata));
