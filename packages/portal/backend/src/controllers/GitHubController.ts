@@ -457,16 +457,20 @@ export class GitHubController implements IGitHubController {
         try {
             let teamValue = null;
             try {
-                Log.info("GitHubController::provisionRepository() - create GitHub team");
+                Log.info("GitHubController::provisionRepository() - create GitHub team(s): " + JSON.stringify(teams));
                 for (const team of teams) {
 
+                    Log.trace("GitHubController::provisionRepository() - team: " + JSON.stringify(team));
                     const dbT = await dbc.getTeam(team.id);
                     if (dbT === null) {
                         throw new Error("GitHubController::provisionRepository( " + repoName + " ) - " +
                             "team does not exist in datastore (but should): " + team.id);
                     }
+                    Log.trace("GitHubController::provisionRepository() - dbT: " + JSON.stringify(dbT));
 
-                    if (team.URL !== null && await tc.getTeamNumber(team.id) !== null) {
+                    const teamNum = await tc.getTeamNumber(team.id);
+                    Log.trace("GitHubController::provisionRepository() - dbT team Number: " + teamNum);
+                    if (team.URL !== null && teamNum !== null) {
                         // already exists
                         Log.warn("GitHubController::provisionRepository( " + repoName + " ) - team already exists: " +
                             teamValue.teamName + "; assuming team members on github are correct.");
@@ -503,21 +507,17 @@ export class GitHubController implements IGitHubController {
                 // swallow these errors and keep going
             }
 
+            // add staff team to repo
             Log.trace("GitHubController::provisionRepository() - add staff team to repo");
-            // const staffTeamNumber = await tc.getTeamNumber(TeamController.STAFF_NAME);
-            // Log.trace("GitHubController::provisionRepository(..) - staffTeamNumber: " + staffTeamNumber);
-            // const staffAdd = await this.gha.addTeamToRepo(staffTeamNumber, repoName, "admin");
             const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin");
             Log.trace("GitHubController::provisionRepository(..) - team name: " + staffAdd.teamName);
 
+            // add admin team to repo
             Log.trace("GitHubController::provisionRepository() - add admin team to repo");
-            // const adminTeamNumber = await tc.getTeamNumber(TeamController.ADMIN_NAME);
-            // Log.trace("GitHubController::provisionRepository(..) - adminTeamNumber: " + adminTeamNumber);
-            // const adminAdd = await this.gha.addTeamToRepo(adminTeamNumber, repoName, "admin");
             const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin");
             Log.trace("GitHubController::provisionRepository(..) - team name: " + adminAdd.teamName);
 
-            // add webhooks
+            // add webhooks to repo
             const host = Config.getInstance().getProp(ConfigKey.publichostname);
             const WEBHOOKADDR = host + "/portal/githubWebhook";
             Log.trace("GitHubController::provisionRepository() - add webhook to: " + WEBHOOKADDR);

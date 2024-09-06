@@ -1374,7 +1374,7 @@ export class GitHubActions implements IGitHubActions {
         // get branches
         // GET /repos/{owner}/{repo}/branches
         const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
-        Log.info("GitHubAction::listBranches(..) - list branch uri: " + listUri);
+        Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
         const listOptions: RequestInit = {
             method: "GET",
             headers: {
@@ -1393,13 +1393,13 @@ export class GitHubActions implements IGitHubActions {
             Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
             return [];
         }
-
         Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
 
         const branches: string[] = [];
         for (const githubBranch of listRespBody) {
             branches.push(githubBranch.name);
         }
+
         Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
         return branches;
     }
@@ -1439,7 +1439,7 @@ export class GitHubActions implements IGitHubActions {
         for (const branch of branchesToDelete) {
             // DELETE /repos/{owner}/{repo}/git/refs/{ref}
             const delUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/git/refs/" + "heads/" + branch;
-            Log.info("GitHubAction::deleteBranches(..) - delete branch uri: " + delUri);
+            Log.info("GitHubAction::deleteBranches(..) - delete branch; uri: " + delUri);
 
             const delOptions: RequestInit = {
                 method: "DELETE",
@@ -1470,11 +1470,14 @@ export class GitHubActions implements IGitHubActions {
         // into the repo provisioning workflow, but the whole reason to change to templates was for
         // performance. Hopefully this is good enough.
 
+        Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
         const branchesAfter = await this.listBranches(repoId);
         if (branchesAfter.length > branchesToKeep.length) {
             // do it again
             Log.info("GitHubAction::deleteBranches(..) - branches still remain; retry removal");
             await this.deleteBranches(repoId, branchesToKeep);
+        } else {
+            Log.info("GitHubAction::deleteBranches(..) - extra branches not found");
         }
 
         Log.info("GitHubAction::deleteBranches(..) - done; success: " + deleteSucceeded + "; took: " + Util.took(start));
