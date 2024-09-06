@@ -1469,7 +1469,7 @@ export class GitHubActions implements IGitHubActions {
         // has passed that this will work correctly. An alternative would have been to put a wait
         // into the repo provisioning workflow, but the whole reason to change to templates was for
         // performance. Hopefully this is good enough.
-        
+
         const branchesAfter = await this.listBranches(repoId);
         if (branchesAfter.length > branchesToKeep.length) {
             // do it again
