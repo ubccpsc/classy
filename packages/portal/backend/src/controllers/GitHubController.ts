@@ -429,7 +429,10 @@ export class GitHubController implements IGitHubController {
                     const branchRenameSuccess = await this.gha.renameBranch(repoName, importBranchesToKeep[0], "main");
                     Log.info("GitHubController::provisionRepository( " + repoName + " ) - branch rename success: " + branchRenameSuccess);
                 }
+            } else {
+                Log.info("GitHubController::provisionRepository( " + repoName + " ) - no branch specified; all branches kept");
             }
+
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
             // we consider the repo to be provisioned once the whole flow is done
