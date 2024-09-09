@@ -561,7 +561,6 @@ export class GitHubActions implements IGitHubActions {
             };
 
             const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
-            // const uri = this.apiPath + "/orgs/" + this.org + "/repos/" + repoName;
             const options: RequestInit = {
                 method: "PATCH",
                 headers: {
@@ -576,7 +575,6 @@ export class GitHubActions implements IGitHubActions {
             const response = await fetch(uri, options);
             const body = await response.json();
             Log.trace("GitHubAction::updateRepo( " + repoName + " ) - request complete");
-            Log.info("GitHubAction::updateRepo( " + repoName + " ) - body: " + JSON.stringify(body));
 
             const url = body.html_url;
             const wasSuccess = repoOpts.has_issues === body.has_issues &&
