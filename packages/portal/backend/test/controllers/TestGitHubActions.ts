@@ -82,6 +82,15 @@ export class TestGitHubActions implements IGitHubActions {
         return this.repos[repoName];
     }
 
+    public async updateRepo(repoName: string): Promise<boolean> {
+        if (typeof this.repos[repoName] !== "undefined") {
+            Log.info("TestGitHubActions::updateRepo( " + repoName + " ) - exists");
+            return true;
+        }
+        Log.info("TestGitHubActions::updateRepo( " + repoName + " ) - does not exist");
+        return false;
+    }
+
     // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {
     public async createTeam(teamName: string, permission: string): Promise<GitTeamTuple> {
         // if (typeof this.teams[teamName] === "undefined") {

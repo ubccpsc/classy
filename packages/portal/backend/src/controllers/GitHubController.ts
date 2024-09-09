@@ -436,6 +436,11 @@ export class GitHubController implements IGitHubController {
                 Log.info("GitHubController::provisionRepository( " + repoName + " ) - no branch specified; all branches kept");
             }
 
+            Log.trace("GitHubController::provisionRepository( " + repoName + " ) - updating repo");
+            // since we moved to template provisioning, we need to update the repo to make sure the settings are correct
+            const updateWorked = await this.gha.updateRepo(repoName);
+            Log.trace("GitHubController::provisionRepository( " + repoName + " ) - repo updated: " + updateWorked);
+
             Log.info("GitHubController::provisionRepository( " + repoName + " ) - GitHub repo created");
 
             // we consider the repo to be provisioned once the whole flow is done

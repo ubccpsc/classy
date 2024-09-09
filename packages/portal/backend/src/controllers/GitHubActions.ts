@@ -44,6 +44,15 @@ export interface IGitHubActions {
     createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string>;
 
     /**
+     * Updates a repo with the settings we want on our repos. This is used for repos created from a template.
+     * Repos that are created with `createRepo` do not need to use this endpoint (although there is no downside
+     * to them using it).
+     *
+     * @param repoName
+     */
+    updateRepo(repoName: string): Promise<boolean>;
+
+    /**
      * Deletes a repo from the organization.
      *
      * @param repoName
@@ -510,6 +519,73 @@ export class GitHubActions implements IGitHubActions {
             return url;
         } catch (err) {
             Log.error("GitHubAction::createRepoFromTemplate(..) - ERROR: " + err);
+            throw new Error("Repository not created; " + err.message);
+        }
+    }
+
+    public async updateRepo(repoName: string): Promise<boolean> {
+        // These are the settings we want on our repos, but we can't set them on creation when making them with a template
+
+        // name: repoName,
+        //     // In Dev and Test, Github free Org Repos cannot be private.
+        //     private: true,
+        //     has_issues: true,
+        //     has_wiki: false,
+        //     has_downloads: false,
+        //     // squash merging does not use ff causing branch problems in autotest
+        //     allow_squash_merge: false,
+        //     // rebase merging does not use ff causing branch problems in autotest
+        //     allow_rebase_merge: false,
+        //     merge_commit_title: "PR_TITLE",
+        //     merge_commit_message: "PR_BODY",
+        //     auto_init: false
+
+        const start = Date.now();
+        try {
+            Log.info("GitHubAction::updateRepo( " + repoName + " ) - start");
+            await GitHubActions.checkDatabase(repoName, null);
+
+            const repoOpts: any = {
+                name: repoName,
+                // In Dev and Test, Github free Org Repos cannot be private.
+                private: true,
+                has_issues: true,
+                has_wiki: false,
+                has_downloads: false,
+                // squash merging does not use ff causing branch problems in autotest
+                allow_squash_merge: false,
+                // rebase merging does not use ff causing branch problems in autotest
+                allow_rebase_merge: false,
+                merge_commit_title: "PR_TITLE",
+                merge_commit_message: "PR_BODY"
+            };
+
+            const uri = this.apiPath + "/orgs/" + this.org + "/repos/" + repoName;
+            const options: RequestInit = {
+                method: "PATCH",
+                headers: {
+                    "Authorization": this.gitHubAuthToken,
+                    "User-Agent": this.gitHubUserName,
+                    "Accept": "application/vnd.github+json"
+                },
+                body: JSON.stringify(repoOpts)
+            };
+
+            Log.trace("GitHubAction::updateRepo( " + repoName + " ) - making request");
+            const response = await fetch(uri, options);
+            const body = await response.json();
+            Log.trace("GitHubAction::updateRepo( " + repoName + " ) - request complete");
+
+            const url = body.html_url;
+            const wasSuccess = repoOpts.has_issues === body.has_issues &&
+                repoOpts.has_wiki === body.has_wiki &&
+                repoOpts.has_downloads === body.has_downloads &&
+                repoOpts.allow_squash_merge === body.allow_squash_merge &&
+                repoOpts.allow_rebase_merge === body.allow_rebase_merge;
+            Log.info("GitHubAction::updateRepo(..) - wasSuccessful: " + wasSuccess + "; URL: " + url + "; took: " + Util.took(start));
+            return wasSuccess;
+        } catch (err) {
+            Log.error("GitHubAction::updateRepo(..) - ERROR: " + err);
             throw new Error("Repository not created; " + err.message);
         }
     }
