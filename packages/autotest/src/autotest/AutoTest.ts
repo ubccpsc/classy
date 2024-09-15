@@ -350,7 +350,8 @@ export abstract class AutoTest implements IAutoTest {
                     const totalJobsRunning = that.jobs.length;
                     Log.info("AutoTest::tick::tickQueue(..)         [JOB] - job start: " + queue.getName() + "; deliv: " +
                         (info.target.delivId + ";").padEnd(8, " ") + " repo: " + (info.target.repoId + ";").padEnd(18, " ") + " SHA: " +
-                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning + "; # queued: " + totalNumQueued +
+                        Util.shaHuman(info.target.commitSHA) + "; # running: " + totalJobsRunning +
+                        "; # queued: " + (totalNumQueued + "").padStart(4, " ") +
                         " ( e: " + that.expressQueue.length() + ", s: " + that.standardQueue.length() + ", l: " + that.lowQueue.length() + " )");
 
                     let gradingJob: GradingJob;
