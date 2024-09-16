@@ -14,7 +14,7 @@ export class Factory {
      *
      * Set to true if you want to run these slow tests locally (they will always run on CI):
      */
-    // public static OVERRIDE = true; // NOTE: should be commented out when committing
+        // public static OVERRIDE = true; // NOTE: should be commented out when committing
     public static OVERRIDE = false; // NOTE: should NOT be commented out when committing
 
     private static readonly TESTNAME = "classytest";
@@ -92,7 +92,9 @@ export class Factory {
                 // If a course wants to specialize the AdminView it should be in the file below.
                 // This is not required. But if it is added, it should never be pushed back to "classy/main"
                 Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
-                plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseController");
+                const controllerPath = "../../../../plugins/" + plugin + "/portal/backend/CustomCourseController";
+                Log.info("Factory::getCourseController() - full path: " + controllerPath);
+                plug = await require(controllerPath);
             } catch (err) {
                 const msg = "Factory::getCourseController() - " + plugin + "/src/custom/CustomCourseController.ts must be defined";
                 Log.error(msg);

@@ -12,6 +12,8 @@ import AdminRoutes from "./common/AdminRoutes";
 import {AuthRoutes} from "./common/AuthRoutes";
 import {AutoTestRoutes} from "./common/AutoTestRoutes";
 import GeneralRoutes from "./common/GeneralRoutes";
+import {GitHubController} from "@backend/controllers/GitHubController";
+import {GitHubActions} from "@backend/controllers/GitHubActions";
 
 /**
  * This configures the REST endpoints for the server.
@@ -111,8 +113,19 @@ export default class BackendServer {
             Log.info("BackendServer::start() - Registering common handlers; done");
 
             // Register custom route handler for specific classy instance
-            Log.info("BackendServer::start() - Registering custom handler");
+            Log.info("BackendServer::start() - Registering custom handlers");
 
+            Log.info("BackendServer::start() - Loading custom course controller");
+            // We do not need a Custom Course Controller here, but this is a good place
+            // to make sure that the CustomCourseController loads up as expected
+            // alongside the CustomRouteHandler.
+            Factory.getCourseController(new GitHubController(GitHubActions.getInstance())).then(function (cc) {
+                Log.info("BackendServer::start() - CustomCourseController loaded");
+            }).catch(function (err) {
+                Log.error("BackendServer::start() - Unable to load CustomCourseController: " + err);
+            });
+
+            Log.info("BackendServer::start() - Loading custom route handler");
             Factory.getCustomRouteHandler().then(function (handler) {
                 handler.registerRoutes(that.rest);
                 Log.info("BackendServer::start() - Registering custom handler; done");
