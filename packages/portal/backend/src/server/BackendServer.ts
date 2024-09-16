@@ -127,8 +127,9 @@ export default class BackendServer {
 
             Log.info("BackendServer::start() - Loading custom route handler");
             Factory.getCustomRouteHandler().then(function (handler) {
+                Log.info("BackendServer::start() - CustomRouteHandler loaded");
                 handler.registerRoutes(that.rest);
-                Log.info("BackendServer::start() - Registering custom handler; done");
+                Log.info("BackendServer::start() - CustomRouteHandler registered");
 
                 // serve up the static frontend resources
                 const frontendHTML = __dirname + "/../../../frontend/html";

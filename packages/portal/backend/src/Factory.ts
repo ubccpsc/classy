@@ -38,12 +38,12 @@ export class Factory {
             let plug: any;
             Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + plugin);
             plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
-            Log.trace("Factory::getCustomRouteHandler() - handler loaded");
+            Log.trace("Factory::getCustomRouteHandler() - CustomRouteHandler loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
             const handler = new plug[constructorName]();
-            Log.info("Factory::getCustomRouteHandler() - handler instantiated");
+            Log.info("Factory::getCustomRouteHandler() - CustomRouteHandler instantiated");
             return handler;
         } catch (err) {
             Log.error(err);
@@ -77,7 +77,7 @@ export class Factory {
             ghController = new GitHubController(GitHubActions.getInstance());
         } else {
             // really only for testing
-            Log.trace("Factory::getCourseController() - using provided controller");
+            Log.trace("Factory::getCourseController() - using provided CustomCourseController");
         }
         try {
             const plugin = Config.getInstance().getProp(ConfigKey.plugin);
@@ -93,7 +93,7 @@ export class Factory {
                 // This is not required. But if it is added, it should never be pushed back to "classy/main"
                 Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
                 const controllerPath = "../../../../plugins/" + plugin + "/portal/backend/CustomCourseController";
-                Log.info("Factory::getCourseController() - full path: " + controllerPath);
+                Log.info("Factory::getCourseController() - loading CustomCourseController; full path: " + controllerPath);
                 plug = await require(controllerPath);
             } catch (err) {
                 const msg = "Factory::getCourseController() - " + plugin + "/src/custom/CustomCourseController.ts must be defined";
@@ -102,12 +102,12 @@ export class Factory {
                 plug = null;
             }
 
-            Log.trace("Factory::getCourseController() - handler loaded");
+            Log.trace("Factory::getCourseController() - CustomCourseController loaded");
 
             // if this fails an error will be raised and the default view will be provided in the catch below
             const constructorName = Object.keys(plug)[0];
             const handler = new plug[constructorName](ghController);
-            Log.trace("Factory::getCourseController() - handler instantiated");
+            Log.trace("Factory::getCourseController() - CustomCourseController handler instantiated");
             return handler;
         } catch (err) {
             const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
