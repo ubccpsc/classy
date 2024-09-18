@@ -105,20 +105,23 @@ Dashboard Page
     margin-left: auto;
     margin-right: auto;
     border-collapse: collapse;
-    user-select: text !important;
-    -webkit-user-select: text !important;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .sortableHeader {
-    user-select: text !important;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .sortableTableRow {
-    user-select: text !important;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .sortableTableCell {
-    user-select: text !important;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 .sortableTable th {
@@ -128,7 +131,8 @@ Dashboard Page
 }
 
 .selectable {
-    user-select: text !important;
+    user-select: auto;
+    -webkit-user-select: auto;
 }
 
 /**
