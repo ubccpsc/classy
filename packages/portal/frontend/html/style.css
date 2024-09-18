@@ -106,6 +106,7 @@ Dashboard Page
     margin-right: auto;
     border-collapse: collapse;
     user-select: text !important;
+    -webkit-user-select: text !important;
 }
 
 .sortableHeader {
