@@ -1528,30 +1528,7 @@ export class GitHubActions implements IGitHubActions {
         // delete branches we do not want
         let deleteSucceeded = true;
         for (const branch of branchesToDelete) {
-            // DELETE /repos/{owner}/{repo}/git/refs/{ref}
-            const delUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/git/refs/" + "heads/" + branch;
-            Log.info("GitHubAction::deleteBranches(..) - delete branch; uri: " + delUri);
-
-            const delOptions: RequestInit = {
-                method: "DELETE",
-                headers: {
-                    "Authorization": this.gitHubAuthToken,
-                    "User-Agent": this.gitHubUserName,
-                    "Accept": "application/vnd.github+json",
-                    "X-GitHub-Api-Version": "2022-11-28"
-                }
-            };
-
-            const deleteResp = await fetch(delUri, delOptions);
-            Log.trace("GitHubAction::deleteBranches(..) - delete response code: " + deleteResp.status);
-
-            if (deleteResp.status !== 204) {
-                const delRespBody = await deleteResp.json();
-                Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " + JSON.stringify(delRespBody));
-                deleteSucceeded = false;
-            } else {
-                Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " + branch + " from repo: " + repoId);
-            }
+            deleteSucceeded = await this.deleteBranch(repoId, branch);
         }
 
         // This is an unsatisfying check. But GitHub Enterprise often returns repo provisioning
@@ -1585,7 +1562,6 @@ export class GitHubActions implements IGitHubActions {
     public async deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
         const start = Date.now();
 
-        // TODO: refactor this so deleteBranches calls this method (currently the delete fcn is fully duplicated)
         const repoExists = await this.repoExists(repoId); // ensure the repo exists
         if (repoExists === false) {
             Log.error("GitHubAction::deleteBranch(..) - failed; repo does not exist");
@@ -1613,10 +1589,12 @@ export class GitHubActions implements IGitHubActions {
 
         if (deleteResp.status !== 204) {
             const delRespBody = await deleteResp.json();
-            Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " + JSON.stringify(delRespBody));
+            Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " +
+                JSON.stringify(delRespBody));
             return false;
         } else {
-            Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " + branchToDelete + " from repo: " + repoId);
+            Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " +
+                branchToDelete + " from repo: " + repoId + "; took: " + Util.took(start));
             return true;
         }
     }
