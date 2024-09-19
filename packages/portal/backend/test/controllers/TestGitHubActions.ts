@@ -26,6 +26,10 @@ export class TestGitHubActions implements IGitHubActions {
         throw new Error("Method not implemented.");
     }
 
+    public deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+
     public renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
         throw new Error("Method not implemented.");
     }

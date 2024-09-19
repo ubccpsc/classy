@@ -264,6 +264,15 @@ export interface IGitHubActions {
     deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean>;
 
     /**
+     * Deletes all branches in a repo except for the ones listed in branchesToKeep.
+     *
+     * @param repoId
+     * @param branchesToDelete The name of the branch to delete
+     * @returns {Promise<boolean>} true if the deletion was successful
+     */
+    deleteBranch(repoId: string, branchToDelete: string): Promise<boolean>;
+
+    /**
      * Renames a branch in a repo.
      *
      * @param repoId
@@ -1401,7 +1410,7 @@ export class GitHubActions implements IGitHubActions {
         const start = Date.now();
         const repoExists = await this.repoExists(repoId); // ensure the repo exists
         if (repoExists === false) {
-            Log.error("GitHubAction::listRepoBranches(..) - failed; repo does not exist");
+            Log.error("GitHubAction::listRepoBranches( " + repoId + " ) - failed; repo does not exist");
             return null;
         }
 
@@ -1480,6 +1489,12 @@ export class GitHubActions implements IGitHubActions {
         return branches;
     }
 
+    /**
+     * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
+     *
+     * @param repoId
+     * @param branchesToKeep
+     */
     public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
         const start = Date.now();
 
@@ -1558,6 +1573,52 @@ export class GitHubActions implements IGitHubActions {
 
         Log.info("GitHubAction::deleteBranches(..) - done; success: " + deleteSucceeded + "; took: " + Util.took(start));
         return deleteSucceeded;
+    }
+
+    /**
+     * NOTE: If a repo has a branch, it will be deleted.
+     *
+     * @param repoId
+     * @param branchToDelete
+     * @returns {Promise<boolean>} true if the branch was deleted, false otherwise; throws error if something bad happened.
+     */
+    public async deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
+        const start = Date.now();
+
+        // TODO: refactor this so deleteBranches calls this method (currently the delete fcn is fully duplicated)
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::deleteBranch(..) - failed; repo does not exist");
+            return false;
+        }
+
+        Log.info("GitHubAction::deleteBranch( " + repoId + ", " + branchToDelete + " ) - start");
+
+        // DELETE /repos/{owner}/{repo}/git/refs/{ref}
+        const delUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/git/refs/" + "heads/" + branchToDelete;
+        Log.info("GitHubAction::deleteBranch(..) - delete branch; uri: " + delUri);
+
+        const delOptions: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const deleteResp = await fetch(delUri, delOptions);
+        Log.trace("GitHubAction::deleteBranch(..) - delete response code: " + deleteResp.status);
+
+        if (deleteResp.status !== 204) {
+            const delRespBody = await deleteResp.json();
+            Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " + JSON.stringify(delRespBody));
+            return false;
+        } else {
+            Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " + branchToDelete + " from repo: " + repoId);
+            return true;
+        }
     }
 
     public async renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
