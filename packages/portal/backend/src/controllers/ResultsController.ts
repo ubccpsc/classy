@@ -73,7 +73,7 @@ export class ResultsController {
     public async createResult(record: AutoTestResult): Promise<boolean> {
         Log.info("ResultsController::createResult(..) - start; deliv: " + record.delivId + "; repo: "
             + record.repoId + "; SHA: " + Util.shaHuman(record.commitSHA));
-        Log.trace("GradesController::createResult(..) - payload: " + JSON.stringify(record));
+        Log.trace("ResultsController::createResult(..) - payload: " + JSON.stringify(record));
         const start = Date.now();
 
         const rc = new RepositoryController();

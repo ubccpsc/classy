@@ -79,6 +79,16 @@ export interface ICourseController {
         accepted: boolean,
         message: string
     } | null>;
+
+    /**
+     * Allow a course to specialize how a grade should be presented
+     * to the students. This is especially useful when a numeric score
+     * is being replaced by a bucket grade.
+     *
+     * The frontend will render gradeTransport.custom.displayScore
+     * if it is set.
+     */
+    convertGrade(grade: Grade): Promise<Grade>;
 }
 
 /**
@@ -223,6 +233,16 @@ export class CourseController implements ICourseController {
     } | null> {
         Log.warn(`CourseController::requestFeedbackDelay(${info}) - Default impl; returning null`);
         return null;
+    }
+
+    /**
+     * By default, nothing is needed here.
+     *
+     * @param grade
+     */
+    public async convertGrade(grade: Grade): Promise<Grade> {
+        Log.info(`CourseController::convertGrade(${grade}) - Default impl; returning original grade`);
+        return grade;
     }
 
     // NOTE: the default implementation is currently broken; do not use it.

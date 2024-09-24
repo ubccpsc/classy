@@ -26,6 +26,10 @@ export class TestGitHubActions implements IGitHubActions {
         throw new Error("Method not implemented.");
     }
 
+    public deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
+        throw new Error("Method not implemented.");
+    }
+
     public renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
         throw new Error("Method not implemented.");
     }
@@ -80,6 +84,15 @@ export class TestGitHubActions implements IGitHubActions {
         }
         Log.info("TestGitHubActions::createRepoFromTemplate( " + repoName + " ) - repos: " + JSON.stringify(this.repos));
         return this.repos[repoName];
+    }
+
+    public async updateRepo(repoName: string): Promise<boolean> {
+        if (typeof this.repos[repoName] !== "undefined") {
+            Log.info("TestGitHubActions::updateRepo( " + repoName + " ) - exists");
+            return true;
+        }
+        Log.info("TestGitHubActions::updateRepo( " + repoName + " ) - does not exist");
+        return false;
     }
 
     // public async createTeam(teamName: string, permission: string): Promise<{ teamName: string; githubTeamNumber: number; URL: string }> {

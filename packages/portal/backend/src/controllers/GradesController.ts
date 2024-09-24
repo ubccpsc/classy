@@ -4,11 +4,15 @@ import Log from "@common/Log";
 import {AutoTestGradeTransport, GradeTransport} from "@common/types/PortalTypes";
 import {GradePayload} from "@common/types/SDMMTypes";
 import Util from "@common/Util";
+
 import {Grade, PersonKind} from "../Types";
+import {Factory} from "../Factory";
 
 import {DatabaseController} from "./DatabaseController";
 import {DeliverablesController} from "./DeliverablesController";
 import {PersonController} from "./PersonController";
+import {GitHubActions} from "./GitHubActions";
+import {GitHubController} from "./GitHubController";
 
 export class GradesController {
 
@@ -80,7 +84,16 @@ export class GradesController {
                 if (grade.score !== null && grade.score < 0) {
                     grade.score = null; // null if not set (not -1)
                 }
-                grades.push(grade);
+
+                // convert grade if needed
+                const gha = GitHubActions.getInstance(true);
+                const ghc = new GitHubController(gha);
+                const cc = await Factory.getCourseController(ghc);
+
+                // allow class instances to specialize how the grades are converted for display to students
+                const convertedGrade = await cc.convertGrade(grade);
+
+                grades.push(convertedGrade);
             } else {
                 Log.trace("GradesController::getReleasedGradesForPerson( " + personId + " ) - closed deliv: " + deliv.id);
             }
