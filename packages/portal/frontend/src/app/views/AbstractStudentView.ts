@@ -138,7 +138,7 @@ export abstract class AbstractStudentView implements IView {
             for (const grade of this.grades) {
                 let scoreToDisplay: number | string = grade.score; // default behaviour
 
-                // allow for custom display scores
+                // overwrite grade with custom score if it is provided
                 if (grade?.custom?.displayScore) {
                     Log.info("AbstractStudentView::renderGrades() - using custom display score: " + grade.custom.displayScore);
                     scoreToDisplay = grade.custom.displayScore;

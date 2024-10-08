@@ -127,7 +127,8 @@ export class AdminGradesTab extends AdminPage {
                             let scorePrepend = "";
 
                             if (grade?.custom?.displayScore) {
-                                // if there's a custom grade to display, use that instead
+                                // check this first so we prefer the custom display score
+                                // if there is a custom grade to display, use that instead
                                 // Log.trace("AdminGradesTab::render() - using custom display score: " + grade.custom.displayScore);
                                 scoreText = grade.custom.displayScore;
                             } else if (grade.score !== null && grade.score >= 0) {
