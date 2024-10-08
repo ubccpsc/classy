@@ -114,18 +114,40 @@ export class CSVParser {
                         typeof row.COMMENT === "string" &&
                         row.COMMENT.length > 1) {
                         comment = row.COMMENT;
+                        comment = comment.trim();
+                    }
+
+                    const isNumber = function (value: string): boolean {
+                        const num = parseFloat(value);
+                        return Number.isNaN(num) ? false : true;
+                    };
+
+                    let gradeScore = row.GRADE;
+
+                    if (typeof gradeScore === "string") {
+                        gradeScore = gradeScore.trim();
+                    }
+
+                    const custom: any = {};
+                    if (isNumber(gradeScore) === true) {
+                        gradeScore = parseFloat(gradeScore);
+                        Log.trace("CSVParser::processGrades(..) - grade is a number: " + gradeScore);
+                    } else {
+                        custom.displayScore = gradeScore;
+                        gradeScore = -1; // grade is reflected in displayScore instead
+                        Log.trace("CSVParser::processGrades(..) - grade is a string: " + custom.displayScore);
                     }
 
                     const personId = row.CSID;
                     const g: Grade = {
                         personId: personId,
                         delivId: delivId,
-                        score: Number(row.GRADE),
+                        score: gradeScore, // Number(row.GRADE),
                         comment: comment,
                         timestamp: Date.now(),
                         urlName: "CSV Upload",
                         URL: null, // set to null so GradesController can restore URL if needed
-                        custom: {}
+                        custom: custom
                     };
 
                     const person = pc.getPerson(personId);
