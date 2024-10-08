@@ -9,6 +9,7 @@ import {DeliverablesController} from "@backend/controllers/DeliverablesControlle
 import {GradesController} from "@backend/controllers/GradesController";
 import {PersonController} from "@backend/controllers/PersonController";
 import {AuditLabel, Grade} from "@backend/Types";
+import Util from "@common/Util";
 
 export class CSVParser {
 
@@ -117,10 +118,10 @@ export class CSVParser {
                         comment = comment.trim();
                     }
 
-                    const isNumber = function (value: string): boolean {
-                        const num = parseFloat(value);
-                        return Number.isNaN(num) ? false : true;
-                    };
+                    // const isNumber = function (value: string): boolean {
+                    //     const num = parseFloat(value);
+                    //     return Number.isNaN(num) ? false : true;
+                    // };
 
                     let gradeScore = row.GRADE;
 
@@ -129,7 +130,7 @@ export class CSVParser {
                     }
 
                     const custom: any = {};
-                    if (isNumber(gradeScore) === true) {
+                    if (Util.isNumber(gradeScore) === true) {
                         gradeScore = parseFloat(gradeScore);
                         Log.trace("CSVParser::processGrades(..) - grade is a number: " + gradeScore);
                     } else {

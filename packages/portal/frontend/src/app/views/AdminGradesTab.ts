@@ -125,7 +125,12 @@ export class AdminGradesTab extends AdminPage {
                             const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
                             let scoreText: string = "";
                             let scorePrepend = "";
-                            if (grade.score !== null && grade.score >= 0) {
+
+                            if (grade?.custom?.displayScore) {
+                                // if there's a custom grade to display, use that instead
+                                // Log.trace("AdminGradesTab::render() - using custom display score: " + grade.custom.displayScore);
+                                scoreText = grade.custom.displayScore;
+                            } else if (grade.score !== null && grade.score >= 0) {
                                 scoreText = grade.score.toFixed(2);
                                 if (grade.score < 100) {
                                     // two decimal places

@@ -299,4 +299,9 @@ export default class Util {
         // at the end of everything, just defer to localCompare
         return ("" + a).localeCompare("" + b);
     }
+
+    public static isNumber(value: string): boolean {
+        const num = parseFloat(value);
+        return Number.isNaN(num) ? false : true;
+    }
 }
