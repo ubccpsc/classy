@@ -56,13 +56,15 @@ export class CSVParser {
      *
      * Classy grade upload CSVs require two
      * columns (each with a case-sensitive header):
-     *   * CSID
-     *   * GRADE
+     * * CSID
+     * * GRADE
      *
      * One optional column is also considered, if present:
      * * COMMENT
      *
-     * If CSID is absent but CWL or GITHUB is present, we map them to the CSID and proceed as needed.
+     * If the CSID header is absent but CWL or GITHUB is present, we map them to
+     * the CSID and proceed as needed.
+     *
      * The deliverable the CSV is applied to is specified by the upload page.
      *
      * @param requesterId
