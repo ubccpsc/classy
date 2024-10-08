@@ -1,4 +1,4 @@
-CSID,GRADE,COMMENT
-user1ID, EXTENDING ,csv comment
-user2ID, PROFICIENT,csv comment
-user3ID,N/A ,csv comment
+CSID,GRADE,DISPLAY,COMMENT
+user1ID, 100,EXTENDING ,csv comment
+user2ID, 80,PROFICIENT,csv comment
+user3ID,0,N/A ,csv comment

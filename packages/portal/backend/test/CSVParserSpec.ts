@@ -69,13 +69,13 @@ describe("CSVParser", function () {
 
         // validate outcome
         grade = await gc.getGrade(TestHarness.USER1.id, TestHarness.DELIVID1);
-        expect(grade.score).to.equal(-1);
+        expect(grade.score).to.equal(100);
         expect(grade.custom.displayScore).to.equal("EXTENDING");
         grade = await gc.getGrade(TestHarness.USER2.id, TestHarness.DELIVID1);
-        expect(grade.score).to.equal(-1);
+        expect(grade.score).to.equal(80);
         expect(grade.custom.displayScore).to.equal("PROFICIENT");
         grade = await gc.getGrade(TestHarness.USER3.id, TestHarness.DELIVID1);
-        expect(grade.score).to.equal(-1);
+        expect(grade.score).to.equal(0);
         expect(grade.custom.displayScore).to.equal("N/A");
     });
 

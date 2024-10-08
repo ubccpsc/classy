@@ -19,7 +19,7 @@ export class CSVParser {
 
     /**
      * Use CSV-Parse to turn a file path into an array of rows. Since we do not know anything
-     * about each row, we"re just returning it as an array of any. Clients should check to
+     * about each row, we are just returning it as an array of any. Clients should check to
      * make sure the right properties exist on each row (e.g., that all the columns are there).
      *
      * @param {string} path
@@ -59,8 +59,12 @@ export class CSVParser {
      * * CSID
      * * GRADE
      *
-     * One optional column is also considered, if present:
+     * Two optional columns are also considered, if present:
      * * COMMENT
+     * * DISPLAY
+     *   * This is the value that will be shown to the students, if it is present.
+     *   * The GRADE will still be visible in the network view though.
+     *   * Set GRADE to -1 if you do not want the students to see it.
      *
      * If the CSID header is absent but CWL or GITHUB is present, we map them to
      * the CSID and proceed as needed.
@@ -120,11 +124,6 @@ export class CSVParser {
                         comment = comment.trim();
                     }
 
-                    // const isNumber = function (value: string): boolean {
-                    //     const num = parseFloat(value);
-                    //     return Number.isNaN(num) ? false : true;
-                    // };
-
                     let gradeScore = row.GRADE;
 
                     if (typeof gradeScore === "string") {
@@ -136,16 +135,19 @@ export class CSVParser {
                         gradeScore = parseFloat(gradeScore);
                         Log.trace("CSVParser::processGrades(..) - grade is a number: " + gradeScore);
                     } else {
-                        custom.displayScore = gradeScore;
-                        gradeScore = -1; // grade is reflected in displayScore instead
-                        Log.trace("CSVParser::processGrades(..) - grade is a string: " + custom.displayScore);
+                        gradeScore = Number(gradeScore); // might as well try
+                    }
+
+                    if (typeof row.DISPLAY === "string") {
+                        custom.displayScore = row.DISPLAY.trim();
+                        Log.trace("CSVParser::processGrades(..) - grade includes DISPLAY: " + custom.displayScore);
                     }
 
                     const personId = row.CSID;
                     const g: Grade = {
                         personId: personId,
                         delivId: delivId,
-                        score: gradeScore, // Number(row.GRADE),
+                        score: gradeScore,
                         comment: comment,
                         timestamp: Date.now(),
                         urlName: "CSV Upload",
