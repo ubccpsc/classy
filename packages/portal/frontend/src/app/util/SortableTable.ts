@@ -234,19 +234,21 @@ export class SortableTable {
             const bVal = b[sortIndex].value;
 
             if (typeof aVal === "string" && typeof bVal === "string") {
-                const OPTIONS = [
-                    "exceeding", // remove later
-                    "extending",
-                    "proficient",
-                    "developing",
-                    "acquiring",
-                    "beginning",
+                const BUCKET_ORDER = [
+                    "",
+                    " ",
+                    "na",
                     "n/a",
-                    "na" // remove later
+                    "beginning",
+                    "acquiring",
+                    "developing",
+                    "proficient",
+                    "extending",
+                    "exceeding"
                 ];
 
-                const aIndex = OPTIONS.indexOf(aVal.toLowerCase());
-                const bIndex = OPTIONS.indexOf(bVal.toLowerCase());
+                const aIndex = BUCKET_ORDER.indexOf(aVal.toLowerCase());
+                const bIndex = BUCKET_ORDER.indexOf(bVal.toLowerCase());
 
                 if (aIndex > -1 && bIndex > -1) {
                     return Util.compare(aIndex, bIndex) * mult;
