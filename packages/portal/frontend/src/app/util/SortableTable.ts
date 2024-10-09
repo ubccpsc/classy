@@ -235,18 +235,21 @@ export class SortableTable {
 
             if (typeof aVal === "string" && typeof bVal === "string") {
                 const OPTIONS = [
+                    "exceeding", // remove later
                     "extending",
                     "proficient",
                     "developing",
                     "acquiring",
                     "beginning",
-                    "n/a"];
+                    "n/a",
+                    "na" // remove later
+                ];
 
                 const aIndex = OPTIONS.indexOf(aVal.toLowerCase());
                 const bIndex = OPTIONS.indexOf(bVal.toLowerCase());
 
                 if (aIndex > -1 && bIndex > -1) {
-                    return Util.compare(aVal, bVal) * mult;
+                    return Util.compare(aIndex, bIndex) * mult;
                 }
             }
 

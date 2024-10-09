@@ -92,7 +92,6 @@ export class CSVParser {
             const gc = new GradesController();
             const gradePromises: Array<Promise<boolean>> = [];
             let errorMessage = "";
-            let unknownId = "";
             for (const row of data) {
 
                 // this check could probably be outside the loop, but since it throws
@@ -113,7 +112,7 @@ export class CSVParser {
                     } else {
                         Log.warn("CSVParser::processGrades(..) - Unknown GITHUB: " + row.GITHUB);
                         if (errorMessage === "") {
-                            "Unknwon GitHub ids: ";
+                            errorMessage = "Unknown ids: ";
                         }
                         errorMessage += row.GITHUB + ", ";
                     }
@@ -128,7 +127,7 @@ export class CSVParser {
                     } else {
                         Log.warn("CSVParser::processGrades(..) - Unknown CWL: " + row.CWL);
                         if (errorMessage === "") {
-                            "Unknwon CWLs: ";
+                            errorMessage = "Unknown ids: ";
                         }
                         errorMessage += row.CWL + ", ";
                     }
@@ -154,7 +153,7 @@ export class CSVParser {
                     }
 
                     const custom: any = {};
-                    if (Util.isNumber(gradeScore) === true) {
+                    if (Util.isNumeric(gradeScore) === true) {
                         gradeScore = parseFloat(gradeScore);
                         Log.trace("CSVParser::processGrades(..) - grade is a number: " + gradeScore);
                     } else {
@@ -182,10 +181,10 @@ export class CSVParser {
                         gradePromises.push(gc.saveGrade(g));
                     } else {
                         Log.warn("CSVParser::processGrades(..) - record ignored for: " + personId + "; unknown personId");
-                        if (unknownId === "") {
-                            unknownId = "Unknown personIds: ";
+                        if (errorMessage === "") {
+                            errorMessage = "Unknown ids: ";
                         }
-                        unknownId += personId + ", ";
+                        errorMessage += personId + ", ";
                     }
 
                 } else {
@@ -204,12 +203,9 @@ export class CSVParser {
             if (errorMessage.endsWith(", ")) {
                 errorMessage.slice(0, -2);
             }
-            if (unknownId.endsWith(", ")) {
-                unknownId.slice(0, -2);
-            }
 
-            if (errorMessage.length > 0 || unknownId.length > 0) {
-                const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage + "; ID: " + unknownId;
+            if (errorMessage.length > 0) {
+                const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage;
                 Log.error(msg);
                 throw new Error(msg);
             }
