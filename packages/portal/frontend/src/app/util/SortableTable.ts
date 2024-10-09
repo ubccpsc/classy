@@ -233,6 +233,23 @@ export class SortableTable {
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
 
+            if (typeof aVal === "string" && typeof bVal === "string") {
+                const OPTIONS = [
+                    "extending",
+                    "proficient",
+                    "developing",
+                    "acquiring",
+                    "beginning",
+                    "n/a"];
+
+                const aIndex = OPTIONS.indexOf(aVal.toLowerCase());
+                const bIndex = OPTIONS.indexOf(bVal.toLowerCase());
+
+                if (aIndex > -1 && bIndex > -1) {
+                    return Util.compare(aVal, bVal) * mult;
+                }
+            }
+
             return Util.compare(aVal, bVal) * mult;
         });
     }
