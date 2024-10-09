@@ -91,14 +91,18 @@ export class CSVParser {
 
             const gc = new GradesController();
             const gradePromises: Array<Promise<boolean>> = [];
+            let errorMessage = "";
             for (const row of data) {
 
                 if (typeof row.CSID === "undefined" && typeof row.GITHUB !== "undefined") {
                     Log.trace("CSVParser::processGrades(..) - CSID absent but GITHUB present; GITHUB: " + row.GITHUB);
                     const person = await pc.getGitHubPerson(row.GITHUB);
                     if (person !== null) {
-                        row.CSID = person.csId;
+                        row.CSID = person.id;
                         Log.info("CSVParser::processGrades(..) - GITHUB -> CSID: " + row.GITHUB + " -> " + row.CSID);
+                    } else {
+                        Log.warn("CSVParser::processGrades(..) - Unknown GITHUB: " + row.GITHUB);
+                        errorMessage += "Unknown GITHUB: " + row.GITHUB + ", ";
                     }
                 }
 
@@ -106,8 +110,11 @@ export class CSVParser {
                     Log.trace("CSVParser::processGrades(..) - CSID absent but CWL present; CWL: " + row.CWL);
                     const person = await pc.getGitHubPerson(row.CWL); // GITHUB && CWL are the same at UBC
                     if (person !== null) {
-                        row.CSID = person.csId;
+                        row.CSID = person.id;
                         Log.info("CSVParser::processGrades(..) - CWL -> CSID: " + row.CWL + " -> " + row.CSID);
+                    } else {
+                        Log.warn("CSVParser::processGrades(..) - Unknown CWL: " + row.CWL);
+                        errorMessage += "Unknown CWL: " + row.CWL + ", ";
                     }
                 }
 
@@ -155,7 +162,7 @@ export class CSVParser {
                         custom: custom
                     };
 
-                    const person = pc.getPerson(personId);
+                    const person = await pc.getPerson(personId);
                     if (person !== null) {
                         gradePromises.push(gc.saveGrade(g));
                     } else {
@@ -163,9 +170,8 @@ export class CSVParser {
                     }
 
                 } else {
-                    const msg = "Required column missing (required: CSID, GRADE).";
-                    Log.error("CSVParser::processGrades(..) - column missing from: " + JSON.stringify(row));
-                    throw new Error(msg);
+                    Log.warn("CSVParser::processGrades(..) - bad record: " + JSON.stringify(row));
+                    errorMessage += "Bad record: " + JSON.stringify(row) + ", ";
                 }
             }
 
@@ -175,6 +181,12 @@ export class CSVParser {
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.GRADE_ADMIN, requesterId, {}, {}, {numGrades: grades.length});
             Log.info("CSVParser::processGrades(..) - done; # grades: " + grades.length);
+
+            if (errorMessage.length > 0) {
+                const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage;
+                Log.error(msg);
+                throw new Error(msg);
+            }
 
             return grades;
         } catch (err) {

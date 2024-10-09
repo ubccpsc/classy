@@ -8,8 +8,9 @@ import {GradesController} from "@backend/controllers/GradesController";
 import {CSVParser} from "@backend/server/common/CSVParser";
 
 import "@common/GlobalSpec";
+import {Grade} from "@backend/Types";
 
-describe("CSVParser", function () {
+describe.only("CSVParser", function () {
 
     before(async () => {
         await TestHarness.suiteBefore("CSVParser");
@@ -77,6 +78,29 @@ describe("CSVParser", function () {
         grade = await gc.getGrade(TestHarness.USER3.id, TestHarness.DELIVID1);
         expect(grade.score).to.equal(0);
         expect(grade.custom.displayScore).to.equal("N/A");
+    });
+
+    it("Should be able to process a valid grade sheet where the grades are strings w/ github header", async function () {
+        // check pre
+        const gc = new GradesController();
+        let grade: Grade;
+        // do upload
+        const path = __dirname + "/data/gradesValidBucketGithub.csv";
+        const csv = new CSVParser();
+        const rows = await csv.processGrades(TestHarness.ADMIN1.id, TestHarness.DELIVID1, path);
+        Log.test("# rows processed: " + rows.length);
+        expect(rows).to.have.lengthOf(3);
+
+        // validate outcome
+        grade = await gc.getGrade(TestHarness.USER1.id, TestHarness.DELIVID1);
+        expect(grade.score).to.equal(99);
+        expect(grade.custom.displayScore).to.equal("EXTENDING1");
+        grade = await gc.getGrade(TestHarness.USER2.id, TestHarness.DELIVID1);
+        expect(grade.score).to.equal(79);
+        expect(grade.custom.displayScore).to.equal("PROFICIENT1");
+        grade = await gc.getGrade(TestHarness.USER3.id, TestHarness.DELIVID1);
+        expect(grade.score).to.equal(1);
+        expect(grade.custom.displayScore).to.equal("N/A1");
     });
 
     it("Should not be able to process grades for an invalid deliverable", async function () {
