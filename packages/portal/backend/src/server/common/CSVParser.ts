@@ -201,7 +201,7 @@ export class CSVParser {
             Log.info("CSVParser::processGrades(..) - done; # grades: " + grades.length);
 
             if (errorMessage.endsWith(", ")) {
-                errorMessage.slice(0, -2);
+                errorMessage = errorMessage.slice(0, -2);
             }
 
             if (errorMessage.length > 0) {
