@@ -92,7 +92,17 @@ export class CSVParser {
             const gc = new GradesController();
             const gradePromises: Array<Promise<boolean>> = [];
             let errorMessage = "";
+            let unknownId = "";
             for (const row of data) {
+
+                // this check could probably be outside the loop, but since it throws
+                // it only happens once anyways
+                const firstKey = Object.keys(row)[0];
+                if (firstKey === "CSID" || firstKey === "CWL" || firstKey === "GITHUB") {
+                    // good record
+                } else {
+                    throw new Error("CSID/CWL/GITHUB should be the first column in the CSV");
+                }
 
                 if (typeof row.CSID === "undefined" && typeof row.GITHUB !== "undefined") {
                     Log.trace("CSVParser::processGrades(..) - CSID absent but GITHUB present; GITHUB: " + row.GITHUB);
@@ -102,7 +112,10 @@ export class CSVParser {
                         Log.info("CSVParser::processGrades(..) - GITHUB -> CSID: " + row.GITHUB + " -> " + row.CSID);
                     } else {
                         Log.warn("CSVParser::processGrades(..) - Unknown GITHUB: " + row.GITHUB);
-                        errorMessage += "Unknown GITHUB: " + row.GITHUB + ", ";
+                        if (errorMessage === "") {
+                            "Unknwon GitHub ids: ";
+                        }
+                        errorMessage += row.GITHUB + ", ";
                     }
                 }
 
@@ -114,7 +127,10 @@ export class CSVParser {
                         Log.info("CSVParser::processGrades(..) - CWL -> CSID: " + row.CWL + " -> " + row.CSID);
                     } else {
                         Log.warn("CSVParser::processGrades(..) - Unknown CWL: " + row.CWL);
-                        errorMessage += "Unknown CWL: " + row.CWL + ", ";
+                        if (errorMessage === "") {
+                            "Unknwon CWLs: ";
+                        }
+                        errorMessage += row.CWL + ", ";
                     }
                 }
 
@@ -149,7 +165,6 @@ export class CSVParser {
                         custom.displayScore = row.DISPLAY.trim();
                         Log.trace("CSVParser::processGrades(..) - grade includes DISPLAY: " + custom.displayScore);
                     }
-
                     const personId = row.CSID;
                     const g: Grade = {
                         personId: personId,
@@ -167,11 +182,15 @@ export class CSVParser {
                         gradePromises.push(gc.saveGrade(g));
                     } else {
                         Log.warn("CSVParser::processGrades(..) - record ignored for: " + personId + "; unknown personId");
+                        if (unknownId === "") {
+                            unknownId = "Unknown personIds: ";
+                        }
+                        unknownId += personId + ", ";
                     }
 
                 } else {
-                    Log.warn("CSVParser::processGrades(..) - bad record: " + JSON.stringify(row));
-                    errorMessage += "Bad record: " + JSON.stringify(row) + ", ";
+                    Log.warn("CSVParser::processGrades(..) - could not parse grade for record: " + JSON.stringify(row));
+                    // errorMessage += "Bad record: " + JSON.stringify(row) + ", ";
                 }
             }
 
@@ -182,8 +201,15 @@ export class CSVParser {
             await dbc.writeAudit(AuditLabel.GRADE_ADMIN, requesterId, {}, {}, {numGrades: grades.length});
             Log.info("CSVParser::processGrades(..) - done; # grades: " + grades.length);
 
-            if (errorMessage.length > 0) {
-                const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage;
+            if (errorMessage.endsWith(", ")) {
+                errorMessage.slice(0, -2);
+            }
+            if (unknownId.endsWith(", ")) {
+                unknownId.slice(0, -2);
+            }
+
+            if (errorMessage.length > 0 || unknownId.length > 0) {
+                const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage + "; ID: " + unknownId;
                 Log.error(msg);
                 throw new Error(msg);
             }
