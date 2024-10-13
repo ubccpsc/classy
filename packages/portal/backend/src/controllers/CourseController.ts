@@ -77,7 +77,8 @@ export interface ICourseController {
 
     requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
         accepted: boolean,
-        message: string
+        message: string,
+        fullMessage?: string
     } | null>;
 
     /**
@@ -229,7 +230,8 @@ export class CourseController implements ICourseController {
 
     public async requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
         accepted: boolean,
-        message: string
+        message: string,
+        fullMessage?: string
     } | null> {
         Log.warn(`CourseController::requestFeedbackDelay(${info}) - Default impl; returning null`);
         return null;

@@ -691,9 +691,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can request feedback");
                     return null;
                 } else {
-                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can NOT request feedback: " +
-                        feedbackDelay.message);
-                    return feedbackDelay.message;
+                    Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can NOT request feedback; message: " +
+                        feedbackDelay.message + "; fullMessage: " + feedbackDelay?.fullMessage);
+                    let msg = "";
+                    if (typeof feedbackDelay.fullMessage !== "undefined") {
+                        msg = feedbackDelay.fullMessage;
+                    } else {
+                        msg = "You must wait " + feedbackDelay + " before requesting feedback.";
+                    }
+                    return msg;
                 }
             } else {
                 Log.info(
@@ -712,7 +718,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                         const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
                         Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName +
                             " ) - default done; NOT enough time passed, delay: " + msg);
-                        return msg;
+
+                        const delayMsg = "You must wait " + msg + " before requesting feedback.";
+                        return delayMsg;
                     }
                 }
             }
