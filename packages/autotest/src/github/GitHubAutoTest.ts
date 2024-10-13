@@ -442,7 +442,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - too early for: " + target.personId + "; must wait: " +
                 feedbackDelay + "; SHA: " + Util.shaHuman(target.commitURL));
             // NOPE, not yet (this is the most common case; feedback requested without time constraints)
-            const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
+            // const msg = "You must wait " + feedbackDelay + " before requesting feedback.";
+            const msg = feedbackDelay; // msg now fully formatted in requestFeedbackDelay
             await this.postToGitHub(target, {url: target.postbackURL, message: msg});
         } else if (previousRequest !== null) {
             Log.info("GitHubAutoTest::handleCommentStudent(..) - feedback previously given for: " +
