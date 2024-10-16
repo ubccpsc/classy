@@ -490,9 +490,10 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
                 "; json.accepted: " + typeof json?.accepted +
                 "; json.message: " + typeof json?.message +
-                "; json.notImplemented: " + typeof json?.notImplemented);
+                "; json.fullMessage: " + typeof json?.fullMessage);
 
-            if (typeof json?.accepted === "boolean" && typeof json?.message === "string") {
+            if (typeof json?.accepted === "boolean" &&
+                (typeof json?.message === "string" || typeof json?.fullMessage === "string")) {
                 resp = {
                     accepted: json.accepted,
                     message: json.message,
