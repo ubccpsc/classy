@@ -627,7 +627,7 @@ export abstract class AutoTest implements IAutoTest {
                 "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(input.target.commitSHA));
 
             let score = -1;
-            if (record.output.report !== null && typeof record.output.report.scoreOverall !== "undefined") {
+            if (record?.output?.report?.scoreOverall) {
                 score = record.output.report.scoreOverall;
             }
             const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);

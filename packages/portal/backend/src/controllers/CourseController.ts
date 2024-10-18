@@ -36,7 +36,7 @@ export interface ICourseController {
      * saved? The Deliverable is included in case due dates want to be considered. The
      * Grade timestamp is the timestamp of the GitHub push event, not the commit event,
      * as this is the only time we can guarantee was not tampered with on the client side.
-     * This will be called once-per-teammember if there are multiple people on the repo
+     * This will be called once-per-teammate if there are multiple people on the repo
      * receiving the grade.
      *
      * @param {Deliverable} deliv

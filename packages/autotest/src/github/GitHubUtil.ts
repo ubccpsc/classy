@@ -309,7 +309,7 @@ export class GitHubUtil {
             const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
             const backendConfig = await portal.getConfiguration();
             if (backendConfig === null) {
-                Log.warn("GitHubUtil::processComment() - no default deliverable for course");
+                Log.warn("GitHubUtil::processPush() - no default deliverable for course");
                 return null;
             }
 

@@ -161,7 +161,7 @@ export class GradingJob {
         } else if (reportRead === false) {
             Log.warn("GradingJob::run() - No grading report for repo: " + this.input.target.repoId +
                 "; delivId: " + this.input.target.delivId + "; SHA: " + Util.shaHuman(this.input.target.commitSHA));
-            out.report.feedback = "Failed to read grade report. Make a new commit and try again.";
+            out.report.feedback = "Failed to read grade report for **`#" + this.input.target.delivId + "`**. Make a new commit and try again.";
             out.report.result = ContainerState.NO_REPORT;
             out.state = ContainerState.NO_REPORT;
         } else {
