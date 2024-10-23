@@ -274,7 +274,7 @@
                 if (btnLabel.startsWith('Admin')) {
                     console.log("stdio.html::handleSwitchStdio(..) - switch to staff view");
                     event.target.innerText = 'Staff View';
-                    loadAdminStdio(delivId, repoId, sha);
+                    loadStdio(delivId, repoId, sha, 'admin');
                     loadNotPassingTestNames(delivId, repoId, sha);
                 } else {
                     console.log("stdio.html::handleSwitchStdio(..) - switch to admin view");
