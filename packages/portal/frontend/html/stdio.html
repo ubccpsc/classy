@@ -130,36 +130,47 @@
             return toReturn;
         }
 
-        function loadAdminStdio(delivId, repoId, sha) {
+        function loadStdioBrief(delivId, repoId, sha) {
             const url = `${HOST}/portal/resource/${sha}-${delivId}/staff/stdio.txt`;
             // admin stdio.txt does not exist, instead render a custom view here
-            console.log("stdio.html::loadAdminStdio(..) - url: " + url);
+            console.log("stdio.html::loadStdioBrief(..) - url: " + url);
             getHTTP(url, HEADERS, function (stdio) {
                 if (HOST.indexOf("cs310") >= 0) {
-                    console.log("stdio.html::loadAdminStdio(..) - simplify stdio for 310");
+                    console.log("stdio.html::loadStdioBrief(..) - simplify stdio for 310");
                     stdio = simplifyStdio(stdio);
+                } else {
+                    console.log("stdio.html::loadStdioBrief(..) - brief and full are the same for this course");
                 }
                 editor.setValue(stdio);
                 editor.clearSelection();
                 editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
             }, function (error) {
                 if (typeof error !== 'string') {
-                    error = 'The request failed, possibly due to unauthorization.';
+                    error = 'The request failed, possibly due to de-authorization.';
                 }
                 alert(error);
             });
         }
 
         function loadStdio(delivId, repoId, sha, stdioType) {
-            const url = `${HOST}/portal/resource/${sha}-${delivId}/${stdioType}/stdio.txt`;
-            console.log("stdio.html::loadStdio(..) - url: " + url);
+            console.log("stdio.html::loadStdio(..) - stdioType: " + stdioType);
+            if (stdioType === "admin") {
+                loadStdioFull(delivId, repoId, sha);
+            } else {
+                loadStdioBrief(delivId, repoId, sha);
+            }
+        }
+
+        function loadStdioFull(delivId, repoId, sha) {
+            const url = `${HOST}/portal/resource/${sha}-${delivId}/staff/stdio.txt`;
+            console.log("stdio.html::loadStdioFull(..) - url: " + url);
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(stdio);
                 editor.clearSelection();
                 editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
             }, function (error) {
                 if (typeof error !== 'string') {
-                    error = 'The request failed, possibly due to unauthorization.';
+                    error = 'The request failed, possibly due to de-authorization.';
                 }
                 alert(error);
             });
