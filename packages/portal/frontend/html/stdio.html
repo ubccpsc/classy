@@ -75,6 +75,70 @@
             return vars;
         }
 
+        function simplifyStdio(stdio) {
+            let toReturn = "";
+
+            try {
+                // Every line that includes AssertionError:
+                // Every line that includes compareJSONArray
+                // Every line that includes Error: Timeout of (but truncate anything after (... since this returns our path names)
+                // Every line that includes ENOENT
+                let LINES_INCLUDE = [
+                    "AssertionError",
+                    "compareJSONArray",
+                    "Error: Timeout of",
+                    "ENOENT"
+                ];
+
+                let lines = stdio.split('\n');
+                for (let line of lines) {
+                    for (let match of LINES_INCLUDE) {
+                        if (line.includes(match)) {
+                            // TODO: handle special case for Timeout of (see comment above)
+                            toReturn += line + '\n';
+                        }
+                    }
+                }
+
+                // Everything before (and including) ProjectGrader::grade(..) - start
+                let preamble = "";
+                if (stdio.contains("ProjectGrader::grade(..) - start")) {
+                    let index = stdio.indexOf("ProjectGrader::grade(..) - start");
+                    preamble = stdio.substring(0, index);
+                }
+                toReturn = preamble + toReturn;
+
+                // Everything after (and including) ProjectGrader::grade(..) - done
+                let postfix = "";
+                if (stdio.contains("ProjectGrader::grade(..) - done")) {
+                    let index = stdio.indexOf("ProjectGrader::grade(..) - done");
+                    postfix = stdio.substring(index);
+                }
+                toReturn = toReturn + postfix;
+            } catch (err) {
+                console.log("Error in simplifyStdio: " + err);
+                toReturn = stdio;
+            }
+            return toReturn;
+        }
+
+        function loadAdminStdio(delivId, repoId, sha) {
+            const url = `${HOST}/portal/resource/${sha}-${delivId}/staff/stdio.txt`;
+            // admin stdio.txt does not exist, instead render a custom view here
+            console.log("stdio.html::loadAdminStdio(..) - url: " + url);
+            getHTTP(url, HEADERS, function (stdio) {
+                stdio = simplifyStdio(stdio);
+                editor.setValue(stdio);
+                editor.clearSelection();
+                editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
+            }, function (error) {
+                if (typeof error !== 'string') {
+                    error = 'The request failed, possibly due to unauthorization.';
+                }
+                alert(error);
+            });
+        }
+
         function loadStdio(delivId, repoId, sha, stdioType) {
             const url = `${HOST}/portal/resource/${sha}-${delivId}/${stdioType}/stdio.txt`;
             console.log("stdio.html::loadStdio(..) - url: " + url);
@@ -188,7 +252,7 @@
                 if (btnLabel.startsWith('Admin')) {
                     console.log("stdio.html::handleSwitchStdio(..) - switch to staff view");
                     event.target.innerText = 'Staff View';
-                    loadStdio(delivId, repoId, sha, 'admin');
+                    loadAdminStdio(delivId, repoId, sha);
                     loadNotPassingTestNames(delivId, repoId, sha);
                 } else {
                     console.log("stdio.html::handleSwitchStdio(..) - switch to admin view");
