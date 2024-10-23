@@ -100,15 +100,19 @@
                     }
                 }
 
-                // Everything before (and including) ProjectGrader::grade(..) - start
+                // Everything before (and including)
+                // ProjectGrader::grade(..) - start
+                // SimpleGrader::doGrading() - start
                 let preamble = "";
-                let prefixIndex = stdio.indexOf("ProjectGrader::grade(..) - start")
+                let prefixIndex = stdio.indexOf("SimpleGrader::doGrading() - start")
                 if (prefixIndex >= 0) {
                     preamble = stdio.substring(0, prefixIndex);
                 }
                 toReturn = preamble + toReturn;
 
-                // Everything after (and including) ProjectGrader::grade(..) - done
+                // Everything after (and including)
+                // ProjectGrader::grade(..) - done
+                // SimpleGrader::doGrading() - done
                 let postfix = "";
                 let postfixIndex = stdio.indexOf("ProjectGrader::grade(..) - done")
                 if ( postfixIndex >= 0) {
