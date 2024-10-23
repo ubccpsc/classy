@@ -135,7 +135,10 @@
             // admin stdio.txt does not exist, instead render a custom view here
             console.log("stdio.html::loadAdminStdio(..) - url: " + url);
             getHTTP(url, HEADERS, function (stdio) {
-                stdio = simplifyStdio(stdio);
+                if (HOST.indexOf("cs310") >= 0) {
+                    console.log("stdio.html::loadAdminStdio(..) - simplify stdio for 310");
+                    stdio = simplifyStdio(stdio);
+                }
                 editor.setValue(stdio);
                 editor.clearSelection();
                 editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
