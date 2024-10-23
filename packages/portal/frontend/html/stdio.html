@@ -93,7 +93,7 @@
                 let lines = stdio.split('\n');
                 for (let line of lines) {
                     for (let match of LINES_INCLUDE) {
-                        if (line.includes(match)) {
+                        if (line.indexOf(match) >= 0) {
                             // TODO: handle special case for Timeout of (see comment above)
                             toReturn += line + '\n';
                         }
@@ -102,21 +102,21 @@
 
                 // Everything before (and including) ProjectGrader::grade(..) - start
                 let preamble = "";
-                if (stdio.contains("ProjectGrader::grade(..) - start")) {
-                    let index = stdio.indexOf("ProjectGrader::grade(..) - start");
-                    preamble = stdio.substring(0, index);
+                let prefixIndex = stdio.indexOf("ProjectGrader::grade(..) - start")
+                if (prefixIndex >= 0) {
+                    preamble = stdio.substring(0, prefixIndex);
                 }
                 toReturn = preamble + toReturn;
 
                 // Everything after (and including) ProjectGrader::grade(..) - done
                 let postfix = "";
-                if (stdio.contains("ProjectGrader::grade(..) - done")) {
-                    let index = stdio.indexOf("ProjectGrader::grade(..) - done");
-                    postfix = stdio.substring(index);
+                let postfixIndex = stdio.indexOf("ProjectGrader::grade(..) - done")
+                if ( postfixIndex >= 0) {
+                    postfix = stdio.substring(postfixIndex, stdio.length);
                 }
                 toReturn = toReturn + postfix;
             } catch (err) {
-                console.log("Error in simplifyStdio: " + err);
+                console.error("stdio::simplifyStdio(..) - ERROR: " + err);
                 toReturn = stdio;
             }
             return toReturn;
