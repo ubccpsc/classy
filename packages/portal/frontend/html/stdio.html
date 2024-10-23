@@ -108,6 +108,7 @@
                 let prefixIndex = stdio.indexOf(PREFIX)
                 if (prefixIndex >= 0) {
                     preamble = stdio.substring(0, prefixIndex + PREFIX.length);
+                    preamble += "\n***GRADING START***\n\n";
                 }
                 toReturn = preamble + toReturn;
 
@@ -119,6 +120,7 @@
                 let postfixIndex = stdio.indexOf(POSTFIX)
                 if (postfixIndex >= 0) {
                     postfix = stdio.substring(postfixIndex, stdio.length);
+                    postfix = "\n\n***GRADING DONE***\n" + postfix;
                 }
                 toReturn = toReturn + postfix;
             } catch (err) {
