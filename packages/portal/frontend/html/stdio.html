@@ -18,7 +18,7 @@
         <div class="center" id="headerTitle">Container Output Viewer</div>
         <div id='stdioSwitch' class="right">
             <ons-toolbar-button id="switchViewBtn">
-                <span id="switchViewText"style="vertical-align: top; font-size: 80%;">Admin View</span>
+                <span id="switchViewText" style="vertical-align: top; font-size: 80%;">Admin View</span>
             </ons-toolbar-button>
         </div>
     </ons-toolbar>
@@ -40,6 +40,8 @@
         var HEADERS = {};
 
         function getHTTP(url, headers, onsuccess, onerror) {
+            console.log("stdio.html::onLoad - url: " + url);
+
             var request = new XMLHttpRequest();
             request.open('GET', url, true);
 
@@ -75,6 +77,7 @@
 
         function loadStdio(delivId, repoId, sha, stdioType) {
             const url = `${HOST}/portal/resource/${sha}-${delivId}/${stdioType}/stdio.txt`;
+            console.log("stdio.html::loadStdio(..) - url: " + url);
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(stdio);
                 editor.clearSelection();
@@ -137,6 +140,8 @@
 
         function loadNotPassingTestNames(delivId, repoId, sha) {
             const url = `${HOST}/portal/admin/dashboard/${delivId}/${repoId}`;
+
+            console.log("stdio.html::loadNotPassingTestNames(..) - url: " + url);
             getHTTP(url, HEADERS, function (data) {
                 json = JSON.parse(data);
                 var commit = json['success']
@@ -175,15 +180,18 @@
 
         // switchViewBtn: only enable the admin/staff stdio switch btn when the user is an admin
         var switchViewBtn = document.getElementById('switchViewBtn');
+
         function handleSwitchStdio() {
             switchViewBtn.addEventListener('click', (event) => {
                 var btnLabel = event.target.innerText;
                 editor.setValue('Loading...');
                 if (btnLabel.startsWith('Admin')) {
+                    console.log("stdio.html::handleSwitchStdio(..) - switch to staff view");
                     event.target.innerText = 'Staff View';
                     loadStdio(delivId, repoId, sha, 'admin');
                     loadNotPassingTestNames(delivId, repoId, sha);
                 } else {
+                    console.log("stdio.html::handleSwitchStdio(..) - switch to admin view");
                     event.target.innerText = 'Admin View';
                     loadStdio(delivId, repoId, sha, 'staff');
                     loadNotPassingTestNames(delivId, repoId, sha);
