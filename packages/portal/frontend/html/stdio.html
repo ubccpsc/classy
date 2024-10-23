@@ -104,9 +104,10 @@
                 // ProjectGrader::grade(..) - start
                 // SimpleGrader::doGrading() - start
                 let preamble = "";
-                let prefixIndex = stdio.indexOf("SimpleGrader::doGrading() - start")
+                const PREFIX = "SimpleGrader::doGrading() - start";
+                let prefixIndex = stdio.indexOf(PREFIX)
                 if (prefixIndex >= 0) {
-                    preamble = stdio.substring(0, prefixIndex);
+                    preamble = stdio.substring(0, prefixIndex + PREFIX.length);
                 }
                 toReturn = preamble + toReturn;
 
@@ -114,8 +115,9 @@
                 // ProjectGrader::grade(..) - done
                 // SimpleGrader::doGrading() - done
                 let postfix = "";
-                let postfixIndex = stdio.indexOf("ProjectGrader::grade(..) - done")
-                if ( postfixIndex >= 0) {
+                const POSTFIX = "SimpleGrader::doGrading() - done";
+                let postfixIndex = stdio.indexOf(POSTFIX)
+                if (postfixIndex >= 0) {
                     postfix = stdio.substring(postfixIndex, stdio.length);
                 }
                 toReturn = toReturn + postfix;
