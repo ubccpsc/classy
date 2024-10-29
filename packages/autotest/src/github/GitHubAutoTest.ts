@@ -60,7 +60,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return false;
             }
 
-            const PREAMBLE = "GitHubAutoTest::handlePushEvent( " + Util.shaHuman(info.commitSHA) + ") - ";
+            const PREAMBLE = "GitHubAutoTest::handlePushEvent( " + Util.shaHuman(info.commitSHA) + " ) - ";
 
             const org = Config.getInstance().getProp(ConfigKey.org);
             Log.trace(PREAMBLE + "start; org: " + org +
@@ -73,9 +73,10 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             Log.info(PREAMBLE + "repo: " + info.repoId + "; person: " + info.personId + "; branch: " + info.ref);
 
-            // if there are already pushes for this SHA, and any of them are on main/master, use those instead
+            // If there are already pushes for this SHA, and any of them are on main/master, use those instead
             // the implication here is that a SHA on a branch will not overwrite a result for a SHA on main/master
-            // but a SHA on main/master can overwrite a SHA on a branch
+            // but a SHA on main/master can overwrite a SHA on a branch.
+            // This sometimes happens when a commit is on a named branch and main, although I don't know why/how this comes to be.
             const prevPush = await this.dataStore.getPushRecord(info.commitURL);
             if (prevPush !== null && GitHubUtil.isMain(prevPush.ref) === true) {
                 Log.info(PREAMBLE + "repo: " + info.repoId + "; person: " + info.personId +
@@ -90,9 +91,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
             const start = Date.now();
             if (typeof delivId === "undefined" || delivId === null) {
-                Log.trace(PREAMBLE + "deliv not specified; requesting");
+                // Log.trace(PREAMBLE + "deliv not specified; requesting");
                 delivId = await this.getDefaultDelivId(); // current default deliverable
-                Log.info(PREAMBLE + "retrieved deliv: " + delivId + "; type: " + typeof delivId);
+                Log.trace(PREAMBLE + "retrieved deliv: " + delivId + "; type: " + typeof delivId);
 
                 if (delivId === "null") {
                     // delivId should be null if null, not "null"; force this flag if this is the case
