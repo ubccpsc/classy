@@ -104,8 +104,12 @@ export class AdminController {
                 Log.trace("AdminController::processNewAutoTestGrade(..) - handling grade for " + personId +
                     "; existingGrade: " + existingGradeScore + "; newGrade: " + newGrade.score);
                 const shouldSave = await cc.handleNewAutoTestGrade(deliv, newGrade, existingGrade);
-                Log.trace("AdminController::processNewAutoTestGrade(..) - handled grade for " + personId +
-                    "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
+                // Log.trace("AdminController::processNewAutoTestGrade(..) - handled grade for " + personId +
+                //     "; shouldSave: " + shouldSave); // NOTE: for hangup debugging
+
+                Log.trace(
+                    "AdminController::processNewAutoTestGrade(..) - grade: " + JSON.stringify(
+                        newGrade) + "; repoId: " + grade.repoId + "; shouldSave: " + shouldSave);
 
                 if (shouldSave === true) {
                     Log.info("AdminController::processNewAutoTestGrade(..) - saving grade for deliv: "

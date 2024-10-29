@@ -70,9 +70,25 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             Log.info("GitHubAutoTest::handlePushEvent(..) - " +
                 "repo: " + info.repoId + "; person: " + info.personId +
                 "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref);
-            const start = Date.now();
-            await this.savePushInfo(info);
 
+            // if there are already pushes for this SHA, and any of them are on main/master, use those instead
+            const prevPush = await this.dataStore.getPushRecord(info.commitURL);
+            if (prevPush !== null && (prevPush.ref === "refs/heads/main" || prevPush.ref === "refs/heads/master")) {
+                Log.info("GitHubAutoTest::handlePushEvent(..) - " +
+                    "repo: " + info.repoId + "; person: " + info.personId +
+                    "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref +
+                    "; using main/master push instead of: " + prevPush.ref);
+                info = prevPush;
+                // already saved so just use that instead
+            } else {
+                Log.info("GitHubAutoTest::handlePushEvent(..) - " +
+                    "repo: " + info.repoId + "; person: " + info.personId +
+                    "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref +
+                    "; no main/master push found");
+                await this.savePushInfo(info);
+            }
+
+            const start = Date.now();
             if (typeof delivId === "undefined" || delivId === null) {
                 Log.trace("GitHubAutoTest::handlePushEvent(..) - deliv not specified; requesting");
                 delivId = await this.getDefaultDelivId(); // current default deliverable
@@ -512,7 +528,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
 
         Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; SHA: " + Util.shaHuman(info.commitSHA));
-        Log.trace("GitHubAutoTest::handleCommentEvent(..) - start; comment: " + JSON.stringify(info));
+        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; comment: " + JSON.stringify(info));
 
         // sanity check; this keeps the rest of the code much simpler
         const preconditionsMet = await this.checkCommentPreconditions(info);
@@ -553,7 +569,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         // This is helpful for testing student workflows with the queue
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             if (typeof info.flags !== "undefined" && info.flags.indexOf("#student") >= 0) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - running admin request as student");
+                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - running admin request as student");
                 isStaff.isStaff = false;
                 isStaff.isAdmin = false;
             }
@@ -561,26 +577,27 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
         if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
             // staff request
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; for: " +
-                info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA));
+            Log.info(
+                "GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; deliv: " + info.delivId +
+                "; SHA: " + Util.shaHuman(info.commitSHA));
             info.adminRequest = true; // set admin request so queues can handle this appropriately
             if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
-                Log.info("GitHubAutoTest::handleCommentEvent(..) - handleAdmin; processing with #force");
+                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; processing with #force");
                 await this.processComment(info, null); // do not pass the previous result so a new one will be generated
             } else {
                 await this.processComment(info, res);
             }
         } else {
             // student request
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - handleStudent; for: " +
-                info.personId + "; deliv: " + info.delivId + "; SHA: " + Util.shaHuman(info.commitSHA));
+            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleStudent; deliv: " + info.delivId +
+                "; SHA: " + Util.shaHuman(info.commitSHA));
             info.adminRequest = false;
             await this.handleCommentStudent(info, res);
         }
 
         // make sure the queues have ticked after the comment has been processed
         this.tick();
-        Log.trace("GitHubAutoTest::handleCommentEvent(..) - done; took: " + Util.took(start));
+        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - done; took: " + Util.took(start));
     }
 
     protected async processExecution(data: AutoTestResult): Promise<void> {

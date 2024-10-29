@@ -158,7 +158,7 @@ export class MongoDataStore implements IDataStore {
      * most recent one.
      */
     public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getPushRecord(..) - start");
+        // Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
             let records = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL}) as CommitTarget[];
