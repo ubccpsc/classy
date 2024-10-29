@@ -183,7 +183,8 @@ export default class AutoTestRouteHandler {
                 return commentEvent;
             case "push":
                 const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
-                if (pushEvent === null) {
+                if (pushEvent === null && (body as any)?.deleted !== true) {
+                    // figure out reasons we end up here that are not deleted branches
                     Log.warn(
                         "AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body));
                 }

@@ -63,11 +63,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             const PREAMBLE = "GitHubAutoTest::handlePushEvent( " + Util.shaHuman(info.commitSHA) + " ) - ";
 
             const org = Config.getInstance().getProp(ConfigKey.org);
-            Log.trace(PREAMBLE + "start; org: " + org +
-                "; push org: " + info.orgId);
+            Log.trace(PREAMBLE + "start; org: " + org + "; repo: " + info.repoId);
             if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
-                Log.warn(PREAMBLE + "ignored, org: " + info.orgId +
-                    " does not match current course: " + org);
+                Log.warn(PREAMBLE + "ignored, org: " + info.orgId + " does not match current course: " + org);
                 return false;
             }
 
@@ -116,7 +114,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 const input: ContainerInput = {target: info, containerConfig};
                 const shouldPromotePush = await this.classPortal.shouldPromotePush(info);
                 input.target.shouldPromote = shouldPromotePush;
-                const sha = Util.shaHuman(info.commitSHA);
 
                 if (info.botMentioned === true) {
                     Log.info(PREAMBLE + "bot mentioned; adding to exp queue");
@@ -154,8 +151,8 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
                             regressionInput.target.shouldPromote = true; // plugin is expecting it, make sure it is added
                             Log.info(PREAMBLE + "scheduling regressionId: " + regressionId);
-                            Log.trace(
-                                PREAMBLE + "scheduling regressionId: " + regressionId + "; input: " + JSON.stringify(regressionInput));
+                            Log.trace(PREAMBLE + "scheduling regressionId: " + regressionId +
+                                "; input: " + JSON.stringify(regressionInput));
 
                             this.addToLowQueue(regressionInput);
                         }
@@ -167,7 +164,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 return true;
             } else {
                 // no active deliverable, ignore this push event (do not push an error either)
-                Log.warn(PREAMBLE + "commit: " + info.commitSHA + " - No active deliverable; push ignored.");
+                Log.warn(PREAMBLE + "no active deliverable; push ignored.");
                 return false;
             }
         } catch (err) {
