@@ -470,4 +470,8 @@ export class GitHubUtil {
         }
         return commitURL;
     }
+
+    public static isMain(ref: string): boolean {
+        return ref === "refs/heads/main" || ref === "refs/heads/master";
+    }
 }

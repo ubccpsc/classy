@@ -6,6 +6,7 @@ import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import Util from "@common/Util";
+import {GitHubUtil} from "@autotest/github/GitHubUtil";
 
 export interface IDataStore {
 
@@ -172,7 +173,8 @@ export class MongoDataStore implements IDataStore {
                 } else {
                     // return main/master if exists
                     for (const r of records) {
-                        if (typeof r.ref !== "undefined" && (r.ref === "refs/heads/main" || r.ref === "refs/heads/master")) {
+
+                        if (typeof r.ref !== "undefined" && GitHubUtil.isMain(r.ref) === true) {
                             Log.trace("MongoDataStore::getPushRecord(..) - multiple found, returning main; took: " + Util.took(start));
                             return r;
                         }

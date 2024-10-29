@@ -53,47 +53,46 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
      * @param {string} delivId
      */
     public async handlePushEvent(info: CommitTarget, delivId?: string): Promise<boolean> {
+
         try {
             if (typeof info === "undefined" || info === null) {
                 Log.info("GitHubAutoTest::handlePushEvent(..) - skipped; info not provided");
                 return false;
             }
 
+            const PREAMBLE = "GitHubAutoTest::handlePushEvent( " + Util.shaHuman(info.commitSHA) + ") - ";
+
             const org = Config.getInstance().getProp(ConfigKey.org);
-            Log.trace("GitHubAutoTest::handlePushEvent(..) - start; org: " + org + "; push org: " + info.orgId);
+            Log.trace(PREAMBLE + "start; org: " + org +
+                "; push org: " + info.orgId);
             if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
-                Log.warn("GitHubAutoTest::handlePushEvent(..) - ignored, org: " + info.orgId +
+                Log.warn(PREAMBLE + "ignored, org: " + info.orgId +
                     " does not match current course: " + org);
                 return false;
             }
 
-            Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                "repo: " + info.repoId + "; person: " + info.personId +
-                "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref);
+            Log.info(PREAMBLE + "repo: " + info.repoId + "; person: " + info.personId + "; branch: " + info.ref);
 
             // if there are already pushes for this SHA, and any of them are on main/master, use those instead
+            // the implication here is that a SHA on a branch will not overwrite a result for a SHA on main/master
+            // but a SHA on main/master can overwrite a SHA on a branch
             const prevPush = await this.dataStore.getPushRecord(info.commitURL);
-            if (prevPush !== null && (prevPush.ref === "refs/heads/main" || prevPush.ref === "refs/heads/master")) {
-                Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                    "repo: " + info.repoId + "; person: " + info.personId +
-                    "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref +
-                    "; using main/master push instead of: " + prevPush.ref);
+            if (prevPush !== null && GitHubUtil.isMain(prevPush.ref) === true) {
+                Log.info(PREAMBLE + "repo: " + info.repoId + "; person: " + info.personId +
+                    "; using previous: " + prevPush.ref + "; instead of: " + info.ref);
                 info = prevPush;
-                // already saved so just use that instead
+                // already saved so just use that instead (even if the current one is also on main)
             } else {
-                Log.info("GitHubAutoTest::handlePushEvent(..) - " +
-                    "repo: " + info.repoId + "; person: " + info.personId +
-                    "; SHA: " + Util.shaHuman(info.commitSHA) + "; branch: " + info.ref +
-                    "; no main/master push found");
+                // Log.trace(PREAMBLE + "repo: " + info.repoId + "; person: " + info.personId +
+                // "; branch: " + info.ref + "; no previous main/master push found");
                 await this.savePushInfo(info);
             }
 
             const start = Date.now();
             if (typeof delivId === "undefined" || delivId === null) {
-                Log.trace("GitHubAutoTest::handlePushEvent(..) - deliv not specified; requesting");
+                Log.trace(PREAMBLE + "deliv not specified; requesting");
                 delivId = await this.getDefaultDelivId(); // current default deliverable
-                Log.info("GitHubAutoTest::handlePushEvent(..) - retrieved deliv: " +
-                    delivId + "; type: " + typeof delivId);
+                Log.info(PREAMBLE + "retrieved deliv: " + delivId + "; type: " + typeof delivId);
 
                 if (delivId === "null") {
                     // delivId should be null if null, not "null"; force this flag if this is the case
@@ -104,12 +103,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             if (delivId !== null) {
                 const containerConfig = await this.classPortal.getContainerDetails(delivId);
                 if (containerConfig === null) {
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; no default deliverable");
+                    Log.info(PREAMBLE + "not scheduled; no default deliverable");
                     return false;
                 }
 
                 if (containerConfig.closeTimestamp < info.timestamp && containerConfig.lateAutoTest === false) {
-                    Log.info("GitHubAutoTest::handlePushEvent(..) - not scheduled; deliv is closed to grading");
+                    Log.info(PREAMBLE + "not scheduled; deliv is closed to grading");
                     return false;
                 }
 
@@ -119,12 +118,12 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 const sha = Util.shaHuman(info.commitSHA);
 
                 if (info.botMentioned === true) {
-                    Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - bot mentioned; adding to exp queue`);
+                    Log.info(PREAMBLE + "bot mentioned; adding to exp queue");
                     // requested jobs will always go on express
                     this.addToExpressQueue(input);
                 } else {
                     if (shouldPromotePush === true) {
-                        Log.info(`GitHubAutoTest::handlePushEvent( ${sha} ) - shouldPromote; Force adding to std queue`);
+                        Log.info(PREAMBLE + "shouldPromote; Force adding to std queue");
                         // promoted jobs should always go on standard
                         this.addToStandardQueue(input, true);
                     } else {
@@ -153,9 +152,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                             };
 
                             regressionInput.target.shouldPromote = true; // plugin is expecting it, make sure it is added
-                            Log.info("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId);
-                            Log.trace("GitHubAutoTest::handlePushEvent(..) - scheduling regressionId: " + regressionId +
-                                "; input: " + JSON.stringify(regressionInput));
+                            Log.info(PREAMBLE + "scheduling regressionId: " + regressionId);
+                            Log.trace(
+                                PREAMBLE + "scheduling regressionId: " + regressionId + "; input: " + JSON.stringify(regressionInput));
 
                             this.addToLowQueue(regressionInput);
                         }
@@ -163,17 +162,15 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                 }
 
                 this.tick();
-                Log.info("GitHubAutoTest::handlePushEvent(..) - done; " +
-                    "deliv: " + info.delivId + "; repo: " + info.repoId + "; SHA: " +
-                    Util.shaHuman(info.commitSHA) + "; took: " + Util.took(start));
+                Log.info(PREAMBLE + "done; " + "deliv: " + info.delivId + "; repo: " + info.repoId + "; took: " + Util.took(start));
                 return true;
             } else {
                 // no active deliverable, ignore this push event (do not push an error either)
-                Log.warn("GitHubAutoTest::handlePushEvent(..) - commit: " + info.commitSHA + " - No active deliverable; push ignored.");
+                Log.warn(PREAMBLE + "commit: " + info.commitSHA + " - No active deliverable; push ignored.");
                 return false;
             }
         } catch (err) {
-            Log.error("GitHubAutoTest::handlePushEvent(..) - ERROR: " + err.message);
+            Log.error("GitHubAutoTest::handlePushEvent( " + Util.shaHuman(info.commitSHA) + " ) - ERROR: " + err.message);
             throw err;
         }
     }
