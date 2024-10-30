@@ -348,9 +348,9 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo + "; person: " +
-                pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
-            Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
+            Log.info("GitHubUtil::processPush(..) - done; person: " + pusher?.personId + "; repo: " + repo +
+                "; SHA: " + Util.shaHuman(commitSHA) + "; ref: " + ref + "; took: " + Util.took(start));
+            // Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
