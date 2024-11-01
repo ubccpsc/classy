@@ -40,6 +40,12 @@ http {
 
         # pass requests to the portal service (which is automatically defined in the hosts file by docker)
         location / {
+            # kill cache (https://stackoverflow.com/a/45285696)
+            add_header Last-Modified $date_gmt;
+            add_header Cache-Control 'no-store, no-cache';
+            if_modified_since off;
+            expires off;
+            etag off;
             proxy_pass         "https://portal:<%= ENV["BACKEND_PORT"] %>/";
         }
 

@@ -95,6 +95,13 @@ export default class BackendServer {
                 return next();
             });
 
+            // prevent caching, overrides cache headers in html files
+            that.rest.use(function(req, res, next) {
+                res.header("Last-Modified", new Date());
+                res.header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
+                return next();
+            });
+
             // Register handlers common between all classy instances
             Log.info("BackendServer::start() - Registering common handlers");
 
