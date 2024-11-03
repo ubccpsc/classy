@@ -286,8 +286,8 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(grade)
             };
 
-            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + "; deliv: " + grade.delivId +
-                "; repo: " + grade.repoId + "; url: " + grade.URL);
+            Log.trace("ClassPortal::sendGrade(..) - deliv: " + grade.delivId +
+                "; repo: " + grade.repoId + +"; grade: " + grade.score + "; url: " + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
