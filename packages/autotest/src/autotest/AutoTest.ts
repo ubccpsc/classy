@@ -608,6 +608,8 @@ export abstract class AutoTest implements IAutoTest {
                 Log.info("AutoTest::handleTick(..) - stale job; old container: " +
                     input.containerConfig.dockerImage + "; new container: " + containerConfig.dockerImage);
                 input.containerConfig = containerConfig;
+            } else if (containerConfig === null) {
+                Log.warn("AutoTest::handleTick(..) - no container found for delivId: " + input.target.delivId);
             }
         } catch (err) {
             Log.warn("AutoTest::handleTick(..) - problem updating container config: " + err.message);
@@ -621,6 +623,11 @@ export abstract class AutoTest implements IAutoTest {
 
         try {
             await job.prepare();
+
+            Log.info("AutoTest::handleTick(..) - prepared; deliv: " + input.target.delivId +
+                "; repo: " + input.target.repoId + "; SHA: " + Util.shaHuman(
+                    input.target.commitSHA));
+
             record = await job.run(this.docker);
 
             Log.info("AutoTest::handleTick(..) - executed; deliv: " + input.target.delivId +
