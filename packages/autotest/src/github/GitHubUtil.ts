@@ -170,13 +170,13 @@ export class GitHubUtil {
                 Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
             }
 
-            Log.trace("GitHubUtil::processComment(..) - 1");
+            // Log.trace("GitHubUtil::processComment(..) - 1");
 
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
-            Log.trace("GitHubUtil::processComment(..) - 2");
+            // Log.trace("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = GitHubUtil.parseCommandsFromComment(message);
 
@@ -185,7 +185,7 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
-            Log.trace("GitHubUtil::processComment(..) - 3");
+            // Log.trace("GitHubUtil::processComment(..) - 3");
 
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they cannot add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
@@ -199,7 +199,7 @@ export class GitHubUtil {
             if (authLevel.isStaff === true || authLevel.isAdmin === true) {
                 adminRequest = true;
             }
-            Log.trace("GitHubUtil::processComment(..) - 4");
+            // Log.trace("GitHubUtil::processComment(..) - 4");
 
             const kind = "standard";
             const shouldPromote = false; // will be set later if needed

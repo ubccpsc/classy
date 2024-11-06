@@ -116,14 +116,12 @@ export class GradingJob {
         Log.trace("GradingJob::run() - updated: " + this.id);
         const maxExecTime = this.input.containerConfig.maxExecTime;
 
-        Log.trace("GradingJob::run() - after container: " + this.id);
-
         const stdio = fs.createWriteStream(this.path + "/staff/stdio.txt");
         const stream = await container.attach({stream: true, stdout: true, stderr: true});
         container.modem.demuxStream(stream, stdio, stdio);
 
         const exitCode = await GradingJob.runContainer(container, maxExecTime);
-        Log.trace("GradingJob::run() - after run: " + this.id + "; exit code: " + exitCode);
+        Log.trace("GradingJob::run() - container complete: " + this.id + "; exit code: " + exitCode);
 
         // NOTE: at this point, out just contains default values
         const out = this.record.output;
