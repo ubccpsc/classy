@@ -305,13 +305,11 @@
                     <div class="expandable-content">
                         The CSV must have a header row that contains the following columns:
 
-                        <pre>CSID,GRADE,COMMENT</pre>
+                        <pre>[CSID|CWL|GITHUB|StudentNumber],GRADE,COMMENT</pre>
 
-                        If the CSID column is not present but a CWL or GITHUB column is present, Classy tries to map
-                        from the CWL/GITHUB
-                        column back to a CSID. This will overwrite any grade that exist for that the students listed in
-                        the CSV. This cannot
-                        be undone.
+                        If the CSID column is not present but a CWL, GITHUB, or StudentNumber column is present,
+                        Classy tries to map from the CWL/GITHUB/StudentNumber column back to a CSID. This will
+                        overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
                     </div>
                 </ons-list-item>
 

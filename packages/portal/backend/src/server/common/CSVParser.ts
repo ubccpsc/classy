@@ -92,15 +92,30 @@ export class CSVParser {
             const gc = new GradesController();
             const gradePromises: Array<Promise<boolean>> = [];
             let errorMessage = "";
+
+            const allPeople = await pc.getAllPeople();
+
             for (const row of data) {
 
                 // this check could probably be outside the loop, but since it throws
                 // it only happens once anyways
                 const firstKey = Object.keys(row)[0];
-                if (firstKey === "CSID" || firstKey === "CWL" || firstKey === "GITHUB") {
+                if (firstKey === "CSID" || firstKey === "CWL" || firstKey === "GITHUB" || firstKey === "StudentNumber") {
                     // good record
                 } else {
-                    throw new Error("CSID/CWL/GITHUB should be the first column in the CSV");
+                    throw new Error("CSID/CWL/GITHUB/StudentNumber must be the first column in the CSV");
+                }
+
+                if (typeof row.StudentNumber !== "undefined") {
+                    // student number is given, make sure person has the right id
+
+                    // find the person with the student number
+                    const person = allPeople.find((p) => p.studentNumber === row.StudentNumber);
+                    if (person !== null) {
+                        row.CSID = person.id;
+                    } else {
+                        Log.warn("CSVParser::processGrades(..) - Unknown StudentNumber: " + row.StudentNumber);
+                    }
                 }
 
                 if (typeof row.CSID === "undefined" && typeof row.GITHUB !== "undefined") {
