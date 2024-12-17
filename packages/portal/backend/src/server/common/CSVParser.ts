@@ -97,8 +97,8 @@ export class CSVParser {
 
             for (const row of data) {
 
-                // this check could probably be outside the loop, but since it throws
-                // it only happens once anyways
+                // these column checks should be outside the loop, but since they throw
+                // they only happens once
                 const firstKey = Object.keys(row)[0];
                 if (firstKey === "CSID" || firstKey === "CWL" || firstKey === "GITHUB" || firstKey === "STUDENTNUMBER") {
                     // good record
@@ -106,19 +106,21 @@ export class CSVParser {
                     throw new Error("CSID/CWL/GITHUB/STUDENTNUMBER must be the first column in the CSV");
                 }
 
-                if (Object.keys(row)[0].includes("GRADE") === false) {
+                if (Object.keys(row).includes("GRADE") === false) {
                     throw new Error("GRADE column must be present in the CSV");
                 }
 
                 if (typeof row.STUDENTNUMBER !== "undefined") {
-                    // student number is given, make sure person has the right id
-
-                    // find the person with the student number
                     const person = allPeople.find((p) => p.studentNumber === row.STUDENTNUMBER);
                     if (person !== null) {
                         row.CSID = person.id;
+                        Log.trace("CSVParser::processGrades(..) - STUDENTNUMBER -> CSID: " + row.STUDENTNUMBER + " -> " + row.CSID);
                     } else {
                         Log.warn("CSVParser::processGrades(..) - Unknown STUDENTNUMBER: " + row.STUDENTNUMBER);
+                        if (errorMessage === "") {
+                            errorMessage = "Unknown Student Numbers: ";
+                        }
+                        errorMessage += row.STUDENTNUMBER + ", ";
                     }
                 }
 
