@@ -112,7 +112,7 @@ export class CSVParser {
 
                 if (typeof row.STUDENTNUMBER !== "undefined") {
                     const person = allPeople.find((p) => p.studentNumber === row.STUDENTNUMBER);
-                    if (person !== null) {
+                    if (person && typeof person.id === "string") {
                         row.CSID = person.id;
                         Log.trace("CSVParser::processGrades(..) - STUDENTNUMBER -> CSID: " + row.STUDENTNUMBER + " -> " + row.CSID);
                     } else {
