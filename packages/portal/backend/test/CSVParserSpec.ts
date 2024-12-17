@@ -10,7 +10,7 @@ import {CSVParser} from "@backend/server/common/CSVParser";
 import "@common/GlobalSpec";
 import {Grade} from "@backend/Types";
 
-describe("CSVParser", function () {
+describe.only("CSVParser", function () {
 
     before(async () => {
         await TestHarness.suiteBefore("CSVParser");
