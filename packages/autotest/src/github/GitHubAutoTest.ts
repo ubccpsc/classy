@@ -260,6 +260,16 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
                     return false;
                 }
 
+                // reject #dev requests by requesters who are not admins or staff
+                if (info.flags.indexOf("#dev") >= 0) {
+                    Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                        " ) - ignored, student use of #dev");
+                    const msg = "Only admins can use the #dev flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+
                 // reject #silent requests by requesters that are not admins or staff
                 if (info.flags.indexOf("#silent") >= 0) {
                     Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
