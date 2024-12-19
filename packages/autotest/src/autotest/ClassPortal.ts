@@ -128,7 +128,7 @@ export interface IClassPortal {
      * @param timestamp
      */
     requestFeedbackDelay(delivId: string, personId: string, timestamp: number):
-        Promise<{ accepted: boolean, message: string } | null>;
+        Promise<{ accepted: boolean, message: string, fullMessage?: string } | null>;
 }
 
 /**
@@ -286,8 +286,8 @@ export class ClassPortal implements IClassPortal {
                 body: JSON.stringify(grade)
             };
 
-            Log.trace("ClassPortal::sendGrade(..) - sending to: " + url + "; deliv: " + grade.delivId +
-                "; repo: " + grade.repoId + "; url: " + grade.URL);
+            Log.trace("ClassPortal::sendGrade(..) - deliv: " + grade.delivId +
+                "; repo: " + grade.repoId + "; grade: " + grade.score + "; url: " + grade.URL);
             Log.trace("ClassPortal::sendGrade(..) - payload: " + JSON.stringify(grade));
             const res = await fetch(url, opts);
 
@@ -453,7 +453,8 @@ export class ClassPortal implements IClassPortal {
 
     public async requestFeedbackDelay(delivId: string, personId: string, timestamp: number): Promise<{
         accepted: boolean;
-        message: string
+        message: string;
+        fullMessage?: string;
     } | null> {
 
         const url = `${this.host}:${this.port}/portal/at/feedbackDelay`;
@@ -462,7 +463,7 @@ export class ClassPortal implements IClassPortal {
         Log.info(`ClassPortal::requestFeedbackDelay(..) - start; person: ${personId}; delivId: ${delivId}`);
 
         // default to null
-        let resp: { accepted: boolean, message: string } | null = null;
+        let resp: { accepted: boolean, message: string, fullMessage: string } | null = null;
 
         try {
             const opts: RequestInit = {
@@ -489,12 +490,14 @@ export class ClassPortal implements IClassPortal {
             Log.trace("ClassPortal::requestFeedbackDelay(..) - types; json: " + typeof json +
                 "; json.accepted: " + typeof json?.accepted +
                 "; json.message: " + typeof json?.message +
-                "; json.notImplemented: " + typeof json?.notImplemented);
+                "; json.fullMessage: " + typeof json?.fullMessage);
 
-            if (typeof json?.accepted === "boolean" && typeof json?.message === "string") {
+            if (typeof json?.accepted === "boolean" &&
+                (typeof json?.message === "string" || typeof json?.fullMessage === "string")) {
                 resp = {
                     accepted: json.accepted,
-                    message: json.message
+                    message: json.message,
+                    fullMessage: json.fullMessage
                 };
             } else if (typeof json?.notImplemented === "boolean" && json.notImplemented === true) {
                 resp = null;

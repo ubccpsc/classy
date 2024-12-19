@@ -136,16 +136,22 @@ export abstract class AbstractStudentView implements IView {
 
             const st = new SortableTable(headers, "#studentGradeTable");
             for (const grade of this.grades) {
+                let scoreToDisplay: number | string = grade.score; // default behaviour
 
-                let score: number | string = grade.score;
+                // overwrite grade with custom score if it is provided
+                if (grade?.custom?.displayScore) {
+                    Log.info("AbstractStudentView::renderGrades() - using custom display score: " + grade.custom.displayScore);
+                    scoreToDisplay = grade.custom.displayScore;
+                }
+
                 let scoreHTML = "";
-                if (score === null) {
-                    score = "Not Set";
-                    scoreHTML = score; // no link if the score is not set
+                if (scoreToDisplay === null) {
+                    scoreToDisplay = "Not Set";
+                    scoreHTML = scoreToDisplay; // no link if the scoreToDisplay is not set
                 } else if (grade.URL === null) {
-                    scoreHTML = String(score); // no link if the link is not set
+                    scoreHTML = String(scoreToDisplay); // no link if the link is not set
                 } else {
-                    scoreHTML = "<a href='" + grade.URL + "'>" + score + "</a>";
+                    scoreHTML = "<a href='" + grade.URL + "'>" + scoreToDisplay + "</a>";
                 }
                 let comment = grade.comment;
                 if (comment === null) {
@@ -153,7 +159,7 @@ export abstract class AbstractStudentView implements IView {
                 }
                 const row: TableCell[] = [
                     {value: grade.delivId, html: grade.delivId},
-                    {value: score, html: scoreHTML},
+                    {value: scoreToDisplay, html: scoreHTML},
                     {value: comment, html: comment}
                 ];
                 st.addRow(row);

@@ -233,6 +233,28 @@ export class SortableTable {
             const aVal = a[sortIndex].value;
             const bVal = b[sortIndex].value;
 
+            if (typeof aVal === "string" && typeof bVal === "string") {
+                const BUCKET_ORDER = [
+                    "",
+                    " ",
+                    "na",
+                    "n/a",
+                    "beginning",
+                    "acquiring",
+                    "developing",
+                    "proficient",
+                    "extending",
+                    "exceeding"
+                ];
+
+                const aIndex = BUCKET_ORDER.indexOf(aVal.toLowerCase());
+                const bIndex = BUCKET_ORDER.indexOf(bVal.toLowerCase());
+
+                if (aIndex > -1 && bIndex > -1) {
+                    return Util.compare(aIndex, bIndex) * mult;
+                }
+            }
+
             return Util.compare(aVal, bVal) * mult;
         });
     }
@@ -269,9 +291,61 @@ export class SortableTable {
         // downloadLink.click();
     }
 
+    // split this into hover and links as separate methods to simplify callers needing to figure out which is which
+    private findColsWithMetadata(divName: string): number[] {
+        const root = document.querySelector(this.divName);
+        const rows = root.querySelectorAll("table tr");
+        let colsWithMetadata: number[] = [];
+
+        // tslint:disable-next-line
+        for (let i = 1; i < rows.length; i++) { // skip the header row
+            const cols = rows[i].querySelectorAll("td, th");
+
+            // tslint:disable-next-line
+            for (let j = 0; j < cols.length; j++) {
+                const col = cols[j] as HTMLElement;
+                // document.getElementById('gradesListTable').children[0]...children[0] instanceof HTMLAnchorElement  <-- true
+                // typeof document.getElementById('gradesListTable').children[0]...children[0].title === "string" <-- true
+                if (col.children.length > 0 &&
+                    (col.children[0] instanceof HTMLAnchorElement || typeof (col as any).children[0]?.title === "string")) {
+                    if (colsWithMetadata.indexOf(j) < 0) {
+                        colsWithMetadata.push(j);
+                    }
+                }
+            }
+        }
+
+        // sort metadata columns
+        colsWithMetadata = colsWithMetadata.sort((a, b) => a - b);
+
+        Log.info("SortableTable::findColsWithMetadata() - cols: " + JSON.stringify(colsWithMetadata));
+        return colsWithMetadata;
+    }
+
+    private escapeCSVValue(value: string): string {
+        let sanitized = value.replace(/"/g, ""); // remove all double quotes
+        sanitized = value.replace(/'/g, ""); // remove all single quotes
+        sanitized = sanitized.replace(/&nbsp;/g, " "); // replace all &nbsp; with a space
+        sanitized = sanitized.replace(/,/g, " "); // remove all commas
+        return sanitized;
+    }
+
+    private extractMetadata(elem: HTMLElement) {
+        let out = "";
+        if (elem.children[0] instanceof HTMLAnchorElement) {
+            out = this.escapeCSVValue((elem.children[0] as HTMLAnchorElement).href);
+        } else if (typeof (elem as any).children[0]?.title === "string") {
+            out = this.escapeCSVValue((elem as any).children[0].title);
+        }
+        // Log.info("SortableTable::extractMetadata() - value: " + out); // remove after working
+        return out;
+    }
+
     private exportTableToCSV() {
         const csv = [];
         const root = document.querySelector(this.divName);
+        const colsWithMetadata = this.findColsWithMetadata(this.divName);
+
         const rows = root.querySelectorAll("table tr");
 
         for (let i = 0; i < rows.length; i++) {
@@ -284,41 +358,23 @@ export class SortableTable {
                     let text = (cols[j] as HTMLTableCellElement).innerText;
                     text = text.replace(" ▼", "");
                     text = text.replace(" ▲", "");
+                    text = text.trim();
                     row.push(text);
                 } else {
-                    row.push((cols[j] as HTMLTableCellElement).innerText);
+                    let text = (cols[j] as HTMLTableCellElement).innerText;
+                    text = text.trim();
+                    row.push(text);
                 }
-            }
-            csv.push(row.join(","));
-        }
 
-        return csv.join("\n");
-    }
-
-    private exportTableLinksToCSV() {
-        const csv = [];
-        const root = document.querySelector(this.divName);
-        const rows = root.querySelectorAll("table tr");
-
-        for (let i = 0; i < rows.length; i++) {
-            const row = [];
-            const cols = rows[i].querySelectorAll("td, th");
-
-            // tslint:disable-next-line
-            for (let j = 0; j < cols.length; j++) {
-                if (i === 0) {
-                    let text = (cols[j] as HTMLTableCellElement).innerText;
-                    text = text.replace(" ▼", "");
-                    text = text.replace(" ▲", "");
-                    row.push(text);
-                } else {
-                    const col = cols[j] as HTMLElement;
-
-                    // this is super brittle
-                    if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
-                        row.push((col.children[0] as HTMLAnchorElement).href);
+                if (colsWithMetadata.indexOf(j) >= 0) {
+                    if (i === 0) {
+                        // header row
+                        // add metadata prior column name
+                        // strange math because we may have added columns to the left
+                        row.push(row[j + colsWithMetadata.indexOf(j)] + "_metadata");
                     } else {
-                        row.push(col.innerText);
+                        // regular row
+                        row.push(this.extractMetadata(cols[j] as HTMLElement));
                     }
                 }
             }
@@ -328,6 +384,40 @@ export class SortableTable {
         return csv.join("\n");
     }
 
+    // no longer used
+    // private exportTableLinksToCSV() {
+    //     const csv = [];
+    //     const root = document.querySelector(this.divName);
+    //     const rows = root.querySelectorAll("table tr");
+    //
+    //     for (let i = 0; i < rows.length; i++) {
+    //         const row = [];
+    //         const cols = rows[i].querySelectorAll("td, th");
+    //
+    //         // tslint:disable-next-line
+    //         for (let j = 0; j < cols.length; j++) {
+    //             if (i === 0) {
+    //                 let text = (cols[j] as HTMLTableCellElement).innerText;
+    //                 text = text.replace(" ▼", "");
+    //                 text = text.replace(" ▲", "");
+    //                 row.push(text);
+    //             } else {
+    //                 const col = cols[j] as HTMLElement;
+    //
+    //                 // this is super brittle
+    //                 if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
+    //                     row.push((col.children[0] as HTMLAnchorElement).href);
+    //                 } else {
+    //                     row.push(col.innerText);
+    //                 }
+    //             }
+    //         }
+    //         csv.push(row.join(","));
+    //     }
+    //
+    //     return csv.join("\n");
+    // }
+
     public numRows(): number {
         return this.rows.length;
     }
@@ -335,8 +425,9 @@ export class SortableTable {
     private attachDownload() {
         const csv = this.exportTableToCSV();
         this.downloadCSV(csv, "classy.csv", "Download Values as CSV&nbsp;");
-        const links = this.exportTableLinksToCSV();
-        this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
+        // no longer needed; regular csv now includes these
+        // const links = this.exportTableLinksToCSV();
+        // this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
     }
 
     /**

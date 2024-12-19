@@ -108,11 +108,13 @@ export class AdminView implements IView {
         }
     }
 
-    private setTabVisibility(name: string, visible: boolean) {
+    protected setTabVisibility(name: string, visible: boolean) {
         const e = document.getElementById(name);
         if (e !== null) {
             if (visible === false) {
                 e.style.display = "none";
+            } else {
+                e.style.display = "";
             }
         } else {
             Log.warn("AdminView::setTabVisibility( " + name + ", " + visible + " ) - tab not found");

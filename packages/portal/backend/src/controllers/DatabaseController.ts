@@ -1003,7 +1003,18 @@ export class DatabaseController {
      * @returns {Promise<Result>}
      */
     public async getResultFromURL(commitURL: string, delivId: string): Promise<Result | null> {
-        return await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
+        // return await this.readSingleRecord(this.RESULTCOLL, {commitURL: commitURL, delivId: delivId}) as Result;
+        const records = await this.readRecords(this.RESULTCOLL, QueryKind.FAST, false,
+            {commitURL: commitURL, delivId: delivId}) as Result[];
+
+        if (records.length > 1) {
+            // This should not happen, but we want to know for sure
+            Log.warn("DatabaseController::getResultFromURL( " + commitURL + ", " + delivId + " ) - multiple results returned");
+        }
+        if (records.length > 0) {
+            return records[0];
+        }
+        return null;
     }
 }
 
