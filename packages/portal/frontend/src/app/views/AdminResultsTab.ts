@@ -222,7 +222,11 @@ export class AdminResultsTab extends AdminPage {
 
         let delivNames: string[] = [];
         for (const deliv of delivs) {
-            delivNames.push(deliv.id);
+            // only add a deliv if it uses AutoTest
+            // or it will never have results to render
+            if (deliv.shouldAutoTest === true) {
+                delivNames.push(deliv.id);
+            }
         }
         delivNames = delivNames.sort();
         delivNames.unshift("-Any-");

@@ -6,6 +6,7 @@ import {AutoTestResult, IFeedbackGiven} from "@common/types/AutoTestTypes";
 import {CommitTarget} from "@common/types/ContainerTypes";
 
 import Util from "@common/Util";
+import {GitHubUtil} from "@autotest/github/GitHubUtil";
 
 export interface IDataStore {
 
@@ -154,37 +155,39 @@ export class MongoDataStore implements IDataStore {
 
     /**
      * Gets the push event record for a given commitURL. If more than one exist,
-     * return the one for main/master. If there isn't a main/master push, return the
+     * return the one for main/master. If there is not a main/master push, return the
      * most recent one.
      */
     public async getPushRecord(commitURL: string): Promise<CommitTarget | null> {
-        Log.trace("MongoDataStore::getPushRecord(..) - start");
+        // Log.trace("MongoDataStore::getPushRecord(..) - start");
         try {
             const start = Date.now();
-            let res = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL});
-            if (res === null) {
+            let records = await this.getRecords(this.PUSHCOLL, {commitURL: commitURL}) as CommitTarget[];
+            if (records === null) {
                 Log.trace("MongoDataStore::getPushRecord(..) - record not found for: " + commitURL);
             } else {
-                Log.trace("MongoDataStore::getPushRecord(..) - found; took: " + Util.took(start));
-                if (res.length === 1) {
+                if (records.length === 1) {
+                    Log.trace("MongoDataStore::getPushRecord(..) - one found; took: " + Util.took(start));
                     // the usual case
-                    return res[0] as CommitTarget;
+                    return records[0];
                 } else {
                     // return main/master if exists
-                    for (const r of res as CommitTarget[]) {
-                        if (typeof r.ref !== "undefined" && (r.ref === "refs/heads/main" || r.ref === "refs/heads/master")) {
-                            return r as CommitTarget;
+                    for (const r of records) {
+
+                        if (typeof r.ref !== "undefined" && GitHubUtil.isMain(r.ref) === true) {
+                            Log.trace("MongoDataStore::getPushRecord(..) - multiple found, returning main; took: " + Util.took(start));
+                            return r;
                         }
                     }
 
                     // sort, should make the oldest record first
-                    res = res.sort(function (c1: CommitTarget, c2: CommitTarget) {
+                    records = records.sort(function (c1: CommitTarget, c2: CommitTarget) {
                         return c1.timestamp - c2.timestamp;
                     });
-                    return res[0] as CommitTarget;
+                    Log.trace("MongoDataStore::getPushRecord(..) - multiple found, returning oldest; took: " + Util.took(start));
+                    return records[0] as CommitTarget;
                 }
             }
-
         } catch (err) {
             Log.error("MongoDataStore::getPushRecord(..) - ERROR: " + err);
         }

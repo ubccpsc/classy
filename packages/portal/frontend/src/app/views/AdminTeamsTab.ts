@@ -1,6 +1,12 @@
 import Log from "@common/Log";
 
-import {CourseTransport, RepositoryTransport, StudentTransport, TeamTransport, TeamTransportPayload} from "@common/types/PortalTypes";
+import {
+    CourseTransport,
+    RepositoryTransport,
+    StudentTransport,
+    TeamTransport,
+    TeamTransportPayload
+} from "@common/types/PortalTypes";
 
 import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
 import {UI} from "../util/UI";
@@ -49,8 +55,19 @@ export class AdminTeamsTab extends AdminPage {
         if (typeof opts.delivId === "undefined") {
             const defaultDelivProvisions = provisionDelivs
                 .some((deliv) => deliv.id === this.course.defaultDeliverableId);
+
+            const projectProvisions = provisionDelivs
+                .some((deliv) => deliv.id === "project");
+
+            // try to choose a sensible default when the tab opens
+            // 1) if the current default deliverable provisions
+            // 2) if the project provisions
+            // 3) nothing
+
             if (defaultDelivProvisions) {
                 opts.delivId = this.course.defaultDeliverableId;
+            } else if (projectProvisions) {
+                opts.delivId = "project";
             } else {
                 opts.delivId = "-None-";
             }

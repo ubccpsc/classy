@@ -174,18 +174,30 @@ export default class AutoTestRouteHandler {
         switch (event) {
             case "commit_comment":
                 const commentEvent = await GitHubUtil.processComment(body);
+                if (commentEvent === null) {
+                    Log.warn(
+                        "AutoTestRouteHandler::handleWebhook() - comment event is null; figure out why; payload: " + JSON.stringify(body));
+                }
                 Log.trace("AutoTestRouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
                 await at.handleCommentEvent(commentEvent);
                 return commentEvent;
             case "push":
                 const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
+
+                if (pushEvent === null && (body as any)?.deleted === true) {
+                    // branch was deleted
+                    Log.info("AutoTestRouteHandler::handleWebhook() - branch was deleted; no action required");
+                } else if (pushEvent === null) {
+                    // figure out other reasons we end up here
+                    Log.warn(
+                        "AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body));
+                }
                 Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
                 await at.handlePushEvent(pushEvent);
                 return pushEvent;
             case "issue_comment":
                 const prEvent = await GitHubUtil.processIssueComment(body);
                 return prEvent;
-            // no return for now, just fall through to error
             default:
                 Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
                 throw new Error("Unhandled GitHub hook event: " + event);

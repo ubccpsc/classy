@@ -98,7 +98,11 @@ export class AdminDashboardTab extends AdminPage {
 
         let delivNames: string[] = [];
         for (const deliv of delivs) {
-            delivNames.push(deliv.id);
+            if (deliv.shouldAutoTest === true) {
+                // dash results are only available for deliverables that
+                // use autotest, so skipp adding to dropdown otherwise
+                delivNames.push(deliv.id);
+            }
         }
         delivNames = delivNames.sort();
         delivNames.unshift("-Any-");

@@ -742,7 +742,7 @@ describe("Admin Routes", function () {
         expect(response.status).to.equal(400);
         expect(body.failure).to.not.be.undefined;
         expect(body.failure.message).to.be.an("string"); // test column missing
-        expect(body.failure.message).to.contain("column missing");
+        expect(body.failure.message).to.contain("Grades upload unsuccessful");
 
         response = await request(app).post(url).attach("gradelist", __dirname + "/../data/gradesEmpty.csv").set({
             user: userName,

@@ -153,7 +153,7 @@ describe("GitHubActions", () => {
         expect(val).to.equal(name);
     }).timeout(TIMEOUT);
 
-    it("Should be able to create a repo from a template.", async function () {
+    it("Should be able to create a repo from a template and update it to have the right features.", async function () {
         const rc = new RepositoryController();
         const dc = new DeliverablesController();
         const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
@@ -162,11 +162,16 @@ describe("GitHubActions", () => {
 
         const owner = Config.getInstance().getProp(ConfigKey.org);
         const repo = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+        Log.test("Creating repo with template");
         const val = await gh.createRepoFromTemplate(repoName, owner, repo);
 
         const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
             Config.getInstance().getProp(ConfigKey.org) + "/" + repoName;
         expect(val).to.equal(name);
+
+        Log.test("Updating template repo with proper settings");
+        const update = await gh.updateRepo(repoName);
+        expect(update).to.be.true;
     }).timeout(TIMEOUT);
 
     it("Should be able to rename a branch on a repo.", async function () {

@@ -36,7 +36,7 @@ export interface ICourseController {
      * saved? The Deliverable is included in case due dates want to be considered. The
      * Grade timestamp is the timestamp of the GitHub push event, not the commit event,
      * as this is the only time we can guarantee was not tampered with on the client side.
-     * This will be called once-per-teammember if there are multiple people on the repo
+     * This will be called once-per-teammate if there are multiple people on the repo
      * receiving the grade.
      *
      * @param {Deliverable} deliv
@@ -77,8 +77,19 @@ export interface ICourseController {
 
     requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
         accepted: boolean,
-        message: string
+        message: string,
+        fullMessage?: string
     } | null>;
+
+    /**
+     * Allow a course to specialize how a grade should be presented
+     * to the students. This is especially useful when a numeric score
+     * is being replaced by a bucket grade.
+     *
+     * The frontend will render gradeTransport.custom.displayScore
+     * if it is set.
+     */
+    convertGrade(grade: Grade): Promise<Grade>;
 }
 
 /**
@@ -219,10 +230,21 @@ export class CourseController implements ICourseController {
 
     public async requestFeedbackDelay(info: { delivId: string; personId: string; timestamp: number }): Promise<{
         accepted: boolean,
-        message: string
+        message: string,
+        fullMessage?: string
     } | null> {
         Log.warn(`CourseController::requestFeedbackDelay(${info}) - Default impl; returning null`);
         return null;
+    }
+
+    /**
+     * By default, nothing is needed here.
+     *
+     * @param grade
+     */
+    public async convertGrade(grade: Grade): Promise<Grade> {
+        Log.info(`CourseController::convertGrade(${grade}) - Default impl; returning original grade`);
+        return grade;
     }
 
     // NOTE: the default implementation is currently broken; do not use it.
