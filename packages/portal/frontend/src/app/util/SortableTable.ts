@@ -21,7 +21,6 @@ export interface TableCell {
 /**
  * Sorted table widget.
  *
- * TODO: The "download CSV" function is not reliable in Safari.
  */
 export class SortableTable {
 

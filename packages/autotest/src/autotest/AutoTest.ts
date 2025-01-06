@@ -400,64 +400,16 @@ export abstract class AutoTest implements IAutoTest {
         }
     }
 
-    private async persistQueues(): Promise<boolean> {
-        Log.trace("AutoTest::persistQueues()");
-        try {
-            const start = Date.now();
-            // noinspection ES6MissingAwait
-            const writing = [
-                this.standardQueue.persist(), // await in Promise.all
-                this.lowQueue.persist(), // await in Promise.all
-                this.expressQueue.persist() // await in Promise.all
-            ];
-            await Promise.all(writing);
-
-            // we have persisted the queues, but not the executing jobs
-            fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + "/queues");
-            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
-            const jobs = {data: this.jobs};
-            await fs.writeJSON(slotsFName, jobs);
-
-            Log.trace("AutoTest::persistQueues() - done; took: " + Util.took(start));
-            return true;
-        } catch (err) {
-            Log.error("AutoTest::persistQueues() - ERROR: " + err.message);
-        }
-        return false;
-    }
-
-    private loadQueues() {
-        try {
-            Log.info("AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
-            this.standardQueue.load();
-            this.lowQueue.load();
-            this.expressQueue.load();
-            const numQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
-            Log.info("AutoTest::loadQueues() - queues loaded; # queued: " + numQueued);
-
-            // read the executing jobs and push onto the head of the express queue so they will start right away
-            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
-            const store = fs.readJSONSync(slotsFName, {throws: false});
-            if (store?.data?.length === undefined) {
-                // read failed; skip hydrating
-                Log.info("AutoTest::loadQueues() - rehydrating jobs skipped");
-            } else {
-
-                // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
-                Log.info("AutoTest::loadQueues() - jobs loaded; # jobs: " + store.data.length);
-
-                // put executions that were running but not done on the front of the queue
-                for (const job of store.data) {
-                    Log.info("AutoTest::loadQueues() - adding job to HEAD; repo: " +
-                        job.target.repoId + "; SHA: " + Util.shaHuman(job.target.commitSHA));
-                    this.expressQueue.pushFirst(job);
-                }
-            }
-        } catch (err) {
-            Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
-        }
-        this.tick(); // start any jobs that were loaded
-        Log.info("AutoTest::loadQueues() - done");
+    /**
+     * Returns the AutoTest queue status.
+     */
+    public getStatus(): AutoTestStatus {
+        return {
+            executing: this.jobs.length,
+            exp: this.expressQueue.length(),
+            std: this.standardQueue.length(),
+            low: this.lowQueue.length()
+        };
     }
 
     /**
@@ -520,6 +472,66 @@ export abstract class AutoTest implements IAutoTest {
             Log.error("AutoTest::isOnQueue() - ERROR: " + err);
         }
         return onQueue;
+    }
+
+    private async persistQueues(): Promise<boolean> {
+        Log.trace("AutoTest::persistQueues()");
+        try {
+            const start = Date.now();
+            // noinspection ES6MissingAwait
+            const writing = [
+                this.standardQueue.persist(), // await in Promise.all
+                this.lowQueue.persist(), // await in Promise.all
+                this.expressQueue.persist() // await in Promise.all
+            ];
+            await Promise.all(writing);
+
+            // we have persisted the queues, but not the executing jobs
+            fs.mkdirpSync(Config.getInstance().getProp(ConfigKey.persistDir) + "/queues");
+            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
+            const jobs = {data: this.jobs};
+            await fs.writeJSON(slotsFName, jobs);
+
+            Log.trace("AutoTest::persistQueues() - done; took: " + Util.took(start));
+            return true;
+        } catch (err) {
+            Log.error("AutoTest::persistQueues() - ERROR: " + err.message);
+        }
+        return false;
+    }
+
+    private loadQueues() {
+        try {
+            Log.info("AutoTest::loadQueues() - start"); // just warn for now; this is really just for testing
+            this.standardQueue.load();
+            this.lowQueue.load();
+            this.expressQueue.load();
+            const numQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
+            Log.info("AutoTest::loadQueues() - queues loaded; # queued: " + numQueued);
+
+            // read the executing jobs and push onto the head of the express queue so they will start right away
+            const slotsFName = Config.getInstance().getProp(ConfigKey.persistDir) + "/queues/executing.json";
+            const store = fs.readJSONSync(slotsFName, {throws: false});
+            if (store?.data?.length === undefined) {
+                // read failed; skip hydrating
+                Log.info("AutoTest::loadQueues() - rehydrating jobs skipped");
+            } else {
+
+                // Log.info("Queue::load() - rehydrating: " + this.name + " from: " + this.persistDir);
+                Log.info("AutoTest::loadQueues() - jobs loaded; # jobs: " + store.data.length);
+
+                // put executions that were running but not done on the front of the queue
+                for (const job of store.data) {
+                    Log.info("AutoTest::loadQueues() - adding job to HEAD; repo: " +
+                        job.target.repoId + "; SHA: " + Util.shaHuman(job.target.commitSHA));
+                    this.expressQueue.pushFirst(job);
+                }
+            }
+        } catch (err) {
+            Log.error("AutoTest::loadQueues() - ERROR: " + err.message);
+        }
+        this.tick(); // start any jobs that were loaded
+        Log.info("AutoTest::loadQueues() - done");
     }
 
     /**
@@ -715,17 +727,5 @@ export abstract class AutoTest implements IAutoTest {
             }
         }
         return removed;
-    }
-
-    /**
-     * Returns the AutoTest queue status.
-     */
-    public getStatus(): AutoTestStatus {
-        return {
-            executing: this.jobs.length,
-            exp: this.expressQueue.length(),
-            std: this.standardQueue.length(),
-            low: this.lowQueue.length()
-        };
     }
 }
