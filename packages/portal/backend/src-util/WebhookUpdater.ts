@@ -71,7 +71,7 @@ export class WebhookUpdater {
 
         for (const repo of candidateRepos) {
             const currentHooks = await this.gha.listWebhooks(repo.repoName) as any[];
-            let currHook = "_NOT-SET_";
+            let currHook = null;
             if (currentHooks.length === 1 && typeof currentHooks[0].config !== "undefined") {
                 currHook = currentHooks[0].config.url;
             }
@@ -80,14 +80,24 @@ export class WebhookUpdater {
                 if (currHook === this.HOOK_URL) {
                     Log.info("WebhookUpdater::updateHooks() - hook correct for repo: " + repo.repoName);
                 } else {
-                    Log.warn("WebhookUpdater::updateHooks() - fixing hook for repo: " + repo.repoName +
-                        "; current: " + currHook + "; new: " + this.HOOK_URL);
-                    await this.gha.updateWebhook(repo.repoName, this.HOOK_URL);
-                    Log.info("WebhookUpdater::updateHooks() - done updating: " + repo.repoName);
+                    if (currHook === null) {
+                        Log.warn("WebhookUpdater::updateHooks() - adding hook to repo: " + repo.repoName +
+                            "; hook: " + this.HOOK_URL);
+                        await this.gha.addWebhook(repo.repoName, this.HOOK_URL);
+                        Log.info("WebhookUpdater::updateHooks() - done adding: " + repo.repoName);
+                    } else {
+                        Log.warn("WebhookUpdater::updateHooks() - fixing hook for repo: " + repo.repoName +
+                            "; current: " + currHook + "; new: " + this.HOOK_URL);
+                        await this.gha.updateWebhook(repo.repoName, this.HOOK_URL);
+                        Log.info("WebhookUpdater::updateHooks() - done updating: " + repo.repoName);
+                    }
                 }
 
             } else {
-                if (currHook === this.HOOK_URL) {
+                if (currHook === null) {
+                    Log.warn("WebhookUpdater::updateHooks() - dry run; adding hook to repo: " + repo.repoName +
+                        "; hook: " + this.HOOK_URL);
+                } else if (currHook === this.HOOK_URL) {
                     Log.info("WebhookUpdater::updateHooks() - dry run; hook correct for repo: " + repo.repoName);
                 } else {
                     Log.warn("WebhookUpdater::updateHooks() - dry run; fixing hook for repo: " + repo.repoName +
