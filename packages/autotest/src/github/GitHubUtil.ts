@@ -111,6 +111,7 @@ export class GitHubUtil {
                     url: postbackURL,
                     message: "AutoTest cannot be invoked from pull requests. Please make a comment on a commit on GitHub."
                 };
+                Log.trace("GitHubUtil::processIssueComment(..) - PR payload: " + JSON.stringify(payload, null, 2));
             } else if (payload?.issue) {
                 // is issue comment (after PR, since that is an instance of a comment)
                 markdown = {
