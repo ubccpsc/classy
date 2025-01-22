@@ -162,13 +162,13 @@ export default class Util {
 	}
 
 	/**
-	 * Makes a copy of an object.
+	 * Makes a deep copy of an object. The original object is not modified and any
+	 * changes to the copy will not be reflected back to the original.
 	 *
-	 * @param {{}} obj
-	 * @returns {{}}
 	 */
-	public static clone(obj: {}): {} {
-		return Object.assign({}, obj);
+	public static clone<T>(a: T): T {
+		// Note: Object.assign only does a _shallow_ copy!
+		return JSON.parse(JSON.stringify(a));
 	}
 
 	/**

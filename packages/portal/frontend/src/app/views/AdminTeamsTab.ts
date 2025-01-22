@@ -25,7 +25,7 @@ export class AdminTeamsTab extends AdminPage {
 	// called by reflection in renderPage
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminTeamsTab::init(..) - start; opts: " + JSON.stringify(opts));
-		const start = Date.now();
+		// const start = Date.now();
 
 		document.getElementById("teamsListTable").innerHTML = ""; // clear target
 		// document.getElementById("teamsIndividualListTable").innerHTML = ""; // clear target
@@ -111,8 +111,8 @@ export class AdminTeamsTab extends AdminPage {
 			Log.info("AdminTeamsTab::init(..) - lab changed");
 			evt.stopPropagation(); // prevents list item expansion
 
-			const val = labSelector.value.valueOf();
-			opts.labSection = val;
+			// const val = labSelector.value.valueOf();
+			opts.labSection = labSelector.value.valueOf();
 			updateTeamTable();
 		};
 

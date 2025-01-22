@@ -1,6 +1,5 @@
 import { AutoTestResult } from "../../../common/src/types/AutoTestTypes";
 import { AutoTestConfig } from "../../../common/src/types/ContainerTypes";
-import { AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo } from "../../../common/src/types/CS340Types";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -93,14 +92,7 @@ export interface Deliverable {
 
 	rubric: any; // captures rubric-specific definitions
 	// custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
-	custom: {
-		rubric?: any; // CS340REST
-		assignment?: AssignmentInfo; // AssignmentController
-		// courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
-		// seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
-		// seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
-		// mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
-	};
+	custom: any; // useful for extension
 
 	lateAutoTest: boolean; // whether the deliv can be executed after the deadline
 	shouldAutoTest: boolean; // whether the deliv will use AutoTest
@@ -165,17 +157,11 @@ export interface Repository {
 		githubCreated?: boolean;
 		githubReleased?: boolean;
 
-		// status?: any, // AssignmentController // TODO: make into assignment.status
-		// assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-		// assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
-
-		assignmentInfo?: AssignmentRepositoryInfo;
-
-		d0enabled?: boolean; // SDMM // TODO: make sdmm.d0enabled
-		d1enabled?: boolean; // SDMM // TODO: make sdmm.d1enabled
-		d2enabled?: boolean; // SDMM // TODO: make sdmm.d2enabled
-		d3enabled?: boolean; // SDMM // TODO: make sdmm.d3enabled
-		sddmD3pr?: boolean; // SDMM // TODO: make sdmm.d3pr
+		// d0enabled?: boolean; // SDMM // TODO: make sdmm.d0enabled
+		// d1enabled?: boolean; // SDMM // TODO: make sdmm.d1enabled
+		// d2enabled?: boolean; // SDMM // TODO: make sdmm.d2enabled
+		// d3enabled?: boolean; // SDMM // TODO: make sdmm.d3enabled
+		// sddmD3pr?: boolean; // SDMM // TODO: make sdmm.d3pr
 	};
 }
 

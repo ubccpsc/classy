@@ -25,7 +25,7 @@ export class AuthHelper {
 					this.updateAuthStatus();
 				}
 			})
-			.catch((err: any) => {
+			.catch((_err: any) => {
 				Log.error("AuthHelper::checkUserrole() - end");
 			});
 	}
@@ -45,7 +45,7 @@ export class AuthHelper {
 				}
 				Log.trace("AuthHelper::updateAuthStatus( ) - end");
 			})
-			.catch((err: Error) => {
+			.catch((_err: Error) => {
 				this.removeAuthStatus();
 				Log.error("AuthHelper::updateAuthStatus( ERROR ) - Logged out - Unauthenticated");
 			});
@@ -77,8 +77,8 @@ export class AuthHelper {
 		const that = this;
 		const url = that.backendURL + "/portal/isAuthenticated"; // TODO: what is this route???
 		Log.trace("AuthHelper::isLoggedIn( " + url + " ) - start");
-		const AUTHORIZED_STATUS: string = "authorized";
-		const authStatus = String(localStorage.getItem("authStatus"));
+		// const AUTHORIZED_STATUS: string = "authorized";
+		// const authStatus = String(localStorage.getItem("authStatus"));
 
 		return fetch(url, that.OPTIONS_HTTP_GET)
 			.then((data: any) => {

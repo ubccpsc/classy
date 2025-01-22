@@ -108,7 +108,7 @@ export class ClassyStudentView extends AbstractStudentView {
 			// no team yet
 
 			const button = document.querySelector("#studentSelectPartnerButton") as OnsButtonElement;
-			button.onclick = function (evt: any) {
+			button.onclick = function (_evt: any) {
 				Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick");
 				that.formTeam()
 					.then(function (team) {
@@ -130,8 +130,8 @@ export class ClassyStudentView extends AbstractStudentView {
 
 			const teamElement = document.getElementById("studentPartnerTeamName");
 			// const partnerElement = document.getElementById("studentPartnerTeammates");
-			const team = projectTeam;
-			teamElement.innerHTML = team.id;
+			// const team = projectTeam;
+			teamElement.innerHTML = projectTeam.id;
 		}
 	}
 

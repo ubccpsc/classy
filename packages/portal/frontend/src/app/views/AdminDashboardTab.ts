@@ -52,7 +52,7 @@ export class AdminDashboardTab extends AdminPage {
 		UI.hideModal();
 
 		const fab = document.querySelector("#dashboardUpdateButton") as OnsButtonElement;
-		fab.onclick = function (evt: any) {
+		fab.onclick = function (_evt: any) {
 			Log.info("AdminDashboardTab::init(..)::updateButton::onClick");
 			UI.showModal("Retrieving results.");
 			that.performQueries()
@@ -323,7 +323,7 @@ export class AdminDashboardTab extends AdminPage {
 		return str;
 	}
 
-	private generateClusteredTable(annotated: DetailRow[], delivId: string, clusteredResult: ClusteredResult): string {
+	private generateClusteredTable(annotated: DetailRow[], _delivId: string, clusteredResult: ClusteredResult): string {
 		const cellMap: { [key: string]: string } = {};
 		for (const cell of annotated) {
 			const c = cell.colour;

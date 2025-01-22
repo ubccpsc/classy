@@ -50,7 +50,7 @@ export class AdminResultsTab extends AdminPage {
 		UI.hideModal();
 
 		const fab = document.querySelector("#resultsUpdateButton") as OnsButtonElement;
-		fab.onclick = function (evt: any) {
+		fab.onclick = function (_evt: any) {
 			Log.info("AdminResultsTab::init(..)::updateButton::onClick");
 			UI.showModal("Retrieving results.");
 			that.performQueries()

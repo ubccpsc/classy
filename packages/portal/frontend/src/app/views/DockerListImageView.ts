@@ -24,7 +24,7 @@ export class DockerListImageView {
 		}
 
 		// could be an exact match, but this is safer
-		if (checkedId.indexOf(imageId) >= 0) {
+		if (checkedId.includes(imageId)) {
 			return true;
 		}
 		return false;

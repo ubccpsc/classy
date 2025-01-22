@@ -87,7 +87,7 @@ export class RepositoryController {
 			const deliv = await dc.getDeliverable(repo.delivId);
 			await this.createRepository(repo.id, deliv, teams, repo.custom);
 		} else {
-			// overwrie existing repo
+			// overwrite existing repo
 			const customExisting = Object.assign({}, existingRepo.custom); // overwrite with new fields
 			const customCombined = Object.assign(customExisting, existingRepo.custom);
 			repo.custom = customCombined;

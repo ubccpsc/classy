@@ -16,7 +16,7 @@ import { PersonKind } from "../src/Types";
 export class FrontendDatasetGenerator {
 	private dc: DatabaseController = null;
 	private ghc = new GitHubController(GitHubActions.getInstance());
-	private cc: AdminController = new AdminController(this.ghc);
+	// private cc: AdminController = new AdminController(this.ghc);
 
 	constructor() {
 		this.dc = DatabaseController.getInstance();
@@ -105,7 +105,7 @@ export class FrontendDatasetGenerator {
 		const cc = await Factory.getCourseController(this.ghc);
 
 		const tc = new TeamController();
-		const delivs = await this.dc.getDeliverables();
+		// const delivs = await this.dc.getDeliverables();
 
 		for (let i = 0; i < 50; i++) {
 			// try i times to make a team

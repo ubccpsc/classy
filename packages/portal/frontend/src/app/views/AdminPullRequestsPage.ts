@@ -35,7 +35,7 @@ export class AdminPullRequestsPage extends AdminPage {
 				.then(function () {
 					// worked
 				})
-				.catch(function (err) {
+				.catch(function (_err) {
 					// did not
 				});
 		};
@@ -47,7 +47,7 @@ export class AdminPullRequestsPage extends AdminPage {
 				.then(function () {
 					// worked
 				})
-				.catch(function (err) {
+				.catch(function (_err) {
 					// did not
 				});
 		};
@@ -59,7 +59,7 @@ export class AdminPullRequestsPage extends AdminPage {
 				.then(function () {
 					// worked
 				})
-				.catch(function (err) {
+				.catch(function (_err) {
 					// did not
 				});
 		};
@@ -71,7 +71,7 @@ export class AdminPullRequestsPage extends AdminPage {
 				.then(function () {
 					// worked
 				})
-				.catch(function (err) {
+				.catch(function (_err) {
 					// did not
 				});
 		};

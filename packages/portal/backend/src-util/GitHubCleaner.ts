@@ -17,7 +17,7 @@ import { TeamController } from "../src/controllers/TeamController";
  */
 export class GitHubCleaner {
 	private gha = GitHubActions.getInstance(true);
-	private tc = new TeamController();
+	// private tc = new TeamController();
 
 	private DRY_RUN = true;
 

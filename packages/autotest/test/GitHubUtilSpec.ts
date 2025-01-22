@@ -21,7 +21,7 @@ describe("GitHubUtil", () => {
 	});
 
 	it("Should be able to correctly parse deliv ids from a commit comment.", () => {
-		let actual = "";
+		let actual;
 
 		actual = GitHubUtil.parseDeliverableFromComment("@ubcbot #d1", ["d1", "d2", "project"]);
 		expect(actual).to.equal("d1");

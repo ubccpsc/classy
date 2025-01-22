@@ -7,7 +7,7 @@ export class EdXClassPortal extends ClassPortal {
 	/**
 	 * There is no default deliverable for the SDMM since it is self-paced.
 	 *
-	 * @returns {Promise<AutoTestDefaultDeliverableTransport | null>}
+	 * @returns {Promise<ClassyConfigurationTransport | null>}
 	 */
 	public async getConfiguration(): Promise<ClassyConfigurationTransport | null> {
 		Log.info("EdXClassPortal::getDefaultDeliverableId(..) - returning null (no default deliverable for SDMM)");

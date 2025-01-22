@@ -32,7 +32,7 @@ export class Command implements ICommand {
 			cmd.stderr.on(`data`, (data: Buffer) => {
 				output = Buffer.concat([output, data], output.length + data.length);
 			});
-			cmd.on(`close`, (code, signal) => {
+			cmd.on(`close`, (code, _signal) => {
 				const out = output.toString().trim();
 				if (code === 0) {
 					resolve([code, out]);

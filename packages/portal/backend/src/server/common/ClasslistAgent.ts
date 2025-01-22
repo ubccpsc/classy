@@ -1,7 +1,5 @@
-import * as parse from "csv-parse";
-import * as fs from "fs";
 import * as https from "https";
-import fetch, { RequestInit } from "node-fetch";
+import fetch from "node-fetch";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -9,7 +7,7 @@ import Log from "@common/Log";
 import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { PersonController } from "../../controllers/PersonController";
-import { AuditLabel, Grade, Person, PersonKind } from "../../Types";
+import { AuditLabel, Person, PersonKind } from "../../Types";
 import { CSVParser } from "./CSVParser";
 
 export class ClasslistAgent {
@@ -53,12 +51,11 @@ export class ClasslistAgent {
 	/**
 	 * Produces a report of student updates:
 	 * - new students added, old students removed, student data updated
-	 * @param beforePoeple A list of students before the Classlist update
+	 * @param beforePeople A list of students before the Classlist update
 	 * @param afterPeople A list of students after the Classlist update
 	 */
 	private getClasslistChanges(beforePeople: Person[], afterPeople: Person[]): ClasslistChangesTransport {
 		Log.info("ClasslistAgent::getClasslistChanges(..) - start");
-		const that = this;
 		const beforeCSIDs = beforePeople.map(function (person) {
 			return person.csId;
 		});

@@ -20,7 +20,7 @@ export default class Log {
 	public static parseLogLevel(): LogLevel {
 		try {
 			// console.log("Log::parseLogLevel() - start; currently: " + Log.Level);
-			let valToSwitch = null;
+			let valToSwitch;
 			if (typeof Log.Level === "undefined") {
 				// if undefined, use .env; otherwise re-parse value
 				valToSwitch = (process.env["LOG_LEVEL"] || "").toUpperCase();

@@ -40,7 +40,7 @@ export interface ICourseController {
 	 *
 	 * @param {Deliverable} deliv
 	 * @param {Grade} newGrade
-	 * * @param {Grade} existingGrade
+	 * @param {Grade} existingGrade
 	 * @returns {boolean} whether the grade should be saved.
 	 */
 	handleNewAutoTestGrade(deliv: Deliverable, newGrade: Grade, existingGrade: Grade): Promise<boolean>;
