@@ -285,14 +285,14 @@ export interface IGitHubActions {
 
 export class GitHubActions implements IGitHubActions {
 
+    private static instance: IGitHubActions = null;
     private readonly apiPath: string | null = null;
     private readonly gitHubUserName: string | null = null;
     private readonly gitHubAuthToken: string | null = null;
-    private readonly org: string | null = null;
 
     // private LONG_PAUSE = 5000; // was deployed previously
     // private SHORT_PAUSE = 1000;
-
+    private readonly org: string | null = null;
     /**
      * Page size for requests. Should be a constant, but using a
      * variable is handy for testing pagination.
@@ -303,7 +303,6 @@ export class GitHubActions implements IGitHubActions {
      * @private
      */
     private pageSize = 100;
-
     private dc: DatabaseController = null;
 
     private constructor() {
@@ -316,8 +315,6 @@ export class GitHubActions implements IGitHubActions {
         this.dc = DatabaseController.getInstance();
         Log.trace("GitHubActions::<init> - url: " + this.apiPath + "/" + this.org);
     }
-
-    private static instance: IGitHubActions = null;
 
     public static getInstance(forceReal?: boolean): IGitHubActions {
 
@@ -361,6 +358,59 @@ export class GitHubActions implements IGitHubActions {
 
         Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");
         return GitHubActions.instance;
+    }
+
+    /* istanbul ignore next */
+    /**
+     * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
+     *
+     * This is like an assertion that should be picked up by tests, although it should never
+     * happen in production (if our suite is any good).
+     *
+     * NOTE: ASYNC FUNCTION!
+     *
+     * @param {string | null} repoName
+     * @param {string | null} teamName
+     * @returns {Promise<boolean>}
+     */
+    public static async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - start");
+        const dbc = DatabaseController.getInstance();
+        if (repoName !== null) {
+            const repo = await dbc.getRepository(repoName);
+            if (repo === null) {
+                const msg = "Repository: " + repoName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof repo.custom === "undefined" || repo.custom === null || typeof repo.custom !== "object") {
+                    const msg = "Repository: " + repoName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
+                    throw new Error(msg);
+                }
+            }
+        }
+
+        if (teamName !== null) {
+            const team = await dbc.getTeam(teamName);
+            if (team === null) {
+                const msg = "Team: " + teamName +
+                    " does not exist in datastore; make sure you add it before calling this operation";
+                Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                throw new Error(msg);
+            } else {
+                // ensure custom property is there
+                if (typeof team.custom === "undefined" || team.custom === null || typeof team.custom !== "object") {
+                    const msg = "Team: " + teamName + " has a non-object .custom property";
+                    Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
+                    throw new Error(msg);
+                }
+            }
+        }
+        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
+        return true;
     }
 
     public setPageSize(size: number) {
@@ -790,65 +840,6 @@ export class GitHubActions implements IGitHubActions {
 
         Log.info("GitHubActions::listPeople(..) - done; # people: " + rows.length + "; took: " + Util.took(start));
         return rows;
-    }
-
-    private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
-        Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
-        const start = Date.now();
-
-        try {
-            Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
-            let response = await fetch(uri, options);
-            let body = await response.json();
-            let results: any[] = body; // save the first page of values
-
-            if (response.headers.has("link") === false) {
-                // single page, save the results and keep going
-                Log.trace("GitHubActions::handlePagination(..) - single page");
-            } else {
-                Log.trace("GitHubActions::handlePagination(..) - multiple pages");
-
-                let linkText = response.headers.get("link");
-                Log.trace("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
-                let links = parseLinkHeader(linkText);
-                Log.trace("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
-
-                // when on the last page links.last will not be present
-                while (typeof links.last !== "undefined") {
-                    // process current body
-                    uri = links.next.url;
-                    Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
-
-                    // NOTE: this needs to be slowed down to prevent DNS problems
-                    // (issuing 10+ concurrent dns requests can be problematic)
-                    await Util.delay(100);
-
-                    response = await fetch(uri, options);
-                    body = await response.json();
-                    results = results.concat(body); // append subsequent pages of values to the first page
-
-                    linkText = response.headers.get("link");
-                    Log.trace("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
-                    links = parseLinkHeader(linkText);
-                    Log.trace("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
-                }
-            }
-
-            if (typeof (results as any).message !== "undefined" &&
-                (results as any).message === "Bad credentials") {
-                // This is an odd place for this check, but seems like
-                // a good canary for uncovering credential problems
-                Log.error("GitHubActions::handlePagination(..) - Bad Credentials encountered");
-                Log.error("GitHubActions::handlePagination(..) - .env GH_BOT_TOKEN is incorrect"); // probably
-                return [];
-            }
-
-            Log.trace("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
-            return results;
-        } catch (err) {
-            Log.error("GitHubActions::handlePagination(..) - ERROR: " + err.message);
-            return [];
-        }
     }
 
     /**
@@ -1447,47 +1438,47 @@ export class GitHubActions implements IGitHubActions {
         return branches;
     }
 
-    public async listBranches(repoId: string): Promise<string[]> {
-        const start = Date.now();
-
-        const repoExists = await this.repoExists(repoId); // ensure the repo exists
-        if (repoExists === false) {
-            Log.error("GitHubAction::listBranches(..) - failed; repo does not exist");
-            return [];
-        }
-
-        // get branches
-        // GET /repos/{owner}/{repo}/branches
-        const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
-        Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
-        const listOptions: RequestInit = {
-            method: "GET",
-            headers: {
-                "Authorization": this.gitHubAuthToken,
-                "User-Agent": this.gitHubUserName,
-                "Accept": "application/vnd.github+json",
-                "X-GitHub-Api-Version": "2022-11-28"
-            }
-        };
-
-        const listResp = await fetch(listUri, listOptions);
-        Log.trace("GitHubAction::listBranches(..) - list response code: " + listResp.status); // 201 success
-        const listRespBody = await listResp.json();
-
-        if (listResp.status !== 200) {
-            Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
-            return [];
-        }
-        Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
-
-        const branches: string[] = [];
-        for (const githubBranch of listRespBody) {
-            branches.push(githubBranch.name);
-        }
-
-        Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
-        return branches;
-    }
+    // public async listBranches(repoId: string): Promise<string[]> {
+    //     const start = Date.now();
+    //
+    //     const repoExists = await this.repoExists(repoId); // ensure the repo exists
+    //     if (repoExists === false) {
+    //         Log.error("GitHubAction::listBranches(..) - failed; repo does not exist");
+    //         return [];
+    //     }
+    //
+    //     // get branches
+    //     // GET /repos/{owner}/{repo}/branches
+    //     const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
+    //     Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
+    //     const listOptions: RequestInit = {
+    //         method: "GET",
+    //         headers: {
+    //             "Authorization": this.gitHubAuthToken,
+    //             "User-Agent": this.gitHubUserName,
+    //             "Accept": "application/vnd.github+json",
+    //             "X-GitHub-Api-Version": "2022-11-28"
+    //         }
+    //     };
+    //
+    //     const listResp = await fetch(listUri, listOptions);
+    //     Log.trace("GitHubAction::listBranches(..) - list response code: " + listResp.status); // 201 success
+    //     const listRespBody = await listResp.json();
+    //
+    //     if (listResp.status !== 200) {
+    //         Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
+    //         return [];
+    //     }
+    //     Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
+    //
+    //     const branches: string[] = [];
+    //     for (const githubBranch of listRespBody) {
+    //         branches.push(githubBranch.name);
+    //     }
+    //
+    //     Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
+    //     return branches;
+    // }
 
     /**
      * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
@@ -1504,7 +1495,7 @@ export class GitHubActions implements IGitHubActions {
             return false;
         }
 
-        const allBranches = await this.listBranches(repoId);
+        const allBranches = await this.listRepoBranches(repoId);
 
         const branchesToKeepThatExist: string[] = [];
         const branchesToDelete: string[] = [];
@@ -1539,7 +1530,7 @@ export class GitHubActions implements IGitHubActions {
         // performance. Hopefully this is good enough.
 
         Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
-        const branchesAfter = await this.listBranches(repoId);
+        const branchesAfter = await this.listRepoBranches(repoId);
         if (branchesAfter.length > branchesToKeep.length) {
             // do it again
             Log.info("GitHubAction::deleteBranches(..) - branches still remain; retry removal");
@@ -1880,18 +1871,6 @@ export class GitHubActions implements IGitHubActions {
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
 
-    private reportStdOut(stdout: any, prefix: string) {
-        if (stdout) {
-            Log.warn("GitHubActions::stdOut(..) - " + prefix + ": " + stdout);
-        }
-    }
-
-    private reportStdErr(stderr: any, prefix: string) {
-        if (stderr) {
-            Log.warn("GitHubActions::stdErr(..) - " + prefix + ": " + stderr);
-        }
-    }
-
     /**
      * Adds a file with the data given, to the specified repository.
      * If force is set to true, will overwrite old files
@@ -2170,59 +2149,6 @@ export class GitHubActions implements IGitHubActions {
         return false;
     }
 
-    /* istanbul ignore next */
-    /**
-     * Checks to make sure the repoName or teamName (or both, if specified) are in the database.
-     *
-     * This is like an assertion that should be picked up by tests, although it should never
-     * happen in production (if our suite is any good).
-     *
-     * NOTE: ASYNC FUNCTION!
-     *
-     * @param {string | null} repoName
-     * @param {string | null} teamName
-     * @returns {Promise<boolean>}
-     */
-    public static async checkDatabase(repoName: string | null, teamName: string | null): Promise<boolean> {
-        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - start");
-        const dbc = DatabaseController.getInstance();
-        if (repoName !== null) {
-            const repo = await dbc.getRepository(repoName);
-            if (repo === null) {
-                const msg = "Repository: " + repoName +
-                    " does not exist in datastore; make sure you add it before calling this operation";
-                Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
-                throw new Error(msg);
-            } else {
-                // ensure custom property is there
-                if (typeof repo.custom === "undefined" || repo.custom === null || typeof repo.custom !== "object") {
-                    const msg = "Repository: " + repoName + " has a non-object .custom property";
-                    Log.error("GitHubActions::checkDatabase() - repo ERROR: " + msg);
-                    throw new Error(msg);
-                }
-            }
-        }
-
-        if (teamName !== null) {
-            const team = await dbc.getTeam(teamName);
-            if (team === null) {
-                const msg = "Team: " + teamName +
-                    " does not exist in datastore; make sure you add it before calling this operation";
-                Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
-                throw new Error(msg);
-            } else {
-                // ensure custom property is there
-                if (typeof team.custom === "undefined" || team.custom === null || typeof team.custom !== "object") {
-                    const msg = "Team: " + teamName + " has a non-object .custom property";
-                    Log.error("GitHubActions::checkDatabase() - team ERROR: " + msg);
-                    throw new Error(msg);
-                }
-            }
-        }
-        Log.trace("GitHubActions::checkDatabase( repo:_" + repoName + "_, team:_" + teamName + "_) - exists");
-        return true;
-    }
-
     public async simulateWebhookComment(projectName: string, sha: string, message: string): Promise<boolean> {
         try {
             if (typeof projectName === "undefined" || projectName === null) {
@@ -2401,6 +2327,77 @@ export class GitHubActions implements IGitHubActions {
         } catch (err) {
             Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - failed; took: " + Util.took(start));
             return [];
+        }
+    }
+
+    private async handlePagination(uri: string, options: RequestInit): Promise<object[]> {
+        Log.trace("GitHubActions::handlePagination(..) - start; PAGE_SIZE: " + this.pageSize);
+        const start = Date.now();
+
+        try {
+            Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
+            let response = await fetch(uri, options);
+            let body = await response.json();
+            let results: any[] = body; // save the first page of values
+
+            if (response.headers.has("link") === false) {
+                // single page, save the results and keep going
+                Log.trace("GitHubActions::handlePagination(..) - single page");
+            } else {
+                Log.trace("GitHubActions::handlePagination(..) - multiple pages");
+
+                let linkText = response.headers.get("link");
+                Log.trace("GitHubActions::handlePagination(..) - outer linkText: " + linkText);
+                let links = parseLinkHeader(linkText);
+                Log.trace("GitHubActions::handlePagination(..) - outer parsed Links: " + JSON.stringify(links));
+
+                // when on the last page links.last will not be present
+                while (typeof links.last !== "undefined") {
+                    // process current body
+                    uri = links.next.url;
+                    Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
+
+                    // NOTE: this needs to be slowed down to prevent DNS problems
+                    // (issuing 10+ concurrent dns requests can be problematic)
+                    await Util.delay(100);
+
+                    response = await fetch(uri, options);
+                    body = await response.json();
+                    results = results.concat(body); // append subsequent pages of values to the first page
+
+                    linkText = response.headers.get("link");
+                    Log.trace("GitHubActions::handlePagination(..) - inner linkText: " + linkText);
+                    links = parseLinkHeader(linkText);
+                    Log.trace("GitHubActions::handlePagination(..) - parsed Links: " + JSON.stringify(links));
+                }
+            }
+
+            if (typeof (results as any).message !== "undefined" &&
+                (results as any).message === "Bad credentials") {
+                // This is an odd place for this check, but seems like
+                // a good canary for uncovering credential problems
+                Log.error("GitHubActions::handlePagination(..) - Bad Credentials encountered");
+                Log.error("GitHubActions::handlePagination(..) - .env GH_BOT_TOKEN is incorrect"); // probably
+                return [];
+            }
+
+            Log.trace("GitHubActions::handlePagination(..) - done; elements: " + results.length + "; took: " + Util.took(start));
+            return results;
+        } catch (err) {
+            Log.error("GitHubActions::handlePagination(..) - ERROR: " + err.message);
+            return [];
+        }
+    }
+
+    private reportStdOut(stdout: any, prefix: string) {
+        if (stdout) {
+            Log.warn("GitHubActions::stdOut(..) - " + prefix + ": " + stdout);
+        }
+    }
+
+    private reportStdErr(stderr: any, prefix: string) {
+        if (stderr) {
+            Log.warn("GitHubActions::stdErr(..) - " + prefix + ": " + stderr);
         }
     }
 }

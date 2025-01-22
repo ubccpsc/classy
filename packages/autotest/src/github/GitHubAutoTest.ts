@@ -175,135 +175,110 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
     /**
      *
-     * @param {CommitTarget} info
-     * @returns {boolean} true if the preconditions are met; false otherwise
+     * NOTE: This description is from an older version of this method.
+     *
+     * Handles comment events from GitHub.
+     *
+     * Persists the event only if the feedback cannot be given right away and should be given when ready.
+     *
+     * Be careful though: if we give the warning we do not want to post back later!
+     *
+     * If build has not finished; let it finish, comments will appear in handleExecutionComplete:
+     *  0) leave it alone if it is currently executing
+     *  1) move it to the express que if faster
+     *  2) leave it on the standard queue if faster
+     *  3) comment will be remembered so results are automatically posted (if within quota or from TA)
+     *
+     * If build is finished:
+     *  * post back results if previously requested
+     *  * post back results if requested by TA
+     *  * post back results if rate limiting check passes (and record feedback given)
+     *  * post back warning if rate limiting check fails
      */
-    private async checkCommentPreconditions(info: CommitTarget): Promise<boolean> {
+    public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
+        const start = Date.now();
 
-        // ignore commits that do not exist
         if (typeof info === "undefined" || info === null) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - info not provided; skipping");
+            Log.info("GitHubAutoTest::handleCommentEvent(..) - skipped; info not provided");
             return false;
         }
 
-        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - start; repo: " +
-            info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
+        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; SHA: " + Util.shaHuman(info.commitSHA));
+        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; comment: " + JSON.stringify(info));
 
-        // ignore messages made by the bot, unless they are #force
-        if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
-
-            if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
-                Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - AutoBot post, but with #force");
-            } else {
-                Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, comment made by AutoBot");
-                return false;
-            }
-        }
-
-        // ignore messages that do not @mention the bot
-        if (info.botMentioned === false) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, bot not mentioned");
+        // sanity check; this keeps the rest of the code much simpler
+        const preconditionsMet = await this.checkCommentPreconditions(info);
+        if (preconditionsMet === false) {
+            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId +
+                " ) - skipped; preconditions not met");
             return false;
         }
 
-        // ignore messages that do not request grading on a specific deliverable
-        const delivId = info.delivId;
-        if (delivId === null) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, null delivId");
-            // no deliverable, give warning and abort
-            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
-            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            return false;
-        }
-
-        // ignore messages that do not request grading on a deliverable that is configured for autotest
-        const deliv = await this.classPortal.getContainerDetails(delivId);
-        if (deliv === null) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, unknown deliv: " + delivId);
-            // no deliverable, give warning and abort
-            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
-            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            return false;
-        }
-
-        const org = Config.getInstance().getProp(ConfigKey.org);
-        Log.trace("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - org: " + org + "; comment org: " + info.orgId);
-        if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
-            Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, org: " + info.orgId +
-                " does not match current course: " + org);
-
-            // no deliverable, give warning and abort
-            const msg = "This commit appears to be from a prior version of the course; AutoTest request cancelled.";
-            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-            return false;
-        }
-
-        // TODO: invalid personId
-
-        // TODO: invalid repoId
-
-        // verify constraints, but ignore them for staff and admins
-        const auth = await this.classPortal.isStaff(info.personId);
-        if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
-            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                " ) - admin request; ignoring openTimestamp and closeTimestamp");
+        const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
+        if (typeof pushEvent?.ref === "string") {
+            // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
+            info.ref = pushEvent.ref;
         } else {
+            // We do not have a push event so just explicitly set ref to "" (so string operations do not fail).
+            //
+            // NOTE: this happens when a comment is made on a commit that is not the one that was pushed
+            // e.g., when 3 commits are pushed and the comment is on any commit that is not the most recent
+            // in the push. This typically happens on < 5% of student comments. The GitHub API does not provide
+            // a way to recover this information.
+            //
+            // One hack might be to look at the ref of the preceding push for this repo, but that is not
+            // going to be reliable enough to use as a grading criteria for most courses.
+            //
+            // Another approach would be to just comment here and ask for only grading on the pushed commit
+            // but that might feel overly restrictive.
+            info.ref = "";
 
-            if (typeof info.flags !== "undefined") {
-                // reject #force requests by requesters who are not admins or staff
-                if (info.flags.indexOf("#force") >= 0) {
-                    Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                        " ) - ignored, student use of #force");
-                    const msg = "Only admins can use the #force flag.";
-                    delete info.flags;
-                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                    return false;
-                }
+            // gather information about these cases so we can work on a better solution
+            Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - processing; deliv: " +
+                info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) +
+                "; hasPush: " + (pushEvent !== null) + "; empty ref; payload body: " + JSON.stringify(pushEvent));
+        }
 
-                // reject #dev requests by requesters who are not admins or staff
-                if (info.flags.indexOf("#dev") >= 0) {
-                    Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                        " ) - ignored, student use of #dev");
-                    const msg = "Only admins can use the #dev flag.";
-                    delete info.flags;
-                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                    return false;
-                }
+        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - processing; deliv: " +
+            info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) +
+            "; hasPush: " + (pushEvent !== null) + "; branch: " + info.ref);
 
-                // reject #silent requests by requesters that are not admins or staff
-                if (info.flags.indexOf("#silent") >= 0) {
-                    Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                        " ) - ignored, student use of #silent");
-                    const msg = "Only admins can use the #silent flag.";
-                    delete info.flags;
-                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                    return false;
-                }
-            }
+        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA, info.ref);
+        const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
 
-            // reject requests for executing deliverables that are not yet open
-            if (deliv.openTimestamp > info.timestamp) {
-                Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                    " ) - ignored, deliverable not yet open to AutoTest");
-                // not open yet
-                const msg = "This deliverable is not yet open for grading.";
-                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                return false;
-            }
-
-            // reject requests for executing deliverables that are closed, unless the deliverable is configured for late autotest
-            if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
-                Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
-                    " ) - ignored, deliverable has been closed to AutoTest");
-                // closed
-                const msg = "This deliverable is closed to grading.";
-                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
-                return false;
+        // Allows course staff to run commits as students with #student flag
+        // This is helpful for testing student workflows with the queue
+        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            if (typeof info.flags !== "undefined" && info.flags.indexOf("#student") >= 0) {
+                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - running admin request as student");
+                isStaff.isStaff = false;
+                isStaff.isAdmin = false;
             }
         }
 
-        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - valid comment; preconditions accepted");
-        return true;
+        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
+            // staff request
+            Log.info(
+                "GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; deliv: " + info.delivId +
+                "; SHA: " + Util.shaHuman(info.commitSHA));
+            info.adminRequest = true; // set admin request so queues can handle this appropriately
+            if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
+                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; processing with #force");
+                await this.processComment(info, null); // do not pass the previous result so a new one will be generated
+            } else {
+                await this.processComment(info, res);
+            }
+        } else {
+            // student request
+            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleStudent; deliv: " + info.delivId +
+                "; SHA: " + Util.shaHuman(info.commitSHA));
+            info.adminRequest = false;
+            await this.handleCommentStudent(info, res);
+        }
+
+        // make sure the queues have ticked after the comment has been processed
+        this.tick();
+        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - done; took: " + Util.took(start));
     }
 
     /**
@@ -481,130 +456,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
         }
     }
 
-    private async shouldCharge(info: CommitTarget, isStaff: AutoTestAuthTransport, res: AutoTestResultTransport): Promise<boolean> {
-
-        // always false for staff and admins
-        if (typeof isStaff !== "undefined" && isStaff !== null &&
-            (isStaff.isAdmin === true || isStaff.isStaff === true)) {
-            Log.info("GitHubAutoTest::shouldCharge(..) - false (staff || admin): " + info.personId);
-            return false;
-        }
-
-        // false if res exists and has been previously paid for
-        if (res !== null) {
-            const feedbackRequested: CommitTarget = await this.getRequester(info.commitURL, info.delivId, "standard");
-            if (feedbackRequested !== null && feedbackRequested.timestamp < Date.now()) {
-                Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    /**
-     *
-     * NOTE: This description is from an older version of this method.
-     *
-     * Handles comment events from GitHub.
-     *
-     * Persists the event only if the feedback cannot be given right away and should be given when ready.
-     *
-     * Be careful though: if we give the warning we do not want to post back later!
-     *
-     * If build has not finished; let it finish, comments will appear in handleExecutionComplete:
-     *  0) leave it alone if it is currently executing
-     *  1) move it to the express que if faster
-     *  2) leave it on the standard queue if faster
-     *  3) comment will be remembered so results are automatically posted (if within quota or from TA)
-     *
-     * If build is finished:
-     *  * post back results if previously requested
-     *  * post back results if requested by TA
-     *  * post back results if rate limiting check passes (and record feedback given)
-     *  * post back warning if rate limiting check fails
-     */
-    public async handleCommentEvent(info: CommitTarget): Promise<boolean> {
-        const start = Date.now();
-
-        if (typeof info === "undefined" || info === null) {
-            Log.info("GitHubAutoTest::handleCommentEvent(..) - skipped; info not provided");
-            return false;
-        }
-
-        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; SHA: " + Util.shaHuman(info.commitSHA));
-        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - start; comment: " + JSON.stringify(info));
-
-        // sanity check; this keeps the rest of the code much simpler
-        const preconditionsMet = await this.checkCommentPreconditions(info);
-        if (preconditionsMet === false) {
-            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId +
-                " ) - skipped; preconditions not met");
-            return false;
-        }
-
-        const pushEvent = await this.dataStore.getPushRecord(info.commitURL);
-        if (typeof pushEvent?.ref === "string") {
-            // If we have a push event for this commit, add the ref from the push to the record (for branch tracking).
-            info.ref = pushEvent.ref;
-        } else {
-            // We do not have a push event so just explicitly set ref to "" (so string operations do not fail).
-            //
-            // NOTE: this happens when a comment is made on a commit that is not the one that was pushed
-            // e.g., when 3 commits are pushed and the comment is on any commit that is not the most recent
-            // in the push. This typically happens on < 5% of student comments. The GitHub API does not provide
-            // a way to recover this information.
-            //
-            // One hack might be to look at the ref of the preceding push for this repo, but that is not
-            // going to be reliable enough to use as a grading criteria for most courses.
-            //
-            // Another approach would be to just comment here and ask for only grading on the pushed commit
-            // but that might feel overly restrictive.
-            info.ref = "";
-        }
-
-        Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - processing; deliv: " +
-            info.delivId + "; repo: " + info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA) +
-            "; hasPush: " + (pushEvent !== null) + "; branch: " + info.ref);
-
-        const res: AutoTestResultTransport = await this.classPortal.getResult(info.delivId, info.repoId, info.commitSHA, info.ref);
-        const isStaff: AutoTestAuthTransport = await this.classPortal.isStaff(info.personId);
-
-        // Allows course staff to run commits as students with #student flag
-        // This is helpful for testing student workflows with the queue
-        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
-            if (typeof info.flags !== "undefined" && info.flags.indexOf("#student") >= 0) {
-                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - running admin request as student");
-                isStaff.isStaff = false;
-                isStaff.isAdmin = false;
-            }
-        }
-
-        if (isStaff !== null && (isStaff.isStaff === true || isStaff.isAdmin === true)) {
-            // staff request
-            Log.info(
-                "GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; deliv: " + info.delivId +
-                "; SHA: " + Util.shaHuman(info.commitSHA));
-            info.adminRequest = true; // set admin request so queues can handle this appropriately
-            if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
-                Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleAdmin; processing with #force");
-                await this.processComment(info, null); // do not pass the previous result so a new one will be generated
-            } else {
-                await this.processComment(info, res);
-            }
-        } else {
-            // student request
-            Log.info("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - handleStudent; deliv: " + info.delivId +
-                "; SHA: " + Util.shaHuman(info.commitSHA));
-            info.adminRequest = false;
-            await this.handleCommentStudent(info, res);
-        }
-
-        // make sure the queues have ticked after the comment has been processed
-        this.tick();
-        Log.trace("GitHubAutoTest::handleCommentEvent( " + info.personId + " ) - done; took: " + Util.took(start));
-    }
-
     protected async processExecution(data: AutoTestResult): Promise<void> {
         try {
             const that = this;
@@ -673,6 +524,181 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             // do not let errors escape
             Log.error("GitHubAutoTest::processExecution() - ERROR: " + err);
         }
+    }
+
+    /**
+     *
+     */
+    protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
+        const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");
+        const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
+        let testDelay = 0;
+        if (details !== null) {
+            testDelay = details.studentDelay;
+        }
+        Log.trace("GitHubAutoTest::requestNextTimeslot(..) - testDelay: " + testDelay);
+        if (record) {
+            const nextTimeslot: number = record.timestamp + (testDelay * 1000);
+            Log.info("GitHubAutoTest::requestNextTimeslot( " + delivId + ", " + userName + " ) - delay: " + testDelay + "; last: " +
+                new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
+            return nextTimeslot;
+        } else {
+            return null;
+        }
+    }
+
+    /**
+     *
+     * @param {CommitTarget} info
+     * @returns {boolean} true if the preconditions are met; false otherwise
+     */
+    private async checkCommentPreconditions(info: CommitTarget): Promise<boolean> {
+
+        // ignore commits that do not exist
+        if (typeof info === "undefined" || info === null) {
+            Log.info("GitHubAutoTest::checkCommentPreconditions(..) - info not provided; skipping");
+            return false;
+        }
+
+        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - start; repo: " +
+            info.repoId + "; SHA: " + Util.shaHuman(info.commitSHA));
+
+        // ignore messages made by the bot, unless they are #force
+        if (info.personId === Config.getInstance().getProp(ConfigKey.botName)) {
+
+            if (typeof info.flags !== "undefined" && info.flags.indexOf("#force") >= 0) {
+                Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - AutoBot post, but with #force");
+            } else {
+                Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, comment made by AutoBot");
+                return false;
+            }
+        }
+
+        // ignore messages that do not @mention the bot
+        if (info.botMentioned === false) {
+            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, bot not mentioned");
+            return false;
+        }
+
+        // ignore messages that do not request grading on a specific deliverable
+        const delivId = info.delivId;
+        if (delivId === null) {
+            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, null delivId");
+            // no deliverable, give warning and abort
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
+        // ignore messages that do not request grading on a deliverable that is configured for autotest
+        const deliv = await this.classPortal.getContainerDetails(delivId);
+        if (deliv === null) {
+            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, unknown deliv: " + delivId);
+            // no deliverable, give warning and abort
+            const msg = "Please specify a deliverable so AutoTest knows what to run against (e.g., #c0).";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
+        const org = Config.getInstance().getProp(ConfigKey.org);
+        Log.trace("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - org: " + org + "; comment org: " + info.orgId);
+        if (typeof org !== "undefined" && typeof info.orgId !== "undefined" && org !== info.orgId) {
+            Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, org: " + info.orgId +
+                " does not match current course: " + org);
+
+            // no deliverable, give warning and abort
+            const msg = "This commit appears to be from a prior version of the course; AutoTest request cancelled.";
+            await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+            return false;
+        }
+
+        // TODO: invalid personId
+
+        // TODO: invalid repoId
+
+        // verify constraints, but ignore them for staff and admins
+        const auth = await this.classPortal.isStaff(info.personId);
+        if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
+            Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                " ) - admin request; ignoring openTimestamp and closeTimestamp");
+        } else {
+
+            if (typeof info.flags !== "undefined") {
+                // reject #force requests by requesters who are not admins or staff
+                if (info.flags.indexOf("#force") >= 0) {
+                    Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                        " ) - ignored, student use of #force");
+                    const msg = "Only admins can use the #force flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+
+                // reject #dev requests by requesters who are not admins or staff
+                if (info.flags.indexOf("#dev") >= 0) {
+                    Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                        " ) - ignored, student use of #dev");
+                    const msg = "Only admins can use the #dev flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+
+                // reject #silent requests by requesters that are not admins or staff
+                if (info.flags.indexOf("#silent") >= 0) {
+                    Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                        " ) - ignored, student use of #silent");
+                    const msg = "Only admins can use the #silent flag.";
+                    delete info.flags;
+                    await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                    return false;
+                }
+            }
+
+            // reject requests for executing deliverables that are not yet open
+            if (deliv.openTimestamp > info.timestamp) {
+                Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                    " ) - ignored, deliverable not yet open to AutoTest");
+                // not open yet
+                const msg = "This deliverable is not yet open for grading.";
+                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                return false;
+            }
+
+            // reject requests for executing deliverables that are closed, unless the deliverable is configured for late autotest
+            if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
+                Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId +
+                    " ) - ignored, deliverable has been closed to AutoTest");
+                // closed
+                const msg = "This deliverable is closed to grading.";
+                await this.postToGitHub(info, {url: info.postbackURL, message: msg});
+                return false;
+            }
+        }
+
+        Log.info("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - valid comment; preconditions accepted");
+        return true;
+    }
+
+    private async shouldCharge(info: CommitTarget, isStaff: AutoTestAuthTransport, res: AutoTestResultTransport): Promise<boolean> {
+
+        // always false for staff and admins
+        if (typeof isStaff !== "undefined" && isStaff !== null &&
+            (isStaff.isAdmin === true || isStaff.isStaff === true)) {
+            Log.info("GitHubAutoTest::shouldCharge(..) - false (staff || admin): " + info.personId);
+            return false;
+        }
+
+        // false if res exists and has been previously paid for
+        if (res !== null) {
+            const feedbackRequested: CommitTarget = await this.getRequester(info.commitURL, info.delivId, "standard");
+            if (feedbackRequested !== null && feedbackRequested.timestamp < Date.now()) {
+                Log.info("GitHubAutoTest::shouldCharge(..) - false (already paid for)");
+                return false;
+            }
+        }
+
+        return true;
     }
 
     /**
@@ -749,27 +775,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
             }
         } catch (err) {
             Log.error("GitHubAutoTest::requestFeedbackDelay(" + delivId + ", " + userName + " ) - ERROR: " + err);
-        }
-    }
-
-    /**
-     *
-     */
-    protected async requestNextTimeslot(delivId: string, userName: string): Promise<number | null> {
-        const record: IFeedbackGiven = await this.dataStore.getLatestFeedbackGivenRecord(delivId, userName, "standard");
-        const details: AutoTestConfigTransport = await this.classPortal.getContainerDetails(delivId); // should cache this
-        let testDelay = 0;
-        if (details !== null) {
-            testDelay = details.studentDelay;
-        }
-        Log.trace("GitHubAutoTest::requestNextTimeslot(..) - testDelay: " + testDelay);
-        if (record) {
-            const nextTimeslot: number = record.timestamp + (testDelay * 1000);
-            Log.info("GitHubAutoTest::requestNextTimeslot( " + delivId + ", " + userName + " ) - delay: " + testDelay + "; last: " +
-                new Date(record.timestamp).toLocaleTimeString() + "; next: " + new Date(nextTimeslot).toLocaleTimeString());
-            return nextTimeslot;
-        } else {
-            return null;
         }
     }
 
