@@ -1,71 +1,70 @@
-import {expect} from "chai";
+import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec";
-import Config, {ConfigKey} from "@common/Config";
+import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 
-import {GitHubUtil, IGitHubMessage} from "@autotest/github/GitHubUtil";
+import { GitHubUtil, IGitHubMessage } from "@autotest/github/GitHubUtil";
 
 describe("GitHub Markdown Service", () => {
-    Config.getInstance();
+	Config.getInstance();
 
-    // tslint:disable-next-line
-    const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
-    const VALID_URL = githubAPI + "/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+	// tslint:disable-next-line
+	const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
+	const VALID_URL = githubAPI + "/repos/classytest/PostTestDoNotDelete/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
 
-    const TIMEOUT = 5000;
+	const TIMEOUT = 5000;
 
-    // let gh: IGitHubService;
+	// let gh: IGitHubService;
 
-    const postbackVal = Config.getInstance().getProp(ConfigKey.postback);
+	const postbackVal = Config.getInstance().getProp(ConfigKey.postback);
 
-    before(function () {
-        // gh = new GitHubService();
+	before(function () {
+		// gh = new GitHubService();
 
-        // set postback to be true so we an actually validate this
-        const config = Config.getInstance();
-        config.setProp(ConfigKey.postback, true);
-    });
+		// set postback to be true so we an actually validate this
+		const config = Config.getInstance();
+		config.setProp(ConfigKey.postback, true);
+	});
 
-    after(function () {
-        // return postback val
-        const config = Config.getInstance();
-        config.setProp(ConfigKey.postback, postbackVal);
-    });
+	after(function () {
+		// return postback val
+		const config = Config.getInstance();
+		config.setProp(ConfigKey.postback, postbackVal);
+	});
 
-    it("Should be able to post a valid message.", async function () {
-        const post: IGitHubMessage = {
-            url: VALID_URL,
-            message: "Automated Test Suite Message"
-        };
+	it("Should be able to post a valid message.", async function () {
+		const post: IGitHubMessage = {
+			url: VALID_URL,
+			message: "Automated Test Suite Message",
+		};
 
-        Log.test("Trying a valid url");
-        const res = await GitHubUtil.postMarkdownToGithub(post);
-        if (res === true) {
-            Log.test("Success (expected)");
-            expect(res).to.equal(true);
-        } else {
-            Log.test("Failure (unexpected)");
-            expect.fail();
-        }
-    }).timeout(TIMEOUT * 2);
+		Log.test("Trying a valid url");
+		const res = await GitHubUtil.postMarkdownToGithub(post);
+		if (res === true) {
+			Log.test("Success (expected)");
+			expect(res).to.equal(true);
+		} else {
+			Log.test("Failure (unexpected)");
+			expect.fail();
+		}
+	}).timeout(TIMEOUT * 2);
 
-    it("Should fail when trying to post an invalid message.", async function () {
-        const post: any = {
-            url: VALID_URL
-        };
+	it("Should fail when trying to post an invalid message.", async function () {
+		const post: any = {
+			url: VALID_URL,
+		};
 
-        Log.test("Trying an invalid message");
+		Log.test("Trying an invalid message");
 
-        const res = await GitHubUtil.postMarkdownToGithub(post);
-        if (res === true) {
-            Log.test("Success (unexpected): " + res);
-            expect.fail();
-        } else {
-            Log.test("Failure (expected)");
-            expect(res).to.equal(false);
-        }
-    }).timeout(TIMEOUT);
-
+		const res = await GitHubUtil.postMarkdownToGithub(post);
+		if (res === true) {
+			Log.test("Success (unexpected): " + res);
+			expect.fail();
+		} else {
+			Log.test("Failure (expected)");
+			expect(res).to.equal(false);
+		}
+	}).timeout(TIMEOUT);
 });

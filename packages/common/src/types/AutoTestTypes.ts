@@ -1,11 +1,11 @@
-import {ContainerInput, ContainerOutput} from "./ContainerTypes";
+import { ContainerInput, ContainerOutput } from "./ContainerTypes";
 
 export interface IFeedbackGiven {
-    personId: string;
-    delivId: string;
-    timestamp: number;
-    commitURL: string; // for information only
-    kind: string; // "standard" | "check"
+	personId: string;
+	delivId: string;
+	timestamp: number;
+	commitURL: string; // for information only
+	kind: string; // "standard" | "check"
 }
 
 /**
@@ -16,26 +16,25 @@ export interface IFeedbackGiven {
  *
  */
 export interface AutoTestResult {
+	/**
+	 * Foreign key into Deliverables.
+	 * This lets us know what deliverable this run is scoring.
+	 *
+	 * (intentional duplication with input.delivId)
+	 */
+	delivId: string;
 
-    /**
-     * Foreign key into Deliverables.
-     * This lets us know what deliverable this run is scoring.
-     *
-     * (intentional duplication with input.delivId)
-     */
-    delivId: string;
+	/**
+	 * Foreign key into Repositories.
+	 * This helps us know what repository (and people) this run is for.
+	 *
+	 * (intentional duplication with input.pushInfo.repoId)
+	 */
+	repoId: string;
 
-    /**
-     * Foreign key into Repositories.
-     * This helps us know what repository (and people) this run is for.
-     *
-     * (intentional duplication with input.pushInfo.repoId)
-     */
-    repoId: string;
+	commitURL: string;
+	commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
 
-    commitURL: string;
-    commitSHA: string; // can be used to index into the AutoTest collections (pushes, comments, & feedback)
-
-    input: ContainerInput; // Prepared by AutoTest service
-    output: ContainerOutput; // Returned by the Grader service
+	input: ContainerInput; // Prepared by AutoTest service
+	output: ContainerOutput; // Returned by the Grader service
 }

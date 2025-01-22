@@ -66,7 +66,7 @@
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
         "prettier:check": "prettier packages/**/*.ts --check",
-        "prettier:fix": "prettier pacakges/**/*.ts --write",
+        "prettier:fix": "prettier packages/**/*.ts --write",
         "cover": "nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
         "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
