@@ -65,10 +65,12 @@
         "postinstall": "git config core.hooksPath .githooks",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
-        "lint": "tslint --project tsconfig.json",
+        "prettier:check": "prettier packages/**/*.ts --check",
+        "prettier:fix": "prettier pacakges/**/*.ts --write",
         "cover": "nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
         "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
-        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"
+        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test",
+        "XXX_MIGRATE_TO_ESLINT_lint": "tslint --project tsconfig.json"
     }
 }

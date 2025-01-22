@@ -6,7 +6,7 @@ const config = {
 
     "trailingComma": "es5",
     "bracketSpacing": true,
-    "bracketLine": false,
+    "bracketSameLine": false,
     "arrowParens": "always",
     "semi": true,
     "singleQuote": false,
