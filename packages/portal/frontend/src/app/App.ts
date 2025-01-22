@@ -191,6 +191,73 @@ export class App {
 			});
 	}
 
+	public handleMainPageClick(params?: any) {
+		if (typeof params === "undefined") {
+			params = {};
+		}
+		Log.trace("App::handleMainPageClick( " + JSON.stringify(params) + " ) - start");
+
+		if (this.validated === true) {
+			Log.info("App::handleMainPageClick(..) - authorized");
+			// push to correct handler
+			params.isAdmin = localStorage.isAdmin === "true"; // localStorage returns strings
+			params.isStaff = localStorage.isStaff === "true"; // localStorage returns strings
+			if (params.isAdmin || params.isStaff) {
+				Log.trace("App::handleMainPageClick(..) - admin");
+				// if we"re admin, keep the logging on
+				Log.Level = LogLevel.TRACE;
+				UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/admin.html", params)
+					.then(function () {
+						// NOTE: _without_ HTMLPrefix()
+						// not using .getHTMLPrefix() above because all instances share a single admin page
+						// success
+					})
+					.catch(function (err) {
+						Log.error("UI::pushPage(..) - ERROR: " + err.message);
+					});
+			} else {
+				Log.trace("App::handleMainPageClick(..) - student");
+				UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/student.html", params)
+					.then(function () {
+						// success
+					})
+					.catch(function (err) {
+						Log.error("UI::pushPage(..) - ERROR: " + err.message);
+					});
+			}
+		} else {
+			// push to login page
+			Log.info("App::handleMainPageClick(..) - not authorized");
+			UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/login.html", params)
+				.then(function () {
+					// success
+				})
+				.catch(function (err) {
+					Log.error("UI::pushPage(..) - ERROR: " + err.message);
+				});
+		}
+	}
+
+	/*
+	 * @Return Boolean - True if user is authenticated
+	 */
+	public isLoggedIn() {
+		return this.validated === true;
+	}
+
+	public async logout(): Promise<void> {
+		Log.trace("App::logout() - start");
+
+		await this.clearCredentials();
+		UI.pushPage("index.html")
+			.then(function () {
+				// success
+			})
+			.catch(function (err) {
+				Log.error("UI::pushPage(..) - ERROR: " + err.message);
+			});
+	}
+
 	/**
 	 * Validate that the current user has valid credentials.
 	 *
@@ -452,60 +519,6 @@ export class App {
 		}
 	}
 
-	public handleMainPageClick(params?: any) {
-		if (typeof params === "undefined") {
-			params = {};
-		}
-		Log.trace("App::handleMainPageClick( " + JSON.stringify(params) + " ) - start");
-
-		if (this.validated === true) {
-			Log.info("App::handleMainPageClick(..) - authorized");
-			// push to correct handler
-			params.isAdmin = localStorage.isAdmin === "true"; // localStorage returns strings
-			params.isStaff = localStorage.isStaff === "true"; // localStorage returns strings
-			if (params.isAdmin || params.isStaff) {
-				Log.trace("App::handleMainPageClick(..) - admin");
-				// if we"re admin, keep the logging on
-				Log.Level = LogLevel.TRACE;
-				UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/admin.html", params)
-					.then(function () {
-						// NOTE: _without_ HTMLPrefix()
-						// not using .getHTMLPrefix() above because all instances share a single admin page
-						// success
-					})
-					.catch(function (err) {
-						Log.error("UI::pushPage(..) - ERROR: " + err.message);
-					});
-			} else {
-				Log.trace("App::handleMainPageClick(..) - student");
-				UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/student.html", params)
-					.then(function () {
-						// success
-					})
-					.catch(function (err) {
-						Log.error("UI::pushPage(..) - ERROR: " + err.message);
-					});
-			}
-		} else {
-			// push to login page
-			Log.info("App::handleMainPageClick(..) - not authorized");
-			UI.pushPage(Factory.getInstance().getHTMLPrefix() + "/login.html", params)
-				.then(function () {
-					// success
-				})
-				.catch(function (err) {
-					Log.error("UI::pushPage(..) - ERROR: " + err.message);
-				});
-		}
-	}
-
-	/*
-	 * @Return Boolean - True if user is authenticated
-	 */
-	public isLoggedIn() {
-		return this.validated === true;
-	}
-
 	private readCookie(name: string) {
 		Log.trace("App::readCookie( " + name + " ) - start; cookie string: " + document.cookie);
 		// this used to work but is not now
@@ -538,19 +551,6 @@ export class App {
 		// }
 		Log.trace("App::readCookie( " + name + " ) - no token found");
 		return null;
-	}
-
-	public async logout(): Promise<void> {
-		Log.trace("App::logout() - start");
-
-		await this.clearCredentials();
-		UI.pushPage("index.html")
-			.then(function () {
-				// success
-			})
-			.catch(function (err) {
-				Log.error("UI::pushPage(..) - ERROR: " + err.message);
-			});
 	}
 
 	private toggleLoginButton() {
