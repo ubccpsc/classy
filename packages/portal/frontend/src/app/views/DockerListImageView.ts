@@ -24,10 +24,7 @@ export class DockerListImageView {
 		}
 
 		// could be an exact match, but this is safer
-		if (checkedId.includes(imageId)) {
-			return true;
-		}
-		return false;
+		return checkedId.includes(imageId);
 	}
 
 	public async bind(dataSource: any, state: any) {

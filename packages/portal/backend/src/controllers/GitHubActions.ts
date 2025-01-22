@@ -733,7 +733,7 @@ export class GitHubActions implements IGitHubActions {
 				throw new Error("GitHubAction::deleteTeam( null ) - null team requested");
 			}
 
-			if (teamName === null || teamName.length < 1) {
+			if (teamName.length < 1) {
 				Log.info("GitHubAction::deleteTeam( " + teamName + " ) - team does not exist, not deleting; took: " + Util.took(start));
 				return false;
 			}

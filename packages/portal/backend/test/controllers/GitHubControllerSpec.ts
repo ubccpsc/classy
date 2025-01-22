@@ -349,7 +349,7 @@ describe("GitHubController", () => {
 		}
 		expect(res).to.be.null;
 		expect(ex).to.not.be.null;
-		expect(ex.message).to.equal("GitHubController::updateBranchProtection(..) - null repo");
+		expect(ex?.message).to.equal("GitHubController::updateBranchProtection(..) - null repo");
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should be create an issue.", async function () {
@@ -385,7 +385,7 @@ describe("GitHubController", () => {
 		}
 		expect(res).to.be.null;
 		expect(ex).to.not.be.null;
-		expect(ex.message).to.equal("GitHubController::createIssues(..) - null repo");
+		expect(ex?.message).to.equal("GitHubController::createIssues(..) - null repo");
 	}).timeout(TestHarness.TIMEOUT);
 
 	// TODO: actually write tests for the PR feature

@@ -106,7 +106,7 @@ export class AuthController {
 				Log.trace("AuthController::isPrivileged( " + personId + ", ... ) - person.kind: " + person.kind);
 				return await this.personPrivileged(person);
 			}
-		} else if (person === null && this.isLocalRequest(token)) {
+		} else if (this.isLocalRequest(token)) {
 			return { isAdmin: false, isStaff: true };
 		}
 		return { isAdmin: false, isStaff: false };

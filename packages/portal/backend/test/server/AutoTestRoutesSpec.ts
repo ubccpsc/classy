@@ -67,8 +67,8 @@ describe("AutoTest Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
 		expect(body).to.not.be.null;
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should respond to a valid backend detail request", async function () {
@@ -119,8 +119,8 @@ describe("AutoTest Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(response.body));
 		expect(response.status).to.equal(400);
 		expect(body).to.not.be.null;
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should accept a valid result payload", async function () {
@@ -134,9 +134,9 @@ describe("AutoTest Routes", function () {
 			Log.test("ERROR: " + err);
 		}
 		expect(response).to.not.be.null;
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(200);
-		expect(response.body.success).to.not.be.undefined;
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(200);
+		expect(response?.body.success).to.not.be.undefined;
 	}).timeout(TIMEOUT);
 
 	it("Should reject an invalid result payload", async function () {
@@ -162,10 +162,10 @@ describe("AutoTest Routes", function () {
 			Log.test("ERROR: " + err);
 		}
 		expect(response).to.not.be.null;
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(400);
-		expect(response.body.success).to.be.undefined;
-		expect(response.body.failure).to.not.be.undefined;
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(400);
+		expect(response?.body.success).to.be.undefined;
+		expect(response?.body.failure).to.not.be.undefined;
 	}).timeout(TIMEOUT);
 
 	it("Should respond to a valid result request", async function () {
@@ -181,8 +181,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(200);
-		expect(body.success).to.not.be.undefined;
-		expect(body.failure).to.be.undefined;
+		expect(body?.success).to.not.be.undefined;
+		expect(body?.failure).to.be.undefined;
 	});
 
 	it("Should reject an unauthorized result request", async function () {
@@ -198,8 +198,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should accept a valid promotePush request", async function () {
@@ -218,12 +218,12 @@ describe("AutoTest Routes", function () {
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(200);
-		expect(response.body.success).to.not.be.undefined;
-		expect(response.body.success.shouldPromote).to.not.be.undefined;
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(200);
+		expect(response?.body.success).to.not.be.undefined;
+		expect(response?.body.success.shouldPromote).to.not.be.undefined;
 		// this is not great, but the default controller always returns false
-		expect(response.body.success.shouldPromote).to.be.false;
+		expect(response?.body.success.shouldPromote).to.be.false;
 	}).timeout(TIMEOUT);
 
 	it("Should not accept an invalid promotePush request", async function () {
@@ -238,8 +238,8 @@ describe("AutoTest Routes", function () {
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(400);
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(400);
 	}).timeout(TIMEOUT);
 
 	it("Should reject an unauthorized isStaff request", async function () {
@@ -254,8 +254,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should respond to a valid isStaff request for staff", async function () {
@@ -307,8 +307,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should respond to a valid personId request", async function () {
@@ -340,8 +340,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should respond to a valid container request for a deliverable", async function () {
@@ -393,8 +393,8 @@ describe("AutoTest Routes", function () {
 		}
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 	});
 
 	it("Should be able to receive a grade event", async function () {
@@ -422,10 +422,10 @@ describe("AutoTest Routes", function () {
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(200);
-		expect(response.body.success).to.not.be.undefined;
-		expect(response.body.success.success).to.be.true;
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(200);
+		expect(response?.body.success).to.not.be.undefined;
+		expect(response?.body.success.success).to.be.true;
 	});
 
 	it("Should reject an invalid grade event", async function () {
@@ -455,10 +455,10 @@ describe("AutoTest Routes", function () {
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(400);
-		expect(response.body.failure).to.not.be.undefined;
-		expect(response.body.failure.message).to.be.a("string");
+		Log.test(response?.status + " -> " + JSON.stringify(response?.body));
+		expect(response?.status).to.equal(400);
+		expect(response?.body.failure).to.not.be.undefined;
+		expect(response?.body.failure.message).to.be.a("string");
 	});
 
 	// this will always fail now that we check the IP of the host
@@ -478,8 +478,8 @@ describe("AutoTest Routes", function () {
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
-		Log.test(response.status + " -> " + JSON.stringify(response.body));
-		expect(response.status).to.equal(400); // really should be 200, but AutoTest is not running so it will return this error
+		Log.test(response?.status + " -> " + JSON.stringify(response.body));
+		expect(response?.status).to.equal(400); // really should be 200, but AutoTest is not running so it will return this error
 		const text = response.text;
 		if (autotestUrl.indexOf("localhost") > -1) {
 			expect(text.indexOf("ECONNREFUSED")).to.be.greaterThan(0); // at least make sure it fails for the right reason

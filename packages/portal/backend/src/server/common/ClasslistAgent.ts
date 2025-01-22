@@ -11,12 +11,12 @@ import { AuditLabel, Person, PersonKind } from "../../Types";
 import { CSVParser } from "./CSVParser";
 
 export class ClasslistAgent {
+	private pc = new PersonController();
+	private db = DatabaseController.getInstance();
+
 	constructor() {
 		//
 	}
-
-	private pc = new PersonController();
-	private db = DatabaseController.getInstance();
 
 	public async fetchClasslist(): Promise<ClasslistTransport[]> {
 		Log.info("ClasslistAgent::fetchClasslist - start");
@@ -34,6 +34,56 @@ export class ClasslistAgent {
 			Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
 			throw new Error("Could not fetch Classlist " + err.message);
 		}
+	}
+
+	public async processClasslist(personId: string = null, path: string = null, data: any): Promise<ClasslistChangesTransport> {
+		Log.trace("ClasslistAgent::processClasslist(...) - start");
+		const peopleBefore: Person[] = await this.pc.getAllPeople();
+
+		if (path !== null) {
+			data = await new CSVParser().parsePath(path);
+		}
+
+		this.duplicateDataCheck(data, ["ACCT", "CWL"]);
+		this.missingDataCheck(data, ["ACCT", "CWL"]);
+		const peoplePromises: Array<Promise<Person>> = [];
+
+		for (const row of data) {
+			// Log.trace(JSON.stringify(row));
+			if (
+				typeof row.ACCT !== "undefined" &&
+				typeof row.CWL !== "undefined" &&
+				typeof row.SNUM !== "undefined" &&
+				typeof row.LAST !== "undefined" &&
+				typeof row.LAB !== "undefined" &&
+				(typeof row.FIRST !== "undefined" || typeof row.PREF !== "undefined")
+			) {
+				const p: Person = {
+					id: row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
+					csId: row.ACCT.toLowerCase(),
+					// github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
+					githubId: row.CWL.toLowerCase(),
+					studentNumber: row.SNUM,
+					fName: row.PREF || row.FIRST,
+					lName: row.LAST,
+					kind: PersonKind.STUDENT,
+					URL: null,
+					labId: row.LAB,
+					custom: {},
+				};
+				peoplePromises.push(this.pc.createPerson(p));
+			} else {
+				Log.error("ClasslistAgent::processClasslist(..) - column missing from: " + JSON.stringify(row));
+				peoplePromises.push(Promise.reject("Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB)."));
+			}
+		}
+		const peopleAfter = await Promise.all(peoplePromises);
+		const classlistChanges = this.getClasslistChanges(peopleBefore, peopleAfter);
+
+		// audit
+		await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId, {}, {}, { numPoeple: classlistChanges.classlist.length });
+
+		return classlistChanges;
 	}
 
 	private getClasslistUri() {
@@ -102,56 +152,6 @@ export class ClasslistAgent {
 		return changeReport;
 	}
 
-	public async processClasslist(personId: string = null, path: string = null, data: any): Promise<ClasslistChangesTransport> {
-		Log.trace("ClasslistAgent::processClasslist(...) - start");
-		const peopleBefore: Person[] = await this.pc.getAllPeople();
-
-		if (path !== null) {
-			data = await new CSVParser().parsePath(path);
-		}
-
-		this.duplicateDataCheck(data, ["ACCT", "CWL"]);
-		this.missingDataCheck(data, ["ACCT", "CWL"]);
-		const peoplePromises: Array<Promise<Person>> = [];
-
-		for (const row of data) {
-			// Log.trace(JSON.stringify(row));
-			if (
-				typeof row.ACCT !== "undefined" &&
-				typeof row.CWL !== "undefined" &&
-				typeof row.SNUM !== "undefined" &&
-				typeof row.LAST !== "undefined" &&
-				typeof row.LAB !== "undefined" &&
-				(typeof row.FIRST !== "undefined" || typeof row.PREF !== "undefined")
-			) {
-				const p: Person = {
-					id: row.ACCT.toLowerCase(), // id is CSID since this cannot be changed
-					csId: row.ACCT.toLowerCase(),
-					// github.ugrad.cs wanted row.ACCT; github.students.cs and github.ubc want row.CWL
-					githubId: row.CWL.toLowerCase(),
-					studentNumber: row.SNUM,
-					fName: row.PREF || row.FIRST,
-					lName: row.LAST,
-					kind: PersonKind.STUDENT,
-					URL: null,
-					labId: row.LAB,
-					custom: {},
-				};
-				peoplePromises.push(this.pc.createPerson(p));
-			} else {
-				Log.error("ClasslistAgent::processClasslist(..) - column missing from: " + JSON.stringify(row));
-				peoplePromises.push(Promise.reject("Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB)."));
-			}
-		}
-		const peopleAfter = await Promise.all(peoplePromises);
-		const classlistChanges = this.getClasslistChanges(peopleBefore, peopleAfter);
-
-		// audit
-		await this.db.writeAudit(AuditLabel.CLASSLIST_UPLOAD, personId, {}, {}, { numPoeple: classlistChanges.classlist.length });
-
-		return classlistChanges;
-	}
-
 	private duplicateDataCheck(data: any[], columnNames: string[]) {
 		Log.trace("ClasslistAgent::duplicateDataCheck -- start");
 		const that = this;
@@ -182,7 +182,7 @@ export class ClasslistAgent {
 	private getMissingDataRowsByColumn(data: any[], column: string): any[] {
 		Log.trace("ClasslistAgent::getMissingDataRowsByColumn -- start");
 		return data.filter((row) => {
-			if (row[column] === "" || typeof row[column] === "undefined") {
+			if (typeof row[column] === "undefined" || row[column] === "") {
 				return true;
 			}
 			return false;

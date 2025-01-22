@@ -1,7 +1,6 @@
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
-import { AdminController } from "../src/controllers/AdminController";
 /* istanbul ignore file */
 import { DatabaseController } from "../src/controllers/DatabaseController";
 import { GitHubActions } from "../src/controllers/GitHubActions";
@@ -16,7 +15,6 @@ import { PersonKind } from "../src/Types";
 export class FrontendDatasetGenerator {
 	private dc: DatabaseController = null;
 	private ghc = new GitHubController(GitHubActions.getInstance());
-	// private cc: AdminController = new AdminController(this.ghc);
 
 	constructor() {
 		this.dc = DatabaseController.getInstance();

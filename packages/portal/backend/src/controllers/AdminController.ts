@@ -383,7 +383,7 @@ export class AdminController {
 		const start = Date.now();
 		const WILDCARD = "any";
 
-		let allResults: Result[] = [];
+		let allResults: Result[];
 		if (reqRepoId !== WILDCARD) {
 			// if both are not "any" just use this one too
 			// ResultsKind not supported for getAllResults(..)

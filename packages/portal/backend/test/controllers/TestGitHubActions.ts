@@ -331,18 +331,14 @@ export class TestGitHubActions implements IGitHubActions {
 		if (repoName === TestHarness.INVALIDREPONAME) {
 			return false;
 		}
-		if (permissionLevel === "admin") {
-			return false;
-		}
-		return true;
+
+		return permissionLevel !== "admin";
 	}
 
 	public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
 		Log.info("TestGitHubActions::writeFileToRepo(..)");
-		if (repoURL === "invalidurl.com") {
-			return false;
-		}
-		return true;
+
+		return repoURL !== "invalidurl.com";
 	}
 
 	public addGithubAuthToken(url: string): string {

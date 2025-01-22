@@ -24,7 +24,8 @@ export class UI {
 			return nav.pushPage(pageId, options);
 		} else {
 			Log.error("UI::pushPage(..) - WARN: nav is null");
-			return nav.pushPage(pageId, options);
+			// nav is null so this call cannot work
+			// return nav.pushPage(pageId, options);
 		}
 	}
 

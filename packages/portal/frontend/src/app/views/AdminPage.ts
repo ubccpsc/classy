@@ -8,7 +8,7 @@ import { UI } from "../util/UI";
 export abstract class AdminPage implements IView {
 	protected readonly remote: string | null = null;
 
-	constructor(remote: string) {
+	protected constructor(remote: string) {
 		this.remote = remote;
 	}
 

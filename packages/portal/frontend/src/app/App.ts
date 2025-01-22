@@ -377,7 +377,7 @@ export class App {
 				that.validated = false;
 				localStorage.clear(); // erase cached info
 				document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
-				location.href = location.href; // force refresh the page
+				location.href = location.href; // forces page refresh (intentional self reference)
 				return;
 			};
 

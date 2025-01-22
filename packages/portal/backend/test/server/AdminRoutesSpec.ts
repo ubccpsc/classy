@@ -1384,8 +1384,8 @@ describe("Admin Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(401);
 		expect(body).to.not.be.null;
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 		expect(ex).to.be.null;
 	});
 
@@ -1451,8 +1451,8 @@ describe("Admin Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(401);
 		expect(body).to.not.be.null;
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 		expect(ex).to.be.null;
 	});
 
@@ -1515,8 +1515,8 @@ describe("Admin Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(401);
 		expect(body).to.not.be.null;
-		expect(body.success).to.be.undefined;
-		expect(body.failure).to.not.be.undefined;
+		expect(body?.success).to.be.undefined;
+		expect(body?.failure).to.not.be.undefined;
 		expect(ex).to.be.null;
 	});
 

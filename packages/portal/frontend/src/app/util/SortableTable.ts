@@ -27,7 +27,7 @@ export class SortableTable {
 	 * This is the div name that will have its innerHTML set to the table.
 	 */
 	protected divName: string;
-	private headers: TableHeader[] = [];
+	private readonly headers: TableHeader[] = [];
 	private rows: TableCell[][] = [];
 	/**
 	 * The current sortHeader
