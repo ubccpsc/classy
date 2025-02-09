@@ -24,6 +24,7 @@ export class AdminResultsTab extends AdminPage {
     // private readonly remote: string; // url to backend
     private delivValue: string | null = null;
     private repoValue: string | null = null;
+    private isAdmin = false;
 
     constructor(remote: string) {
         // this.remote = remote;
@@ -62,6 +63,10 @@ export class AdminResultsTab extends AdminPage {
                 UI.showError(err);
             });
         };
+
+        if (typeof opts.isAdmin !== "undefined") {
+            this.isAdmin = opts.isAdmin;
+        }
 
         this.render(delivs, repos, results);
     }
@@ -165,19 +170,21 @@ export class AdminResultsTab extends AdminPage {
 
             let score: number | string = "";
             let scorePrepend = "";
-            score = result.scoreOverall;
-            if (score === 100) {
-                score = "100.00";
-            } else {
-                // two decimal places
-                if (typeof score === "number") {
-                    score = score.toFixed(2);
-                }
-                // prepend space (not 100)
-                scorePrepend = "&#8199;" + scorePrepend;
-                if (result.scoreOverall < 10) {
-                    // prepend with extra space if < 10
+            if (this.isAdmin) {
+                score = result.scoreOverall;
+                if (score === 100) {
+                    score = "100.00";
+                } else {
+                    // two decimal places
+                    if (typeof score === "number") {
+                        score = score.toFixed(2);
+                    }
+                    // prepend space (not 100)
                     scorePrepend = "&#8199;" + scorePrepend;
+                    if (result.scoreOverall < 10) {
+                        // prepend with extra space if < 10
+                        scorePrepend = "&#8199;" + scorePrepend;
+                    }
                 }
             }
 
