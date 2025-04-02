@@ -745,7 +745,8 @@ export class AdminController {
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
-				if (repo.URL === null) {
+				// if (repo.URL === null) {
+				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
 					// key check: repo.URL is only set if the repo has been provisioned
 					const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
 					const teams: Team[] = await Promise.all(futureTeams);
@@ -877,7 +878,8 @@ export class AdminController {
 		// we want to know all repos whether they are released or not
 		const allRepos: Repository[] = reposAlreadyReleased;
 		for (const toReleaseRepo of reposToRelease) {
-			toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
+			// toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
+			toReleaseRepo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // denotes that repo has not been released yet
 			allRepos.push(toReleaseRepo);
 		}
 		return allRepos;
@@ -894,7 +896,9 @@ export class AdminController {
 		for (const repo of repos) {
 			try {
 				const startRepo = Date.now();
-				if (repo.URL !== null) {
+				// if (repo.URL !== null) {
+				// can only release repos that are provisioned
+				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 					const teams: Team[] = [];
 					for (const teamId of repo.teamIds) {
 						teams.push(await this.dbc.getTeam(teamId));

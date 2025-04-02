@@ -26,7 +26,7 @@ import { PersonController } from "../../controllers/PersonController";
 import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
 import { Factory } from "../../Factory";
-import { AuditLabel, Person } from "../../Types";
+import { AuditLabel, GitHubStatus, Person } from "../../Types";
 import { ClasslistAgent } from "./ClasslistAgent";
 
 import IREST from "../IREST";
@@ -35,35 +35,6 @@ import { AuthRoutes } from "./AuthRoutes";
 import Util from "@common/Util";
 
 export default class GeneralRoutes implements IREST {
-	public registerRoutes(server: restify.Server) {
-		Log.trace("GeneralRoutes::registerRoutes() - start");
-
-		// returns the org that the backend is currently configured to serve
-		// mainly used by the frontend so it uses the correct UI
-		server.get("/portal/config", GeneralRoutes.getConfig);
-
-		// used to get student-specific data
-		server.get("/portal/person", GeneralRoutes.getPerson);
-
-		// used by students to get their (released) grades
-		server.get("/portal/grades", GeneralRoutes.getGrades);
-
-		// used by students to get their teams
-		server.get("/portal/teams", GeneralRoutes.getTeams);
-
-		// used by students to get their repos
-		server.get("/portal/repos", GeneralRoutes.getRepos);
-
-		// used by students to create their teams
-		server.post("/portal/team", GeneralRoutes.postTeam);
-
-		// server.get("/portal/resource/:path", GeneralRoutes.getResource);
-		server.get("/portal/resource/*", GeneralRoutes.getResource);
-
-		// IP restricted
-		server.put("/portal/classlist", GeneralRoutes.updateClasslist);
-	}
-
 	public static async getConfig(req: any, res: any, next: any) {
 		Log.trace("GeneralRoutes::getConfig(..) - start");
 		const start = Date.now();
@@ -106,23 +77,6 @@ export default class GeneralRoutes implements IREST {
 				res.send(400, payload);
 				return next(false);
 			});
-	}
-
-	private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
-		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
-		if (isValid === false) {
-			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
-			throw new Error("Invalid credentials");
-		} else {
-			const pc = new PersonController();
-			const person = await pc.getPerson(user);
-			if (person === null) {
-				return null;
-			}
-
-			return PersonController.personToTransport(person);
-		}
 	}
 
 	public static getGrades(req: any, res: any, next: any) {
@@ -374,6 +328,29 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
+	public static handleError(code: number, msg: string, res: any, next: any) {
+		Log.error("GeneralRoutes::handleError(..) - ERROR: " + msg);
+		res.send(code, { failure: { message: msg, shouldLogout: false } });
+		return next(false);
+	}
+
+	private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
+		const ac = new AuthController();
+		const isValid = await ac.isValid(user, token);
+		if (isValid === false) {
+			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
+			throw new Error("Invalid credentials");
+		} else {
+			const pc = new PersonController();
+			const person = await pc.getPerson(user);
+			if (person === null) {
+				return null;
+			}
+
+			return PersonController.personToTransport(person);
+		}
+	}
+
 	private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
 		const ac = new AuthController();
@@ -503,9 +480,9 @@ export default class GeneralRoutes implements IREST {
 			Log.trace("GeneralRoutes::performGetRepos(..) - #repos: " + repos.length);
 			const repoTrans: RepositoryTransport[] = [];
 			for (const repo of repos) {
-				if (repo.URL !== null) {
-					// null URLs are Repository objects that have been created locally but not on GitHub
-					// TODO: should probably consider repo.custom.githubCreated
+				// if (repo.URL !== null) {
+				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					// provisioned repos
 					repoTrans.push(RepositoryController.repositoryToTransport(repo));
 				}
 			}
@@ -513,9 +490,32 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	public static handleError(code: number, msg: string, res: any, next: any) {
-		Log.error("GeneralRoutes::handleError(..) - ERROR: " + msg);
-		res.send(code, { failure: { message: msg, shouldLogout: false } });
-		return next(false);
+	public registerRoutes(server: restify.Server) {
+		Log.trace("GeneralRoutes::registerRoutes() - start");
+
+		// returns the org that the backend is currently configured to serve
+		// mainly used by the frontend so it uses the correct UI
+		server.get("/portal/config", GeneralRoutes.getConfig);
+
+		// used to get student-specific data
+		server.get("/portal/person", GeneralRoutes.getPerson);
+
+		// used by students to get their (released) grades
+		server.get("/portal/grades", GeneralRoutes.getGrades);
+
+		// used by students to get their teams
+		server.get("/portal/teams", GeneralRoutes.getTeams);
+
+		// used by students to get their repos
+		server.get("/portal/repos", GeneralRoutes.getRepos);
+
+		// used by students to create their teams
+		server.post("/portal/team", GeneralRoutes.postTeam);
+
+		// server.get("/portal/resource/:path", GeneralRoutes.getResource);
+		server.get("/portal/resource/*", GeneralRoutes.getResource);
+
+		// IP restricted
+		server.put("/portal/classlist", GeneralRoutes.updateClasslist);
 	}
 }

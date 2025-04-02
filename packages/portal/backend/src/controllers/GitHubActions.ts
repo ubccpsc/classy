@@ -10,6 +10,7 @@ import { Factory } from "../Factory";
 import { DatabaseController } from "./DatabaseController";
 import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
 import { TeamController } from "./TeamController";
+import { GitHubStatus } from "@backend/Types";
 
 // tslint:disable-next-line
 const tmp = require("tmp-promise");
@@ -462,6 +463,7 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
@@ -551,6 +553,7 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
 			Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; took: " + Util.took(start));
@@ -1021,6 +1024,8 @@ export class GitHubActions implements IGitHubActions {
 
 				// remove default token provider/maintainer from team
 				await this.removeMembersFromTeam(teamName, [Config.getInstance().getProp(ConfigKey.githubBotName)]);
+
+				// TODO: why is the team not reflected to the DB here (with status UNLINKED) like in createRepo?
 
 				return { teamName: teamName, githubTeamNumber: body.id };
 			}

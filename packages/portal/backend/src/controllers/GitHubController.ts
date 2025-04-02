@@ -353,6 +353,10 @@ export class GitHubController implements IGitHubController {
 			}
 		}
 
+		// update the repo status to be linked
+		repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+		await this.dbc.writeRepository(repo);
+
 		Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
 		return true;
 	}

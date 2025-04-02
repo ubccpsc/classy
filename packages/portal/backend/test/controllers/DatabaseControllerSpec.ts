@@ -6,7 +6,7 @@ import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
-import { PersonKind } from "@backend/Types";
+import { GitHubStatus, PersonKind } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 
@@ -389,6 +389,7 @@ describe("DatabaseController", () => {
 		expect(res).to.not.be.null;
 		expect(res.id).to.equal(TestHarness.REPONAME1);
 		expect(res.URL).to.equal(null);
+		expect(res.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
 		expect((res.custom as any).foo).to.be.undefined;
 
 		(res.custom as any).foo = true;

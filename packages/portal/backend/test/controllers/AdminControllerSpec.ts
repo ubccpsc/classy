@@ -544,6 +544,7 @@ describe("AdminController", () => {
 			const allNewRepos = await rc.getAllRepos();
 			expect(allNewRepos.length).to.equal(1);
 			expect(allNewRepos[0].URL).to.not.be.null;
+			expect(allNewRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 
 			const repoExists = await gha.repoExists(allNewRepos[0].id);
 			expect(repoExists).to.be.true; // should be provisioned
@@ -561,7 +562,8 @@ describe("AdminController", () => {
 			// await clearAndPreparePartial();
 			const allRepos = await rc.getAllRepos();
 			expect(allRepos.length).to.equal(1);
-			expect(allRepos[0].URL).to.not.be.null; // provisioned
+			expect(allRepos[0].URL).to.not.be.null;
+			expect(allRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
@@ -579,6 +581,9 @@ describe("AdminController", () => {
 			Log.test("Released: " + JSON.stringify(res));
 			expect(res).to.be.an("array");
 			expect(res.length).to.equal(1);
+			const provisionedRepos = await rc.getAllRepos();
+			expect(provisionedRepos[0].URL).to.not.be.null;
+			expect(provisionedRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // now attached
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
@@ -636,8 +641,9 @@ describe("AdminController", () => {
 				if (repo.delivId === deliv.id) {
 					Log.test("Repo: " + JSON.stringify(repo));
 					const repoExists = await gha.repoExists(repo.id);
-					expect(repoExists).to.be.true; // should be provisioned
+					expect(repoExists).to.be.true;
 					expect(repo.URL).to.not.be.null;
+					expect(repo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 				}
 			}
 		}).timeout(TestHarness.TIMEOUTLONG * 5);

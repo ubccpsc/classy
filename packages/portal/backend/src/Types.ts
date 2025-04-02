@@ -108,15 +108,27 @@ export interface Deliverable {
 	teamStudentsForm: boolean;
 }
 
+/**
+ * Tracks the GitHub status of Teams and Repositories.
+ *
+ * Creating a Team or Repository object in the database does not mean that it has
+ * been provisioned on the GitHub instance.
+ *
+ * NOT_PROVISIONED: The team/repo exists in the DB but not on GitHub.
+ *
+ * LINKED / UNLINKED: Differentiates between teams and repos that have been
+ * provisioned, but not linked to each other. This is important because an
+ * unlinked team or repo is effectively read-only to students.
+ */
 export enum GitHubStatus {
 	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
 	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (team: not linked to repo, repo: no assigned team)
 	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team/repo provisioned on GitHub and linked to each other
-	// PROVISIONED_READONLY = "PROVISIONED_READONLY", // repo provisioned and linked to a repo but not writeable (not relevant for teams)
 }
 
 export interface Team {
 	readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
+
 	/**
 	 * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
 	 * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
@@ -145,10 +157,9 @@ export interface Team {
 	 * GitHub assigns a numeric value to team objects. Looking this up can be slow,
 	 * especially for tasks where all team numbers are needed.
 	 *
-	 * We cache these, since they are durable, but the number itself should not
-	 * be used to compute the team's GitHub status.
+	 * DANGER: do not use as replacement for gitHubStatus!
 	 */
-	githubId: number | null; // this is just for performance (to avoid a GH lookup), only use gitHubStatus status!
+	githubId: number | null;
 
 	custom: {};
 }
@@ -167,38 +178,23 @@ export interface Repository {
 	readonly delivId: string; // invariant
 
 	/**
-	 * URL for project in version control system.
-	 *
-	 * This should only be used to keep track of the repo, not to compute its status
-	 * (e.g., that the repo has been provisioned on GitHub).
-	 */
-	URL: string | null;
-
-	/**
-	 * git clone URL for project; null if not yet created
-	 *
-	 * TODO: make sure this is not used to check if a repo has been provisioned.
-	 */
-	cloneURL: string | null; // git clone URL for project; null if not yet created
-
-	/**
 	 * Teams associated with the repo.
 	 */
 	teamIds: string[]; // Team.id[] - foreign key
 
 	/**
-	 * Has the repo been provisioned on GitHub.
+	 * URL for project in version control system; null if not yet known.
 	 *
-	 * TODO: make this non-optional.
+	 * DANGER: do not use as replacement for gitHubStatus!
 	 */
-	githubProvisioned?: boolean;
+	URL: string | null;
 
 	/**
-	 * Is the repo student-writeable on GitHub.
+	 * git clone URL for project; null if not yet known.
 	 *
-	 * TODO: make this non-optional.
+	 * DANGER: do not use as replacement for gitHubStatus!
 	 */
-	githubWriteable?: boolean;
+	cloneURL: string | null; // git clone URL for project; null if not yet created
 
 	/**
 	 * The GitHub status for the team.
