@@ -16,7 +16,7 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
+import { AuditLabel, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubActions } from "./GitHubActions";
@@ -28,15 +28,6 @@ import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
 
 export class AdminController {
-	/**
-	 * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
-	 *
-	 * @returns {string | null}
-	 */
-	public static getName(): string | null {
-		return Config.getInstance().getProp(ConfigKey.name);
-	}
-
 	protected dbc = DatabaseController.getInstance();
 	protected pc = new PersonController();
 	protected rc = new RepositoryController();
@@ -49,6 +40,82 @@ export class AdminController {
 	constructor(ghController: IGitHubController) {
 		Log.trace("AdminController::<init>");
 		this.gh = ghController;
+	}
+
+	/**
+	 * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
+	 *
+	 * @returns {string | null}
+	 */
+	public static getName(): string | null {
+		return Config.getInstance().getProp(ConfigKey.name);
+	}
+
+	/**
+	 * Validates the CourseTransport object.
+	 *
+	 * @param {CourseTransport} courseTrans
+	 * @returns {string | null} null if object is valid; string description of error if not.
+	 */
+	public static validateCourseTransport(courseTrans: CourseTransport): string | null {
+		if (typeof courseTrans === "undefined" || courseTrans === null) {
+			const msg = "Course not populated.";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.id !== "string") {
+			const msg = "Course.id not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.defaultDeliverableId !== "string") {
+			const msg = "defaultDeliverableId not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			return msg;
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.custom !== "object") {
+			const msg = "custom not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			return msg;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns null if the object is valid. This API is terrible.
+	 *
+	 * @param {ProvisionTransport} obj
+	 * @returns {ProvisionTransport | null}
+	 */
+	public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
+		if (typeof obj === "undefined" || obj === null) {
+			const msg = "Transport not populated.";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof obj.delivId !== "string") {
+			const msg = "Provision.id not specified";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof obj.formSingle !== "boolean") {
+			const msg = "formSingle not specified";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		return null;
 	}
 
 	/**
@@ -344,40 +411,6 @@ export class AdminController {
 		return results;
 	}
 
-	private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
-		const resultSummary = await this.clipAutoTestResult(result);
-
-		let testPass: string[] = [];
-		let testFail: string[] = [];
-		let testSkip: string[] = [];
-		let testError: string[] = [];
-
-		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
-			const report: GradeReport = result.output.report;
-			if (typeof report.passNames !== "undefined") {
-				testPass = report.passNames;
-			}
-			if (typeof report.failNames !== "undefined") {
-				testFail = report.failNames;
-			}
-			if (typeof report.skipNames !== "undefined") {
-				testSkip = report.skipNames;
-			}
-			if (typeof report.errorNames !== "undefined") {
-				testError = report.errorNames;
-			}
-		}
-
-		return {
-			...resultSummary,
-			testPass: testPass,
-			testFail: testFail,
-			testError: testError,
-			testSkip: testSkip,
-			custom: {},
-		};
-	}
-
 	public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
 		Log.trace("AdminController::matchResults(..) - start");
 		const start = Date.now();
@@ -488,65 +521,6 @@ export class AdminController {
 	}
 
 	/**
-	 * Transforms a Result into an AutoTestResultSummaryTransport
-	 */
-	private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
-		const repoId = result.input.target.repoId;
-		const repoURL =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
-
-		let scoreOverall = null;
-		let scoreCover = null;
-		let scoreTest = null;
-
-		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
-			const report = result.output.report;
-			if (typeof report.scoreOverall !== "undefined") {
-				scoreOverall = report.scoreOverall;
-			}
-			if (typeof report.scoreTest !== "undefined") {
-				scoreTest = report.scoreTest;
-			}
-			if (typeof report.scoreCover !== "undefined") {
-				scoreCover = report.scoreCover;
-			}
-		}
-
-		const state = this.selectState(result);
-
-		return {
-			repoId: repoId,
-			repoURL: repoURL,
-			delivId: result.delivId,
-			state: state,
-			timestamp: result.output.timestamp,
-			commitSHA: result.input.target.commitSHA,
-			commitURL: result.input.target.commitURL,
-			scoreOverall: scoreOverall,
-			scoreCover: scoreCover,
-			scoreTests: scoreTest,
-			custom: {},
-		};
-	}
-
-	/**
-	 * Takes a result, and if the VM was successful picks the state of the report.
-	 *     else returns the state of the VM
-	 * @param result
-	 */
-	private selectState(result: Result): string {
-		// if the VM state is SUCCESS, return the report state
-		let state = "UNDEFINED";
-		if (typeof result.output !== "undefined" && typeof result.output.state !== "undefined") {
-			state = result.output.state.toString();
-		}
-		if (state === "SUCCESS" && typeof result.output.report.result !== "undefined") {
-			state = result.output.report.result;
-		}
-		return state;
-	}
-
-	/**
 	 * Gets the deliverables associated with the course.
 	 *
 	 * @returns {Promise<DeliverableTransport[]>}
@@ -569,43 +543,6 @@ export class AdminController {
 
 		Log.trace("AdminController::getDeliverables() - done; # delivs: " + delivs.length + "; took: " + Util.took(start));
 		return delivs;
-	}
-
-	/**
-	 * Validates the CourseTransport object.
-	 *
-	 * @param {CourseTransport} courseTrans
-	 * @returns {string | null} null if object is valid; string description of error if not.
-	 */
-	public static validateCourseTransport(courseTrans: CourseTransport): string | null {
-		if (typeof courseTrans === "undefined" || courseTrans === null) {
-			const msg = "Course not populated.";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.id !== "string") {
-			const msg = "Course.id not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.defaultDeliverableId !== "string") {
-			const msg = "defaultDeliverableId not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			return msg;
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.custom !== "object") {
-			const msg = "custom not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			return msg;
-		}
-
-		return null;
 	}
 
 	/**
@@ -909,7 +846,8 @@ export class AdminController {
 				const repo = await this.dbc.getRepository(names.repoName);
 
 				/* istanbul ignore else */
-				if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
+				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
+				if (team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
 					/* istanbul ignore else */
 					if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
@@ -1088,9 +1026,14 @@ export class AdminController {
 					team.githubId = null; // does not exist, must not have a number
 				}
 
-				if (team.custom.githubAttached !== false) {
-					Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
-					team.custom.githubAttached = false; // does not exist, must not be attached
+				// if (team.custom.githubAttached !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
+				// 	team.custom.githubAttached = false; // does not exist, must not be attached
+				// }
+
+				if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - team should not exist: " + team.id);
+					team.gitHubStatus = GitHubStatus.NOT_PROVISIONED; // does not exist, must not be attached
 				}
 			}
 
@@ -1126,9 +1069,14 @@ export class AdminController {
 						Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
 					}
 
-					if (team.custom.githubAttached !== true) {
-						team.custom.githubAttached = true;
-						Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+					// if (team.custom.githubAttached !== true) {
+					// 	team.custom.githubAttached = true;
+					// 	Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+					// }
+
+					if (team.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
+						team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+						Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_LINKED: " + team.id);
 					}
 
 					if (dryRun === false) {
@@ -1161,9 +1109,11 @@ export class AdminController {
 			}
 			if (checked === false) {
 				// teams that were not found with repos must not be attached
-				if (team.custom.githubAttached !== false) {
-					team.custom.githubAttached = false;
-					Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be false: " + team.id);
+				// if (team.custom.githubAttached !== false) {
+				// 	team.custom.githubAttached = false;
+				if (team.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
+					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_UNLINKED: " + team.id);
 
 					if (dryRun === false) {
 						await this.dbc.writeTeam(team);
@@ -1173,6 +1123,82 @@ export class AdminController {
 		}
 
 		Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
+	}
+
+	private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
+		const resultSummary = await this.clipAutoTestResult(result);
+
+		let testPass: string[] = [];
+		let testFail: string[] = [];
+		let testSkip: string[] = [];
+		let testError: string[] = [];
+
+		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
+			const report: GradeReport = result.output.report;
+			if (typeof report.passNames !== "undefined") {
+				testPass = report.passNames;
+			}
+			if (typeof report.failNames !== "undefined") {
+				testFail = report.failNames;
+			}
+			if (typeof report.skipNames !== "undefined") {
+				testSkip = report.skipNames;
+			}
+			if (typeof report.errorNames !== "undefined") {
+				testError = report.errorNames;
+			}
+		}
+
+		return {
+			...resultSummary,
+			testPass: testPass,
+			testFail: testFail,
+			testError: testError,
+			testSkip: testSkip,
+			custom: {},
+		};
+	}
+
+	/**
+	 * Transforms a Result into an AutoTestResultSummaryTransport
+	 */
+	private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
+		const repoId = result.input.target.repoId;
+		const repoURL =
+			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
+
+		let scoreOverall = null;
+		let scoreCover = null;
+		let scoreTest = null;
+
+		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
+			const report = result.output.report;
+			if (typeof report.scoreOverall !== "undefined") {
+				scoreOverall = report.scoreOverall;
+			}
+			if (typeof report.scoreTest !== "undefined") {
+				scoreTest = report.scoreTest;
+			}
+			if (typeof report.scoreCover !== "undefined") {
+				scoreCover = report.scoreCover;
+			}
+		}
+
+		const state = this.selectState(result);
+
+		return {
+			repoId: repoId,
+			repoURL: repoURL,
+			delivId: result.delivId,
+			state: state,
+			timestamp: result.output.timestamp,
+			commitSHA: result.input.target.commitSHA,
+			commitURL: result.input.target.commitURL,
+			scoreOverall: scoreOverall,
+			scoreCover: scoreCover,
+			scoreTests: scoreTest,
+			custom: {},
+		};
 	}
 
 	// NOTE: the default implementation is currently broken; do not use it.
@@ -1231,32 +1257,19 @@ export class AdminController {
 	// }
 
 	/**
-	 * Returns null if the object is valid. This API is terrible.
-	 *
-	 * @param {ProvisionTransport} obj
-	 * @returns {ProvisionTransport | null}
+	 * Takes a result, and if the VM was successful picks the state of the report.
+	 *     else returns the state of the VM
+	 * @param result
 	 */
-	public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
-		if (typeof obj === "undefined" || obj === null) {
-			const msg = "Transport not populated.";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
+	private selectState(result: Result): string {
+		// if the VM state is SUCCESS, return the report state
+		let state = "UNDEFINED";
+		if (typeof result.output !== "undefined" && typeof result.output.state !== "undefined") {
+			state = result.output.state.toString();
 		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof obj.delivId !== "string") {
-			const msg = "Provision.id not specified";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
+		if (state === "SUCCESS" && typeof result.output.report.result !== "undefined") {
+			state = result.output.report.result;
 		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof obj.formSingle !== "boolean") {
-			const msg = "formSingle not specified";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		return null;
+		return state;
 	}
 }

@@ -17,7 +17,7 @@ import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Person, PersonKind, Repository, Team } from "@backend/Types";
+import { GitHubStatus, Person, PersonKind, Repository, Team } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -564,7 +564,8 @@ describe("AdminController", () => {
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
 			expect(allTeams[0].URL).to.not.be.null; // provisioned
-			expect(allTeams[0].custom.githubAttached).to.be.false;
+			// expect(allTeams[0].custom.githubAttached).to.be.false; // not attached
+			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const relPlan = await ac.planRelease(deliv);
@@ -579,7 +580,8 @@ describe("AdminController", () => {
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
-			expect(allNewTeams[0].custom.githubAttached).to.be.true;
+			// expect(allNewTeams[0].custom.githubAttached).to.be.true; // attached
+			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
 
 			// // try again: should not release any more repos
 			// res = await ac.release(allRepos);

@@ -108,6 +108,13 @@ export interface Deliverable {
 	teamStudentsForm: boolean;
 }
 
+export enum GitHubStatus {
+	NOT_PROVISIONED = "NOT_PROVISIONED", // repo not provisioned
+	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // repo provisioned but not linked to a team/repo
+	PROVISIONED_LINKED = "PROVISIONED_LINKED", // repo provisioned and linked to a team/repo
+	// PROVISIONED_READONLY = "PROVISIONED_READONLY", // repo provisioned and linked to a repo but not writeable (not relevant for teams)
+}
+
 export interface Team {
 	readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
 	/**
@@ -123,9 +130,12 @@ export interface Team {
 	// repoUrl: string | null;
 
 	// githubStatus: string; // NONE | CREATED | LINKED
+
+	gitHubStatus: GitHubStatus;
+
 	custom: {
-		githubProvisioned?: boolean; // TODO: remove
-		githubAttached?: boolean; // TODO: remove
+		// githubProvisioned?: boolean; // TODO: remove
+		// githubAttached?: boolean; // TODO: remove
 	};
 }
 

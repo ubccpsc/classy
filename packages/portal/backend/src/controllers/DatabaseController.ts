@@ -4,10 +4,46 @@ import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { AuditEvent, AuditLabel, Auth, Course, Deliverable, FeedbackRecord, Grade, Person, Repository, Result, Team } from "../Types";
+import {
+	AuditEvent,
+	AuditLabel,
+	Auth,
+	Course,
+	Deliverable,
+	FeedbackRecord,
+	GitHubStatus,
+	Grade,
+	Person,
+	Repository,
+	Result,
+	Team,
+} from "../Types";
 import { TeamController } from "./TeamController";
 
 export class DatabaseController {
+	private static instance: DatabaseController = null;
+	private db: Db = null;
+	private writeDb: Db = null;
+	private slowDb: Db = null;
+	private readonly COURSECOLL = "course";
+	private readonly PERSONCOLL = "people";
+	private readonly GRADECOLL = "grades";
+	private readonly RESULTCOLL = "results";
+	private readonly TEAMCOLL = "teams";
+	private readonly DELIVCOLL = "deliverables";
+	private readonly REPOCOLL = "repositories";
+	private readonly AUTHCOLL = "auth";
+	private readonly AUDITCOLL = "audit";
+	private readonly TICKERCOLL = "ids";
+	private readonly FEEDBACKCOLL = "feedback";
+
+	/**
+	 * use getInstance() instead.
+	 */
+	private constructor() {
+		Log.info("DatabaseController::<init> - creating new controller");
+	}
+
 	/**
 	 * Returns the current controller; shares Mongo connections.
 	 *
@@ -21,32 +57,6 @@ export class DatabaseController {
 			// not great to do this on
 		}
 		return DatabaseController.instance;
-	}
-
-	private static instance: DatabaseController = null;
-
-	private db: Db = null;
-	private writeDb: Db = null;
-	private slowDb: Db = null;
-
-	private readonly COURSECOLL = "course";
-	private readonly PERSONCOLL = "people";
-	private readonly GRADECOLL = "grades";
-	private readonly RESULTCOLL = "results";
-	private readonly TEAMCOLL = "teams";
-	private readonly DELIVCOLL = "deliverables";
-	private readonly REPOCOLL = "repositories";
-	private readonly AUTHCOLL = "auth";
-	private readonly AUDITCOLL = "audit";
-	private readonly TICKERCOLL = "ids";
-
-	private readonly FEEDBACKCOLL = "feedback";
-
-	/**
-	 * use getInstance() instead.
-	 */
-	private constructor() {
-		Log.info("DatabaseController::<init> - creating new controller");
 	}
 
 	public async getPerson(recordId: string): Promise<Person | null> {
@@ -409,19 +419,6 @@ export class DatabaseController {
 		return false;
 	}
 
-	private async deleteRecord(colName: string, query: {}): Promise<boolean> {
-		Log.trace("DatabaseController::deleteRecord( " + colName + ", " + JSON.stringify(query) + " ) - start");
-		try {
-			const collection = await this.getCollection(colName);
-			const res = await collection.deleteOne(query);
-			Log.trace("DatabaseController::deleteRecord(..) - delete complete; result: " + JSON.stringify(res));
-			return true;
-		} catch (err) {
-			Log.error("DatabaseController::deleteRecord(..) - ERROR: " + err);
-			return false;
-		}
-	}
-
 	public async writeDeliverable(record: Deliverable): Promise<boolean> {
 		const existingDeiverable = await this.getDeliverable(record.id);
 		if (existingDeiverable === null) {
@@ -609,36 +606,6 @@ export class DatabaseController {
 	}
 
 	/**
-	 * Perform a query and return a single record. If the query matches more than one record, the first is
-	 * returned; if no records are found, null is returned.
-	 *
-	 * @param {string} column
-	 * @param {{}} query
-	 * @returns {Promise<{} | null>}
-	 */
-	private async readSingleRecord(column: string, query: {}): Promise<{} | null> {
-		try {
-			// Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
-			const col = await this.getCollection(column, QueryKind.FAST);
-
-			const records: any[] = await (col as any).find(query).toArray();
-			if (records === null || records.length === 0) {
-				// Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
-				return null;
-			} else {
-				// Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " +
-				// records.length + "; took: " + Util.took(start));
-				const record = records[0];
-				delete record._id; // remove the record id, just so we cannot use it
-				return record;
-			}
-		} catch (err) {
-			Log.error("DatabaseController::readSingleRecord(..) - ERROR: " + err);
-			return null;
-		}
-	}
-
-	/**
 	 * Perform a query on a collection. Support is provided for limiting the number of results returned,
 	 * as all results are often not needed, but in busy courses the number of records can exceed 100,000
 	 * which can take way too long to return.
@@ -705,198 +672,6 @@ export class DatabaseController {
 			Log.error("DatabaseController::readRecords(..) - ERROR: " + err);
 		}
 		return [];
-	}
-
-	private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
-		try {
-			const col = await this.getCollection(column, QueryKind.WRITE);
-
-			const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
-
-			if (record === null || record === undefined) {
-				return null;
-			} else {
-				delete record._id;
-				return record;
-			}
-		} catch (err) {
-			Log.error("DatabaseController::readAndUpdateSingleRecord(..) - ERROR: " + err);
-			return null;
-		}
-	}
-
-	/**
-	 * Internal use only, do not use this method; use getCollection instead.
-	 *
-	 * @returns {Promise<Db>}
-	 */
-	private async open(kind: string): Promise<Db> {
-		try {
-			// Log.trace("DatabaseController::open() - start");
-			let db;
-			if (kind === QueryKind.SLOW) {
-				db = this.slowDb;
-			} else if (kind === QueryKind.WRITE) {
-				db = this.writeDb;
-			} else {
-				db = this.db;
-			}
-
-			if (db === null) {
-				// just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
-				let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
-				const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
-
-				Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
-				const client = await MongoClient.connect(dbHost, { serverSelectionTimeoutMS: 500 });
-				if (kind === "slow") {
-					Log.trace("DatabaseController::open() - creating slowDb");
-					this.slowDb = await client.db(dbName);
-					db = this.slowDb;
-				} else if (kind === QueryKind.WRITE) {
-					Log.trace("DatabaseController::open() - creating writeDb");
-					this.writeDb = await client.db(dbName);
-					db = this.writeDb;
-				} else {
-					Log.trace("DatabaseController::open() - creating standard db");
-					this.db = await client.db(dbName);
-					db = this.db;
-
-					// ensure required records / indexes exist
-					await this.initDatabase();
-				}
-
-				Log.trace("DatabaseController::open() - db null; new connection made");
-			}
-			// Log.trace("DatabaseController::open() - returning db");
-			return db;
-		} catch (err) {
-			Log.error("DatabaseController::open() - ERROR: " + err);
-			Log.error(
-				"DatabaseController::open() - ERROR: Host probably does not have a database configured " +
-					"and running (see README.md if this is a test instance)."
-			);
-		}
-	}
-
-	/**
-	 * Collect any actions that need to happen when a database is first opened.
-	 *
-	 * This can include objects or indexes that must be created.
-	 */
-	private async initDatabase() {
-		try {
-			if (this.db === null) {
-				throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
-			}
-
-			// create indexes if they do not exist (idempotent operation; even if index exists this is ok)
-			// https://stackoverflow.com/a/35020346
-
-			// results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
-			let coll = await this.getCollection(this.RESULTCOLL);
-			await coll.createIndex(
-				{
-					"input.target.timestamp": -1,
-				},
-				{ name: "ts" }
-			);
-
-			// results needs a delivId index because we often query by delivId
-			await coll.createIndex(
-				{
-					delivId: 1,
-				},
-				{ name: "delivId" }
-			);
-			// results needs a repoId index because we often query by repoId
-			await coll.createIndex(
-				{
-					repoId: 1,
-				},
-				{ name: "repoId" }
-			);
-			await coll.createIndex(
-				{
-					repoId: 1,
-					delivId: 1,
-				},
-				{ name: "delivAndRepoIds" }
-			);
-
-			// grades needs indexes because we group on <personId, delivId> tuples
-			coll = await this.getCollection(this.GRADECOLL);
-			await coll.createIndex(
-				{
-					personId: 1,
-				},
-				{ name: "personId" }
-			);
-			await coll.createIndex(
-				{
-					delivId: 1,
-				},
-				{ name: "delivId" }
-			);
-			await coll.createIndex(
-				{
-					delivId: 1,
-					repoId: 1,
-				},
-				{ name: "delivAndRepoIds" }
-			);
-
-			// Make sure required Team objects exist.
-			// Cannot use TeamController because this would cause an infinite loop since
-			// TeamController uses this code to get the database instance.
-			let teamName = TeamController.ADMIN_NAME;
-			let team = await this.getTeam(teamName);
-			if (team === null) {
-				const newTeam: Team = {
-					id: teamName,
-					delivId: null, // null for special teams
-					githubId: null, // to be filled in later
-					URL: null, // to be filled in later
-					personIds: [], // empty for special teams
-					// repoName:  null, // null for special teams
-					// repoUrl:   null,
-					custom: {},
-				};
-				await this.writeTeam(newTeam);
-			}
-			teamName = TeamController.STAFF_NAME;
-			team = await this.getTeam(teamName);
-			if (team === null) {
-				const newTeam: Team = {
-					id: teamName,
-					delivId: null, // null for special teams
-					githubId: null, // to be filled in later
-					URL: null, // to be filled in later
-					personIds: [], // empty for special teams
-					// repoName:  null, // null for special teams
-					// repoUrl:   null,
-					custom: {},
-				};
-				await this.writeTeam(newTeam);
-			}
-			teamName = "students";
-			team = await this.getTeam(teamName);
-			if (team === null) {
-				const newTeam: Team = {
-					id: teamName,
-					delivId: null, // null for special teams
-					githubId: null, // to be filled in later
-					URL: null, // to be filled in later
-					personIds: [], // empty for special teams
-					// repoName:  null, // null for special teams
-					// repoUrl:   null,
-					custom: {},
-				};
-				await this.writeTeam(newTeam);
-			}
-		} catch (err) {
-			Log.error("DatabaseController::initDatabase() - ERROR: " + err.message);
-		}
 	}
 
 	public async writeAuth(record: Auth): Promise<boolean> {
@@ -1067,6 +842,244 @@ export class DatabaseController {
 			return records[0];
 		}
 		return null;
+	}
+
+	private async deleteRecord(colName: string, query: {}): Promise<boolean> {
+		Log.trace("DatabaseController::deleteRecord( " + colName + ", " + JSON.stringify(query) + " ) - start");
+		try {
+			const collection = await this.getCollection(colName);
+			const res = await collection.deleteOne(query);
+			Log.trace("DatabaseController::deleteRecord(..) - delete complete; result: " + JSON.stringify(res));
+			return true;
+		} catch (err) {
+			Log.error("DatabaseController::deleteRecord(..) - ERROR: " + err);
+			return false;
+		}
+	}
+
+	/**
+	 * Perform a query and return a single record. If the query matches more than one record, the first is
+	 * returned; if no records are found, null is returned.
+	 *
+	 * @param {string} column
+	 * @param {{}} query
+	 * @returns {Promise<{} | null>}
+	 */
+	private async readSingleRecord(column: string, query: {}): Promise<{} | null> {
+		try {
+			// Log.trace("DatabaseController::readSingleRecord( " + column + ", " + JSON.stringify(query) + " ) - start");
+			const col = await this.getCollection(column, QueryKind.FAST);
+
+			const records: any[] = await (col as any).find(query).toArray();
+			if (records === null || records.length === 0) {
+				// Log.trace("DatabaseController::readSingleRecord(..) - done; no records found; took: " + Util.took(start));
+				return null;
+			} else {
+				// Log.trace("DatabaseController::readSingleRecord(..) - done; # records: " +
+				// records.length + "; took: " + Util.took(start));
+				const record = records[0];
+				delete record._id; // remove the record id, just so we cannot use it
+				return record;
+			}
+		} catch (err) {
+			Log.error("DatabaseController::readSingleRecord(..) - ERROR: " + err);
+			return null;
+		}
+	}
+
+	private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
+		try {
+			const col = await this.getCollection(column, QueryKind.WRITE);
+
+			const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
+
+			if (record === null || record === undefined) {
+				return null;
+			} else {
+				delete record._id;
+				return record;
+			}
+		} catch (err) {
+			Log.error("DatabaseController::readAndUpdateSingleRecord(..) - ERROR: " + err);
+			return null;
+		}
+	}
+
+	/**
+	 * Internal use only, do not use this method; use getCollection instead.
+	 *
+	 * @returns {Promise<Db>}
+	 */
+	private async open(kind: string): Promise<Db> {
+		try {
+			// Log.trace("DatabaseController::open() - start");
+			let db;
+			if (kind === QueryKind.SLOW) {
+				db = this.slowDb;
+			} else if (kind === QueryKind.WRITE) {
+				db = this.writeDb;
+			} else {
+				db = this.db;
+			}
+
+			if (db === null) {
+				// just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
+				let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
+				const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
+
+				Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
+				const client = await MongoClient.connect(dbHost, { serverSelectionTimeoutMS: 500 });
+				if (kind === "slow") {
+					Log.trace("DatabaseController::open() - creating slowDb");
+					this.slowDb = await client.db(dbName);
+					db = this.slowDb;
+				} else if (kind === QueryKind.WRITE) {
+					Log.trace("DatabaseController::open() - creating writeDb");
+					this.writeDb = await client.db(dbName);
+					db = this.writeDb;
+				} else {
+					Log.trace("DatabaseController::open() - creating standard db");
+					this.db = await client.db(dbName);
+					db = this.db;
+
+					// ensure required records / indexes exist
+					await this.initDatabase();
+				}
+
+				Log.trace("DatabaseController::open() - db null; new connection made");
+			}
+			// Log.trace("DatabaseController::open() - returning db");
+			return db;
+		} catch (err) {
+			Log.error("DatabaseController::open() - ERROR: " + err);
+			Log.error(
+				"DatabaseController::open() - ERROR: Host probably does not have a database configured " +
+					"and running (see README.md if this is a test instance)."
+			);
+		}
+	}
+
+	/**
+	 * Collect any actions that need to happen when a database is first opened.
+	 *
+	 * This can include objects or indexes that must be created.
+	 */
+	private async initDatabase() {
+		try {
+			if (this.db === null) {
+				throw new Error("DatabaseController::initDatabase() cannot be called before db is set");
+			}
+
+			// create indexes if they do not exist (idempotent operation; even if index exists this is ok)
+			// https://stackoverflow.com/a/35020346
+
+			// results needs a timestamp index because it gets to be too long to iterate through all records (32MB result limit)
+			let coll = await this.getCollection(this.RESULTCOLL);
+			await coll.createIndex(
+				{
+					"input.target.timestamp": -1,
+				},
+				{ name: "ts" }
+			);
+
+			// results needs a delivId index because we often query by delivId
+			await coll.createIndex(
+				{
+					delivId: 1,
+				},
+				{ name: "delivId" }
+			);
+			// results needs a repoId index because we often query by repoId
+			await coll.createIndex(
+				{
+					repoId: 1,
+				},
+				{ name: "repoId" }
+			);
+			await coll.createIndex(
+				{
+					repoId: 1,
+					delivId: 1,
+				},
+				{ name: "delivAndRepoIds" }
+			);
+
+			// grades needs indexes because we group on <personId, delivId> tuples
+			coll = await this.getCollection(this.GRADECOLL);
+			await coll.createIndex(
+				{
+					personId: 1,
+				},
+				{ name: "personId" }
+			);
+			await coll.createIndex(
+				{
+					delivId: 1,
+				},
+				{ name: "delivId" }
+			);
+			await coll.createIndex(
+				{
+					delivId: 1,
+					repoId: 1,
+				},
+				{ name: "delivAndRepoIds" }
+			);
+
+			// Make sure required Team objects exist.
+			// Cannot use TeamController because this would cause an infinite loop since
+			// TeamController uses this code to get the database instance.
+			let teamName = TeamController.ADMIN_NAME;
+			let team = await this.getTeam(teamName);
+			if (team === null) {
+				const newTeam: Team = {
+					id: teamName,
+					delivId: null, // null for special teams
+					githubId: null, // to be filled in later
+					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					URL: null, // to be filled in later
+					personIds: [], // empty for special teams
+					// repoName:  null, // null for special teams
+					// repoUrl:   null,
+					custom: {},
+				};
+				await this.writeTeam(newTeam);
+			}
+			teamName = TeamController.STAFF_NAME;
+			team = await this.getTeam(teamName);
+			if (team === null) {
+				const newTeam: Team = {
+					id: teamName,
+					delivId: null, // null for special teams
+					githubId: null, // to be filled in later
+					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					URL: null, // to be filled in later
+					personIds: [], // empty for special teams
+					// repoName:  null, // null for special teams
+					// repoUrl:   null,
+					custom: {},
+				};
+				await this.writeTeam(newTeam);
+			}
+			teamName = "students";
+			team = await this.getTeam(teamName);
+			if (team === null) {
+				const newTeam: Team = {
+					id: teamName,
+					delivId: null, // null for special teams
+					githubId: null, // to be filled in later
+					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					URL: null, // to be filled in later
+					personIds: [], // empty for special teams
+					// repoName:  null, // null for special teams
+					// repoUrl:   null,
+					custom: {},
+				};
+				await this.writeTeam(newTeam);
+			}
+		} catch (err) {
+			Log.error("DatabaseController::initDatabase() - ERROR: " + err.message);
+		}
 	}
 }
 

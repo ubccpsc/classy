@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { Repository, Team } from "../Types";
+import { GitHubStatus, Repository, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { TeamController } from "./TeamController";
@@ -331,10 +331,12 @@ export class GitHubController implements IGitHubController {
 				// const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
 				if (res.githubTeamNumber > 0) {
 					// keep track of team addition
-					team.custom.githubAttached = true;
+					team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+					// team.custom.githubAttached = true;
 				} else {
 					Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
-					team.custom.githubAttached = false;
+					// team.custom.githubAttached = false;
+					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 				}
 
 				await this.dbc.writeTeam(team); // add new properties to the team
@@ -524,7 +526,8 @@ export class GitHubController implements IGitHubController {
 							// team.URL = teamValue.URL;
 							team.URL = await this.getTeamUrl(team);
 							team.githubId = teamValue.githubTeamNumber;
-							team.custom.githubAttached = false; // attaching happens in release
+							team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+							// team.custom.githubAttached = false; // attaching happens in release
 							await dbc.writeTeam(team);
 						}
 
