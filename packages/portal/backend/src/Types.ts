@@ -125,7 +125,7 @@ export interface Team {
 
 	// githubStatus: string; // NONE | CREATED | LINKED
 	custom: {
-		githubProvisioned?: boolean, // TODO: remove
+		githubProvisioned?: boolean; // TODO: remove
 		githubAttached?: boolean; // TODO: remove
 
 		sdmmd0?: boolean;
@@ -147,40 +147,39 @@ export interface Repository {
 	 */
 	readonly delivId: string; // invariant
 
-  /**
-     * URL for project in version control system; null if not yet created.
-     *
-     * TODO: remove; make githubProvisioned non-optional and use that instead.
-     */
+	/**
+	 * URL for project in version control system; null if not yet created.
+	 *
+	 * TODO: remove; make githubProvisioned non-optional and use that instead.
+	 */
 	URL: string | null; // URL for project in version control system; null if not yet created
 
-    /**
-     * git clone URL for project; null if not yet created
-     *
-     * TODO: make sure this is not used to check if a repo has been provisioned.
-     */    
-    cloneURL: string | null; // git clone URL for project; null if not yet created
+	/**
+	 * git clone URL for project; null if not yet created
+	 *
+	 * TODO: make sure this is not used to check if a repo has been provisioned.
+	 */
+	cloneURL: string | null; // git clone URL for project; null if not yet created
 	teamIds: string[]; // Team.id[] - foreign key
 
-    /**
-     * Has the repo been provisioned on GitHub.
-     *
-     * TODO: make this non-optional.
-     */
-    githubProvisioned?: boolean;
+	/**
+	 * Has the repo been provisioned on GitHub.
+	 *
+	 * TODO: make this non-optional.
+	 */
+	githubProvisioned?: boolean;
 
-    /**
-     * Is the repo student-writeable on GitHub.
-     *
-     * TODO: make this non-optional.
-     */
-    githubWriteable?: boolean;
-
+	/**
+	 * Is the repo student-writeable on GitHub.
+	 *
+	 * TODO: make this non-optional.
+	 */
+	githubWriteable?: boolean;
 
 	custom: {
 		// rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-    githubCreated?: boolean, // TODO: remove
-        githubReleased?: boolean, // TODO: remove
+		githubCreated?: boolean; // TODO: remove
+		githubReleased?: boolean; // TODO: remove
 
 		// d0enabled?: boolean; // SDMM // TODO: make sdmm.d0enabled
 		// d1enabled?: boolean; // SDMM // TODO: make sdmm.d1enabled
