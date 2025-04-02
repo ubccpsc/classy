@@ -524,7 +524,8 @@ describe("AdminController", () => {
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
-			expect(allTeams[0].URL).to.be.null; // not provisioned yet
+			expect(allTeams[0].URL).to.be.null;
+			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED); // not provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const plan = await ac.planProvision(deliv, false);
@@ -552,7 +553,8 @@ describe("AdminController", () => {
 
 			const teamNum = await tc.getTeamNumber(allNewTeams[0].id);
 			expect(teamNum).to.be.greaterThan(0); // should be provisioned
-			expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
+			expect(allNewTeams[0].URL).to.not.be.null;
+			expect(allNewTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should release repos.", async () => {
@@ -563,7 +565,7 @@ describe("AdminController", () => {
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
-			expect(allTeams[0].URL).to.not.be.null; // provisioned
+			expect(allTeams[0].URL).to.not.be.null;
 			// expect(allTeams[0].custom.githubAttached).to.be.false; // not attached
 			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
 
@@ -581,10 +583,6 @@ describe("AdminController", () => {
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
 			const newTeam = allNewTeams[0];
-			Log.test("NewTeam: " + JSON.stringify(newTeam));
-			Log.test(
-				"NewTeam Status: " + newTeam.gitHubStatus + "; isLinked: " + (newTeam.gitHubStatus === GitHubStatus.PROVISIONED_LINKED)
-			);
 			// expect(newTeam.custom.githubAttached).to.be.true; // attached
 			expect(newTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
 

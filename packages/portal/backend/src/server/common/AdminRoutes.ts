@@ -1112,7 +1112,8 @@ export default class AdminRoutes implements IREST {
 		const dbc = DatabaseController.getInstance();
 		const team = await dbc.getTeam(teamId);
 		if (team !== null) {
-			if (team.URL !== null) {
+			// if (team.URL !== null) {
+			if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 				deletedGithub = await GitHubActions.getInstance().deleteTeam(teamId);
 				Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from GitHub");
 			}
@@ -1187,7 +1188,8 @@ export default class AdminRoutes implements IREST {
 			}
 		}
 
-		if (team.URL !== null) {
+		// if (team.URL !== null) {
+		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 			await GitHubActions.getInstance().addMembersToTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to GitHub team");
 		}
@@ -1260,7 +1262,8 @@ export default class AdminRoutes implements IREST {
 
 		const beforeTeam = new TeamController().teamToTransport(team);
 
-		if (team.URL !== null) {
+		// if (team.URL !== null) {
+		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 			await GitHubActions.getInstance().removeMembersFromTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from GitHub team");
 		}

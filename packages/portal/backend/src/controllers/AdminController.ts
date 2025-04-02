@@ -306,8 +306,6 @@ export class AdminController {
 				delivId: team.delivId,
 				people: team.personIds,
 				URL: team.URL,
-				// repoName: team.repoName,
-				// repoUrl:  team.repoUrl
 			};
 			teams.push(teamTransport);
 		}

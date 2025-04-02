@@ -509,14 +509,15 @@ export class GitHubController implements IGitHubController {
 
 					const teamNum = await tc.getTeamNumber(team.id);
 					Log.trace("GitHubController::provisionRepository() - dbT team Number: " + teamNum);
-					if (team.URL !== null && teamNum !== null) {
+					// if (team.URL !== null && teamNum !== null) {
+					if (team.gitHubStatus === GitHubStatus.PROVISIONED_LINKED || team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
 						// already exists
 						Log.warn(
 							"GitHubController::provisionRepository( " +
 								repoName +
 								" ) - team already exists: " +
 								teamValue.teamName +
-								"; assuming team members on github are correct."
+								"; assuming team members on GitHub are correct."
 						);
 					} else {
 						teamValue = await this.gha.createTeam(team.id, "push");

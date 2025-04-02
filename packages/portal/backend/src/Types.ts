@@ -123,20 +123,20 @@ export interface Team {
 	 */
 	readonly delivId: string; // invariant
 
-	URL: string | null; // null when not yet created // TODO: remove
-	githubId: number | null; // null when not yet created // TODO: remove
+	/**
+	 * The people associated with a team.
+	 */
 	personIds: string[]; // Person.id[] - foreign key
-	// repoName: string | null;
-	// repoUrl: string | null;
 
-	// githubStatus: string; // NONE | CREATED | LINKED
+	/**
+	 * The GitHub URL for the team.
+	 */
+	URL: string | null; // used by frontend to link to team, only use gitHubStatus for status!
 
 	gitHubStatus: GitHubStatus;
+	githubId: number | null; // this is just for performance (to avoid a GH lookup), only use gitHubStatus status!
 
-	custom: {
-		// githubProvisioned?: boolean; // TODO: remove
-		// githubAttached?: boolean; // TODO: remove
-	};
+	custom: {};
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
