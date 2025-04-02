@@ -18,7 +18,7 @@
         <div class="center" id="headerTitle">Container Output Viewer</div>
         <div id='stdioSwitch' class="right">
             <ons-toolbar-button id="switchViewBtn">
-                <span id="switchViewText"style="vertical-align: top; font-size: 80%;">Admin View</span>
+                <span id="switchViewText" style="vertical-align: top; font-size: 80%;">Admin View</span>
             </ons-toolbar-button>
         </div>
     </ons-toolbar>
@@ -40,6 +40,8 @@
         var HEADERS = {};
 
         function getHTTP(url, headers, onsuccess, onerror) {
+            console.log("stdio.html::onLoad - url: " + url);
+
             var request = new XMLHttpRequest();
             request.open('GET', url, true);
 
@@ -73,15 +75,102 @@
             return vars;
         }
 
+        function simplifyStdio(stdio) {
+            let toReturn = "";
+
+            try {
+                // Every line that includes AssertionError:
+                // Every line that includes compareJSONArray
+                // Every line that includes Error: Timeout of (but truncate anything after (... since this returns our path names)
+                // Every line that includes ENOENT
+                let LINES_INCLUDE = [
+                    "AssertionError",
+                    "compareJSONArray",
+                    "Error: Timeout of",
+                    "ENOENT"
+                ];
+
+                let lines = stdio.split('\n');
+                for (let line of lines) {
+                    for (let match of LINES_INCLUDE) {
+                        if (line.indexOf(match) >= 0) {
+                            // TODO: handle special case for Timeout of (see comment above)
+                            toReturn += line + '\n';
+                        }
+                    }
+                }
+
+                // Everything before (and including)
+                // ProjectGrader::grade(..) - start
+                // SimpleGrader::doGrading() - start
+                let preamble = "";
+                const PREFIX = "SimpleGrader::doGrading() - start";
+                let prefixIndex = stdio.indexOf(PREFIX)
+                if (prefixIndex >= 0) {
+                    preamble = stdio.substring(0, prefixIndex + PREFIX.length);
+                    preamble += "\n***GRADING START***\n\n";
+                }
+                toReturn = preamble + toReturn;
+
+                // Everything after (and including)
+                // ProjectGrader::grade(..) - done
+                // SimpleGrader::doGrading() - done
+                let postfix = "";
+                const POSTFIX = "SimpleGrader::doGrading() - done";
+                let postfixIndex = stdio.indexOf(POSTFIX)
+                if (postfixIndex >= 0) {
+                    postfix = stdio.substring(postfixIndex, stdio.length);
+                    postfix = "\n\n***GRADING DONE***\n" + postfix;
+                }
+                toReturn = toReturn + postfix;
+            } catch (err) {
+                console.error("stdio::simplifyStdio(..) - ERROR: " + err);
+                toReturn = stdio;
+            }
+            return toReturn;
+        }
+
+        function loadStdioBrief(delivId, repoId, sha) {
+            const url = `${HOST}/portal/resource/${sha}-${delivId}/staff/stdio.txt`;
+            // admin stdio.txt does not exist, instead render a custom view here
+            console.log("stdio.html::loadStdioBrief(..) - url: " + url);
+            getHTTP(url, HEADERS, function (stdio) {
+                if (HOST.indexOf("cs310") >= 0) {
+                    console.log("stdio.html::loadStdioBrief(..) - simplify stdio for 310");
+                    stdio = simplifyStdio(stdio);
+                } else {
+                    console.log("stdio.html::loadStdioBrief(..) - brief and full are the same for this course");
+                }
+                editor.setValue(stdio);
+                editor.clearSelection();
+                editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
+            }, function (error) {
+                if (typeof error !== 'string') {
+                    error = 'The request failed, possibly due to de-authorization.';
+                }
+                alert(error);
+            });
+        }
+
         function loadStdio(delivId, repoId, sha, stdioType) {
-            const url = `${HOST}/portal/resource/${sha}-${delivId}/${stdioType}/stdio.txt`;
+            console.log("stdio.html::loadStdio(..) - stdioType: " + stdioType);
+            if (stdioType === "admin") {
+                loadStdioFull(delivId, repoId, sha);
+            } else {
+                loadStdioBrief(delivId, repoId, sha);
+            }
+        }
+
+        function loadStdioFull(delivId, repoId, sha) {
+            const url = `${HOST}/portal/resource/${sha}-${delivId}/staff/stdio.txt`;
+            console.log("stdio.html::loadStdioFull(..) - url: " + url);
             getHTTP(url, HEADERS, function (stdio) {
                 editor.setValue(stdio);
                 editor.clearSelection();
                 editor.focus(); // manually set the focus so that CMD/CTRL+F will search within the stdio
             }, function (error) {
                 if (typeof error !== 'string') {
-                    error = 'The request failed, possibly due to unauthorization.';
+                    error = 'The request failed, possibly due to de-authorization.';
                 }
                 alert(error);
             });
@@ -90,6 +179,15 @@
         function highlightKeywords(keywords) {
             // modified based on https://stackoverflow.com/a/43757653/2361752 {
             ace.define('ace/mode/custom', [], function (require, exports, module) {
+                // add other keywords we want to highlight
+                keywords.push("AssertionError");
+                keywords.push("TypeError");
+                keywords.push("ENOENT");
+                keywords.push("compareJSONArray");
+                keywords.push("compareJSONArrays");
+                keywords.push("Timeout");
+                keywords.push("expected");
+
                 var oop = require("ace/lib/oop");
                 var TextMode = require("ace/mode/text").Mode;
                 var Tokenizer = require("ace/tokenizer").Tokenizer;
@@ -108,7 +206,8 @@
                 var TextHighlightRules = require("ace/mode/text_highlight_rules").TextHighlightRules;
                 var CustomHighlightRules = function () {
                     var keywordMapper = this.createKeywordMapper({
-                        "variable.language": "beforeEach",
+                        // "variable.language": "beforeEach",
+                        "variable.language": "",
                         "keyword":
                             keywords.join('|').replace(' ', '|'),
                         "constant.language":
@@ -133,6 +232,8 @@
 
         function loadNotPassingTestNames(delivId, repoId, sha) {
             const url = `${HOST}/portal/admin/dashboard/${delivId}/${repoId}`;
+
+            console.log("stdio.html::loadNotPassingTestNames(..) - url: " + url);
             getHTTP(url, HEADERS, function (data) {
                 json = JSON.parse(data);
                 var commit = json['success']
@@ -171,15 +272,18 @@
 
         // switchViewBtn: only enable the admin/staff stdio switch btn when the user is an admin
         var switchViewBtn = document.getElementById('switchViewBtn');
+
         function handleSwitchStdio() {
             switchViewBtn.addEventListener('click', (event) => {
                 var btnLabel = event.target.innerText;
                 editor.setValue('Loading...');
                 if (btnLabel.startsWith('Admin')) {
+                    console.log("stdio.html::handleSwitchStdio(..) - switch to staff view");
                     event.target.innerText = 'Staff View';
                     loadStdio(delivId, repoId, sha, 'admin');
                     loadNotPassingTestNames(delivId, repoId, sha);
                 } else {
+                    console.log("stdio.html::handleSwitchStdio(..) - switch to admin view");
                     event.target.innerText = 'Admin View';
                     loadStdio(delivId, repoId, sha, 'staff');
                     loadNotPassingTestNames(delivId, repoId, sha);
@@ -194,7 +298,7 @@
         }
 
     });
-    
+
 </script>
 
 </body>

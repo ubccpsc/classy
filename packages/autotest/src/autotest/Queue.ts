@@ -104,6 +104,72 @@ export class Queue {
     }
 
     /**
+     * Replace the oldest item on the queue for a given person.
+     *
+     * NOTE: this will not replace any job that mentions the bot
+     * or that the course plugin designated for promotion.
+     *
+     * This is because users (or the course plugin) expect
+     * these requests to be run.
+     *
+     * @param {ContainerInput} info
+     * @param forceAdd boolean whether the job should be added even if there is not one to replace
+     * @return {ContainerInput | null} the container input that was replaced, or null if no replacement occurred
+     */
+    public replaceOldestForPerson(info: ContainerInput, forceAdd: boolean): ContainerInput | null {
+        let oldestIndex = -1;
+        let oldestJob: ContainerInput | null = null;
+        let oldestTime = Number.MAX_SAFE_INTEGER;
+        for (let i = 0; i < this.data.length; i++) {
+            const queued = this.data[i];
+            if (queued.target?.personId === info.target?.personId) {
+                // the right person
+                if (queued.target?.botMentioned === false && queued.target?.shouldPromote === false) {
+                    // queued job was not put there by an explicit request by a user or the course plugin
+                    if (queued.target?.timestamp < oldestTime) {
+                        // queued job is older than the oldest job
+                        oldestIndex = i;
+                        oldestJob = queued;
+                        oldestTime = queued.target.timestamp;
+                    }
+                }
+            }
+        }
+
+        if (oldestIndex >= 0) {
+            if (info.target.timestamp < oldestJob.target.timestamp) {
+                // if a job being added is older than the oldest job, add it to the queue if it is being forced
+                if (forceAdd === true) {
+                    Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                        "; job is older than the oldest job, adding to queue");
+                    this.push(info);
+                    return null;
+                } else {
+                    Log.warn("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                        "; job is older than the oldest job, NOT adding to queue");
+                }
+            } else {
+                // replace the oldest job with the current job
+                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                    "; replacing sha: " + Util.shaHuman(oldestJob.target.commitSHA) +
+                    "; with sha: " + Util.shaHuman(info.target.commitSHA));
+                this.data.splice(oldestIndex, 1, info);
+                return oldestJob;
+            }
+        } else {
+            // no jobs to replace, just add it to the queue
+            if (forceAdd === true) {
+                Log.info("Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name +
+                    "; no jobs to replace, adding to queue");
+                this.push(info);
+                return null;
+            }
+        }
+        // if we have not returned already, then the job is not on the queue
+        return info;
+    }
+
+    /**
      * Returns the index of a given container where equality is
      * determined by identical <commitSHA, delivId, ref (branch)>.
      *

@@ -109,7 +109,7 @@ export default class AdminRoutes implements IREST {
         const payload: Payload = {failure: {message: msg, shouldLogout: false}};
         if (code !== 401) {
             Log.error("AdminRoutes::handleError(..) - ERROR: ", msg);
-            Log.error("AdminRoutes::handleError(..) - Payload: ", payload);
+            Log.trace("AdminRoutes::handleError(..) - Payload: ", msg); // only needed when debugging
         } else {
             // common enough it should not be logged as error
             Log.info("AdminRoutes::handleError(..) - ERROR: ", msg);
@@ -138,7 +138,7 @@ export default class AdminRoutes implements IREST {
                         token = tokenParts[0];
                         user = tokenParts[1];
                     }
-                    Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user + "; token: " + token);
+                    Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user);
                 } else {
                     // we are here because user or token are not defined, but we do not have them here either
                     Log.info("AdminRoutes::processAuth(..) - cookies parsing failed; tokenString: " + tokenString);
@@ -902,15 +902,15 @@ export default class AdminRoutes implements IREST {
         const rc = new RepositoryController();
 
         const repo = await rc.getRepository(repoId);
-        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - repo: " + repo);
+        Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - start");
         if (repo !== null) {
             const dbc = DatabaseController.getInstance();
             await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, {repoId: repoId});
 
             const ac = new AdminController(AdminRoutes.ghc);
             const releaseSucceeded = await ac.performRelease([repo]);
-            Log.info("AdminRoutes::performRelease() - success; # results: " + releaseSucceeded.length +
-                "; took: " + Util.took(start));
+            Log.info("AdminRoutes::performRelease() - done; repo: " + repoId +
+                ";  results: " + releaseSucceeded.length + "; took: " + Util.took(start));
             return releaseSucceeded;
 
         } else {
@@ -1069,7 +1069,10 @@ export default class AdminRoutes implements IREST {
         });
     }
 
-    private static async handleTeamDelete(personId: string, teamId: string): Promise<{ deletedObject: boolean, deletedGithub: boolean }> {
+    private static async handleTeamDelete(personId: string, teamId: string): Promise<{
+        deletedObject: boolean,
+        deletedGithub: boolean
+    }> {
         Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - start");
 
         let deletedGithub = false;

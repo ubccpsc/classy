@@ -1,9 +1,9 @@
 import {expect} from "chai";
 import "mocha";
 
+import "@common/GlobalSpec";
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
-import "@common/GlobalSpec";
 
 import {GitHubUtil, IGitHubMessage} from "@autotest/github/GitHubUtil";
 

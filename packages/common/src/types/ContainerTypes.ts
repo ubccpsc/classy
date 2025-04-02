@@ -48,7 +48,8 @@ export interface CommitTarget {
     orgId?: string;
 
     adminRequest: boolean; // true if requested by admin or staff
-    botMentioned: boolean; // true if explicitly mentioned
+    botMentioned: boolean; // true if explicitly mentioned by a student
+    shouldPromote: boolean; // true if course plugin calls for promotion
     personId: string | null; // string is Person.id if explicitly invoked, null otherwise
     kind: "push" | "standard"; // kind of request
 
@@ -70,7 +71,7 @@ export interface CommitTarget {
  * These can be specified per-deliverable in the Portal UI.
  */
 export interface AutoTestConfig {
-    dockerImage: string; // docker image that should be launchd
+    dockerImage: string; // docker image that should be launched
     studentDelay: number; // minimum interval between student requests in seconds
     maxExecTime: number; // maximum execution time for the container before it will be timed out in seconds
     regressionDelivIds: string[]; // other deliverables that should be run alongside any request

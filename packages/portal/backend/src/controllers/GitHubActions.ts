@@ -2,7 +2,6 @@ import * as crypto from "crypto";
 import * as parseLinkHeader from "parse-link-header";
 import fetch, {RequestInit} from "node-fetch";
 
-// cannot use @common here as this is referenced from TestHarness and ends up being circular
 import Config, {ConfigKey} from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
@@ -11,8 +10,6 @@ import {Factory} from "../Factory";
 import {DatabaseController} from "./DatabaseController";
 import {BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue} from "./GitHubController";
 import {TeamController} from "./TeamController";
-
-// import {TestGitHubActions} from "../../test/controllers/TestGitHubActions";
 
 // tslint:disable-next-line
 const tmp = require("tmp-promise");
@@ -38,6 +35,24 @@ export interface IGitHubActions {
     createRepo(repoName: string): Promise<string>;
 
     /**
+     * Creates a repo from a template and returns its URL. If the repo exists, return the URL for that repo.
+     *
+     * @param repoName The name of the repo. Must be unique within the organization.
+     * @param templateOwner The org/owner of the template repo.
+     * @param templateRepo The name of the template repo. Must be readable by the bot user.
+     */
+    createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string>;
+
+    /**
+     * Updates a repo with the settings we want on our repos. This is used for repos created from a template.
+     * Repos that are created with `createRepo` do not need to use this endpoint (although there is no downside
+     * to them using it).
+     *
+     * @param repoName
+     */
+    updateRepo(repoName: string): Promise<boolean>;
+
+    /**
      * Deletes a repo from the organization.
      *
      * @param repoName
@@ -60,7 +75,7 @@ export interface IGitHubActions {
      * NOTE: this used to take a number, but GitHub deprecated this API:
      * https://developer.github.com/changes/2020-01-21-moving-the-team-api-endpoints/
      *
-     * @param teamName: string
+     * @param teamName string
      * @returns {Promise<boolean>}
      */
     deleteTeam(teamName: string): Promise<boolean>;
@@ -68,7 +83,7 @@ export interface IGitHubActions {
     /**
      * Gets all repos in an org.
      *
-     * @returns {Promise<{GitRepoTuple[]>}
+     * @returns {Promise<{GitRepoTuple}[]>}
      */
     listRepos(): Promise<GitRepoTuple[]>;
 
@@ -85,7 +100,7 @@ export interface IGitHubActions {
      *
      * NOTE: this is a slow operation (if there are many teams) so try not to do it too much!
      *
-     * @returns {Promise<{GitTeamTuple[]>}
+     * @returns {Promise<{GitTeamTuple}[]>}
      */
     listTeams(): Promise<GitTeamTuple[]>;
 
@@ -116,7 +131,7 @@ export interface IGitHubActions {
      * Add a list of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param memberGithubIds: string[] // github usernames
+     * @param memberGithubIds github usernames
      * @returns {Promise<GitTeamTuple>}
      */
     addMembersToTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
@@ -125,7 +140,7 @@ export interface IGitHubActions {
      * Removes a list of GitHub members (their usernames) from a given team.
      *
      * @param teamName
-     * @param memberGithubIds: string[] // github usernames
+     * @param memberGithubIds github usernames
      * @returns {Promise<GitTeamTuple>}
      */
     removeMembersFromTeam(teamName: string, memberGithubIds: string[]): Promise<GitTeamTuple>;
@@ -228,6 +243,44 @@ export interface IGitHubActions {
     addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
 
     makeIssue(repoId: string, issue: Issue): Promise<boolean>;
+
+    /**
+     * Lists the branches in a repo.
+     *
+     * This is used mainly to detect an incomplete provisioned repo (the repo may return with getRepo, but it will have no branches).
+     *
+     * @param repoId
+     * @returns {Promise<string[]} If [], the repo may not be fully provisioned yet.
+     */
+    listRepoBranches(repoId: string): Promise<string[]>;
+
+    /**
+     * Deletes all branches in a repo except for the ones listed in branchesToKeep.
+     *
+     * @param repoId
+     * @param branchesToKeep Must be an array of at least one branch name that already exists on the repo
+     * @returns {Promise<boolean>} true if the only remaining branches are the ones listed in branchesToKeep
+     */
+    deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean>;
+
+    /**
+     * Deletes all branches in a repo except for the ones listed in branchesToKeep.
+     *
+     * @param repoId
+     * @param branchesToDelete The name of the branch to delete
+     * @returns {Promise<boolean>} true if the deletion was successful
+     */
+    deleteBranch(repoId: string, branchToDelete: string): Promise<boolean>;
+
+    /**
+     * Renames a branch in a repo.
+     *
+     * @param repoId
+     * @param oldName This branch must exist.
+     * @param newName
+     * @returns {Promise<boolean>} true if the old branch existed and was successfully updated to the new name
+     */
+    renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean>;
 }
 
 export class GitHubActions implements IGitHubActions {
@@ -237,7 +290,8 @@ export class GitHubActions implements IGitHubActions {
     private readonly gitHubAuthToken: string | null = null;
     private readonly org: string | null = null;
 
-    private PAUSE = 5000;
+    // private LONG_PAUSE = 5000; // was deployed previously
+    // private SHORT_PAUSE = 1000;
 
     /**
      * Page size for requests. Should be a constant, but using a
@@ -342,6 +396,12 @@ export class GitHubActions implements IGitHubActions {
                     has_issues: true,
                     has_wiki: false,
                     has_downloads: false,
+                    // squash merging does not use ff causing branch problems in autotest
+                    allow_squash_merge: false,
+                    // rebase merging does not use ff causing branch problems in autotest
+                    allow_rebase_merge: false,
+                    merge_commit_title: "PR_TITLE",
+                    merge_commit_message: "PR_BODY",
                     auto_init: false
                 })
             };
@@ -359,13 +419,182 @@ export class GitHubActions implements IGitHubActions {
             await this.dc.writeRepository(repo);
             Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
-            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying to prep repo. Took: " + Util.took(start));
-            await Util.delay(this.PAUSE);
-            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; delaying complete");
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; took: " + Util.took(start));
+
+            // would prefer to avoid this long pause
+            // try a more dynamic approach below; this works for template repos, but has not been verified for normal repos
+            // await Util.delay(this.LONG_PAUSE);
+
+            // listing branches is not sufficient because they are often [] for an initial repo
+            // whether listing teams is sufficient has not been tested in prod yet (23W2)
+            let doesNotExist = true;
+            let existCount = 0; // only try 10 times to avoid spinning forever
+            while (doesNotExist && existCount < 10) {
+                Log.info("GitHubAction::createRepo(..) - checking if repo is ready");
+                const repoData = await this.getTeamsOnRepo(repoName);
+                Log.info("GitHubAction::createRepo(..) - repoData: " + JSON.stringify(repoData));
+                if (repoData !== null) {
+                    Log.info("GitHubAction::createRepo(..) - repo is ready");
+                    doesNotExist = false;
+                } else {
+                    Log.info("GitHubAction::createRepo(..) - repo is NOT ready");
+                    existCount++;
+                    await Util.delay(250); // wait a bit longer
+                }
+            }
+
+            Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
 
             return url;
         } catch (err) {
             Log.error("GitHubAction::createRepo(..) - ERROR: " + err);
+            throw new Error("Repository not created; " + err.message);
+        }
+    }
+
+    /**
+     * Creates a repo from a template and returns its URL. If the repo exists, return the URL for that repo.
+     * The template repo _must_ have a branch for this to work (essentially it cannot be a completely empty repo).
+     * If you want a completely empty repo, just use createRepo instead.
+     *
+     * @param repoName
+     * @param templateOwner The org / owner of the template repo
+     * @param templateRepo The repo to use as a template. (both owner (org) and repo name are required)
+     * @returns {Promise<string>} provisioned repo URL
+     */
+    public async createRepoFromTemplate(repoName: string, templateOwner: string, templateRepo: string): Promise<string> {
+        const start = Date.now();
+        try {
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + ", " + templateOwner + ", " + templateRepo + " ) - start");
+            await GitHubActions.checkDatabase(repoName, null);
+
+            const uri = this.apiPath + "/repos/" + templateOwner + "/" + templateRepo + "/generate";
+            // const uri = this.apiPath + "/orgs/" + this.org + "/repos/" + templateOwner + "/" + templateRepo + "/generate";
+            const options: RequestInit = {
+                method: "POST",
+                headers: {
+                    "Authorization": this.gitHubAuthToken,
+                    "User-Agent": this.gitHubUserName,
+                    "Accept": "application/vnd.github+json",
+                    "X-GitHub-Api-Version": "2022-11-28"
+                },
+                body: JSON.stringify({
+                    include_all_branches: true, // include all branches, will be post-processed after creation
+                    owner: this.org,
+                    name: repoName,
+                    // In Dev and Test, Github free Org Repos cannot be private.
+                    private: true
+                })
+            };
+
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - making request");
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri + "; options: " + JSON.stringify(options));
+            const response = await fetch(uri, options);
+            const body = await response.json();
+            Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete");
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
+            if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
+                Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
+                throw new Error("Is the import repo (" + templateOwner + "/" + templateRepo +
+                    ") configured in GitHub as a template repository?");
+            }
+            const url = body.html_url;
+
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db start");
+            const repo = await this.dc.getRepository(repoName);
+            repo.URL = url; // only update this field in the existing Repository record
+            repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
+            await this.dc.writeRepository(repo);
+            Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
+            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; took: " + Util.took(start));
+
+            let doesNotExist = true;
+            let existCount = 0; // only try 10 times to avoid spinning forever
+            while (doesNotExist && existCount < 10) {
+                Log.info("GitHubAction::createRepoFromTemplate(..) - checking if repo is ready");
+                const repoBranches = await this.listRepoBranches(repoName);
+                if (repoBranches !== null && repoBranches.length > 0) {
+                    Log.info("GitHubAction::createRepoFromTemplate(..) - repo is ready");
+                    doesNotExist = false;
+                } else {
+                    Log.info("GitHubAction::createRepoFromTemplate(..) - repo is NOT ready");
+                    existCount++;
+                    await Util.delay(250); // wait a bit longer
+                }
+            }
+
+            Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
+
+            return url;
+        } catch (err) {
+            Log.error("GitHubAction::createRepoFromTemplate(..) - ERROR: " + err);
+            throw new Error("Repository not created; " + err.message);
+        }
+    }
+
+    public async updateRepo(repoName: string): Promise<boolean> {
+        // These are the settings we want on our repos, but we can't set them on creation when making them with a template
+
+        // name: repoName,
+        //     // In Dev and Test, Github free Org Repos cannot be private.
+        //     private: true,
+        //     has_issues: true,
+        //     has_wiki: false,
+        //     has_downloads: false,
+        //     // squash merging does not use ff causing branch problems in autotest
+        //     allow_squash_merge: false,
+        //     // rebase merging does not use ff causing branch problems in autotest
+        //     allow_rebase_merge: false,
+        //     merge_commit_title: "PR_TITLE",
+        //     merge_commit_message: "PR_BODY",
+        //     auto_init: false
+
+        const start = Date.now();
+        try {
+            Log.info("GitHubAction::updateRepo( " + repoName + " ) - start");
+            await GitHubActions.checkDatabase(repoName, null);
+
+            const repoOpts: any = {
+                name: repoName,
+                // In Dev and Test, Github free Org Repos cannot be private.
+                private: true,
+                has_issues: true,
+                has_wiki: false,
+                has_downloads: false,
+                // squash merging does not use ff causing branch problems in autotest
+                allow_squash_merge: false,
+                // rebase merging does not use ff causing branch problems in autotest
+                allow_rebase_merge: false,
+                merge_commit_title: "PR_TITLE",
+                merge_commit_message: "PR_BODY"
+            };
+
+            const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
+            const options: RequestInit = {
+                method: "PATCH",
+                headers: {
+                    "Authorization": this.gitHubAuthToken,
+                    "User-Agent": this.gitHubUserName,
+                    "Accept": "application/vnd.github+json"
+                },
+                body: JSON.stringify(repoOpts)
+            };
+
+            Log.trace("GitHubAction::updateRepo( " + repoName + " ) - making request");
+            const response = await fetch(uri, options);
+            const body = await response.json();
+            Log.trace("GitHubAction::updateRepo( " + repoName + " ) - request complete");
+
+            const url = body.html_url;
+            const wasSuccess = repoOpts.has_issues === body.has_issues &&
+                repoOpts.has_wiki === body.has_wiki &&
+                repoOpts.has_downloads === body.has_downloads &&
+                repoOpts.allow_squash_merge === body.allow_squash_merge &&
+                repoOpts.allow_rebase_merge === body.allow_rebase_merge;
+            Log.info("GitHubAction::updateRepo(..) - wasSuccessful: " + wasSuccess + "; URL: " + url + "; took: " + Util.took(start));
+            return wasSuccess;
+        } catch (err) {
+            Log.error("GitHubAction::updateRepo(..) - ERROR: " + err);
             throw new Error("Repository not created; " + err.message);
         }
     }
@@ -446,7 +675,7 @@ export class GitHubActions implements IGitHubActions {
      *
      * NOTE: if you are deleting the "admin", "staff", or "students" teams, you are doing something terribly wrong.
      *
-     * @param teamName: string
+     * @param teamName name of the team to delete
      */
     public async deleteTeam(teamName: string): Promise<boolean> {
 
@@ -493,7 +722,6 @@ export class GitHubActions implements IGitHubActions {
     }
 
     /**
-     *
      * Gets all repos in an org.
      * This is just a subset of the return, but it is the subset we actually use:
      * @returns {Promise<GitRepoTuple[]}
@@ -816,7 +1044,7 @@ export class GitHubActions implements IGitHubActions {
      * Add a set of GitHub members (their usernames) to a given team.
      *
      * @param teamName
-     * @param members: string[] // github usernames
+     * @param members GitHub usernames to add to the team
      * @returns {Promise<GitTeamTuple>}
      */
     public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -866,7 +1094,7 @@ export class GitHubActions implements IGitHubActions {
      * Remove a set of GitHub members (their usernames) from a given team.
      *
      * @param teamName
-     * @param members: string[] // GitHub usernames to remove from the team
+     * @param members GitHub usernames to remove from the team
      * @returns {Promise<GitTeamTuple>}
      */
     public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
@@ -1086,7 +1314,7 @@ export class GitHubActions implements IGitHubActions {
         const response = await fetch(uri, options);
 
         if (response.status === 404) {
-            Log.warn("GitHubAction::getTeam( " + teamName + " ) - ERROR: Github Team " + response.status);
+            Log.warn("GitHubAction::getTeam( " + teamName + " ) - team does not exist; status: " + response.status);
             return null;
         }
 
@@ -1176,6 +1404,238 @@ export class GitHubActions implements IGitHubActions {
         const teamMembers = await gh.getTeamMembers(teamName);
 
         return teamMembers;
+    }
+
+    public async listRepoBranches(repoId: string): Promise<string[]> {
+        const start = Date.now();
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::listRepoBranches( " + repoId + " ) - failed; repo does not exist");
+            return null;
+        }
+
+        // get branches
+        // GET /repos/{owner}/{repo}/branches
+        const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
+        Log.info("GitHubAction::listRepoBranches(..) - list branch uri: " + listUri);
+        const listOptions: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const listResp = await fetch(listUri, listOptions);
+        Log.trace("GitHubAction::listRepoBranches(..) - list response code: " + listResp.status); // 201 success
+        const listRespBody = await listResp.json();
+
+        if (listResp.status !== 200) {
+            Log.warn("GitHubAction::listRepoBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
+            return null;
+        }
+
+        Log.trace("GitHubAction::listRepoBranches(..) - branch list: " + JSON.stringify(listRespBody));
+
+        const branches: string[] = [];
+        for (const githubBranch of listRespBody) {
+            branches.push(githubBranch.name);
+        }
+        Log.trace("GitHubAction::listRepoBranches(..) - branches: " + JSON.stringify(branches) + "; took: " + Util.took(start));
+        return branches;
+    }
+
+    public async listBranches(repoId: string): Promise<string[]> {
+        const start = Date.now();
+
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::listBranches(..) - failed; repo does not exist");
+            return [];
+        }
+
+        // get branches
+        // GET /repos/{owner}/{repo}/branches
+        const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
+        Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
+        const listOptions: RequestInit = {
+            method: "GET",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const listResp = await fetch(listUri, listOptions);
+        Log.trace("GitHubAction::listBranches(..) - list response code: " + listResp.status); // 201 success
+        const listRespBody = await listResp.json();
+
+        if (listResp.status !== 200) {
+            Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
+            return [];
+        }
+        Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
+
+        const branches: string[] = [];
+        for (const githubBranch of listRespBody) {
+            branches.push(githubBranch.name);
+        }
+
+        Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
+        return branches;
+    }
+
+    /**
+     * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
+     *
+     * @param repoId
+     * @param branchesToKeep
+     */
+    public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
+        const start = Date.now();
+
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::deleteBranches(..) - failed; repo does not exist");
+            return false;
+        }
+
+        const allBranches = await this.listBranches(repoId);
+
+        const branchesToKeepThatExist: string[] = [];
+        const branchesToDelete: string[] = [];
+        for (const githubBranch of allBranches) {
+            if (branchesToKeep.indexOf(githubBranch) < 0) {
+                branchesToDelete.push(githubBranch);
+            } else {
+                branchesToKeepThatExist.push(githubBranch);
+            }
+        }
+
+        Log.info("GitHubAction::deleteBranches(..) - branches to delete: " + JSON.stringify(branchesToDelete));
+
+        // make sure there will be at least one branch left on the repo
+        // requires a real branchToKeep or that all of the existing branches are not in branchesToKeep
+        if (branchesToKeepThatExist.length < 1) {
+            Log.error("GitHubAction::deleteBranches(..) - none of the branchesToKeep actually exist (one must remain)");
+            return false;
+        }
+
+        // delete branches we do not want
+        let deleteSucceeded = true;
+        for (const branch of branchesToDelete) {
+            deleteSucceeded = await this.deleteBranch(repoId, branch);
+        }
+
+        // This is an unsatisfying check. But GitHub Enterprise often returns repo provisioning
+        // before it is actually complete. This means that all of the branches may not be found
+        // at the time this method runs the first time. Hopefully after some deletions enough time
+        // has passed that this will work correctly. An alternative would have been to put a wait
+        // into the repo provisioning workflow, but the whole reason to change to templates was for
+        // performance. Hopefully this is good enough.
+
+        Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
+        const branchesAfter = await this.listBranches(repoId);
+        if (branchesAfter.length > branchesToKeep.length) {
+            // do it again
+            Log.info("GitHubAction::deleteBranches(..) - branches still remain; retry removal");
+            await this.deleteBranches(repoId, branchesToKeep);
+        } else {
+            Log.info("GitHubAction::deleteBranches(..) - extra branches not found");
+        }
+
+        Log.info("GitHubAction::deleteBranches(..) - done; success: " + deleteSucceeded + "; took: " + Util.took(start));
+        return deleteSucceeded;
+    }
+
+    /**
+     * NOTE: If a repo has a branch, it will be deleted.
+     *
+     * @param repoId
+     * @param branchToDelete
+     * @returns {Promise<boolean>} true if the branch was deleted, false otherwise; throws error if something bad happened.
+     */
+    public async deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
+        const start = Date.now();
+
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::deleteBranch(..) - failed; repo does not exist");
+            return false;
+        }
+
+        Log.info("GitHubAction::deleteBranch( " + repoId + ", " + branchToDelete + " ) - start");
+
+        // DELETE /repos/{owner}/{repo}/git/refs/{ref}
+        const delUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/git/refs/" + "heads/" + branchToDelete;
+        Log.info("GitHubAction::deleteBranch(..) - delete branch; uri: " + delUri);
+
+        const delOptions: RequestInit = {
+            method: "DELETE",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            }
+        };
+
+        const deleteResp = await fetch(delUri, delOptions);
+        Log.trace("GitHubAction::deleteBranch(..) - delete response code: " + deleteResp.status);
+
+        if (deleteResp.status !== 204) {
+            const delRespBody = await deleteResp.json();
+            Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " +
+                JSON.stringify(delRespBody));
+            return false;
+        } else {
+            Log.info("GitHubAction::deleteBranches(..) - successfully deleted branch: " +
+                branchToDelete + " from repo: " + repoId + "; took: " + Util.took(start));
+            return true;
+        }
+    }
+
+    public async renameBranch(repoId: string, oldName: string, newName: string): Promise<boolean> {
+        Log.info("GitHubAction::renameBranch( " + repoId + ", " + oldName + ", " + newName + " ) - start");
+
+        const repoExists = await this.repoExists(repoId); // ensure the repo exists
+        if (repoExists === false) {
+            Log.error("GitHubAction::renameBranch(..) - failed; repo does not exist");
+            return false;
+        }
+
+        const start = Date.now();
+        // /repos/{owner}/{repo}/branches/{branch}/rename
+        const uri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches/" + oldName + "/rename";
+        Log.info("GitHubAction::renameBranch(..) - uri: " + uri);
+        const options: RequestInit = {
+            method: "POST",
+            headers: {
+                "Authorization": this.gitHubAuthToken,
+                "User-Agent": this.gitHubUserName,
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2022-11-28"
+            },
+            body: JSON.stringify({
+                new_name: newName
+            })
+        };
+
+        const response = await fetch(uri, options);
+        Log.trace("GitHubAction::renameBranch(..) - response code: " + response.status); // 201 success
+
+        if (response.status === 201) {
+            Log.info("GitHubAction::renameBranch(..) - success; took: " + Util.took(start));
+            return true;
+        } else {
+            const body = await response.json();
+            Log.warn("GitHubAction::renameBranch(..) - failed; response: " + JSON.stringify(body));
+            return false;
+        }
     }
 
     public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
@@ -1415,7 +1875,7 @@ export class GitHubActions implements IGitHubActions {
     public addGithubAuthToken(url: string) {
         const startAppend = url.indexOf("//") + 2;
         const token = this.gitHubAuthToken;
-        const authKey = token.substr(token.indexOf("token ") + 6) + "@";
+        const authKey = token.substring(token.indexOf("token ") + 6) + "@";
         // creates "longokenstring@githuburi"
         return url.slice(0, startAppend) + authKey + url.slice(startAppend);
     }
@@ -1783,10 +2243,10 @@ export class GitHubActions implements IGitHubActions {
             // find a better short string for logging
             let messageToPrint = message;
             if (messageToPrint.indexOf("\n") > 0) {
-                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf("\n"));
+                messageToPrint = messageToPrint.substring(0, messageToPrint.indexOf("\n"));
             }
             if (messageToPrint.length > 80) {
-                messageToPrint = messageToPrint.substr(0, 80) + "...";
+                messageToPrint = messageToPrint.substring(0, 80) + "...";
             }
 
             Log.info("GitHubActions::simulateWebhookComment(..) - Simulating comment to project: " +
@@ -1865,10 +2325,10 @@ export class GitHubActions implements IGitHubActions {
             // find a better short string for logging
             let messageToPrint = message;
             if (messageToPrint.indexOf("\n") > 0) {
-                messageToPrint = messageToPrint.substr(0, messageToPrint.indexOf("\n"));
+                messageToPrint = messageToPrint.substring(0, messageToPrint.indexOf("\n"));
             }
             if (messageToPrint.length > 80) {
-                messageToPrint = messageToPrint.substr(0, 80) + "...";
+                messageToPrint = messageToPrint.substring(0, 80) + "...";
             }
 
             Log.info("GitHubActions::makeComment(..) - Posting markdown to url: " +
@@ -1929,16 +2389,17 @@ export class GitHubActions implements IGitHubActions {
         try {
             const response = await fetch(uri, options);
             const results = await response.json();
-            Log.trace("GitHubAction::repoExists( " + repoId + " ) - true; took: " + Util.took(start));
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - response received");
 
             const toReturn: GitTeamTuple[] = [];
             for (const result of results) {
                 toReturn.push({teamName: result.name, githubTeamNumber: result.id});
             }
 
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - done; # teams: " + toReturn.length + "; took: " + Util.took(start));
             return toReturn;
         } catch (err) {
-            Log.trace("GitHubAction::repoExists( " + repoId + " ) - false; took: " + Util.took(start));
+            Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - failed; took: " + Util.took(start));
             return [];
         }
     }

@@ -18,8 +18,6 @@
 
 # NOTE: Do not change the container names. They are used to refer to the service throughout the codebase in http requests.
 
-version: "3.5"
-
 services:
     autotest:
         build:

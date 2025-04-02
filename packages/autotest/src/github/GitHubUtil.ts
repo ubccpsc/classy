@@ -77,7 +77,8 @@ export class GitHubUtil {
     }
 
     public static parseCommandsFromComment(message: string): string[] {
-        return [...new Set(message.match(/#[a-zA-Z0-9]+/g) || [])];
+        // original pattern: /#[a-zA-Z0-9]+/g
+        return [...new Set(message.match(/#[a-zA-Z0-9_:-]+/g) || [])];
     }
 
     /**
@@ -169,13 +170,13 @@ export class GitHubUtil {
                 Log.warn("GitHubUtil::processComment(..) - failed to parse org: " + err);
             }
 
-            Log.trace("GitHubUtil::processComment(..) - 1");
+            // Log.trace("GitHubUtil::processComment(..) - 1");
 
             const cp = new ClassPortal();
             const config = await cp.getConfiguration();
             const delivId = GitHubUtil.parseDeliverableFromComment(message, config.deliverableIds);
 
-            Log.trace("GitHubUtil::processComment(..) - 2");
+            // Log.trace("GitHubUtil::processComment(..) - 2");
 
             const flags: string[] = GitHubUtil.parseCommandsFromComment(message);
 
@@ -184,7 +185,7 @@ export class GitHubUtil {
 
             const repoId = payload.repository.name;
 
-            Log.trace("GitHubUtil::processComment(..) - 3");
+            // Log.trace("GitHubUtil::processComment(..) - 3");
 
             // const timestamp = new Date(payload.comment.updated_at).getTime(); // updated so they cannot add requests to a past comment
             const timestamp = Date.now(); // set timestamp to the time the commit was made
@@ -198,9 +199,10 @@ export class GitHubUtil {
             if (authLevel.isStaff === true || authLevel.isAdmin === true) {
                 adminRequest = true;
             }
-            Log.trace("GitHubUtil::processComment(..) - 4");
+            // Log.trace("GitHubUtil::processComment(..) - 4");
 
             const kind = "standard";
+            const shouldPromote = false; // will be set later if needed
             const commentEvent: CommitTarget = {
                 delivId,
                 repoId,
@@ -211,6 +213,7 @@ export class GitHubUtil {
                 postbackURL,
                 cloneURL,
                 adminRequest,
+                shouldPromote,
                 personId,
                 kind,
                 timestamp,
@@ -289,12 +292,18 @@ export class GitHubUtil {
             if (typeof payload.commits !== "undefined" && payload.commits.length > 0) {
                 commitSHA = payload.commits[payload.commits.length - 1].id;
                 commitURL = payload.commits[payload.commits.length - 1].url;
-                Log.trace("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length);
+                let shas = "";
+                for (const sha of payload.commits) {
+                    shas += Util.shaHuman(sha.id) + " ";
+                }
+                shas = shas.trim();
+                Log.trace("GitHubUtil::processPush(..) - regular push; repo: " + repo + "; # commits: " + payload.commits.length +
+                    ", all commits: [" + shas + "]");
             } else {
                 // use this one when creating a new branch (may not have any commits)
                 commitSHA = payload.head_commit.id;
                 commitURL = payload.head_commit.url;
-                Log.trace("GitHubUtil::processPush(..) - branch added; repo: " + repo);
+                Log.trace("GitHubUtil::processPush(..) - branch added; repo: " + repo + "; sha: " + Util.shaHuman(commitSHA));
             }
 
             Log.info("GitHubUtil::processPush(..) - start; repo: " + repo +
@@ -306,7 +315,7 @@ export class GitHubUtil {
             const timestamp = Date.now(); // it does not matter when the work was done, what matters is when it was submitted
             const backendConfig = await portal.getConfiguration();
             if (backendConfig === null) {
-                Log.warn("GitHubUtil::processComment() - no default deliverable for course");
+                Log.warn("GitHubUtil::processPush() - no default deliverable for course");
                 return null;
             }
 
@@ -328,6 +337,7 @@ export class GitHubUtil {
                 orgId: org,
                 botMentioned: false, // not explicitly invoked
                 adminRequest: isAdmin, // let us prioritize admin pushes
+                shouldPromote: false, // will be set later if needed
                 personId: pusher?.personId ?? null,
                 kind: "push",
                 cloneURL,
@@ -338,9 +348,9 @@ export class GitHubUtil {
                 ref
             };
 
-            Log.info("GitHubUtil::processPush(..) - done; repo: " + repo + "; person: " +
-                pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA) + "; took: " + Util.took(start));
-            Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
+            Log.info("GitHubUtil::processPush(..) - done; person: " + pusher?.personId + "; repo: " + repo +
+                "; SHA: " + Util.shaHuman(commitSHA) + "; ref: " + ref + "; took: " + Util.took(start));
+            // Log.trace("GitHubUtil::processPush(..) - done; pushEvent:", pushEvent);
             return pushEvent;
         } catch (err) {
             Log.error("GitHubUtil::processPush(..) - ERROR parsing: " + err);
@@ -459,5 +469,9 @@ export class GitHubUtil {
             // ignored
         }
         return commitURL;
+    }
+
+    public static isMain(ref: string): boolean {
+        return ref === "refs/heads/main" || ref === "refs/heads/master";
     }
 }

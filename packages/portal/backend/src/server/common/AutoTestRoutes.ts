@@ -50,6 +50,8 @@ export class AutoTestRoutes implements IREST {
 
         server.post("/portal/at/promotePush", AutoTestRoutes.atShouldPromotePush);
 
+        server.post("/portal/at/feedbackDelay", AutoTestRoutes.atFeedbackDelay);
+
         // The next three endpoints are not in the right place as they represent
         // requests that do not arise from AutoTest.
 
@@ -58,6 +60,7 @@ export class AutoTestRoutes implements IREST {
 
         // Receives Grading Image admin events, and forwards them to AutoTest
         server.get("/portal/at/docker/images", AutoTestRoutes.getDockerImages);
+        server.del("/portal/at/docker/image/:tag", AutoTestRoutes.deleteDockerImage);
         server.post("/portal/at/docker/image", AutoTestRoutes.postDockerImage);
     }
 
@@ -182,12 +185,12 @@ export class AutoTestRoutes implements IREST {
         if (validGradeRecord !== null) {
             throw new Error("Invalid Grade Record: " + validGradeRecord);
         } else {
-            Log.info("AutoTestRoutes::atGrade(..) - deliv: " + grade.delivId +
+            Log.info("AutoTestRoutes::performPostGrade(..) - deliv: " + grade.delivId +
                 "; repo: " + grade.repoId + "; grade: " + grade.score);
             // Log.trace("AutoTestRoutes::atGrade(..) - repoId: " + grade.repoId +
             //     "; delivId: " + grade.delivId + "; body: " + JSON.stringify(grade));
-            const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
-            return await cc.processNewAutoTestGrade(grade);
+            const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
+            return await ac.processNewAutoTestGrade(grade);
         }
     }
 
@@ -379,6 +382,36 @@ export class AutoTestRoutes implements IREST {
         }
     }
 
+    public static async atFeedbackDelay(req: any, res: any, next: any) {
+        Log.info("AutoTestRoutes::atFeedbackDelay(..) - start");
+
+        const start = Date.now();
+
+        const providedSecret = req.headers.token;
+        if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
+            return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res, next);
+        } else {
+            try {
+                const info: { delivId: string, personId: string, timestamp: number } = req.body;
+                const courseController = await Factory.getCourseController();
+                const feedbackDelay = await courseController.requestFeedbackDelay(info);
+                if (feedbackDelay === null) {
+                    // default implementation just says not implemented, although this is not an error
+                    res.send(204, {success: {notImplemented: true}});
+                    return next(true);
+                } else {
+                    Log.info("AutoTestRoutes::atFeedbackDelay(..) - done; feedbackDelay: " + JSON.stringify(feedbackDelay) +
+                        "; took: " + Util.took(start));
+                    const payload: Payload = {success: {feedbackDelay}};
+                    res.send(200, payload);
+                    return next(true);
+                }
+            } catch (err) {
+                return AutoTestRoutes.handleError(400, "Failed to determine feedback eligibility", res, next);
+            }
+        }
+    }
+
     /**
      * This route forwards GitHub webhooks from the public-facing backend
      * to the AutoTest endpoint (which is internal and protected).
@@ -444,7 +477,7 @@ export class AutoTestRoutes implements IREST {
     }
 
     public static async getDockerImages(req: any, res: any, next: any) {
-        Log.trace("AutoTestRoutes::getDockerImages(..) - start");
+        Log.info("AutoTestRoutes::getDockerImages(..) - start");
         try {
             const config = Config.getInstance();
 
@@ -474,7 +507,7 @@ export class AutoTestRoutes implements IREST {
 
                 Log.trace("AutoTestRoutes::getDockerImages(..) - requesting; options: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
-                Log.trace("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
+                Log.info("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
 
                 if (!atResponse.ok) {
                     throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" +
@@ -492,11 +525,62 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
             res.send(400);
         }
-        // return next();
+        next();
+    }
+
+    public static async deleteDockerImage(req: any, res: any, next: any) {
+        try {
+            const config = Config.getInstance();
+
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - start; tag: " + req.params.tag);
+            const githubId = req.headers.user;
+            const pc = new PersonController();
+            const person = await pc.getGitHubPerson(githubId);
+            const privileges = await new AuthController().personPrivileged(person);
+
+            if (typeof githubId === "undefined" || person === null) {
+                throw new Error("Valid user parameter not provided");
+            }
+
+            if (!privileges.isAdmin) {
+                Log.warn("AutoTestRoutes::deleteDockerImage(..) - AUTHORIZATION FAILURE " +
+                    githubId + " is not an admin.");
+                return res.send(401);
+            }
+
+            const atHost = config.getProp(ConfigKey.autotestUrl);
+            const url = atHost + ":" +
+                config.getProp(ConfigKey.autotestPort) +
+                req.href().replace("/portal/at", "");
+            const options: RequestInit = {
+                method: "DELETE",
+                headers: {token: Config.getInstance().getProp(ConfigKey.autotestSecret)}
+            };
+
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - requesting; url: " + url);
+            const atResponse = await fetch(url, options);
+            Log.info("AutoTestRoutes::deleteDockerImage(..) - done; isOk: " + atResponse.ok);
+            const body = await atResponse.json();
+            const status = atResponse.status;
+
+            if (!atResponse.ok) {
+                Log.warn("AutoTestRoutes::deleteDockerImage(..) - ERROR sending request to AutoTest service; " +
+                    "status: " + status + "; body: " + JSON.stringify(body));
+            } else {
+                Log.info("AutoTestRoutes::deleteDockerImage(..) - sending request to AutoTest service worked; " +
+                    "status: " + status + "; body: " + JSON.stringify(body));
+            }
+
+            res.send(status, body);
+        } catch (err) {
+            Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR " + err);
+            res.send(500);
+        }
+        next();
     }
 
     public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
-        Log.trace("AutoTestRoutes::postDockerImage(..) - start");
+        Log.info("AutoTestRoutes::postDockerImage(..) - start");
         try {
             const githubId = req.headers.user as string;
             const pc = new PersonController();
@@ -526,7 +610,7 @@ export class AutoTestRoutes implements IREST {
 
             // Request native replaced with fetch. See https://github.com/node-fetch/node-fetch#streams
             try {
-                Log.trace("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
+                Log.info("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
                 const atResponse = await fetch(url, options);
 
                 res.write(""); // keep alive
@@ -546,7 +630,7 @@ export class AutoTestRoutes implements IREST {
                     Log.error("AutoTestRoutes::postDockerImage(..) - myChunk ERROR: " + err);
                 }
 
-                Log.trace("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
+                Log.info("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
                 if (!atResponse.ok) {
                     throw Error(
@@ -570,7 +654,7 @@ export class AutoTestRoutes implements IREST {
             Log.error("AutoTestRoutes::postDockerImage(..) - ERROR " + err);
             return res.send(400);
         }
-        // return next();
+        // next(); // intentionally not calling next here because we do not want to close the streaming response
     }
 
     /**

@@ -1,7 +1,7 @@
 # Classy
 
 [![CircleCI](https://circleci.com/gh/ubccpsc/classy.svg?style=svg)](https://circleci.com/gh/ubccpsc/classy)
-[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=master&service=github)](https://coveralls.io/github/ubccpsc/classy?branch=master)
+[![Coverage Status](https://coveralls.io/repos/github/ubccpsc/classy/badge.svg?branch=main&service=github)](https://coveralls.io/github/ubccpsc/classy?branch=main)
 
 Classy is a classroom management system developed by the Department of Computer Science at UBC. Classy is tightly integrated with GitHub and has the ability to automatically provision student repositories, create teams, and mark assignments. Administrators can configure deliverables, enter grades, and view comprehensive dashboards of all student test executions. Students can use the system to create teams (if required) and view their grades and assignment feedback.
 
@@ -16,7 +16,7 @@ Primary contributors:
 
 Features that add value to Classy should be merged back into the Classy project. Any feature that is practical, improves the administration of a course, and is useful to instructors is likely to add value and be accepted as core code. Features, on the other hand, that are only useful to a single course will likely not be accepted as core code. A feature needs to have adequate code coverage (> 90%) and have been tested for a semester in a downstream fork to be eligible as core code. Bug fixes always have value and can be merged via PR back to `ubccpsc/classy` as required.
 
-To contribute code to Classy, create a PR that has your code in a feature branch (ie. `feature/my-new-feature`) ready to merge into the root `ubccpsc/master` branch. To ensure that the code is ready to merge, rebase your feature branch on the `ubccpsc/master` branch. Rebasing will help eliminate any later downstream and upstream merge conflicts. Classy has been configured with CircleCI for validating work. Any PRs must pass the CircleCI testsuites.
+To contribute code to Classy, create a PR that has your code in a feature branch (e.g., `feature/my-new-feature`) ready to merge into the root `ubccpsc/main` branch. To ensure that the code is ready to merge, rebase your feature branch on the `ubccpsc/main` branch. Rebasing will help eliminate any later downstream and upstream merge conflicts. Classy has been configured with CircleCI for validating work. Any PRs must pass the CircleCI test suites.
 
 Any unnecessary files, such as custom back-end and front-end files should **NOT** be part of the PR. Add unnecessary files to your [Global Git Ignore Configuration](https://help.github.com/en/github/using-git/ignoring-files#create-a-global-gitignore).
 
@@ -84,11 +84,11 @@ Instructions for getting started with Classy have been sorted into sections base
 - [2. Hardware Requirements](/docs/tech-staff/hardware.md)
 - [3. Installation](/docs/tech-staff/install.md)
     - [3.1 Software Dependencies](/docs/tech-staff/install.md#software-dependencies)
-    - [3.2 Install Classy](/docs/tech-staff/install.md#install-classy)
+    - [3.2 Classy Installation](/docs/tech-staff/install.md#install-classy)
     - [3.3 System Configuration](/docs/tech-staff/install.md#create-user-group)
     - [3.4 Create SSL Certificates](/docs/tech-staff/install.md#create-ssl-certificates)
     - [3.5 Configure Firewall Rules](/docs/tech-staff/install.md#create-firewall-rules)
-- [4. Github Setup](/docs/tech-staff/githubsetup.md)
+- [4. GitHub Setup](/docs/tech-staff/githubsetup.md)
 - [5. Backup Configuration](/docs/tech-staff/backups.md)
 - [6. Build/Start/Stop Classy](/docs/tech-staff/operatingclassy.md)
 - [7. Patching](/docs/tech-staff/updates.md)
@@ -101,3 +101,4 @@ Instructions for getting started with Classy have been sorted into sections base
 ## License
 
 [MIT](LICENSE)
+
