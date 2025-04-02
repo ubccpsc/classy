@@ -580,6 +580,7 @@ describe("AdminController", () => {
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
+			Log.test("AllNewTeams: " + JSON.stringify(allNewTeams));
 			// expect(allNewTeams[0].custom.githubAttached).to.be.true; // attached
 			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
 

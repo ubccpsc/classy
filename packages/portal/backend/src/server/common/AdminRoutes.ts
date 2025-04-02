@@ -479,7 +479,7 @@ export default class AdminRoutes implements IREST {
 		const userId = req.headers.user;
 		AdminRoutes.handleDeleteRepository(userId, repoId)
 			.then(function (success) {
-				Log.trace("AdminRoutes::deleteRepository(..) - done; success: " + success);
+				Log.info("AdminRoutes::deleteRepository(..) - done; success: " + success);
 				const payload: Payload = { success: { message: "Repository deleted." } };
 				res.send(200, payload); // return as text rather than json
 				return next();
@@ -497,6 +497,7 @@ export default class AdminRoutes implements IREST {
 			const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
 				const team = await dbc.getTeam(teamId);
 				const newTeam = { ...team, custom: { ...team.custom, gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED } };
+				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);
 				await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});
 			});

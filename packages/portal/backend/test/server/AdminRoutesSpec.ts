@@ -1409,6 +1409,7 @@ describe("Admin Routes", function () {
 		expect(ex).to.be.null;
 
 		const team = await DatabaseController.getInstance().getTeam(TestHarness.TEAMNAME1);
+		Log.test("Team: " + JSON.stringify(team));
 		// expect(team.custom.githubAttached).to.be.false; // not attached
 		expect(team.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // team still exists but is unlinked
 	}).timeout(TestHarness.TIMEOUT);
