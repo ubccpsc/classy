@@ -1,11 +1,11 @@
-import Log, {LogLevel} from "@common/Log";
+import Log, { LogLevel } from "@common/Log";
 import Util from "@common/Util";
 
-import {DatabaseController} from "../src/controllers/DatabaseController";
-import {GradesController} from "../src/controllers/GradesController";
-import {ResultsController} from "../src/controllers/ResultsController";
+import { DatabaseController } from "../src/controllers/DatabaseController";
+import { GradesController } from "../src/controllers/GradesController";
+import { ResultsController } from "../src/controllers/ResultsController";
 
-import {AuditLabel, Grade} from "../src/Types";
+import { AuditLabel, Grade } from "../src/Types";
 
 /**
  * To run this locally you need to have a .env configured with the production values
@@ -19,195 +19,216 @@ import {AuditLabel, Grade} from "../src/Types";
  * 5) Run this script: node packages/portal/backend/src-util/TransformGrades.js
  */
 export class TransformGrades {
+	private dc: DatabaseController;
 
-    private dc: DatabaseController;
+	/**
+	 * Whether the execution is for testing (true) or should actually change the database (false).
+	 *
+	 * @type {boolean}
+	 */
+	private DRY_RUN = true;
 
-    /**
-     * Whether the execution is for testing (true) or should actually change the database (false).
-     *
-     * @type {boolean}
-     */
-    private DRY_RUN = true;
+	/**
+	 * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
+	 *
+	 * @type {string}
+	 */
+	private readonly TEST_USER = "XXXXX";
 
-    /**
-     * A test user that can be used for checking DB writing (ignores DRY_RUN above, but only for this user).
-     *
-     * @type {string}
-     */
-    private readonly TEST_USER = "XXXXX";
+	/**
+	 * The delivId we are updating grades for.
+	 *
+	 * @type {string}
+	 */
+	private readonly DELIVID: string = "d3";
 
-    /**
-     * The delivId we are updating grades for.
-     *
-     * @type {string}
-     */
-    private readonly DELIVID: string = "d3";
+	constructor() {
+		Log.info("TransformGrades::<init> - start");
+		this.dc = DatabaseController.getInstance();
+	}
 
-    constructor() {
-        Log.info("TransformGrades::<init> - start");
-        this.dc = DatabaseController.getInstance();
-    }
+	public async process(): Promise<void> {
+		Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
 
-    public async process(): Promise<void> {
-        Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
+		const gradesC = new GradesController();
+		const resultsC = new ResultsController();
+		const dbc = DatabaseController.getInstance();
 
-        const gradesC = new GradesController();
-        const resultsC = new ResultsController();
-        const dbc = DatabaseController.getInstance();
+		// get all the DELIVID grade records eligible for updating
+		const allGrades = await gradesC.getAllGrades();
+		const grades = [];
+		for (const grade of allGrades as Grade[]) {
+			if (grade.delivId === this.DELIVID) {
+				grades.push(grade);
+			}
+		}
 
-        // get all the DELIVID grade records eligible for updating
-        const allGrades = await gradesC.getAllGrades();
-        const grades = [];
-        for (const grade of allGrades as Grade[]) {
-            if (grade.delivId === this.DELIVID) {
-                grades.push(grade);
-            }
-        }
+		// should be one per student
+		Log.info("TransformGrades::process() - for: " + this.DELIVID + "; # grades: " + grades.length);
 
-        // should be one per student
-        Log.info("TransformGrades::process() - for: " + this.DELIVID + "; # grades: " + grades.length);
+		const gradeDeltas: number[] = [];
 
-        const gradeDeltas: number[] = [];
+		for (const grade of grades) {
+			const url = grade.URL;
 
-        for (const grade of grades) {
-            const url = grade.URL;
+			const result = await resultsC.getResultFromURL(url, this.DELIVID);
+			if (result !== null) {
+				Log.info("Considering grade for " + this.DELIVID + " for url: " + url);
 
-            const result = await resultsC.getResultFromURL(url, this.DELIVID);
-            if (result !== null) {
+				// make sure row is valid
+				if (
+					typeof result.output === "undefined" ||
+					typeof result.output.report === "undefined" ||
+					typeof result.output.report.scoreTest === "undefined" ||
+					typeof result.output.report.scoreOverall === "undefined" ||
+					typeof result.output.report.custom === "undefined"
+				) {
+					Log.error("FATAL: NO GRADE RECORD");
+					break;
+				}
+				if (
+					typeof (result.output.report.custom as any).private === "undefined" ||
+					typeof (result.output.report.custom as any).private.scoreTest === "undefined"
+				) {
+					Log.warn("WARNING: NO PRIVATE RECORD; filling with 0s");
 
-                Log.info("Considering grade for " + this.DELIVID + " for url: " + url);
+					(result.output.report.custom as any).private = {};
+					(result.output.report.custom as any).private.scoreTest = 0;
 
-                // make sure row is valid
-                if (typeof result.output === "undefined" ||
-                    typeof result.output.report === "undefined" ||
-                    typeof result.output.report.scoreTest === "undefined" ||
-                    typeof result.output.report.scoreOverall === "undefined" ||
-                    typeof result.output.report.custom === "undefined"
-                ) {
-                    Log.error("FATAL: NO GRADE RECORD");
-                    break;
-                }
-                if (typeof (result.output.report.custom as any).private === "undefined" ||
-                    typeof (result.output.report.custom as any).private.scoreTest === "undefined"
-                ) {
-                    Log.warn("WARNING: NO PRIVATE RECORD; filling with 0s");
+					continue; // just skip this row; this is a fatal error though that we need to figure out
+				}
 
-                    (result.output.report.custom as any).private = {};
-                    (result.output.report.custom as any).private.scoreTest = 0;
+				const scorePub = Number(result.output.report.scoreTest);
+				const scoreCover = Number(result.output.report.scoreCover);
+				const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
+				const scorePubOverall = Number(result.output.report.scoreOverall);
 
-                    continue; // just skip this row; this is a fatal error though that we need to figure out
-                }
+				let finalScore = 0;
+				if (this.DELIVID === "d1") {
+					// 25% private tests
+					finalScore = (scorePub * 0.75 + scorePriv * 0.25) * 0.8 + scoreCover * 0.2;
+					finalScore = Number(finalScore.toFixed(2));
+					Log.info(
+						"Updating grade for " +
+							this.DELIVID +
+							"; original: " +
+							scorePubOverall.toFixed(0) +
+							"; new: " +
+							finalScore.toFixed(0)
+					);
 
-                const scorePub = Number(result.output.report.scoreTest);
-                const scoreCover = Number(result.output.report.scoreCover);
-                const scorePriv = Number((result.output.report.custom as any).private.scoreTest);
-                const scorePubOverall = Number(result.output.report.scoreOverall);
+					// if there"s a big difference, print a warning
+					if (scorePub - scorePriv > 20) {
+						Log.warn(
+							"Divergent score between public and private; original: " +
+								scorePubOverall.toFixed(0) +
+								"; new: " +
+								finalScore.toFixed(0)
+						);
+					}
+				}
+				if (this.DELIVID === "d2") {
+					// 25% private tests
+					finalScore = (scorePub * 0.75 + scorePriv * 0.25) * 0.8 + scoreCover * 0.2;
+					finalScore = Number(finalScore.toFixed(2));
+					Log.info("Updating grade for " + this.DELIVID + "; original: " + scorePubOverall + "; new: " + finalScore);
 
-                let finalScore = 0;
-                if (this.DELIVID === "d1") {
-                    // 25% private tests
-                    finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
-                    finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
-                        scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
+					// if there"s a big difference, print a warning
+					if (scorePub - scorePriv > 20) {
+						Log.warn("Divergent score between public and private; original: " + scorePubOverall + "; new: " + finalScore);
+					}
+				} else if (this.DELIVID === "d3") {
+					// 50% private tests
+					finalScore = (scorePub * 0.5 + scorePriv * 0.5) * 0.8 + scoreCover * 0.2;
+					finalScore = Number(finalScore.toFixed(2));
+					Log.info(
+						"Updating grade for " +
+							this.DELIVID +
+							"; original: " +
+							scorePubOverall.toFixed(0) +
+							"; new: " +
+							finalScore.toFixed(0)
+					);
 
-                    // if there"s a big difference, print a warning
-                    if ((scorePub - scorePriv) > 20) {
-                        Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
-                    }
-                }
-                if (this.DELIVID === "d2") {
-                    // 25% private tests
-                    finalScore = (((scorePub * .75) + (scorePriv * .25)) * .8) + (scoreCover * .2);
-                    finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
-                        scorePubOverall + "; new: " + finalScore);
+					// if there"s a big difference, print a warning
+					if (scorePub - scorePriv > 20) {
+						Log.warn(
+							"Divergent score between public and private; original: " +
+								scorePubOverall.toFixed(0) +
+								"; new: " +
+								finalScore.toFixed(0)
+						);
+					}
+				}
 
-                    // if there"s a big difference, print a warning
-                    if ((scorePub - scorePriv) > 20) {
-                        Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall + "; new: " + finalScore);
-                    }
-                } else if (this.DELIVID === "d3") {
-                    // 50% private tests
-                    finalScore = (((scorePub * .5) + (scorePriv * .5)) * .8) + (scoreCover * .2);
-                    finalScore = Number(finalScore.toFixed(2));
-                    Log.info("Updating grade for " + this.DELIVID + "; original: " +
-                        scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
+				const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which does not work here
+				(newGrade.custom as any).publicGrade = grade; // keep the old grad record around in the grade.custom field
+				newGrade.timestamp = Date.now(); // TS for when we updated the grade record
 
-                    // if there"s a big difference, print a warning
-                    if ((scorePub - scorePriv) > 20) {
-                        Log.warn("Divergent score between public and private; original: " +
-                            scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
-                    }
-                }
+				// change grade
+				// could add comment here too if needed (e.g., to newGrade.comment)
+				newGrade.urlName = "Transformed";
+				newGrade.score = finalScore;
 
-                const newGrade: Grade = JSON.parse(JSON.stringify(grade)); // Object.assign is a shallow copy which does not work here
-                (newGrade.custom as any).publicGrade = grade; // keep the old grad record around in the grade.custom field
-                newGrade.timestamp = Date.now(); // TS for when we updated the grade record
+				gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
 
-                // change grade
-                // could add comment here too if needed (e.g., to newGrade.comment)
-                newGrade.urlName = "Transformed";
-                newGrade.score = finalScore;
+				Log.info("TransformGrades::process() - processing result: " + url);
+				if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
+					// publish grade
+					Log.info("Grade update for: " + newGrade.personId);
+					await gradesC.saveGrade(newGrade);
+					await dbc.writeAudit(AuditLabel.GRADE_CHANGE, "ProcessPrivateTest", grade, newGrade, {});
+				} else {
+					Log.info("Dry run grade update for: " + newGrade.personId);
+				}
+			} else {
+				// should not really happen; if we have a grade already we must have a result
+				Log.warn("TransformGrades::process - WARN; no grade found for: " + url);
+			}
+		}
 
-                gradeDeltas.push(Number((newGrade.score - grade.score).toFixed(2))); // track delta
+		// Log.trace("gradeDeltas: " + JSON.stringify(gradeDeltas));
+		let gradeIncreased = 0;
+		let gradeDecreased = 0;
+		let gradeUnchanged = 0;
+		let increasedAmount = 0;
+		let decreasedAmount = 0;
 
-                Log.info("TransformGrades::process() - processing result: " + url);
-                if (this.DRY_RUN === false || grade.personId === this.TEST_USER) {
-                    // publish grade
-                    Log.info("Grade update for: " + newGrade.personId);
-                    await gradesC.saveGrade(newGrade);
-                    await dbc.writeAudit(AuditLabel.GRADE_CHANGE, "ProcessPrivateTest", grade, newGrade, {});
-                } else {
-                    Log.info("Dry run grade update for: " + newGrade.personId);
-                }
-            } else {
-                // should not really happen; if we have a grade already we must have a result
-                Log.warn("TransformGrades::process - WARN; no grade found for: " + url);
-            }
-        }
+		for (const delta of gradeDeltas) {
+			if (delta > 0) {
+				gradeIncreased++;
+				increasedAmount += delta;
+			} else if (delta < 0) {
+				gradeDecreased++;
+				decreasedAmount += delta;
+			} else {
+				// unchanged
+				gradeUnchanged++;
+			}
+		}
 
-        // Log.trace("gradeDeltas: " + JSON.stringify(gradeDeltas));
-        let gradeIncreased = 0;
-        let gradeDecreased = 0;
-        let gradeUnchanged = 0;
-        let increasedAmount = 0;
-        let decreasedAmount = 0;
+		Log.info("*** Transformation Summary ***");
+		Log.info("# increased: " + gradeIncreased + "; by avg: " + (increasedAmount / gradeIncreased).toFixed(2));
+		Log.info("# decreased: " + gradeDecreased + "; by avg: " + (decreasedAmount / gradeDecreased).toFixed(2));
+		Log.info("# unchanged: " + gradeUnchanged);
+		Log.info(
+			"Average change: " + ((decreasedAmount + increasedAmount) / (gradeDecreased + gradeIncreased + gradeUnchanged)).toFixed(2)
+		);
+		Log.info("*** /Transformation Summary ***");
 
-        for (const delta of gradeDeltas) {
-            if (delta > 0) {
-                gradeIncreased++;
-                increasedAmount += delta;
-            } else if (delta < 0) {
-                gradeDecreased++;
-                decreasedAmount += delta;
-            } else {
-                // unchanged
-                gradeUnchanged++;
-            }
-        }
-
-        Log.info("*** Transformation Summary ***");
-        Log.info("# increased: " + gradeIncreased + "; by avg: " + (increasedAmount / gradeIncreased).toFixed(2));
-        Log.info("# decreased: " + gradeDecreased + "; by avg: " + (decreasedAmount / gradeDecreased).toFixed(2));
-        Log.info("# unchanged: " + gradeUnchanged);
-        Log.info("Average change: " +
-            ((decreasedAmount + increasedAmount) / (gradeDecreased + gradeIncreased + gradeUnchanged)).toFixed(2));
-        Log.info("*** /Transformation Summary ***");
-
-        Log.info("TransformGrades::process() - done");
-    }
+		Log.info("TransformGrades::process() - done");
+	}
 }
 
 const ppt = new TransformGrades();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-ppt.process().then(function() {
-    Log.info("TransformGrades::process() - complete; took: " + Util.took(start));
-    process.exit();
-}).catch(function(err) {
-    Log.error("TransformGrades::process() - ERROR: " + err.message);
-    process.exit();
-});
+ppt.process()
+	.then(function () {
+		Log.info("TransformGrades::process() - complete; took: " + Util.took(start));
+		process.exit();
+	})
+	.catch(function (err) {
+		Log.error("TransformGrades::process() - ERROR: " + err.message);
+		process.exit();
+	});

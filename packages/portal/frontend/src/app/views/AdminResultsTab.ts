@@ -1,328 +1,329 @@
 import * as moment from "moment";
-import {OnsButtonElement} from "onsenui";
+import { OnsButtonElement } from "onsenui";
 
 import Log from "@common/Log";
 import {
-    AutoTestResultSummaryPayload,
-    AutoTestResultSummaryTransport,
-    DeliverableTransport,
-    RepositoryPayload,
-    RepositoryTransport
+	AutoTestResultSummaryPayload,
+	AutoTestResultSummaryTransport,
+	DeliverableTransport,
+	RepositoryPayload,
+	RepositoryTransport,
 } from "@common/types/PortalTypes";
 
-import {SortableTable, TableCell, TableHeader} from "../util/SortableTable";
-import {UI} from "../util/UI";
+import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
+import { UI } from "../util/UI";
 
-import {AdminDeliverablesTab} from "./AdminDeliverablesTab";
-import {AdminPage} from "./AdminPage";
-import {AdminView} from "./AdminView";
+import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
+import { AdminPage } from "./AdminPage";
+import { AdminView } from "./AdminView";
 
 declare var TomSelect: any;
 
 export class AdminResultsTab extends AdminPage {
+	// private readonly remote: string; // url to backend
+	private delivValue: string | null = null;
+	private repoValue: string | null = null;
 
-    // private readonly remote: string; // url to backend
-    private delivValue: string | null = null;
-    private repoValue: string | null = null;
+	constructor(remote: string) {
+		// this.remote = remote;
+		super(remote);
+	}
 
-    constructor(remote: string) {
-        // this.remote = remote;
-        super(remote);
-    }
+	// called by reflection in renderPage
+	public async init(opts: any): Promise<void> {
+		Log.info("AdminResultsTab::init(..) - start");
+		const that = this;
 
-    // called by reflection in renderPage
-    public async init(opts: any): Promise<void> {
-        Log.info("AdminResultsTab::init(..) - start");
-        const that = this;
+		// NOTE: this could consider if studentListTable has children, and if they do, do not refresh
+		document.getElementById("resultsListTable").innerHTML = ""; // clear target
 
-        // NOTE: this could consider if studentListTable has children, and if they do, do not refresh
-        document.getElementById("resultsListTable").innerHTML = ""; // clear target
+		UI.showModal("Retrieving results.");
+		const course = await AdminView.getCourse(this.remote);
+		if (this.delivValue === null) {
+			this.delivValue = course.defaultDeliverableId;
+			// ugly way to set the default the first time the page is rendered
+			UI.setDropdownOptions("resultsDelivSelect", [this.delivValue], this.delivValue);
+		}
+		const delivs = await AdminDeliverablesTab.getDeliverables(this.remote); // for select
+		const repos = await AdminResultsTab.getRepositories(this.remote); // for select
+		const results = await this.performQueries();
+		UI.hideModal();
 
-        UI.showModal("Retrieving results.");
-        const course = await AdminView.getCourse(this.remote);
-        if (this.delivValue === null) {
-            this.delivValue = course.defaultDeliverableId;
-            // ugly way to set the default the first time the page is rendered
-            UI.setDropdownOptions("resultsDelivSelect", [this.delivValue], this.delivValue);
-        }
-        const delivs = await AdminDeliverablesTab.getDeliverables(this.remote); // for select
-        const repos = await AdminResultsTab.getRepositories(this.remote); // for select
-        const results = await this.performQueries();
-        UI.hideModal();
+		const fab = document.querySelector("#resultsUpdateButton") as OnsButtonElement;
+		fab.onclick = function (_evt: any) {
+			Log.info("AdminResultsTab::init(..)::updateButton::onClick");
+			UI.showModal("Retrieving results.");
+			that.performQueries()
+				.then(function (newResults) {
+					// TODO: need to track and update the current value of deliv and repo
+					that.render(delivs, repos, newResults);
+					UI.hideModal();
+				})
+				.catch(function (err) {
+					UI.showError(err);
+				});
+		};
 
-        const fab = document.querySelector("#resultsUpdateButton") as OnsButtonElement;
-        fab.onclick = function (evt: any) {
-            Log.info("AdminResultsTab::init(..)::updateButton::onClick");
-            UI.showModal("Retrieving results.");
-            that.performQueries().then(function (newResults) {
-                // TODO: need to track and update the current value of deliv and repo
-                that.render(delivs, repos, newResults);
-                UI.hideModal();
-            }).catch(function (err) {
-                UI.showError(err);
-            });
-        };
+		this.render(delivs, repos, results);
+	}
 
-        this.render(delivs, repos, results);
-    }
+	private async performQueries(): Promise<AutoTestResultSummaryTransport[]> {
+		Log.info("AdminResultsTab::performQueries(..) - start");
+		const start = Date.now();
+		let deliv = UI.getDropdownValue("resultsDelivSelect");
+		if (deliv === "-Any-") {
+			deliv = "any";
+		}
+		let repo = UI.getDropdownValue("resultsRepoSelect");
+		if (repo === "-Any-") {
+			repo = "any";
+		}
 
-    private async performQueries(): Promise<AutoTestResultSummaryTransport[]> {
-        Log.info("AdminResultsTab::performQueries(..) - start");
-        const start = Date.now();
-        let deliv = UI.getDropdownValue("resultsDelivSelect");
-        if (deliv === "-Any-") {
-            deliv = "any";
-        }
-        let repo = UI.getDropdownValue("resultsRepoSelect");
-        if (repo === "-Any-") {
-            repo = "any";
-        }
+		this.delivValue = deliv;
+		this.repoValue = repo;
+		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
+		Log.info("AdminResultsTab::performQueries(..) - done; # values: " + values.length + "; took: " + UI.took(start));
+		return values;
+	}
 
-        this.delivValue = deliv;
-        this.repoValue = repo;
-        const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
-        Log.info("AdminResultsTab::performQueries(..) - done; # values: " + values.length + "; took: " + UI.took(start));
-        return values;
-    }
+	private renderResults(results: AutoTestResultSummaryTransport[]): void {
+		Log.trace("AdminResultsTab::renderResults: " + results.length);
+		const headers: TableHeader[] = [
+			{
+				id: "?",
+				text: "?",
+				sortable: false,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "repoId",
+				text: "Repository",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "delivId",
+				text: "Deliv",
+				sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
+				defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
+				sortDown: false, // Whether the column should initially sort descending or ascending.
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "score",
+				text: "Score",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "state",
+				text: "State",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "timstamp",
+				text: "Timestamp",
+				sortable: true,
+				defaultSort: true,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+		];
 
-    private renderResults(results: AutoTestResultSummaryTransport[]): void {
-        Log.trace("AdminResultsTab::renderResults: " + results.length);
-        const headers: TableHeader[] = [
-            {
-                id: "?",
-                text: "?",
-                sortable: false,
-                defaultSort: false,
-                sortDown: true,
-                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
-            },
-            {
-                id: "repoId",
-                text: "Repository",
-                sortable: true,
-                defaultSort: false,
-                sortDown: true,
-                style: "padding-left: 1em; padding-right: 1em; text-align: left;"
-            },
-            {
-                id: "delivId",
-                text: "Deliv",
-                sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
-                defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
-                sortDown: false, // Whether the column should initially sort descending or ascending.
-                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
-            },
-            {
-                id: "score",
-                text: "Score",
-                sortable: true,
-                defaultSort: false,
-                sortDown: true,
-                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
-            },
-            {
-                id: "state",
-                text: "State",
-                sortable: true,
-                defaultSort: false,
-                sortDown: true,
-                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
-            },
-            {
-                id: "timstamp",
-                text: "Timestamp",
-                sortable: true,
-                defaultSort: true,
-                sortDown: true,
-                style: "padding-left: 1em; padding-right: 1em; text-align: center;"
-            }
-        ];
+		const st = new SortableTable(headers, "#resultsListTable");
 
-        const st = new SortableTable(headers, "#resultsListTable");
+		// this loop could not possibly be less efficient
+		for (const result of results) {
+			// repoId
+			// repoURL
+			// delivId
+			// result
+			// timestamp
+			// commitSHA
+			// commitURL
+			// scoreOverall
+			// scoreCover
+			// scoreTests
 
-        // this loop could not possibly be less efficient
-        for (const result of results) {
+			// const ts = result.input.pushInfo.timestamp;
+			const ts = result.timestamp;
+			const date = new Date(ts);
+			const mom = moment(date);
+			const tsString = mom.format("MM/DD[@]HH:mm");
+			// const tsString = new Date(ts).toLocaleDateString() + " @ " + new Date(ts).toLocaleTimeString();
 
-            // repoId
-            // repoURL
-            // delivId
-            // result
-            // timestamp
-            // commitSHA
-            // commitURL
-            // scoreOverall
-            // scoreCover
-            // scoreTests
+			const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
-            // const ts = result.input.pushInfo.timestamp;
-            const ts = result.timestamp;
-            const date = new Date(ts);
-            const mom = moment(date);
-            const tsString = mom.format("MM/DD[@]HH:mm");
-            // const tsString = new Date(ts).toLocaleDateString() + " @ " + new Date(ts).toLocaleTimeString();
+			let score: number | string = "";
+			let scorePrepend = "";
+			score = result.scoreOverall;
+			if (score === 100) {
+				score = "100.00";
+			} else {
+				// two decimal places
+				if (typeof score === "number") {
+					score = score.toFixed(2);
+				}
+				// prepend space (not 100)
+				scorePrepend = "&#8199;" + scorePrepend;
+				if (result.scoreOverall < 10) {
+					// prepend with extra space if < 10
+					scorePrepend = "&#8199;" + scorePrepend;
+				}
+			}
 
-            const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
+			// ion-ios-help-outline
+			const row: TableCell[] = [
+				{
+					value: "",
+					html:
+						"<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
+						stdioViewerURL +
+						"'><ons-icon icon='md-info-outline'</ons-icon></a>",
+				},
+				{
+					value: result.repoId,
+					html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>",
+				},
+				// {value: result.repoId, html: result.repoId},
+				{ value: result.delivId, html: result.delivId },
+				{ value: result.scoreOverall, html: scorePrepend + score },
+				{ value: result.state, html: result.state },
+				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
+			];
 
-            let score: number | string = "";
-            let scorePrepend = "";
-            score = result.scoreOverall;
-            if (score === 100) {
-                score = "100.00";
-            } else {
-                // two decimal places
-                if (typeof score === "number") {
-                    score = score.toFixed(2);
-                }
-                // prepend space (not 100)
-                scorePrepend = "&#8199;" + scorePrepend;
-                if (result.scoreOverall < 10) {
-                    // prepend with extra space if < 10
-                    scorePrepend = "&#8199;" + scorePrepend;
-                }
-            }
+			st.addRow(row);
+		}
 
-            // ion-ios-help-outline
-            const row: TableCell[] = [
-                {
-                    value: "",
-                    html: "<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
-                        stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>"
-                },
-                {
-                    value: result.repoId,
-                    html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>"
-                },
-                // {value: result.repoId, html: result.repoId},
-                {value: result.delivId, html: result.delivId},
-                {value: result.scoreOverall, html: scorePrepend + score},
-                {value: result.state, html: result.state},
-                {value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>"}
-            ];
+		st.generate();
 
-            st.addRow(row);
-        }
+		if (st.numRows() > 0) {
+			UI.showSection("resultsListTable");
+			UI.hideSection("resultsListTableNone");
+		} else {
+			UI.showSection("resultsListTable");
+			UI.hideSection("resultsListTableNone");
+		}
+	}
 
-        st.generate();
+	private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestResultSummaryTransport[]): void {
+		Log.trace("AdminResultsTab::render(..) - start");
 
-        if (st.numRows() > 0) {
-            UI.showSection("resultsListTable");
-            UI.hideSection("resultsListTableNone");
-        } else {
-            UI.showSection("resultsListTable");
-            UI.hideSection("resultsListTableNone");
-        }
-    }
+		const that = this;
 
-    private render(delivs: DeliverableTransport[],
-                   repos: RepositoryTransport[],
-                   results: AutoTestResultSummaryTransport[]): void {
-        Log.trace("AdminResultsTab::render(..) - start");
+		let delivNames: string[] = [];
+		for (const deliv of delivs) {
+			// only add a deliv if it uses AutoTest
+			// or it will never have results to render
+			if (deliv.shouldAutoTest === true) {
+				delivNames.push(deliv.id);
+			}
+		}
+		delivNames = delivNames.sort();
+		delivNames.unshift("-Any-");
+		UI.setDropdownOptions("resultsDelivSelect", delivNames, this.delivValue);
 
-        const that = this;
+		let repoNames: string[] = [];
+		for (const repo of repos) {
+			repoNames.push(repo.id);
+		}
+		repoNames = repoNames.sort();
+		repoNames.unshift("-Any-");
+		UI.setDropdownOptions("resultsRepoSelect", repoNames, this.repoValue);
 
-        let delivNames: string[] = [];
-        for (const deliv of delivs) {
-            // only add a deliv if it uses AutoTest
-            // or it will never have results to render
-            if (deliv.shouldAutoTest === true) {
-                delivNames.push(deliv.id);
-            }
-        }
-        delivNames = delivNames.sort();
-        delivNames.unshift("-Any-");
-        UI.setDropdownOptions("resultsDelivSelect", delivNames, this.delivValue);
+		this.renderResults(results);
 
-        let repoNames: string[] = [];
-        for (const repo of repos) {
-            repoNames.push(repo.id);
-        }
-        repoNames = repoNames.sort();
-        repoNames.unshift("-Any-");
-        UI.setDropdownOptions("resultsRepoSelect", repoNames, this.repoValue);
+		try {
+			new TomSelect("#resultsRepoSelect", {
+				maxOptions: null,
+				maxItems: 1,
+				closeAfterSelect: true,
+				onDropdownOpen: function () {
+					Log.trace("AdminResultsTab::render(..)::repoSelect - Clearing input: " + this);
+					this.setValue("");
+				},
+				onDropdownClose: function () {
+					// heavyweight way to initiate a search, but it works
+					Log.trace("AdminResultsTab::render(..)::repoSelect - Performing search: " + this);
+					Log.trace("AdminResultsTab::render(..)::repoSelect - Search value: " + this.getValue());
+					if (this.getValue() === "") {
+						// if nothing selected, go back to any
+						this.setValue("-Any-");
+					}
+					that.init({}).then().catch(); // promises ignored
+					this.blur();
+				},
+			});
+		} catch (err) {
+			Log.trace("AdminResultsTab::render(..) - updating select; MSG: " + err.message);
+		}
+	}
 
-        this.renderResults(results);
+	public static async getResults(remote: string, delivId: string, repoId: string): Promise<AutoTestResultSummaryTransport[]> {
+		Log.info("AdminResultsTab::getResults( .. ) - start");
 
-        try {
-            new TomSelect("#resultsRepoSelect", {
-                maxOptions: null,
-                maxItems: 1,
-                closeAfterSelect: true,
-                onDropdownOpen: function () {
-                    Log.trace("AdminResultsTab::render(..)::repoSelect - Clearing input: " + this);
-                    this.setValue("");
-                },
-                onDropdownClose: function () {
-                    // heavyweight way to initiate a search, but it works
-                    Log.trace("AdminResultsTab::render(..)::repoSelect - Performing search: " + this);
-                    Log.trace("AdminResultsTab::render(..)::repoSelect - Search value: " + this.getValue());
-                    if (this.getValue() === "") {
-                        // if nothing selected, go back to any
-                        this.setValue("-Any-");
-                    }
-                    that.init({}).then().catch(); // promises ignored
-                    this.blur();
-                }
-            });
-        } catch (err) {
-            Log.trace("AdminResultsTab::render(..) - updating select; MSG: " + err.message);
-        }
-    }
+		const start = Date.now();
+		const url = remote + "/portal/admin/results/" + delivId + "/" + repoId;
+		const options = AdminView.getOptions();
+		const response = await fetch(url, options);
 
-    public static async getResults(remote: string, delivId: string, repoId: string): Promise<AutoTestResultSummaryTransport[]> {
-        Log.info("AdminResultsTab::getResults( .. ) - start");
+		if (response.status === 200) {
+			Log.trace("AdminResultsTab::getResults(..) - 200 received");
+			const json: AutoTestResultSummaryPayload = await response.json();
+			if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
+				Log.trace("AdminResultsTab::getResults(..)  - worked; # rows: " + json.success.length + "; took: " + UI.took(start));
+				return json.success;
+			} else {
+				Log.trace("AdminResultsTab::getResults(..)  - ERROR: " + json.failure.message);
+				AdminView.showError(json.failure); // FailurePayload
+			}
+		} else {
+			Log.trace("AdminResultsTab::getResults(..)  - !200 received: " + response.status);
+			const text = await response.text();
+			AdminView.showError(text);
+		}
 
-        const start = Date.now();
-        const url = remote + "/portal/admin/results/" + delivId + "/" + repoId;
-        const options = AdminView.getOptions();
-        const response = await fetch(url, options);
+		return [];
+	}
 
-        if (response.status === 200) {
-            Log.trace("AdminResultsTab::getResults(..) - 200 received");
-            const json: AutoTestResultSummaryPayload = await response.json();
-            if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
-                Log.trace("AdminResultsTab::getResults(..)  - worked; # rows: " + json.success.length + "; took: " + UI.took(start));
-                return json.success;
-            } else {
-                Log.trace("AdminResultsTab::getResults(..)  - ERROR: " + json.failure.message);
-                AdminView.showError(json.failure); // FailurePayload
-            }
-        } else {
-            Log.trace("AdminResultsTab::getResults(..)  - !200 received: " + response.status);
-            const text = await response.text();
-            AdminView.showError(text);
-        }
+	public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
+		Log.info("AdminResultsTab::getRepositories( .. ) - start");
 
-        return [];
-    }
+		try {
+			const start = Date.now();
+			const url = remote + "/portal/admin/repositories";
+			const options = AdminView.getOptions();
+			const response = await fetch(url, options);
 
-    public static async getRepositories(remote: string): Promise<RepositoryTransport[]> {
-        Log.info("AdminResultsTab::getRepositories( .. ) - start");
-
-        try {
-            const start = Date.now();
-            const url = remote + "/portal/admin/repositories";
-            const options = AdminView.getOptions();
-            const response = await fetch(url, options);
-
-            if (response.status === 200) {
-                Log.trace("AdminResultsTab::getRepositories(..) - 200 received");
-                const json: RepositoryPayload = await response.json();
-                if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
-                    Log.trace("AdminResultsTab::getRepositories(..)  - worked; # repos: " +
-                        json.success.length + "; took: " + UI.took(start));
-                    return json.success;
-                } else {
-                    Log.trace("AdminResultsTab::getRepositories(..)  - ERROR: " + json.failure.message);
-                    AdminView.showError(json.failure); // FailurePayload
-                }
-            } else {
-                Log.trace("AdminResultsTab::getRepositories(..)  - !200 received: " + response.status);
-                const text = await response.text();
-                AdminView.showError(text);
-            }
-        } catch (err) {
-            AdminView.showError("Getting results failed: " + err.message);
-        }
-        return [];
-    }
+			if (response.status === 200) {
+				Log.trace("AdminResultsTab::getRepositories(..) - 200 received");
+				const json: RepositoryPayload = await response.json();
+				if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
+					Log.trace(
+						"AdminResultsTab::getRepositories(..)  - worked; # repos: " + json.success.length + "; took: " + UI.took(start)
+					);
+					return json.success;
+				} else {
+					Log.trace("AdminResultsTab::getRepositories(..)  - ERROR: " + json.failure.message);
+					AdminView.showError(json.failure); // FailurePayload
+				}
+			} else {
+				Log.trace("AdminResultsTab::getRepositories(..)  - !200 received: " + response.status);
+				const text = await response.text();
+				AdminView.showError(text);
+			}
+		} catch (err) {
+			AdminView.showError("Getting results failed: " + err.message);
+		}
+		return [];
+	}
 }

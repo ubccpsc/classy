@@ -15,9 +15,9 @@
         }
     ],
     "license": "MIT",
-    "version": "0.4.0",
+    "version": "1.4.0",
     "engines": {
-        "node": ">= 18.12 < 19"
+        "node": ">= 18.12 < 24"
     },
     "workspaces": [
         "packages/*",
@@ -44,6 +44,7 @@
         "chai": "^4.3.6",
         "jsonschema": "1.2.2",
         "mocha": "^9.2.2",
+        "prettier": "^3.4.2",
         "ts-node": "4.1.0",
         "tslint": "^5.11.0",
         "typescript": "^4.9.4",
@@ -64,10 +65,12 @@
         "postinstall": "git config core.hooksPath .githooks",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
-        "lint": "tslint --project tsconfig.json",
+        "prettier:check": "prettier packages/**/*.ts --check",
+        "prettier:fix": "prettier packages/**/*.ts --write",
         "cover": "nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
         "test": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
-        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"
+        "test:autotest": "mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test",
+        "XXX_MIGRATE_TO_ESLINT_lint": "tslint --project tsconfig.json"
     }
 }

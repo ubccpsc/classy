@@ -1,301 +1,301 @@
-import {expect} from "chai";
+import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec";
-import Config, {ConfigKey} from "@common/Config";
+import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
-import {TestHarness} from "@common/TestHarness";
-import {AutoTestResult} from "@common/types/AutoTestTypes";
-import {ContainerInput, ContainerOutput, ContainerState} from "@common/types/ContainerTypes";
-import {AutoTestGradeTransport} from "@common/types/PortalTypes";
+import { TestHarness } from "@common/TestHarness";
+import { AutoTestResult } from "@common/types/AutoTestTypes";
+import { ContainerInput, ContainerOutput, ContainerState } from "@common/types/ContainerTypes";
+import { AutoTestGradeTransport } from "@common/types/PortalTypes";
 
-import {DatabaseController} from "@backend/controllers/DatabaseController";
+import { DatabaseController } from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";
-import {Course} from "@backend/Types";
+import { Course } from "@backend/Types";
 
-import {ClassPortal, IClassPortal} from "@autotest/autotest/ClassPortal";
+import { ClassPortal, IClassPortal } from "@autotest/autotest/ClassPortal";
 
 describe("ClassPortal Service", () => {
-    Config.getInstance();
+	Config.getInstance();
 
-    let cp: IClassPortal;
+	let cp: IClassPortal;
 
-    let backend: BackendServer = null;
-    before(async function () {
-        Log.test("ClassPortalSpec::before() - start");
+	let backend: BackendServer = null;
+	before(async function () {
+		Log.test("ClassPortalSpec::before() - start");
 
-        const ci = process.env.CI;
-        if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
-            Log.test("ClassPortalSpec::before() - running in CI; using https");
-            // CI uses https and certificates, but local testing does not
-            backend = new BackendServer(true);
-        } else {
-            Log.test("ClassPortalSpec::before() - not running in CI; using http");
-            backend = new BackendServer(false);
-        }
+		const ci = process.env.CI;
+		if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+			Log.test("ClassPortalSpec::before() - running in CI; using https");
+			// CI uses https and certificates, but local testing does not
+			backend = new BackendServer(true);
+		} else {
+			Log.test("ClassPortalSpec::before() - not running in CI; using http");
+			backend = new BackendServer(false);
+		}
 
-        await backend.start();
-        await TestHarness.prepareDeliverables();
-        await TestHarness.preparePeople();
-        await TestHarness.prepareTeams();
-        await TestHarness.prepareRepositories();
-        Log.test("ClassPortalSpec::before() - done");
-    });
+		await backend.start();
+		await TestHarness.prepareDeliverables();
+		await TestHarness.preparePeople();
+		await TestHarness.prepareTeams();
+		await TestHarness.prepareRepositories();
+		Log.test("ClassPortalSpec::before() - done");
+	});
 
-    after(async function () {
-        Log.test("ClassPortalSpec::after() - start");
-        await backend.stop();
-        Log.test("ClassPortalSpec::after() - done");
-    });
+	after(async function () {
+		Log.test("ClassPortalSpec::after() - start");
+		await backend.stop();
+		Log.test("ClassPortalSpec::after() - done");
+	});
 
-    beforeEach(function () {
-        cp = new ClassPortal();
-    });
+	beforeEach(function () {
+		cp = new ClassPortal();
+	});
 
-    // NOTE: if this fails it could be because the ClassPortal BackendDaemon has not been started yet
-    it("Should be able for an adminstaff user to be staff.", async () => {
-        try {
-            const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);
-            Log.test("Actual: " + actual);
-            expect(actual.isStaff).to.equal(true);
-            expect(actual.isAdmin).to.equal(true);
-        } catch (err) {
-            expect.fail("Should not happen: " + err);
-        }
-    });
+	// NOTE: if this fails it could be because the ClassPortal BackendDaemon has not been started yet
+	it("Should be able for an adminstaff user to be staff.", async () => {
+		try {
+			const actual = await cp.isStaff(TestHarness.ADMINSTAFF1.github);
+			Log.test("Actual: " + actual);
+			expect(actual.isStaff).to.equal(true);
+			expect(actual.isAdmin).to.equal(true);
+		} catch (err) {
+			expect.fail("Should not happen: " + err);
+		}
+	});
 
-    it("Should be able for a non-staff user to not be staff.", async () => {
-        try {
-            const actual = await cp.isStaff("student");
-            expect(actual.isStaff).to.equal(false);
-            expect(actual.isAdmin).to.equal(false);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    }).timeout(TestHarness.TIMEOUT);
+	it("Should be able for a non-staff user to not be staff.", async () => {
+		try {
+			const actual = await cp.isStaff("student");
+			expect(actual.isStaff).to.equal(false);
+			expect(actual.isAdmin).to.equal(false);
+		} catch (err) {
+			expect.fail("Should not happen");
+		}
+	}).timeout(TestHarness.TIMEOUT);
 
-    it("Should be able for invalid user to not be staff.", async () => {
-        try {
-            const actual = await cp.isStaff("foo");
-            expect(actual.isStaff).to.equal(false);
-            expect(actual.isAdmin).to.equal(false);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    });
+	it("Should be able for invalid user to not be staff.", async () => {
+		try {
+			const actual = await cp.isStaff("foo");
+			expect(actual.isStaff).to.equal(false);
+			expect(actual.isAdmin).to.equal(false);
+		} catch (err) {
+			expect.fail("Should not happen");
+		}
+	});
 
-    it("Should return false for non-staff.", async () => {
-        try {
-            let actual = await cp.isStaff(null);
-            expect(actual.isStaff).to.equal(false);
-            expect(actual.isAdmin).to.equal(false);
-            actual = await cp.isStaff(undefined);
-            expect(actual.isStaff).to.equal(false);
-            expect(actual.isAdmin).to.equal(false);
-            actual = await cp.isStaff("");
-            expect(actual.isStaff).to.equal(false);
-            expect(actual.isAdmin).to.equal(false);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    }).timeout(TestHarness.TIMEOUT);
+	it("Should return false for non-staff.", async () => {
+		try {
+			let actual = await cp.isStaff(null);
+			expect(actual.isStaff).to.equal(false);
+			expect(actual.isAdmin).to.equal(false);
+			actual = await cp.isStaff(undefined);
+			expect(actual.isStaff).to.equal(false);
+			expect(actual.isAdmin).to.equal(false);
+			actual = await cp.isStaff("");
+			expect(actual.isStaff).to.equal(false);
+			expect(actual.isAdmin).to.equal(false);
+		} catch (err) {
+			expect.fail("Should not happen");
+		}
+	}).timeout(TestHarness.TIMEOUT);
 
-    // Tested in the backend (AutoTestRouteSpec)
-    // it("Should return the test delay in seconds for a course.", async () => {
-    //     try {
-    //         const res = await cp.getContainerDetails("d0");
-    //         expect(res).to.not.be.null;
-    //         const actual = res.studentDelay;
-    //         expect(actual).to.equal(43200);
-    //     } catch (err) {
-    //         expect.fail("Should not happen: " + err.message);
-    //     }
-    // });
+	// Tested in the backend (AutoTestRouteSpec)
+	// it("Should return the test delay in seconds for a course.", async () => {
+	//     try {
+	//         const res = await cp.getContainerDetails("d0");
+	//         expect(res).to.not.be.null;
+	//         const actual = res.studentDelay;
+	//         expect(actual).to.equal(43200);
+	//     } catch (err) {
+	//         expect.fail("Should not happen: " + err.message);
+	//     }
+	// });
 
-    // Tested in the backend (AutoTestRouteSpec)
-    // it("Should return a container id for an existing course.", async () => {
-    //     try {
-    //         const res = await cp.getContainerDetails("d0");
-    //         const actual = res.dockerImage;
-    //         expect(actual).to.equal("testImage");
-    //     } catch (err) {
-    //         expect.fail("Should not happen: " + err.message);
-    //     }
-    // });
+	// Tested in the backend (AutoTestRouteSpec)
+	// it("Should return a container id for an existing course.", async () => {
+	//     try {
+	//         const res = await cp.getContainerDetails("d0");
+	//         const actual = res.dockerImage;
+	//         expect(actual).to.equal("testImage");
+	//     } catch (err) {
+	//         expect.fail("Should not happen: " + err.message);
+	//     }
+	// });
 
-    it("Should return a null container id if delivId does not exist.", async () => {
-        try {
-            const res = await cp.getContainerDetails("d9997");
-            expect(res).to.equal(null);
-        } catch (err) {
-            expect.fail("Should not happen");
-        }
-    });
+	it("Should return a null container id if delivId does not exist.", async () => {
+		try {
+			const res = await cp.getContainerDetails("d9997");
+			expect(res).to.equal(null);
+		} catch (err) {
+			expect.fail("Should not happen");
+		}
+	});
 
-    it("Should return a default deliverable if the course has one.", async () => {
-        // setup
-        const db = DatabaseController.getInstance();
-        const course: Course = {
-            id: Config.getInstance().getProp(ConfigKey.name),
-            defaultDeliverableId: "d0",
-            custom: {}
-        };
-        await db.writeCourseRecord(course);
+	it("Should return a default deliverable if the course has one.", async () => {
+		// setup
+		const db = DatabaseController.getInstance();
+		const course: Course = {
+			id: Config.getInstance().getProp(ConfigKey.name),
+			defaultDeliverableId: "d0",
+			custom: {},
+		};
+		await db.writeCourseRecord(course);
 
-        // test
-        const actual = await cp.getConfiguration();
-        Log.test("Actual: " + JSON.stringify(actual));
+		// test
+		const actual = await cp.getConfiguration();
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual.defaultDeliverable).to.equal("d0");
-    });
+		expect(actual.defaultDeliverable).to.equal("d0");
+	});
 
-    it("Should be able to send a valid grade.", async () => {
-        const grade: AutoTestGradeTransport = {
-            repoId: TestHarness.REPONAME1,
-            repoURL: "https://repo1",
-            delivId: "d0",
-            score: 60,
-            comment: "comment!",
-            urlName: "SHAName",
-            URL: "https://SHAURL",
-            timestamp: new Date(1400000000000 + 1000).getTime(),
-            custom: {}
-        };
-        const actual = await cp.sendGrade(grade);
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should be able to send a valid grade.", async () => {
+		const grade: AutoTestGradeTransport = {
+			repoId: TestHarness.REPONAME1,
+			repoURL: "https://repo1",
+			delivId: "d0",
+			score: 60,
+			comment: "comment!",
+			urlName: "SHAName",
+			URL: "https://SHAURL",
+			timestamp: new Date(1400000000000 + 1000).getTime(),
+			custom: {},
+		};
+		const actual = await cp.sendGrade(grade);
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual.success).to.not.be.undefined;
-        expect(actual.failure).to.be.undefined;
-    });
+		expect(actual.success).to.not.be.undefined;
+		expect(actual.failure).to.be.undefined;
+	});
 
-    it("Should fail to send an invalid grade.", async () => {
-        const grade: any = { // AutoTestGradeTransport
-            repoId: TestHarness.REPONAME1,
-            repoURL: "https://repo1",
-            // delivId:   "d0",  // this should be required
-            score: 60,
-            comment: "comment!",
-            urlName: "SHAName",
-            URL: "https://SHAURL",
-            timestamp: Date.now(),
-            custom: {}
-        };
-        const actual = await cp.sendGrade(grade);
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should fail to send an invalid grade.", async () => {
+		const grade: any = {
+			// AutoTestGradeTransport
+			repoId: TestHarness.REPONAME1,
+			repoURL: "https://repo1",
+			// delivId:   "d0",  // this should be required
+			score: 60,
+			comment: "comment!",
+			urlName: "SHAName",
+			URL: "https://SHAURL",
+			timestamp: Date.now(),
+			custom: {},
+		};
+		const actual = await cp.sendGrade(grade);
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual.success).to.be.undefined;
-        expect(actual.failure).to.not.be.undefined;
-        expect(actual.failure.message).to.be.an("string");
-    });
+		expect(actual.success).to.be.undefined;
+		expect(actual.failure).to.not.be.undefined;
+		expect(actual.failure.message).to.be.an("string");
+	});
 
-    function getResult(delivId: string, repoId: string, score: number) {
-        const ts = Date.now() - Math.random() * 1000 * 600;
-        const projectURL = Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
-            Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
-        const commitURL = projectURL + "/commits/FOOOSHA";
-        const output: ContainerOutput = {
-            timestamp: ts,
-            report: {
-                scoreOverall: score,
-                scoreTest: Math.random() * 100,
-                scoreCover: Math.random() * 100,
-                passNames: [],
-                failNames: [],
-                errorNames: [],
-                skipNames: [],
-                custom: {},
-                feedback: "feedback",
-                result: "SUCCESS",
-                attachments: []
-            },
-            postbackOnComplete: true,
-            custom: {},
-            state: ContainerState.SUCCESS,
-            graderTaskId: ""
-        };
+	function getResult(delivId: string, repoId: string, score: number) {
+		const ts = Date.now() - Math.random() * 1000 * 600;
+		const projectURL =
+			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
+		const commitURL = projectURL + "/commits/FOOOSHA";
+		const output: ContainerOutput = {
+			timestamp: ts,
+			report: {
+				scoreOverall: score,
+				scoreTest: Math.random() * 100,
+				scoreCover: Math.random() * 100,
+				passNames: [],
+				failNames: [],
+				errorNames: [],
+				skipNames: [],
+				custom: {},
+				feedback: "feedback",
+				result: "SUCCESS",
+				attachments: [],
+			},
+			postbackOnComplete: true,
+			custom: {},
+			state: ContainerState.SUCCESS,
+			graderTaskId: "",
+		};
 
-        const input: ContainerInput = {
-            target: {
-                delivId: delivId,
-                repoId: repoId,
+		const input: ContainerInput = {
+			target: {
+				delivId: delivId,
+				repoId: repoId,
 
-                // branch:    "master",
-                cloneURL: "cloneURL",
-                commitSHA: "sha",
-                commitURL: commitURL,
+				// branch:    "master",
+				cloneURL: "cloneURL",
+				commitSHA: "sha",
+				commitURL: commitURL,
 
-                botMentioned: false,
-                adminRequest: false,
-                shouldPromote: false,
-                personId: null,
-                kind: "push",
+				botMentioned: false,
+				adminRequest: false,
+				shouldPromote: false,
+				personId: null,
+				kind: "push",
 
-                // projectURL:  projectURL,
-                postbackURL: "postbackURL",
-                timestamp: ts
-            },
-            containerConfig: {
-                dockerImage: "imageName",
-                studentDelay: 300,
-                maxExecTime: 6000,
-                regressionDelivIds: [],
-                custom: {},
-                openTimestamp: 0,
-                closeTimestamp: 10000,
-                lateAutoTest: true,
-            },
-            // delivId: delivId,
-        };
+				// projectURL:  projectURL,
+				postbackURL: "postbackURL",
+				timestamp: ts,
+			},
+			containerConfig: {
+				dockerImage: "imageName",
+				studentDelay: 300,
+				maxExecTime: 6000,
+				regressionDelivIds: [],
+				custom: {},
+				openTimestamp: 0,
+				closeTimestamp: 10000,
+				lateAutoTest: true,
+			},
+			// delivId: delivId,
+		};
 
-        const result: AutoTestResult = {
-            delivId: delivId,
-            repoId: repoId,
-            commitURL: commitURL,
-            commitSHA: "sha",
-            input: input,
-            output: output
-        };
+		const result: AutoTestResult = {
+			delivId: delivId,
+			repoId: repoId,
+			commitURL: commitURL,
+			commitSHA: "sha",
+			input: input,
+			output: output,
+		};
 
-        return result;
-    }
+		return result;
+	}
 
-    it("Should be able to send a valid result.", async () => {
-        const result = getResult("d0", "TESTrepo1", 50);
-        // timestamp needs to be hardcoded to when the deliverable is open for new results
-        result.input.target.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
-        const actual = await cp.sendResult(result);
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should be able to send a valid result.", async () => {
+		const result = getResult("d0", "TESTrepo1", 50);
+		// timestamp needs to be hardcoded to when the deliverable is open for new results
+		result.input.target.timestamp = new Date(Date.UTC(2017, 3, 1, 1, 1)).getTime();
+		const actual = await cp.sendResult(result);
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual.success).to.not.be.undefined;
-    });
+		expect(actual.success).to.not.be.undefined;
+	});
 
-    it("Should not be able to send an invalid result.", async () => {
-        const result = getResult("d0", "TESTrepo1", 50);
-        delete result.input.target.delivId; // REQUIRED field
-        const actual = await cp.sendResult(result);
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should not be able to send an invalid result.", async () => {
+		const result = getResult("d0", "TESTrepo1", 50);
+		delete result.input.target.delivId; // REQUIRED field
+		const actual = await cp.sendResult(result);
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual.success).to.be.undefined;
-        expect(actual.failure).to.not.be.undefined;
-        expect(actual.failure.message).to.be.an("string");
-    });
+		expect(actual.success).to.be.undefined;
+		expect(actual.failure).to.not.be.undefined;
+		expect(actual.failure.message).to.be.an("string");
+	});
 
-    it("Should be able to get a result.", async () => {
-        const proto = getResult("d0", "TESTrepo1", 50);
-        const actual = await cp.getResult(proto.delivId, proto.repoId, proto.commitSHA);
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should be able to get a result.", async () => {
+		const proto = getResult("d0", "TESTrepo1", 50);
+		const actual = await cp.getResult(proto.delivId, proto.repoId, proto.commitSHA);
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual).to.not.be.null;
-        expect(actual.delivId).to.equal("d0");
-        expect(actual.repoId).to.equal("TESTrepo1");
-    });
+		expect(actual).to.not.be.null;
+		expect(actual.delivId).to.equal("d0");
+		expect(actual.repoId).to.equal("TESTrepo1");
+	});
 
-    it("Should not get a result that does not exist.", async () => {
-        const actual = await cp.getResult("d_" + Date.now(), "repo0", "INVALID_SHA_" + Date.now());
-        Log.test("Actual: " + JSON.stringify(actual));
+	it("Should not get a result that does not exist.", async () => {
+		const actual = await cp.getResult("d_" + Date.now(), "repo0", "INVALID_SHA_" + Date.now());
+		Log.test("Actual: " + JSON.stringify(actual));
 
-        expect(actual).to.be.null;
-    });
-
+		expect(actual).to.be.null;
+	});
 });
