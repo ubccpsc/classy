@@ -496,7 +496,7 @@ export default class AdminRoutes implements IREST {
 		if (repo !== null) {
 			const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
 				const team = await dbc.getTeam(teamId);
-				const newTeam = { ...team, custom: { ...team.custom, gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED } };
+				const newTeam = { ...team, gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED, custom: { ...team.custom } };
 				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);
 				await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});

@@ -580,9 +580,13 @@ describe("AdminController", () => {
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
-			Log.test("AllNewTeams: " + JSON.stringify(allNewTeams));
-			// expect(allNewTeams[0].custom.githubAttached).to.be.true; // attached
-			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
+			const newTeam = allNewTeams[0];
+			Log.test("NewTeam: " + JSON.stringify(newTeam));
+			Log.test(
+				"NewTeam Status: " + newTeam.gitHubStatus + "; isLinked: " + (newTeam.gitHubStatus === GitHubStatus.PROVISIONED_LINKED)
+			);
+			// expect(newTeam.custom.githubAttached).to.be.true; // attached
+			expect(newTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
 
 			// // try again: should not release any more repos
 			// res = await ac.release(allRepos);
