@@ -130,10 +130,24 @@ export interface Team {
 
 	/**
 	 * The GitHub URL for the team.
+	 *
+	 * This should only be used to keep track of the team, not to compute its status
+	 * (e.g., that the team has been provisioned on GitHub).
 	 */
-	URL: string | null; // used by frontend to link to team, only use gitHubStatus for status!
+	URL: string | null;
 
+	/**
+	 * The GitHub status for the team.
+	 */
 	gitHubStatus: GitHubStatus;
+
+	/**
+	 * GitHub assigns a numeric value to team objects. Looking this up can be slow,
+	 * especially for tasks where all team numbers are needed.
+	 *
+	 * We cache these, since they are durable, but the number itself should not
+	 * be used to compute the team's GitHub status.
+	 */
 	githubId: number | null; // this is just for performance (to avoid a GH lookup), only use gitHubStatus status!
 
 	custom: {};
