@@ -331,11 +331,13 @@ export class GitHubController implements IGitHubController {
 				// const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
 				if (res.githubTeamNumber > 0) {
 					// keep track of team addition
+					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_LINKED);
 					team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
 					// team.custom.githubAttached = true;
 				} else {
 					Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
 					// team.custom.githubAttached = false;
+					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_UNLINKED);
 					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 				}
 
