@@ -110,8 +110,8 @@ export interface Deliverable {
 
 export enum GitHubStatus {
 	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
-	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (but for team, not linked to repo)
-	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team provisioned on GitHub and linked to repo
+	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (team: not linked to repo, repo: no assigned team)
+	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team/repo provisioned on GitHub and linked to each other
 	// PROVISIONED_READONLY = "PROVISIONED_READONLY", // repo provisioned and linked to a repo but not writeable (not relevant for teams)
 }
 
@@ -205,11 +205,7 @@ export interface Repository {
 	 */
 	gitHubStatus: GitHubStatus;
 
-	custom: {
-		// rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-		// githubCreated?: boolean; // TODO: remove
-		githubReleased?: boolean; // TODO: remove
-	};
+	custom: {};
 }
 
 /**

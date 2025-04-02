@@ -1074,8 +1074,15 @@ export class AdminController {
 				}
 
 				if (isTeamOnRepo === true) {
-					if (repo.custom.githubReleased !== true) {
-						repo.custom.githubReleased = true;
+					// if (repo.custom.githubReleased !== true) {
+					// 	repo.custom.githubReleased = true;
+					// 	Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
+					// }
+
+					// if a team is on a repo, it must be provisioned and linked
+					if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
+						// repo.custom.githubReleased = true;
+						repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
 						Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
 					}
 
@@ -1098,9 +1105,11 @@ export class AdminController {
 
 			if (repoHasBeenChecked === false) {
 				// repos that were not found to have teams must not be released
-				if (repo.custom.githubReleased !== false) {
-					repo.custom.githubReleased = false; // was not found above, must be unreleased
-					Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be false: " + repo.id);
+				// if (repo.custom.githubReleased !== false) {
+				// 	repo.custom.githubReleased = false; // was not found above, must be unreleased
+				if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
+					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					Log.warn("AdminController::dbSanityCheck() - repo.gitHubStatus should be PROVISIONED_UNLINKED: " + repo.gitHubStatus);
 
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
