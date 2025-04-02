@@ -57,7 +57,6 @@ export interface Person {
 	labId: string | null; // null for non-students
 
 	custom: {
-		sdmmStatus?: string; // SDMM // TODO: make into sdmm.status
 		myProp?: any; // PersonControllerSpec
 	};
 }
@@ -127,11 +126,6 @@ export interface Team {
 	custom: {
 		githubProvisioned?: boolean; // TODO: remove
 		githubAttached?: boolean; // TODO: remove
-
-		sdmmd0?: boolean;
-		sdmmd1?: boolean;
-		sdmmd2?: boolean;
-		sdmmd3?: boolean;
 	};
 }
 
@@ -180,12 +174,6 @@ export interface Repository {
 		// rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
 		githubCreated?: boolean; // TODO: remove
 		githubReleased?: boolean; // TODO: remove
-
-		// d0enabled?: boolean; // SDMM // TODO: make sdmm.d0enabled
-		// d1enabled?: boolean; // SDMM // TODO: make sdmm.d1enabled
-		// d2enabled?: boolean; // SDMM // TODO: make sdmm.d2enabled
-		// d3enabled?: boolean; // SDMM // TODO: make sdmm.d3enabled
-		// sddmD3pr?: boolean; // SDMM // TODO: make sdmm.d3pr
 	};
 }
 

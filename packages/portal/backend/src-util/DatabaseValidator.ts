@@ -1,8 +1,7 @@
-import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { DatabaseController, QueryKind } from "../src/controllers/DatabaseController";
+import { DatabaseController } from "../src/controllers/DatabaseController";
 import { DeliverablesController } from "../src/controllers/DeliverablesController";
 import { GradesController } from "../src/controllers/GradesController";
 import { PersonController } from "../src/controllers/PersonController";
@@ -192,29 +191,12 @@ export class DatabaseValidator {
 					Log.warn("DatabaseValidator::validateTeams() - missing Team.delivId for: " + team.id);
 					isValid = false;
 
-					if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
-						if (team.custom !== null) {
-							if (team.custom.sdmmd0) {
-								(team as any).delivId = "d0";
-							}
-							if (team.custom.sdmmd1 || team.custom.sdmmd2 || team.custom.sdmmd3) {
-								(team as any).delivId = "project";
-							}
-						}
-					} else {
-						// team.delivId= ""; // TODO: unique per repair?
-					}
-
 					Log.warn("\tSetting to: " + team.delivId);
 				}
 
 				if (typeof team.URL === "undefined") {
 					Log.warn("DatabaseValidator::validateTeams() - missing Team.URL for: " + team.id);
 					isValid = false;
-					// team.URL = null;
-					if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
-						team.URL = "https://github.com/orgs/SECapstone/teams/" + team.id.toLowerCase();
-					}
 					// TODO: define replacement
 					Log.warn("\tSetting to: " + team.URL);
 				}
@@ -448,87 +430,6 @@ export class DatabaseValidator {
 		Log.info("DatabaseValidator::validateResults() - start");
 		const resultsC = new ResultsController();
 		let results = await resultsC.getAllResults();
-
-		if (Config.getInstance().getProp(ConfigKey.name) === ConfigCourses.sdmm) {
-			// preprocess sdmm results differently
-
-			const outputRecords = await this.dc.readRecords("output", QueryKind.SLOW, false, {});
-			for (const output of outputRecords as any) {
-				Log.trace("considering: output record: " + output.commitSHA);
-
-				// see if result exists
-				let resultExists = false;
-				for (const result of results) {
-					if (result.commitSHA === output.commitSHA) {
-						resultExists = true;
-					}
-				}
-
-				if (resultExists === false) {
-					const repoId = output.input.pushInfo.repoId;
-
-					const rc = new RepositoryController();
-					const personIds = await rc.getPeopleForRepo(repoId);
-
-					// construct result
-					const newResult: Result = {
-						people: personIds,
-						delivId: output.input.delivId,
-						repoId: repoId,
-						commitURL: output.commitURL,
-						commitSHA: output.commitSHA,
-						input: output.input,
-						output: output.output,
-					};
-
-					if (newResult.output.report === null) {
-						Log.trace("Inserting empty grade report.");
-
-						// insert blank report (using existing feedback if possible)
-						let feedback = output.feedback;
-						if (typeof feedback !== "string") {
-							feedback = "Result failed to generate";
-						}
-
-						newResult.output.report = {
-							scoreOverall: 0,
-							scoreCover: null,
-							scoreTest: null,
-							feedback: feedback,
-							passNames: [],
-							skipNames: [],
-							failNames: [],
-							errorNames: [],
-							result: null,
-							custom: {},
-							attachments: [],
-						};
-					}
-
-					const validResult = resultsC.validateAutoTestResult(newResult);
-					if (validResult === null) {
-						// valid
-						Log.trace("NEW RESULT (valid); obj: " + JSON.stringify(newResult));
-
-						const localOverride = true;
-						if (this.DRY_RUN === false || localOverride) {
-							// await this.dbc.writeRepository(repo);
-							await this.dc.writeResult(newResult);
-						} else {
-							Log.info(
-								"\t DatabaseValidator::validateResults() - SDMM result needs updating: " +
-									newResult +
-									"; NOT WRITTEN (DRY_RUN === true)"
-							);
-						}
-					} else {
-						Log.error("NEW RESULT (INVALID); obj: " + JSON.stringify(newResult));
-					}
-				}
-			}
-
-			Log.info("DatabaseValidator::validateResults() - done; # SDMM results processed: " + outputRecords.length);
-		}
 
 		// update results in case anything was new from the last step:
 		results = await resultsC.getAllResults();

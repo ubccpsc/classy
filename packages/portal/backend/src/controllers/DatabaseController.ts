@@ -107,7 +107,8 @@ export class DatabaseController {
 
 		for (const result of results) {
 			if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
-				// this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+				// this is a backwards compatibility step that can disappear in 2019
+				// TODO: is this still needed?
 				result.input.target = (result.input as any).pushInfo;
 			}
 		}
@@ -745,11 +746,6 @@ export class DatabaseController {
 				// just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
 				let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
 				const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
-
-				/* istanbul ignore if */
-				if (dbName === "sdmm") {
-					dbName = "secapstone"; // NOTE: this is just an unfortunate historical artifact
-				}
 
 				Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
 				const client = await MongoClient.connect(dbHost, { serverSelectionTimeoutMS: 500 });
