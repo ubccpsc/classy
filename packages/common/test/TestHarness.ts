@@ -18,6 +18,56 @@ import { AutoTestConfigTransport } from "@common/types/PortalTypes";
 export class TestHarness {
 	public static readonly TIMEOUT = 1000 * 10;
 	public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
+	public static readonly TEAMNAME1 = "t1_d0_user1CSID_user2CSID";
+	public static readonly TEAMNAME2 = "TESTteam2";
+	public static readonly TEAMNAME3 = "TESTteam3";
+	public static readonly TEAMNAME4 = "TESTteam4";
+	public static readonly TEAMNAMEREAL = "t_d0_atest-04CSID_atest-05CSID";
+	public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
+	// FAKE USERS -- NOT USED TO INTERACT WITH GITHUB AND WORK
+	public static readonly USER1 = { id: "user1ID", csId: "user1CSID", github: "user1gh" };
+	public static readonly USER2 = { id: "user2ID", csId: "user2CSID", github: "user2gh" };
+	public static readonly USER3 = { id: "user3ID", csId: "user3CSID", github: "user3gh" };
+	public static readonly USER4 = { id: "user4ID", csId: "user4CSID", github: "user4gh" };
+	public static readonly USER5 = { id: "user5ID", csId: "user5CSID", github: "user5gh" };
+	public static readonly USER6 = { id: "user6ID", csId: "user6CSID", github: "user6gh" };
+	public static readonly INVALIDUSER1 = { id: "invalidUser1id", csId: "invalidUser1CSID", github: "invalidUser1gh" };
+	// REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
+	public static readonly ADMIN1 = TestHarness.getConfigUser(ConfigKey.githubAdmin);
+	public static readonly ADMINSTAFF1 = TestHarness.getConfigUser(ConfigKey.githubAdminStaff);
+	public static readonly STAFF1 = TestHarness.getConfigUser(ConfigKey.githubStaff);
+	public static readonly REALUSER1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1);
+	public static readonly REALUSER2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 2);
+	public static readonly REALUSER3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 3);
+	public static readonly GITHUB1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 4);
+	public static readonly GITHUB2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 5);
+	public static readonly GITHUB3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 6);
+	public static readonly REALBOTNAME1 = TestHarness.getConfigUser(ConfigKey.githubBot01); // was "cpscbot";
+	public static readonly REALBOTNAME2 = TestHarness.getConfigUser(ConfigKey.githubBot02); // was "ubcbot";
+	public static readonly REALUSERNAME = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1); // was "rthse2";
+	public static readonly DELIVIDPROJ = "project";
+	public static readonly DELIVID0 = "d0";
+	public static readonly DELIVID1 = "d1";
+	public static readonly DELIVID2 = "d2";
+	public static readonly DELIVID3 = "d3";
+	public static readonly ASSIGNID0 = "a0";
+	public static readonly ASSIGNID1 = "a1";
+	public static readonly REPONAME1 = "TESTrepo1";
+	public static readonly REPONAME2 = "TESTrepo2";
+	public static readonly REPONAME3 = "TESTrepo3";
+	public static readonly REPONAMEREAL = "d0_atest-04CSID_atest-05CSID";
+	public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
+	public static readonly REUSABLETEAMNAME = "testTeamName_" + Date.now();
+	public static readonly REPONAMEREAL_POSTTEST = "PostTestDoNotDelete";
+	public static readonly REPONAMEREAL_TESTINGSAMPLE = "TESTING_SAMPLE_REPO";
+	public static readonly REPOBRANCHREAL_TESTINGSAMPLE = "test-branch";
+	public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = "subdirectory";
+	public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = "README.md";
+	public static readonly REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE = "NESTED.txt";
+	public static readonly REALTOKEN = "realtoken";
+	public static readonly FAKETOKEN = "faketoken";
+	public static readonly ASSIGNTEAMNAME0 = TestHarness.ASSIGNID0 + "__" + TestHarness.REALUSER1.id;
+	public static readonly ASSIGNTEAMNAME1 = TestHarness.ASSIGNID1 + "__" + TestHarness.REALUSER1.id;
 
 	public static async suiteBefore(suiteName: string) {
 		Log.test("Test::suiteBefore( ... ) - suite: " + suiteName);
@@ -362,10 +412,6 @@ export class TestHarness {
 		}
 	}
 
-	private static getRandomInt(max: number) {
-		return Math.floor(Math.random() * Math.floor(max));
-	}
-
 	public static async prepareAuth(): Promise<void> {
 		const dc = DatabaseController.getInstance();
 
@@ -492,13 +538,6 @@ export class TestHarness {
 		}
 	}
 
-	public static readonly TEAMNAME1 = "t1_d0_user1CSID_user2CSID";
-	public static readonly TEAMNAME2 = "TESTteam2";
-	public static readonly TEAMNAME3 = "TESTteam3";
-	public static readonly TEAMNAME4 = "TESTteam4";
-	public static readonly TEAMNAMEREAL = "t_d0_atest-04CSID_atest-05CSID";
-	public static readonly INVALIDTEAMNAME = "InvalidTeamNameShouldNotExist";
-
 	/**
 	 * Creates user testing templates for real GitHub accounts configured in .env
 	 * @param userKey ConfigKey property for user i.e., ConfigKey.githubAdmin
@@ -512,60 +551,6 @@ export class TestHarness {
 			github: username,
 		};
 	}
-
-	// FAKE USERS -- NOT USED TO INTERACT WITH GITHUB AND WORK
-	public static readonly USER1 = { id: "user1ID", csId: "user1CSID", github: "user1gh" };
-	public static readonly USER2 = { id: "user2ID", csId: "user2CSID", github: "user2gh" };
-	public static readonly USER3 = { id: "user3ID", csId: "user3CSID", github: "user3gh" };
-	public static readonly USER4 = { id: "user4ID", csId: "user4CSID", github: "user4gh" };
-	public static readonly USER5 = { id: "user5ID", csId: "user5CSID", github: "user5gh" };
-	public static readonly USER6 = { id: "user6ID", csId: "user6CSID", github: "user6gh" };
-	public static readonly INVALIDUSER1 = { id: "invalidUser1id", csId: "invalidUser1CSID", github: "invalidUser1gh" };
-
-	// REAL USERS -- CURRENTLY USED TO TEST ON GITHUB -- ENVSURE .ENV FILE CONTAINS REAL GITHUB USERS
-	public static readonly ADMIN1 = TestHarness.getConfigUser(ConfigKey.githubAdmin);
-	public static readonly ADMINSTAFF1 = TestHarness.getConfigUser(ConfigKey.githubAdminStaff);
-	public static readonly STAFF1 = TestHarness.getConfigUser(ConfigKey.githubStaff);
-	public static readonly REALUSER1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1);
-	public static readonly REALUSER2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 2);
-	public static readonly REALUSER3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 3);
-
-	public static readonly GITHUB1 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 4);
-	public static readonly GITHUB2 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 5);
-	public static readonly GITHUB3 = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 6);
-
-	public static readonly REALBOTNAME1 = TestHarness.getConfigUser(ConfigKey.githubBot01); // was "cpscbot";
-	public static readonly REALBOTNAME2 = TestHarness.getConfigUser(ConfigKey.githubBot02); // was "ubcbot";
-	public static readonly REALUSERNAME = TestHarness.getConfigUser(ConfigKey.githubTestUsers, 1); // was "rthse2";
-
-	public static readonly DELIVIDPROJ = "project";
-	public static readonly DELIVID0 = "d0";
-	public static readonly DELIVID1 = "d1";
-	public static readonly DELIVID2 = "d2";
-	public static readonly DELIVID3 = "d3";
-	public static readonly ASSIGNID0 = "a0";
-	public static readonly ASSIGNID1 = "a1";
-
-	public static readonly REPONAME1 = "TESTrepo1";
-	public static readonly REPONAME2 = "TESTrepo2";
-	public static readonly REPONAME3 = "TESTrepo3";
-	public static readonly REPONAMEREAL = "d0_atest-04CSID_atest-05CSID";
-	public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
-
-	public static readonly REUSABLETEAMNAME = "testTeamName_" + Date.now();
-
-	public static readonly REPONAMEREAL_POSTTEST = "PostTestDoNotDelete";
-	public static readonly REPONAMEREAL_TESTINGSAMPLE = "TESTING_SAMPLE_REPO";
-	public static readonly REPOBRANCHREAL_TESTINGSAMPLE = "test-branch";
-	public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = "subdirectory";
-	public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = "README.md";
-	public static readonly REPOSUBDIRSEEDFILEREAL_TESTINGSAMPLE = "NESTED.txt";
-
-	public static readonly REALTOKEN = "realtoken";
-	public static readonly FAKETOKEN = "faketoken";
-
-	public static readonly ASSIGNTEAMNAME0 = TestHarness.ASSIGNID0 + "__" + TestHarness.REALUSER1.id;
-	public static readonly ASSIGNTEAMNAME1 = TestHarness.ASSIGNID1 + "__" + TestHarness.REALUSER1.id;
 
 	public static getDeliverable(delivId: string): Deliverable {
 		const deliv: Deliverable = {
@@ -658,6 +643,7 @@ export class TestHarness {
 		const repo: Repository = {
 			id: id,
 			delivId: delivId,
+			gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED,
 			URL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id,
 			cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id + ".git",
 			teamIds: [teamId],
@@ -905,5 +891,9 @@ export class TestHarness {
 		}
 		Log.test("GitHubActionSpec::deleteStale() - done; took: " + Util.took(start));
 		return true;
+	}
+
+	private static getRandomInt(max: number) {
+		return Math.floor(Math.random() * Math.floor(max));
 	}
 }

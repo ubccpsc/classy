@@ -109,9 +109,9 @@ export interface Deliverable {
 }
 
 export enum GitHubStatus {
-	NOT_PROVISIONED = "NOT_PROVISIONED", // repo not provisioned
-	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // repo provisioned but not linked to a team/repo
-	PROVISIONED_LINKED = "PROVISIONED_LINKED", // repo provisioned and linked to a team/repo
+	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
+	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (but for team, not linked to repo)
+	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team provisioned on GitHub and linked to repo
 	// PROVISIONED_READONLY = "PROVISIONED_READONLY", // repo provisioned and linked to a repo but not writeable (not relevant for teams)
 }
 
@@ -159,6 +159,7 @@ export interface Repository {
 	 * The name of the repo; must be unique locally and on GitHub.
 	 */
 	readonly id: string; // invariant
+
 	/**
 	 * The deliverable the repository was provisioned for. This does not modify AutoTest
 	 * but is used to track provisioning.
@@ -166,11 +167,12 @@ export interface Repository {
 	readonly delivId: string; // invariant
 
 	/**
-	 * URL for project in version control system; null if not yet created.
+	 * URL for project in version control system.
 	 *
-	 * TODO: remove; make githubProvisioned non-optional and use that instead.
+	 * This should only be used to keep track of the repo, not to compute its status
+	 * (e.g., that the repo has been provisioned on GitHub).
 	 */
-	URL: string | null; // URL for project in version control system; null if not yet created
+	URL: string | null;
 
 	/**
 	 * git clone URL for project; null if not yet created
@@ -178,6 +180,10 @@ export interface Repository {
 	 * TODO: make sure this is not used to check if a repo has been provisioned.
 	 */
 	cloneURL: string | null; // git clone URL for project; null if not yet created
+
+	/**
+	 * Teams associated with the repo.
+	 */
 	teamIds: string[]; // Team.id[] - foreign key
 
 	/**
@@ -194,9 +200,14 @@ export interface Repository {
 	 */
 	githubWriteable?: boolean;
 
+	/**
+	 * The GitHub status for the team.
+	 */
+	gitHubStatus: GitHubStatus;
+
 	custom: {
 		// rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-		githubCreated?: boolean; // TODO: remove
+		// githubCreated?: boolean; // TODO: remove
 		githubReleased?: boolean; // TODO: remove
 	};
 }

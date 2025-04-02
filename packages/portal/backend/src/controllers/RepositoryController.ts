@@ -1,7 +1,7 @@
 import Log from "@common/Log";
 import { RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { Deliverable, Person, Repository, Team } from "../Types";
+import { Deliverable, GitHubStatus, Person, Repository, Team } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
@@ -9,6 +9,20 @@ import { TeamController } from "./TeamController";
 
 export class RepositoryController {
 	private db: DatabaseController = DatabaseController.getInstance();
+
+	public static repositoryToTransport(repository: Repository): RepositoryTransport {
+		if (typeof repository === "undefined" || repository === null) {
+			throw new Error("RepositoryController::repositoryToTransport( .. ) - ERROR: repository not provided.");
+		}
+
+		const repo: RepositoryTransport = {
+			id: repository.id,
+			URL: repository.URL,
+			delivId: repository.delivId,
+		};
+
+		return repo;
+	}
 
 	public async getAllRepos(): Promise<Repository[]> {
 		Log.trace("RepositoryController::getAllRepos() - start");
@@ -98,6 +112,19 @@ export class RepositoryController {
 		return await this.db.getRepository(repo.id);
 	}
 
+	// public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
+	//     Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", .. ) -  NOT IMPLEMENTED!!");
+	//     // TODO: implement PR functionality
+	//
+	//     // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
+	//     const repo = await this.getRepository(repoId);
+	//     const customA = Object.assign({}, repo.custom);
+	//     const customB = Object.assign(customA, custom); // overwrite with new fields
+	//     repo.custom = customB;
+	//     await this.db.writeRepository(repo);
+	//     return await this.getRepository(repoId);
+	// }
+
 	public async createRepository(name: string, deliv: Deliverable, teams: Team[], custom: any): Promise<Repository | null> {
 		Log.info("RepositoryController::createRepository( " + name + ", .. ) - start");
 
@@ -113,6 +140,7 @@ export class RepositoryController {
 				id: name,
 				delivId: deliv.id,
 				URL: null,
+				gitHubStatus: GitHubStatus.NOT_PROVISIONED,
 				cloneURL: null,
 				teamIds: teamIds,
 				custom: custom,
@@ -127,19 +155,6 @@ export class RepositoryController {
 			return await this.db.getRepository(name);
 		}
 	}
-
-	// public async createPullRequest(repoId: string, prId: string, custom: any): Promise<Repository | null> {
-	//     Log.error("RepositoryController::createPullRequest( " + repoId + ", " + prId + ", .. ) -  NOT IMPLEMENTED!!");
-	//     // TODO: implement PR functionality
-	//
-	//     // NOTE: this impl is more complex than it needs to be but is erring on the side of caution
-	//     const repo = await this.getRepository(repoId);
-	//     const customA = Object.assign({}, repo.custom);
-	//     const customB = Object.assign(customA, custom); // overwrite with new fields
-	//     repo.custom = customB;
-	//     await this.db.writeRepository(repo);
-	//     return await this.getRepository(repoId);
-	// }
 
 	public async getPeopleForRepo(repoId: string): Promise<string[] | null> {
 		Log.trace("RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  start");
@@ -168,19 +183,5 @@ export class RepositoryController {
 				Util.took(start)
 		);
 		return peopleIds;
-	}
-
-	public static repositoryToTransport(repository: Repository): RepositoryTransport {
-		if (typeof repository === "undefined" || repository === null) {
-			throw new Error("RepositoryController::repositoryToTransport( .. ) - ERROR: repository not provided.");
-		}
-
-		const repo: RepositoryTransport = {
-			id: repository.id,
-			URL: repository.URL,
-			delivId: repository.delivId,
-		};
-
-		return repo;
 	}
 }

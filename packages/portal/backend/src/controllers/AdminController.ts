@@ -756,7 +756,8 @@ export class AdminController {
 
 					if (success === true) {
 						repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-						repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
+						// repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
+						repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 						await dbc.writeRepository(repo);
 						Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
 						provisionedRepos.push(repo);
@@ -847,7 +848,8 @@ export class AdminController {
 				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
 				if (team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
 					/* istanbul ignore else */
-					if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
+					// if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
+					if (repo !== null && repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
 						// aka only release provisioned repos
 						reposToRelease.push(repo);
@@ -967,19 +969,29 @@ export class AdminController {
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-				if (repo.custom.githubCreated !== true) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
-					repo.custom.githubCreated = true;
+				// if (repo.custom.githubCreated !== true) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
+				// 	repo.custom.githubCreated = true;
+				// }
+				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - gitHubStatus should be PROVISIONED for created: " + repo.id);
+					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // linking does not matter for repos
 				}
 			} else {
-				if (repo.custom.githubCreated !== false) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
-					repo.custom.githubCreated = false; // does not exist, must not be created
-				}
+				// if (repo.custom.githubCreated !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
+				// 	repo.custom.githubCreated = false; // does not exist, must not be created
+				// }
+				//
+				// if (repo.custom.githubReleased !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
+				// 	repo.custom.githubReleased = false; // does not exist, must not be released
+				// }
 
-				if (repo.custom.githubReleased !== false) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
-					repo.custom.githubReleased = false; // does not exist, must not be released
+				// repo does not exist
+				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - gitHubStatus can only be NOT_PROVISIONED for !created: " + repo.id);
+					repo.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
 				}
 
 				if (repo.URL !== null) {

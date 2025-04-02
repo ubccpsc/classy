@@ -473,7 +473,8 @@ export class GitHubController implements IGitHubController {
 			// we consider the repo to be provisioned once the whole flow is done
 			// callers of this method should instead set the URL field
 			repo = await dbc.getRepository(repoName);
-			repo.custom.githubCreated = true;
+			// repo.custom.githubCreated = true;
+			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 			await dbc.writeRepository(repo);
 
 			Log.info("GitHubController::provisionRepository( " + repoName + " ) - val: " + repoVal);
