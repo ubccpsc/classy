@@ -102,9 +102,9 @@ To do this you need to do two things:
 1. Ensure you have a local mongo instance running (see `DB_URL` in `.env`).
    In a terminal, run: `docker run -p 27017:27017 mongo`
 1. Ensure you have a valid `.env` file in the root of the project. You can copy the `.env.example` file and fill in the values.
-1. Have a test profile in your IDE that runs the tests. In Webstorm, this is done by creating a Mocha target with node options `--require dotenv/config -r tsconfig-paths/register` as the node options and the test directory pointed to the relevant test parent for the project. You will also want to set `Compile typescript` as a before launch action.
-1. The two main test suites are for AutoTest (`packages/autotest/tests`) and ClassPortal (`packages/portal/backend/test`). If you are running the tests for one of these, you'll need to make sure an instance of the other is running (e.g., running the ClassPortal tests requires AutoTest to be running). 
-   
+1. Have a test profile in your IDE that runs the tests. In Webstorm, this is done by creating a Mocha target with node options `--require dotenv/config --require tsconfig-paths/register` as the node options and the test directory pointed to the relevant test parent for the project. You will also want to set `Compile typescript` as a before launch action. 
+   * By default, the slowest tests will not run locally; to disable this, change `Factory.OVERRIDE = true`, but do NOT commit this to version control!
+
 ## Main repos
 
 * `ubccpsc/classy/main` (hereby `root`) is the core project that repos pull stable code from

@@ -176,28 +176,55 @@ describe("GitHubActions", () => {
 
 	it("Should be able to rename a branch on a repo.", async function () {
 		const repoName = REPONAME2;
-		const val = await gh.renameBranch(repoName, "test-branch", "renamed-test-branch");
-		expect(val).to.be.true;
+		const beforeBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches before: " + JSON.stringify(beforeBranches));
+
+		const renameSuccessful = await gh.renameBranch(repoName, "test-branch", "renamed-test-branch");
+		const afterBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches after: " + JSON.stringify(afterBranches));
+
+		expect(renameSuccessful).to.be.true;
 	}).timeout(TIMEOUT);
 
 	it("Should fail to rename an invalid branch on a repo.", async function () {
 		const repoName = REPONAME2;
-		const val = await gh.renameBranch(repoName, "BRANCH_THAT_DOES_NOT_EXIST", "renamed-test-branch");
-		expect(val).to.be.false;
+		const beforeBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches before: " + JSON.stringify(beforeBranches));
+
+		const renameSuccessful = await gh.renameBranch(repoName, "BRANCH_THAT_DOES_NOT_EXIST", "renamed-test-branch");
+
+		const afterBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches after: " + JSON.stringify(afterBranches));
+
+		expect(renameSuccessful).to.be.false;
 	}).timeout(TIMEOUT);
 
 	it("Should be able to delete a branch on a repo.", async function () {
 		const repoName = REPONAME2;
-		const val = await gh.deleteBranches(repoName, ["renamed-test-branch"]);
-		// TODO: check that branchesToKeep are all that is left (would require exposing another endpoint though)
-		expect(val).to.be.true;
+
+		const beforeBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches before: " + JSON.stringify(beforeBranches));
+
+		const deleteSuccessful = await gh.deleteBranches(repoName, ["renamed-test-branch"]);
+
+		const afterBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches after: " + JSON.stringify(afterBranches));
+
+		expect(deleteSuccessful).to.be.true;
 	}).timeout(TIMEOUT);
 
 	it("Should not be able to delete all the branches on a repo.", async function () {
 		const repoName = REPONAME2;
-		const val = await gh.deleteBranches(repoName, []);
-		// TODO: check that branchesToKeep are all that is left (would require exposing another endpoint though)
-		expect(val).to.be.false;
+
+		const beforeBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches before: " + JSON.stringify(beforeBranches));
+
+		const deleteSuccesful = await gh.deleteBranches(repoName, []);
+
+		const afterBranches = await gh.listRepoBranches(repoName);
+		Log.test("Branches after: " + JSON.stringify(afterBranches));
+
+		expect(deleteSuccesful).to.be.false;
 	}).timeout(TIMEOUT);
 
 	it("Should be able to create a team.", async function () {

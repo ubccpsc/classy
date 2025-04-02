@@ -461,9 +461,14 @@ describe("AutoTest Routes", function () {
 		expect(response?.body.failure.message).to.be.a("string");
 	});
 
-	// this will always fail now that we check the IP of the host
+	// this will always fail locally now that we check the IP of the host
 	it("Should be able to receive a Webhook event from GitHub, but fail gracefully.", async function () {
-		// NOTE: this is a terrible tests; without the service running we get nothing
+		// only run this test in CI
+		if (TestHarness.isCI() === false) {
+			return;
+		}
+
+		// NOTE: this is a terrible test; without the service running we get nothing
 		let response = null;
 		const body = fs.readJSONSync(__dirname + "/../../../../autotest/test/githubEvents/push_master-branch.json"); // __dirname
 		const autotestUrl = Config.getInstance().getProp(ConfigKey.autotestUrl);
