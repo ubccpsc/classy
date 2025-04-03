@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { Repository, Team } from "../Types";
+import { GitHubStatus, Repository, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { TeamController } from "./TeamController";
@@ -331,10 +331,14 @@ export class GitHubController implements IGitHubController {
 				// const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
 				if (res.githubTeamNumber > 0) {
 					// keep track of team addition
-					team.custom.githubAttached = true;
+					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_LINKED);
+					team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+					// team.custom.githubAttached = true;
 				} else {
 					Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
-					team.custom.githubAttached = false;
+					// team.custom.githubAttached = false;
+					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_UNLINKED);
+					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 				}
 
 				await this.dbc.writeTeam(team); // add new properties to the team
@@ -348,6 +352,10 @@ export class GitHubController implements IGitHubController {
 				);
 			}
 		}
+
+		// update the repo status to be linked
+		repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+		await this.dbc.writeRepository(repo);
 
 		Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
 		return true;
@@ -469,7 +477,8 @@ export class GitHubController implements IGitHubController {
 			// we consider the repo to be provisioned once the whole flow is done
 			// callers of this method should instead set the URL field
 			repo = await dbc.getRepository(repoName);
-			repo.custom.githubCreated = true;
+			// repo.custom.githubCreated = true;
+			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 			await dbc.writeRepository(repo);
 
 			Log.info("GitHubController::provisionRepository( " + repoName + " ) - val: " + repoVal);
@@ -505,14 +514,15 @@ export class GitHubController implements IGitHubController {
 
 					const teamNum = await tc.getTeamNumber(team.id);
 					Log.trace("GitHubController::provisionRepository() - dbT team Number: " + teamNum);
-					if (team.URL !== null && teamNum !== null) {
+					// if (team.URL !== null && teamNum !== null) {
+					if (team.gitHubStatus === GitHubStatus.PROVISIONED_LINKED || team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
 						// already exists
 						Log.warn(
 							"GitHubController::provisionRepository( " +
 								repoName +
 								" ) - team already exists: " +
 								teamValue.teamName +
-								"; assuming team members on github are correct."
+								"; assuming team members on GitHub are correct."
 						);
 					} else {
 						teamValue = await this.gha.createTeam(team.id, "push");
@@ -524,7 +534,8 @@ export class GitHubController implements IGitHubController {
 							// team.URL = teamValue.URL;
 							team.URL = await this.getTeamUrl(team);
 							team.githubId = teamValue.githubTeamNumber;
-							team.custom.githubAttached = false; // attaching happens in release
+							team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+							// team.custom.githubAttached = false; // attaching happens in release
 							await dbc.writeTeam(team);
 						}
 

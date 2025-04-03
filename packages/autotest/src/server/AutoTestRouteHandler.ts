@@ -12,7 +12,6 @@ import Util from "@common/Util";
 import { AutoTest } from "../autotest/AutoTest";
 import { ClassPortal } from "../autotest/ClassPortal";
 import { MongoDataStore } from "../autotest/DataStore";
-import { EdXClassPortal } from "../edx/EdxClassPortal";
 import { GitHubAutoTest } from "../github/GitHubAutoTest";
 import { GitHubUtil } from "../github/GitHubUtil";
 
@@ -41,13 +40,7 @@ export default class AutoTestRouteHandler {
 		if (AutoTestRouteHandler.autoTest === null) {
 			const dataStore = new MongoDataStore();
 			const docker = AutoTestRouteHandler.getDocker();
-			let portal: ClassPortal;
-
-			if (Config.getInstance().getProp(ConfigKey.name) === "sdmm") {
-				portal = new EdXClassPortal();
-			} else {
-				portal = new ClassPortal();
-			}
+			let portal: ClassPortal = new ClassPortal();
 
 			AutoTestRouteHandler.autoTest = new GitHubAutoTest(dataStore, portal, docker);
 		}
@@ -180,67 +173,6 @@ export default class AutoTestRouteHandler {
 		// no next() call here; .then clause above will finish the response
 	}
 
-	private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
-		// cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
-		const at: GitHubAutoTest = AutoTestRouteHandler.getAutoTest() as GitHubAutoTest;
-
-		switch (event) {
-			case "commit_comment":
-				const commentEvent = await GitHubUtil.processComment(body);
-				if (commentEvent === null) {
-					Log.warn(
-						"AutoTestRouteHandler::handleWebhook() - comment event is null; figure out why; payload: " + JSON.stringify(body)
-					);
-				}
-				Log.trace("AutoTestRouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
-				await at.handleCommentEvent(commentEvent);
-				return commentEvent;
-			case "push":
-				const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
-
-				if (pushEvent === null && (body as any)?.deleted === true) {
-					// branch was deleted
-					Log.info("AutoTestRouteHandler::handleWebhook() - branch was deleted; no action required");
-				} else if (pushEvent === null) {
-					// figure out other reasons we end up here
-					Log.warn(
-						"AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body)
-					);
-				}
-				Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
-				await at.handlePushEvent(pushEvent);
-				return pushEvent;
-			case "issue_comment":
-				const prEvent = await GitHubUtil.processIssueComment(body);
-				return prEvent;
-			default:
-				Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
-				throw new Error("Unhandled GitHub hook event: " + event);
-		}
-	}
-
-	// public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
-	//     const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
-	//     Log.info("AutoTestRouteHandler::getResource(..) - start; fetching resource: " + path);
-	//
-	//     const rs = fs.createReadStream(path);
-	//     rs.on("error", (err: any) => {
-	//         if (err.code === "ENOENT") {
-	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
-	//             res.send(404, err.message);
-	//         } else {
-	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
-	//             res.send(500, err.message);
-	//         }
-	//     });
-	//     rs.on("end", () => {
-	//         rs.close();
-	//     });
-	//     rs.pipe(res);
-	//
-	//     next();
-	// }
-
 	public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
 		try {
 			const docker = AutoTestRouteHandler.getDocker();
@@ -265,6 +197,28 @@ export default class AutoTestRouteHandler {
 		}
 		next();
 	}
+
+	// public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
+	//     const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
+	//     Log.info("AutoTestRouteHandler::getResource(..) - start; fetching resource: " + path);
+	//
+	//     const rs = fs.createReadStream(path);
+	//     rs.on("error", (err: any) => {
+	//         if (err.code === "ENOENT") {
+	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
+	//             res.send(404, err.message);
+	//         } else {
+	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
+	//             res.send(500, err.message);
+	//         }
+	//     });
+	//     rs.on("end", () => {
+	//         rs.close();
+	//     });
+	//     rs.pipe(res);
+	//
+	//     next();
+	// }
 
 	public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
 		Log.info("AutoTestRouteHandler::postDockerImage(..) - start");
@@ -415,5 +369,44 @@ export default class AutoTestRouteHandler {
 			res.send(400, { success: false, message: errorMsg });
 		}
 		next();
+	}
+
+	private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
+		// cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
+		const at: GitHubAutoTest = AutoTestRouteHandler.getAutoTest() as GitHubAutoTest;
+
+		switch (event) {
+			case "commit_comment":
+				const commentEvent = await GitHubUtil.processComment(body);
+				if (commentEvent === null) {
+					Log.warn(
+						"AutoTestRouteHandler::handleWebhook() - comment event is null; figure out why; payload: " + JSON.stringify(body)
+					);
+				}
+				Log.trace("AutoTestRouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
+				await at.handleCommentEvent(commentEvent);
+				return commentEvent;
+			case "push":
+				const pushEvent = await GitHubUtil.processPush(body, new ClassPortal());
+
+				if (pushEvent === null && (body as any)?.deleted === true) {
+					// branch was deleted
+					Log.info("AutoTestRouteHandler::handleWebhook() - branch was deleted; no action required");
+				} else if (pushEvent === null) {
+					// figure out other reasons we end up here
+					Log.warn(
+						"AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body)
+					);
+				}
+				Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
+				await at.handlePushEvent(pushEvent);
+				return pushEvent;
+			case "issue_comment":
+				const prEvent = await GitHubUtil.processIssueComment(body);
+				return prEvent;
+			default:
+				Log.error("AutoTestRouteHandler::handleWebhook() - Unhandled GitHub event: " + event);
+				throw new Error("Unhandled GitHub hook event: " + event);
+		}
 	}
 }

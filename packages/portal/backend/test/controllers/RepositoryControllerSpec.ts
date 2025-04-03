@@ -8,7 +8,7 @@ import { DeliverablesController } from "@backend/controllers/DeliverablesControl
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { Repository } from "@backend/Types";
+import { GitHubStatus, Repository } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 import "./TeamControllerSpec"; // load first
@@ -130,6 +130,7 @@ describe("RepositoryController", () => {
 			id: Date.now() + "_id",
 			delivId: TestHarness.DELIVID0,
 			URL: null,
+			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
 			cloneURL: null,
 			custom: {},
 			teamIds: [],
@@ -153,6 +154,7 @@ describe("RepositoryController", () => {
 			id: Date.now() + "_id",
 			delivId: TestHarness.DELIVID0,
 			URL: null,
+			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
 			cloneURL: null,
 			custom: {},
 			teamIds: [],

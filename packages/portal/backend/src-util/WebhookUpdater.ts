@@ -24,7 +24,6 @@ export class WebhookUpdater {
 	 * @type {string}
 	 */
 	// private HOOK_URL = "https://localhost/portal/githubWebhook";
-	// private HOOK_URL = "https://sdmm.cs.ubc.ca/portal/githubWebhook";
 	private HOOK_URL = "https://cs310.students.cs.ubc.ca/portal/githubWebhook";
 
 	private gha = GitHubActions.getInstance(true);

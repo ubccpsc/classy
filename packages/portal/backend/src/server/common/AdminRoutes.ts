@@ -24,7 +24,7 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
-import { AuditLabel, Person, Repository } from "@backend/Types";
+import { AuditLabel, GitHubStatus, Person, Repository } from "@backend/Types";
 import { Factory } from "@backend/Factory";
 
 import { AdminController } from "@backend/controllers/AdminController";
@@ -47,61 +47,6 @@ import { CSVParser } from "./CSVParser";
 export default class AdminRoutes implements IREST {
 	private static ghc = new GitHubController(GitHubActions.getInstance());
 	private static rc = new RepositoryController();
-
-	public registerRoutes(server: restify.Server) {
-		Log.trace("AdminRoutes::registerRoutes() - start");
-
-		// visible to non-privileged users
-		// NOTHING
-
-		// visible to all privileged users
-		server.get("/portal/admin/course", AdminRoutes.isPrivileged, AdminRoutes.getCourse);
-		server.get("/portal/admin/deliverables", AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
-		server.get("/portal/admin/students", AdminRoutes.isPrivileged, AdminRoutes.getStudents);
-		server.get("/portal/admin/staff", AdminRoutes.isPrivileged, AdminRoutes.getStaff);
-		server.get("/portal/admin/teams", AdminRoutes.isPrivileged, AdminRoutes.getTeams);
-		server.get("/portal/admin/repositories", AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
-		server.get("/portal/admin/grades", AdminRoutes.isPrivileged, AdminRoutes.getGrades);
-		server.get("/portal/admin/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
-		server.get("/portal/admin/export/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
-		server.get("/portal/admin/results/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
-		server.get("/portal/admin/gradedResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getGradedResults); // graded results
-		server.get("/portal/admin/bestResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // results with best score
-
-		// admin-only functions
-		server.post("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-		server.put("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
-		server.post("/portal/admin/grades/csv/:delivId", AdminRoutes.isAdmin, AdminRoutes.postGrades);
-		server.post("/portal/admin/grades/prairie", AdminRoutes.isAdmin, AdminRoutes.postGradesPrairie);
-		server.post("/portal/admin/deliverable", AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
-
-		server.post("/portal/admin/course", AdminRoutes.isAdmin, AdminRoutes.postCourse);
-		server.get("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.getProvision);
-		server.post("/portal/admin/provision/:delivId/:repoId", AdminRoutes.isAdmin, AdminRoutes.postProvision);
-		server.get("/portal/admin/release/:delivId", AdminRoutes.isAdmin, AdminRoutes.getRelease);
-		server.post("/portal/admin/release/:repoId", AdminRoutes.isAdmin, AdminRoutes.postRelease);
-		server.post("/portal/admin/withdraw", AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
-		server.post("/portal/admin/checkDatabase/:dryRun", AdminRoutes.isAdmin, AdminRoutes.postCheckDatabase);
-		server.del("/portal/admin/deliverable/:delivId", AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
-		server.del("/portal/admin/repository/:repoId", AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
-
-		// admin team functions
-		server.post("/portal/admin/team", AdminRoutes.isAdmin, AdminRoutes.teamCreate);
-		server.post("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
-		server.del("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
-		server.del("/portal/admin/team/:teamId", AdminRoutes.isAdmin, AdminRoutes.teamDelete);
-
-		// admin patch routes
-		server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
-		server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
-		server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
-		server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
-
-		// TODO: un-release repos
-
-		// staff-only functions
-		// NOTHING
-	}
 
 	public static handleError(code: number, msg: string, res: any, next: any) {
 		const payload: Payload = { failure: { message: msg, shouldLogout: false } };
@@ -150,6 +95,97 @@ export default class AdminRoutes implements IREST {
 			Log.error("AdminRoutes::processAuth(..) - ERROR: " + err.message);
 		}
 		return null;
+	}
+
+	public static async updateClasslist(req: any, res: any, next: any) {
+		Log.info("AdminRoutes::updateClasslist(..) - start");
+
+		const auditUser = req.headers.user;
+		try {
+			const ca = new ClasslistAgent();
+			const data = await ca.fetchClasslist();
+			const classlistChanges = await ca.processClasslist(auditUser, null, data);
+
+			if (classlistChanges.classlist.length) {
+				const payload: ClasslistChangesTransportPayload = { success: classlistChanges };
+				res.send(200, payload);
+				Log.info(
+					"AdminRoutes::updateClasslist(..) - done: " +
+						"Classlist upload successful. " +
+						classlistChanges.classlist.length +
+						" students processed."
+				);
+			} else {
+				const msg = "Classlist upload not successful; no students were processed from classlist service.";
+				return AdminRoutes.handleError(400, msg, res, next);
+			}
+		} catch (err) {
+			const msg = "Classlist upload not successful; no students were processed from classlist service.";
+			return AdminRoutes.handleError(400, msg, res, next);
+		}
+	}
+
+	public static postWithdraw(req: any, res: any, next: any) {
+		Log.info("AdminRoutes::postWithdraw(..) - start");
+
+		// handled by isAdmin in the route chain
+		const cc = new AdminController(AdminRoutes.ghc);
+		cc.performStudentWithdraw()
+			.then(function (msg) {
+				Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
+				const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
+				res.send(200, payload);
+				return next(true);
+			})
+			.catch(function (err) {
+				Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
+				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+				res.send(400, payload);
+				return next(false);
+			});
+	}
+
+	public static postCheckDatabase(req: any, res: any, next: any) {
+		Log.info("AdminRoutes::postCheckDatabase(..) - start");
+
+		const dryRun = req.params.dryRun === "true";
+		Log.info(
+			"AdminRoutes::postCheckDatabase(..) - dryRun: " + dryRun + "; true? " + (dryRun === true) + "; false? " + (dryRun === false)
+		);
+
+		const cc = new AdminController(AdminRoutes.ghc);
+		cc.dbSanityCheck(dryRun)
+			.then(function () {
+				Log.info("AdminRoutes::postCheckDatabase(..) - done");
+				const payload: Payload = { success: { message: "Check complete" } };
+				res.send(200, payload);
+				return next(true);
+			})
+			.catch(function (err) {
+				Log.info("AdminRoutes::postCheckDatabase(..) - ERROR: " + err.message); // intentionally info
+				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+				res.send(400, payload);
+				return next(false);
+			});
+	}
+
+	public static teamCreate(req: any, res: any, next: any) {
+		Log.info("AdminRoutes::teamCreate(..) - start");
+
+		// handled by isAdmin in the route chain
+		const userName = AdminRoutes.getUser(req);
+		const teamTrans: TeamFormationTransport = req.params;
+		AdminRoutes.handleTeamCreate(userName, teamTrans)
+			.then(function (team) {
+				Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
+				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
+				res.send(200, payload);
+				return next(true);
+			})
+			.catch(function (err) {
+				Log.info("AdminRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
+				return AdminRoutes.handleError(400, err.message, res, next);
+			});
 	}
 
 	/**
@@ -443,7 +479,7 @@ export default class AdminRoutes implements IREST {
 		const userId = req.headers.user;
 		AdminRoutes.handleDeleteRepository(userId, repoId)
 			.then(function (success) {
-				Log.trace("AdminRoutes::deleteRepository(..) - done; success: " + success);
+				Log.info("AdminRoutes::deleteRepository(..) - done; success: " + success);
 				const payload: Payload = { success: { message: "Repository deleted." } };
 				res.send(200, payload); // return as text rather than json
 				return next();
@@ -460,7 +496,8 @@ export default class AdminRoutes implements IREST {
 		if (repo !== null) {
 			const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
 				const team = await dbc.getTeam(teamId);
-				const newTeam = { ...team, custom: { ...team.custom, githubAttached: false } };
+				const newTeam = { ...team, gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED, custom: { ...team.custom } };
+				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);
 				await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});
 			});
@@ -605,34 +642,6 @@ export default class AdminRoutes implements IREST {
 			.catch(function (err) {
 				return AdminRoutes.handleError(400, "Unable to get deliverable list; ERROR: " + err.message, res, next);
 			});
-	}
-
-	public static async updateClasslist(req: any, res: any, next: any) {
-		Log.info("AdminRoutes::updateClasslist(..) - start");
-
-		const auditUser = req.headers.user;
-		try {
-			const ca = new ClasslistAgent();
-			const data = await ca.fetchClasslist();
-			const classlistChanges = await ca.processClasslist(auditUser, null, data);
-
-			if (classlistChanges.classlist.length) {
-				const payload: ClasslistChangesTransportPayload = { success: classlistChanges };
-				res.send(200, payload);
-				Log.info(
-					"AdminRoutes::updateClasslist(..) - done: " +
-						"Classlist upload successful. " +
-						classlistChanges.classlist.length +
-						" students processed."
-				);
-			} else {
-				const msg = "Classlist upload not successful; no students were processed from classlist service.";
-				return AdminRoutes.handleError(400, msg, res, next);
-			}
-		} catch (err) {
-			const msg = "Classlist upload not successful; no students were processed from classlist service.";
-			return AdminRoutes.handleError(400, msg, res, next);
-		}
 	}
 
 	private static postClasslist(req: any, res: any, next: any) {
@@ -995,69 +1004,6 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Perform release unsuccessful.");
 	}
 
-	public static postWithdraw(req: any, res: any, next: any) {
-		Log.info("AdminRoutes::postWithdraw(..) - start");
-
-		// handled by isAdmin in the route chain
-		const cc = new AdminController(AdminRoutes.ghc);
-		cc.performStudentWithdraw()
-			.then(function (msg) {
-				Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
-				const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
-				res.send(200, payload);
-				return next(true);
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
-	}
-
-	public static postCheckDatabase(req: any, res: any, next: any) {
-		Log.info("AdminRoutes::postCheckDatabase(..) - start");
-
-		const dryRun = req.params.dryRun === "true";
-		Log.info(
-			"AdminRoutes::postCheckDatabase(..) - dryRun: " + dryRun + "; true? " + (dryRun === true) + "; false? " + (dryRun === false)
-		);
-
-		const cc = new AdminController(AdminRoutes.ghc);
-		cc.dbSanityCheck(dryRun)
-			.then(function () {
-				Log.info("AdminRoutes::postCheckDatabase(..) - done");
-				const payload: Payload = { success: { message: "Check complete" } };
-				res.send(200, payload);
-				return next(true);
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::postCheckDatabase(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
-	}
-
-	public static teamCreate(req: any, res: any, next: any) {
-		Log.info("AdminRoutes::teamCreate(..) - start");
-
-		// handled by isAdmin in the route chain
-		const userName = AdminRoutes.getUser(req);
-		const teamTrans: TeamFormationTransport = req.params;
-		AdminRoutes.handleTeamCreate(userName, teamTrans)
-			.then(function (team) {
-				Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
-				res.send(200, payload);
-				return next(true);
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
-				return AdminRoutes.handleError(400, err.message, res, next);
-			});
-	}
-
 	private static async handleTeamCreate(personId: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("AdminRoutes::handleTeamCreate( .. ) - Team: " + JSON.stringify(requestedTeam));
 
@@ -1166,7 +1112,8 @@ export default class AdminRoutes implements IREST {
 		const dbc = DatabaseController.getInstance();
 		const team = await dbc.getTeam(teamId);
 		if (team !== null) {
-			if (team.URL !== null) {
+			// if (team.URL !== null) {
+			if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 				deletedGithub = await GitHubActions.getInstance().deleteTeam(teamId);
 				Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from GitHub");
 			}
@@ -1241,7 +1188,8 @@ export default class AdminRoutes implements IREST {
 			}
 		}
 
-		if (team.URL !== null) {
+		// if (team.URL !== null) {
+		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 			await GitHubActions.getInstance().addMembersToTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to GitHub team");
 		}
@@ -1314,7 +1262,8 @@ export default class AdminRoutes implements IREST {
 
 		const beforeTeam = new TeamController().teamToTransport(team);
 
-		if (team.URL !== null) {
+		// if (team.URL !== null) {
+		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 			await GitHubActions.getInstance().removeMembersFromTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from GitHub team");
 		}
@@ -1419,5 +1368,60 @@ export default class AdminRoutes implements IREST {
 			Log.info("AdminRoutes::patchSource(..) - patch not found in environment");
 			return AdminRoutes.handleError(424, "Patch source repo not found in environment", res, next);
 		}
+	}
+
+	public registerRoutes(server: restify.Server) {
+		Log.trace("AdminRoutes::registerRoutes() - start");
+
+		// visible to non-privileged users
+		// NOTHING
+
+		// visible to all privileged users
+		server.get("/portal/admin/course", AdminRoutes.isPrivileged, AdminRoutes.getCourse);
+		server.get("/portal/admin/deliverables", AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
+		server.get("/portal/admin/students", AdminRoutes.isPrivileged, AdminRoutes.getStudents);
+		server.get("/portal/admin/staff", AdminRoutes.isPrivileged, AdminRoutes.getStaff);
+		server.get("/portal/admin/teams", AdminRoutes.isPrivileged, AdminRoutes.getTeams);
+		server.get("/portal/admin/repositories", AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
+		server.get("/portal/admin/grades", AdminRoutes.isPrivileged, AdminRoutes.getGrades);
+		server.get("/portal/admin/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
+		server.get("/portal/admin/export/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
+		server.get("/portal/admin/results/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
+		server.get("/portal/admin/gradedResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getGradedResults); // graded results
+		server.get("/portal/admin/bestResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // results with best score
+
+		// admin-only functions
+		server.post("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.postClasslist);
+		server.put("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
+		server.post("/portal/admin/grades/csv/:delivId", AdminRoutes.isAdmin, AdminRoutes.postGrades);
+		server.post("/portal/admin/grades/prairie", AdminRoutes.isAdmin, AdminRoutes.postGradesPrairie);
+		server.post("/portal/admin/deliverable", AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+
+		server.post("/portal/admin/course", AdminRoutes.isAdmin, AdminRoutes.postCourse);
+		server.get("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.getProvision);
+		server.post("/portal/admin/provision/:delivId/:repoId", AdminRoutes.isAdmin, AdminRoutes.postProvision);
+		server.get("/portal/admin/release/:delivId", AdminRoutes.isAdmin, AdminRoutes.getRelease);
+		server.post("/portal/admin/release/:repoId", AdminRoutes.isAdmin, AdminRoutes.postRelease);
+		server.post("/portal/admin/withdraw", AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
+		server.post("/portal/admin/checkDatabase/:dryRun", AdminRoutes.isAdmin, AdminRoutes.postCheckDatabase);
+		server.del("/portal/admin/deliverable/:delivId", AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
+		server.del("/portal/admin/repository/:repoId", AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
+
+		// admin team functions
+		server.post("/portal/admin/team", AdminRoutes.isAdmin, AdminRoutes.teamCreate);
+		server.post("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
+		server.del("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
+		server.del("/portal/admin/team/:teamId", AdminRoutes.isAdmin, AdminRoutes.teamDelete);
+
+		// admin patch routes
+		server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
+		server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+		server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
+		server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
+
+		// TODO: un-release repos
+
+		// staff-only functions
+		// NOTHING
 	}
 }

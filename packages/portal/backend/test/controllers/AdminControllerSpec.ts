@@ -17,7 +17,7 @@ import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Person, PersonKind, Repository, Team } from "@backend/Types";
+import { GitHubStatus, Person, PersonKind, Repository, Team } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -524,7 +524,8 @@ describe("AdminController", () => {
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
-			expect(allTeams[0].URL).to.be.null; // not provisioned yet
+			expect(allTeams[0].URL).to.be.null;
+			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED); // not provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const plan = await ac.planProvision(deliv, false);
@@ -543,6 +544,7 @@ describe("AdminController", () => {
 			const allNewRepos = await rc.getAllRepos();
 			expect(allNewRepos.length).to.equal(1);
 			expect(allNewRepos[0].URL).to.not.be.null;
+			expect(allNewRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 
 			const repoExists = await gha.repoExists(allNewRepos[0].id);
 			expect(repoExists).to.be.true; // should be provisioned
@@ -552,19 +554,22 @@ describe("AdminController", () => {
 
 			const teamNum = await tc.getTeamNumber(allNewTeams[0].id);
 			expect(teamNum).to.be.greaterThan(0); // should be provisioned
-			expect(allNewTeams[0].URL).to.not.be.null; // should be provisioned
+			expect(allNewTeams[0].URL).to.not.be.null;
+			expect(allNewTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should release repos.", async () => {
 			// await clearAndPreparePartial();
 			const allRepos = await rc.getAllRepos();
 			expect(allRepos.length).to.equal(1);
-			expect(allRepos[0].URL).to.not.be.null; // provisioned
+			expect(allRepos[0].URL).to.not.be.null;
+			expect(allRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
-			expect(allTeams[0].URL).to.not.be.null; // provisioned
-			expect(allTeams[0].custom.githubAttached).to.be.false;
+			expect(allTeams[0].URL).to.not.be.null;
+			// expect(allTeams[0].custom.githubAttached).to.be.false; // not attached
+			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const relPlan = await ac.planRelease(deliv);
@@ -576,10 +581,15 @@ describe("AdminController", () => {
 			Log.test("Released: " + JSON.stringify(res));
 			expect(res).to.be.an("array");
 			expect(res.length).to.equal(1);
+			const provisionedRepos = await rc.getAllRepos();
+			expect(provisionedRepos[0].URL).to.not.be.null;
+			expect(provisionedRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // now attached
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
-			expect(allNewTeams[0].custom.githubAttached).to.be.true;
+			const newTeam = allNewTeams[0];
+			// expect(newTeam.custom.githubAttached).to.be.true; // attached
+			expect(newTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
 
 			// // try again: should not release any more repos
 			// res = await ac.release(allRepos);
@@ -631,8 +641,9 @@ describe("AdminController", () => {
 				if (repo.delivId === deliv.id) {
 					Log.test("Repo: " + JSON.stringify(repo));
 					const repoExists = await gha.repoExists(repo.id);
-					expect(repoExists).to.be.true; // should be provisioned
+					expect(repoExists).to.be.true;
 					expect(repo.URL).to.not.be.null;
+					expect(repo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
 				}
 			}
 		}).timeout(TestHarness.TIMEOUTLONG * 5);

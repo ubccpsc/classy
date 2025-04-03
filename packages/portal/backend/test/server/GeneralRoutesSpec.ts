@@ -13,6 +13,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import BackendServer from "@backend/server/BackendServer";
+import { GitHubStatus } from "@backend/Types";
 
 describe("General Routes", function () {
 	let app: restify.Server = null;
@@ -691,6 +692,7 @@ describe("General Routes", function () {
 
 		// now simulate the repo being released
 		repo.URL = "https://provisioned!";
+		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 		await dc.writeRepository(repo);
 
 		ex = null;

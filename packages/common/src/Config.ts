@@ -17,8 +17,7 @@ if (envLoadResult.error) {
 export enum ConfigCourses {
 	classytest = "classytest",
 	cs310 = "cs310",
-	// cs340 = "cs340",
-	sdmm = "sdmm", // edX micromasters capstone project
+	// cs210 = "cs210",
 }
 
 export enum ConfigKey {
@@ -72,7 +71,7 @@ export enum ConfigKey {
 	botName = "botName",
 	postback = "postback",
 
-	patchId = "patchId", // Used by sdmm/classy
+	patchId = "patchId", // Used by classy
 	patchToolUrl = "patchToolUrl",
 	patchSourceRepo = "patchSourceRepo",
 

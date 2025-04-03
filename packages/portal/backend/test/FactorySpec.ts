@@ -20,13 +20,7 @@ describe("Factory", function () {
 		let actual = Factory.getCustomRouteHandler("classytest");
 		expect(actual).to.not.be.null;
 
-		actual = Factory.getCustomRouteHandler("sdmm");
-		expect(actual).to.not.be.null;
-
 		actual = Factory.getCustomRouteHandler("cs310");
-		expect(actual).to.not.be.null;
-
-		actual = Factory.getCustomRouteHandler("cs340");
 		expect(actual).to.not.be.null;
 
 		actual = null;

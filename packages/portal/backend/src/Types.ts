@@ -57,7 +57,6 @@ export interface Person {
 	labId: string | null; // null for non-students
 
 	custom: {
-		sdmmStatus?: string; // SDMM // TODO: make into sdmm.status
 		myProp?: any; // PersonControllerSpec
 	};
 }
@@ -109,29 +108,60 @@ export interface Deliverable {
 	teamStudentsForm: boolean;
 }
 
+/**
+ * Tracks the GitHub status of Teams and Repositories.
+ *
+ * Creating a Team or Repository object in the database does not mean that it has
+ * been provisioned on the GitHub instance.
+ *
+ * NOT_PROVISIONED: The team/repo exists in the DB but not on GitHub.
+ *
+ * LINKED / UNLINKED: Differentiates between teams and repos that have been
+ * provisioned, but not linked to each other. This is important because an
+ * unlinked team or repo is effectively read-only to students.
+ */
+export enum GitHubStatus {
+	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
+	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (team: not linked to repo, repo: no assigned team)
+	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team/repo provisioned on GitHub and linked to each other
+}
+
 export interface Team {
 	readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
+
 	/**
 	 * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
 	 * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
 	 */
 	readonly delivId: string; // invariant
 
-	URL: string | null; // null when not yet created
-	githubId: number | null; // null when not yet created
+	/**
+	 * The people associated with a team.
+	 */
 	personIds: string[]; // Person.id[] - foreign key
-	// repoName: string | null;
-	// repoUrl: string | null;
 
-	// githubStatus: string; // NONE | CREATED | LINKED
-	custom: {
-		githubAttached?: boolean;
+	/**
+	 * The GitHub URL for the team.
+	 *
+	 * This should only be used to keep track of the team, not to compute its status
+	 * (e.g., that the team has been provisioned on GitHub).
+	 */
+	URL: string | null;
 
-		sdmmd0?: boolean;
-		sdmmd1?: boolean;
-		sdmmd2?: boolean;
-		sdmmd3?: boolean;
-	};
+	/**
+	 * The GitHub status for the team.
+	 */
+	gitHubStatus: GitHubStatus;
+
+	/**
+	 * GitHub assigns a numeric value to team objects. Looking this up can be slow,
+	 * especially for tasks where all team numbers are needed.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	githubId: number | null;
+
+	custom: {};
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
@@ -140,29 +170,38 @@ export interface Repository {
 	 * The name of the repo; must be unique locally and on GitHub.
 	 */
 	readonly id: string; // invariant
+
 	/**
 	 * The deliverable the repository was provisioned for. This does not modify AutoTest
 	 * but is used to track provisioning.
 	 */
 	readonly delivId: string; // invariant
 
-	URL: string | null; // URL for project in version control system; null if not yet created
-	cloneURL: string | null; // git clone URL for project; null if not yet created
+	/**
+	 * Teams associated with the repo.
+	 */
 	teamIds: string[]; // Team.id[] - foreign key
 
-	// githubStatus: string; // NONE | CREATED
+	/**
+	 * URL for project in version control system; null if not yet known.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	URL: string | null;
 
-	custom: {
-		// rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-		githubCreated?: boolean;
-		githubReleased?: boolean;
+	/**
+	 * git clone URL for project; null if not yet known.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	cloneURL: string | null; // git clone URL for project; null if not yet created
 
-		// d0enabled?: boolean; // SDMM // TODO: make sdmm.d0enabled
-		// d1enabled?: boolean; // SDMM // TODO: make sdmm.d1enabled
-		// d2enabled?: boolean; // SDMM // TODO: make sdmm.d2enabled
-		// d3enabled?: boolean; // SDMM // TODO: make sdmm.d3enabled
-		// sddmD3pr?: boolean; // SDMM // TODO: make sdmm.d3pr
-	};
+	/**
+	 * The GitHub status for the team.
+	 */
+	gitHubStatus: GitHubStatus;
+
+	custom: {};
 }
 
 /**

@@ -16,7 +16,7 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
+import { AuditLabel, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubActions } from "./GitHubActions";
@@ -28,15 +28,6 @@ import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
 
 export class AdminController {
-	/**
-	 * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
-	 *
-	 * @returns {string | null}
-	 */
-	public static getName(): string | null {
-		return Config.getInstance().getProp(ConfigKey.name);
-	}
-
 	protected dbc = DatabaseController.getInstance();
 	protected pc = new PersonController();
 	protected rc = new RepositoryController();
@@ -49,6 +40,82 @@ export class AdminController {
 	constructor(ghController: IGitHubController) {
 		Log.trace("AdminController::<init>");
 		this.gh = ghController;
+	}
+
+	/**
+	 * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
+	 *
+	 * @returns {string | null}
+	 */
+	public static getName(): string | null {
+		return Config.getInstance().getProp(ConfigKey.name);
+	}
+
+	/**
+	 * Validates the CourseTransport object.
+	 *
+	 * @param {CourseTransport} courseTrans
+	 * @returns {string | null} null if object is valid; string description of error if not.
+	 */
+	public static validateCourseTransport(courseTrans: CourseTransport): string | null {
+		if (typeof courseTrans === "undefined" || courseTrans === null) {
+			const msg = "Course not populated.";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.id !== "string") {
+			const msg = "Course.id not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.defaultDeliverableId !== "string") {
+			const msg = "defaultDeliverableId not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			return msg;
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof courseTrans.custom !== "object") {
+			const msg = "custom not specified";
+			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
+			return msg;
+		}
+
+		return null;
+	}
+
+	/**
+	 * Returns null if the object is valid. This API is terrible.
+	 *
+	 * @param {ProvisionTransport} obj
+	 * @returns {ProvisionTransport | null}
+	 */
+	public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
+		if (typeof obj === "undefined" || obj === null) {
+			const msg = "Transport not populated.";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof obj.delivId !== "string") {
+			const msg = "Provision.id not specified";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		// noinspection SuspiciousTypeOfGuard
+		if (typeof obj.formSingle !== "boolean") {
+			const msg = "formSingle not specified";
+			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
+			throw new Error(msg);
+		}
+
+		return null;
 	}
 
 	/**
@@ -239,8 +306,6 @@ export class AdminController {
 				delivId: team.delivId,
 				people: team.personIds,
 				URL: team.URL,
-				// repoName: team.repoName,
-				// repoUrl:  team.repoUrl
 			};
 			teams.push(teamTransport);
 		}
@@ -342,40 +407,6 @@ export class AdminController {
 		}
 		Log.info("AdminController::getDashboard(..) - # results: " + results.length + "; took: " + Util.took(start));
 		return results;
-	}
-
-	private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
-		const resultSummary = await this.clipAutoTestResult(result);
-
-		let testPass: string[] = [];
-		let testFail: string[] = [];
-		let testSkip: string[] = [];
-		let testError: string[] = [];
-
-		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
-			const report: GradeReport = result.output.report;
-			if (typeof report.passNames !== "undefined") {
-				testPass = report.passNames;
-			}
-			if (typeof report.failNames !== "undefined") {
-				testFail = report.failNames;
-			}
-			if (typeof report.skipNames !== "undefined") {
-				testSkip = report.skipNames;
-			}
-			if (typeof report.errorNames !== "undefined") {
-				testError = report.errorNames;
-			}
-		}
-
-		return {
-			...resultSummary,
-			testPass: testPass,
-			testFail: testFail,
-			testError: testError,
-			testSkip: testSkip,
-			custom: {},
-		};
 	}
 
 	public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind): Promise<Result[]> {
@@ -488,65 +519,6 @@ export class AdminController {
 	}
 
 	/**
-	 * Transforms a Result into an AutoTestResultSummaryTransport
-	 */
-	private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
-		const repoId = result.input.target.repoId;
-		const repoURL =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
-
-		let scoreOverall = null;
-		let scoreCover = null;
-		let scoreTest = null;
-
-		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
-			const report = result.output.report;
-			if (typeof report.scoreOverall !== "undefined") {
-				scoreOverall = report.scoreOverall;
-			}
-			if (typeof report.scoreTest !== "undefined") {
-				scoreTest = report.scoreTest;
-			}
-			if (typeof report.scoreCover !== "undefined") {
-				scoreCover = report.scoreCover;
-			}
-		}
-
-		const state = this.selectState(result);
-
-		return {
-			repoId: repoId,
-			repoURL: repoURL,
-			delivId: result.delivId,
-			state: state,
-			timestamp: result.output.timestamp,
-			commitSHA: result.input.target.commitSHA,
-			commitURL: result.input.target.commitURL,
-			scoreOverall: scoreOverall,
-			scoreCover: scoreCover,
-			scoreTests: scoreTest,
-			custom: {},
-		};
-	}
-
-	/**
-	 * Takes a result, and if the VM was successful picks the state of the report.
-	 *     else returns the state of the VM
-	 * @param result
-	 */
-	private selectState(result: Result): string {
-		// if the VM state is SUCCESS, return the report state
-		let state = "UNDEFINED";
-		if (typeof result.output !== "undefined" && typeof result.output.state !== "undefined") {
-			state = result.output.state.toString();
-		}
-		if (state === "SUCCESS" && typeof result.output.report.result !== "undefined") {
-			state = result.output.report.result;
-		}
-		return state;
-	}
-
-	/**
 	 * Gets the deliverables associated with the course.
 	 *
 	 * @returns {Promise<DeliverableTransport[]>}
@@ -569,43 +541,6 @@ export class AdminController {
 
 		Log.trace("AdminController::getDeliverables() - done; # delivs: " + delivs.length + "; took: " + Util.took(start));
 		return delivs;
-	}
-
-	/**
-	 * Validates the CourseTransport object.
-	 *
-	 * @param {CourseTransport} courseTrans
-	 * @returns {string | null} null if object is valid; string description of error if not.
-	 */
-	public static validateCourseTransport(courseTrans: CourseTransport): string | null {
-		if (typeof courseTrans === "undefined" || courseTrans === null) {
-			const msg = "Course not populated.";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.id !== "string") {
-			const msg = "Course.id not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.defaultDeliverableId !== "string") {
-			const msg = "defaultDeliverableId not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			return msg;
-		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof courseTrans.custom !== "object") {
-			const msg = "custom not specified";
-			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
-			return msg;
-		}
-
-		return null;
 	}
 
 	/**
@@ -810,7 +745,8 @@ export class AdminController {
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
-				if (repo.URL === null) {
+				// if (repo.URL === null) {
+				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
 					// key check: repo.URL is only set if the repo has been provisioned
 					const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
 					const teams: Team[] = await Promise.all(futureTeams);
@@ -821,7 +757,8 @@ export class AdminController {
 
 					if (success === true) {
 						repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-						repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
+						// repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
+						repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 						await dbc.writeRepository(repo);
 						Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
 						provisionedRepos.push(repo);
@@ -909,9 +846,11 @@ export class AdminController {
 				const repo = await this.dbc.getRepository(names.repoName);
 
 				/* istanbul ignore else */
-				if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
+				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
+				if (team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
 					/* istanbul ignore else */
-					if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
+					// if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
+					if (repo !== null && repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
 						// aka only release provisioned repos
 						reposToRelease.push(repo);
@@ -939,7 +878,8 @@ export class AdminController {
 		// we want to know all repos whether they are released or not
 		const allRepos: Repository[] = reposAlreadyReleased;
 		for (const toReleaseRepo of reposToRelease) {
-			toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
+			// toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
+			toReleaseRepo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // denotes that repo has not been released yet
 			allRepos.push(toReleaseRepo);
 		}
 		return allRepos;
@@ -956,7 +896,9 @@ export class AdminController {
 		for (const repo of repos) {
 			try {
 				const startRepo = Date.now();
-				if (repo.URL !== null) {
+				// if (repo.URL !== null) {
+				// can only release repos that are provisioned
+				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
 					const teams: Team[] = [];
 					for (const teamId of repo.teamIds) {
 						teams.push(await this.dbc.getTeam(teamId));
@@ -1031,19 +973,29 @@ export class AdminController {
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-				if (repo.custom.githubCreated !== true) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
-					repo.custom.githubCreated = true;
+				// if (repo.custom.githubCreated !== true) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
+				// 	repo.custom.githubCreated = true;
+				// }
+				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - gitHubStatus should be PROVISIONED for created: " + repo.id);
+					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // linking does not matter for repos
 				}
 			} else {
-				if (repo.custom.githubCreated !== false) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
-					repo.custom.githubCreated = false; // does not exist, must not be created
-				}
+				// if (repo.custom.githubCreated !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
+				// 	repo.custom.githubCreated = false; // does not exist, must not be created
+				// }
+				//
+				// if (repo.custom.githubReleased !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
+				// 	repo.custom.githubReleased = false; // does not exist, must not be released
+				// }
 
-				if (repo.custom.githubReleased !== false) {
-					Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
-					repo.custom.githubReleased = false; // does not exist, must not be released
+				// repo does not exist
+				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - gitHubStatus can only be NOT_PROVISIONED for !created: " + repo.id);
+					repo.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
 				}
 
 				if (repo.URL !== null) {
@@ -1088,9 +1040,14 @@ export class AdminController {
 					team.githubId = null; // does not exist, must not have a number
 				}
 
-				if (team.custom.githubAttached !== false) {
-					Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
-					team.custom.githubAttached = false; // does not exist, must not be attached
+				// if (team.custom.githubAttached !== false) {
+				// 	Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
+				// 	team.custom.githubAttached = false; // does not exist, must not be attached
+				// }
+
+				if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					Log.warn("AdminController::dbSanityCheck() - team should not exist: " + team.id);
+					team.gitHubStatus = GitHubStatus.NOT_PROVISIONED; // does not exist, must not be attached
 				}
 			}
 
@@ -1121,14 +1078,26 @@ export class AdminController {
 				}
 
 				if (isTeamOnRepo === true) {
-					if (repo.custom.githubReleased !== true) {
-						repo.custom.githubReleased = true;
+					// if (repo.custom.githubReleased !== true) {
+					// 	repo.custom.githubReleased = true;
+					// 	Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
+					// }
+
+					// if a team is on a repo, it must be provisioned and linked
+					if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
+						// repo.custom.githubReleased = true;
+						repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
 						Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
 					}
 
-					if (team.custom.githubAttached !== true) {
-						team.custom.githubAttached = true;
-						Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+					// if (team.custom.githubAttached !== true) {
+					// 	team.custom.githubAttached = true;
+					// 	Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
+					// }
+
+					if (team.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
+						team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
+						Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_LINKED: " + team.id);
 					}
 
 					if (dryRun === false) {
@@ -1140,9 +1109,11 @@ export class AdminController {
 
 			if (repoHasBeenChecked === false) {
 				// repos that were not found to have teams must not be released
-				if (repo.custom.githubReleased !== false) {
-					repo.custom.githubReleased = false; // was not found above, must be unreleased
-					Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be false: " + repo.id);
+				// if (repo.custom.githubReleased !== false) {
+				// 	repo.custom.githubReleased = false; // was not found above, must be unreleased
+				if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
+					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					Log.warn("AdminController::dbSanityCheck() - repo.gitHubStatus should be PROVISIONED_UNLINKED: " + repo.gitHubStatus);
 
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
@@ -1161,9 +1132,11 @@ export class AdminController {
 			}
 			if (checked === false) {
 				// teams that were not found with repos must not be attached
-				if (team.custom.githubAttached !== false) {
-					team.custom.githubAttached = false;
-					Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be false: " + team.id);
+				// if (team.custom.githubAttached !== false) {
+				// 	team.custom.githubAttached = false;
+				if (team.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
+					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_UNLINKED: " + team.id);
 
 					if (dryRun === false) {
 						await this.dbc.writeTeam(team);
@@ -1173,6 +1146,82 @@ export class AdminController {
 		}
 
 		Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
+	}
+
+	private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
+		const resultSummary = await this.clipAutoTestResult(result);
+
+		let testPass: string[] = [];
+		let testFail: string[] = [];
+		let testSkip: string[] = [];
+		let testError: string[] = [];
+
+		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
+			const report: GradeReport = result.output.report;
+			if (typeof report.passNames !== "undefined") {
+				testPass = report.passNames;
+			}
+			if (typeof report.failNames !== "undefined") {
+				testFail = report.failNames;
+			}
+			if (typeof report.skipNames !== "undefined") {
+				testSkip = report.skipNames;
+			}
+			if (typeof report.errorNames !== "undefined") {
+				testError = report.errorNames;
+			}
+		}
+
+		return {
+			...resultSummary,
+			testPass: testPass,
+			testFail: testFail,
+			testError: testError,
+			testSkip: testSkip,
+			custom: {},
+		};
+	}
+
+	/**
+	 * Transforms a Result into an AutoTestResultSummaryTransport
+	 */
+	private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
+		const repoId = result.input.target.repoId;
+		const repoURL =
+			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
+
+		let scoreOverall = null;
+		let scoreCover = null;
+		let scoreTest = null;
+
+		if (typeof result.output !== "undefined" && typeof result.output.report !== "undefined") {
+			const report = result.output.report;
+			if (typeof report.scoreOverall !== "undefined") {
+				scoreOverall = report.scoreOverall;
+			}
+			if (typeof report.scoreTest !== "undefined") {
+				scoreTest = report.scoreTest;
+			}
+			if (typeof report.scoreCover !== "undefined") {
+				scoreCover = report.scoreCover;
+			}
+		}
+
+		const state = this.selectState(result);
+
+		return {
+			repoId: repoId,
+			repoURL: repoURL,
+			delivId: result.delivId,
+			state: state,
+			timestamp: result.output.timestamp,
+			commitSHA: result.input.target.commitSHA,
+			commitURL: result.input.target.commitURL,
+			scoreOverall: scoreOverall,
+			scoreCover: scoreCover,
+			scoreTests: scoreTest,
+			custom: {},
+		};
 	}
 
 	// NOTE: the default implementation is currently broken; do not use it.
@@ -1231,32 +1280,19 @@ export class AdminController {
 	// }
 
 	/**
-	 * Returns null if the object is valid. This API is terrible.
-	 *
-	 * @param {ProvisionTransport} obj
-	 * @returns {ProvisionTransport | null}
+	 * Takes a result, and if the VM was successful picks the state of the report.
+	 *     else returns the state of the VM
+	 * @param result
 	 */
-	public static validateProvisionTransport(obj: ProvisionTransport): ProvisionTransport | null {
-		if (typeof obj === "undefined" || obj === null) {
-			const msg = "Transport not populated.";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
+	private selectState(result: Result): string {
+		// if the VM state is SUCCESS, return the report state
+		let state = "UNDEFINED";
+		if (typeof result.output !== "undefined" && typeof result.output.state !== "undefined") {
+			state = result.output.state.toString();
 		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof obj.delivId !== "string") {
-			const msg = "Provision.id not specified";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
+		if (state === "SUCCESS" && typeof result.output.report.result !== "undefined") {
+			state = result.output.report.result;
 		}
-
-		// noinspection SuspiciousTypeOfGuard
-		if (typeof obj.formSingle !== "boolean") {
-			const msg = "formSingle not specified";
-			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
-			throw new Error(msg);
-		}
-
-		return null;
+		return state;
 	}
 }
