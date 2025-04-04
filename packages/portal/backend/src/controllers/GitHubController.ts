@@ -89,6 +89,7 @@ export class GitHubController implements IGitHubController {
 		return teamUrl;
 	}
 
+	// is this even used anymore? provisionRepository seems to use GHA directly?
 	/**
 	 * Creates the given repository on GitHub. Returns the Repository object when it is done (or null if it failed).
 	 *
