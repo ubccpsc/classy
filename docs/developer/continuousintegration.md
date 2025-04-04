@@ -3,7 +3,7 @@
 A pull-request MUST pass all tests in the continuous integration (CI) test suite before it is merged into the `main` branch of the root `ubccpsc` project. This setup ensures that code may only be merged into the `main` branch:
 
 1. Through a pull-request opened on GitHub.
-2. Approved by at least one member of the project, AND ONLY (c.)
+2. Approved by at least one member of the project.
 3. ONLY after all tests pass.
 
    Code will be tested on any branch pushed to the remote `origin` of your fork. A passing CircleCI check is necessary to merge code into your main `main` branch, which will be enforced by GitHub and code contributors.
