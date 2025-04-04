@@ -1,6 +1,5 @@
-import {AutoTestResult} from "../../../common/src/types/AutoTestTypes";
-import {AutoTestConfig} from "../../../common/src/types/ContainerTypes";
-import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../../common/src/types/CS340Types";
+import { AutoTestResult } from "../../../common/src/types/AutoTestTypes";
+import { AutoTestConfig } from "../../../common/src/types/ContainerTypes";
 
 /**
  * These types are the storage-specific types used by the backend.
@@ -45,137 +44,164 @@ import {AssignmentGrade, AssignmentInfo, AssignmentRepositoryInfo} from "../../.
  */
 
 export interface Person {
-    readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
-    readonly csId: string;
-    readonly studentNumber: number | null;
-    githubId: string; // warning: this can change (e.g., if student updates their CWL)
+	readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
+	readonly csId: string;
+	readonly studentNumber: number | null;
+	githubId: string; // warning: this can change (e.g., if student updates their CWL)
 
-    fName: string;
-    lName: string;
-    kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
-    URL: string | null; // usually the GitHub profile URL for the person; null when not yet validated
+	fName: string;
+	lName: string;
+	kind: PersonKind | null; // student, staff, admin (staff / admin taken from GitHub if kind is null)
+	URL: string | null; // usually the GitHub profile URL for the person; null when not yet validated
 
-    labId: string | null; // null for non-students
+	labId: string | null; // null for non-students
 
-    custom: {
-        sdmmStatus?: string, // SDMM // TODO: make into sdmm.status
-        myProp?: any // PersonControllerSpec
-    };
+	custom: {
+		myProp?: any; // PersonControllerSpec
+	};
 }
 
 /**
  * These are the kinds of Person. Using an enum for greater type checking flexibility.
  */
 export enum PersonKind {
-    NONE = "",
-    STUDENT = "student",
-    WITHDRAWN = "withdrawn", // typically a student who has left the class
-    ADMINSTAFF = "adminstaff",
-    ADMIN = "admin",
-    STAFF = "staff"
+	NONE = "",
+	STUDENT = "student",
+	WITHDRAWN = "withdrawn", // typically a student who has left the class
+	ADMINSTAFF = "adminstaff",
+	ADMIN = "admin",
+	STAFF = "staff",
 }
 
 export interface Auth {
-    personId: string; // invariant
-    token: string | null;
+	personId: string; // invariant
+	token: string | null;
 }
 
 // NOTE: Intentionally not linked to Repository (see docs at top of file)
 export interface Deliverable {
-    readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
-    URL: string; // links to the public deliverable description
+	readonly id: string; // primary key; invariant. this is the shortname of the deliverable (e.g., d1)
+	URL: string; // links to the public deliverable description
 
-    openTimestamp: number;
-    closeTimestamp: number;
-    gradesReleased: boolean; // whether students can see their grades
+	openTimestamp: number;
+	closeTimestamp: number;
+	gradesReleased: boolean; // whether students can see their grades
 
-    visibleToStudents: boolean; // whether students even see the column
+	visibleToStudents: boolean; // whether students even see the column
 
-    rubric: any; // captures rubric-specific definitions
-    // custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
-    custom: {
-        rubric?: any, // CS340REST
-        assignment?: AssignmentInfo // AssignmentController
-        // courseWeight?: any, // AssignmentController // TODO: make into assignment.courseWeight
-        // seedRepoURL?: any, // RubricController // TODO: make into rubric.seedRepoURL
-        // seedRepoPath?: any, // RubricController // TODO: make into rubric.seedRepoPath
-        // mainFilePath?: any // AssignmentController // TODO: make into assignment.mainFilePath
-    };
+	rubric: any; // captures rubric-specific definitions
+	// custom: any; // {}; not used by the default implementation, but useful for extension (e.g., schemas)
+	custom: any; // useful for extension
 
-    lateAutoTest: boolean; // whether the deliv can be executed after the deadline
-    shouldAutoTest: boolean; // whether the deliv will use AutoTest
-    autotest: AutoTestConfig;
+	lateAutoTest: boolean; // whether the deliv can be executed after the deadline
+	shouldAutoTest: boolean; // whether the deliv will use AutoTest
+	autotest: AutoTestConfig;
 
-    // these options are only set if shouldProvision is true
-    shouldProvision: boolean; // whether the deliv is for provisioning at all; if not, the fields below are not needed
-    repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
-    teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
-    importURL: string | null; // URL that should be cloned for the repos to be provisioned
-    teamMinSize: number;
-    teamMaxSize: number;
-    teamSameLab: boolean;
-    teamStudentsForm: boolean;
+	// these options are only set if shouldProvision is true
+	shouldProvision: boolean; // whether the deliv is for provisioning at all; if not, the fields below are not needed
+	repoPrefix: string | null; // prefix for repo names (e.g., project_ or d1_)
+	teamPrefix: string | null; // prefix for team names (e.g., pTeam_ or d1Team_)
+	importURL: string | null; // URL that should be cloned for the repos to be provisioned
+	teamMinSize: number;
+	teamMaxSize: number;
+	teamSameLab: boolean;
+	teamStudentsForm: boolean;
+}
+
+/**
+ * Tracks the GitHub status of Teams and Repositories.
+ *
+ * Creating a Team or Repository object in the database does not mean that it has
+ * been provisioned on the GitHub instance.
+ *
+ * NOT_PROVISIONED: The team/repo exists in the DB but not on GitHub.
+ *
+ * LINKED / UNLINKED: Differentiates between teams and repos that have been
+ * provisioned, but not linked to each other. This is important because an
+ * unlinked team or repo is effectively read-only to students.
+ */
+export enum GitHubStatus {
+	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
+	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (team: not linked to repo, repo: no assigned team)
+	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team/repo provisioned on GitHub and linked to each other
 }
 
 export interface Team {
-    readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
-    /**
-     * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
-     * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
-     */
-    readonly delivId: string; // invariant
+	readonly id: string; // invariant; the name of the team. must be unique locally and on GitHub
 
-    URL: string | null; // null when not yet created
-    githubId: number | null; // null when not yet created
-    personIds: string[]; // Person.id[] - foreign key
-    // repoName: string | null;
-    // repoUrl: string | null;
+	/**
+	 * The deliverable the team was provisioned for. Does _NOT_ influence what AutoTest can be
+	 * run against, but specifies the constraints placed upon the team (e.g., from the Deliverable).
+	 */
+	readonly delivId: string; // invariant
 
-    // githubStatus: string; // NONE | CREATED | LINKED
-    custom: {
-        githubAttached?: boolean,
+	/**
+	 * The people associated with a team.
+	 */
+	personIds: string[]; // Person.id[] - foreign key
 
-        sdmmd0?: boolean,
-        sdmmd1?: boolean,
-        sdmmd2?: boolean,
-        sdmmd3?: boolean,
-    };
+	/**
+	 * The GitHub URL for the team.
+	 *
+	 * This should only be used to keep track of the team, not to compute its status
+	 * (e.g., that the team has been provisioned on GitHub).
+	 */
+	URL: string | null;
+
+	/**
+	 * The GitHub status for the team.
+	 */
+	gitHubStatus: GitHubStatus;
+
+	/**
+	 * GitHub assigns a numeric value to team objects. Looking this up can be slow,
+	 * especially for tasks where all team numbers are needed.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	githubId: number | null;
+
+	custom: {};
 }
 
 // NOTE: Intentionally not linked to Deliverable (see docs at top of file)
 export interface Repository {
-    /**
-     * The name of the repo; must be unique locally and on GitHub.
-     */
-    readonly id: string; // invariant
-    /**
-     * The deliverable the repository was provisioned for. This does not modify AutoTest
-     * but is used to track provisioning.
-     */
-    readonly delivId: string; // invariant
+	/**
+	 * The name of the repo; must be unique locally and on GitHub.
+	 */
+	readonly id: string; // invariant
 
-    URL: string | null; // URL for project in version control system; null if not yet created
-    cloneURL: string | null; // git clone URL for project; null if not yet created
-    teamIds: string[]; // Team.id[] - foreign key
+	/**
+	 * The deliverable the repository was provisioned for. This does not modify AutoTest
+	 * but is used to track provisioning.
+	 */
+	readonly delivId: string; // invariant
 
-    // githubStatus: string; // NONE | CREATED
+	/**
+	 * Teams associated with the repo.
+	 */
+	teamIds: string[]; // Team.id[] - foreign key
 
-    custom: { // rather than having custom be .any, this allows courses to make sure they do not clash on their .custom parameters
-        githubCreated?: boolean,
-        githubReleased?: boolean,
+	/**
+	 * URL for project in version control system; null if not yet known.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	URL: string | null;
 
-        // status?: any, // AssignmentController // TODO: make into assignment.status
-        // assignmentId?: any, // AssignmentController // TODO: make into assignment.id
-        // assignedTeams?: any, // AssignmentController // TODO: make into assignment.assignedTeams
+	/**
+	 * git clone URL for project; null if not yet known.
+	 *
+	 * DANGER: do not use as replacement for gitHubStatus!
+	 */
+	cloneURL: string | null; // git clone URL for project; null if not yet created
 
-        assignmentInfo?: AssignmentRepositoryInfo,
+	/**
+	 * The GitHub status for the team.
+	 */
+	gitHubStatus: GitHubStatus;
 
-        d0enabled?: boolean, // SDMM // TODO: make sdmm.d0enabled
-        d1enabled?: boolean, // SDMM // TODO: make sdmm.d1enabled
-        d2enabled?: boolean, // SDMM // TODO: make sdmm.d2enabled
-        d3enabled?: boolean  // SDMM // TODO: make sdmm.d3enabled
-        sddmD3pr?: boolean, // SDMM // TODO: make sdmm.d3pr
-    };
+	custom: {};
 }
 
 /**
@@ -183,63 +209,64 @@ export interface Repository {
  * (in contrast to course-level static data in the .env file)
  */
 export interface Course {
-    readonly id: string; // invariant; this is the name of the course
-    defaultDeliverableId: string | null; // Deliverable.id foreign key
-    custom: {
-        status?: string
-    };
+	readonly id: string; // invariant; this is the name of the course
+	defaultDeliverableId: string | null; // Deliverable.id foreign key
+	custom: {
+		status?: string;
+	};
 }
 
 export enum AuditLabel {
-    COURSE = "Course",
-    DELIVERABLE = "Deliverable",
-    REPOSITORY = "Repository",
-    TEAM = "TEAM",
-    TEAM_ADMIN = "TeamAdmin", // Created / updated by admin
-    TEAM_STUDENT = "TeamStudent", // Created / updated by student
-    GRADE_ADMIN = "GradeAdmin", // Created / updated by admin
-    GRADE_CHANGE = "Grade_Change",
-    GRADE_AUTOTEST = "GradeAutotest",
-    REPO_PROVISION = "RepositoryProvision",
-    REPO_RELEASE = "RepositoryRelease",
-    CLASSLIST_UPLOAD = "Classlist_Upload",
-    CLASSLIST_PRUNE = "Classlist_Prune"
+	COURSE = "Course",
+	DELIVERABLE = "Deliverable",
+	REPOSITORY = "Repository",
+	TEAM = "TEAM",
+	TEAM_ADMIN = "TeamAdmin", // Created / updated by admin
+	TEAM_STUDENT = "TeamStudent", // Created / updated by student
+	GRADE_ADMIN = "GradeAdmin", // Created / updated by admin
+	GRADE_CHANGE = "Grade_Change",
+	GRADE_AUTOTEST = "GradeAutotest",
+	REPO_PROVISION = "RepositoryProvision",
+	REPO_RELEASE = "RepositoryRelease",
+	CLASSLIST_UPLOAD = "Classlist_Upload",
+	CLASSLIST_PRUNE = "Classlist_Prune",
 }
 
 export interface AuditEvent {
-    label: string;
-    timestamp: number;
-    personId: string;
-    before: object | null;
-    after: object | null;
-    custom: object; // enables easier querying
+	label: string;
+	timestamp: number;
+	personId: string;
+	before: object | null;
+	after: object | null;
+	custom: object; // enables easier querying
 }
 
 export interface Grade {
-    // this should be the personId associated with the repo, not a staff who invoked it!
-    readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person
-    readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
+	// this should be the personId associated with the repo, not a staff who invoked it!
+	readonly personId: string; // Person.id; grades are really on repos, but we only care about them by person
+	readonly delivId: string; // Deliverable.id - foreign key // could be a Deliverable, but this is just easier
 
-    score: number;
-    comment: string;
-    timestamp: number;
+	score: number;
+	comment: string;
+	timestamp: number;
 
-    urlName: string | null; // name associated with URL (e.g., project name)
-    URL: string | null; // link to commit, if appropriate or repoUrl if not
+	urlName: string | null; // name associated with URL (e.g., project name)
+	URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-    // bucket grading can use this to store the bucket name
-    custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+	// bucket grading can use this to store the bucket name
+	custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
 }
 
-export interface Result extends AutoTestResult { // TODO: define this without this extends. This import is no good!
-    people: string[];
+export interface Result extends AutoTestResult {
+	// TODO: define this without this extends. This import is no good!
+	people: string[];
 }
 
 // same as IFeedbackGiven from AutoTestTypes
 export interface FeedbackRecord {
-    personId: string;
-    delivId: string;
-    timestamp: number;
-    commitURL: string; // for information only
-    kind: string; // "standard" | "check"
+	personId: string;
+	delivId: string;
+	timestamp: number;
+	commitURL: string; // for information only
+	kind: string; // "standard" | "check"
 }
