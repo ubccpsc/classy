@@ -78,3 +78,4 @@ Underneath the repository settings area, select "Branches" on the left-panel and
   - Require pull request reviews before merging (1 or more approval required before merge)
   - Require status checks to pass before merging (select `ci/circleci:build`, deselect `coverage/coveralls`)
   - Include Administrators
+
