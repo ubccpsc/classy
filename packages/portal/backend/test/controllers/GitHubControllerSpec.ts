@@ -180,7 +180,7 @@ describe("GitHubController", () => {
 		expect(repo).to.not.be.null;
 
 		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.createRepository(repo.id, importURL);
+		const success = await gc.createRepositoryFromFS(repo.id, importURL);
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
@@ -213,7 +213,7 @@ describe("GitHubController", () => {
 		try {
 			// repo already exists
 			Log.test("checking repo that already exists");
-			res = await gc.createRepository(repo.id, importURL);
+			res = await gc.createRepositoryFromFS(repo.id, importURL);
 		} catch (err) {
 			ex = err;
 		}
@@ -225,7 +225,7 @@ describe("GitHubController", () => {
 		try {
 			// should fail because Repository object does not exist for this repoName
 			Log.test("checking repo that is not in datastore");
-			res = await gc.createRepository("unknownId" + Date.now(), importURL);
+			res = await gc.createRepositoryFromFS("unknownId" + Date.now(), importURL);
 		} catch (err) {
 			ex = err;
 		}
@@ -252,7 +252,7 @@ describe("GitHubController", () => {
 		Log.test("Custom setup done");
 
 		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.createRepository(repo.id, importURL, "README.md");
+		const success = await gc.createRepositoryFromFS(repo.id, importURL, "README.md");
 		Log.test("Custom test done: " + success);
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
