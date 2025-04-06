@@ -38,8 +38,10 @@ describe("GitHubController", () => {
 		gha = GitHubActions.getInstance(true);
 		await gha.deleteTeam(TestHarness.TEAMNAME1);
 		await gha.deleteTeam(TestHarness.TEAMNAME2);
+		await gha.deleteTeam(TestHarness.TEAMNAME3);
 		await gha.deleteRepo(TestHarness.REPONAME1);
 		await gha.deleteRepo(TestHarness.REPONAME2);
+		await gha.deleteRepo(TestHarness.REPONAME3);
 
 		// get data ready
 		await TestHarness.prepareDeliverables();
@@ -63,8 +65,11 @@ describe("GitHubController", () => {
 			TestHarness.GITHUB2.id,
 		]);
 		await dbc.writeTeam(t2);
-		// const t3 = await Test.teamCreate(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
-		// await dbc.writeTeam(t3);
+		const t3 = await TestHarness.createTeam(TestHarness.TEAMNAME3, TestHarness.DELIVID2, [
+			TestHarness.GITHUB1.id,
+			TestHarness.GITHUB2.id,
+		]);
+		await dbc.writeTeam(t3);
 
 		const dc = new DeliverablesController();
 		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
@@ -72,7 +77,7 @@ describe("GitHubController", () => {
 		const rc = new RepositoryController();
 		await rc.createRepository(TestHarness.REPONAME1, deliv, [t1], {});
 		await rc.createRepository(TestHarness.REPONAME2, deliv, [t2], {});
-		// await rc.createRepository(Test.REPONAME3, [t3], {});
+		await rc.createRepository(TestHarness.REPONAME3, deliv, [t3], {});
 	});
 
 	after(() => {
@@ -217,6 +222,20 @@ describe("GitHubController", () => {
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
+	it("Should be able to provision a repo from a Template.", async function () {
+		// setup
+		const rc: RepositoryController = new RepositoryController();
+		const repo = await rc.getRepository(TestHarness.REPONAME3);
+		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+		expect(repo).to.not.be.null;
+
+		const templateOwnerName = TestHarness.ORGNAMEREAL;
+		const templateName = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+
+		const success = await gc.provisionRepositoryFromTemplate(repo.id, templateOwnerName, templateName);
+		expect(success).to.be.true;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
 	// does not actually check the right thing (aka it fails because the repo db object does not exist, not because creation failed)
 	// it("Should not be able to create a repo with an invalid name.", async function() {
 	//     const name = ""; // // repo names must have length 1 on github
@@ -331,7 +350,7 @@ describe("GitHubController", () => {
 		const tc: TeamController = new TeamController();
 		const allTeams: Team[] = await tc.getAllTeams();
 		const teamCount: number = allTeams.length;
-		Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
+		Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamCount: " + teamCount);
 		expect(teamCount).to.be.greaterThan(1);
 		let res = null;
 		let ex = null;
@@ -347,7 +366,7 @@ describe("GitHubController", () => {
 		res = null;
 		ex = null;
 		try {
-			const team: any = { id: TestHarness.TEAMNAME3, personIds: [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id] };
+			const team: any = { id: TestHarness.TEAMNAME3 + "DOESNOTEXIST", personIds: [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id] };
 			// try to release a repo with a team that does not exist
 			res = await gc.releaseRepository(allRepos[1], [team], false);
 			expect(res).to.be.false;
