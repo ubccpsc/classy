@@ -739,15 +739,11 @@ export class AdminController {
 		Log.info("AdminController::performProvision(..) - start; # repos: " + repos.length + "; importURL: " + importURL);
 		const provisionedRepos: Repository[] = [];
 
-		const errors = [];
-
 		for (const repo of repos) {
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
-				// if (repo.URL === null) {
 				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
-					// key check: repo.URL is only set if the repo has been provisioned
 					const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
 					const teams: Team[] = await Promise.all(futureTeams);
 					Log.trace("AdminController::performProvision(..) - about to provision: " + repo.id);
@@ -756,10 +752,6 @@ export class AdminController {
 					Log.trace("AdminController::performProvision(..) - provisioned: " + repo.id + "; success: " + success);
 
 					if (success === true) {
-						repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-						// repo.custom.githubCreated = true; // might not be necessary anymore; should just use repo.URL !== null
-						repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-						await dbc.writeRepository(repo);
 						Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
 						provisionedRepos.push(repo);
 					} else {

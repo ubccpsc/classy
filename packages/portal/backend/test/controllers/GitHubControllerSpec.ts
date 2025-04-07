@@ -127,7 +127,7 @@ describe("GitHubController", () => {
 		const repos = await new RepositoryController().getAllRepos();
 		expect(repos.length).to.be.greaterThan(0);
 
-		const repoUrl = await gc.getRepositoryUrl(repos[0]);
+		const repoUrl = gc.getRepositoryUrl(repos[0]);
 		const config = Config.getInstance();
 		const url = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + TestHarness.REPONAME1;
 		expect(repoUrl).to.equal(url);
@@ -218,8 +218,36 @@ describe("GitHubController", () => {
 		expect(repo).to.not.be.null;
 
 		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.provisionRepositoryFromFS(repo.id, importURL);
+		// const success = await gc.provisionRepositoryFromFS(repo.id, importURL);
+		const success = await gc.provisionRepository(repo.id, [], importURL);
 		expect(success).to.be.true;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
+	it("Should fail to provision a repo from invalid Template URLs.", async function () {
+		const repoName = "validName";
+		let url = "";
+		let provisionSuccessful = null;
+		let ex = null;
+
+		// not owner/repoName
+		try {
+			url = "one/two/three";
+			provisionSuccessful = await gc.provisionRepository(repoName, [], url);
+		} catch (err) {
+			ex = err;
+		}
+		expect(provisionSuccessful).to.be.null;
+		expect(ex).to.not.be.null;
+
+		// git url in repo pair
+		try {
+			url = "CPSC310/project-resources.git";
+			provisionSuccessful = await gc.provisionRepository(repoName, [], url);
+		} catch (err) {
+			ex = err;
+		}
+		expect(provisionSuccessful).to.be.null;
+		expect(ex).to.not.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should be able to provision a repo from a Template.", async function () {
@@ -232,7 +260,10 @@ describe("GitHubController", () => {
 		const templateOwnerName = TestHarness.ORGNAMEREAL;
 		const templateName = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
 
-		const success = await gc.provisionRepositoryFromTemplate(repo.id, templateOwnerName, templateName);
+		const url = templateOwnerName + "/" + templateName + "#main";
+
+		// const success = await gc.provisionRepositoryFromTemplate(repo.id, templateOwnerName, templateName);
+		const success = await gc.provisionRepository(repo.id, [], url);
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
@@ -265,19 +296,20 @@ describe("GitHubController", () => {
 		try {
 			// repo already exists
 			Log.test("checking repo that already exists");
-			res = await gc.provisionRepositoryFromFS(repo.id, importURL);
+			res = await gc.provisionRepository(repo.id, [], importURL);
 		} catch (err) {
 			ex = err;
 		}
-		expect(res).to.be.null;
-		expect(ex).to.not.be.null;
+		expect(res).to.be.false; // if repo exists, just return false, do not throw
+		expect(ex).to.be.null;
 
 		res = null;
 		ex = null;
 		try {
 			// should fail because Repository object does not exist for this repoName
 			Log.test("checking repo that is not in datastore");
-			res = await gc.provisionRepositoryFromFS("unknownId" + Date.now(), importURL);
+			// res = await gc.provisionRepositoryFromFS("unknownId" + Date.now(), importURL);
+			res = await gc.provisionRepository("unknownId" + Date.now(), [], importURL);
 		} catch (err) {
 			ex = err;
 		}
@@ -285,29 +317,32 @@ describe("GitHubController", () => {
 		expect(ex).to.not.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
-	it("Should be able to create a repo with a custom path.", async function () {
-		// NOTE: this test is unreliable and needs to be fundamentally fixed
-		this.skip();
-
-		Log.test("Custom setup start");
-		// setup
-		await gha.deleteTeam(TestHarness.TEAMNAME1); // delete team
-		await TestHarness.prepareTeams();
-		await TestHarness.prepareRepositories();
-		// await Test.deleteStaleRepositories();
-		const rc: RepositoryController = new RepositoryController();
-		const repo = await rc.getRepository(TestHarness.REPONAME2); // get repo object
-		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
-
-		await gha.deleteRepo(repo.id); // delete repo from github
-		await gha.deleteRepo(TestHarness.REPONAME2); // delete repo from github
-		Log.test("Custom setup done");
-
-		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.provisionRepositoryFromFS(repo.id, importURL, "README.md");
-		Log.test("Custom test done: " + success);
-		expect(success).to.be.true;
-	}).timeout(TestHarness.TIMEOUTLONG);
+	// refactor to allow templates to work does not support paths right now
+	// this is just an api signature issue, the code is actually there to do it
+	//
+	// it("Should be able to create a repo with a custom path.", async function () {
+	// 	// NOTE: this test is unreliable and needs to be fundamentally fixed
+	// 	this.skip();
+	//
+	// 	Log.test("Custom setup start");
+	// 	// setup
+	// 	await gha.deleteTeam(TestHarness.TEAMNAME1); // delete team
+	// 	await TestHarness.prepareTeams();
+	// 	await TestHarness.prepareRepositories();
+	// 	// await Test.deleteStaleRepositories();
+	// 	const rc: RepositoryController = new RepositoryController();
+	// 	const repo = await rc.getRepository(TestHarness.REPONAME2); // get repo object
+	// 	const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+	//
+	// 	await gha.deleteRepo(repo.id); // delete repo from github
+	// 	await gha.deleteRepo(TestHarness.REPONAME2); // delete repo from github
+	// 	Log.test("Custom setup done");
+	//
+	// 	const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+	// 	const success = await gc.provisionRepositoryFromFS(repo.id, importURL, "README.md");
+	// 	Log.test("Custom test done: " + success);
+	// 	expect(success).to.be.true;
+	// }).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should be able to release a repo.", async function () {
 		// setup
