@@ -1279,96 +1279,96 @@ export default class AdminRoutes implements IREST {
 		return afterTeam;
 	}
 
-	private static updatePatches(_req: any, res: any, next: any) {
-		Log.trace("AdminRoutes::updatePatches(..) - start");
-		const start = Date.now();
+	// private static updatePatches(_req: any, res: any, next: any) {
+	// 	Log.trace("AdminRoutes::updatePatches(..) - start");
+	// 	const start = Date.now();
+	//
+	// 	const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
+	// 	const opts: RequestInit = {
+	// 		method: "post",
+	// 		agent: new http.Agent(),
+	// 	};
+	// 	fetch(url, opts)
+	// 		.then((_result) => {
+	// 			Log.info("AdminRoutes::updatePatches(..) - done; took: " + Util.took(start));
+	// 			res.send({ success: "patches updated" });
+	// 			return next();
+	// 		})
+	// 		.catch((err) => {
+	// 			return AdminRoutes.handleError(400, "Unable to update patches. Error: " + err.message, res, next);
+	// 		});
+	// }
 
-		const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
-		const opts: RequestInit = {
-			method: "post",
-			agent: new http.Agent(),
-		};
-		fetch(url, opts)
-			.then((_result) => {
-				Log.info("AdminRoutes::updatePatches(..) - done; took: " + Util.took(start));
-				res.send({ success: "patches updated" });
-				return next();
-			})
-			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to update patches. Error: " + err.message, res, next);
-			});
-	}
+	// private static listPatches(_req: any, res: any, next: any) {
+	// 	Log.trace("AdminRoutes::listPatches(..) - start");
+	// 	const start = Date.now();
+	//
+	// 	const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/patches";
+	// 	const opts: RequestInit = {
+	// 		method: "get",
+	// 		agent: new http.Agent(),
+	// 	};
+	//
+	// 	fetch(url, opts)
+	// 		.then(async (result) => {
+	// 			try {
+	// 				const patches = (await result.json()).message;
+	// 				Log.info(
+	// 					"AdminRoutes::listPatches(..) - done; " +
+	// 						patches.length +
+	// 						" patch" +
+	// 						(patches.length === 1 ? "" : "es") +
+	// 						" found; took: " +
+	// 						Util.took(start)
+	// 				);
+	// 				res.send({ success: patches });
+	// 				return next();
+	// 			} catch (err) {
+	// 				return AdminRoutes.handleError(400, "Patches not returned in expected format. Error: " + err.message, res, next);
+	// 			}
+	// 		})
+	// 		.catch((err) => {
+	// 			return AdminRoutes.handleError(400, "Unable to get patches. Error: " + err.message, res, next);
+	// 		});
+	// }
 
-	private static listPatches(_req: any, res: any, next: any) {
-		Log.trace("AdminRoutes::listPatches(..) - start");
-		const start = Date.now();
+	// private static patchRepo(req: any, res: any, next: any) {
+	// 	Log.trace("AdminRoutes::patchRepo(..) - start");
+	// 	const start = Date.now();
+	// 	const patch: string = req.params.patch;
+	// 	const repoId: string = req.params.repo;
+	// 	const root: boolean = req.params.root === "true";
+	// 	AdminRoutes.rc
+	// 		.getRepository(repoId)
+	// 		.then((repo: Repository) => {
+	// 			return AdminRoutes.ghc.createPullRequest(repo, patch, false, root);
+	// 		})
+	// 		.then((result: boolean) => {
+	// 			if (result) {
+	// 				Log.info("AdminRoutes::patchRepo(..) - done; took: " + Util.took(start));
+	// 				res.send({ success: repoId });
+	// 				return next();
+	// 			} else {
+	// 				return AdminRoutes.handleError(400, "Unable to patch repo.", res, next);
+	// 			}
+	// 		})
+	// 		.catch((err: any) => {
+	// 			return AdminRoutes.handleError(400, "Unable to patch repo. ERROR: " + err.message, res, next);
+	// 		});
+	// }
 
-		const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/patches";
-		const opts: RequestInit = {
-			method: "get",
-			agent: new http.Agent(),
-		};
-
-		fetch(url, opts)
-			.then(async (result) => {
-				try {
-					const patches = (await result.json()).message;
-					Log.info(
-						"AdminRoutes::listPatches(..) - done; " +
-							patches.length +
-							" patch" +
-							(patches.length === 1 ? "" : "es") +
-							" found; took: " +
-							Util.took(start)
-					);
-					res.send({ success: patches });
-					return next();
-				} catch (err) {
-					return AdminRoutes.handleError(400, "Patches not returned in expected format. Error: " + err.message, res, next);
-				}
-			})
-			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to get patches. Error: " + err.message, res, next);
-			});
-	}
-
-	private static patchRepo(req: any, res: any, next: any) {
-		Log.trace("AdminRoutes::patchRepo(..) - start");
-		const start = Date.now();
-		const patch: string = req.params.patch;
-		const repoId: string = req.params.repo;
-		const root: boolean = req.params.root === "true";
-		AdminRoutes.rc
-			.getRepository(repoId)
-			.then((repo: Repository) => {
-				return AdminRoutes.ghc.createPullRequest(repo, patch, false, root);
-			})
-			.then((result: boolean) => {
-				if (result) {
-					Log.info("AdminRoutes::patchRepo(..) - done; took: " + Util.took(start));
-					res.send({ success: repoId });
-					return next();
-				} else {
-					return AdminRoutes.handleError(400, "Unable to patch repo.", res, next);
-				}
-			})
-			.catch((err: any) => {
-				return AdminRoutes.handleError(400, "Unable to patch repo. ERROR: " + err.message, res, next);
-			});
-	}
-
-	private static patchSource(_req: any, res: any, next: any) {
-		Log.trace("AdminRoutes::patchSource(..) - start");
-		const patchSourceRepo: string = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
-		if (patchSourceRepo && patchSourceRepo !== "") {
-			Log.trace("AdminRoutes::patchSource(..) - Responding with patch source (" + patchSourceRepo + ")");
-			res.send({ success: patchSourceRepo });
-			return next();
-		} else {
-			Log.info("AdminRoutes::patchSource(..) - patch not found in environment");
-			return AdminRoutes.handleError(424, "Patch source repo not found in environment", res, next);
-		}
-	}
+	// private static patchSource(_req: any, res: any, next: any) {
+	// 	Log.trace("AdminRoutes::patchSource(..) - start");
+	// 	const patchSourceRepo: string = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
+	// 	if (patchSourceRepo && patchSourceRepo !== "") {
+	// 		Log.trace("AdminRoutes::patchSource(..) - Responding with patch source (" + patchSourceRepo + ")");
+	// 		res.send({ success: patchSourceRepo });
+	// 		return next();
+	// 	} else {
+	// 		Log.info("AdminRoutes::patchSource(..) - patch not found in environment");
+	// 		return AdminRoutes.handleError(424, "Patch source repo not found in environment", res, next);
+	// 	}
+	// }
 
 	public registerRoutes(server: restify.Server) {
 		Log.trace("AdminRoutes::registerRoutes() - start");
@@ -1413,13 +1413,11 @@ export default class AdminRoutes implements IREST {
 		server.del("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
 		server.del("/portal/admin/team/:teamId", AdminRoutes.isAdmin, AdminRoutes.teamDelete);
 
-		// admin patch routes
-		server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
-		server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
-		server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
-		server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
-
-		// TODO: un-release repos
+		// admin patch routes (no longer supported)
+		// server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
+		// server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
+		// server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
+		// server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
 
 		// staff-only functions
 		// NOTHING
