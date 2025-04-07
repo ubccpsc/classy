@@ -58,8 +58,9 @@ export class TestHarness {
 	public static readonly REPONAMEREAL = "d0_atest-04CSID_atest-05CSID";
 	public static readonly INVALIDREPONAME = "InvalidRepoNameShouldNotExist";
 	public static readonly REUSABLETEAMNAME = "testTeamName_" + Date.now();
+	public static readonly ORGNAMEREAL = "classytest";
 	public static readonly REPONAMEREAL_POSTTEST = "PostTestDoNotDelete";
-	public static readonly REPONAMEREAL_TESTINGSAMPLE = "TESTING_SAMPLE_REPO";
+	public static readonly REPONAMEREAL_TESTINGSAMPLE = "TESTING_SAMPLE_REPO"; // is a template repo
 	public static readonly REPOBRANCHREAL_TESTINGSAMPLE = "test-branch";
 	public static readonly REPOSUBDIRREAL_TESTINGSAMPLE = "subdirectory";
 	public static readonly REPOSEEDFILEREAL_TESTINGSAMPLE = "README.md";

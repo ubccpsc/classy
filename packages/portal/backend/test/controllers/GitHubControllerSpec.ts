@@ -12,7 +12,7 @@ import { GitHubController } from "@backend/controllers/GitHubController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { PersonKind, Repository, Team } from "@backend/Types";
+import { GitHubStatus, PersonKind, Repository, Team } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 import "./TeamControllerSpec";
@@ -38,8 +38,10 @@ describe("GitHubController", () => {
 		gha = GitHubActions.getInstance(true);
 		await gha.deleteTeam(TestHarness.TEAMNAME1);
 		await gha.deleteTeam(TestHarness.TEAMNAME2);
+		await gha.deleteTeam(TestHarness.TEAMNAME3);
 		await gha.deleteRepo(TestHarness.REPONAME1);
 		await gha.deleteRepo(TestHarness.REPONAME2);
+		await gha.deleteRepo(TestHarness.REPONAME3);
 
 		// get data ready
 		await TestHarness.prepareDeliverables();
@@ -63,8 +65,11 @@ describe("GitHubController", () => {
 			TestHarness.GITHUB2.id,
 		]);
 		await dbc.writeTeam(t2);
-		// const t3 = await Test.teamCreate(Test.TEAMNAME3, Test.DELIVID2, [Test.BOTNAME01, Test.USERNAMEGITHUB2]);
-		// await dbc.writeTeam(t3);
+		const t3 = await TestHarness.createTeam(TestHarness.TEAMNAME3, TestHarness.DELIVID2, [
+			TestHarness.GITHUB1.id,
+			TestHarness.GITHUB2.id,
+		]);
+		await dbc.writeTeam(t3);
 
 		const dc = new DeliverablesController();
 		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
@@ -72,7 +77,7 @@ describe("GitHubController", () => {
 		const rc = new RepositoryController();
 		await rc.createRepository(TestHarness.REPONAME1, deliv, [t1], {});
 		await rc.createRepository(TestHarness.REPONAME2, deliv, [t2], {});
-		// await rc.createRepository(Test.REPONAME3, [t3], {});
+		await rc.createRepository(TestHarness.REPONAME3, deliv, [t3], {});
 	});
 
 	after(() => {
@@ -130,15 +135,44 @@ describe("GitHubController", () => {
 
 	it("Should be able to provision a repo.", async function () {
 		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
-		const repos = await new RepositoryController().getAllRepos();
+		const rc = new RepositoryController();
+		const tc = new TeamController();
+
+		const repos = await rc.getAllRepos();
+		const repo = repos[0];
 		expect(repos.length).to.be.greaterThan(0);
+		expect(repo.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
+		Log.test("repo starting unprovisioned");
 
-		const teams = await new TeamController().getAllTeams();
+		const teams = await tc.getAllTeams();
 		expect(teams.length).to.be.greaterThan(0);
+		const team = teams[0];
+		expect(team.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
+		Log.test("team starting unprovisioned");
 
+		// do provisioning
 		const importUrl = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const provisioned = await gc.provisionRepository(repos[0].id, teams, importUrl);
+		const provisioned = await gc.provisionRepository(repo.id, teams, importUrl);
 		expect(provisioned).to.be.true;
+
+		const provisionedRepo = await rc.getRepository(repo.id);
+		expect(provisionedRepo).to.not.be.null;
+		expect(provisionedRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		Log.test("repo ending provisioned, unlinked");
+
+		const provisionedTeam = await tc.getTeam(team.id);
+		expect(provisionedTeam).to.not.be.null;
+		expect(provisionedTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		Log.test("team ending provisioned, unlinked");
+
+		// double check with GitHub
+		const repoExists = await gha.repoExists(repo.id);
+		expect(repoExists).to.be.true;
+		Log.test("repo on GitHub");
+
+		const teamExists = await gha.getTeamByName(team.id);
+		expect(teamExists).to.not.be.null;
+		Log.test("team on GitHub");
 	}).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should fail to provision a repo that already exists.", async function () {
@@ -149,6 +183,7 @@ describe("GitHubController", () => {
 		const teams = await new TeamController().getAllTeams();
 		expect(teams.length).to.be.greaterThan(0);
 
+		// repo already provisioned, should return false
 		const importUrl = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
 		let res = null;
 		let ex = null;
@@ -157,9 +192,12 @@ describe("GitHubController", () => {
 		} catch (err) {
 			ex = err;
 		}
-		expect(res).to.be.null;
-		expect(ex).to.not.be.null;
+		// expect(res).to.be.null;
+		// expect(ex).to.not.be.null;
+		expect(res).to.be.false;
+		expect(ex).to.be.null;
 
+		// repo not in db; should throw
 		res = null;
 		ex = null;
 		try {
@@ -172,7 +210,7 @@ describe("GitHubController", () => {
 		expect(ex).to.not.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
-	it("Should be able to create a repo.", async function () {
+	it("Should be able to provision a repo from FS.", async function () {
 		// setup
 		const rc: RepositoryController = new RepositoryController();
 		const repo = await rc.getRepository(TestHarness.REPONAME2);
@@ -180,7 +218,21 @@ describe("GitHubController", () => {
 		expect(repo).to.not.be.null;
 
 		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.createRepository(repo.id, importURL);
+		const success = await gc.provisionRepositoryFromFS(repo.id, importURL);
+		expect(success).to.be.true;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
+	it("Should be able to provision a repo from a Template.", async function () {
+		// setup
+		const rc: RepositoryController = new RepositoryController();
+		const repo = await rc.getRepository(TestHarness.REPONAME3);
+		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+		expect(repo).to.not.be.null;
+
+		const templateOwnerName = TestHarness.ORGNAMEREAL;
+		const templateName = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+
+		const success = await gc.provisionRepositoryFromTemplate(repo.id, templateOwnerName, templateName);
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
@@ -213,7 +265,7 @@ describe("GitHubController", () => {
 		try {
 			// repo already exists
 			Log.test("checking repo that already exists");
-			res = await gc.createRepository(repo.id, importURL);
+			res = await gc.provisionRepositoryFromFS(repo.id, importURL);
 		} catch (err) {
 			ex = err;
 		}
@@ -225,7 +277,7 @@ describe("GitHubController", () => {
 		try {
 			// should fail because Repository object does not exist for this repoName
 			Log.test("checking repo that is not in datastore");
-			res = await gc.createRepository("unknownId" + Date.now(), importURL);
+			res = await gc.provisionRepositoryFromFS("unknownId" + Date.now(), importURL);
 		} catch (err) {
 			ex = err;
 		}
@@ -252,7 +304,7 @@ describe("GitHubController", () => {
 		Log.test("Custom setup done");
 
 		const importURL = githubHost + "/classytest/" + TestHarness.REPONAMEREAL_TESTINGSAMPLE;
-		const success = await gc.createRepository(repo.id, importURL, "README.md");
+		const success = await gc.provisionRepositoryFromFS(repo.id, importURL, "README.md");
 		Log.test("Custom test done: " + success);
 		expect(success).to.be.true;
 	}).timeout(TestHarness.TIMEOUTLONG);
@@ -263,19 +315,28 @@ describe("GitHubController", () => {
 		const allRepos: Repository[] = await rc.getAllRepos();
 		const repoCount: number = allRepos.length;
 
-		const repo = await rc.getRepository(TestHarness.REPONAME1);
-
-		expect(repoCount).to.be.greaterThan(1);
+		// const repo = await rc.getRepository(TestHarness.REPONAME1);
+		const repo = allRepos[0];
+		expect(repo).to.not.be.null;
+		expect(repo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // repo unlinked
 
 		const tc: TeamController = new TeamController();
-		const allTeams: Team[] = await tc.getAllTeams();
-		const team = await tc.getTeam(TestHarness.TEAMNAME1);
-		const teamCount: number = allTeams.length;
-		Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
-		expect(teamCount).to.be.greaterThan(1);
+		// const team = await tc.getTeam(TestHarness.TEAMNAME1);
+		const team = await tc.getTeam(repo.teamIds[0]);
+		expect(team).to.not.be.null;
+		expect(team.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // team unlinked
 
+		// do the provisioning
 		const success = await gc.releaseRepository(repo, [team], false);
 		expect(success).to.be.true;
+
+		const finalRepo = await rc.getRepository(repo.id);
+		expect(finalRepo).to.not.be.null;
+		expect(finalRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // repo linked
+
+		const finalTeam = await tc.getTeam(team.id);
+		expect(finalTeam).to.not.be.null;
+		expect(finalTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // team linked
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should fail to release a repo if preconditions are not met.", async function () {
@@ -289,7 +350,7 @@ describe("GitHubController", () => {
 		const tc: TeamController = new TeamController();
 		const allTeams: Team[] = await tc.getAllTeams();
 		const teamCount: number = allTeams.length;
-		Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamcCount: " + teamCount);
+		Log.info("GithubControllerSpec::ReleasingRepo - repoCount: " + repoCount + " teamCount: " + teamCount);
 		expect(teamCount).to.be.greaterThan(1);
 		let res = null;
 		let ex = null;
@@ -305,7 +366,7 @@ describe("GitHubController", () => {
 		res = null;
 		ex = null;
 		try {
-			const team: any = { id: TestHarness.TEAMNAME3, personIds: [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id] };
+			const team: any = { id: TestHarness.TEAMNAME3 + "DOESNOTEXIST", personIds: [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id] };
 			// try to release a repo with a team that does not exist
 			res = await gc.releaseRepository(allRepos[1], [team], false);
 			expect(res).to.be.false;

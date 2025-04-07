@@ -160,10 +160,10 @@ describe("GitHubActions", () => {
 		const repoName = REPONAME2;
 		await rc.createRepository(repoName, deliv, [], {});
 
-		const owner = Config.getInstance().getProp(ConfigKey.org);
-		const repo = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
+		const templateOwnerName = Config.getInstance().getProp(ConfigKey.org);
+		const templateName = TestHarness.REPONAMEREAL_TESTINGSAMPLE;
 		Log.test("Creating repo with template");
-		const val = await gh.createRepoFromTemplate(repoName, owner, repo);
+		const val = await gh.createRepoFromTemplate(repoName, templateOwnerName, templateName);
 
 		const name =
 			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoName;
