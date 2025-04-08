@@ -782,12 +782,16 @@ export abstract class AutoTest implements IAutoTest {
 			};
 			// provide a way for the grade controller to contribute data directly
 			// to the grade record
+			// forward result.output.custom
 			if (record?.output?.custom) {
 				gradePayload.custom.output = record.output.custom;
 			}
-			if (record?.output?.report?.custom) {
-				gradePayload.custom.result = record.output.report.custom;
-			}
+
+			// do NOT forward other custom properties
+			// can revisit this if needed, but it is bloating the grade records unnecessarily
+			// if (record?.output?.report?.custom) {
+			// 	gradePayload.custom.result = record.output.report.custom;
+			// }
 		} catch (err) {
 			Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
 		} finally {
