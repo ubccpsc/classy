@@ -161,7 +161,7 @@ export class GitHubController implements IGitHubController {
 	 *
 	 * Attaches admin/staff teams.
 	 * Configures webhooks.
-	 * Ensures student teams are provisioned, but does not attach them.
+	 * Ensures student teams are provisioned, but they are not attached.
 	 *
 	 * @param repoName
 	 * @param teams
@@ -173,7 +173,7 @@ export class GitHubController implements IGitHubController {
 
 		const config = Config.getInstance();
 		const host = config.getProp(ConfigKey.publichostname);
-		const WEBHOOKADDR = host + "/portal/githubWebhook";
+		const WEBHOOK_ADDRESS = host + "/portal/githubWebhook";
 
 		try {
 			// Add staff team with push
@@ -188,7 +188,7 @@ export class GitHubController implements IGitHubController {
 
 			// add webhooks
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add webhook");
-			const createHook = await this.gha.addWebhook(repoName, WEBHOOKADDR);
+			const createHook = await this.gha.addWebhook(repoName, WEBHOOK_ADDRESS);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - webhook successful: " + createHook);
 
 			// ensure consistent repo settings (ensures template & FS imports turn out the same)
@@ -200,8 +200,8 @@ export class GitHubController implements IGitHubController {
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - provisioning teams");
 			let allTeamsSuccessful = true;
 			for (const team of teams) {
-				const succ = await this.provisionTeam(team);
-				if (succ === false) {
+				const success = await this.provisionTeam(team);
+				if (success === false) {
 					allTeamsSuccessful = false;
 				}
 			}
@@ -224,7 +224,7 @@ export class GitHubController implements IGitHubController {
 	 *
 	 * @param {string} repoName The name of the repository being provisioned.
 	 * @param {string} templateOwner The org/owner of the template repo.
-	 * @param {string} templateOwner The name of the template repo.
+	 * @param {string} templateRepo The name of the template repo.
 	 * @param {string[]} branchesToKeep The subset of the branches from the imported repo that should exist in the created repo.
 	 * If undefined or [], all branches are retained.
 	 * @returns {Promise<boolean>}
@@ -303,7 +303,7 @@ export class GitHubController implements IGitHubController {
 	 *
 	 * @param {Repository} repo The repository to be released. This must be in the datastore.
 	 * @param {Team[]} teams The teams to be added. These must be in the datastore.
-	 * @param {boolean} asCollaborators Whether the team members should be added as a collaborators
+	 * @param {boolean} asCollaborators Whether the team members should be added as a collaborator.
 	 * or whether a GitHub team should be created for them.
 	 * @returns {Promise<Repository | null>}
 	 */
@@ -378,7 +378,7 @@ export class GitHubController implements IGitHubController {
 
 		// ensure repo already exists in db
 		// (outside try to allow throw)
-		this.checkDatabase(repoName, null);
+		await this.checkDatabase(repoName, null);
 
 		// ensure repo not already provisioned
 		// return false for these rather than throwing (and deleting existing repos)
@@ -484,7 +484,7 @@ export class GitHubController implements IGitHubController {
 
 		try {
 			// ensure team is in DB as expected
-			this.checkDatabase(null, team.id);
+			await this.checkDatabase(null, team.id);
 
 			Log.trace("GitHubController::provisionTeam( " + team.id + " ) - start; team: " + JSON.stringify(team));
 

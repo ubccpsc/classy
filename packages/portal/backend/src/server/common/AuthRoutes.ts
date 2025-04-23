@@ -40,7 +40,7 @@ export class AuthRoutes implements IREST {
 	 *
 	 * Really.
 	 *
-	 * Code taken from restify #284
+	 * Code originated in restify#284.
 	 *
 	 * Run often by browsers, but never with the unit test suite.
 	 *
@@ -175,7 +175,7 @@ export class AuthRoutes implements IREST {
 	 */
 
 	/* istanbul ignore next */
-	public static getAuth(req: any, res: any, next: any) {
+	public static getAuth(_req: any, res: any, next: any) {
 		Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
 		const config = Config.getInstance();
@@ -194,9 +194,10 @@ export class AuthRoutes implements IREST {
 	}
 
 	/**
-	 * Handles the GitHub OAuth callback. This seems complicated, and is, so you should
-	 * really think on it over a weekend before deciding to make any edits to _anything_
-	 * in this method.
+	 * Handles the GitHub OAuth callback.
+	 *
+	 * This seems complicated, and is, so you should really think hard over
+	 * a weekend before deciding to make any edits to _anything_ in this method.
 	 *
 	 * Coverage will not happen because of GitHub dependencies.
 	 *
