@@ -24,6 +24,12 @@ export class TeamController {
 	 */
 	public static readonly STUDENTS_NAME = "students";
 
+	/**
+	 * A special GitHub team that contains all test students enrolled in a course.
+	 * This is used for staff to view Classy with a student view.
+	 */
+	public static readonly TEST_STUDENTS_NAME = "students-test";
+
 	private db: DatabaseController = DatabaseController.getInstance();
 	private gha: IGitHubActions;
 
@@ -53,7 +59,8 @@ export class TeamController {
 			if (
 				team.id === TeamController.ADMIN_NAME ||
 				team.id === TeamController.STAFF_NAME ||
-				team.id === TeamController.STUDENTS_NAME
+				team.id === TeamController.STUDENTS_NAME ||
+				team.id === TeamController.TEST_STUDENTS_NAME
 			) {
 				// do not include
 			} else {
