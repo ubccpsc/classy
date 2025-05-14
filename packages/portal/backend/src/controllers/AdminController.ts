@@ -325,6 +325,7 @@ export class AdminController {
 				id: repo.id,
 				URL: repo.URL,
 				delivId: repo.delivId,
+				gitHubStatus: repo.gitHubStatus.toString(),
 			};
 			repos.push(repoTransport);
 		}
@@ -708,7 +709,7 @@ export class AdminController {
 
 		const repoTrans: RepositoryTransport[] = [];
 		for (const repo of reposToProvision) {
-			const newRepo = { delivId: deliv.id, id: repo.id, URL: repo.URL };
+			const newRepo = { delivId: deliv.id, id: repo.id, URL: repo.URL, gitHubStatus: repo.gitHubStatus.toString() };
 			repoTrans.push(newRepo);
 		}
 

@@ -143,7 +143,7 @@ export class AdminProvisionPage extends AdminPage {
 				let toProvision = [];
 
 				for (const repo of provisionRepo) {
-					if (repo.URL === null) {
+					if (repo.gitHubStatus === "NOT_PROVISIONED") {
 						// Log.trace("Repo to provision: " + repo.id + "; URL: " + repo.URL);
 						toProvision.push(repo.id);
 					} else {
@@ -190,7 +190,7 @@ export class AdminProvisionPage extends AdminPage {
 
 				for (const repo of reposToRelease) {
 					// Log.info("repo for release: " + JSON.stringify(repo));
-					if (repo.URL === null) {
+					if (repo.gitHubStatus === "PROVISIONED_UNLINKED") {
 						toRelease.push(repo.id);
 					} else {
 						released.push(repo.id);
