@@ -1,7 +1,4 @@
-import Config from "@common/Config";
 import Log from "@common/Log";
-
-import { DatabaseController } from "../src/controllers/DatabaseController";
 import { GitHubActions, IGitHubActions } from "../src/controllers/GitHubActions";
 
 import { Repository } from "../src/Types";
@@ -9,9 +6,9 @@ import { RepositoryController } from "@backend/controllers/RepositoryController"
 
 /**
  * Sometimes you may need to perform some GitHub actions on many repositories.
- * This file shows how you can accomplish this.
+ * This file shows how you can do this.
  *
- * To run this locally you need to have a .env configured with the production values
+ * To run this locally, you need to have a .env configured with the production values
  * and an ssh tunnel configured to the server you want the database to come from.
  *
  * 1) Get on the UBC VPN.
@@ -21,7 +18,7 @@ import { RepositoryController } from "@backend/controllers/RepositoryController"
  * 5) Run this script.
  *
  * Alternatively, this can be run on the production host, which saves you from
- * having to configuring a .env.
+ * having to configure a .env.
  *
  * Regardless of how you are using this, running with DRY_RUN true
  * is always recommended, so you can ensure the script is behaving
@@ -31,7 +28,7 @@ import { RepositoryController } from "@backend/controllers/RepositoryController"
 export class RepositoryUpdater {
 	/**
 	 * Only actually performs the action if DRY_RUN is false.
-	 * Otherwise, just show what _would_ happen.
+	 * Otherwise, show what _would_ happen.
 	 * NOTE: this is ignored for the TEST_USER user.
 	 */
 	private DRY_RUN = true;
@@ -54,25 +51,13 @@ export class RepositoryUpdater {
 	 */
 	private readonly REPOPREFIX = "project_";
 
-	// private readonly MSG  = "@310-bot #d1 #force #silent.";
-	// private readonly MSG  = "@310-bot #d2 #force #silent.";
-	// private readonly MSG = "@310-bot #c1 #force #silent.";
-	// private readonly MSG = "@310-bot #c4 #force #silent.";
-	// private readonly MSG  = "@310-bot #c3 #force #silent. C3 results will be posted to the Classy grades view once they are released. " +
-	//     "\n\n Note: if you do not think this is the right commit, please fill out the project late grade request form " +
-	//     "by December 14 @ 0800; we will finalize all project grades that day.";
-
-	private dc: DatabaseController;
-
 	constructor() {
 		Log.info("RepositoryUpdater::<init> - start");
-		this.dc = DatabaseController.getInstance();
 	}
 
 	public async process(): Promise<void> {
 		Log.info("RepositoryUpdater::process() - start");
 
-		const c = Config.getInstance();
 		const gha = GitHubActions.getInstance(true);
 
 		// Find the commit you want to invoke the bot against.

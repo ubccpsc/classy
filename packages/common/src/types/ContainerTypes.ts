@@ -40,7 +40,7 @@ export interface ContainerOutput {
 export interface CommitTarget {
 	/**
 	 * The delivId the commit should be executed against. If the course does not
-	 * have a default id and one is not specified (e.g., in a commit comment)
+	 * have a default id and one is not specified (e.g., in a commit comment),
 	 * we cannot create a CommitTarget.
 	 */
 	delivId: string;
@@ -123,7 +123,7 @@ export interface GradeReport {
 
 /**
  * Description of attachments that are saved in files on disk. This
- * helps minimize database size making it easier to back up and much
+ * helps minimize database size, making it easier to back up and much
  * quicker to search and traverse (especially over the network).
  */
 export interface Attachment {

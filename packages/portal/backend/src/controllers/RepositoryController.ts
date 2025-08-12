@@ -19,6 +19,7 @@ export class RepositoryController {
 			id: repository.id,
 			URL: repository.URL,
 			delivId: repository.delivId,
+			gitHubStatus: repository.gitHubStatus.toString(),
 		};
 
 		return repo;

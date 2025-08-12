@@ -573,6 +573,7 @@ describe("AutoTest Routes", function () {
 					expect(res.status).to.equal(401);
 				}
 			});
+
 			it("Should respond 400 if the user is not in the request header.", async function () {
 				let res: any;
 
@@ -585,6 +586,7 @@ describe("AutoTest Routes", function () {
 					expect(res.status).to.equal(400);
 				}
 			});
+
 			it("Should respond 400 if the user is not a GitHub person.", async function () {
 				let res: any;
 
@@ -597,6 +599,7 @@ describe("AutoTest Routes", function () {
 					expect(res.status).to.equal(400);
 				}
 			});
+
 			it("Should respond 500 if forwarding the request to AutoTest fails.", async function () {
 				this.timeout(15000);
 				let res: any;
@@ -610,6 +613,7 @@ describe("AutoTest Routes", function () {
 					expect(res.status).to.equal(500);
 				}
 			});
+
 			// This is only for debugging, to work, an AutoTest instance must be running
 			// on the host (that is why this is skipped by default)
 			it.skip("Should be able to create a grading image, if AT is running.", async function () {

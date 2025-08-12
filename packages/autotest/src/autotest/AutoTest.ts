@@ -55,7 +55,7 @@ export interface IAutoTest {
  * and space for one to start.
  *
  * 2) Standard jobs run when no express jobs are waiting. If too
- * many jobs are added to this queue from a single user the
+ * many jobs are added to this queue from a single user, the
  * jobs are demoted to the low queue.
  *
  * 3) Low jobs are run when no express or standard jobs
@@ -72,15 +72,13 @@ export abstract class AutoTest implements IAutoTest {
 	 * going on in the other queues, these will be executed first.
 	 *
 	 * All explicit requests go on the express queue. No implicit requests
-	 * are added to this queue. Staff/Admin jobs are placed on the head
+	 * are added to this queue. Staff/Admin jobs are placed at the head
 	 * of the express queue.
 	 *
-	 * While there is no threshold on the number of jobs a student can put
-	 * on the express queue, the 'charging' mechanism should ensure that only
-	 * jobs the student is allowed to request (e.g., enough time has passed)
-	 * are added to the queue.
-	 *
-	 * @private {Queue}
+	 * There is no threshold on the number of jobs a student can put
+	 * on the express queue. However, the 'charging' mechanism should ensure
+	 * that only jobs the student is allowed to request (e.g., enough time
+	 * has passed) are added to the queue.
 	 */
 	private expressQueue = new Queue("exp");
 
@@ -94,24 +92,20 @@ export abstract class AutoTest implements IAutoTest {
 	 * To ensure feedback is timely, any scheduled standard job that exceeds
 	 * the job threshold will be replaced (without losing its queue position)
 	 * with the more recent job. Replaced jobs will be moved to the low queue.
-	 *
-	 * @private {Queue}
 	 */
 	private standardQueue = new Queue("std");
 
 	/**
-	 * Low priority jobs. These will happen whenever they can. Repos
+	 * Low-priority jobs. These will happen whenever they can. Repos
 	 * that push too rapidly will have their jobs demoted to the
 	 * low queue.
 	 *
-	 * When the low queue threshold is passed the oldest jobs _will_ be
+	 * When the low queue threshold is passed, the oldest jobs _will_ be
 	 * removed and will not be graded. This should rarely happen. But if
 	 * it does, any student request on one of these old jobs will cause the job
 	 * to run as it will be added to the express queue. As the deadline nears,
-	 * the jobs will be newer than those previously requested so the jobs
+	 * the jobs will be newer than those previously requested, so the jobs
 	 * closest to any deadline will always be run.
-	 *
-	 * @private {Queue}
 	 */
 	private lowQueue = new Queue("low");
 
@@ -119,11 +113,9 @@ export abstract class AutoTest implements IAutoTest {
 	 * The maximum number of jobs a single user can have on the standard queue
 	 * before it will schedule on the low queue instead.
 	 *
-	 * A push event will always schedule on the standard queue. If this push will
-	 * cause the user to exceed this limit, the oldest job will be moved to the
+	 * A push event will always be scheduled on the standard queue. If this push
+	 * causes the user to exceed this limit, the oldest job will be moved to the
 	 * low queue and the newer job will be scheduled on the standard queue.
-	 *
-	 * @private
 	 */
 	private readonly MAX_STANDARD_JOBS: number = 2;
 
@@ -136,8 +128,6 @@ export abstract class AutoTest implements IAutoTest {
 	 *
 	 * This is key to ensuring a single user cannot DOS the AutoTest service
 	 * by pushing too rapidly.
-	 *
-	 * @private
 	 */
 	private readonly MAX_LOW_JOBS: number = 10;
 
@@ -174,12 +164,12 @@ export abstract class AutoTest implements IAutoTest {
 	}
 
 	/**
-	 * Adds a job to the express queue. There is not a limit to these requests so
+	 * Adds a job to the express queue. There is not a limit to these requests, so
 	 * deliverables need to be configured to ensure that results cannot be requested
 	 * too often.
 	 *
-	 * If the job is already executing on any other queue it will not be added, but
-	 * if it is just sitting on another queue it will be added to express and removed
+	 * If the job is already executing on any other queue, it will not be added. But
+	 * if it is just sitting on another queue, it will be added to express and removed
 	 * from the lower priority queue.
 	 *
 	 * @param input
@@ -213,7 +203,7 @@ export abstract class AutoTest implements IAutoTest {
 
 	/**
 	 * Adds a job to the standard queue. Newer jobs will replace older jobs
-	 * that are already on this queue and the older jobs will be moved to
+	 * that are already on this queue, older jobs will be moved to
 	 * the low queue. This tries to maximize more recent feedback.
 	 *
 	 * While MAX_STANDARD_JOBS will manage the number of jobs on the queue for a
@@ -617,10 +607,10 @@ export abstract class AutoTest implements IAutoTest {
 	/**
 	 * Called when a container completes.
 	 *
-	 * Persist record (could decide to move this persistence into ClassPortal::sendResult in future).
-	 * Post back if specified by container output.
-	 * Post back if requested by TA.
-	 * Post back if requested by user and quota allows (and record feedback given).
+	 * Persist record (could decide to move this persistence into ClassPortal::sendResult in the future).
+	 * Post back if specified by containerOutput.
+	 * Post back if requested by a TA.
+	 * Post back if requested by a user, and quota allows (and record feedback given).
 	 *
 	 * @param data
 	 */
@@ -782,12 +772,16 @@ export abstract class AutoTest implements IAutoTest {
 			};
 			// provide a way for the grade controller to contribute data directly
 			// to the grade record
+			// forward result.output.custom
 			if (record?.output?.custom) {
 				gradePayload.custom.output = record.output.custom;
 			}
-			if (record?.output?.report?.custom) {
-				gradePayload.custom.result = record.output.report.custom;
-			}
+
+			// do NOT forward other custom properties
+			// can revisit this if needed, but it is bloating the grade records unnecessarily
+			// if (record?.output?.report?.custom) {
+			// 	gradePayload.custom.result = record.output.report.custom;
+			// }
 		} catch (err) {
 			Log.error("AutoTest::handleTick(..) - ERROR in execution for SHA: " + input.target.commitSHA + "; ERROR: " + err);
 		} finally {
@@ -826,7 +820,7 @@ export abstract class AutoTest implements IAutoTest {
 	}
 
 	/**
-	 * Removes a job <commitURL:deliv:ref tuple> from the jobs list.
+	 * Removes a job <commitURL:deliv:ref tuple> from the job list.
 	 *
 	 * @param commitURL
 	 * @param delivId
