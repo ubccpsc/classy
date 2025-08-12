@@ -283,6 +283,7 @@ export interface RepositoryTransport {
 	id: string;
 	URL: string;
 	delivId: string;
+	gitHubStatus: string; // would be better if this were GithubStatus, but this is a transport type
 }
 
 export interface AutoTestResultPayload {

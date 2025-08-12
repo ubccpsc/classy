@@ -24,6 +24,12 @@ export class TeamController {
 	 */
 	public static readonly STUDENTS_NAME = "students";
 
+	/**
+	 * A special GitHub team that contains all test students enrolled in a course.
+	 * This is used for staff to view Classy with a student view.
+	 */
+	public static readonly TEST_STUDENTS_NAME = "students-test";
+
 	private db: DatabaseController = DatabaseController.getInstance();
 	private gha: IGitHubActions;
 
@@ -53,7 +59,8 @@ export class TeamController {
 			if (
 				team.id === TeamController.ADMIN_NAME ||
 				team.id === TeamController.STAFF_NAME ||
-				team.id === TeamController.STUDENTS_NAME
+				team.id === TeamController.STUDENTS_NAME ||
+				team.id === TeamController.TEST_STUDENTS_NAME
 			) {
 				// do not include
 			} else {
@@ -77,7 +84,7 @@ export class TeamController {
 	/**
 	 * Gets the GitHub team number.
 	 *
-	 * Returns null if the does not exist on GitHub.
+	 * Returns null if the team does not exist on GitHub.
 	 *
 	 * @param {string} name
 	 * @returns {Promise<number | null>}
@@ -150,7 +157,7 @@ export class TeamController {
 	 * Convenience method for creating team objects when only primitive types are known. This is
 	 * especially useful for students specifying their own teams as it checks to ensure that team
 	 * constraints (specified in the deliverable) are adhered to. Once all checks pass, the code
-	 * passes through to TeamController::teamCreate(..).
+	 * passes through to TeamController::teamCreate(...).
 	 *
 	 * @param teamId
 	 * @param deliv

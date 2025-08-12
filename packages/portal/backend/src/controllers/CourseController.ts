@@ -115,7 +115,7 @@ export class CourseController implements ICourseController {
 	/**
 	 * This endpoint just lets subclasses change the behaviour for when users are unknown.
 	 *
-	 * The default behaviour (returning null) effecively disallows any non-registered student,
+	 * The default behaviour (returning null) effectively disallows any non-registered student,
 	 * although any user registered on the GitHub admin or staff team will bypass this.
 	 *
 	 * @param {string} githubUsername
@@ -228,12 +228,12 @@ export class CourseController implements ICourseController {
 	}
 
 	public async finalizeProvisionedRepo(repo: Repository, teams: Team[]): Promise<boolean> {
-		Log.warn("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
+		Log.info("CourseController::finalizeProvisionedRepo( " + repo.id + " ) - default impl; returning true");
 		return true;
 	}
 
 	public async shouldPrioritizePushEvent(info: CommitTarget): Promise<boolean> {
-		Log.warn(`CourseController::shouldPrioritizePushEvent(${info.commitSHA}) - Default impl; returning false`);
+		Log.info(`CourseController::shouldPrioritizePushEvent(${info.commitSHA}) - default impl; returning false`);
 		return false;
 	}
 
@@ -242,7 +242,7 @@ export class CourseController implements ICourseController {
 		message: string;
 		fullMessage?: string;
 	} | null> {
-		Log.warn(`CourseController::requestFeedbackDelay(${info}) - Default impl; returning null`);
+		Log.warn(`CourseController::requestFeedbackDelay(${info}) - default impl; returning null`);
 		return null;
 	}
 
@@ -252,7 +252,7 @@ export class CourseController implements ICourseController {
 	 * @param grade
 	 */
 	public async convertGrade(grade: Grade): Promise<Grade> {
-		Log.info(`CourseController::convertGrade(${grade}) - Default impl; returning original grade`);
+		Log.info(`CourseController::convertGrade(${grade}) - default impl; returning original grade`);
 		return grade;
 	}
 
