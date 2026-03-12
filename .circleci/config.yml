@@ -4,7 +4,7 @@
 #
 version: 2.1
 jobs:
-  build:
+  build_and_test:
     docker:
         # Specify service dependencies here if necessary
         # CircleCI maintains a library of pre-built images
@@ -178,7 +178,7 @@ jobs:
             name: Cleaning up
             when: always
 
-  build_run_stop:
+  build_only:
     machine:
       image: ubuntu-2204:current
     working_directory: ~/project
@@ -272,11 +272,13 @@ workflows:
       not:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
-      - build
+      - build_and_test
   nightly:
     when:
       and:
         - equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
         - equal: [ nightly_build, << pipeline.schedule.name >> ]
     jobs:
-      - build_run_stop
+      - build_and_test
+# we really want to know the container is still working (build) not just that it builds (build_run_stop)
+#      - build_only

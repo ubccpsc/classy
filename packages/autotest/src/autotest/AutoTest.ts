@@ -813,10 +813,7 @@ export abstract class AutoTest implements IAutoTest {
 	 * @private
 	 */
 	private hasCapacity() {
-		if (this.jobs.length < this.numJobs) {
-			return true;
-		}
-		return false;
+		return this.jobs.length < this.numJobs;
 	}
 
 	/**
