@@ -281,7 +281,9 @@ export default class AutoTestRouteHandler {
 			const reqParams = querystring.stringify(dockerOptions);
 			const reqOptions = {
 				socketPath: "/var/run/docker.sock",
-				path: "/v1.24/build?" + reqParams,
+				// v1.40 is the oldest API version modern daemons accept (Docker 29 reports
+				// MinAPIVersion 1.40 and rejects anything older outright)
+				path: "/v1.40/build?" + reqParams,
 				method: "POST",
 			};
 
