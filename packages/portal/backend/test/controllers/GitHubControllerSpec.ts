@@ -416,17 +416,33 @@ describe("GitHubController", () => {
 		await TestHarness.prepareRepositories();
 
 		const rc: RepositoryController = new RepositoryController();
+
+		// NOTE: a branch protection rule targets a _branch_, so the repo must actually have one.
+		// createRepo uses auto_init: false and yields a repo with no branches at all, so provision
+		// from the template instead. Recreate unconditionally so this does not depend on whatever
+		// an earlier test happened to leave behind.
+		if ((await gha.repoExists(TestHarness.REPONAME1)) === true) {
+			await gha.deleteRepo(TestHarness.REPONAME1);
+		}
+		const url = await gha.createRepoFromTemplate(
+			TestHarness.REPONAME1,
+			Config.getInstance().getProp(ConfigKey.org),
+			TestHarness.REPONAMEREAL_TESTINGSAMPLE
+		);
+		expect(url).to.have.length.greaterThan(0);
+
 		const repo = await rc.getRepository(TestHarness.REPONAME1);
 		expect(repo).to.not.be.null;
 
-		if ((await gha.repoExists(TestHarness.REPONAME1)) === false) {
-			// create repo
-			const url = await gha.createRepo(TestHarness.REPONAME1);
-			expect(url).to.have.length.greaterThan(0);
-		}
-		const success = await gc.updateBranchProtection(repo, [{ name: TestHarness.USER1.github, reviews: 1 }]);
+		const branches = await gha.listRepoBranches(TestHarness.REPONAME1);
+		Log.test("Branches on " + TestHarness.REPONAME1 + ": " + JSON.stringify(branches));
+		expect(branches).to.have.length.greaterThan(0);
+
+		// NOTE: this used to pass TestHarness.USER1.github (a githubId, not a branch name), which
+		// always 404d; it only appeared to pass because addBranchProtectionRule ignored the response
+		const success = await gc.updateBranchProtection(repo, [{ name: branches[0], reviews: 1 }]);
 		expect(success).to.be.true;
-	}).timeout(TestHarness.TIMEOUT);
+	}).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should not update branch protection for a repo that does not exist.", async function () {
 		await TestHarness.prepareRepositories();
