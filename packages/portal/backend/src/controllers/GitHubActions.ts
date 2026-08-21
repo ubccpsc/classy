@@ -1124,7 +1124,13 @@ export class GitHubActions implements IGitHubActions {
 		const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
 
 		// sanity check (members should be githubIds, not other ids)
+		// NOTE: the bot is exempt; createTeam removes it from every new team, but it is
+		// a GitHub account rather than a Person so it is legitimately not in the datastore
+		const botName = Config.getInstance().getProp(ConfigKey.githubBotName);
 		for (const member of members) {
+			if (member === botName) {
+				continue;
+			}
 			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
 				const emsg =
