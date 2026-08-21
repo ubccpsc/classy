@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import * as Docker from "dockerode";
+import Docker from "dockerode";
 import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";

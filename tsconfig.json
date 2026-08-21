@@ -6,20 +6,24 @@
         "removeComments": true,
         "preserveConstEnums": true,
         "sourceMap": true,
-        "baseUrl": ".",
+        // TypeScript 7 removed 'baseUrl' and requires path mappings to be relative to
+        // this file. 'strict' is pinned off to preserve the pre-7 semantics; TS 7 turns it
+        // on by default, which surfaces ~1250 additional null/undefined diagnostics.
+        // TODO: think about turning strict on later (this would be a large diff, so skipped for now)
+        "strict": false,
         "paths": {
             "@common/*": [
-                "packages/common/src/*",
-                "packages/common/test/*"
+                "./packages/common/src/*",
+                "./packages/common/test/*"
             ],
             "@frontend/*": [
-                "packages/portal/frontend/src/app/*"
+                "./packages/portal/frontend/src/app/*"
             ],
             "@backend/*": [
-                "packages/portal/backend/src/*"
+                "./packages/portal/backend/src/*"
             ],
             "@autotest/*": [
-                "packages/autotest/src/*"
+                "./packages/autotest/src/*"
             ]
         },
         "lib": [

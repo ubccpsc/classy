@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import * as restify from "restify";
-import * as request from "supertest";
+import request from "supertest";
 
 import Log from "@common/Log";
 import { AuthTransportPayload } from "@common/types/PortalTypes";

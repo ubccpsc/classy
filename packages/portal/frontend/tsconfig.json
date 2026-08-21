@@ -1,6 +1,8 @@
 {
     "compilerOptions": {
         "module": "commonjs",
+        "types": ["node"],
+        "strict": false,
         "target": "ES6",
         "noImplicitAny": true,
         "removeComments": true,
@@ -10,7 +12,6 @@
         // unless we adopt tsconfig-paths (to resolve these references at runtime)
         // the frontend does this with tsconfig-paths-webpack-plugin
         // TODO: refactor the type cycle that requires the @backend reference here
-        "baseUrl": ".",
         "paths": {
             "@frontend/*": [
                 "../../portal/frontend/src/app/*"

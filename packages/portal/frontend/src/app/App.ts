@@ -422,7 +422,7 @@ export class App {
 				}
 				return null;
 			})
-			.catch(function (err: any) {
+			.catch(function (err: any): null {
 				Log.error("App::getGithubCredentials(..) - ERROR: " + err);
 				return null;
 			});
@@ -483,7 +483,7 @@ export class App {
 				Log.trace("App::getServerCredentials(..) - data json: " + JSON.stringify(data));
 				return data;
 			})
-			.catch(function (err: any) {
+			.catch(function (err: any): null {
 				Log.error("App::getServerCredentials(..) - ERROR: " + err);
 				return null;
 			});

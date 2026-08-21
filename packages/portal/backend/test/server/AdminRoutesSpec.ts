@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 import * as restify from "restify";
-import * as request from "supertest";
+import request from "supertest";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";

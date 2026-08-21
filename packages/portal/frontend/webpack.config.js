@@ -8,8 +8,6 @@ require("dotenv").config(
 // copy plugin files so they are available to frontend
 const CopyPlugin = require("copy-webpack-plugin");
 
-// handle @frontend and @common type import aliases from plugin
-const TsconfigPathsPlugin = require("tsconfig-paths-webpack-plugin");
 const { webpack, DefinePlugin } = require("webpack");
 
 /**
@@ -68,8 +66,11 @@ module.exports = {
         }),
     ],
 
+    // tsc runs before webpack (see package.json / the Dockerfile) and emits .js beside each
+    // .ts, so webpack bundles the compiled output. TypeScript 7 dropped the JS compiler API
+    // that ts-loader and tsconfig-paths-webpack-plugin are built on, so neither can run here.
     entry: {
-        portal: "./src/app/App.ts"
+        portal: "./src/app/App.js"
     },
 
     output: {
@@ -82,11 +83,13 @@ module.exports = {
     devtool: "source-map",
 
     resolve: {
-        // Add ".ts" and ".tsx" as resolvable extensions.
-        extensions: [".ts", ".tsx", ".js", ".json"],
-        plugins: [new TsconfigPathsPlugin({
-            configFile: "tsconfig.json"
-        })]
+        extensions: [".js", ".json"],
+        // Mirrors the "paths" mappings in tsconfig.json, resolved against the emitted .js
+        alias: {
+            "@frontend": path.resolve(__dirname, "./src/app"),
+            "@common": path.resolve(__dirname, "../../common/src"),
+            "@backend": path.resolve(__dirname, "../../portal/backend/src")
+        }
     },
 
     performance: {
@@ -95,9 +98,6 @@ module.exports = {
 
     module: {
         rules: [
-            // All files with a ".ts" or ".tsx" extension will be handled by "ts-loader" or awesome-typescript-loader".
-            {test: /\.tsx?$/, loader: "ts-loader"},
-
             // All output ".js" files will have any sourcemaps re-processed by "source-map-loader".
             {
                 enforce: "pre",

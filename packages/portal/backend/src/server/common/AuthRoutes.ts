@@ -1,4 +1,4 @@
-import * as ClientOAuth2 from "client-oauth2";
+import ClientOAuth2 from "client-oauth2";
 import fetch, { RequestInit } from "node-fetch";
 import * as restify from "restify";
 

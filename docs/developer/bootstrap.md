@@ -51,6 +51,30 @@ To install Classy for development:
 
 **NOTE**: `tsc` emits the compiled `.js` beside each `.ts` file, and both the daemons and the test suite run that emitted JavaScript. Re-run `yarn run build` after every source change or you will be running stale code.
 
+## TypeScript 7 notes
+
+The project builds with TypeScript 7, whose compiler is a native binary rather than a JavaScript
+program. Three consequences are worth knowing before you touch the build:
+
+- **There is no `baseUrl`.** TS 7 removed it, and path mappings in every `tsconfig.json` are now
+  relative to the file they appear in. `tsconfig-paths`, which resolves the `@common`/`@backend`
+  aliases *at runtime*, still requires a baseUrl, so the scripts that load it export
+  `TS_NODE_BASEURL=.` (the Dockerfiles set it as an `ENV`). Running mocha or a daemon by hand
+  without that variable fails with `Cannot find module '@common/Log'`.
+- **`strict` is on by default in TS 7**; each `tsconfig.json` pins `"strict": false` to keep the
+  pre-7 semantics. Turning it on surfaces roughly 1250 null/undefined diagnostics, so treat that as
+  its own project rather than a side effect of an unrelated change.
+- **`esModuleInterop` is always on and cannot be disabled.** CommonJS packages that are called or
+  constructed (`supertest`, `dockerode`, `csv-parse`, `client-oauth2`, `moment`,
+  `parse-link-header`) must use `import x from "y"`, not `import * as x from "y"`.
+
+The `typescript` package no longer exposes the JavaScript compiler API, so tools built on it do not
+work: `ts-loader`, `tsconfig-paths-webpack-plugin`, `tslint`, and `ts-node` are all incompatible.
+`ts-node` has been dropped (nothing used it); `tslint` is still declared but its script is already
+disabled and awaits the ESLint migration.
+The frontend bundle therefore runs `tsc` first and points webpack at the emitted `.js`, with
+`resolve.alias` standing in for the path mappings; webpack no longer type-checks, `tsc` does.
+
 ## Running MongoDB
 
 Mongo is easiest to run as a container; the tests and both services expect it on port 27017:

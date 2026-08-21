@@ -1,6 +1,7 @@
 {
     "compilerOptions": {
         "module": "commonjs",
+        "strict": false,
         "target": "ES6",
         "noImplicitAny": true,
         "removeComments": true,
@@ -14,7 +15,6 @@
         "typeRoots": [
             "../../node_modules/@types"
         ],
-        "baseUrl": ".",
         "paths": {
             "@common/*": [
                 "./src/*",

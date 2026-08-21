@@ -1,5 +1,5 @@
 import * as crypto from "crypto";
-import * as parseLinkHeader from "parse-link-header";
+import parseLinkHeader from "parse-link-header";
 import fetch, { RequestInit } from "node-fetch";
 
 import Config, { ConfigKey } from "@common/Config";

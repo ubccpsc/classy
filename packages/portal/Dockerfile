@@ -51,4 +51,8 @@ COPY --from=builder /app /app
 RUN git config --system user.email "${GH_BOT_EMAIL}" \
  && git config --system user.name "${GH_BOT_USERNAME}"
 
+# tsconfig-paths resolves the @common/@backend aliases at runtime and needs a baseUrl,
+# which TypeScript 7 removed from tsconfig.json; this supplies it (relative to /app).
+ENV TS_NODE_BASEURL=.
+
 CMD ["node", "--require", "/app/node_modules/tsconfig-paths/register", "/app/packages/portal/backend/src/BackendDaemon.js"]

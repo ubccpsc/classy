@@ -35,6 +35,11 @@ packages/portal/backend/**/*.map
 packages/portal/frontend/**/*.js
 packages/portal/frontend/**/*.map
 
+# webpack's CopyPlugin writes the active plugin's html into html/<NAME>, where NAME comes
+# from .env, so the directory name differs per fork. Only files at the root of html/ are
+# tracked; every subdirectory (including html/js/) is build output.
+packages/portal/frontend/html/*/
+
 ## Fork-specific resources
 packages/portal/backend/test/cs310/
 packages/portal/frontend/html/cs310/

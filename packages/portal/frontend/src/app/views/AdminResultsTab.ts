@@ -1,4 +1,4 @@
-import * as moment from "moment";
+import moment from "moment";
 import { OnsButtonElement } from "onsenui";
 
 import Log from "@common/Log";

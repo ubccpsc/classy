@@ -1,6 +1,6 @@
 // import { use as chaiUse } from "chai";
 import { expect, use as chaiUse } from "chai";
-import * as chaiAsPromised from "chai-as-promised";
+import chaiAsPromised from "chai-as-promised";
 import "mocha";
 
 import Log from "@common/Log";
