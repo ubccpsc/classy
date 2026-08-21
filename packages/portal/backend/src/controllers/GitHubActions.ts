@@ -457,6 +457,14 @@ export class GitHubActions implements IGitHubActions {
 			const response = await fetch(uri, options);
 			const body = await response.json();
 			Log.info("GitHubAction::createRepo( " + repoName + " ) - request complete");
+
+			// fetch does not reject on 4xx/5xx, so the response must be checked explicitly; without
+			// this a failed creation still writes an undefined URL and PROVISIONED_UNLINKED to the db
+			if (response.ok === false || typeof body.html_url === "undefined" || body.html_url.length < 5) {
+				Log.error("GitHubAction::createRepo( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
+				throw new Error("GitHub returned " + response.status + "; " + JSON.stringify(body.message));
+			}
+
 			const url = body.html_url;
 
 			Log.trace("GitHubAction::createRepo( " + repoName + " ) - db start");
@@ -474,21 +482,26 @@ export class GitHubActions implements IGitHubActions {
 			// await Util.delay(this.LONG_PAUSE);
 
 			// listing branches is not sufficient because they are often [] for an initial repo
-			// whether listing teams is sufficient has not been tested in prod yet (23W2)
-			let doesNotExist = true;
+			// (createRepo uses auto_init: false, so a new repo has no branches at all).
+			// listing teams is not sufficient either: getTeamsOnRepo returns [] both when the
+			// request fails and when a ready repo simply has no teams yet, so it can never
+			// signal readiness. repoExists distinguishes a 404 from a successful lookup.
+			let isReady = false;
 			let existCount = 0; // only try 10 times to avoid spinning forever
-			while (doesNotExist && existCount < 10) {
+			while (isReady === false && existCount < 10) {
 				Log.info("GitHubAction::createRepo(..) - checking if repo is ready");
-				const repoData = await this.getTeamsOnRepo(repoName);
-				Log.info("GitHubAction::createRepo(..) - repoData: " + JSON.stringify(repoData));
-				if (repoData !== null) {
+				isReady = await this.repoExists(repoName);
+				if (isReady === true) {
 					Log.info("GitHubAction::createRepo(..) - repo is ready");
-					doesNotExist = false;
 				} else {
 					Log.info("GitHubAction::createRepo(..) - repo is NOT ready");
 					existCount++;
 					await Util.delay(250); // wait a bit longer
 				}
+			}
+
+			if (isReady === false) {
+				Log.warn("GitHubAction::createRepo(..) - repo did not become ready after " + existCount + " attempts");
 			}
 
 			Log.info("GitHubAction::createRepo(..) - success; URL: " + url + "; total creation took: " + Util.took(start));
@@ -1054,7 +1067,7 @@ export class GitHubActions implements IGitHubActions {
 
 		// sanity check (members should be githubIds, not other ids)
 		for (const member of members) {
-			const person = this.dc.getGitHubPerson(member);
+			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
 				const errMsg =
 					"GitHubAction::addMembersToTeam( .. ) - githubId: " +
@@ -1112,7 +1125,7 @@ export class GitHubActions implements IGitHubActions {
 
 		// sanity check (members should be githubIds, not other ids)
 		for (const member of members) {
-			const person = this.dc.getGitHubPerson(member);
+			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
 				const emsg =
 					"GitHubAction::removeMembersFromTeam( .. ) - githubId: " +
@@ -1501,7 +1514,7 @@ export class GitHubActions implements IGitHubActions {
 	 * @param repoId
 	 * @param branchesToKeep
 	 */
-	public async deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean> {
+	public async deleteBranches(repoId: string, branchesToKeep: string[], attemptsRemaining: number = 5): Promise<boolean> {
 		const start = Date.now();
 
 		const repoExists = await this.repoExists(repoId); // ensure the repo exists
@@ -1534,7 +1547,8 @@ export class GitHubActions implements IGitHubActions {
 		// delete branches we do not want
 		let deleteSucceeded = true;
 		for (const branch of branchesToDelete) {
-			deleteSucceeded = await this.deleteBranch(repoId, branch);
+			const branchDeleted = await this.deleteBranch(repoId, branch);
+			deleteSucceeded = deleteSucceeded && branchDeleted; // must not short-circuit the deletion
 		}
 
 		// This is an unsatisfying check. But GitHub Enterprise often returns repo provisioning
@@ -1546,10 +1560,16 @@ export class GitHubActions implements IGitHubActions {
 
 		Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
 		const branchesAfter = await this.listRepoBranches(repoId);
-		if (branchesAfter.length > branchesToKeep.length) {
-			// do it again
-			Log.info("GitHubAction::deleteBranches(..) - branches still remain; retry removal");
-			await this.deleteBranches(repoId, branchesToKeep);
+		if (branchesAfter !== null && branchesAfter.length > branchesToKeep.length) {
+			// retry, but bounded: a branch that cannot be deleted (e.g., protected) would
+			// otherwise recurse forever
+			if (attemptsRemaining > 0) {
+				Log.info("GitHubAction::deleteBranches(..) - branches still remain; retry removal (" + attemptsRemaining + " left)");
+				deleteSucceeded = await this.deleteBranches(repoId, branchesToKeep, attemptsRemaining - 1);
+			} else {
+				Log.error("GitHubAction::deleteBranches(..) - branches still remain; giving up (retries exhausted)");
+				deleteSucceeded = false;
+			}
 		} else {
 			Log.info("GitHubAction::deleteBranches(..) - extra branches not found");
 		}
