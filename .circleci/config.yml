@@ -9,7 +9,7 @@ jobs:
         # Specify service dependencies here if necessary
         # CircleCI maintains a library of pre-built images
         # documented at https://circleci.com/docs/2.0/circleci-images/
-      - image: cimg/node:18.12
+      - image: cimg/node:24.9
       - image: circleci/mongo:5.0
 
     working_directory: ~/project
