@@ -12,8 +12,13 @@ COPY packages/common ./packages/common
 COPY packages/portal/backend ./packages/portal/backend
 COPY packages/autotest ./packages/autotest
 
+# The build needs the dev dependencies (tsc), but the runtime does not, so the second
+# install prunes them back out. Both the prune and the yarn cache removal have to happen
+# in this RUN: anything deleted in a later layer still ships inside the earlier one.
 RUN yarn install --pure-lockfile --non-interactive --ignore-scripts \
  && yarn tsc --sourceMap false \
+ && yarn install --production --pure-lockfile --non-interactive --ignore-scripts \
+ && yarn cache clean \
  && chmod -R a+rx /app
 
 CMD ["node", "--require", "/app/node_modules/tsconfig-paths/register", "/app/packages/autotest/src/AutoTestDaemon.js"]
