@@ -33,6 +33,7 @@
         "restify": "^10.0.0"
     },
     "devDependencies": {
+        "@biomejs/biome": "2.5.5",
         "@types/bson": "^4.2.0",
         "@types/fs-extra": "5.0.0",
         "@types/jszip": "3.1.6",
@@ -43,9 +44,6 @@
         "chai": "^4.3.6",
         "jsonschema": "1.2.2",
         "mocha": "^9.2.2",
-        "prettier": "^3.4.2",
-
-        "tslint": "^5.11.0",
         "typescript": "^7.0.2",
         "webpack": "^5.94.0"
     },
@@ -64,12 +62,11 @@
         "postinstall": "git config core.hooksPath .githooks",
         "build": "tsc",
         "build:prod": "tsc --outDir bin --sourceMap false",
-        "prettier:check": "prettier packages/**/*.ts --check",
-        "prettier:fix": "prettier packages/**/*.ts --write",
+        "lint": "biome check .",
+        "lint:fix": "biome check --write .",
         "cover": "TS_NODE_BASEURL=. nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
         "test": "TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
-        "test:autotest": "TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test",
-        "XXX_MIGRATE_TO_ESLINT_lint": "tslint --project tsconfig.json"
+        "test:autotest": "TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"
     }
 }

@@ -1,0 +1,124 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.5/schema.json",
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		"useIgnoreFile": true
+	},
+	"files": {
+		"includes": ["packages/**/src*/**/*.ts", "packages/**/test/**/*.ts"],
+		"ignoreUnknown": true
+	},
+	"formatter": {
+		"enabled": true,
+		"indentStyle": "tab",
+		"lineWidth": 140,
+		"lineEnding": "lf"
+	},
+	"javascript": {
+		"formatter": {
+			"quoteStyle": "double",
+			"semicolons": "always",
+			"trailingCommas": "es5",
+			"arrowParentheses": "always"
+		},
+		"globals": ["$", "_"]
+	},
+	"linter": {
+		"enabled": true,
+		"rules": {
+			"preset": "none",
+			"complexity": {
+				"noExcessiveLinesPerFunction": {
+					"level": "warn",
+					"options": {
+						"maxLines": 120,
+						"skipBlankLines": true,
+						"skipIifes": false
+					}
+				},
+				"useLiteralKeys": "warn",
+				"useOptionalChain": "error"
+			},
+			"correctness": {
+				"noUnusedVariables": "error"
+			},
+			"performance": {
+				"noAwaitInLoops": "warn"
+			},
+			"security": {
+				"noGlobalEval": "error"
+			},
+			"style": {
+				"noExcessiveLinesPerFile": {
+					"level": "warn",
+					"options": {
+						"maxLines": 1000,
+						"skipBlankLines": true
+					}
+				},
+				"useConsistentMemberAccessibility": {
+					"level": "error",
+					"options": {
+						"accessibility": "explicit"
+					}
+				},
+				"useConst": "error",
+				"useForOf": "error",
+				"useFilenamingConvention": {
+					"level": "error",
+					"options": {
+						"strictCase": false,
+						"filenameCases": ["camelCase", "PascalCase"]
+					}
+				}
+			},
+			"suspicious": {
+				"noAsyncPromiseExecutor": "error",
+				"noConfusingVoidType": "error",
+				"noConsole": "error",
+				"noDoubleEquals": "error",
+				"noShadow": "error",
+				"noVar": "error",
+				"useAwait": "warn"
+			},
+			"nursery": {
+				"noExcessiveNestedCallbacks": {
+					"level": "error",
+					"options": {
+						"max": 5
+					}
+				},
+				"noFloatingPromises": "error",
+				"noIdenticalTestTitle": "error",
+				"noImpliedEval": "error",
+				"noMisusedPromises": "error",
+				"useAwaitThenable": "warn",
+				"useExplicitReturnType": "warn",
+				"useExplicitType": "warn"
+			}
+		}
+	},
+	"overrides": [
+		{
+			"includes": ["packages/portal/backend/src/server/IREST.ts", "packages/portal/frontend/src/app/util/UI.ts"],
+			"linter": {
+				"rules": {
+					"style": {
+						"useFilenamingConvention": "off"
+					}
+				}
+			}
+		},
+		{
+			"includes": ["packages/**/test/**/*.ts"],
+			"linter": {
+				"rules": {
+					"complexity": {
+						"noExcessiveLinesPerFunction": "off"
+					}
+				}
+			}
+		}
+	]
+}
