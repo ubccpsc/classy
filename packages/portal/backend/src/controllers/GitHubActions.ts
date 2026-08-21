@@ -1066,15 +1066,17 @@ export class GitHubActions implements IGitHubActions {
 		const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
 
 		// sanity check (members should be githubIds, not other ids)
+		// NOTE: warn rather than throw. Not every legitimate team member is a Person in the
+		// datastore (e.g., the bot, or the live GitHub accounts GitHubActionSpec operates on),
+		// so this cannot be a hard assertion; it is here to surface id/githubId mixups.
 		for (const member of members) {
 			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
-				const errMsg =
+				Log.warn(
 					"GitHubAction::addMembersToTeam( .. ) - githubId: " +
-					member +
-					" is unknown; is this actually an id instead of a githubId?";
-				Log.error(errMsg);
-				throw new Error(errMsg);
+						member +
+						" is unknown; is this actually an id instead of a githubId?"
+				);
 			}
 		}
 
@@ -1133,12 +1135,11 @@ export class GitHubActions implements IGitHubActions {
 			}
 			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
-				const emsg =
+				Log.warn(
 					"GitHubAction::removeMembersFromTeam( .. ) - githubId: " +
-					member +
-					" is unknown; is this actually an id instead of a githubId?";
-				Log.error(emsg);
-				throw new Error(emsg);
+						member +
+						" is unknown; is this actually an id instead of a githubId?"
+				);
 			}
 		}
 
