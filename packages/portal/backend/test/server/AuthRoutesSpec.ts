@@ -1,14 +1,14 @@
 import { expect } from "chai";
 import "mocha";
-import * as restify from "restify";
-import request from "supertest";
-
-import Log from "@common/Log";
-import { AuthTransportPayload } from "@common/types/PortalTypes";
-import { TestHarness } from "@common/TestHarness";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";
+
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
+import { AuthTransportPayload } from "@common/types/PortalTypes";
+import * as restify from "restify";
+import request from "supertest";
 
 describe("Auth Routes", function () {
 	let app: restify.Server = null;

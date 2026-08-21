@@ -1,14 +1,12 @@
-import parse from "csv-parse";
-// import {parse} from "csv-parse";
-import * as fs from "fs";
-
-import Log from "@common/Log";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { AuditLabel, Deliverable, Grade } from "@backend/Types";
+import Log from "@common/Log";
+import parse from "csv-parse";
+// import {parse} from "csv-parse";
+import * as fs from "fs";
 
 /**
  * This uploads PrairieLearn grades into Classy. Things to note:
@@ -31,7 +29,7 @@ import { AuditLabel, Deliverable, Grade } from "@backend/Types";
  * 5) At minimum, the CSV must contain the UID, UIN, and Role columns.
  */
 export class CSVPrairieLearnParser {
-	constructor() {
+	public constructor() {
 		// empty
 	}
 

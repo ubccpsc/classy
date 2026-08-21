@@ -1,18 +1,14 @@
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport } from "@common/types/PortalTypes";
-
+import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
+import { OnsButtonElement } from "onsenui";
 import { Network } from "../util/Network";
 import { UI } from "../util/UI";
-
 import { AdminDeletePage } from "./AdminDeletePage";
 import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminProvisionPage } from "./AdminProvisionPage";
 import { AdminView } from "./AdminView";
-
-import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
 
 export class AdminConfigTab extends AdminPage {
 	// private readonly remote: string; // url to backend
@@ -21,7 +17,7 @@ export class AdminConfigTab extends AdminPage {
 	private deliverablesPage: AdminDeliverablesTab = null;
 	private course: CourseTransport = null;
 
-	constructor(remote: string, isAdmin: boolean) {
+	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		this.isAdmin = isAdmin;
 		this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
@@ -47,7 +43,8 @@ export class AdminConfigTab extends AdminPage {
 			const fileInput = document.querySelector("#adminClasslistFile") as HTMLInputElement;
 			const isValid: boolean = that.validateFileSpecified(fileInput);
 			if (isValid === true) {
-				that.uploadClasslist(fileInput.files)
+				that
+					.uploadClasslist(fileInput.files)
 					.then(function () {
 						// done
 					})
@@ -61,7 +58,8 @@ export class AdminConfigTab extends AdminPage {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - update classlist pressed");
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.updateClasslistPressed()
+			that
+				.updateClasslistPressed()
 				.then(function () {
 					// worked
 				})
@@ -79,7 +77,8 @@ export class AdminConfigTab extends AdminPage {
 			if (isValid === true) {
 				const delivDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 				const delivId = delivDropdown.value;
-				that.uploadGrades(fileInput.files, delivId)
+				that
+					.uploadGrades(fileInput.files, delivId)
 					.then(function () {
 						// done
 					})
@@ -96,7 +95,8 @@ export class AdminConfigTab extends AdminPage {
 			const fileInput = document.querySelector("#adminGradePrairieCSV") as HTMLInputElement;
 			const isValid: boolean = that.validateFileSpecified(fileInput);
 			if (isValid === true) {
-				that.uploadGradesPrairie(fileInput.files)
+				that
+					.uploadGradesPrairie(fileInput.files)
 					.then(function () {
 						// done
 					})
@@ -111,7 +111,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.defaultDeliverablePressed()
+			that
+				.defaultDeliverablePressed()
 				.then(function () {
 					// worked
 				})
@@ -125,7 +126,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.provisionDeliverablePressed()
+			that
+				.provisionDeliverablePressed()
 				.then(function () {
 					// worked
 				})
@@ -139,7 +141,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.releaseDeliverablePressed()
+			that
+				.releaseDeliverablePressed()
 				.then(function () {
 					// worked
 				})
@@ -153,7 +156,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.repoEnableWritePressed()
+			that
+				.repoEnableWritePressed()
 				.then(function () {
 					// worked
 				})
@@ -167,7 +171,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.repoDisableWritePressed()
+			that
+				.repoDisableWritePressed()
 				.then(function () {
 					// worked
 				})
@@ -181,7 +186,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.teamCreatePressed()
+			that
+				.teamCreatePressed()
 				.then(function () {
 					// worked
 				})
@@ -195,7 +201,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.teamDeletePressed()
+			that
+				.teamDeletePressed()
 				.then(function () {
 					// worked
 				})
@@ -209,7 +216,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.teamAddMemberPressed()
+			that
+				.teamAddMemberPressed()
 				.then(function () {
 					// worked
 				})
@@ -223,7 +231,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.preventDefault();
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.teamRemoveMemberPressed()
+			that
+				.teamRemoveMemberPressed()
 				.then(function () {
 					// worked
 				})
@@ -236,7 +245,8 @@ export class AdminConfigTab extends AdminPage {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - delete page pressed");
 			evt.preventDefault();
 
-			that.pushPage("./adminDelete2.html", {})
+			that
+				.pushPage("./adminDelete2.html", {})
 				.then(function () {
 					const deletePage = new AdminDeletePage(that.remote);
 					deletePage
@@ -259,7 +269,8 @@ export class AdminConfigTab extends AdminPage {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - manage repo page pressed");
 			evt.preventDefault();
 
-			that.pushPage("./adminProvision.html", {})
+			that
+				.pushPage("./adminProvision.html", {})
 				.then(function () {
 					const provisionPage = new AdminProvisionPage(that.remote);
 					provisionPage
@@ -282,7 +293,8 @@ export class AdminConfigTab extends AdminPage {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - remove grader images page pressed");
 			evt.preventDefault();
 
-			that.pushPage("./adminGraderImages.html", {})
+			that
+				.pushPage("./adminGraderImages.html", {})
 				.then(function () {
 					const deleteImagePage = new AdminDeleteGraderPage(that.remote);
 					deleteImagePage
@@ -324,7 +336,8 @@ export class AdminConfigTab extends AdminPage {
 			evt.stopPropagation(); // prevents list item expansion
 			evt.preventDefault();
 
-			that.performWithdraw()
+			that
+				.performWithdraw()
 				.then(function () {
 					// worked
 				})
@@ -451,9 +464,7 @@ export class AdminConfigTab extends AdminPage {
 							reason.failure.message
 					);
 				} else {
-					UI.notification(
-						"There was an issue uploading your class list. " + "Please ensure the CSV file includes all required columns."
-					);
+					UI.notification("There was an issue uploading your class list. " + "Please ensure the CSV file includes all required columns.");
 				}
 			}
 		} catch (err) {
@@ -498,9 +509,7 @@ export class AdminConfigTab extends AdminPage {
 							reason.failure.message
 					);
 				} else {
-					UI.notification(
-						"There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns."
-					);
+					UI.notification("There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns.");
 				}
 			}
 		} catch (err) {
@@ -545,9 +554,7 @@ export class AdminConfigTab extends AdminPage {
 							reason.failure.message
 					);
 				} else {
-					UI.notification(
-						"There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns."
-					);
+					UI.notification("There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns.");
 				}
 			}
 		} catch (err) {

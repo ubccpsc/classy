@@ -2,9 +2,9 @@ import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec";
-import Util from "@common/Util";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
+import Util from "@common/Util";
 
 describe("Util", function () {
 	before(async function () {

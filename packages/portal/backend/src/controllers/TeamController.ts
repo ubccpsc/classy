@@ -1,8 +1,7 @@
+import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-
 import { TeamTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import Config, { ConfigKey } from "@common/Config";
 
 import { Deliverable, GitHubStatus, Person, PersonKind, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
@@ -33,7 +32,7 @@ export class TeamController {
 	private db: DatabaseController = DatabaseController.getInstance();
 	private gha: IGitHubActions;
 
-	constructor(gha?: IGitHubActions) {
+	public constructor(gha?: IGitHubActions) {
 		if (typeof gha === "undefined") {
 			this.gha = GitHubActions.getInstance();
 		} else {
@@ -223,9 +222,7 @@ export class TeamController {
 			for (const existingTeam of teamsForPerson) {
 				if (existingTeam.delivId === deliv.id) {
 					// NOTE: no adminOverride for this, this must be enforced
-					Log.warn(
-						"TeamController::formTeam( ... ) - member already on team: " + existingTeam.id + " for deliverable: " + deliv.id
-					);
+					Log.warn("TeamController::formTeam( ... ) - member already on team: " + existingTeam.id + " for deliverable: " + deliv.id);
 					if (
 						existingTeam.personIds.length === people.length &&
 						people.every((p) => existingTeam.personIds.includes(p.id)) &&

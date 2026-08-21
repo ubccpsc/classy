@@ -99,14 +99,9 @@ jobs:
             name: Building autotest
             when: always
 
-#      - run:
-#            command: yarn run lint
-#            name: Linting project
-#            when: always
-
       - run:
-          command: yarn run prettier:check
-          name: Checking project formatting (prettier)
+          command: yarn run lint
+          name: Checking project formatting and lint rules (biome)
           when: always
 
       - run:

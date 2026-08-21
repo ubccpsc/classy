@@ -1,11 +1,10 @@
 import { expect } from "chai";
 import "mocha";
 
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-
 import { GradesController } from "@backend/controllers/GradesController";
 import { CSVParser } from "@backend/server/common/CSVParser";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
 
 import "@common/GlobalSpec";
 import { Grade } from "@backend/Types";

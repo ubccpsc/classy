@@ -2,10 +2,9 @@
  * Created by rtholmes on 2016-06-19.
  */
 
+import AutoTestServer from "@autotest/server/AutoTestServer";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-
-import AutoTestServer from "@autotest/server/AutoTestServer";
 
 /**
  * Starts the server; does not listen to whether the start was successful.
@@ -45,10 +44,12 @@ Log.info("AutoTestDaemon - registering unhandled rejection");
 process.on("unhandledRejection", (reason, p) => {
 	try {
 		Log.warn("AutoTestDaemon - unhandled promise rejection"); // in case next line fails
-		// tslint:disable-next-line
+		// JSON.stringify throws on a circular reason and the catch below eats it, so write the
+		// raw values first; this is the only record that survives that case
+		// biome-ignore lint/suspicious/noConsole: deliberate fallback when the Log call below throws
 		console.log("AutoTestDaemon - unhandled rejection at: ", p, "; reason:", reason);
 		Log.error("AutoTestDaemon - unhandled promise rejection: " + JSON.stringify(reason));
-	} catch (err) {
+	} catch (_err) {
 		// eat any error
 	}
 });

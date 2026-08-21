@@ -1,10 +1,8 @@
-import * as https from "https";
-import fetch from "node-fetch";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-
 import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
+import * as https from "https";
+import fetch from "node-fetch";
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { PersonController } from "../../controllers/PersonController";
 import { AuditLabel, Person, PersonKind } from "../../Types";
@@ -14,7 +12,7 @@ export class ClasslistAgent {
 	private pc = new PersonController();
 	private db = DatabaseController.getInstance();
 
-	constructor() {
+	public constructor() {
 		//
 	}
 

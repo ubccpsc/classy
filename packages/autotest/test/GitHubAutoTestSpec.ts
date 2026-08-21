@@ -3,20 +3,19 @@ import * as fs from "fs-extra";
 import "mocha";
 
 import "@common/GlobalSpec"; // load first
-import { TestData } from "./TestData";
 
+import { IClassPortal } from "@autotest/autotest/ClassPortal";
+import { MockClassPortal } from "@autotest/autotest/mocks/MockClassPortal";
+import { MockDataStore } from "@autotest/autotest/mocks/MockDataStore";
+import { MockGradingJob } from "@autotest/autotest/mocks/MockGradingJob";
+import { GitHubAutoTest } from "@autotest/github/GitHubAutoTest";
+import { IGitHubMessage } from "@autotest/github/GitHubUtil";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { IFeedbackGiven } from "@common/types/AutoTestTypes";
 import { CommitTarget } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
-
-import { IClassPortal } from "@autotest/autotest/ClassPortal";
-import { MockClassPortal } from "@autotest/autotest/mocks/MockClassPortal";
-import { MockDataStore } from "@autotest/autotest/mocks/MockDataStore";
-import { GitHubAutoTest } from "@autotest/github/GitHubAutoTest";
-import { IGitHubMessage } from "@autotest/github/GitHubUtil";
-import { MockGradingJob } from "@autotest/autotest/mocks/MockGradingJob";
+import { TestData } from "./TestData";
 
 /* tslint:disable:max-line-length */
 describe("GitHubAutoTest", () => {

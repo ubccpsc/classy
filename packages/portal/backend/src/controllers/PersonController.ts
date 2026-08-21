@@ -53,12 +53,7 @@ export class PersonController {
 
 			if (existingPerson.githubId !== personPrototype.githubId) {
 				Log.info(
-					"PersonController::createPerson( " +
-						personPrototype.id +
-						" ) - URL change: " +
-						existingPerson.URL +
-						" -> " +
-						personPrototype.URL
+					"PersonController::createPerson( " + personPrototype.id + " ) - URL change: " + existingPerson.URL + " -> " + personPrototype.URL
 				);
 			}
 			existingPerson.URL = personPrototype.URL; // can update (along with githubId)

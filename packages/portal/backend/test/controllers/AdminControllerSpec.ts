@@ -1,11 +1,6 @@
 import { expect } from "chai";
 import "mocha";
 
-import Config, { ConfigCourses, ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-import { AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport } from "@common/types/PortalTypes";
-
 import { AdminController } from "@backend/controllers/AdminController";
 import { ICourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
@@ -18,6 +13,10 @@ import { RepositoryController } from "@backend/controllers/RepositoryController"
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
 import { GitHubStatus, Person, PersonKind, Repository, Team } from "@backend/Types";
+import Config, { ConfigCourses, ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
+import { AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport } from "@common/types/PortalTypes";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -25,7 +24,7 @@ import "./GradeControllerSpec"; // load first
 describe("AdminController", () => {
 	let ac: AdminController;
 	let cc: ICourseController;
-	let gc: GradesController;
+	let _gc: GradesController;
 	let tc: TeamController;
 	let rc: RepositoryController;
 	let pc: PersonController;
@@ -45,7 +44,7 @@ describe("AdminController", () => {
 		cc = await Factory.getCourseController(ghInstance);
 
 		rc = new RepositoryController();
-		gc = new GradesController();
+		_gc = new GradesController();
 		tc = new TeamController();
 		pc = new PersonController();
 		dc = new DeliverablesController();
@@ -114,19 +113,9 @@ describe("AdminController", () => {
 			PersonKind.STUDENT
 		);
 		await dbc.writePerson(p1);
-		const p2 = TestHarness.createPerson(
-			TestHarness.GITHUB2.id,
-			TestHarness.GITHUB2.csId,
-			TestHarness.GITHUB2.github,
-			PersonKind.STUDENT
-		);
+		const p2 = TestHarness.createPerson(TestHarness.GITHUB2.id, TestHarness.GITHUB2.csId, TestHarness.GITHUB2.github, PersonKind.STUDENT);
 		await dbc.writePerson(p2);
-		const p3 = TestHarness.createPerson(
-			TestHarness.GITHUB3.id,
-			TestHarness.GITHUB3.csId,
-			TestHarness.GITHUB3.github,
-			PersonKind.STUDENT
-		);
+		const p3 = TestHarness.createPerson(TestHarness.GITHUB3.id, TestHarness.GITHUB3.csId, TestHarness.GITHUB3.github, PersonKind.STUDENT);
 		await dbc.writePerson(p3);
 
 		const deliv = await dbc.getDeliverable(TestHarness.DELIVIDPROJ);
@@ -388,7 +377,7 @@ describe("AdminController", () => {
 		try {
 			AdminController.validateCourseTransport(null);
 			res = "NOT THROWN";
-		} catch (err) {
+		} catch (_err) {
 			res = "THROW CAUGHT";
 		}
 		expect(res).to.equal("THROW CAUGHT");

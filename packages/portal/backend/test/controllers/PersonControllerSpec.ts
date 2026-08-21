@@ -1,10 +1,10 @@
 import { expect } from "chai";
 import "mocha";
 
-import { TestHarness } from "@common/TestHarness";
+import { Person, PersonKind } from "@backend//Types";
 
 import { PersonController } from "@backend/controllers/PersonController";
-import { Person, PersonKind } from "@backend//Types";
+import { TestHarness } from "@common/TestHarness";
 
 import "@common/GlobalSpec"; // load first
 import "./DeliverablesControllerSpec";

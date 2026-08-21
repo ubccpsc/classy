@@ -35,7 +35,7 @@ export class SortableTable {
 	 */
 	private sortHeader: TableHeader | null = null;
 
-	constructor(headers: TableHeader[], divName: string) {
+	public constructor(headers: TableHeader[], divName: string) {
 		this.headers = headers;
 		this.divName = divName;
 
@@ -236,9 +236,7 @@ export class SortableTable {
 		if (sortHead.sortDown) {
 			mult = 1;
 		}
-		Log.trace(
-			"SortableTable::sort() - col: " + sortHead.id + "; down: " + sortHead.sortDown + "; mult: " + mult + "; index: " + sortIndex
-		);
+		Log.trace("SortableTable::sort() - col: " + sortHead.id + "; down: " + sortHead.sortDown + "; mult: " + mult + "; index: " + sortIndex);
 
 		this.rows = this.rows.sort(function (a, b) {
 			const aVal = a[sortIndex].value;
@@ -261,14 +259,11 @@ export class SortableTable {
 
 	// code from: https://www.codexworld.com/export-html-table-data-to-csv-using-javascript/
 	private downloadCSV(csv: string, fileName: string, linkName: string) {
-		let csvFile;
-		let downloadLink;
-
 		// CSV file
-		csvFile = new Blob([csv], { type: "text/csv" });
+		const csvFile = new Blob([csv], { type: "text/csv" });
 
 		// Download link
-		downloadLink = document.createElement("a");
+		const downloadLink = document.createElement("a");
 		downloadLink.innerHTML = linkName;
 
 		const table = document.querySelector(this.divName);

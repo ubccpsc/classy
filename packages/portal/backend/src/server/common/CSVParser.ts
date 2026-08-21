@@ -1,18 +1,16 @@
-import parse from "csv-parse";
-// import {parse} from "csv-parse";
-import * as fs from "fs";
-
-import Log from "@common/Log";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { AuditLabel, Grade } from "@backend/Types";
+import Log from "@common/Log";
 import Util from "@common/Util";
+import parse from "csv-parse";
+// import {parse} from "csv-parse";
+import * as fs from "fs";
 
 export class CSVParser {
-	constructor() {
+	public constructor() {
 		// empty
 	}
 

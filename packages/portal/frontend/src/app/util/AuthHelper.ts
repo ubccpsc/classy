@@ -7,7 +7,7 @@ export class AuthHelper {
 	private backendURL: string;
 	private OPTIONS_HTTP_GET: object = { credentials: "include" };
 
-	constructor(backendURL: string) {
+	public constructor(backendURL: string) {
 		Log.trace("AuthHelper::<init> - start");
 		this.backendURL = backendURL;
 	}

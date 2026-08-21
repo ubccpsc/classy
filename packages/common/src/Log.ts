@@ -1,4 +1,4 @@
-/* tslint:disable:no-console */
+// biome-ignore-all lint/suspicious/noConsole: this is the logger; console is its output device
 
 export enum LogLevel {
 	TRACE,
@@ -13,6 +13,11 @@ let LOG_LEVEL: LogLevel;
 
 /**
  * Collection of logging methods. Useful for making the output easier to read and understand.
+ *
+ * NOTE: this is the one file that is allowed to call console directly -- it is the logger, and
+ * console is its output device. The biome-ignore-all at the top of this file exempts it from
+ * suspicious/noConsole; without that exemption the rule's autofix silently empties every method
+ * below and the whole system stops logging.
  */
 export default class Log {
 	public static Level: LogLevel = Log.parseLogLevel();
@@ -23,7 +28,7 @@ export default class Log {
 			let valToSwitch;
 			if (typeof Log.Level === "undefined") {
 				// if undefined, use .env; otherwise re-parse value
-				valToSwitch = (process.env["LOG_LEVEL"] || "").toUpperCase();
+				valToSwitch = (process.env.LOG_LEVEL || "").toUpperCase();
 			} else {
 				valToSwitch = Log.Level;
 			}
@@ -61,7 +66,7 @@ export default class Log {
 				Log.Level = LOG_LEVEL;
 				return LOG_LEVEL;
 			}
-		} catch (err) {
+		} catch (_err) {
 			console.log("<E> Log::parseLogLevel() - ERROR; setting to TRACE");
 			Log.Level = LogLevel.TRACE;
 			LOG_LEVEL = LogLevel.TRACE;

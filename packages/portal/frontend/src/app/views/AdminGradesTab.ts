@@ -11,7 +11,7 @@ import { AdminView } from "./AdminView";
 
 export class AdminGradesTab extends AdminPage {
 	// private readonly remote: string; // url to backend
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		// this.remote = remote;
 		super(remote);
 	}

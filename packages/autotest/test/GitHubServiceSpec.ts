@@ -2,10 +2,10 @@ import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec";
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
 
 import { GitHubUtil, IGitHubMessage } from "@autotest/github/GitHubUtil";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
 
 describe("GitHub Markdown Service", () => {
 	Config.getInstance();

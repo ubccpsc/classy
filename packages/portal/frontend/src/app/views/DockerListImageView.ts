@@ -1,6 +1,5 @@
-import { OnsListItemElement, OnsRadioElement } from "onsenui";
-
 import Log from "@common/Log";
+import { OnsListItemElement, OnsRadioElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
@@ -13,7 +12,7 @@ export interface DockerImage {
 export class DockerListImageView {
 	public readonly list: any;
 
-	constructor(list: any) {
+	public constructor(list: any) {
 		this.list = list;
 	}
 
@@ -56,10 +55,7 @@ export class DockerListImageView {
 						exists = true;
 						if (this.imageMatches(state.checkedItemSha, image.id)) {
 							Log.trace(
-								"DockerListImageView::bind(..) - loop candidate check match; checked: " +
-									state.checkedItemSha +
-									"; id: " +
-									image.id
+								"DockerListImageView::bind(..) - loop candidate check match; checked: " + state.checkedItemSha + "; id: " + image.id
 							);
 						}
 						break;

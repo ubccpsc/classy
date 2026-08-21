@@ -4,12 +4,11 @@ import { CourseTransport, RepositoryTransport, StudentTransport, TeamTransport, 
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
-
+import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminResultsTab } from "./AdminResultsTab";
 import { AdminStudentsTab } from "./AdminStudentsTab";
 import { AdminView } from "./AdminView";
-import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 
 export class AdminTeamsTab extends AdminPage {
 	private teams: TeamTransport[] = [];
@@ -18,7 +17,7 @@ export class AdminTeamsTab extends AdminPage {
 	private course: CourseTransport = null;
 	private repos: RepositoryTransport[] = [];
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		super(remote);
 	}
 
@@ -188,7 +187,7 @@ export class AdminTeamsTab extends AdminPage {
 
 		let labSectionsOptions = ["-All-", "-Unspecified-"];
 		const st = new SortableTable(headers, "#teamsListTable");
-		let listContainsStudents = false;
+		let _listContainsStudents = false;
 
 		let count = 1;
 		for (const team of teams) {
@@ -251,7 +250,7 @@ export class AdminTeamsTab extends AdminPage {
 					st.addRow(row);
 				}
 				// st.addRow(row);
-				listContainsStudents = true;
+				_listContainsStudents = true;
 			}
 		}
 
@@ -371,7 +370,7 @@ export class AdminTeamsTab extends AdminPage {
 			}
 		}
 
-		let listContainsStudents = false;
+		let _listContainsStudents = false;
 		let count = 1;
 		for (const student of students) {
 			if (studentsOnTeams.indexOf(student.id) < 0) {
@@ -405,7 +404,7 @@ export class AdminTeamsTab extends AdminPage {
 						st.addRow(row);
 					}
 					// st.addRow(row);
-					listContainsStudents = true;
+					_listContainsStudents = true;
 				}
 			}
 		}

@@ -1,10 +1,9 @@
-import fetch, { RequestInit } from "node-fetch";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { CommitTarget } from "@common/types/ContainerTypes";
 import { AutoTestAuthTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import fetch, { RequestInit } from "node-fetch";
 
 import { ClassPortal, IClassPortal } from "../autotest/ClassPortal";
 
@@ -335,12 +334,7 @@ export class GitHubUtil {
 			}
 
 			Log.info(
-				"GitHubUtil::processPush(..) - start; repo: " +
-					repo +
-					"; person: " +
-					pusher?.personId +
-					"; SHA: " +
-					Util.shaHuman(commitSHA)
+				"GitHubUtil::processPush(..) - start; repo: " + repo + "; person: " + pusher?.personId + "; SHA: " + Util.shaHuman(commitSHA)
 			);
 			Log.trace("GitHubUtil::processPush(..) - repo: " + repo + "; sha: " + commitSHA);
 
@@ -432,9 +426,7 @@ export class GitHubUtil {
 
 				const sha = GitHubUtil.commitURLtoSHA(message.url);
 				const repo = GitHubUtil.commitURLtoRepoName(message.url);
-				Log.info(
-					"GitHubUtil::postMarkdownToGithub(..) - posting to repo: " + repo + "; SHA: " + sha + "; message: " + loggingMessage
-				);
+				Log.info("GitHubUtil::postMarkdownToGithub(..) - posting to repo: " + repo + "; SHA: " + sha + "; message: " + loggingMessage);
 			} catch (err) {
 				Log.error("GitHubUtil::postMarkdownToGithub(..) - ERROR: " + err.message);
 			}
@@ -486,7 +478,7 @@ export class GitHubUtil {
 				repo = repo.substring(repo.lastIndexOf("/", repo.indexOf("/commit") - 1) + 1, repo.indexOf("/commit"));
 				return repo;
 			}
-		} catch (err) {
+		} catch (_err) {
 			// ignored
 		}
 		return commitURL;
@@ -509,7 +501,7 @@ export class GitHubUtil {
 				sha = Util.shaHuman(sha);
 				return sha;
 			}
-		} catch (err) {
+		} catch (_err) {
 			// ignored
 		}
 		return commitURL;

@@ -16,7 +16,7 @@ export class FrontendDatasetGenerator {
 	private dc: DatabaseController = null;
 	private ghc = new GitHubController(GitHubActions.getInstance());
 
-	constructor() {
+	public constructor() {
 		this.dc = DatabaseController.getInstance();
 	}
 
@@ -245,7 +245,8 @@ if (typeof it === "function") {
 	Log.warn("Frontend data not generated (test suite execution)");
 } else {
 	const fedg = new FrontendDatasetGenerator();
-	fedg.create()
+	fedg
+		.create()
 		.then(function () {
 			// done
 			Log.info("create done");

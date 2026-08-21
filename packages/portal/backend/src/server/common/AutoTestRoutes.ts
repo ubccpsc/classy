@@ -1,9 +1,17 @@
-import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
-
+import { AdminController } from "@backend/controllers/AdminController";
+import { AuthController } from "@backend/controllers/AuthController";
+import { DeliverablesController } from "@backend/controllers/DeliverablesController";
+import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController } from "@backend/controllers/GitHubController";
+import { GradesController } from "@backend/controllers/GradesController";
+import { PersonController } from "@backend/controllers/PersonController";
+import { ResultsController } from "@backend/controllers/ResultsController";
+import { Factory } from "@backend/Factory";
+import IREST from "@backend/server/IREST";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
+import { CommitTarget } from "@common/types/ContainerTypes";
 import {
 	AutoTestAuthPayload,
 	AutoTestConfigPayload,
@@ -16,18 +24,8 @@ import {
 	Payload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { CommitTarget } from "@common/types/ContainerTypes";
-
-import { AdminController } from "@backend/controllers/AdminController";
-import { AuthController } from "@backend/controllers/AuthController";
-import { DeliverablesController } from "@backend/controllers/DeliverablesController";
-import { GitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
-import { GradesController } from "@backend/controllers/GradesController";
-import { PersonController } from "@backend/controllers/PersonController";
-import { ResultsController } from "@backend/controllers/ResultsController";
-import { Factory } from "@backend/Factory";
-import IREST from "@backend/server/IREST";
+import fetch, { RequestInit } from "node-fetch";
+import * as restify from "restify";
 
 /**
  * Handle the REST interactions initiated by AutoTest
@@ -189,9 +187,7 @@ export class AutoTestRoutes implements IREST {
 		if (validGradeRecord !== null) {
 			throw new Error("Invalid Grade Record: " + validGradeRecord);
 		} else {
-			Log.info(
-				"AutoTestRoutes::performPostGrade(..) - deliv: " + grade.delivId + "; repo: " + grade.repoId + "; grade: " + grade.score
-			);
+			Log.info("AutoTestRoutes::performPostGrade(..) - deliv: " + grade.delivId + "; repo: " + grade.repoId + "; grade: " + grade.score);
 			// Log.trace("AutoTestRoutes::atGrade(..) - repoId: " + grade.repoId +
 			//     "; delivId: " + grade.delivId + "; body: " + JSON.stringify(grade));
 			const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
@@ -305,9 +301,7 @@ export class AutoTestRoutes implements IREST {
 				const ac = new AuthController();
 				const priv = await ac.personPrivileged(person);
 				payload = { success: { personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin } };
-				Log.trace(
-					"AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " + JSON.stringify(payload) + "; took: " + Util.took(start)
-				);
+				Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " + JSON.stringify(payload) + "; took: " + Util.took(start));
 				res.send(200, payload);
 				return next(true);
 			} else {
@@ -334,14 +328,7 @@ export class AutoTestRoutes implements IREST {
 			pc.getGitHubPerson(githubId)
 				.then(function (person) {
 					if (person !== null) {
-						Log.info(
-							"AutoTestRoutes::atPersonId(..) - person: " +
-								person.id +
-								"; github: " +
-								githubId +
-								"; took: " +
-								Util.took(start)
-						);
+						Log.info("AutoTestRoutes::atPersonId(..) - person: " + person.id + "; github: " + githubId + "; took: " + Util.took(start));
 						payload = { success: { personId: person.id } }; // PersonTransportPayload
 						res.send(200, payload);
 						return next(true);
@@ -375,14 +362,7 @@ export class AutoTestRoutes implements IREST {
 			}
 
 			Log.trace(
-				"AutoTestRoutes::atGetResult(..) - deliv: " +
-					delivId +
-					"; repo: " +
-					repoId +
-					"; SHA: " +
-					Util.shaHuman(sha) +
-					"; ref: " +
-					ref
+				"AutoTestRoutes::atGetResult(..) - deliv: " + delivId + "; repo: " + repoId + "; SHA: " + Util.shaHuman(sha) + "; ref: " + ref
 			);
 
 			const rc = new ResultsController();
@@ -418,7 +398,7 @@ export class AutoTestRoutes implements IREST {
 				const payload: Payload = { success: { shouldPromote } };
 				res.send(200, payload);
 				return next(true);
-			} catch (err) {
+			} catch (_err) {
 				return AutoTestRoutes.handleError(400, "Failed to find push promotion details", res, next);
 			}
 		}
@@ -443,16 +423,13 @@ export class AutoTestRoutes implements IREST {
 					return next(true);
 				} else {
 					Log.info(
-						"AutoTestRoutes::atFeedbackDelay(..) - done; feedbackDelay: " +
-							JSON.stringify(feedbackDelay) +
-							"; took: " +
-							Util.took(start)
+						"AutoTestRoutes::atFeedbackDelay(..) - done; feedbackDelay: " + JSON.stringify(feedbackDelay) + "; took: " + Util.took(start)
 					);
 					const payload: Payload = { success: { feedbackDelay } };
 					res.send(200, payload);
 					return next(true);
 				}
-			} catch (err) {
+			} catch (_err) {
 				return AutoTestRoutes.handleError(400, "Failed to determine feedback eligibility", res, next);
 			}
 		}
@@ -555,9 +532,7 @@ export class AutoTestRoutes implements IREST {
 				Log.info("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
 
 				if (!atResponse.ok) {
-					throw new Error(
-						"AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" + " status: " + res.status
-					);
+					throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" + " status: " + res.status);
 				}
 
 				const body = await atResponse.json();
@@ -685,9 +660,7 @@ export class AutoTestRoutes implements IREST {
 				Log.info("AutoTestRoutes::postDockerImage(..) - responded code: " + atResponse.status);
 
 				if (!atResponse.ok) {
-					throw Error(
-						"AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: " + atResponse.status
-					);
+					throw Error("AutoTestRoutes::postDockerImage(..) - ERROR Forwarding body to AutoTest service, code: " + atResponse.status);
 				}
 				Log.trace("AutoTestRoutes::postDockerImage(..) - before pipe");
 				// atResponse.body.pipe(res);

@@ -2,17 +2,16 @@
  * Created by rtholmes on 2017-10-04.
  */
 
-import { OnsButtonElement, OnsPageElement } from "onsenui";
-
 import Log, { LogLevel } from "@common/Log";
 import { AuthTransportPayload, ConfigTransport, ConfigTransportPayload } from "@common/types/PortalTypes";
+import { OnsButtonElement, OnsPageElement } from "onsenui";
 
 import { Factory } from "./Factory";
 import { Network } from "./util/Network";
 import { UI } from "./util/UI";
 import { IView } from "./views/IView";
 
-declare var classportal: any;
+declare let classportal: any;
 
 export class App {
 	public readonly backendURL: string = null;
@@ -23,7 +22,7 @@ export class App {
 	private validated = false;
 	private config: ConfigTransport = null;
 
-	constructor() {
+	public constructor() {
 		Log.trace("App::<init> - start");
 
 		// configure the frontend and backend URLs
@@ -68,7 +67,8 @@ export class App {
 		return new Promise(function (fulfill, reject) {
 			document.addEventListener("init", function (event) {
 				const page = event.target as OnsPageElement;
-				that.performInit(page.id)
+				that
+					.performInit(page.id)
 					.then(function () {
 						//
 					})
@@ -464,7 +464,8 @@ export class App {
 					Log.trace("App::getServerCredentials(..) - code returned: " + resp.status);
 
 					if (resp.status === 400) {
-						that.clearCredentials()
+						that
+							.clearCredentials()
 							.then(function () {
 								// worked
 							})
@@ -524,8 +525,8 @@ export class App {
 		// this used to work but is not now
 		const s: string[] = decodeURI(document.cookie).split(";");
 		// tslint:disable-next-line
-		for (let i = 0; i < s.length; i++) {
-			const row = s[i].split("=", 2);
+		for (const cookie of s) {
+			const row = cookie.split("=", 2);
 			if (row.length === 2) {
 				const key = row[0].trim(); // firefox sometimes has an extraneous space before the key
 				if (key === name) {

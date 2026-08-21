@@ -1,18 +1,16 @@
-import { OnsButtonElement, OnsSelectElement } from "onsenui";
-
 import Log from "@common/Log";
 import { Payload } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-
+import { AdminDeliverablesTab } from "@frontend/views/AdminDeliverablesTab";
+import { OnsButtonElement, OnsSelectElement } from "onsenui";
 import { UI } from "../util/UI";
 import { AdminPage } from "./AdminPage";
 import { AdminView } from "./AdminView";
-import { AdminDeliverablesTab } from "@frontend/views/AdminDeliverablesTab";
 
 export class AdminDeleteGraderPage extends AdminPage {
 	private images: Array<{ sha: string; tag: string; created: Date }> = [];
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		super(remote);
 	}
 
@@ -94,7 +92,8 @@ export class AdminDeleteGraderPage extends AdminPage {
 		(document.querySelector("#adminRemoveGraderImagesButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminDeleteGraderPage::adminRemoveGraderImagesButton(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handleRemoveImagePressed()
+			that
+				.handleRemoveImagePressed()
 				.then(function () {
 					// worked
 					Log.info("AdminDeleteGraderPage::adminRemoveGraderImagesButton(..) - done");
@@ -122,15 +121,13 @@ export class AdminDeleteGraderPage extends AdminPage {
 			const selectedOptions = selector.selectedOptions;
 			let removalCount = 0;
 			/* tslint:disable-next-line */ // cannot for-of selectedOptions
-			for (let i = 0; i < selectedOptions.length; i++) {
-				const value = selectedOptions[i].value;
+			for (const option of selectedOptions) {
+				const value = option.value;
 				Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - selected: " + value);
 				const sha = value.substring(1, value.indexOf("_ ("));
 				Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - removing image sha: " + sha);
 				const success = await this.removeImage(sha);
-				Log.info(
-					"AdminDeleteGraderPage::handleRemoveImagePressed(..) - image sha removal success; sha: " + sha + "; success: " + success
-				);
+				Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - image sha removal success; sha: " + sha + "; success: " + success);
 				if (success) {
 					removalCount++;
 				}

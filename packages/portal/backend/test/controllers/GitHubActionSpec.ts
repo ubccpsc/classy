@@ -2,10 +2,6 @@ import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec"; // load first
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-import Util from "@common/Util";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
@@ -13,6 +9,10 @@ import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubAction
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
+import Util from "@common/Util";
 
 describe("GitHubActions", () => {
 	// TODO: investigate skipping this way: https://stackoverflow.com/a/41908943 (and turning them on/off with an env flag)
@@ -148,8 +148,7 @@ describe("GitHubActions", () => {
 		await rc.createRepository(REPONAME, deliv, [], {});
 
 		const val = await gh.createRepo(REPONAME);
-		const name =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
+		const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
 		expect(val).to.equal(name);
 	}).timeout(TIMEOUT);
 
@@ -165,8 +164,7 @@ describe("GitHubActions", () => {
 		Log.test("Creating repo with template");
 		const val = await gh.createRepoFromTemplate(repoName, templateOwnerName, templateName);
 
-		const name =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoName;
+		const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoName;
 		expect(val).to.equal(name);
 
 		Log.test("Updating template repo with proper settings");
@@ -346,8 +344,7 @@ describe("GitHubActions", () => {
 
 	it("Should be able to create the repo again.", async function () {
 		const val = await gh.createRepo(REPONAME);
-		const name =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
+		const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
 		expect(val).to.equal(name);
 	}).timeout(TIMEOUT);
 
@@ -785,74 +782,74 @@ describe("GitHubActions", () => {
 
 		try {
 			await gh.createRepo("INVALIDREPONAME");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.deleteRepo("INVALIDREPONAME");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.listRepos();
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.createTeam("INVALIDTEAMNAMER", "push");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.getTeamNumber("INVALIDTEAMNAMER");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.deleteTeam("team_" + Date.now());
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			// await gh.addTeamToRepo(-1, "INVALIDREPONAME", "push");
 			await gh.addTeamToRepo("INVALIDTEAMNAME", "INVALIDREPONAME", "push");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.addMembersToTeam("INVALIDTEAMNAME", ["INVALIDPERSONNAME"]);
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.listTeams();
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.listWebhooks("INVALIDREPONAME");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.addWebhook("INVALIDREPONAME", "INVALIDENDPOINT");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
 		try {
 			await gh.importRepoFS("https://localhost", "https://localhost");
-		} catch (err) {
+		} catch (_err) {
 			// expected
 		}
 
@@ -1040,10 +1037,7 @@ describe("GitHubActions", () => {
 		msg = msg + "\n" + msg;
 
 		url =
-			githubAPI +
-			"/repos/classytest/" +
-			TestHarness.REPONAMEREAL_POSTTEST +
-			"/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
+			githubAPI + "/repos/classytest/" + TestHarness.REPONAMEREAL_POSTTEST + "/commits/c35a0e5968338a9757813b58368f36ddd64b063e/comments";
 		worked = await gh.makeComment(url, msg);
 		expect(worked).to.be.true; // should have worked
 	}).timeout(TIMEOUT);

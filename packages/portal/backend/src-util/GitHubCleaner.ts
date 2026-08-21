@@ -21,7 +21,7 @@ export class GitHubCleaner {
 
 	private DRY_RUN = true;
 
-	constructor() {
+	public constructor() {
 		Log.info("GitHubCleaner::<init> - start");
 		const config = Config.getInstance();
 
@@ -99,7 +99,8 @@ export class GitHubCleaner {
 
 const ghc = new GitHubCleaner();
 const start = Date.now();
-ghc.run()
+ghc
+	.run()
 	.then(function () {
 		Log.info("GitHubCleaner::validate() - complete; took: " + Util.took(start));
 	})

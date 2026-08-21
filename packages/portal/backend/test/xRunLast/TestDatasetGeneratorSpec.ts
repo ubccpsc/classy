@@ -1,15 +1,14 @@
 import "mocha";
 
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Auth, Course, Deliverable, Person, PersonKind } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
 
 describe("TestDatasetGenerator", function () {
 	before(async function () {
@@ -50,7 +49,7 @@ describe("TestDatasetGenerator", function () {
 
 		try {
 			await pc.createPerson(p);
-		} catch (e) {
+		} catch (_e) {
 			// Person already exists, should fine fine
 		}
 
@@ -73,7 +72,7 @@ describe("TestDatasetGenerator", function () {
 
 		try {
 			await pc.createPerson(p);
-		} catch (e) {
+		} catch (_e) {
 			// Person already exists, should fine fine
 		}
 
@@ -98,7 +97,7 @@ describe("TestDatasetGenerator", function () {
 
 			try {
 				await pc.createPerson(p);
-			} catch (e) {
+			} catch (_e) {
 				// Person already exists, should fine fine
 			}
 		}
@@ -160,7 +159,7 @@ describe("TestDatasetGenerator", function () {
 			deliv.closeTimestamp = new Date().getTime();
 			try {
 				await dc.saveDeliverable(deliv);
-			} catch (err) {
+			} catch (_err) {
 				// Fail silently, it"s fine, the deliverable already exists
 			}
 		}
@@ -176,7 +175,7 @@ describe("TestDatasetGenerator", function () {
 		const deliv = await dc.getDeliverable("d0");
 		try {
 			await tc.createTeam(TestHarness.TEAMNAME3, deliv, [pA, pB], {});
-		} catch (err) {
+		} catch (_err) {
 			// Fail silently, it"s fine, the team already exists
 		}
 
@@ -185,7 +184,7 @@ describe("TestDatasetGenerator", function () {
 		const pC = await pc.getPerson("p5");
 		try {
 			await tc.createTeam(TestHarness.TEAMNAME4, deliv, [pA, pB, pC], {});
-		} catch (err) {
+		} catch (_err) {
 			// Fail silently, it"s fine, the team already exists
 		}
 	});
@@ -199,13 +198,13 @@ describe("TestDatasetGenerator", function () {
 		const deliv = await dc.getDeliverable(TestHarness.DELIVID1);
 		try {
 			await rc.createRepository(TestHarness.REPONAME1, deliv, [teams[0]], {});
-		} catch (err) {
+		} catch (_err) {
 			// Fail silently, it"s fine, the team already exists
 		}
 
 		try {
 			await rc.createRepository(TestHarness.REPONAME2, deliv, [teams[1]], {});
-		} catch (err) {
+		} catch (_err) {
 			// Fail silently, it"s fine, the team already exists
 		}
 	});

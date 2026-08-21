@@ -2,19 +2,18 @@ import { expect } from "chai";
 import "mocha";
 
 import "@common/GlobalSpec";
+
+import { ClassPortal, IClassPortal } from "@autotest/autotest/ClassPortal";
+import { DatabaseController } from "@backend/controllers/DatabaseController";
+import BackendServer from "@backend/server/BackendServer";
+import { Course } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-import Util from "@common/Util";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
 import { ContainerInput, ContainerOutput, ContainerState } from "@common/types/ContainerTypes";
 import { AutoTestGradeTransport } from "@common/types/PortalTypes";
-
-import { DatabaseController } from "@backend/controllers/DatabaseController";
-import BackendServer from "@backend/server/BackendServer";
-import { Course } from "@backend/Types";
-
-import { ClassPortal, IClassPortal } from "@autotest/autotest/ClassPortal";
+import Util from "@common/Util";
 
 describe("ClassPortal Service", () => {
 	Config.getInstance();
@@ -70,7 +69,7 @@ describe("ClassPortal Service", () => {
 			const actual = await cp.isStaff("student");
 			expect(actual.isStaff).to.equal(false);
 			expect(actual.isAdmin).to.equal(false);
-		} catch (err) {
+		} catch (_err) {
 			expect.fail("Should not happen");
 		}
 	}).timeout(TestHarness.TIMEOUT);
@@ -80,7 +79,7 @@ describe("ClassPortal Service", () => {
 			const actual = await cp.isStaff("foo");
 			expect(actual.isStaff).to.equal(false);
 			expect(actual.isAdmin).to.equal(false);
-		} catch (err) {
+		} catch (_err) {
 			expect.fail("Should not happen");
 		}
 	});
@@ -96,7 +95,7 @@ describe("ClassPortal Service", () => {
 			actual = await cp.isStaff("");
 			expect(actual.isStaff).to.equal(false);
 			expect(actual.isAdmin).to.equal(false);
-		} catch (err) {
+		} catch (_err) {
 			expect.fail("Should not happen");
 		}
 	}).timeout(TestHarness.TIMEOUT);
@@ -128,7 +127,7 @@ describe("ClassPortal Service", () => {
 		try {
 			const res = await cp.getContainerDetails("d9997");
 			expect(res).to.equal(null);
-		} catch (err) {
+		} catch (_err) {
 			expect.fail("Should not happen");
 		}
 	});

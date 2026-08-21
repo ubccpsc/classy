@@ -4,7 +4,7 @@
 import Log from "@common/Log";
 
 // import * as ons from "onsenui"; // for dev
-declare var ons: any; // for release (or webpack bundling gets huge)
+declare let ons: any; // for release (or webpack bundling gets huge)
 
 export class UI {
 	public static inputTypes = { TIMEDATE: "timeDate", NUMBER: "number", TEXT: "text" };
@@ -143,7 +143,7 @@ export class UI {
 			Log.trace("UI::showModal( " + text + " ) - start");
 			if (m !== null) {
 				if (text != null) {
-					const content = document.querySelectorAll("#modalText") as any;
+					const _content = document.querySelectorAll("#modalText") as any;
 					const textFields = document.querySelectorAll("#modalText") as any;
 					for (const t of textFields) {
 						t.innerHTML = text;
@@ -204,9 +204,9 @@ export class UI {
 		if (field !== null) {
 			for (let i = 0; i < field.length; i++) {
 				const opt = field.options[i];
-				// tslint:disable-next-line
-				if (opt.value == value) {
-					// use == so string and number values match
+				// option values are always strings, but callers pass numbers (e.g., team sizes),
+				// so coerce rather than compare across types
+				if (opt.value === String(value)) {
 					field.selectedIndex = i;
 				}
 			}
@@ -299,7 +299,7 @@ export class UI {
 				classlistDialog.querySelector("ons-button").onclick = function () {
 					classlistDialog.hide();
 				};
-				if (options && options.listContent) {
+				if (options?.listContent) {
 					options.listContent.forEach(function (listItem) {
 						onsList.appendChild(UI.createListItem(listItem.text, listItem.subtext || ""));
 					});
@@ -324,10 +324,10 @@ export class UI {
 			};
 			saveButton.onclick = function () {
 				const dateTimeLocal = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString();
-				saveButton["download"] = "Build Log " + dateTimeLocal + ".txt";
+				saveButton.download = "Build Log " + dateTimeLocal + ".txt";
 				saveButton.href = "data:application/octet-stream," + encodeURIComponent(textContentDiv.innerText);
 			};
-			saveButton["download"] = "Classy Build Log";
+			saveButton.download = "Classy Build Log";
 
 			// Updates data when right-clicked to choose custom save filename
 			saveButton.oncontextmenu = function () {

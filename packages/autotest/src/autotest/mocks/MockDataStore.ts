@@ -26,7 +26,7 @@ export class MockDataStore implements IDataStore {
 	private pushes: CommitTarget[];
 	private feedback: IFeedbackGiven[];
 
-	constructor() {
+	public constructor() {
 		Log.info("MockDataStore::<init> - start; dir: " + this.dir);
 
 		try {
@@ -104,9 +104,7 @@ export class MockDataStore implements IDataStore {
 	}
 
 	public async savePush(info: CommitTarget): Promise<void> {
-		Log.info(
-			"MockDataStore::savePush(..) - repo: " + info.repoId + "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA)
-		);
+		Log.info("MockDataStore::savePush(..) - repo: " + info.repoId + "; deliv: " + info.delivId + "; sha: " + Util.shaHuman(info.commitSHA));
 
 		try {
 			const start = Date.now();
@@ -301,12 +299,7 @@ export class MockDataStore implements IDataStore {
 			// const records: IFeedbackGiven[] = await fs.readJSON(this.FEEDBACK_PATH);
 			const records: IFeedbackGiven[] = this.feedback;
 			for (const feedback of records) {
-				if (
-					feedback !== null &&
-					feedback.commitURL === commitURL &&
-					feedback.personId === userName &&
-					feedback.delivId === delivId
-				) {
+				if (feedback !== null && feedback.commitURL === commitURL && feedback.personId === userName && feedback.delivId === delivId) {
 					Log.info("MockDataStore::getFeedbackGivenRecordForCommit(..) - found; took: " + Util.took(start));
 					ret = feedback;
 					break;

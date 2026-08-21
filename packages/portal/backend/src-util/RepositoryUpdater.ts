@@ -1,8 +1,7 @@
+import { RepositoryController } from "@backend/controllers/RepositoryController";
 import Log from "@common/Log";
 import { GitHubActions, IGitHubActions } from "../src/controllers/GitHubActions";
-
 import { Repository } from "../src/Types";
-import { RepositoryController } from "@backend/controllers/RepositoryController";
 
 /**
  * Sometimes you may need to perform some GitHub actions on many repositories.
@@ -51,7 +50,7 @@ export class RepositoryUpdater {
 	 */
 	private readonly REPOPREFIX = "project_";
 
-	constructor() {
+	public constructor() {
 		Log.info("RepositoryUpdater::<init> - start");
 	}
 
@@ -151,10 +150,7 @@ export class RepositoryUpdater {
 		for (const branch of branchesToRemove) {
 			if (this.DRY_RUN === false) {
 				Log.info(
-					"RepositoryUpdater::deleteUnwantedBranches() - DRY_RUN === false; removing branch; repo: " +
-						repo.id +
-						"; branch: " +
-						branch
+					"RepositoryUpdater::deleteUnwantedBranches() - DRY_RUN === false; removing branch; repo: " + repo.id + "; branch: " + branch
 				);
 				try {
 					const success = await gha.deleteBranch(repo.id, branch);

@@ -1,7 +1,6 @@
-import * as dotenv from "dotenv";
-
-import Log, { LogLevel } from "./Log";
 import Util from "@common/Util";
+import * as dotenv from "dotenv";
+import Log, { LogLevel } from "./Log";
 
 const envLoadResult = dotenv.config({ path: __dirname + "/../../../.env" });
 

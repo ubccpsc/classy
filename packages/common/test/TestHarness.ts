@@ -10,10 +10,10 @@ import { Auth, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Rep
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-import Util from "@common/Util";
 import { ContainerInput, ContainerOutput, ContainerState } from "@common/types/ContainerTypes";
-import { GradePayload } from "@common/types/SDMMTypes";
 import { AutoTestConfigTransport } from "@common/types/PortalTypes";
+import { GradePayload } from "@common/types/SDMMTypes";
+import Util from "@common/Util";
 
 export class TestHarness {
 	public static readonly TIMEOUT = 1000 * 10;
@@ -164,12 +164,7 @@ export class TestHarness {
 			PersonKind.STUDENT
 		);
 		await dbc.writePerson(person);
-		person = await TestHarness.createPerson(
-			TestHarness.ADMIN1.id,
-			TestHarness.ADMIN1.csId,
-			TestHarness.ADMIN1.github,
-			PersonKind.ADMIN
-		);
+		person = await TestHarness.createPerson(TestHarness.ADMIN1.id, TestHarness.ADMIN1.csId, TestHarness.ADMIN1.github, PersonKind.ADMIN);
 		await dbc.writePerson(person);
 		person = await TestHarness.createPerson(
 			TestHarness.ADMINSTAFF1.id,
@@ -251,28 +246,13 @@ export class TestHarness {
 		await dc.writePerson(p);
 
 		// REAL USERS CAPABLE FOR GITHUB EXTERNAL BUSINESS LOGIC TESTS. CAN ALWAYS ADD MORE REAL ATEST-xx USERS
-		p = TestHarness.createPerson(
-			TestHarness.REALUSER1.id,
-			TestHarness.REALUSER1.csId,
-			TestHarness.REALUSER1.github,
-			PersonKind.STUDENT
-		);
+		p = TestHarness.createPerson(TestHarness.REALUSER1.id, TestHarness.REALUSER1.csId, TestHarness.REALUSER1.github, PersonKind.STUDENT);
 		await dc.writePerson(p);
 
-		p = TestHarness.createPerson(
-			TestHarness.REALUSER2.id,
-			TestHarness.REALUSER2.csId,
-			TestHarness.REALUSER2.github,
-			PersonKind.STUDENT
-		);
+		p = TestHarness.createPerson(TestHarness.REALUSER2.id, TestHarness.REALUSER2.csId, TestHarness.REALUSER2.github, PersonKind.STUDENT);
 		await dc.writePerson(p);
 
-		p = TestHarness.createPerson(
-			TestHarness.REALUSER3.id,
-			TestHarness.REALUSER3.csId,
-			TestHarness.REALUSER3.github,
-			PersonKind.STUDENT
-		);
+		p = TestHarness.createPerson(TestHarness.REALUSER3.id, TestHarness.REALUSER3.csId, TestHarness.REALUSER3.github, PersonKind.STUDENT);
 		await dc.writePerson(p);
 
 		// admin person (this username should be on the admin but not the staff team in the github org)
@@ -300,10 +280,7 @@ export class TestHarness {
 		try {
 			const db = DatabaseController.getInstance();
 
-			let team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [
-				TestHarness.USER1.id,
-				TestHarness.USER2.id,
-			]);
+			let team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [TestHarness.USER1.id, TestHarness.USER2.id]);
 			await db.writeTeam(team);
 
 			// user 1 has a different partner for d1

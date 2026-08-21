@@ -1,15 +1,14 @@
-import * as fs from "fs-extra";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { ContainerInput } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
+import * as fs from "fs-extra";
 
 export class Queue {
 	private readonly name: string = "";
 	private readonly persistDir: string;
 
-	constructor(name: string) {
+	public constructor(name: string) {
 		Log.trace("Queue::<init>( " + name + " )");
 		this.name = name;
 
@@ -177,11 +176,7 @@ export class Queue {
 			// no jobs to replace, just add it to the queue
 			if (forceAdd === true) {
 				Log.info(
-					"Queue::replaceOldestForPerson( " +
-						info.target.personId +
-						" ) - queue: " +
-						this.name +
-						"; no jobs to replace, adding to queue"
+					"Queue::replaceOldestForPerson( " + info.target.personId + " ) - queue: " + this.name + "; no jobs to replace, adding to queue"
 				);
 				this.push(info);
 				return null;

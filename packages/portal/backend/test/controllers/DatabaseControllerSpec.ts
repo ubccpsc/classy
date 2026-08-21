@@ -1,12 +1,11 @@
 import { expect } from "chai";
 import "mocha";
 
+import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { GitHubStatus, PersonKind } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-
-import { DatabaseController } from "@backend/controllers/DatabaseController";
-import { GitHubStatus, PersonKind } from "@backend/Types";
 
 import "@common/GlobalSpec"; // load first
 
@@ -288,10 +287,7 @@ describe("DatabaseController", () => {
 		let res = await dc.writePerson(p2);
 		expect(res).to.be.true;
 
-		const team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [
-			TestHarness.USER1.id,
-			TestHarness.USER2.id,
-		]);
+		const team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [TestHarness.USER1.id, TestHarness.USER2.id]);
 		res = await dc.writeTeam(team);
 		expect(res).to.be.true;
 	});
@@ -321,10 +317,7 @@ describe("DatabaseController", () => {
 	// update team
 	it("Should be able to update a team.", async () => {
 		// get the person in there
-		const team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [
-			TestHarness.USER1.id,
-			TestHarness.USER2.id,
-		]);
+		const team = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [TestHarness.USER1.id, TestHarness.USER2.id]);
 		await dc.writeTeam(team);
 
 		let res = await dc.getTeam(TestHarness.TEAMNAME1);

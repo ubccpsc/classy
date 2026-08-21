@@ -1,7 +1,6 @@
+import { GradingJob } from "@autotest/autotest/GradingJob";
 import { expect } from "chai";
 import * as Docker from "dockerode";
-
-import { GradingJob } from "@autotest/autotest/GradingJob";
 
 class ContainerMock extends Docker.Container {
 	public timer: any;

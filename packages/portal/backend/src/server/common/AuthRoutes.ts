@@ -1,19 +1,15 @@
-import ClientOAuth2 from "client-oauth2";
-import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
-
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { AuthTransportPayload, Payload } from "@common/types/PortalTypes";
-
 import { AuthController } from "@backend/controllers/AuthController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { PersonController } from "@backend/controllers/PersonController";
-
 import { Factory } from "@backend/Factory";
-import { Auth } from "@backend/Types";
-
 import IREST from "@backend/server/IREST";
+import { Auth } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { AuthTransportPayload, Payload } from "@common/types/PortalTypes";
+import ClientOAuth2 from "client-oauth2";
+import fetch, { RequestInit } from "node-fetch";
+import * as restify from "restify";
 
 /**
  * Just a large body of static methods for translating between restify and the remainder of the system.

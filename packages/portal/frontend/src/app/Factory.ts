@@ -93,7 +93,7 @@ export class Factory {
 
 				Log.info("Factory::getAdminView() - AdminView instantiated");
 			}
-		} catch (err) {
+		} catch (_err) {
 			Log.info("Factory::getAdminView() - custom admin view not provided; using default AdminView");
 			this.adminView = new AdminView(backendUrl, tabs);
 		}

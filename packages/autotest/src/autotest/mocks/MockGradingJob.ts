@@ -8,7 +8,7 @@ import { GradingJob } from "../GradingJob";
 export class MockGradingJob extends GradingJob {
 	public static readonly JOB_WAIT = 200;
 
-	constructor(input: ContainerInput) {
+	public constructor(input: ContainerInput) {
 		super(input);
 	}
 

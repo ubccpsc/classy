@@ -1,12 +1,12 @@
 // do not use module imports (@common, @backend) in this file
-import Log from "@common/Log";
-import Config, { ConfigKey } from "@common/Config";
-import { TestHarness } from "@common/TestHarness";
 
-import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
-import { TeamController } from "@backend/controllers/TeamController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
+import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
+import { TeamController } from "@backend/controllers/TeamController";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
 
 export class TestGitHubActions implements IGitHubActions {
 	private teams: Map<string, GitTeamTuple> = new Map();

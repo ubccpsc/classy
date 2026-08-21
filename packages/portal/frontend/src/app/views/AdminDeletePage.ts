@@ -1,7 +1,6 @@
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { RepositoryTransport, TeamTransport } from "@common/types/PortalTypes";
+import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
@@ -14,7 +13,7 @@ export class AdminDeletePage extends AdminPage {
 	private teams: TeamTransport[];
 	private repos: RepositoryTransport[];
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		super(remote);
 	}
 
@@ -61,7 +60,8 @@ export class AdminDeletePage extends AdminPage {
 			if (typeof value === "string") {
 				value = value.trim();
 			}
-			that.deleteDeliverable(value)
+			that
+				.deleteDeliverable(value)
 				.then(function () {
 					// done
 				})
@@ -73,7 +73,8 @@ export class AdminDeletePage extends AdminPage {
 		(document.querySelector("#adminDeleteTeamButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminDeletePage::handleTeamDelete(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.deleteTeamPressed()
+			that
+				.deleteTeamPressed()
 				.then(function () {
 					// worked
 				})
@@ -86,7 +87,8 @@ export class AdminDeletePage extends AdminPage {
 			Log.info("AdminDeletePage::handleRepositoryDelete(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.deleteRepoPressed()
+			that
+				.deleteRepoPressed()
 				.then(function () {
 					// worked
 				})
@@ -98,7 +100,8 @@ export class AdminDeletePage extends AdminPage {
 		(document.querySelector("#adminDeleteSanitizeDB") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminDeletePage::adminDeleteSanitizeDB(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.sanitizeDBPressed()
+			that
+				.sanitizeDBPressed()
 				.then(function () {
 					// worked
 				})
@@ -114,8 +117,7 @@ export class AdminDeletePage extends AdminPage {
 		const selected = [];
 
 		// tslint:disable-next-line
-		for (let i = 0; i < repoDelete.options.length; i++) {
-			const opt = repoDelete.options[i];
+		for (const opt of repoDelete.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
 			}
@@ -157,8 +159,7 @@ export class AdminDeletePage extends AdminPage {
 		const selected = [];
 
 		// tslint:disable-next-line
-		for (let i = 0; i < teamDelete.options.length; i++) {
-			const opt = teamDelete.options[i];
+		for (const opt of teamDelete.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
 			}
@@ -206,7 +207,7 @@ export class AdminDeletePage extends AdminPage {
 			const options: any = AdminView.getOptions();
 			options.method = "post";
 
-			const response = await fetch(url, options);
+			const _response = await fetch(url, options);
 
 			UI.showSuccessToast("Sanitization complete.", { buttonLabel: "Ok" });
 			// const body = await response.json();

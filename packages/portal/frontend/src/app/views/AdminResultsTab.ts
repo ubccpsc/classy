@@ -1,6 +1,3 @@
-import moment from "moment";
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import {
 	AutoTestResultSummaryPayload,
@@ -9,6 +6,8 @@ import {
 	RepositoryPayload,
 	RepositoryTransport,
 } from "@common/types/PortalTypes";
+import moment from "moment";
+import { OnsButtonElement } from "onsenui";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -17,14 +16,14 @@ import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminView } from "./AdminView";
 
-declare var TomSelect: any;
+declare let TomSelect: any;
 
 export class AdminResultsTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private delivValue: string | null = null;
 	private repoValue: string | null = null;
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		// this.remote = remote;
 		super(remote);
 	}
@@ -53,7 +52,8 @@ export class AdminResultsTab extends AdminPage {
 		fab.onclick = function (_evt: any) {
 			Log.info("AdminResultsTab::init(..)::updateButton::onClick");
 			UI.showModal("Retrieving results.");
-			that.performQueries()
+			that
+				.performQueries()
 				.then(function (newResults) {
 					// TODO: need to track and update the current value of deliv and repo
 					that.render(delivs, repos, newResults);
@@ -259,7 +259,7 @@ export class AdminResultsTab extends AdminPage {
 						// if nothing selected, go back to any
 						this.setValue("-Any-");
 					}
-					that.init({}).then().catch(); // promises ignored
+					void that.init({}).then().catch(); // promises ignored
 					this.blur();
 				},
 			});
@@ -308,9 +308,7 @@ export class AdminResultsTab extends AdminPage {
 				Log.trace("AdminResultsTab::getRepositories(..) - 200 received");
 				const json: RepositoryPayload = await response.json();
 				if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
-					Log.trace(
-						"AdminResultsTab::getRepositories(..)  - worked; # repos: " + json.success.length + "; took: " + UI.took(start)
-					);
+					Log.trace("AdminResultsTab::getRepositories(..)  - worked; # repos: " + json.success.length + "; took: " + UI.took(start));
 					return json.success;
 				} else {
 					Log.trace("AdminResultsTab::getRepositories(..)  - ERROR: " + json.failure.message);

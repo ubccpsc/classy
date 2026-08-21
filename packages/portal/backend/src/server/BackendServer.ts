@@ -1,19 +1,19 @@
 /**
  * Created by rtholmes on 2018-02-23.
  */
-import * as fs from "fs";
-import * as restify from "restify";
+
+import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController } from "@backend/controllers/GitHubController";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-
+import * as fs from "fs";
+import * as restify from "restify";
 import { Factory } from "../Factory";
 import AdminRoutes from "./common/AdminRoutes";
 import { AuthRoutes } from "./common/AuthRoutes";
 import { AutoTestRoutes } from "./common/AutoTestRoutes";
 import GeneralRoutes from "./common/GeneralRoutes";
-import { GitHubController } from "@backend/controllers/GitHubController";
-import { GitHubActions } from "@backend/controllers/GitHubActions";
 
 /**
  * This configures the REST endpoints for the server.
@@ -23,7 +23,7 @@ export default class BackendServer {
 	private config: Config = null;
 	private useHttps = false;
 
-	constructor(useHttps = true) {
+	public constructor(useHttps = true) {
 		Log.info("BackendServer::<init> - start");
 		this.config = Config.getInstance();
 		this.useHttps = useHttps;
@@ -79,8 +79,8 @@ export default class BackendServer {
 				Log.warn("BackendServer::start() - disabling HTTPS; should only be used in testing!");
 			} else {
 				// prod only
-				httpsOptions["key"] = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
-				httpsOptions["certificate"] = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
+				httpsOptions.key = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
+				httpsOptions.certificate = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
 			}
 
 			that.rest = restify.createServer(httpsOptions);

@@ -1,7 +1,6 @@
-import * as restify from "restify";
-
 import Config from "@common/Config";
 import Log from "@common/Log";
+import * as restify from "restify";
 
 import AutoTestRouteHandler from "./AutoTestRouteHandler";
 
@@ -12,7 +11,7 @@ export default class AutoTestServer {
 	private rest: restify.Server;
 	private port: number;
 
-	constructor() {
+	public constructor() {
 		Config.getInstance(); // for SSL params
 	}
 

@@ -46,7 +46,7 @@ export class AdminController {
 	// protected cc: ICourseController;
 	protected gh: IGitHubController = null;
 
-	constructor(ghController: IGitHubController) {
+	public constructor(ghController: IGitHubController) {
 		Log.trace("AdminController::<init>");
 		this.gh = ghController;
 	}
@@ -201,10 +201,7 @@ export class AdminController {
 
 				if (shouldSave === true) {
 					Log.info(
-						"AdminController::processNewAutoTestGrade(..) - saving grade for deliv: " +
-							newGrade.delivId +
-							"; repo: " +
-							grade.repoId
+						"AdminController::processNewAutoTestGrade(..) - saving grade for deliv: " + newGrade.delivId + "; repo: " + grade.repoId
 					);
 					await this.dbc.writeAudit(AuditLabel.GRADE_AUTOTEST, "AutoTest", existingGrade, newGrade, { repoId: grade.repoId });
 					await this.gc.saveGrade(newGrade);
@@ -605,9 +602,7 @@ export class AdminController {
 		for (const team of allTeams) {
 			if (team === null || deliv === null || team.id === null || deliv.id === null) {
 				// seeing this during 310 provisioning, need to figure this out
-				Log.error(
-					"AdminController::planProvision(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv)
-				);
+				Log.error("AdminController::planProvision(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
 			} else {
 				if (team.delivId === deliv.id) {
 					Log.info("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
@@ -841,9 +836,7 @@ export class AdminController {
 		for (const team of allTeams) {
 			if (team === null || deliv === null || team.id === null || deliv.id === null) {
 				// seeing this during 310 provisioning, need to figure this out
-				Log.error(
-					"AdminController::planRelease(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv)
-				);
+				Log.error("AdminController::planRelease(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
 			} else {
 				if (team.delivId === deliv.id) {
 					Log.trace("AdminController::planRelease(..) - adding team: " + team.id + " to delivTeams");
@@ -877,9 +870,7 @@ export class AdminController {
 						// aka only release provisioned repos
 						reposToRelease.push(repo);
 					} else {
-						Log.info(
-							"AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(team.personIds)
-						);
+						Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(team.personIds));
 					}
 				} else {
 					Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
@@ -950,10 +941,7 @@ export class AdminController {
 			releasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
 		}
 		Log.info(
-			"AdminController::performRelease(..) - complete; # released: " +
-				releasedRepositoryTransport.length +
-				"; took: " +
-				Util.took(start)
+			"AdminController::performRelease(..) - complete; # released: " + releasedRepositoryTransport.length + "; took: " + Util.took(start)
 		);
 
 		return releasedRepositoryTransport;
@@ -1209,8 +1197,7 @@ export class AdminController {
 	 */
 	private async clipAutoTestResult(result: Result): Promise<AutoTestResultSummaryTransport> {
 		const repoId = result.input.target.repoId;
-		const repoURL =
-			Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
+		const repoURL = Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + repoId;
 
 		let scoreOverall = null;
 		let scoreCover = null;

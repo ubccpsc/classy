@@ -1,8 +1,7 @@
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { Payload, RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
@@ -14,7 +13,7 @@ export class AdminPullRequestsPage extends AdminPage {
 	private patches: string[];
 	private repos: string[];
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		super(remote);
 	}
 
@@ -31,7 +30,8 @@ export class AdminPullRequestsPage extends AdminPage {
 		(document.querySelector("#adminViewPatch") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminPullRequestsPage::viewPatchButton(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handleViewPatch()
+			that
+				.handleViewPatch()
 				.then(function () {
 					// worked
 				})
@@ -43,7 +43,8 @@ export class AdminPullRequestsPage extends AdminPage {
 		(document.querySelector("#adminRefreshPatches") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminPullRequestsPage::refreshPatchesButton(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handlePatchRefresh()
+			that
+				.handlePatchRefresh()
 				.then(function () {
 					// worked
 				})
@@ -55,7 +56,8 @@ export class AdminPullRequestsPage extends AdminPage {
 		(document.querySelector("#adminPatchSubsetOfReposButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminPullRequestsPage::patchSubsetRepos(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handlePatchSubset()
+			that
+				.handlePatchSubset()
 				.then(function () {
 					// worked
 				})
@@ -67,7 +69,8 @@ export class AdminPullRequestsPage extends AdminPage {
 		(document.querySelector("#adminPatchAllReposButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminPullRequestsPage::patchAllRepos(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handlePatchAll()
+			that
+				.handlePatchAll()
 				.then(function () {
 					// worked
 				})
@@ -209,9 +212,7 @@ export class AdminPullRequestsPage extends AdminPage {
 				try {
 					const res = await this.patchRepo(repo, patch, root);
 					if (res) {
-						Log.info(
-							"AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo + "; took: " + Util.took(start)
-						);
+						Log.info("AdminPullRequestPage::patchListOfRepos(..) - patching complete; repo: " + repo + "; took: " + Util.took(start));
 						UI.showSuccessToast("Repo patched: " + repo + " ( " + ++i + " of " + repoList.length + " )", {
 							timeout: 1000,
 							animation: "none",
@@ -220,7 +221,7 @@ export class AdminPullRequestsPage extends AdminPage {
 						++i;
 						throw new Error();
 					}
-				} catch (err) {
+				} catch (_err) {
 					Log.error("AdminPullRequestPage::patchListOfRepos(..) - patching error for: " + patch + ".");
 					UI.showErrorToast("Repo NOT patched: " + repo + " (see error console)");
 				}

@@ -4,15 +4,14 @@ import Log from "@common/Log";
 import { AutoTestGradeTransport, GradeTransport } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
-
-import { Grade, PersonKind } from "../Types";
 import { Factory } from "../Factory";
+import { Grade, PersonKind } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
-import { PersonController } from "./PersonController";
 import { GitHubActions } from "./GitHubActions";
 import { GitHubController } from "./GitHubController";
+import { PersonController } from "./PersonController";
 
 export class GradesController {
 	private db: DatabaseController = DatabaseController.getInstance();
@@ -38,10 +37,7 @@ export class GradesController {
 					Log.trace("GradesController::getAllGrades() - not returning grade for: " + grade.personId + "; kind: " + person.kind);
 				} else {
 					Log.warn(
-						"GradesController::getAllGrades() - null; not returning grade: " +
-							JSON.stringify(grade) +
-							"; person: " +
-							JSON.stringify(person)
+						"GradesController::getAllGrades() - null; not returning grade: " + JSON.stringify(grade) + "; person: " + JSON.stringify(person)
 					);
 				}
 			}
@@ -171,9 +167,7 @@ export class GradesController {
 					timestamp: grade.timestamp,
 					custom: grade.custom,
 				};
-				Log.trace(
-					"GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord)
-				);
+				Log.trace("GradesController::createGrade(..) - new grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
 			} else {
 				// update existing
 				// personId & delivId are invariant
@@ -182,9 +176,7 @@ export class GradesController {
 				gradeRecord.URL = grade.URL;
 				gradeRecord.timestamp = grade.timestamp;
 				gradeRecord.custom = grade.custom;
-				Log.trace(
-					"GradesController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord)
-				);
+				Log.trace("GradesController::createGrade(..) - updating grade; personId: " + personId + "; grade: " + JSON.stringify(gradeRecord));
 			}
 			const succeeded = await this.db.writeGrade(gradeRecord);
 			if (succeeded === false) {

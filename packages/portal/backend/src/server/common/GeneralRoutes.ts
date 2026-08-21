@@ -1,6 +1,3 @@
-import * as fs from "fs-extra";
-import * as restify from "restify";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import {
@@ -15,7 +12,9 @@ import {
 	TeamTransport,
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
-
+import Util from "@common/Util";
+import * as fs from "fs-extra";
+import * as restify from "restify";
 import { AuthController } from "../../controllers/AuthController";
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { DeliverablesController } from "../../controllers/DeliverablesController";
@@ -27,12 +26,11 @@ import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
 import { Factory } from "../../Factory";
 import { AuditLabel, GitHubStatus, Person } from "../../Types";
-import { ClasslistAgent } from "./ClasslistAgent";
 
 import IREST from "../IREST";
 import AdminRoutes from "./AdminRoutes";
 import { AuthRoutes } from "./AuthRoutes";
-import Util from "@common/Util";
+import { ClasslistAgent } from "./ClasslistAgent";
 
 export default class GeneralRoutes implements IREST {
 	public static async getConfig(req: any, res: any, next: any) {
@@ -107,9 +105,7 @@ export default class GeneralRoutes implements IREST {
 
 		GeneralRoutes.performGetTeams(user, token)
 			.then(function (teams) {
-				Log.trace(
-					"GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start)
-				);
+				Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
 				const payload: TeamTransportPayload = { success: teams };
 				res.send(200, payload);
 				return next(false);
@@ -241,7 +237,7 @@ export default class GeneralRoutes implements IREST {
 				// internal throw not great, but gets us into the same path as invalid student from
 				throw new Error("401");
 			}
-		} catch (err) {
+		} catch (_err) {
 			throw new Error("401");
 		}
 
@@ -322,7 +318,7 @@ export default class GeneralRoutes implements IREST {
 				const msg = "Classlist upload not successful; no students were processed from CSV.";
 				return GeneralRoutes.handleError(400, msg, res, next);
 			}
-		} catch (err) {
+		} catch (_err) {
 			const msg = "Classlist upload not successful; no students were processed from CSV.";
 			return GeneralRoutes.handleError(400, msg, res, next);
 		}

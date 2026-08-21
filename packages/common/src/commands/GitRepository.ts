@@ -1,6 +1,5 @@
 import * as path from "path";
-import { CommandResult } from "./Command";
-import { Command } from "./Command";
+import { Command, CommandResult } from "./Command";
 
 interface Repository {
 	/**
@@ -31,7 +30,7 @@ interface Repository {
 export class GitRepository extends Command implements Repository {
 	private readonly path: string;
 
-	constructor(dir: string) {
+	public constructor(dir: string) {
 		super("git");
 		this.path = path.resolve(dir);
 	}

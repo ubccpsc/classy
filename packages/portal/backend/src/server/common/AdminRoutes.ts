@@ -1,8 +1,17 @@
-import * as cookie from "cookie";
-import * as http from "http";
-import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
-
+import { AdminController } from "@backend/controllers/AdminController";
+import { AuthController } from "@backend/controllers/AuthController";
+import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { DeliverablesController } from "@backend/controllers/DeliverablesController";
+import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController } from "@backend/controllers/GitHubController";
+import { PersonController } from "@backend/controllers/PersonController";
+import { RepositoryController } from "@backend/controllers/RepositoryController";
+import { ResultsKind } from "@backend/controllers/ResultsController";
+import { TeamController } from "@backend/controllers/TeamController";
+import { Factory } from "@backend/Factory";
+import { CSVPrairieLearnParser } from "@backend/server/common/CSVPrairieLearnParser";
+import IREST from "@backend/server/IREST";
+import { AuditLabel, GitHubStatus, Person, Repository } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import {
@@ -23,23 +32,10 @@ import {
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-
-import { AuditLabel, GitHubStatus, Person, Repository } from "@backend/Types";
-import { Factory } from "@backend/Factory";
-
-import { AdminController } from "@backend/controllers/AdminController";
-import { AuthController } from "@backend/controllers/AuthController";
-import { DatabaseController } from "@backend/controllers/DatabaseController";
-import { DeliverablesController } from "@backend/controllers/DeliverablesController";
-import { GitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
-import { PersonController } from "@backend/controllers/PersonController";
-import { RepositoryController } from "@backend/controllers/RepositoryController";
-import { TeamController } from "@backend/controllers/TeamController";
-import { ResultsKind } from "@backend/controllers/ResultsController";
-
-import IREST from "@backend/server/IREST";
-import { CSVPrairieLearnParser } from "@backend/server/common/CSVPrairieLearnParser";
+import * as cookie from "cookie";
+import * as http from "http";
+import fetch, { RequestInit } from "node-fetch";
+import * as restify from "restify";
 
 import { ClasslistAgent } from "./ClasslistAgent";
 import { CSVParser } from "./CSVParser";
@@ -72,7 +68,7 @@ export default class AdminRoutes implements IREST {
 				// the following snippet is a tiny modification based on a snippet in App.validateCredentials()
 				// https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/
 				// packages/portal/frontend/src/app/App.ts#L200
-				const tokenString = cookie.parse(req.headers.cookie)["token"];
+				const tokenString = cookie.parse(req.headers.cookie).token;
 				if (typeof tokenString !== "undefined" && tokenString !== null && typeof tokenString.split !== "undefined") {
 					const tokenParts = tokenString.split("__"); // Firefox does not like multiple tokens
 					if (tokenParts.length === 1) {
@@ -119,7 +115,7 @@ export default class AdminRoutes implements IREST {
 				const msg = "Classlist upload not successful; no students were processed from classlist service.";
 				return AdminRoutes.handleError(400, msg, res, next);
 			}
-		} catch (err) {
+		} catch (_err) {
 			const msg = "Classlist upload not successful; no students were processed from classlist service.";
 			return AdminRoutes.handleError(400, msg, res, next);
 		}
@@ -149,9 +145,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postCheckDatabase(..) - start");
 
 		const dryRun = req.params.dryRun === "true";
-		Log.info(
-			"AdminRoutes::postCheckDatabase(..) - dryRun: " + dryRun + "; true? " + (dryRun === true) + "; false? " + (dryRun === false)
-		);
+		Log.info("AdminRoutes::postCheckDatabase(..) - dryRun: " + dryRun + "; true? " + (dryRun === true) + "; false? " + (dryRun === false));
 
 		const cc = new AdminController(AdminRoutes.ghc);
 		cc.dbSanityCheck(dryRun)
@@ -365,14 +359,7 @@ export default class AdminRoutes implements IREST {
 		cc.getResults(delivId, repoId)
 			.then(function (results) {
 				Log.info(
-					"AdminRoutes::getResults( " +
-						delivId +
-						", " +
-						repoId +
-						" ) - # results: " +
-						results.length +
-						"; took: " +
-						Util.took(start)
+					"AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start)
 				);
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
@@ -989,12 +976,7 @@ export default class AdminRoutes implements IREST {
 			const ac = new AdminController(AdminRoutes.ghc);
 			const releaseSucceeded = await ac.performRelease([repo]);
 			Log.info(
-				"AdminRoutes::performRelease() - done; repo: " +
-					repoId +
-					";  results: " +
-					releaseSucceeded.length +
-					"; took: " +
-					Util.took(start)
+				"AdminRoutes::performRelease() - done; repo: " + repoId + ";  results: " + releaseSucceeded.length + "; took: " + Util.took(start)
 			);
 			return releaseSucceeded;
 		} else {

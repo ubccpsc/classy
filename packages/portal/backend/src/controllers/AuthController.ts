@@ -1,5 +1,5 @@
-import Log from "@common/Log";
 import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
 
 import { Person, PersonKind } from "../Types";
 import { DatabaseController } from "./DatabaseController";
@@ -12,7 +12,7 @@ import { PersonController } from "./PersonController";
 export class AuthController {
 	private dc: DatabaseController = null;
 
-	constructor() {
+	public constructor() {
 		this.dc = DatabaseController.getInstance();
 	}
 

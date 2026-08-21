@@ -1,19 +1,18 @@
 import { expect } from "chai";
 import * as fs from "fs-extra";
 import "mocha";
-import * as restify from "restify";
-import request from "supertest";
-
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-import { ConfigTransportPayload, Payload, TeamFormationTransport } from "@common/types/PortalTypes";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import BackendServer from "@backend/server/BackendServer";
 import { GitHubStatus } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
+import { ConfigTransportPayload, Payload, TeamFormationTransport } from "@common/types/PortalTypes";
+import * as restify from "restify";
+import request from "supertest";
 
 describe("General Routes", function () {
 	let app: restify.Server = null;

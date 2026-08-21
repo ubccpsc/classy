@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import "mocha";
-import * as restify from "restify";
-import request from "supertest";
 
+import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { DeliverablesController } from "@backend/controllers/DeliverablesController";
+import { GitHubActions } from "@backend/controllers/GitHubActions";
+import BackendServer from "@backend/server/BackendServer";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -20,11 +22,8 @@ import {
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-
-import { DatabaseController } from "@backend/controllers/DatabaseController";
-import { DeliverablesController } from "@backend/controllers/DeliverablesController";
-import { GitHubActions } from "@backend/controllers/GitHubActions";
-import BackendServer from "@backend/server/BackendServer";
+import * as restify from "restify";
+import request from "supertest";
 
 import "./AuthRoutesSpec";
 import { GitHubStatus } from "@backend/Types";
@@ -818,7 +817,6 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to update the course object with invalid settings", async function () {
 		let response = null;
-		let body: Payload;
 		const url = "/portal/admin/course";
 
 		const newId = Date.now() + "id";
@@ -829,7 +827,7 @@ describe("Admin Routes", function () {
 			custom: {},
 		};
 		response = await request(app).post(url).send(course).set({ user: userName, token: userToken });
-		body = response.body;
+		const body: Payload = response.body;
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(400);
 		expect(body.success).to.be.undefined;
@@ -1084,7 +1082,6 @@ describe("Admin Routes", function () {
 
 		it("Should be able to release a deliverable", async function () {
 			let response = null;
-			let body: Payload;
 			const url = "/portal/admin/release/" + TestHarness.REPONAMEREAL;
 
 			// const provision: ProvisionTransport = {
@@ -1092,7 +1089,7 @@ describe("Admin Routes", function () {
 			//     formSingle: false
 			// };
 			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
+			const body: Payload = response.body;
 			Log.test("first release: " + response.status + " -> " + JSON.stringify(body));
 			expect(response.status).to.equal(200);
 			expect(body.success).to.not.be.undefined;

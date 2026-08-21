@@ -66,7 +66,7 @@ export class GitHubController implements IGitHubController {
 
 	private gha: IGitHubActions = null;
 
-	constructor(gha: IGitHubActions) {
+	public constructor(gha: IGitHubActions) {
 		this.gha = gha;
 	}
 
@@ -117,10 +117,7 @@ export class GitHubController implements IGitHubController {
 				const res = await this.gha.deleteRepo(repoName);
 				Log.info("GitHubController::provisionRepositoryFromFS( " + repoName + " ) - repo removed: " + res);
 				throw new Error(
-					"GitHubController::provisionRepositoryFromFS(..) failed; Repository " +
-						repoName +
-						" creation failed; ERROR: " +
-						err.message
+					"GitHubController::provisionRepositoryFromFS(..) failed; Repository " + repoName + " creation failed; ERROR: " + err.message
 				);
 			}
 		}
@@ -141,11 +138,7 @@ export class GitHubController implements IGitHubController {
 			Log.trace("GitHubController::provisionRepositoryFromFS( " + repoName + " ) - import complete; output: " + output);
 
 			Log.trace(
-				"GithubController::provisionRepositoryFromFS( " +
-					repoName +
-					" ) - successfully completed; " +
-					"took: " +
-					Util.took(startTime)
+				"GithubController::provisionRepositoryFromFS( " + repoName + " ) - successfully completed; " + "took: " + Util.took(startTime)
 			);
 
 			return true;
@@ -252,10 +245,7 @@ export class GitHubController implements IGitHubController {
 		}
 
 		Log.info(
-			"GitHubController::provisionRepositoryFromTemplate( " +
-				repoName +
-				", ...) - start; branchesToKeep: " +
-				JSON.stringify(branchesToKeep)
+			"GitHubController::provisionRepositoryFromTemplate( " + repoName + ", ...) - start; branchesToKeep: " + JSON.stringify(branchesToKeep)
 		);
 
 		// make sure repoName already exists in the database
@@ -282,11 +272,7 @@ export class GitHubController implements IGitHubController {
 			if (finalBranches.length === 1) {
 				if (finalBranches[0] !== "main") {
 					Log.info(
-						"GitHubController::provisionRepositoryFromTemplate( " +
-							repoName +
-							" ) - renaming branch: " +
-							finalBranches[0] +
-							" -> main"
+						"GitHubController::provisionRepositoryFromTemplate( " + repoName + " ) - renaming branch: " + finalBranches[0] + " -> main"
 					);
 					await this.gha.renameBranch(repoName, finalBranches[0], "main");
 				}
@@ -301,9 +287,7 @@ export class GitHubController implements IGitHubController {
 				// repo creation failed; remove if needed (requires createRepo be permissive if already exists)
 				const res = await this.gha.deleteRepo(repoName);
 				Log.info("GitHubController::provisionRepositoryFromTemplate( " + repoName + " ) - repo removed: " + res);
-				throw new Error(
-					"GitHubController::provisionRepositoryFromTemplate( " + repoName + " ) creation failed; ERROR: " + err.message
-				);
+				throw new Error("GitHubController::provisionRepositoryFromTemplate( " + repoName + " ) creation failed; ERROR: " + err.message);
 			}
 		}
 	}
@@ -504,9 +488,7 @@ export class GitHubController implements IGitHubController {
 			// NOTE: the repo was created and may already contain imported student content, so it is
 			// NOT deleted here; finalization (teams / webhooks / settings) is what failed and that
 			// is recoverable by re-running finalization, whereas deleting the repo is not.
-			Log.error(
-				"GitHubController::provisionRepository( " + repoName + " ) - created but not finalized; repo left in place for retry"
-			);
+			Log.error("GitHubController::provisionRepository( " + repoName + " ) - created but not finalized; repo left in place for retry");
 			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo created but finalization failed");
 		}
 

@@ -1,7 +1,6 @@
-import { OnsBackButtonElement, OnsButtonElement, OnsFabElement, OnsRadioElement, OnsSwitchElement } from "onsenui";
-
 import Log from "@common/Log";
 import { AutoTestConfigTransport, DeliverableTransport, DeliverableTransportPayload } from "@common/types/PortalTypes";
+import { OnsBackButtonElement, OnsButtonElement, OnsFabElement, OnsRadioElement, OnsSwitchElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
@@ -10,7 +9,7 @@ import { AdminView } from "./AdminView";
 import { DockerListImageView } from "./DockerListImageView";
 
 // import flatpickr from "flatpickr";
-declare var flatpickr: any;
+declare let flatpickr: any;
 
 /**
  *
@@ -25,7 +24,7 @@ export class AdminDeliverablesTab extends AdminPage {
 	private openPicker: any; // flatpickr;
 	private closePicker: any; // flatpickr;
 
-	constructor(remote: string, isAdmin: boolean) {
+	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		// this.remote = remote;
 		this.isAdmin = isAdmin;
@@ -169,7 +168,8 @@ export class AdminDeliverablesTab extends AdminPage {
 		} else {
 			fab.onclick = function (_evt) {
 				Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick");
-				that.save()
+				that
+					.save()
 					.then(function () {
 						// worked
 					})
@@ -328,7 +328,8 @@ export class AdminDeliverablesTab extends AdminPage {
 
 						UI.showModal();
 
-						that.buildDockerImage(context, tag, file)
+						that
+							.buildDockerImage(context, tag, file)
 							.then(function (sha: string) {
 								imageSha = sha;
 								UI.hideModal();

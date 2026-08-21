@@ -1,4 +1,4 @@
-import { Collection, Db, MongoClient } from "mongodb";
+import { GitHubUtil } from "@autotest/github/GitHubUtil";
 import Config, { ConfigKey } from "@common/Config";
 
 import Log from "@common/Log";
@@ -6,7 +6,7 @@ import { AutoTestResult, IFeedbackGiven } from "@common/types/AutoTestTypes";
 import { CommitTarget } from "@common/types/ContainerTypes";
 
 import Util from "@common/Util";
-import { GitHubUtil } from "@autotest/github/GitHubUtil";
+import { Collection, Db, MongoClient } from "mongodb";
 
 export interface IDataStore {
 	/**
@@ -76,7 +76,7 @@ export class MongoDataStore implements IDataStore {
 	private readonly OUTPUTCOLL = "output";
 	private readonly FEEDBACKCOLL = "feedback";
 
-	constructor() {
+	public constructor() {
 		Log.info("MongoDataStore::<init> - start");
 
 		try {
@@ -298,9 +298,7 @@ export class MongoDataStore implements IDataStore {
 			// NOTE: this has been implemented as getLatestFeedbackGiven in @backend and can be ported
 			const res = await this.getRecords(this.FEEDBACKCOLL, { delivId: delivId, personId: userName, kind: kind });
 			if (res === null) {
-				Log.trace(
-					"MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for deliv: " + delivId + "; user: " + userName
-				);
+				Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit(..) - record not found for deliv: " + delivId + "; user: " + userName);
 				return null;
 			} else {
 				// pick the most recent
@@ -336,12 +334,7 @@ export class MongoDataStore implements IDataStore {
 			const res = await this.getSingleRecord(this.FEEDBACKCOLL, { delivId: delivId, commitURL: commitURL });
 			if (res === null) {
 				Log.trace(
-					"MongoDataStore::getFeedbackGivenRecordForCommit( " +
-						delivId +
-						", " +
-						userName +
-						" ) - record not found for: " +
-						commitURL
+					"MongoDataStore::getFeedbackGivenRecordForCommit( " + delivId + ", " + userName + " ) - record not found for: " + commitURL
 				);
 			} else {
 				Log.trace("MongoDataStore::getFeedbackGivenRecordForCommit( " + delivId + ", " + userName + " ) - found for: " + commitURL);

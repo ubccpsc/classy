@@ -1,16 +1,16 @@
 import { expect } from "chai";
 import * as fs from "fs-extra";
 import "mocha";
-import * as restify from "restify";
-import request from "supertest";
+
+import { DatabaseController } from "@backend/controllers/DatabaseController";
+import BackendServer from "@backend/server/BackendServer";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestAuthPayload, AutoTestConfigPayload, AutoTestGradeTransport, ClassyConfigurationPayload } from "@common/types/PortalTypes";
-
-import { DatabaseController } from "@backend/controllers/DatabaseController";
-import BackendServer from "@backend/server/BackendServer";
+import * as restify from "restify";
+import request from "supertest";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.

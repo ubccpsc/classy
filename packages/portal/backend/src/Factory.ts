@@ -34,9 +34,8 @@ export class Factory {
 
 		try {
 			// plugin path can be substituted in .env for customization of routes
-			let plug: any;
 			Log.info("Factory::getCustomRouteHandler() - instantiating CustomCourseRoutes for: " + name + "; path: " + plugin);
-			plug = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
+			const plug: any = await require("../../../../plugins/" + plugin + "/portal/backend/CustomCourseRoutes"); // default for testing
 			Log.trace("Factory::getCustomRouteHandler() - CustomRouteHandler loaded");
 
 			// if this fails an error will be raised and the default view will be provided in the catch below
@@ -108,7 +107,7 @@ export class Factory {
 			const handler = new plug[constructorName](ghController);
 			Log.trace("Factory::getCourseController() - CustomCourseController handler instantiated");
 			return handler;
-		} catch (err) {
+		} catch (_err) {
 			const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
 			Log.error(msg);
 			throw new Error(msg);

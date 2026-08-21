@@ -42,7 +42,7 @@ export class TransformGrades {
 	 */
 	private readonly DELIVID: string = "d3";
 
-	constructor() {
+	public constructor() {
 		Log.info("TransformGrades::<init> - start");
 		this.dc = DatabaseController.getInstance();
 	}
@@ -108,22 +108,12 @@ export class TransformGrades {
 					// 25% private tests
 					finalScore = (scorePub * 0.75 + scorePriv * 0.25) * 0.8 + scoreCover * 0.2;
 					finalScore = Number(finalScore.toFixed(2));
-					Log.info(
-						"Updating grade for " +
-							this.DELIVID +
-							"; original: " +
-							scorePubOverall.toFixed(0) +
-							"; new: " +
-							finalScore.toFixed(0)
-					);
+					Log.info("Updating grade for " + this.DELIVID + "; original: " + scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
 					// if there"s a big difference, print a warning
 					if (scorePub - scorePriv > 20) {
 						Log.warn(
-							"Divergent score between public and private; original: " +
-								scorePubOverall.toFixed(0) +
-								"; new: " +
-								finalScore.toFixed(0)
+							"Divergent score between public and private; original: " + scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0)
 						);
 					}
 				}
@@ -141,22 +131,12 @@ export class TransformGrades {
 					// 50% private tests
 					finalScore = (scorePub * 0.5 + scorePriv * 0.5) * 0.8 + scoreCover * 0.2;
 					finalScore = Number(finalScore.toFixed(2));
-					Log.info(
-						"Updating grade for " +
-							this.DELIVID +
-							"; original: " +
-							scorePubOverall.toFixed(0) +
-							"; new: " +
-							finalScore.toFixed(0)
-					);
+					Log.info("Updating grade for " + this.DELIVID + "; original: " + scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0));
 
 					// if there"s a big difference, print a warning
 					if (scorePub - scorePriv > 20) {
 						Log.warn(
-							"Divergent score between public and private; original: " +
-								scorePubOverall.toFixed(0) +
-								"; new: " +
-								finalScore.toFixed(0)
+							"Divergent score between public and private; original: " + scorePubOverall.toFixed(0) + "; new: " + finalScore.toFixed(0)
 						);
 					}
 				}
@@ -211,9 +191,7 @@ export class TransformGrades {
 		Log.info("# increased: " + gradeIncreased + "; by avg: " + (increasedAmount / gradeIncreased).toFixed(2));
 		Log.info("# decreased: " + gradeDecreased + "; by avg: " + (decreasedAmount / gradeDecreased).toFixed(2));
 		Log.info("# unchanged: " + gradeUnchanged);
-		Log.info(
-			"Average change: " + ((decreasedAmount + increasedAmount) / (gradeDecreased + gradeIncreased + gradeUnchanged)).toFixed(2)
-		);
+		Log.info("Average change: " + ((decreasedAmount + increasedAmount) / (gradeDecreased + gradeIncreased + gradeUnchanged)).toFixed(2));
 		Log.info("*** /Transformation Summary ***");
 
 		Log.info("TransformGrades::process() - done");
@@ -223,7 +201,8 @@ export class TransformGrades {
 const ppt = new TransformGrades();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-ppt.process()
+ppt
+	.process()
 	.then(function () {
 		Log.info("TransformGrades::process() - complete; took: " + Util.took(start));
 		process.exit();

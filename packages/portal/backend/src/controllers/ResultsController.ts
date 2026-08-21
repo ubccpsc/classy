@@ -387,12 +387,7 @@ export class ResultsController {
 		}
 
 		Log.info(
-			"ResultsController::getResultsForDeliverable( " +
-				delivId +
-				" ) - done; # results: " +
-				outcome.length +
-				"; took: " +
-				Util.took(start)
+			"ResultsController::getResultsForDeliverable( " + delivId + " ) - done; # results: " + outcome.length + "; took: " + Util.took(start)
 		);
 
 		return outcome;
@@ -408,9 +403,7 @@ export class ResultsController {
 		const start = Date.now();
 
 		const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
-		Log.info(
-			"ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " + outcome.length + "; took: " + Util.took(start)
-		);
+		Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " + outcome.length + "; took: " + Util.took(start));
 
 		return outcome;
 	}

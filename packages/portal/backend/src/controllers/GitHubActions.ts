@@ -1,16 +1,14 @@
-import * as crypto from "crypto";
-import parseLinkHeader from "parse-link-header";
-import fetch, { RequestInit } from "node-fetch";
-
+import { GitHubStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
-
+import * as crypto from "crypto";
+import fetch, { RequestInit } from "node-fetch";
+import parseLinkHeader from "parse-link-header";
 import { Factory } from "../Factory";
 import { DatabaseController } from "./DatabaseController";
 import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
 import { TeamController } from "./TeamController";
-import { GitHubStatus } from "@backend/Types";
 
 // tslint:disable-next-line
 const tmp = require("tmp-promise");
@@ -562,9 +560,7 @@ export class GitHubActions implements IGitHubActions {
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
 			if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
 				Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-				throw new Error(
-					"Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?"
-				);
+				throw new Error("Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?");
 			}
 			const url = body.html_url;
 
@@ -1090,9 +1086,7 @@ export class GitHubActions implements IGitHubActions {
 			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
 				Log.warn(
-					"GitHubAction::addMembersToTeam( .. ) - githubId: " +
-						member +
-						" is unknown; is this actually an id instead of a githubId?"
+					"GitHubAction::addMembersToTeam( .. ) - githubId: " + member + " is unknown; is this actually an id instead of a githubId?"
 				);
 			}
 		}
@@ -1130,12 +1124,7 @@ export class GitHubActions implements IGitHubActions {
 	 */
 	public async removeMembersFromTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
 		Log.info(
-			"GitHubAction::removeMembersFromTeam( " +
-				teamName +
-				", ..) - start; teamName: " +
-				teamName +
-				"; members: " +
-				JSON.stringify(members)
+			"GitHubAction::removeMembersFromTeam( " + teamName + ", ..) - start; teamName: " + teamName + "; members: " + JSON.stringify(members)
 		);
 		const start = Date.now();
 
@@ -1153,9 +1142,7 @@ export class GitHubActions implements IGitHubActions {
 			const person = await this.dc.getGitHubPerson(member);
 			if (person === null) {
 				Log.warn(
-					"GitHubAction::removeMembersFromTeam( .. ) - githubId: " +
-						member +
-						" is unknown; is this actually an id instead of a githubId?"
+					"GitHubAction::removeMembersFromTeam( .. ) - githubId: " + member + " is unknown; is this actually an id instead of a githubId?"
 				);
 			}
 		}
@@ -1237,9 +1224,7 @@ export class GitHubActions implements IGitHubActions {
 				throw new Error(response.statusText);
 			}
 
-			Log.info(
-				"GitHubAction::addTeamToRepo(..) - success; team: " + teamName + "; repo: " + repoName + "; took: " + Util.took(start)
-			);
+			Log.info("GitHubAction::addTeamToRepo(..) - success; team: " + teamName + "; repo: " + repoName + "; took: " + Util.took(start));
 
 			// const teamId = await this.getTeamNumber(teamName);
 			return { githubTeamNumber: team.githubTeamNumber, teamName: "NOTSETHERE" }; // TODO: why NOTSETHERE?
@@ -1274,9 +1259,7 @@ export class GitHubActions implements IGitHubActions {
 				Log.info("GitHubAction::getTeamNumber(..) - WARN: Could not find team: " + teamName + "; took: " + Util.took(start));
 				return -1;
 			} else {
-				Log.info(
-					"GitHubAction::getTeamNumber(..) - Found team: " + teamName + "; teamId: " + teamId + "; took: " + Util.took(start)
-				);
+				Log.info("GitHubAction::getTeamNumber(..) - Found team: " + teamName + "; teamId: " + teamId + "; took: " + Util.took(start));
 				return teamId;
 			}
 		} catch (err) {
@@ -1785,8 +1768,8 @@ export class GitHubActions implements IGitHubActions {
 
 		function getImportBranch(url: string): string {
 			try {
-				const [cloneUrl, specifiers] = url.split("#");
-				const [branch, path] = (specifiers || "").split(":");
+				const [_cloneUrl, specifiers] = url.split("#");
+				const [branch, _path] = (specifiers || "").split(":");
 				return branch;
 			} catch (err) {
 				Log.error("GitHubActions::importRepoFS(..)::getImportBranch() - Unexpected error", err);
@@ -1796,8 +1779,8 @@ export class GitHubActions implements IGitHubActions {
 
 		function getPath(url: string): string {
 			try {
-				const [cloneUrl, specifiers] = url.split(".git");
-				const [branch, pathSpecifier] = (specifiers || "").split(":");
+				const [_cloneUrl, specifiers] = url.split(".git");
+				const [_branch, pathSpecifier] = (specifiers || "").split(":");
 				let path = pathSpecifier || "";
 				path = path.startsWith("/") ? path.slice(1) : path;
 				path = path.endsWith("/") ? path.slice(0, -1) : path;
@@ -1900,9 +1883,7 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		function moveFiles(originPath: string, filesLocation: string, destPath: string) {
-			Log.info(
-				"GitHubActions::importRepoFS(..)::moveFiles( " + originPath + ", " + filesLocation + ", " + destPath + ") - moving files"
-			);
+			Log.info("GitHubActions::importRepoFS(..)::moveFiles( " + originPath + ", " + filesLocation + ", " + destPath + ") - moving files");
 			return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`).then(function (result: any) {
 				Log.info("GitHubActions::importRepoFS(..)::moveFiles(..) - done");
 				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::moveFiles(..)");
@@ -2043,7 +2024,7 @@ export class GitHubActions implements IGitHubActions {
 			await addFilesToRepo();
 			try {
 				await commitFilesToRepo();
-			} catch (err) {
+			} catch (_err) {
 				Log.warn("GithubActions::writeFileToRepo(..) - No file differences; " + "Did not write file to repo");
 				// this only fails when the files have not changed,
 				return true; // we technically "wrote" the file still
@@ -2091,9 +2072,7 @@ export class GitHubActions implements IGitHubActions {
 
 		function createNewFile() {
 			Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - writing: " + fileName);
-			return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`).then(function (
-				result: any
-			) {
+			return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`).then(function (result: any) {
 				Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - done");
 				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::createNewFile()");
 				that.reportStdErr(result.stderr, "writeFileToRepo(..)::createNewFile()");
@@ -2289,16 +2268,7 @@ export class GitHubActions implements IGitHubActions {
 			if (response.ok === false) {
 				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 				const respBody = await response.text();
-				Log.warn(
-					"GitHubAction::makeIssue(",
-					repoId,
-					",",
-					issue.title,
-					") - failed; status:",
-					response.status,
-					"; response:",
-					respBody
-				);
+				Log.warn("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - failed; status:", response.status, "; response:", respBody);
 				return false;
 			}
 			Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
@@ -2487,7 +2457,7 @@ export class GitHubActions implements IGitHubActions {
 
 			Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - done; # teams: " + toReturn.length + "; took: " + Util.took(start));
 			return toReturn;
-		} catch (err) {
+		} catch (_err) {
 			Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - failed; took: " + Util.took(start));
 			return [];
 		}

@@ -10,7 +10,7 @@ import BackendServer from "./server/BackendServer";
 export class BackendDaemon {
 	private server: BackendServer = null;
 
-	constructor() {
+	public constructor() {
 		Log.info("BackendDaemon::<init> - start");
 		//  App.config = <IConfig>Config;
 	}
@@ -59,7 +59,8 @@ export class BackendDaemon {
 Log.info("BackendDaemon - starting");
 Config.getInstance();
 const app = new BackendDaemon();
-app.start()
+app
+	.start()
 	.then(function (success) {
 		if (success === true) {
 			Log.info("BackendDaemon - start success");
@@ -79,7 +80,7 @@ process.on("unhandledRejection", (reason) => {
 		Log.error("BackendDaemon - unhandled promise"); // in case next line fails
 		// console.log("BackendDaemon - unhandled rejection at: ", p, "; reason:", reason);
 		Log.error("BackendDaemon - unhandled promise: " + JSON.stringify(reason));
-	} catch (err) {
+	} catch (_err) {
 		// eat any error
 	}
 });

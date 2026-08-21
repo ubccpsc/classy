@@ -1,10 +1,6 @@
 import { expect } from "chai";
 import "mocha";
 
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
@@ -13,6 +9,9 @@ import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { GitHubStatus, PersonKind, Repository, Team } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
 
 import "@common/GlobalSpec"; // load first
 import "./TeamControllerSpec";
@@ -55,20 +54,11 @@ describe("GitHubController", () => {
 		await pc.writePerson(p);
 
 		// const tc = new TeamController();
-		const t1 = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [
-			TestHarness.GITHUB1.id,
-			TestHarness.GITHUB2.id,
-		]);
+		const t1 = await TestHarness.createTeam(TestHarness.TEAMNAME1, TestHarness.DELIVID0, [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id]);
 		await dbc.writeTeam(t1);
-		const t2 = await TestHarness.createTeam(TestHarness.TEAMNAME2, TestHarness.DELIVID1, [
-			TestHarness.GITHUB1.id,
-			TestHarness.GITHUB2.id,
-		]);
+		const t2 = await TestHarness.createTeam(TestHarness.TEAMNAME2, TestHarness.DELIVID1, [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id]);
 		await dbc.writeTeam(t2);
-		const t3 = await TestHarness.createTeam(TestHarness.TEAMNAME3, TestHarness.DELIVID2, [
-			TestHarness.GITHUB1.id,
-			TestHarness.GITHUB2.id,
-		]);
+		const t3 = await TestHarness.createTeam(TestHarness.TEAMNAME3, TestHarness.DELIVID2, [TestHarness.GITHUB1.id, TestHarness.GITHUB2.id]);
 		await dbc.writeTeam(t3);
 
 		const dc = new DeliverablesController();
@@ -254,7 +244,7 @@ describe("GitHubController", () => {
 		// setup
 		const rc: RepositoryController = new RepositoryController();
 		const repo = await rc.getRepository(TestHarness.REPONAME3);
-		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
+		const _githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
 		expect(repo).to.not.be.null;
 
 		const templateOwnerName = TestHarness.ORGNAMEREAL;
@@ -348,7 +338,7 @@ describe("GitHubController", () => {
 		// setup
 		const rc: RepositoryController = new RepositoryController();
 		const allRepos: Repository[] = await rc.getAllRepos();
-		const repoCount: number = allRepos.length;
+		const _repoCount: number = allRepos.length;
 
 		// const repo = await rc.getRepository(TestHarness.REPONAME1);
 		const repo = allRepos[0];

@@ -1,13 +1,12 @@
 import { expect } from "chai";
 import "mocha";
 
-import Log from "@common/Log";
-import { TestHarness } from "@common/TestHarness";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Deliverable, Person, PersonKind, Team } from "@backend/Types";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
 
 import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";

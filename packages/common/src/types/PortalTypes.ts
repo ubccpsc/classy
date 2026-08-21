@@ -5,8 +5,9 @@
  *
  * All fields should be primitives or types declared in this file.
  */
-import { AutoTestResult } from "./AutoTestTypes";
+
 import { PersonKind } from "@backend/Types";
+import { AutoTestResult } from "./AutoTestTypes";
 
 export interface FailurePayload {
 	message: string;

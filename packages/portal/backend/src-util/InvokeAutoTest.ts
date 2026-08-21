@@ -74,7 +74,7 @@ export class InvokeAutoTest {
 
 	private dc: DatabaseController;
 
-	constructor() {
+	public constructor() {
 		Log.info("InvokeAutoTest::<init> - start");
 		this.dc = DatabaseController.getInstance();
 	}
@@ -162,7 +162,8 @@ export class InvokeAutoTest {
 const iat = new InvokeAutoTest();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-iat.process()
+iat
+	.process()
 	.then(function () {
 		Log.info("InvokeAutoTest::process() - complete; took: " + Util.took(start));
 		process.exit();

@@ -1,13 +1,12 @@
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { CommitTarget } from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 import * as crypto from "crypto";
 import Docker from "dockerode";
 import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";
-
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import { CommitTarget } from "@common/types/ContainerTypes";
-import Util from "@common/Util";
 
 import { AutoTest } from "../autotest/AutoTest";
 import { ClassPortal } from "../autotest/ClassPortal";
@@ -40,7 +39,7 @@ export default class AutoTestRouteHandler {
 		if (AutoTestRouteHandler.autoTest === null) {
 			const dataStore = new MongoDataStore();
 			const docker = AutoTestRouteHandler.getDocker();
-			let portal: ClassPortal = new ClassPortal();
+			const portal: ClassPortal = new ClassPortal();
 
 			AutoTestRouteHandler.autoTest = new GitHubAutoTest(dataStore, portal, docker);
 		}
@@ -118,10 +117,7 @@ export default class AutoTestRouteHandler {
 				secretVerified = githubSecret === computed;
 				if (secretVerified === true) {
 					Log.trace(
-						"AutoTestRouteHandler::postGithubHook(..) - webhook secret verified: " +
-							secretVerified +
-							"; took: " +
-							Util.took(start)
+						"AutoTestRouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified + "; took: " + Util.took(start)
 					);
 				} else {
 					Log.warn("AutoTestRouteHandler::postGithubHook(..) - webhook secrets do not match");
@@ -136,10 +132,7 @@ export default class AutoTestRouteHandler {
 
 		// leave this on for a while; would like to verify that this works so we can replace the hardcode below
 		Log.info(
-			"AutoTestRouteHandler::postGithubHook(..) - hasSecret: " +
-				(typeof githubSecret === "string") +
-				"; secretVerified: " +
-				secretVerified
+			"AutoTestRouteHandler::postGithubHook(..) - hasSecret: " + (typeof githubSecret === "string") + "; secretVerified: " + secretVerified
 		);
 
 		secretVerified = true; // TODO: stop overwriting this
@@ -179,7 +172,7 @@ export default class AutoTestRouteHandler {
 			const filtersStr = req.query.filters;
 			const options: any = {};
 			if (filtersStr) {
-				options["filters"] = JSON.parse(filtersStr);
+				options.filters = JSON.parse(filtersStr);
 			}
 			Log.info("AutoTestRouteHandler::getDockerImages(..) - start; options: " + JSON.stringify(options));
 			const images = await docker.listImages(options);
@@ -381,9 +374,7 @@ export default class AutoTestRouteHandler {
 			case "commit_comment":
 				const commentEvent = await GitHubUtil.processComment(body);
 				if (commentEvent === null) {
-					Log.warn(
-						"AutoTestRouteHandler::handleWebhook() - comment event is null; figure out why; payload: " + JSON.stringify(body)
-					);
+					Log.warn("AutoTestRouteHandler::handleWebhook() - comment event is null; figure out why; payload: " + JSON.stringify(body));
 				}
 				Log.trace("AutoTestRouteHandler::handleWebhook() - comment request: " + JSON.stringify(commentEvent, null, 2));
 				await at.handleCommentEvent(commentEvent);
@@ -396,9 +387,7 @@ export default class AutoTestRouteHandler {
 					Log.info("AutoTestRouteHandler::handleWebhook() - branch was deleted; no action required");
 				} else if (pushEvent === null) {
 					// figure out other reasons we end up here
-					Log.warn(
-						"AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body)
-					);
+					Log.warn("AutoTestRouteHandler::handleWebhook() - push event is null; figure out why; payload: " + JSON.stringify(body));
 				}
 				Log.trace("AutoTestRouteHandler::handleWebhook() - push request: " + JSON.stringify(pushEvent, null, 2));
 				await at.handlePushEvent(pushEvent);

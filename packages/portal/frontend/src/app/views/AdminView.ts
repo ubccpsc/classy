@@ -49,7 +49,7 @@ export class AdminView implements IView {
 	protected dashTab: AdminDashboardTab;
 	protected configTab: AdminConfigTab;
 
-	constructor(remoteUrl: string, tabs: AdminTabs) {
+	public constructor(remoteUrl: string, tabs: AdminTabs) {
 		Log.info("AdminView::<init>");
 
 		this.remote = remoteUrl;
@@ -130,7 +130,7 @@ export class AdminView implements IView {
 			if (f !== null) {
 				failure = f; // change to object if it is one
 			}
-		} catch (err) {
+		} catch (_err) {
 			// intentionally blank
 		}
 		if (typeof failure === "string") {

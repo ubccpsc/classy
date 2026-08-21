@@ -1,9 +1,8 @@
-import moment from "moment";
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { ClusteredResult } from "@common/types/ContainerTypes";
 import { AutoTestDashboardPayload, AutoTestDashboardTransport, DeliverableTransport, RepositoryTransport } from "@common/types/PortalTypes";
+import moment from "moment";
+import { OnsButtonElement } from "onsenui";
 
 import { DashboardTable } from "../util/DashboardTable";
 import { TableCell, TableHeader } from "../util/SortableTable";
@@ -14,7 +13,7 @@ import { AdminPage } from "./AdminPage";
 import { AdminResultsTab } from "./AdminResultsTab";
 import { AdminView } from "./AdminView";
 
-declare var TomSelect: any;
+declare let TomSelect: any;
 
 export interface DetailRow {
 	name: string;
@@ -27,7 +26,7 @@ export class AdminDashboardTab extends AdminPage {
 	private delivValue: string | null = null;
 	private repoValue: string | null = null;
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		// this.remote = remote;
 		super(remote);
 	}
@@ -55,7 +54,8 @@ export class AdminDashboardTab extends AdminPage {
 		fab.onclick = function (_evt: any) {
 			Log.info("AdminDashboardTab::init(..)::updateButton::onClick");
 			UI.showModal("Retrieving results.");
-			that.performQueries()
+			that
+				.performQueries()
 				.then(function (newResults) {
 					// TODO: need to track and update the current value of deliv and repo
 					that.render(delivs, repos, newResults);
@@ -247,7 +247,7 @@ export class AdminDashboardTab extends AdminPage {
 						// if nothing selected, go back to any
 						this.setValue("-Any-");
 					}
-					that.init({}).then().catch(); // ignored on purpose
+					void that.init({}).then().catch(); // ignored on purpose
 					this.blur();
 				},
 			});

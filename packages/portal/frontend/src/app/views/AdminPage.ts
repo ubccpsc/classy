@@ -1,9 +1,8 @@
 import Log from "@common/Log";
 
 import { Factory } from "../Factory";
-import { IView } from "./IView";
-
 import { UI } from "../util/UI";
+import { IView } from "./IView";
 
 export abstract class AdminPage implements IView {
 	protected readonly remote: string | null = null;

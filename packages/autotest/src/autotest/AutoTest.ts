@@ -1,18 +1,16 @@
-import * as Docker from "dockerode";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
 import { ContainerInput } from "@common/types/ContainerTypes";
 import { AutoTestGradeTransport, AutoTestStatus } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-
+import * as Docker from "dockerode";
+import * as fs from "fs-extra";
 import { IClassPortal } from "./ClassPortal";
 import { IDataStore } from "./DataStore";
 import { GradingJob } from "./GradingJob";
 import { MockGradingJob } from "./mocks/MockGradingJob";
 import { Queue } from "./Queue";
-import * as fs from "fs-extra";
 
 export interface IAutoTest {
 	/**
@@ -145,7 +143,7 @@ export abstract class AutoTest implements IAutoTest {
 	 */
 	private jobs: ContainerInput[] = [];
 
-	constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
+	public constructor(dataStore: IDataStore, classPortal: IClassPortal, docker: Docker) {
 		Log.trace("AutoTest::<init> - starting AutoTest");
 		this.dataStore = dataStore;
 		this.classPortal = classPortal;
@@ -230,18 +228,14 @@ export abstract class AutoTest implements IAutoTest {
 
 		try {
 			if (this.isCommitExecuting(input)) {
-				Log.info(
-					"AutoTest::addToStandardQueue(..) - not added; commit already executing; SHA: " + Util.shaHuman(input.target.commitSHA)
-				);
+				Log.info("AutoTest::addToStandardQueue(..) - not added; commit already executing; SHA: " + Util.shaHuman(input.target.commitSHA));
 				return;
 			}
 
 			// only add job if it is not already on express
 			if (this.expressQueue.indexOf(input) >= 0) {
 				Log.info(
-					"AutoTest::addToStandardQueue(..) - skipped; " +
-						"job already on express queue; SHA: " +
-						Util.shaHuman(input.target.commitSHA)
+					"AutoTest::addToStandardQueue(..) - skipped; " + "job already on express queue; SHA: " + Util.shaHuman(input.target.commitSHA)
 				);
 				return;
 			}
@@ -421,7 +415,7 @@ export abstract class AutoTest implements IAutoTest {
 					// noinspection ES6MissingAwait
 					// noinspection JSIgnoredPromiseFromCall
 					// tslint:disable-next-line
-					that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
+					void that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
 				} else {
 					// no cap to tick (should not happen)
 					Log.trace("AutoTest::tick::tickQueue(..) - no capacity to tick");
@@ -589,10 +583,7 @@ export abstract class AutoTest implements IAutoTest {
 				// put executions that were running but not done on the front of the queue
 				for (const job of store.data) {
 					Log.info(
-						"AutoTest::loadQueues() - adding job to HEAD; repo: " +
-							job.target.repoId +
-							"; SHA: " +
-							Util.shaHuman(job.target.commitSHA)
+						"AutoTest::loadQueues() - adding job to HEAD; repo: " + job.target.repoId + "; SHA: " + Util.shaHuman(job.target.commitSHA)
 					);
 					this.expressQueue.pushFirst(job);
 				}
@@ -647,9 +638,7 @@ export abstract class AutoTest implements IAutoTest {
 				// be reflected in the data.input.target fields.
 				const resultPayload = await this.classPortal.sendResult(data);
 				if (typeof resultPayload.failure !== "undefined") {
-					Log.error(
-						"AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " + JSON.stringify(resultPayload)
-					);
+					Log.error("AutoTest::handleExecutionComplete(..) - ERROR; Classy rejected result record: " + JSON.stringify(resultPayload));
 				} else {
 					await this.processExecution(data);
 				}
@@ -834,14 +823,7 @@ export abstract class AutoTest implements IAutoTest {
 					this.jobs.splice(i, 1);
 					const lenAfter = this.jobs.length;
 					Log.trace(
-						"Queue::clearExecution( .., " +
-							delivId +
-							" ) - # before: " +
-							lenBefore +
-							"; # after: " +
-							lenAfter +
-							"; commitURL: " +
-							commitURL
+						"Queue::clearExecution( .., " + delivId + " ) - # before: " + lenBefore + "; # after: " + lenAfter + "; commitURL: " + commitURL
 					);
 					removed = true;
 				}

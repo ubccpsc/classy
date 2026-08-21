@@ -28,7 +28,7 @@ export class WebhookUpdater {
 
 	private gha = GitHubActions.getInstance(true);
 
-	constructor() {
+	public constructor() {
 		Log.info("WebhookUpdater::<init> - start");
 		const config = Config.getInstance();
 
@@ -126,7 +126,8 @@ export class WebhookUpdater {
 
 const ghc = new WebhookUpdater();
 const start = Date.now();
-ghc.run()
+ghc
+	.run()
 	.then(function () {
 		Log.info("WebhookUpdater::run() - complete; took: " + Util.took(start));
 	})

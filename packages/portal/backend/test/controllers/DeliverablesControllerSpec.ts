@@ -1,12 +1,11 @@
 import { expect } from "chai";
 import "mocha";
 
-import { DeliverableTransport } from "@common/types/PortalTypes";
-import { TestHarness } from "@common/TestHarness";
-
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { Deliverable } from "@backend/Types";
+import { TestHarness } from "@common/TestHarness";
+import { DeliverableTransport } from "@common/types/PortalTypes";
 
 import "@common/GlobalSpec"; // load first
 import "./DatabaseControllerSpec"; // run first

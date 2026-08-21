@@ -5,10 +5,9 @@ import Log from "@common/Log";
 import "@common/GlobalSpec";
 
 import { Queue } from "@autotest/autotest/Queue";
-
-import { TestData } from "./TestData";
-import Util from "@common/Util";
 import { ContainerInput } from "@common/types/ContainerTypes";
+import Util from "@common/Util";
+import { TestData } from "./TestData";
 
 describe("Queue", () => {
 	let q: Queue;

@@ -2,13 +2,13 @@ import Log from "@common/Log";
 
 import { AdminTabs, AdminView } from "../AdminView";
 
-declare var ons: any;
+declare let ons: any;
 
 /**
  * This is a test implementation of the Classy admin features.
  */
 export class ClassyAdminView extends AdminView {
-	constructor(remoteUrl: string, tabs: AdminTabs) {
+	public constructor(remoteUrl: string, tabs: AdminTabs) {
 		Log.info("ClassyAdminView::<init>(..)");
 		super(remoteUrl, tabs);
 	}

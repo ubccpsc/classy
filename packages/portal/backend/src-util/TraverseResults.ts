@@ -48,7 +48,7 @@ export class TraverseResults {
 	// private readonly PREFIXOLD = "https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T2/";
 	// private readonly PREFIXNEW = "https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T2/";
 
-	constructor() {
+	public constructor() {
 		Log.info("TraverseResults::<init> - start");
 		this.dc = DatabaseController.getInstance();
 	}
@@ -179,7 +179,8 @@ export class TraverseResults {
 const ppt = new TraverseResults();
 const start = Date.now();
 Log.Level = LogLevel.INFO;
-ppt.process()
+ppt
+	.process()
 	.then(function () {
 		Log.info("TraverseResults::process() - complete; took: " + Util.took(start));
 		process.exit();

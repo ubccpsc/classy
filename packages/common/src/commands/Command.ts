@@ -1,4 +1,4 @@
-import { ChildProcess, spawn, SpawnOptions } from "child_process";
+import { ChildProcess, SpawnOptions, spawn } from "child_process";
 import Config from "../Config";
 import Log from "../Log";
 
@@ -13,7 +13,7 @@ export class Command implements ICommand {
 	private readonly spawn: (command: string, args: string[], options: SpawnOptions) => ChildProcess;
 	private readonly cmdName: string;
 
-	constructor(name: string) {
+	public constructor(name: string) {
 		this.cmdName = name;
 		this.spawn = spawn;
 	}

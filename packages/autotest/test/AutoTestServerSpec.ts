@@ -1,13 +1,13 @@
 import { expect } from "chai";
 import "mocha";
-import * as restify from "restify";
-import request from "supertest";
+import AutoTestServer from "@autotest/server/AutoTestServer";
+import { DatabaseController } from "@backend/controllers/DatabaseController";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-import AutoTestServer from "@autotest/server/AutoTestServer";
-import { DatabaseController } from "@backend/controllers/DatabaseController";
+import * as restify from "restify";
+import request from "supertest";
 
 describe("AutoTest AutoTestServer", function () {
 	const TIMEOUT = 1000;

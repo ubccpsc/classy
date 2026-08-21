@@ -1,11 +1,9 @@
 import Log from "@common/Log";
 import { GradeTransport, RepositoryTransport, StudentTransport } from "@common/types/PortalTypes";
-
-import { IView } from "./IView";
 import { Factory } from "../Factory";
-
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
+import { IView } from "./IView";
 
 export abstract class AbstractStudentView implements IView {
 	protected remote: string = null;

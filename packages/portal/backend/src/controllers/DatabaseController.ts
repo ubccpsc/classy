@@ -1,8 +1,7 @@
-import { Collection, Db, MongoClient } from "mongodb";
-
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
+import { Collection, Db, MongoClient } from "mongodb";
 
 import {
 	AuditEvent,
@@ -622,9 +621,7 @@ export class DatabaseController {
 			if (typeof sort === "undefined") {
 				Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
 			} else {
-				Log.trace(
-					"DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + ", " + JSON.stringify(sort) + " ) - start"
-				);
+				Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + ", " + JSON.stringify(sort) + " ) - start");
 			}
 
 			let LIMITS = 999999999;
@@ -924,7 +921,7 @@ export class DatabaseController {
 
 			if (db === null) {
 				// just use Config.name for the db (use a test org name if you want to avoid tests wiping data!!)
-				let dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
+				const dbName = Config.getInstance().getProp(ConfigKey.name).trim(); // make sure there are no extra spaces in config
 				const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
 				Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");

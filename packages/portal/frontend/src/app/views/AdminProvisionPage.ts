@@ -1,8 +1,7 @@
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { DeliverableTransport, Payload, RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
@@ -13,7 +12,7 @@ import { AdminView } from "./AdminView";
 export class AdminProvisionPage extends AdminPage {
 	private deliverables: DeliverableTransport[];
 
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		super(remote);
 	}
 
@@ -46,7 +45,8 @@ export class AdminProvisionPage extends AdminPage {
 		(document.querySelector("#adminManageProvisionButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminProvisionPage::manageProvisionButton(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handleProvisionPressed()
+			that
+				.handleProvisionPressed()
 				.then(function () {
 					// worked
 				})
@@ -59,7 +59,8 @@ export class AdminProvisionPage extends AdminPage {
 		(document.querySelector("#adminManageReleaseButton") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminProvisionPage::manageReleaseButton(..) - button pressed");
 			evt.stopPropagation(); // prevents list item expansion
-			that.handleReleasePressed()
+			that
+				.handleReleasePressed()
 				.then(function () {
 					// worked
 				})
@@ -73,7 +74,8 @@ export class AdminProvisionPage extends AdminPage {
 		delivSelector.onchange = function (evt) {
 			evt.stopPropagation(); // prevents list item expansion
 
-			that.handleDelivChanged()
+			that
+				.handleDelivChanged()
 				.then(function () {
 					//
 				})
@@ -241,8 +243,7 @@ export class AdminProvisionPage extends AdminPage {
 		const selected = [];
 
 		// tslint:disable-next-line
-		for (let i = 0; i < releaseList.options.length; i++) {
-			const opt = releaseList.options[i];
+		for (const opt of releaseList.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
 			}
@@ -262,18 +263,14 @@ export class AdminProvisionPage extends AdminPage {
 				const start = Date.now();
 				const success = await this.releaseRepo(repoId);
 				if (success) {
-					Log.info(
-						"AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId + "; took: " + Util.took(start)
-					);
+					Log.info("AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId + "; took: " + Util.took(start));
 					UI.showSuccessToast("Repo released: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )", {
 						timeout: 1000,
 						animation: "none",
 					});
 				} else {
 					// should have already displayed an error
-					Log.warn(
-						"AdminProvisionPage::handleReleasePressed(..) - releasing failed; repo: " + repoId + "; took: " + Util.took(start)
-					);
+					Log.warn("AdminProvisionPage::handleReleasePressed(..) - releasing failed; repo: " + repoId + "; took: " + Util.took(start));
 				}
 			} catch (err) {
 				Log.error("AdminProvisionPage::handleReleasePressed(..) - releasing error for: " + repoId + "; ERROR: " + err.message);
@@ -297,8 +294,7 @@ export class AdminProvisionPage extends AdminPage {
 		const selected = [];
 
 		// tslint:disable-next-line
-		for (let i = 0; i < provisionList.options.length; i++) {
-			const opt = provisionList.options[i];
+		for (const opt of provisionList.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
 			}
@@ -321,18 +317,14 @@ export class AdminProvisionPage extends AdminPage {
 				const start = Date.now();
 				const success = await this.provisionRepo(delivId, repoId);
 				if (success) {
-					Log.info(
-						"AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId + "; took: " + Util.took(start)
-					);
+					Log.info("AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId + "; took: " + Util.took(start));
 					UI.showSuccessToast("Repo provisioned: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )", {
 						timeout: 10000,
 						force: true,
 					});
 				} else {
 					// should have already shown an error so just log
-					Log.warn(
-						"AdminProvisionPage::handleProvision(..) - provisioning failed; repo: " + repoId + "; took: " + Util.took(start)
-					);
+					Log.warn("AdminProvisionPage::handleProvision(..) - provisioning failed; repo: " + repoId + "; took: " + Util.took(start));
 				}
 			} catch (err) {
 				Log.error("AdminProvisionPage::handleProvision(..) - provisioning error for: " + repoId + "; ERROR: " + err.message);

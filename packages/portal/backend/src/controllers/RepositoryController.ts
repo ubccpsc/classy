@@ -66,12 +66,7 @@ export class RepositoryController {
 		}
 
 		Log.trace(
-			"RepositoryController::getReposForPerson( " +
-				myPerson.id +
-				" ) - done; # found: " +
-				myRepos.length +
-				"; took: " +
-				Util.took(start)
+			"RepositoryController::getReposForPerson( " + myPerson.id + " ) - done; # found: " + myRepos.length + "; took: " + Util.took(start)
 		);
 		return myRepos;
 	}
@@ -176,12 +171,7 @@ export class RepositoryController {
 		}
 
 		Log.trace(
-			"RepositoryController::getPeopleForRepo( " +
-				repoId +
-				", .. ) -  done; # people: " +
-				peopleIds.length +
-				"; took: " +
-				Util.took(start)
+			"RepositoryController::getPeopleForRepo( " + repoId + ", .. ) -  done; # people: " + peopleIds.length + "; took: " + Util.took(start)
 		);
 		return peopleIds;
 	}

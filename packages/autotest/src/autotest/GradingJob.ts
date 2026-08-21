@@ -1,13 +1,12 @@
+import Config, { ConfigKey } from "@common/Config";
+import { GitRepository } from "@common/commands/GitRepository";
+import Log from "@common/Log";
+import { AutoTestResult } from "@common/types/AutoTestTypes";
+import { ContainerInput, ContainerState } from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 import { exec } from "child_process";
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
-
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import Util from "@common/Util";
-import { GitRepository } from "@common/commands/GitRepository";
-import { AutoTestResult } from "@common/types/AutoTestTypes";
-import { ContainerInput, ContainerState } from "@common/types/ContainerTypes";
 
 export class GradingJob {
 	public readonly record: AutoTestResult;
@@ -15,7 +14,7 @@ export class GradingJob {
 	public readonly path: string;
 	public readonly id: string;
 
-	constructor(containerInput: ContainerInput) {
+	public constructor(containerInput: ContainerInput) {
 		this.input = containerInput;
 		this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
 		this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
@@ -152,8 +151,7 @@ export class GradingJob {
 					"; SHA: " +
 					Util.shaHuman(this.input.target.commitSHA)
 			);
-			out.report.feedback =
-				"Failed to read grade report for **`#" + this.input.target.delivId + "`**. Make a new commit and try again.";
+			out.report.feedback = "Failed to read grade report for **`#" + this.input.target.delivId + "`**. Make a new commit and try again.";
 			out.report.result = ContainerState.NO_REPORT;
 			out.state = ContainerState.NO_REPORT;
 		} else {

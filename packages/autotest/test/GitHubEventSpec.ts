@@ -3,19 +3,18 @@ import * as fs from "fs";
 import "mocha";
 
 import "@common/GlobalSpec"; // load first
-import Config, { ConfigKey } from "@common/Config";
-import Log from "@common/Log";
-import Util from "@common/Util";
-import { TestHarness } from "@common/TestHarness";
-import { CommitTarget } from "@common/types/ContainerTypes";
 
+import { MockClassPortal } from "@autotest/autotest/mocks/MockClassPortal";
+import { GitHubUtil } from "@autotest/github/GitHubUtil";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import BackendServer from "@backend/server/BackendServer";
 import { Deliverable, Person } from "@backend/Types";
-
-import { MockClassPortal } from "@autotest/autotest/mocks/MockClassPortal";
-import { GitHubUtil } from "@autotest/github/GitHubUtil";
+import Config, { ConfigKey } from "@common/Config";
+import Log from "@common/Log";
+import { TestHarness } from "@common/TestHarness";
+import { CommitTarget } from "@common/types/ContainerTypes";
+import Util from "@common/Util";
 
 /* tslint:disable:max-line-length */
 describe("GitHub Event Parser", () => {

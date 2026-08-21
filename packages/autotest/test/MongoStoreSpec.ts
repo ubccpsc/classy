@@ -4,9 +4,9 @@ import "mocha";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import "@common/GlobalSpec";
-import { CommitTarget } from "@common/types/ContainerTypes";
 
 import { IDataStore, MongoDataStore } from "@autotest/autotest/DataStore";
+import { CommitTarget } from "@common/types/ContainerTypes";
 
 import { TestData } from "./TestData";
 
@@ -195,11 +195,7 @@ describe("MongoStore", () => {
 		await ds.saveFeedbackGivenRecord(TestData.feedbackRecordB);
 
 		// TEST
-		const actual = await ds.getLatestFeedbackGivenRecord(
-			TestData.feedbackRecordA.delivId,
-			TestData.feedbackRecordA.personId,
-			"standard"
-		);
+		const actual = await ds.getLatestFeedbackGivenRecord(TestData.feedbackRecordA.delivId, TestData.feedbackRecordA.personId, "standard");
 
 		// VERIFY
 		expect(actual).to.not.be.null;

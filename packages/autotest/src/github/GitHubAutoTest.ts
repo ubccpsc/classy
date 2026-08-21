@@ -1,5 +1,6 @@
-import * as Docker from "dockerode";
-
+import { AutoTest } from "@autotest/autotest/AutoTest";
+import { IClassPortal } from "@autotest/autotest/ClassPortal";
+import { IDataStore } from "@autotest/autotest/DataStore";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AutoTestResult, IFeedbackGiven } from "@common/types/AutoTestTypes";
@@ -11,10 +12,7 @@ import {
 	ClassyConfigurationTransport,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-
-import { AutoTest } from "@autotest/autotest/AutoTest";
-import { IClassPortal } from "@autotest/autotest/ClassPortal";
-import { IDataStore } from "@autotest/autotest/DataStore";
+import * as Docker from "dockerode";
 import { GitHubUtil, IGitHubMessage } from "./GitHubUtil";
 
 export interface IGitHubTestManager {
@@ -36,7 +34,7 @@ export interface IGitHubTestManager {
 }
 
 export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
-	constructor(dataStore: IDataStore, portal: IClassPortal, docker: Docker) {
+	public constructor(dataStore: IDataStore, portal: IClassPortal, docker: Docker) {
 		super(dataStore, portal, docker);
 	}
 
@@ -157,9 +155,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
 							regressionInput.target.shouldPromote = true; // plugin is expecting it, make sure it is added
 							Log.info(PREAMBLE + "scheduling regressionId: " + regressionId);
-							Log.trace(
-								PREAMBLE + "scheduling regressionId: " + regressionId + "; input: " + JSON.stringify(regressionInput)
-							);
+							Log.trace(PREAMBLE + "scheduling regressionId: " + regressionId + "; input: " + JSON.stringify(regressionInput));
 
 							this.addToLowQueue(regressionInput);
 						}
@@ -421,10 +417,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 							Util.shaHuman(info.commitSHA)
 					);
 					Log.trace(
-						"GitHubAutoTest::processCommentExists(..) - updating target for: " +
-							res.commitURL +
-							" to: " +
-							JSON.stringify(res.input.target)
+						"GitHubAutoTest::processCommentExists(..) - updating target for: " + res.commitURL + " to: " + JSON.stringify(res.input.target)
 					);
 					await this.classPortal.sendResult(res);
 				} else {
@@ -537,12 +530,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 		);
 
 		const shouldCharge = await this.shouldCharge(target, null, res);
-		const feedbackDelay: string | null = await this.requestFeedbackDelay(
-			target.delivId,
-			target.personId,
-			target.timestamp,
-			target.flags
-		);
+		const feedbackDelay: string | null = await this.requestFeedbackDelay(target.delivId, target.personId, target.timestamp, target.flags);
 		const previousRequest: IFeedbackGiven = await this.dataStore.getFeedbackGivenRecordForCommit(target);
 
 		Log.info(
@@ -585,10 +573,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 			await this.processComment(target, res);
 		} else {
 			Log.info(
-				"GitHubAutoTest::handleCommentStudent(..) - not too early; for: " +
-					target.personId +
-					"; SHA: " +
-					Util.shaHuman(target.commitURL)
+				"GitHubAutoTest::handleCommentStudent(..) - not too early; for: " + target.personId + "; SHA: " + Util.shaHuman(target.commitURL)
 			);
 			// no time limitations. Because of this, queueing is the same as submitting now.
 			// processComment will take care of request whether this is already in progress, etc.
@@ -826,9 +811,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 		const auth = await this.classPortal.isStaff(info.personId);
 		if (auth !== null && (auth.isAdmin === true || auth.isStaff === true)) {
 			Log.info(
-				"GitHubAutoTest::checkCommentPreconditions( " +
-					info.personId +
-					" ) - admin request; ignoring openTimestamp and closeTimestamp"
+				"GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - admin request; ignoring openTimestamp and closeTimestamp"
 			);
 		} else {
 			if (typeof info.flags !== "undefined") {
@@ -862,9 +845,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
 			// reject requests for executing deliverables that are not yet open
 			if (deliv.openTimestamp > info.timestamp) {
-				Log.warn(
-					"GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, deliverable not yet open to AutoTest"
-				);
+				Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, deliverable not yet open to AutoTest");
 				// not open yet
 				const msg = "This deliverable is not yet open for grading.";
 				await this.postToGitHub(info, { url: info.postbackURL, message: msg });
@@ -873,9 +854,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
 			// reject requests for executing deliverables that are closed, unless the deliverable is configured for late autotest
 			if (deliv.closeTimestamp < info.timestamp && deliv.lateAutoTest === false) {
-				Log.warn(
-					"GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, deliverable has been closed to AutoTest"
-				);
+				Log.warn("GitHubAutoTest::checkCommentPreconditions( " + info.personId + " ) - ignored, deliverable has been closed to AutoTest");
 				// closed
 				const msg = "This deliverable is closed to grading.";
 				await this.postToGitHub(info, { url: info.postbackURL, message: msg });
@@ -939,9 +918,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 			}
 
 			if (feedbackDelay !== null) {
-				Log.info(
-					"GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom feedback delay: " + JSON.stringify(feedbackDelay)
-				);
+				Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom feedback delay: " + JSON.stringify(feedbackDelay));
 				if (feedbackDelay.accepted === true) {
 					Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - custom done; can request feedback");
 					return null;
@@ -963,9 +940,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 					return msg;
 				}
 			} else {
-				Log.info(
-					"GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default feedback delay; next timeslot: " + nextTimeslot
-				);
+				Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default feedback delay; next timeslot: " + nextTimeslot);
 				if (nextTimeslot === null) {
 					Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; no prior request, no delay");
 					return null; // no prior requests
@@ -978,9 +953,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 						return null; // enough time has passed
 					} else {
 						const msg = Util.tookHuman(reqTimestamp, nextTimeslot);
-						Log.info(
-							"GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; NOT enough time passed, delay: " + msg
-						);
+						Log.info("GitHubAutoTest::requestFeedbackDelay( " + userName + " ) - default done; NOT enough time passed, delay: " + msg);
 
 						const delayMsg = "You must wait " + msg + " before requesting feedback.";
 						return delayMsg;
@@ -1023,12 +996,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 	private async saveCommentInfo(info: CommitTarget) {
 		try {
 			Log.trace(
-				"GitHubAutoTest::saveCommentInfo(..) - for: " +
-					info.personId +
-					"; SHA: " +
-					Util.shaHuman(info.commitSHA) +
-					"; kind: " +
-					info.kind
+				"GitHubAutoTest::saveCommentInfo(..) - for: " + info.personId + "; SHA: " + Util.shaHuman(info.commitSHA) + "; kind: " + info.kind
 			);
 			await this.dataStore.saveComment(info);
 		} catch (err) {

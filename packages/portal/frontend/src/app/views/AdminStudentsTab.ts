@@ -8,7 +8,7 @@ import { AdminView } from "./AdminView";
 
 export class AdminStudentsTab {
 	private readonly remote: string; // url to backend
-	constructor(remote: string) {
+	public constructor(remote: string) {
 		this.remote = remote;
 	}
 
@@ -174,9 +174,7 @@ export class AdminStudentsTab {
 				const json: StudentTransportPayload = await response.json();
 				// Log.trace("AdminView::handleStudents(..)  - payload: " + JSON.stringify(json));
 				if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
-					Log.trace(
-						"AdminStudentsTab::getPeople(..)  - worked; # students: " + json.success.length + "; took: " + UI.took(start)
-					);
+					Log.trace("AdminStudentsTab::getPeople(..)  - worked; # students: " + json.success.length + "; took: " + UI.took(start));
 					return json.success;
 				} else {
 					Log.trace("AdminStudentsTab::getPeople(..)  - ERROR: " + json.failure.message);

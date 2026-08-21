@@ -6,10 +6,9 @@
  * course-specific file must live in "views/course/StudentView.ts".
  */
 
-import { OnsButtonElement } from "onsenui";
-
 import Log from "@common/Log";
 import { Payload, TeamFormationTransport, TeamTransport } from "@common/types/PortalTypes";
+import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../../util/UI";
 
@@ -18,7 +17,7 @@ import { AbstractStudentView } from "../AbstractStudentView";
 export class ClassyStudentView extends AbstractStudentView {
 	private teams: TeamTransport[];
 
-	constructor(remoteUrl: string) {
+	public constructor(remoteUrl: string) {
 		super();
 		Log.info("ClassyStudentView::<init>");
 		this.remote = remoteUrl;
@@ -110,7 +109,8 @@ export class ClassyStudentView extends AbstractStudentView {
 			const button = document.querySelector("#studentSelectPartnerButton") as OnsButtonElement;
 			button.onclick = function (_evt: any) {
 				Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick");
-				that.formTeam()
+				that
+					.formTeam()
 					.then(function (team) {
 						Log.info("ClassyStudentView::renderTeams(..)::createTeam::onClick::then - team created");
 						that.teams.push(team);

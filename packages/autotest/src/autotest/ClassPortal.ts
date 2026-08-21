@@ -1,7 +1,3 @@
-import * as https from "https";
-import * as http from "http";
-import fetch, { RequestInit } from "node-fetch";
-
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
@@ -20,6 +16,9 @@ import {
 	Payload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import * as http from "http";
+import * as https from "https";
+import fetch, { RequestInit } from "node-fetch";
 
 export interface IClassPortal {
 	/**
@@ -164,12 +163,7 @@ export class ClassPortal implements IClassPortal {
 			Log.trace("ClassPortal::isStaff( " + userName + " ) - success; payload: " + res + "; took: " + Util.took(start));
 			const json: AutoTestAuthPayload = (await res.json()) as AutoTestAuthPayload;
 			Log.info(
-				"ClassPortal::isStaff( " +
-					userName +
-					" ) - success; isStaff: " +
-					json.success.isStaff +
-					"; isAdmin: " +
-					json.success.isAdmin
+				"ClassPortal::isStaff( " + userName + " ) - success; isStaff: " + json.success.isStaff + "; isAdmin: " + json.success.isAdmin
 			);
 			if (typeof json.success !== "undefined") {
 				return json.success;
@@ -201,12 +195,7 @@ export class ClassPortal implements IClassPortal {
 			const json: Payload = (await res.json()) as Payload;
 			if (typeof json.success !== "undefined") {
 				Log.info(
-					"ClassPortal::getPersonId( " +
-						githubId +
-						" ) - success; person: " +
-						json.success?.personId +
-						"; took: " +
-						Util.took(start)
+					"ClassPortal::getPersonId( " + githubId + " ) - success; person: " + json.success?.personId + "; took: " + Util.took(start)
 				);
 				return json.success; // AutoTestPersonIdTransport
 			} else {
@@ -315,12 +304,7 @@ export class ClassPortal implements IClassPortal {
 			const json = await res.json();
 			if (typeof json.success !== "undefined") {
 				Log.info(
-					"ClassPortal::sendGrade(..) - grade accepted; deliv: " +
-						grade.delivId +
-						"; repo: " +
-						grade.repoId +
-						"; took: " +
-						Util.took(start)
+					"ClassPortal::sendGrade(..) - grade accepted; deliv: " + grade.delivId + "; repo: " + grade.repoId + "; took: " + Util.took(start)
 				);
 				return json;
 			} else {
@@ -463,9 +447,7 @@ export class ClassPortal implements IClassPortal {
 					return null;
 				}
 			} else {
-				Log.error(
-					"ClassPortal::getResult(..) - ERROR; result not received:  " + JSON.stringify(json) + "; took: " + Util.took(start)
-				);
+				Log.error("ClassPortal::getResult(..) - ERROR; result not received:  " + JSON.stringify(json) + "; took: " + Util.took(start));
 				return null;
 			}
 		} catch (err) {

@@ -1,10 +1,9 @@
 import { expect } from "chai";
 import "mocha";
 
+import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-
-import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 
 import "@common/GlobalSpec";
 
