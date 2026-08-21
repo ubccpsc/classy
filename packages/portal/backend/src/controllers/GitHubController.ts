@@ -207,9 +207,22 @@ export class GitHubController implements IGitHubController {
 			}
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - teams provisioned: " + allTeamsSuccessful);
 
-			Log.info("GithubController::finalizeProvisionRepository( " + repoName + " ) - done; " + "took: " + Util.took(start));
+			if (allTeamsSuccessful === false) {
+				// NOTE: this used to return true regardless, so a repo whose teams all failed to
+				// provision was still reported as fully provisioned
+				Log.error("GithubController::finalizeProvisionRepository( " + repoName + " ) - one or more teams failed to provision");
+			}
 
-			return true;
+			Log.info(
+				"GithubController::finalizeProvisionRepository( " +
+					repoName +
+					" ) - done; success: " +
+					allTeamsSuccessful +
+					"; took: " +
+					Util.took(start)
+			);
+
+			return allTeamsSuccessful;
 		} catch (err) {
 			Log.error("GithubController::finalizeProvisionRepository( " + repoName + " ) - ERROR: " + err);
 			return false;
@@ -391,6 +404,10 @@ export class GitHubController implements IGitHubController {
 			return false;
 		}
 
+		// tracks whether the repo exists on GitHub (and may already hold imported content);
+		// if it does, the failure path below must not delete it
+		let repoCreated = false;
+
 		try {
 			let provisionSuccessful = false;
 			const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
@@ -411,10 +428,23 @@ export class GitHubController implements IGitHubController {
 				const templateOwner = importUrl.split("/")[0];
 				let templateRepo = importUrl.split("/")[1];
 
-				const branchesToKeep = [];
+				const branchesToKeep: string[] = [];
 				if (templateRepo.indexOf("#") > 0) {
-					templateRepo = templateRepo.split("#")[0];
-					branchesToKeep.push(templateRepo.split("#")[1]);
+					// NOTE: split once and read both halves; reading the branch back off templateRepo
+					// after reassigning it always yielded undefined, silently disabling branch pruning
+					const templateParts = templateRepo.split("#");
+					templateRepo = templateParts[0];
+					const branchName = templateParts[1];
+					if (typeof branchName === "string" && branchName.length > 0) {
+						branchesToKeep.push(branchName);
+					} else {
+						Log.warn(
+							"GitHubController::provisionRepository( " +
+								repoName +
+								" ) - importUrl has an empty branch after #; keeping all branches; was: " +
+								importUrl
+						);
+					}
 				}
 
 				if (templateRepo.indexOf(".git") > 0) {
@@ -438,6 +468,7 @@ export class GitHubController implements IGitHubController {
 
 			if (provisionSuccessful === true) {
 				Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning successful");
+				repoCreated = true; // the repo now exists on GitHub, with its imported content
 				// attach admin/staff teams, add webhooks, provision student teams (but do not attach them)
 				const finalizeSuccessful = await this.finalizeProvisionRepository(repoName, teams);
 
@@ -471,8 +502,18 @@ export class GitHubController implements IGitHubController {
 			Log.error("GitHubController::provisionRepository( " + repoName + " ) - ERROR: " + err);
 		}
 
-		// repo creation failed; remove if needed (requires createRepo be permissive if already exists)
 		// get here if true hasn't been returned or an exception has been thrown
+		if (repoCreated === true) {
+			// NOTE: the repo was created and may already contain imported student content, so it is
+			// NOT deleted here; finalization (teams / webhooks / settings) is what failed and that
+			// is recoverable by re-running finalization, whereas deleting the repo is not.
+			Log.error(
+				"GitHubController::provisionRepository( " + repoName + " ) - created but not finalized; repo left in place for retry"
+			);
+			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo created but finalization failed");
+		}
+
+		// repo creation failed; remove if needed (requires createRepo be permissive if already exists)
 		// try to unprovision the repo, just so we can try again in the future
 		const res = await this.gha.deleteRepo(repoName);
 		Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
@@ -524,8 +565,10 @@ export class GitHubController implements IGitHubController {
 				Log.info("GitHubController::provisionTeam( " + team.id + " ) - addMembers: " + addMembers.teamName);
 			}
 		} catch (err) {
-			Log.warn("GitHubController::provisionTeam( " + team.id + " ) - create team ERROR: " + err);
-			// swallow these errors and keep going
+			// NOTE: this used to swallow the error and return true, which made every team
+			// provisioning failure invisible to the caller
+			Log.error("GitHubController::provisionTeam( " + team.id + " ) - create team ERROR: " + err);
+			return false;
 		}
 		return true;
 	}
