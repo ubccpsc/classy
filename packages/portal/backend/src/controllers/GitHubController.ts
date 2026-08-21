@@ -176,35 +176,32 @@ export class GitHubController implements IGitHubController {
 		const WEBHOOK_ADDRESS = host + "/portal/githubWebhook";
 
 		try {
-			// Add staff team with push
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add staff team to repo");
-			const staffAdd = await this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin");
-			Log.trace("GitHubController::finalizeProvisionRepository(..) - team name: " + staffAdd.teamName);
-
-			// Add admin team with push
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add admin team to repo");
-			const adminAdd = await this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin");
-			Log.trace("GitHubController::finalizeProvisionRepository(..) - team name: " + adminAdd.teamName);
-
-			// add webhooks
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add webhook");
-			const createHook = await this.gha.addWebhook(repoName, WEBHOOK_ADDRESS);
+			// NOTE: these four calls do not depend on each other, so they are issued together
+			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add teams, webhook and settings");
+			const [staffAdd, adminAdd, createHook, updateWorked] = await Promise.all([
+				this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin"),
+				this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin"),
+				this.gha.addWebhook(repoName, WEBHOOK_ADDRESS),
+				this.gha.updateRepo(repoName),
+			]);
+			Log.trace("GitHubController::finalizeProvisionRepository(..) - staff team: " + staffAdd.teamName);
+			Log.trace("GitHubController::finalizeProvisionRepository(..) - admin team: " + adminAdd.teamName);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - webhook successful: " + createHook);
+			Log.trace("GitHubController::finalizeProvisionRepository(..) - done repo settings: " + updateWorked);
 
-			// ensure consistent repo settings (ensures template & FS imports turn out the same)
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - updating repo settings");
-			const updateWorked = await this.gha.updateRepo(repoName);
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - done repo settings: " + updateWorked);
-
-			// ensure teams are provisioned
-			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - provisioning teams");
-			let allTeamsSuccessful = true;
-			for (const team of teams) {
-				const success = await this.provisionTeam(team);
-				if (success === false) {
-					allTeamsSuccessful = false;
-				}
+			// NOTE: as before, only team provisioning affects the return value; a failed webhook or
+			// settings update is logged but does not fail finalization
+			if (createHook === false) {
+				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added");
 			}
+			if (updateWorked === false) {
+				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - repo settings NOT updated");
+			}
+
+			// ensure teams are provisioned; independent of each other, so run them together
+			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - provisioning teams");
+			const teamResults = await Promise.all(teams.map((team) => this.provisionTeam(team)));
+			const allTeamsSuccessful = teamResults.every((success) => success === true);
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - teams provisioned: " + allTeamsSuccessful);
 
 			if (allTeamsSuccessful === false) {

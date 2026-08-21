@@ -1450,12 +1450,24 @@ export class GitHubActions implements IGitHubActions {
 	}
 
 	public async listRepoBranches(repoId: string): Promise<string[]> {
-		const start = Date.now();
 		const repoExists = await this.repoExists(repoId); // ensure the repo exists
 		if (repoExists === false) {
 			Log.error("GitHubAction::listRepoBranches( " + repoId + " ) - failed; repo does not exist");
 			return null;
 		}
+
+		return this.listRepoBranchesUnchecked(repoId);
+	}
+
+	/**
+	 * listRepoBranches without the repoExists round trip; for callers that have already
+	 * established the repo exists (e.g. deleteBranches, which checks once up front).
+	 *
+	 * @param repoId
+	 * @returns {Promise<string[]>} null if the branches could not be listed
+	 */
+	private async listRepoBranchesUnchecked(repoId: string): Promise<string[]> {
+		const start = Date.now();
 
 		// get branches
 		// GET /repos/{owner}/{repo}/branches
@@ -1550,7 +1562,8 @@ export class GitHubActions implements IGitHubActions {
 			return false;
 		}
 
-		const allBranches = await this.listRepoBranches(repoId);
+		// NOTE: unchecked variants below; repoExists was already confirmed above
+		const allBranches = await this.listRepoBranchesUnchecked(repoId);
 		if (allBranches === null) {
 			Log.error("GitHubAction::deleteBranches(..) - failed; could not list branches for repo: " + repoId);
 			return false;
@@ -1593,7 +1606,7 @@ export class GitHubActions implements IGitHubActions {
 		// delete branches we do not want
 		let deleteSucceeded = true;
 		for (const branch of branchesToDelete) {
-			const branchDeleted = await this.deleteBranch(repoId, branch);
+			const branchDeleted = await this.deleteBranchUnchecked(repoId, branch);
 			deleteSucceeded = deleteSucceeded && branchDeleted; // must not short-circuit the deletion
 		}
 
@@ -1605,7 +1618,7 @@ export class GitHubActions implements IGitHubActions {
 		// performance. Hopefully this is good enough.
 
 		Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
-		const branchesAfter = await this.listRepoBranches(repoId);
+		const branchesAfter = await this.listRepoBranchesUnchecked(repoId);
 		if (branchesAfter !== null && branchesAfter.length > branchesToRetain.length) {
 			// retry, but bounded: a branch that cannot be deleted (e.g., protected) would
 			// otherwise recurse forever
@@ -1632,13 +1645,25 @@ export class GitHubActions implements IGitHubActions {
 	 * @returns {Promise<boolean>} true if the branch was deleted, false otherwise; throws error if something bad happened.
 	 */
 	public async deleteBranch(repoId: string, branchToDelete: string): Promise<boolean> {
-		const start = Date.now();
-
 		const repoExists = await this.repoExists(repoId); // ensure the repo exists
 		if (repoExists === false) {
 			Log.error("GitHubAction::deleteBranch(..) - failed; repo does not exist");
 			return false;
 		}
+
+		return this.deleteBranchUnchecked(repoId, branchToDelete);
+	}
+
+	/**
+	 * deleteBranch without the repoExists round trip; for callers that have already
+	 * established the repo exists (e.g. deleteBranches, which checks once up front).
+	 *
+	 * @param repoId
+	 * @param branchToDelete
+	 * @returns {Promise<boolean>}
+	 */
+	private async deleteBranchUnchecked(repoId: string, branchToDelete: string): Promise<boolean> {
+		const start = Date.now();
 
 		Log.info("GitHubAction::deleteBranch( " + repoId + ", " + branchToDelete + " ) - start");
 
