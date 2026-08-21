@@ -28,6 +28,15 @@ import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
 
 export class AdminController {
+	/**
+	 * How many repos to provision at once.
+	 *
+	 * Provisioning is dominated by waiting on GitHub. 1 is serialized, but
+	 * GitHub rate limits bound how high it can be in practice.
+	 * If provisioning starts to throw 403 errros, it's too high.
+	 */
+	public static readonly PROVISION_CONCURRENCY = 4;
+
 	protected dbc = DatabaseController.getInstance();
 	protected pc = new PersonController();
 	protected rc = new RepositoryController();
@@ -729,18 +738,30 @@ export class AdminController {
 	 * @param {string} importURL
 	 * @returns {Promise<Repository[]>}
 	 */
-	public async performProvision(repos: Repository[], importURL: string): Promise<RepositoryTransport[]> {
+	public async performProvision(repos: Repository[], importURL: string, concurrency?: number): Promise<RepositoryTransport[]> {
 		const gha = GitHubActions.getInstance(true);
 		const ghc = new GitHubController(gha);
 		const cc = await Factory.getCourseController(this.gh);
 
-		const config = Config.getInstance();
-		const dbc = DatabaseController.getInstance();
+		if (typeof concurrency === "undefined") {
+			concurrency = AdminController.PROVISION_CONCURRENCY;
+		}
 
-		Log.info("AdminController::performProvision(..) - start; # repos: " + repos.length + "; importURL: " + importURL);
+		const batchStart = Date.now();
+		Log.info(
+			"AdminController::performProvision(..) - start; # repos: " +
+				repos.length +
+				"; concurrency: " +
+				concurrency +
+				"; importURL: " +
+				importURL
+		);
 		const provisionedRepos: Repository[] = [];
 
-		for (const repo of repos) {
+		// NOTE: provisioning each repo is independent, and each one is dominated by waiting on
+		// GitHub, so they are run with bounded concurrency rather than strictly one at a time.
+		// The cap matters: GitHub applies secondary rate limits to bursts of concurrent writes.
+		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
@@ -759,10 +780,6 @@ export class AdminController {
 						Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
 					}
 
-					// forced wait unnecessary with the transition to creating repo from template
-					// Log.trace("AdminController::performProvision(..) - done provisioning: " + repo.id + "; forced wait");
-					// await Util.delay(2 * 1000); // after any provisioning wait a bit
-					// Log.info("AdminController::performProvision(..) - done for repo: " + repo.id + "; wait complete");
 					Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " + repo.id + "; took: " + Util.took(start));
 				} else {
 					Log.info("AdminController::performProvision(..) - skipped; already provisioned: " + repo.id + "; URL: " + repo.URL);
@@ -770,9 +787,21 @@ export class AdminController {
 			} catch (err) {
 				Log.error("AdminController::performProvision(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
 				// would prefer not to rethrow, but the extra logging can be helpful
+				// NOTE: this stops further repos from being scheduled; those already in flight still finish
 				throw err;
 			}
-		}
+		});
+
+		Log.info(
+			"AdminController::performProvision(..) - done; # provisioned: " +
+				provisionedRepos.length +
+				" of " +
+				repos.length +
+				"; concurrency: " +
+				concurrency +
+				"; took: " +
+				Util.took(batchStart)
+		);
 
 		const provisionedRepositoryTransport: RepositoryTransport[] = [];
 		for (const repo of provisionedRepos) {

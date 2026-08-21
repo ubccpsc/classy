@@ -295,4 +295,71 @@ export default class Util {
 		// at the end of everything, just defer to localCompare
 		return ("" + a).localeCompare("" + b);
 	}
+
+	/**
+	 * Runs `worker` over every item, with at most `concurrency` workers in flight at a time.
+	 *
+	 * Results are returned in the order of `items`, regardless of completion order.
+	 *
+	 * Error handling: if a worker rejects, no further items are scheduled, but the workers
+	 * already in flight are allowed to finish (so nothing is abandoned mid-operation); the
+	 * first error is then re-thrown. If you would rather collect failures and continue, have
+	 * `worker` catch its own errors and return a result object instead.
+	 *
+	 * @param items
+	 * @param concurrency maximum number of workers in flight; values < 1 are treated as 1
+	 * @param worker
+	 * @returns {Promise<R[]>} results, in the order of `items`
+	 */
+	public static async processConcurrently<T, R>(
+		items: T[],
+		concurrency: number,
+		worker: (item: T, index: number) => Promise<R>
+	): Promise<R[]> {
+		if (Array.isArray(items) === false || items.length === 0) {
+			return [];
+		}
+
+		let limit = Math.floor(concurrency);
+		if (isNaN(limit) === true || limit < 1) {
+			limit = 1;
+		}
+		if (limit > items.length) {
+			limit = items.length;
+		}
+
+		const results: R[] = new Array(items.length);
+		let nextIndex = 0;
+		let firstError: any = null;
+
+		const runner = async (): Promise<void> => {
+			while (firstError === null) {
+				const index = nextIndex;
+				nextIndex++;
+				if (index >= items.length) {
+					return;
+				}
+				try {
+					results[index] = await worker(items[index], index);
+				} catch (err) {
+					// stop scheduling, but let the other in-flight workers drain
+					if (firstError === null) {
+						firstError = err;
+					}
+					return;
+				}
+			}
+		};
+
+		const runners: Array<Promise<void>> = [];
+		for (let i = 0; i < limit; i++) {
+			runners.push(runner());
+		}
+		await Promise.all(runners); // runner never rejects, so this always drains
+
+		if (firstError !== null) {
+			throw firstError;
+		}
+		return results;
+	}
 }
