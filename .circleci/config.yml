@@ -122,13 +122,18 @@ jobs:
                       ./node_modules/.bin/nyc --reporter html --report-dir ../../../testOutput/backend/coverage --reporter=text-lcov yarn run testCI
             name: Running backend tests
             environment:
-              MOCHA_FILE: testOutput/backend/test/test-results.xml
+              MOCHA_FILE: ../../../testOutput/backend/test/test-results.xml
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/backend/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/portal/backend/testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
+            command: |
+                      mkdir -p testOutput/backend/test/
+                      # tests may have failed (or not run at all); only convert what exists
+                      if [ -f testOutput/backend/test/test-results.xml ]; then
+                        ./node_modules/xunit-viewer/bin/xunit-viewer --results=testOutput/backend/test/test-results.xml --output=testOutput/backend/test/index.html
+                      fi
             name: Converting backend test results to HTML
-            when: on_success
+            when: always
 
       # Makes docker.sock available to AutoTest docker endpoint tests
       - setup_remote_docker:
@@ -141,13 +146,18 @@ jobs:
                       yarn coverCI
             name: Running autotest tests
             environment:
-              MOCHA_FILE: testOutput/autotest/test/test-results.xml
+              MOCHA_FILE: ../../testOutput/autotest/test/test-results.xml
             when: on_success
 
       - run:
-            command: mkdir -p testOutput/autotest/test/ && ./node_modules/xunit-viewer/bin/xunit-viewer --results=packages/autotest/testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
+            command: |
+                      mkdir -p testOutput/autotest/test/
+                      # tests may have failed (or not run at all); only convert what exists
+                      if [ -f testOutput/autotest/test/test-results.xml ]; then
+                        ./node_modules/xunit-viewer/bin/xunit-viewer --results=testOutput/autotest/test/test-results.xml --output=testOutput/autotest/test/index.html
+                      fi
             name: Converting autotest test results to HTML
-            when: on_success
+            when: always
 
       - run:
             command: cd packages/portal/backend && yarn coveralls
@@ -167,6 +177,9 @@ jobs:
             name: Running backend codecov
             when: on_success
 
+      # NOTE: store_artifacts runs even when an earlier step failed, so the JUnit XML
+      # written under testOutput/ is uploaded on red builds too -- that is how you find
+      # out which tests failed (the step log is truncated by CircleCI at 400KB).
       - store_test_results:
           path: testOutput
 
