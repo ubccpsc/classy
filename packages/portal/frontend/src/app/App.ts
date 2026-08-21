@@ -524,7 +524,6 @@ export class App {
 		Log.trace("App::readCookie( " + name + " ) - start; cookie string: " + document.cookie);
 		// this used to work but is not now
 		const s: string[] = decodeURI(document.cookie).split(";");
-		// tslint:disable-next-line
 		for (const cookie of s) {
 			const row = cookie.split("=", 2);
 			if (row.length === 2) {

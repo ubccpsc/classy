@@ -292,7 +292,7 @@ export interface AutoTestResultPayload {
 	failure?: FailurePayload; // only set if defined
 }
 
-/* tslint:disable-next-line */ // This will get properties eventually
+// This will get properties eventually
 export interface AutoTestResultTransport extends AutoTestResult {
 	// NOTE: this extends should go away, but is easiest right now
 }

@@ -141,7 +141,6 @@ export class CustomStudentView extends AbstractStudentView {
             }
 
             const teamItems = teamsListDiv.querySelectorAll("ons-list-item");
-            // tslint:disable-next-line:prefer-for-of
             for (let i = 0; i < teamItems.length; i++) {
                 teamItems[i].remove();
             }

@@ -16,7 +16,6 @@ import { TestHarness } from "@common/TestHarness";
 import { CommitTarget } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 
-/* tslint:disable:max-line-length */
 describe("GitHub Event Parser", () => {
 	Config.getInstance();
 

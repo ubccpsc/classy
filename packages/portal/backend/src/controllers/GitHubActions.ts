@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this class is a facade over the whole GitHub API surface; splitting it by resource is tracked separately
 import { GitHubStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -10,7 +11,6 @@ import { DatabaseController } from "./DatabaseController";
 import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
 import { TeamController } from "./TeamController";
 
-// tslint:disable-next-line
 const tmp = require("tmp-promise");
 tmp.setGracefulCleanup(); // cleanup files when done
 
@@ -1944,7 +1944,6 @@ export class GitHubActions implements IGitHubActions {
 
 		function addFilesToRepo() {
 			Log.info("GitHubActions::importRepoFS(..)::addFilesToRepo() - start");
-			// tslint:disable-next-line
 			const command = `cd ${cloneTempDir.path} && git config user.email "classy@cs.ubc.ca" && git config user.name "classy" && git add . && git commit -q -m "Starter files"`;
 			return exec(command).then(function (result: any) {
 				Log.info("GitHubActions::importRepoFS(..)::addFilesToRepo() - done");
@@ -2129,7 +2128,6 @@ export class GitHubActions implements IGitHubActions {
 			}
 
 			// Make sure the repo exists
-			// tslint:disable-next-line:no-floating-promises
 			const repoExists = await this.repoExists(repoName);
 			if (repoExists) {
 				Log.info("GitHubAction::setRepoPermission(..) - repo exists");
@@ -2146,7 +2144,6 @@ export class GitHubActions implements IGitHubActions {
 				};
 
 				// Change each team"s permission
-				// tslint:disable-next-line:no-floating-promises
 				const response = await fetch(teamsUri, teamOptions); // .then(function(responseData: any) {
 				const body = await response.json();
 				Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
@@ -2323,7 +2320,6 @@ export class GitHubActions implements IGitHubActions {
 			const body = {
 				comment: {
 					commit_id: sha,
-					// tslint:disable-next-line
 					html_url: repoUrl + "/commit/" + sha + "#fooWillBeStripped", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0/commit/82ldl2731c665c364ad979c9135688d1c206462c#commitcomment-285811"
 					user: {
 						login: Config.getInstance().getProp(ConfigKey.botName), // userId // autobot
@@ -2331,7 +2327,6 @@ export class GitHubActions implements IGitHubActions {
 					body: message,
 				},
 				repository: {
-					// tslint:disable-next-line
 					commits_url: apiUrl + "/commits{/sha}", // https://github.ugrad.cs.ubc.ca/api/v3/repos/CPSC310-2018W-T1/project_r2d2_c3p0/commits{/sha}
 					clone_url: repoUrl + ".git", // https://github.ugrad.cs.ubc.ca/CPSC310-2018W-T1/project_r2d2_c3p0.git
 					name: projectName,

@@ -1,3 +1,4 @@
+// biome-ignore-all lint/complexity/useLiteralKeys: string index access is used to reach private members from tests
 import { expect } from "chai";
 import * as fs from "fs-extra";
 import "mocha";
@@ -17,7 +18,6 @@ import { CommitTarget } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 import { TestData } from "./TestData";
 
-/* tslint:disable:max-line-length */
 describe("GitHubAutoTest", () => {
 	Config.getInstance();
 

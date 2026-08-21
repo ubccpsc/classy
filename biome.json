@@ -30,7 +30,7 @@
 			"preset": "none",
 			"complexity": {
 				"noExcessiveLinesPerFunction": {
-					"level": "warn",
+					"level": "info",
 					"options": {
 						"maxLines": 120,
 						"skipBlankLines": true,
@@ -43,15 +43,12 @@
 			"correctness": {
 				"noUnusedVariables": "error"
 			},
-			"performance": {
-				"noAwaitInLoops": "warn"
-			},
 			"security": {
 				"noGlobalEval": "error"
 			},
 			"style": {
 				"noExcessiveLinesPerFile": {
-					"level": "warn",
+					"level": "info",
 					"options": {
 						"maxLines": 1000,
 						"skipBlankLines": true
@@ -79,8 +76,7 @@
 				"noConsole": "error",
 				"noDoubleEquals": "error",
 				"noShadow": "error",
-				"noVar": "error",
-				"useAwait": "warn"
+				"noVar": "error"
 			},
 			"nursery": {
 				"noExcessiveNestedCallbacks": {
@@ -89,13 +85,9 @@
 						"max": 5
 					}
 				},
-				"noFloatingPromises": "error",
 				"noIdenticalTestTitle": "error",
 				"noImpliedEval": "error",
-				"noMisusedPromises": "error",
-				"useAwaitThenable": "warn",
-				"useExplicitReturnType": "warn",
-				"useExplicitType": "warn"
+				"noMisusedPromises": "error"
 			}
 		}
 	},

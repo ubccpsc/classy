@@ -120,7 +120,7 @@ export class AdminDeleteGraderPage extends AdminPage {
 			const selector = document.querySelector("#graderImagesSelect") as HTMLSelectElement;
 			const selectedOptions = selector.selectedOptions;
 			let removalCount = 0;
-			/* tslint:disable-next-line */ // cannot for-of selectedOptions
+			// cannot for-of selectedOptions
 			for (const option of selectedOptions) {
 				const value = option.value;
 				Log.info("AdminDeleteGraderPage::handleRemoveImagePressed(..) - selected: " + value);

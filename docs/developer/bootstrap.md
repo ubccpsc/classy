@@ -70,8 +70,8 @@ program. Three consequences are worth knowing before you touch the build:
 
 The `typescript` package no longer exposes the JavaScript compiler API, so tools built on it do not
 work: `ts-loader`, `tsconfig-paths-webpack-plugin`, `tslint`, and `ts-node` are all incompatible.
-`ts-node` has been dropped (nothing used it); `tslint` is still declared but its script is already
-disabled and awaits the ESLint migration.
+`ts-node` and `tslint` have both since been removed -- linting and formatting now run through Biome
+(`yarn lint`), which does not depend on the TypeScript compiler API.
 The frontend bundle therefore runs `tsc` first and points webpack at the emitted `.js`, with
 `resolve.alias` standing in for the path mappings; webpack no longer type-checks, `tsc` does.
 
@@ -173,7 +173,7 @@ More checks may need to be made depending on the nature of your work, but these 
 1. [ ] Portal backend compiles
 2. [ ] Portal frontend compiles
 3. [ ] AutoTest compiles
-4. [ ] Formatting is clean (`yarn run prettier:check`; `yarn run prettier:fix` to apply)
+4. [ ] Lint and formatting are clean (`yarn lint`; `yarn lint:fix` to apply)
 5. [ ] CI tests pass for Portal Back-end
 6. [ ] CI tests pass for AutoTest
 7. [ ] Project containers build successfully (`docker compose build` and `docker compose up`)

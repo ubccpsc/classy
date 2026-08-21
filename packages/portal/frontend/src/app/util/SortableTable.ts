@@ -292,12 +292,10 @@ export class SortableTable {
 		const rows = root.querySelectorAll("table tr");
 		let colsWithMetadata: number[] = [];
 
-		// tslint:disable-next-line
 		for (let i = 1; i < rows.length; i++) {
 			// skip the header row
 			const cols = rows[i].querySelectorAll("td, th");
 
-			// tslint:disable-next-line
 			for (let j = 0; j < cols.length; j++) {
 				const col = cols[j] as HTMLElement;
 				// document.getElementById('gradesListTable').children[0]...children[0] instanceof HTMLAnchorElement  <-- true
@@ -350,7 +348,6 @@ export class SortableTable {
 			const row = [];
 			const cols = rows[i].querySelectorAll("td, th");
 
-			// tslint:disable-next-line
 			for (let j = 0; j < cols.length; j++) {
 				if (i === 0) {
 					let text = (cols[j] as HTMLTableCellElement).innerText;
@@ -392,7 +389,6 @@ export class SortableTable {
 	//         const row = [];
 	//         const cols = rows[i].querySelectorAll("td, th");
 	//
-	//         // tslint:disable-next-line
 	//         for (let j = 0; j < cols.length; j++) {
 	//             if (i === 0) {
 	//                 let text = (cols[j] as HTMLTableCellElement).innerText;

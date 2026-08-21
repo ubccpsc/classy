@@ -414,7 +414,6 @@ export abstract class AutoTest implements IAutoTest {
 					}
 					// noinspection ES6MissingAwait
 					// noinspection JSIgnoredPromiseFromCall
-					// tslint:disable-next-line
 					void that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
 				} else {
 					// no cap to tick (should not happen)

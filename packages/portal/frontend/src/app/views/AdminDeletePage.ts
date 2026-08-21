@@ -116,7 +116,6 @@ export class AdminDeletePage extends AdminPage {
 
 		const selected = [];
 
-		// tslint:disable-next-line
 		for (const opt of repoDelete.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
@@ -130,7 +129,6 @@ export class AdminDeletePage extends AdminPage {
 			UI.showErrorToast("No repositories selected for deletion.");
 		}
 
-		// tslint:disable-next-line
 		for (let i = 0; i < selected.length; i++) {
 			const sel = selected[i];
 			try {
@@ -158,7 +156,6 @@ export class AdminDeletePage extends AdminPage {
 		const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
 		const selected = [];
 
-		// tslint:disable-next-line
 		for (const opt of teamDelete.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
@@ -172,7 +169,6 @@ export class AdminDeletePage extends AdminPage {
 			UI.showErrorToast("No teams selected for deletion.");
 		}
 
-		// tslint:disable-next-line
 		for (let i = 0; i < selected.length; i++) {
 			const sel = selected[i];
 			try {

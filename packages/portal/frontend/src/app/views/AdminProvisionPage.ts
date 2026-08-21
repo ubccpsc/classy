@@ -242,7 +242,6 @@ export class AdminProvisionPage extends AdminPage {
 		const releaseList = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
 		const selected = [];
 
-		// tslint:disable-next-line
 		for (const opt of releaseList.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
@@ -256,7 +255,6 @@ export class AdminProvisionPage extends AdminPage {
 			UI.showErrorToast("No repos selected for releasing.");
 		}
 
-		// tslint:disable-next-line
 		for (let i = 0; i < selected.length; i++) {
 			const repoId = selected[i];
 			try {
@@ -293,7 +291,6 @@ export class AdminProvisionPage extends AdminPage {
 		const provisionList = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
 		const selected = [];
 
-		// tslint:disable-next-line
 		for (const opt of provisionList.options) {
 			if (opt.selected) {
 				selected.push(opt.value || opt.text);
@@ -309,7 +306,6 @@ export class AdminProvisionPage extends AdminPage {
 			UI.showErrorToast("No repos selected for provisioning.");
 		}
 
-		// tslint:disable-next-line
 		for (let i = 0; i < selected.length; i++) {
 			const repoId = selected[i];
 			try {

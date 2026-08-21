@@ -1,3 +1,4 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: one spec per admin route; splitting it would scatter shared fixture setup
 import { expect } from "chai";
 import "mocha";
 
