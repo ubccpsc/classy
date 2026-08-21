@@ -163,18 +163,17 @@ export default class Config {
 			// This is not a great place to sniff for the CI environment
 			// but at least it should happen near the start of any execution.
 			const ci = process.env.CI;
-			if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
-				// CI instances should be INFO always
+			const explicitLevel = (process.env.LOG_LEVEL || "").trim();
+			if (explicitLevel.length > 0) {
+				// An explicit LOG_LEVEL always wins, including on CI. Log already parsed it at
+				// startup, so there is nothing to set here. Being able to quiet CI further is the
+				// only way to keep an early spec inside the CI log buffer when a later one is noisy.
+				Log.info("Config - Log::<init> - using explicit LOG_LEVEL: " + explicitLevel);
+			} else if (typeof ci !== "undefined" && Util.toBoolean(ci) === true) {
+				// CI defaults to INFO when LOG_LEVEL is not set:
 				// trace emits too much text so the CI buffer does not save it all
 				Log.info("Config - Log::<init> - CI detected; changing to INFO");
 				Log.Level = LogLevel.INFO; // force INFO
-			} else {
-				const level = this.getProp(ConfigKey.logLevel);
-				if (typeof this.config.logLevel !== "undefined" && level !== null) {
-					Log.info("Config - Log::<init> - updating log level to: " + level);
-					Log.Level = level;
-					Log.parseLogLevel();
-				}
 			}
 		} catch (err) {
 			Log.error("Config::<init> - fatal error reading configuration file: " + err);
