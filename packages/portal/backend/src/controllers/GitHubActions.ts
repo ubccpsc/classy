@@ -257,9 +257,12 @@ export interface IGitHubActions {
 	/**
 	 * Deletes all branches in a repo except for the ones listed in branchesToKeep.
 	 *
+	 * The repo default branch is always retained as well, whether or not it appears in
+	 * branchesToKeep, because GitHub refuses to delete it.
+	 *
 	 * @param repoId
 	 * @param branchesToKeep Must be an array of at least one branch name that already exists on the repo
-	 * @returns {Promise<boolean>} true if the only remaining branches are the ones listed in branchesToKeep
+	 * @returns {Promise<boolean>} true if the only remaining branches are branchesToKeep plus the default branch
 	 */
 	deleteBranches(repoId: string, branchesToKeep: string[]): Promise<boolean>;
 
@@ -1518,6 +1521,9 @@ export class GitHubActions implements IGitHubActions {
 	/**
 	 * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
 	 *
+	 * The repo default branch is _always_ retained, whether or not it is in branchesToKeep:
+	 * GitHub refuses to delete it, so attempting to would only guarantee a false return.
+	 *
 	 * @param repoId
 	 * @param branchesToKeep
 	 */
@@ -1531,14 +1537,33 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		const allBranches = await this.listRepoBranches(repoId);
+		if (allBranches === null) {
+			Log.error("GitHubAction::deleteBranches(..) - failed; could not list branches for repo: " + repoId);
+			return false;
+		}
 
+		// GitHub will not delete a repo default branch, so it must be retained; if it cannot be
+		// determined we carry on without the extra protection rather than failing the whole call
+		const defaultBranch = await this.getDefaultBranch(repoId);
+		const branchesToRetain = branchesToKeep.slice();
+		if (defaultBranch === null) {
+			Log.warn("GitHubAction::deleteBranches(..) - could not determine default branch for repo: " + repoId);
+		} else if (branchesToRetain.indexOf(defaultBranch) < 0) {
+			Log.warn("GitHubAction::deleteBranches(..) - retaining default branch (not requested): " + defaultBranch);
+			branchesToRetain.push(defaultBranch);
+		}
+
+		// NOTE: two different lists on purpose. branchesToKeepThatExist validates the _caller_ named
+		// a real branch (so deleteBranches(repo, []) is still rejected below), while branchesToRetain
+		// decides what actually survives (the default branch survives whether it was asked for or not).
 		const branchesToKeepThatExist: string[] = [];
 		const branchesToDelete: string[] = [];
 		for (const githubBranch of allBranches) {
-			if (branchesToKeep.indexOf(githubBranch) < 0) {
-				branchesToDelete.push(githubBranch);
-			} else {
+			if (branchesToKeep.indexOf(githubBranch) >= 0) {
 				branchesToKeepThatExist.push(githubBranch);
+			}
+			if (branchesToRetain.indexOf(githubBranch) < 0) {
+				branchesToDelete.push(githubBranch);
 			}
 		}
 
@@ -1567,7 +1592,7 @@ export class GitHubActions implements IGitHubActions {
 
 		Log.info("GitHubAction::deleteBranches(..) - verifying remaining branches");
 		const branchesAfter = await this.listRepoBranches(repoId);
-		if (branchesAfter !== null && branchesAfter.length > branchesToKeep.length) {
+		if (branchesAfter !== null && branchesAfter.length > branchesToRetain.length) {
 			// retry, but bounded: a branch that cannot be deleted (e.g., protected) would
 			// otherwise recurse forever
 			if (attemptsRemaining > 0) {
@@ -1622,11 +1647,22 @@ export class GitHubActions implements IGitHubActions {
 
 		if (deleteResp.status !== 204) {
 			const delRespBody = await deleteResp.json();
-			Log.warn("GitHubAction::deleteBranches(..) - failed to delete branch for repo; response: " + JSON.stringify(delRespBody));
+			// NOTE: name the branch and the status here; without them a failure is undiagnosable
+			// (422 default-branch and 403 protected-branch both just become `false` to the caller)
+			Log.warn(
+				"GitHubAction::deleteBranch( " +
+					repoId +
+					", " +
+					branchToDelete +
+					" ) - failed; status: " +
+					deleteResp.status +
+					"; response: " +
+					JSON.stringify(delRespBody)
+			);
 			return false;
 		} else {
 			Log.info(
-				"GitHubAction::deleteBranches(..) - successfully deleted branch: " +
+				"GitHubAction::deleteBranch(..) - successfully deleted branch: " +
 					branchToDelete +
 					" from repo: " +
 					repoId +
@@ -2382,6 +2418,46 @@ export class GitHubActions implements IGitHubActions {
 		} catch (err) {
 			Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - failed; took: " + Util.took(start));
 			return [];
+		}
+	}
+
+	/**
+	 * Returns the name of the repo default branch, or null if it could not be determined.
+	 *
+	 * GitHub refuses to delete a repo default branch, so any operation that removes branches
+	 * needs to know which one to leave alone.
+	 *
+	 * @param repoId
+	 * @returns {Promise<string | null>}
+	 */
+	private async getDefaultBranch(repoId: string): Promise<string | null> {
+		const uri = this.apiPath + "/repos/" + this.org + "/" + repoId;
+		const options: RequestInit = {
+			method: "GET",
+			headers: {
+				Authorization: this.gitHubAuthToken,
+				"User-Agent": this.gitHubUserName,
+				Accept: "application/vnd.github+json",
+				"X-GitHub-Api-Version": "2022-11-28",
+			},
+		};
+
+		try {
+			const response = await fetch(uri, options);
+			if (response.status !== 200) {
+				Log.warn("GitHubAction::getDefaultBranch( " + repoId + " ) - could not read repo; status: " + response.status);
+				return null;
+			}
+			const body = await response.json();
+			if (typeof body.default_branch !== "string" || body.default_branch.length < 1) {
+				Log.warn("GitHubAction::getDefaultBranch( " + repoId + " ) - repo has no default_branch");
+				return null;
+			}
+			Log.trace("GitHubAction::getDefaultBranch( " + repoId + " ) - default: " + body.default_branch);
+			return body.default_branch;
+		} catch (err) {
+			Log.warn("GitHubAction::getDefaultBranch( " + repoId + " ) - ERROR: " + err.message);
+			return null;
 		}
 	}
 

@@ -123,6 +123,10 @@ jobs:
             name: Running backend tests
             environment:
               MOCHA_FILE: ../../../testOutput/backend/test/test-results.xml
+              # CircleCI truncates step output at 400KB and this suite blows past that, which
+              # hides the early specs (GitHubActionSpec) entirely. WARN keeps warn/error/test
+              # (including the Log.test branch dumps) and drops the info/trace chatter.
+              LOG_LEVEL: WARN
             when: on_success
 
       - run:
