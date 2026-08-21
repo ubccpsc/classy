@@ -227,6 +227,33 @@ describe("GitHubActions", () => {
 		expect(deleteSuccesful).to.be.false;
 	}).timeout(TIMEOUT);
 
+	// NOTE: these run after the branch delete tests on purpose; REPONAME2 is not used by any
+	// later test in this spec, so protecting one of its branches cannot affect anything else
+	// (a protected branch cannot be deleted, which would break the tests above if run earlier).
+	it("Should be able to add a branch protection rule to a repo.", async function () {
+		const repoName = REPONAME2;
+
+		const branches = await gh.listRepoBranches(repoName);
+		Log.test("Branches: " + JSON.stringify(branches));
+		// the rename/delete tests above leave this branch in place
+		expect(branches).to.contain("renamed-test-branch");
+
+		const success = await gh.addBranchProtectionRule(repoName, { name: "renamed-test-branch", reviews: 1 });
+		expect(success).to.be.true;
+	}).timeout(TIMEOUT);
+
+	it("Should fail to add a branch protection rule for a branch that does not exist.", async function () {
+		const repoName = REPONAME2;
+
+		const success = await gh.addBranchProtectionRule(repoName, { name: "BRANCH_THAT_DOES_NOT_EXIST", reviews: 1 });
+		expect(success).to.be.false;
+	}).timeout(TIMEOUT);
+
+	it("Should fail to add a branch protection rule to a repo that does not exist.", async function () {
+		const success = await gh.addBranchProtectionRule("INVALID_REPO_" + Date.now(), { name: "main", reviews: 1 });
+		expect(success).to.be.false;
+	}).timeout(TIMEOUT);
+
 	it("Should be able to create a team.", async function () {
 		const val = await gh.createTeam(TEAMNAME, "push");
 		Log.test("Team created; details: " + JSON.stringify(val));

@@ -552,7 +552,10 @@ export class GitHubActions implements IGitHubActions {
 			};
 
 			Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - making request");
-			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri + "; options: " + JSON.stringify(options));
+			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri);
+			// NOTE: options carries the Authorization header (the bot token); do not log it.
+			// Uncomment only for local debugging.
+			// Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri + "; options: " + JSON.stringify(options));
 			const response = await fetch(uri, options);
 			const body = await response.json();
 			Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete");
@@ -916,7 +919,9 @@ export class GitHubActions implements IGitHubActions {
 
 		let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
 		secret = crypto.createHash("sha256").update(secret, "utf8").digest("hex"); // webhook w/ sha256
-		Log.info("GitHubAction::addWebhook( .. ) - secret: " + secret);
+		// NOTE: do not log the secret; the hash is not a redaction, it is the value sent to
+		// GitHub and used to sign webhook payloads. Uncomment only for local debugging.
+		// Log.info("GitHubAction::addWebhook( .. ) - secret: " + secret);
 		const start = Date.now();
 
 		// https://developer.github.com/webhooks/creating/
@@ -941,7 +946,14 @@ export class GitHubActions implements IGitHubActions {
 			}),
 		};
 
-		await fetch(uri, opts);
+		const response = await fetch(uri, opts);
+		if (response.ok === false) {
+			// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
+			const respBody = await response.text();
+			Log.error("GitHubAction::addWebhook( " + repoName + " ) - failed; status: " + response.status + "; response: " + respBody);
+			return false;
+		}
+
 		Log.info("GitHubAction::addWebhook(..) - success; took: " + Util.took(start));
 		return true;
 	}
@@ -955,7 +967,9 @@ export class GitHubActions implements IGitHubActions {
 
 			let secret = Config.getInstance().getProp(ConfigKey.autotestSecret);
 			secret = crypto.createHash("sha256").update(secret, "utf8").digest("hex"); // webhook w/ sha256
-			Log.info("GitHubAction::updateWebhook( .. ) - secret: " + secret);
+			// NOTE: do not log the secret; the hash is not a redaction, it is the value sent to
+			// GitHub and used to sign webhook payloads. Uncomment only for local debugging.
+			// Log.info("GitHubAction::updateWebhook( .. ) - secret: " + secret);
 			const start = Date.now();
 
 			// https://developer.github.com/webhooks/creating/
@@ -1975,7 +1989,10 @@ export class GitHubActions implements IGitHubActions {
 	 * @returns {Promise<boolean>} - true if write was successful
 	 */
 	public async writeFileToRepo(repoURL: string, fileName: string, fileContent: string, force?: boolean): Promise<boolean> {
-		Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" + " , " + fileContent + " , " + force + " ) - start");
+		Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + " , " + force + " ) - start");
+		// NOTE: fileContent is omitted above; it can be large and can carry sensitive content.
+		// Uncomment only for local debugging.
+		// Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" + " , " + fileContent + " , " + force + " ) - start");
 		const that = this;
 
 		if (typeof force === "undefined") {
@@ -2196,7 +2213,22 @@ export class GitHubActions implements IGitHubActions {
 				},
 				body,
 			};
-			await fetch(uri, options);
+			const response = await fetch(uri, options);
+			if (response.ok === false) {
+				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
+				const respBody = await response.text();
+				Log.warn(
+					"GitHubAction::addBranchProtectionRule(",
+					repoId,
+					",",
+					rule.name,
+					") - failed; status:",
+					response.status,
+					"; response:",
+					respBody
+				);
+				return false;
+			}
 			Log.info("GitHubAction::addBranchProtectionRule(", repoId, ",", rule.name, ") - Success! took: ", Util.took(start));
 			return true;
 		} catch (err) {
@@ -2228,7 +2260,22 @@ export class GitHubActions implements IGitHubActions {
 				},
 				body,
 			};
-			await fetch(uri, options);
+			const response = await fetch(uri, options);
+			if (response.ok === false) {
+				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
+				const respBody = await response.text();
+				Log.warn(
+					"GitHubAction::makeIssue(",
+					repoId,
+					",",
+					issue.title,
+					") - failed; status:",
+					response.status,
+					"; response:",
+					respBody
+				);
+				return false;
+			}
 			Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
 			return true;
 		} catch (err) {
