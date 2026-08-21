@@ -23,7 +23,10 @@
 **/html/**/*.map
 **/bin/
 
-persist/queues/**.json
+# AutoTest run/queue state; created wherever a process is launched from when
+# PERSIST_DIR is a relative path (as it is for local development). The previous
+# rule (persist/queues/**.json) was anchored here and only covered the queue JSON.
+persist/
 
 packages/common/**/*.js
 packages/common/**/*.map

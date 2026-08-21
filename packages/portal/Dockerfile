@@ -1,4 +1,4 @@
-FROM node:18-alpine
+FROM node:22-alpine
 
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy
