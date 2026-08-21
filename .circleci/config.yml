@@ -253,15 +253,60 @@ jobs:
             cd ${TEST_LOGS} && sudo touch portal-front-end-test.log portal-back-end-test.log autotest-test.log docker-stdout.log
             sudo chmod 777 -R ${TEST_LOGS}
 
+     # The .env in env.enc is written for host-local development, where every service is
+     # reachable on localhost. Inside the compose network, localhost is the container itself,
+     # so the service URLs have to name the services instead. PERSIST_DIR must also be
+     # absolute: compose uses it as a mount target and rejects a relative path.
       - run:
-          name: Build and start container to verify it is working
+          name: "Export container-specific service URLs to configuration file"
           command: |
             set -x
-            docker-compose up -d 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+            MONGO_USER=$(grep -m 1 "^MONGO_INITDB_ROOT_USERNAME=" .env | cut -d= -f2-)
+            MONGO_PASS=$(grep -m 1 "^MONGO_INITDB_ROOT_PASSWORD=" .env | cut -d= -f2-)
+            {
+              echo "DB_URL=mongodb://${MONGO_USER}:${MONGO_PASS}@db:27017/?authMechanism=DEFAULT"
+              echo "AUTOTEST_URL=http://autotest"
+              echo "BACKEND_URL=https://portal"
+              echo "PERSIST_DIR=/output"
+            } >> .env
+
+      - run:
+          name: Bootstraps default plugin for containers
+          command: ./helper-scripts/bootstrap-plugin.sh
+
+      - run:
+          name: Build and start containers
+          command: |
+            set -x
+            docker compose up -d --build 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+
+     # `up -d` only reports that the containers were started, so it passes even when a service
+     # crashes on its first request (restart: always then hides it). Polling an endpoint that
+     # goes proxy -> portal -> mongo is what actually proves the stack is wired together.
+      - run:
+          name: Verify the stack is serving
+          command: |
+            set -x
+            for i in $(seq 1 30); do
+              code=$(curl -k -s -o /dev/null -w "%{http_code}" https://localhost/portal/config || true)
+              if [ "$code" = "200" ]; then
+                echo "stack responded 200 after ${i} attempt(s)"
+                exit 0
+              fi
+              sleep 5
+            done
+            echo "stack did not serve /portal/config within 150s (last status: ${code})"
+            exit 1
+
+      - run:
+          name: Collect container logs
+          command: docker compose logs --no-color >> ${TEST_LOGS}/docker-stdout.log 2>&1
+          when: always
 
       - run:
           name: Shut down containers
-          command: docker-compose down 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+          command: docker compose down 2>&1 | tee -a ${TEST_LOGS}/docker-stdout.log
+          when: always
 
       - run:
           name: Cleaning up Docker containers and images
@@ -290,6 +335,7 @@ workflows:
         equal: [ scheduled_pipeline, << pipeline.trigger_source >> ]
     jobs:
       - build_and_test
+      - build_only
   nightly:
     when:
       and:
@@ -297,5 +343,4 @@ workflows:
         - equal: [ nightly_build, << pipeline.schedule.name >> ]
     jobs:
       - build_and_test
-# we really want to know the container is still working (build) not just that it builds (build_run_stop)
-#      - build_only
+      - build_only

@@ -137,7 +137,7 @@ docker compose -f docker-compose.yml down && cp .env.bak .env
 
 Notes:
 
-- **`-f docker-compose.yml` is deliberate.** It skips `docker-compose.override.yml`, which `bootstrap-plugin.sh` copies from the plugin. The default plugin's override is identical to the root compose file except that it hardcodes the db volume as `/var/opt/classy/db`; on a dev machine that path is created root-owned while the container runs as `${UID}`, and Mongo dies with `Attempted to create a lock file on a read-only directory: /data/db`. Dropping the override lets the db volume follow `${HOST_DIR}` instead. Include the override when you specifically want to test plugin behaviour, and create that directory yourself first.
+- **`-f docker-compose.yml` is deliberate.** It skips `docker-compose.override.yml`, which `bootstrap-plugin.sh` copies from the plugin. The default plugin's override is identical to the root compose file except that it hardcodes the db volume as `/var/opt/classy/db`; on a dev machine that path is created root-owned while the container runs as `${UID}`, and Mongo dies with `Attempted to create a lock file on a read-only directory: /data/db`. Dropping the override lets the db volume follow `${HOST_DIR}` instead. Include the override when you specifically want to test plugin behaviour, and create that directory yourself first. (CI does include it: `build_only` runs as root, so the hardcoded path is writable there.)
 - Stop any other Mongo you have bound to 27017 first; the `db` service publishes that port.
 - `restart: always` means a crashed service comes straight back, so a failing request can look like a 502 from nginx rather than a crash. Check `docker compose logs portal` before concluding the proxy is at fault.
 - The built images contain a copy of your `.env`. They are fine locally, but do not push them anywhere.
@@ -157,6 +157,6 @@ More checks may need to be made depending on the nature of your work, but these 
 *NOTE*:
 
 - Items 1-6 can all be verified both locally and by CircleCI.
-- Item 7 can only be done manually at this time; see [Testing the containers locally](#testing-the-containers-locally). The CircleCI job that would cover it (`build_only`) exists but is not wired into any workflow.
+- Item 7 is executed by the `build_only` CI job, which builds the images, starts the stack, and polls `/portal/config` until it answers. Run it locally too when you are changing anything the containers depend on; see [Testing the containers locally](#testing-the-containers-locally).
 - Item 7 requires a properly-setup `.env` file with SSL certificates.
 - Some specs (e.g., the AutoTest specs that build Docker images) are skipped on CI and only run locally, so a green CI build is not by itself proof that a change works end-to-end.
