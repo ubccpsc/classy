@@ -1,109 +1,61 @@
 # Bootstrapping Classy for Development
 
-Although Classy is containerized, configuring your development instance does not require building Docker containers. The [Classy](https://github.com/ubccpsc/classy) repository consists of two REST-based projects and a JavaScript front-end application that is served by one of the REST APIs as static HTML content. These applications can be run separately, or together, in your IDE or from the command line in debugging mode. TypeScript source maps are produced during compilation for debugging the application during runtime.
+Classy is two REST services (`portal/backend` and `autotest`) plus a frontend that the backend serves as
+static content. All of them run from an IDE or the command line without building containers.
 
 ## Software Dependencies
 
-The software dependencies that are currently used in production and recommended to work in development:
+| Dependency | Notes |
+| --- | --- |
+| Node 22 (`>= 22.0.0 < 24`) | `nvm install` picks the version from `.nvmrc` (`lts/jod`); CI builds on `cimg/node:22.23.2`. Node 24 does **not** work: `restify` pulls in `spdy`, which calls the `http_parser` binding that Node 24 removed. |
+| Yarn 1 (classic) | `.yarnrc` pins the repo's own copy, so whichever Yarn 1.x launcher you have defers to it. |
+| Docker | Runs MongoDB, and the AutoTest specs that build grading images. |
+| MongoDB 5 | `docker run --name classy-mongo -p 27017:27017 -d mongo:5.0`, then `docker start classy-mongo` on later sessions. |
 
-- Node JS v22 (`>= 22.0.0 < 24`, as declared in the root `package.json`) [Download](https://nodejs.org/en/download/). The repo ships a `.nvmrc` (`lts/jod`), so `nvm install` / `nvm use` in `classy/` selects the right version. CI builds on `cimg/node:22.23.2`.
-- Yarn v1 (classic) [Installation](https://yarnpkg.com/lang/en/docs/install). The repo pins its own copy through `.yarnrc` (`.yarn/releases/yarn-1.18.0.cjs`), so whichever Yarn 1.x launcher you have installed will defer to that version.
-- Docker [Install](https://docs.docker.com/install/). Needed to run MongoDB, and by the AutoTest specs that build grading containers.
-- IDE: Webstorm is recommended, VSCode is supported.
-- MongoDB v5 (Docker: `docker run -p 27017:27017 mongo:5.0`, or [Install](https://docs.mongodb.com/manual/installation/))
+Mongo must be running before you start AutoTest, Portal, or the test suite.
 
-**NOTE**: MongoDB must be running before starting **AutoTest** or **Portal**, or before running the test suite.
+On macOS the AutoTest Docker specs need `/var/run/docker.sock`, which Docker Desktop does not create by
+default: enable **Settings → Advanced → "Allow the default Docker socket to be used"**.
 
-### macOS: the Docker socket
+## Configuring an Instance
 
-The AutoTest service talks to the Docker daemon over `/var/run/docker.sock`. Docker Desktop for macOS does not create that path by default; enable **Settings → Advanced → "Allow the default Docker socket to be used"** (it will ask for your password). Without it, the AutoTest specs that build images fail with `connect ENOENT /var/run/docker.sock`.
+Copy `.env.sample` to `.env` in the repo root and fill it in. The sample documents each variable inline
+and `packages/common/src/Config.ts` is the authoritative list. ***Never commit `.env`.*** `Config` loads
+it by a path relative to itself, so it resolves no matter which directory you launch from.
 
-## Environmental Config
+Two settings matter specifically for local development:
 
-You will need to ensure the required environment variables, which you can see in `packages/common/src/Config.ts`, are set. This can be done by copying `.env.sample` to `.env` in the root of the project and modifying as needed. It is ***CRUCIAL*** that your `.env` file is never committed to version control.
+- `DB_URL` — your local Mongo, e.g. `mongodb://localhost:27017`.
+- `BACKEND_URL` — must be **http** for local test runs. The specs start their own backend, and
+  `BackendServer` only listens over https when `CI` is set; with `https://localhost` the AutoTest
+  `ClassPortal` and `GitHub Event Parser` specs cannot reach it.
 
-`Config` loads the root `.env` itself (using a path relative to its own location), so the variables resolve no matter which directory you launch a process from.
+Classy manages administrators through GitHub teams, so the org needs `staff` and `admin` teams, and the
+bot user should be an owner of the organization.
 
-The sample configuration file includes a lot of documentation inline so [take a look](https://github.com/ubccpsc/classy/blob/main/.env.sample).
-
-Two settings deserve attention when configuring a machine for local development:
-
-- `DB_URL` should point at your local Mongo (e.g., `mongodb://localhost:27017` for an instance started without authentication).
-- `BACKEND_URL` must use **http** for local test runs. The specs start their own backend, and `BackendServer` is only started in https mode when `CI` is set; with `BACKEND_URL=https://localhost` the AutoTest `ClassPortal` and `GitHub Event Parser` specs cannot reach it and fail. Use `https` only when running the real backend or `docker compose`.
-
-## GitHub Setup
-
-Classy manages administrators using GitHub teams. The GitHub organization that the course uses should have a `staff` and `admin` team. Users on the GitHub `staff` and `admin` teams will have access to the Classy Admin Portal, although users on the `staff` team will have greater privileges (e.g., the ability to configure the course). The bot user should be added as an owner of the organization.
-
-## Install/Build
-
-To install Classy for development:
-
-1. Type `git clone https://github.com/ORGNAME/classy`
-2. `cd classy` to navigate inside the directory.
-3. `nvm install` to install and select the Node version named in `.nvmrc` (`nvm use` on its own only works once that version is present locally).
-4. Inside the directory, type `yarn install` to fetch library dependencies.
-5. Then type `yarn run build` to build the project.
-
-   During the build step, a source-map was produced with the built code, which allows you to set breakpoints and debug in your IDE.
-
-6. You are ready to run any of the applications (commands found in `package.json` files under respective application package directories).
-
-**NOTE**: `tsc` emits the compiled `.js` beside each `.ts` file, and both the daemons and the test suite run that emitted JavaScript. Re-run `yarn run build` after every source change or you will be running stale code.
-
-## TypeScript 7 notes
-
-The project builds with TypeScript 7, whose compiler is a native binary rather than a JavaScript
-program. Three consequences are worth knowing before you touch the build:
-
-- **There is no `baseUrl`.** TS 7 removed it, and path mappings in every `tsconfig.json` are now
-  relative to the file they appear in. `tsconfig-paths`, which resolves the `@common`/`@backend`
-  aliases *at runtime*, still requires a baseUrl, so the scripts that load it export
-  `TS_NODE_BASEURL=.` (the Dockerfiles set it as an `ENV`). Running mocha or a daemon by hand
-  without that variable fails with `Cannot find module '@common/Log'`.
-- **`strict` is on by default in TS 7**; each `tsconfig.json` pins `"strict": false` to keep the
-  pre-7 semantics. Turning it on surfaces roughly 1250 null/undefined diagnostics, so treat that as
-  its own project rather than a side effect of an unrelated change.
-- **`esModuleInterop` is always on and cannot be disabled.** CommonJS packages that are called or
-  constructed (`supertest`, `dockerode`, `csv-parse`, `client-oauth2`, `moment`,
-  `parse-link-header`) must use `import x from "y"`, not `import * as x from "y"`.
-
-The `typescript` package no longer exposes the JavaScript compiler API, so tools built on it do not
-work: `ts-loader`, `tsconfig-paths-webpack-plugin`, `tslint`, and `ts-node` are all incompatible.
-`ts-node` and `tslint` have both since been removed -- linting and formatting now run through Biome
-(`yarn lint`), which does not depend on the TypeScript compiler API.
-The frontend bundle therefore runs `tsc` first and points webpack at the emitted `.js`, with
-`resolve.alias` standing in for the path mappings; webpack no longer type-checks, `tsc` does.
-
-## Running MongoDB
-
-Mongo is easiest to run as a container; the tests and both services expect it on port 27017:
+## Install/Build/Run
 
 ```
-docker run --name classy-mongo -p 27017:27017 -d mongo:5.0
+nvm install     # selects the node version named in .nvmrc
+yarn install
+yarn run build
 ```
 
-On subsequent sessions, `docker start classy-mongo` is enough.
+`tsc` emits each `.js` beside its `.ts`, and both the daemons and the test suite run that emitted
+JavaScript. **Re-run `yarn run build` after every source change** or you will be running stale code.
 
-## Running as dev
+To run a service:
 
-There are a variety of services you may want to run independently while developing.
-Most will require configuring mongo to run in dev mode (see `DB_URL` in `.env`).
-The most common of these services can be invoked through either the terminal or IDE:
+- backend: `yarn run backend` from `packages/portal/backend/`
+- autotest: `yarn run autotest` from `packages/autotest/`
+- frontend: see `packages/portal/frontend/README.md`
 
-* Classy backend: `yarn run backend` from `packages/portal/backend/`
-* Classy frontend: Instructions in `packages/portal/frontend/README.md`
-* AutoTest backend: `yarn run autotest` from `packages/autotest/`
-
-Some handy dev scripts also exist; these can be found in `packages/portal/backend/src-util/`; use these with care, many modify the database or GitHub repos in unrecoverable ways.
+`packages/portal/backend/src-util/` holds batch utilities. Several of them modify the database or GitHub
+irreversibly, so read them carefully before running any of these.
 
 ## Running the test suite
 
-The automated test suite is stored in:
-* `packages/autotest/test/`
-* `packages/portal/backend/test/`
-
-Run it from the `classy/` root, after `yarn run build`:
+From the repo root, after `yarn run build`:
 
 ```
 yarn run test:backend
@@ -111,76 +63,99 @@ yarn run test:autotest
 yarn run test
 ```
 
-**Run from the repo root.** `yarn run test` also works inside `packages/portal/backend/`, but the AutoTest specs read their fixtures through a repo-root-relative path when `CI` is unset, so running them from `packages/autotest/` fails with `ENOENT ... test/githubEvents/*.json`.
+- **Run from the repo root.** The AutoTest specs resolve their fixtures relative to the root when `CI` is
+  unset, so running from `packages/autotest/` fails with `ENOENT ... test/githubEvents/*.json`.
+- Set `LOG_LEVEL=WARN` for a readable run; the default `TRACE` buries the Mocha summary under thousands
+  of lines.
+- Specs that hit live GitHub skip themselves unless `CI` is set, so a local run leaves ~100 pending. To
+  exercise them, set `CI=true` — which also switches the backend to https, so generate certs first:
+  ```
+  mkdir -p packages/portal/backend/ssl && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 \
+    -keyout packages/portal/backend/ssl/privkey.pem \
+    -out packages/portal/backend/ssl/fullchain.pem -subj "/CN=localhost"
+  ```
+- `yarn run cover` writes coverage to `testOutput/coverage/index.html`. Locally it under-reports, because
+  mocks stand in for much of what CI exercises for real.
 
-Set `LOG_LEVEL=WARN` for a readable run (e.g., `LOG_LEVEL=WARN yarn run test:backend`); the default `TRACE` buries the Mocha summary under thousands of lines.
+In WebStorm, create a Mocha target with node options `-r tsconfig-paths/register`, mocha options
+`--exit`, and the repo root as the working directory.
 
-To run these in the IDE create a Mocha target in Webstorm with `-r tsconfig-paths/register` as the node options, `--exit` as the mocha options, and the `classy/` root as the working directory.
+## TypeScript 7 gotchas
 
-### Coverage
+- **There is no `baseUrl`.** Path mappings are relative to the `tsconfig.json` they appear in.
+  `tsconfig-paths` resolves the `@common`/`@backend` aliases *at runtime* and still needs one, so the
+  scripts export `TS_NODE_BASEURL=.` (the Dockerfiles set it as an `ENV`). Running mocha or a daemon by
+  hand without it fails with `Cannot find module '@common/Log'`.
+- **`strict` is pinned to `false`** in each `tsconfig.json` to keep pre-7 semantics. Turning it on
+  surfaces roughly 1250 null/undefined diagnostics, so treat that as its own project.
+- **`esModuleInterop` is always on and cannot be disabled.** CommonJS packages that are called or
+  constructed (`supertest`, `dockerode`, `csv-parse`, `client-oauth2`, `moment`, `parse-link-header`)
+  must use `import x from "y"`, not `import * as x from "y"`.
+- The compiler is a native binary with no JavaScript API, so tools built on it do not work: `ts-loader`,
+  `tsconfig-paths-webpack-plugin`, `tslint`, and `ts-node`. Linting and formatting run through Biome
+  (`yarn lint`, `yarn lint:fix`); the frontend runs `tsc` first and points webpack at the emitted `.js`,
+  with `resolve.alias` standing in for the path mappings.
 
-The best way to run coverage locally is to execute `yarn run cover` in `classy/`. The coverage report will be generated in `testOutput/coverage/index.html`. NOTE: when executing locally, mocks are extensively used so the report will not be as comprehensive as executing on CI.
+## Building and launching the containers
 
-## Testing the containers locally
-
-QA item 7 (`docker compose build` / `docker compose up`) can be run on a dev machine, but the container stack needs different configuration than host-local development does. The values that must change are the ones that name other services: inside a container, `localhost` is that container, not its neighbour.
-
-Keep a second env file, `.env.docker`, alongside your normal `.env` (both are gitignored). It differs only in:
+Containers need different configuration than host-local development, because inside a container
+`localhost` is that container rather than its neighbour. Keep a second `.env.docker` (also gitignored)
+that differs only in:
 
 | Setting | Host-local | Containers |
 | --- | --- | --- |
-| `DB_URL` | `mongodb://localhost:27017` | `mongodb://USER:PASS@db:27017/?authMechanism=DEFAULT` (the `db` container enables auth from `MONGO_INITDB_ROOT_*`) |
+| `DB_URL` | `mongodb://localhost:27017` | `mongodb://USER:PASS@db:27017/?authMechanism=DEFAULT` |
 | `AUTOTEST_URL` | `http://localhost` | `http://autotest` |
 | `BACKEND_URL` | `http://localhost` | `https://portal` |
-| `PERSIST_DIR` | a relative path (e.g., `persist`) | an absolute path (e.g., `/output`) |
+| `PERSIST_DIR` | relative, e.g. `persist` | absolute, e.g. `/output` — a relative value fails with `mount path must be absolute` |
 
-`PERSIST_DIR` is the easy one to miss: it is a mount target in `docker-compose.yml`, and a relative value fails with `invalid mount path: 'persist' mount path must be absolute`.
-
-`docker-compose.yml` hardcodes `env_file: .env` and the Dockerfiles `COPY .env`, so `.env.docker` cannot be passed in with `--env-file`; it has to be swapped into place for the duration of the run:
+`docker-compose.yml` hardcodes `env_file: .env` and the Dockerfiles `COPY .env`, so `.env.docker` cannot
+be passed with `--env-file`; it has to be swapped into place for the run:
 
 ```
 cp .env .env.bak && cp .env.docker .env
 ./helper-scripts/bootstrap-plugin.sh
 docker compose -f docker-compose.yml up -d --build
-```
-
-Then check the stack is actually serving (the certs are self-signed, hence `-k`):
-
-```
-curl -k https://localhost/              # landing page through nginx
-curl -k https://localhost/portal/config # portal + database
-```
-
-`/portal/config` is the useful probe: it exercises nginx to portal over https and portal to Mongo. `docker compose logs portal | grep "AT status"` should report `success`, which confirms portal can reach AutoTest.
-
-Finally, tear down and put your `.env` back:
-
-```
+curl -k https://localhost/portal/config      # exercises nginx -> portal -> Mongo
 docker compose -f docker-compose.yml down && cp .env.bak .env
 ```
 
-Notes:
+- **`-f docker-compose.yml` is deliberate.** It skips `docker-compose.override.yml`, which
+  `bootstrap-plugin.sh` copies from the plugin and which hardcodes the db volume at
+  `/var/opt/classy/db`. On a dev machine that path is created root-owned while the container runs as
+  `${UID}`, so Mongo dies with `read-only directory: /data/db`. Include the override only when you are
+  specifically testing plugin behaviour, and create that directory yourself first. (CI includes it:
+  `build_only` runs as root, where the path is writable.)
+- Stop any other Mongo bound to 27017 first; the `db` service publishes that port.
+- `restart: always` means a crashed service comes straight back, so a failure can look like a 502 from
+  nginx rather than a crash. Check `docker compose logs portal` before blaming the proxy.
+- The built images contain a copy of your `.env`. Fine locally; do not push them anywhere.
 
-- **`-f docker-compose.yml` is deliberate.** It skips `docker-compose.override.yml`, which `bootstrap-plugin.sh` copies from the plugin. The default plugin's override is identical to the root compose file except that it hardcodes the db volume as `/var/opt/classy/db`; on a dev machine that path is created root-owned while the container runs as `${UID}`, and Mongo dies with `Attempted to create a lock file on a read-only directory: /data/db`. Dropping the override lets the db volume follow `${HOST_DIR}` instead. Include the override when you specifically want to test plugin behaviour, and create that directory yourself first. (CI does include it: `build_only` runs as root, so the hardcoded path is writable there.)
-- Stop any other Mongo you have bound to 27017 first; the `db` service publishes that port.
-- `restart: always` means a crashed service comes straight back, so a failing request can look like a 502 from nginx rather than a crash. Check `docker compose logs portal` before concluding the proxy is at fault.
-- The built images contain a copy of your `.env`. They are fine locally, but do not push them anywhere.
+## Sending work to CI
 
-## QA Checklist
+CircleCI runs two jobs per push:
 
-More checks may need to be made depending on the nature of your work, but these are the recommended checks:
+- **`build_and_test`** — compiles every package, checks formatting and lint rules with Biome, then runs
+  the Portal and AutoTest suites.
+- **`build_only`** — builds the images, starts the stack, and polls `/portal/config` until it answers.
 
-1. [ ] Portal backend compiles
-2. [ ] Portal frontend compiles
-3. [ ] AutoTest compiles
-4. [ ] Lint and formatting are clean (`yarn lint`; `yarn lint:fix` to apply)
-5. [ ] CI tests pass for Portal Back-end
-6. [ ] CI tests pass for AutoTest
-7. [ ] Project containers build successfully (`docker compose build` and `docker compose up`)
+CI decrypts its own `.env` from `.circleci/env.enc`, so your local `.env` is never involved.
 
-*NOTE*:
+When a build fails, the test results are in the build's artifacts as
+`testOutput/backend/test/test-results.xml` — **including on red builds**. Read that rather than the step
+output: CircleCI truncates step output at 400KB and this suite exceeds it, so the earliest specs scroll off.
 
-- Items 1-6 can all be verified both locally and by CircleCI.
-- Item 7 is executed by the `build_only` CI job, which builds the images, starts the stack, and polls `/portal/config` until it answers. Run it locally too when you are changing anything the containers depend on; see [Testing the containers locally](#testing-the-containers-locally).
-- Item 7 requires a properly-setup `.env` file with SSL certificates.
-- Some specs (e.g., the AutoTest specs that build Docker images) are skipped on CI and only run locally, so a green CI build is not by itself proof that a change works end-to-end.
+A nightly scheduled build runs the same job against live GitHub. It catches breakage caused by external
+state drift (a changed template repo, an expired token) rather than by commits, so a nightly failure on
+unchanged code is a real signal, not a flake.
+
+### Before you push
+
+1. [ ] Portal backend, Portal frontend, and AutoTest all compile
+2. [ ] `yarn lint` is clean (`yarn lint:fix` to apply)
+3. [ ] Portal and AutoTest suites pass
+4. [ ] Containers build and come up — only when changing something they depend on
+
+Items 1–3 are exactly what `build_and_test` checks. Some specs behave differently locally than on CI
+(the AutoTest Docker ones, and anything gated on live GitHub), so a green local run is not proof of a
+green build, nor the reverse.
