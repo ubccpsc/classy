@@ -357,7 +357,11 @@ export class GitHubActions implements IGitHubActions {
 			GitHubActions.instance = new TestGitHubActions();
 		}
 
-		Log.test("GitHubActions::getInstance() - returning cached TestGitHubActions");
+		// NOTE: warn, not test-level. A live spec that ends up here is silently running against a
+		// mock, which is how concurrent team membership appeared to be "lost" (the real fix was to
+		// stop GitHubActions building a TeamController, which built one of these). Keep this
+		// visible even at LOG_LEVEL=WARN so mixed real/mock runs stay diagnosable.
+		Log.warn("GitHubActions::getInstance() - returning cached TestGitHubActions (mock)");
 		return GitHubActions.instance;
 	}
 
@@ -1076,8 +1080,13 @@ export class GitHubActions implements IGitHubActions {
 		);
 		const start = Date.now();
 
-		const tc = new TeamController();
-		const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
+		// NOTE: this used to resolve a team _number_ through TeamController so it could call the
+		// deprecated /teams/{id}/memberships/{user} endpoint. That was fragile in two ways: the
+		// number had to be looked up (and TeamController builds its own GitHubActions, which is a
+		// mock outside CI), and a bad number produced 404s that were silently discarded. The
+		// org/team-slug endpoint needs no number at all.
+		const team = await this.getTeamByName(teamName);
+		const teamNumber = team !== null ? team.githubTeamNumber : -1;
 
 		// sanity check (members should be githubIds, not other ids)
 		// NOTE: warn rather than throw. Not every legitimate team member is a Person in the
@@ -1092,26 +1101,51 @@ export class GitHubActions implements IGitHubActions {
 			}
 		}
 
-		const promises: any = [];
+		const promises: Array<Promise<{ member: string; ok: boolean; status: number; body: string }>> = [];
 		for (const member of members) {
 			Log.info("GitHubAction::addMembersToTeam(..) - adding member: " + member);
 
-			// PUT /teams/:id/memberships/:username
-			const uri = this.apiPath + "/teams/" + teamNumber + "/memberships/" + member;
-			Log.info("GitHubAction::addMembersToTeam(..) - uri: " + uri);
+			// PUT /orgs/{org}/teams/{team_slug}/memberships/{username}
+			const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/memberships/" + member;
+			Log.trace("GitHubAction::addMembersToTeam(..) - uri: " + uri);
 			const opts: RequestInit = {
 				method: "PUT",
 				headers: {
 					Authorization: this.gitHubAuthToken,
 					"User-Agent": this.gitHubUserName,
-					Accept: "application/json",
+					Accept: "application/vnd.github+json",
+					"X-GitHub-Api-Version": "2022-11-28",
 				},
+				body: JSON.stringify({ role: "member" }),
 			};
-			promises.push(fetch(uri, opts));
+			promises.push(
+				fetch(uri, opts).then(async (response) => {
+					const text = response.ok === false ? await response.text() : "";
+					return { member: member, ok: response.ok, status: response.status, body: text };
+				})
+			);
 		}
 
 		const results = await Promise.all(promises);
-		Log.info("GitHubAction::addMembersToTeam(..) - success; took: " + Util.took(start) + "; results:" + JSON.stringify(results));
+
+		// NOTE: these responses used to be discarded, so a member that was never added looked
+		// exactly like success. Fail loudly instead: a team missing its members is not usable.
+		const failures = results.filter((r) => r.ok === false);
+		if (failures.length > 0) {
+			const msg =
+				"GitHubAction::addMembersToTeam( " +
+				teamName +
+				" ) - failed to add " +
+				failures.length +
+				" of " +
+				members.length +
+				" member(s): " +
+				failures.map((f) => f.member + " (" + f.status + ")").join(", ");
+			Log.error(msg + "; first response: " + failures[0].body.substring(0, 200));
+			throw new Error(msg);
+		}
+
+		Log.info("GitHubAction::addMembersToTeam(..) - success; # members: " + members.length + "; took: " + Util.took(start));
 
 		return { teamName: teamName, githubTeamNumber: teamNumber };
 	}
@@ -1129,8 +1163,9 @@ export class GitHubActions implements IGitHubActions {
 		);
 		const start = Date.now();
 
-		const tc = new TeamController();
-		const teamNumber = await tc.getTeamNumber(teamName); // try to use cache
+		// see addMembersToTeam: org/team-slug endpoint, no team number lookup required
+		const team = await this.getTeamByName(teamName);
+		const teamNumber = team !== null ? team.githubTeamNumber : -1;
 
 		// sanity check (members should be githubIds, not other ids)
 		// NOTE: the bot is exempt; createTeam removes it from every new team, but it is
@@ -1148,26 +1183,41 @@ export class GitHubActions implements IGitHubActions {
 			}
 		}
 
-		const promises: any = [];
+		const promises: Array<Promise<{ member: string; ok: boolean; status: number }>> = [];
 		for (const member of members) {
 			Log.info("GitHubAction::removeMembersFromTeam(..) - removing member: " + member);
 
-			// DELETE /teams/:id/memberships/:username
-			const uri = this.apiPath + "/teams/" + teamNumber + "/memberships/" + member;
-			Log.info("GitHubAction::removeMembersFromTeam(..) - uri: " + uri);
+			// DELETE /orgs/{org}/teams/{team_slug}/memberships/{username}
+			const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/memberships/" + member;
+			Log.trace("GitHubAction::removeMembersFromTeam(..) - uri: " + uri);
 			const opts: RequestInit = {
 				method: "DELETE",
 				headers: {
 					Authorization: this.gitHubAuthToken,
 					"User-Agent": this.gitHubUserName,
-					Accept: "application/json",
+					Accept: "application/vnd.github+json",
+					"X-GitHub-Api-Version": "2022-11-28",
 				},
 			};
-			promises.push(fetch(uri, opts));
+			promises.push(fetch(uri, opts).then((response) => ({ member: member, ok: response.ok, status: response.status })));
 		}
 
 		const results = await Promise.all(promises);
-		Log.info("GitHubAction::removeMembersFromTeam(..) - success; took: " + Util.took(start) + "; results:" + JSON.stringify(results));
+
+		// NOTE: unlike adding, a failed removal is warned about rather than thrown: removing
+		// someone who is not on the team is harmless, and createTeam always tries to remove the
+		// bot whether or not it ended up as a member.
+		const failures = results.filter((r) => r.ok === false);
+		if (failures.length > 0) {
+			Log.warn(
+				"GitHubAction::removeMembersFromTeam( " +
+					teamName +
+					" ) - could not remove: " +
+					failures.map((f) => f.member + " (" + f.status + ")").join(", ")
+			);
+		}
+
+		Log.info("GitHubAction::removeMembersFromTeam(..) - done; took: " + Util.took(start));
 
 		return { teamName: teamName, githubTeamNumber: teamNumber };
 	}
