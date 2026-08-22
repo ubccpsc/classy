@@ -1077,6 +1077,9 @@ describe("Admin Routes", function () {
 			const repoIds: string[] = (body.success as any[]).map((r) => r.id);
 			expect(repoIds.length, "need >1 planned repo for this to exercise batching").to.be.greaterThan(1);
 
+			// clean up
+			await clearAll(repoIds, []);
+
 			// all of them, in ONE request
 			response = await request(app).post(url).send({ repoIds: repoIds }).set({ user: userName, token: userToken });
 			body = response.body;
@@ -1090,6 +1093,10 @@ describe("Admin Routes", function () {
 			for (const repoId of repoIds) {
 				expect(await gh.repoExists(repoId), "repo not created: " + repoId).to.be.true;
 			}
+
+			// NOTE: deliberately NOT cleaning up here. The release tests below expect
+			// REPONAMEREAL to still be provisioned, and clearing exactly these repos at the
+			// start of this test is what makes it order-independent anyway.
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should fail a batch provision request that is malformed", async function () {
