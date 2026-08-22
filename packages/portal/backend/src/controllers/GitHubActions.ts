@@ -1805,7 +1805,8 @@ export class GitHubActions implements IGitHubActions {
 			}
 			await pushToRepo();
 		} catch (err) {
-			Log.error("GithubActions::writeFileToRepo(..) - Error: " + err);
+			// NOTE: redact; the failed git command carries the bot token in its remote URL
+			Log.error("GithubActions::writeFileToRepo(..) - Error: " + this.redact(String(err)));
 			return false;
 		}
 
@@ -2331,15 +2332,28 @@ export class GitHubActions implements IGitHubActions {
 		}
 	}
 
+	/**
+	 * Strips the bot token out of text that is about to be logged. Both forms are removed: the
+	 * configured value ("token abc...") and the bare token that gets embedded in git remote URLs.
+	 *
+	 * @param text
+	 * @returns {string}
+	 */
+	private redact(text: string): string {
+		const bare = this.gitHubAuthToken.substring(this.gitHubAuthToken.indexOf("token ") + 6);
+		return Util.redactSecrets(text, [this.gitHubAuthToken, bare]);
+	}
+
 	private reportStdOut(stdout: any, prefix: string) {
+		// NOTE: git echoes the authenticated remote URL, so redact before logging
 		if (stdout) {
-			Log.warn("GitHubActions::stdOut(..) - " + prefix + ": " + stdout);
+			Log.warn("GitHubActions::stdOut(..) - " + prefix + ": " + this.redact(String(stdout)));
 		}
 	}
 
 	private reportStdErr(stderr: any, prefix: string) {
 		if (stderr) {
-			Log.warn("GitHubActions::stdErr(..) - " + prefix + ": " + stderr);
+			Log.warn("GitHubActions::stdErr(..) - " + prefix + ": " + this.redact(String(stderr)));
 		}
 	}
 }

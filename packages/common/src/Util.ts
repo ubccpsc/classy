@@ -362,4 +362,39 @@ export default class Util {
 		}
 		return results;
 	}
+
+	/**
+	 * Removes credentials from arbitrary text before it is logged.
+	 *
+	 * Classy clones and pushes over https by injecting the bot token into the remote URL. When a
+	 * git command fails, the failure message (and often its stderr) contains the whole command,
+	 * so logging it verbatim writes a live credential into the log. Run any git output or error
+	 * through this first.
+	 *
+	 * Two passes, because one is not enough: the URL pattern catches the well-formed
+	 * `https://<token>@host` case, and `secrets` catches the token wherever else it appears --
+	 * including the malformed URLs produced when the input had no "//" to insert after.
+	 *
+	 * @param text
+	 * @param secrets literal values to remove (e.g., the bot token); short values are ignored
+	 * @returns {string} the text with credentials replaced
+	 */
+	public static redactSecrets(text: string, secrets?: string[]): string {
+		if (typeof text !== "string" || text.length === 0) {
+			return text;
+		}
+
+		// scheme://<userinfo>@ -- keep the scheme, drop the credential
+		let redacted = text.replace(/([a-zA-Z][a-zA-Z0-9+.-]*:\/\/)[^@\s/]+@/g, "$1<REDACTED>@");
+
+		if (Array.isArray(secrets) === true) {
+			for (const secret of secrets) {
+				// the length guard stops a short or empty config value from redacting everything
+				if (typeof secret === "string" && secret.length >= 8) {
+					redacted = redacted.split(secret).join("<REDACTED>");
+				}
+			}
+		}
+		return redacted;
+	}
 }

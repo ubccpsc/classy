@@ -106,7 +106,9 @@ export class RepoImporter {
 			return true; // made it cleanly
 		} catch (err) {
 			/* istanbul ignore next */
-			Log.error(label + " - ERROR: " + err);
+			// NOTE: redact; a failed git command puts the whole command line (which carries the
+			// bot token in the remote URL) into the error message
+			Log.error(label + " - ERROR: " + this.redact(String(err)));
 			throw err;
 		} finally {
 			// cleanup has to happen on both paths, hence the finally
@@ -229,12 +231,25 @@ export class RepoImporter {
 	 * Surfaces whatever the git invocation wrote to stdout/stderr; both are only interesting
 	 * when non-empty, which is usually a sign something did not go as planned.
 	 */
+	/**
+	 * Strips the bot token out of text that is about to be logged; see GitHubActions::redact.
+	 *
+	 * @param text
+	 * @returns {string}
+	 */
+	private redact(text: string): string {
+		const bare = this.gitHubAuthToken.substring(this.gitHubAuthToken.indexOf("token ") + 6);
+		return Util.redactSecrets(text, [this.gitHubAuthToken, bare]);
+	}
+
 	private report(result: any, step: string): void {
+		// NOTE: git writes the remote URL (with the embedded token) into its own diagnostics,
+		// so both streams are redacted before they reach the log
 		if (result.stdout) {
-			Log.warn("GitHubActions::stdOut(..) - GitHubActions::importRepoFS(..)::" + step + ": " + result.stdout);
+			Log.warn("GitHubActions::stdOut(..) - GitHubActions::importRepoFS(..)::" + step + ": " + this.redact(String(result.stdout)));
 		}
 		if (result.stderr) {
-			Log.warn("GitHubActions::stdErr(..) - importRepoFS(..)::" + step + ": " + result.stderr);
+			Log.warn("GitHubActions::stdErr(..) - importRepoFS(..)::" + step + ": " + this.redact(String(result.stderr)));
 		}
 	}
 }
