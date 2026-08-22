@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/noExcessiveLinesPerFile: this file is the admin REST surface and is already over the limit; splitting it is worth doing on its own rather than as a side effect of adding a route
+
 import { AdminController } from "@backend/controllers/AdminController";
 import { AuthController } from "@backend/controllers/AuthController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
@@ -835,7 +837,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postProvision(..) - start; delivId: " + delivId + "; repoId: " + repoId);
 		// const provisionTrans: ProvisionTransport = req.params;
 		// Log.info("AdminRoutes::postProvision() - body: " + provisionTrans);
-		AdminRoutes.handleProvisionRepo(userName, delivId, repoId)
+		AdminRoutes.handleProvisionRepo(userName, delivId, [repoId])
 			.then(function (success) {
 				const payload: Payload = { success: success };
 				res.send(200, payload);
@@ -843,6 +845,32 @@ export default class AdminRoutes implements IREST {
 			})
 			.catch(function (err) {
 				return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res, next);
+			});
+	}
+
+	/**
+	 * Provisions a set of repos in one request, so the server can batch them.
+	 *
+	 * NOTE: callers should keep batches modest. The proxy in front of this
+	 * (packages/proxy/proxy.conf) uses proxy_read_timeout 90, so a request that provisions more
+	 * repos than fit in 90s is cut off by nginx even though the server keeps working.
+	 */
+	private static postProvisionBatch(req: any, res: any, next: any) {
+		const delivId = req.params.delivId;
+		const body = req.body || {};
+		const repoIds: string[] = Array.isArray(body.repoIds) ? body.repoIds : [];
+
+		const userName = AdminRoutes.getUser(req);
+		Log.info("AdminRoutes::postProvisionBatch(..) - start; delivId: " + delivId + "; # repos: " + repoIds.length);
+
+		AdminRoutes.handleProvisionRepo(userName, delivId, repoIds)
+			.then(function (success) {
+				const payload: Payload = { success: success };
+				res.send(200, payload);
+				return next(true);
+			})
+			.catch(function (err) {
+				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res, next);
 			});
 	}
 
@@ -862,29 +890,48 @@ export default class AdminRoutes implements IREST {
 			});
 	}
 
-	private static async handleProvisionRepo(personId: string, delivId: string, repoId: string): Promise<RepositoryTransport[]> {
+	/**
+	 * Provisions one or more repos for a deliverable.
+	 *
+	 * NOTE: the repos are handed to performProvision as a batch so it can provision them with
+	 * bounded concurrency (AdminController.PROVISION_CONCURRENCY). Passing them one at a time,
+	 * as this used to, made that batching a no-op.
+	 *
+	 * @param personId the admin performing the operation (for the audit record)
+	 * @param delivId
+	 * @param repoIds
+	 */
+	private static async handleProvisionRepo(personId: string, delivId: string, repoIds: string[]): Promise<RepositoryTransport[]> {
 		const cc = new AdminController(AdminRoutes.ghc);
 
 		// TODO: if course is SDMM, always fail
 
 		const dc = new DeliverablesController();
 		const deliv = await dc.getDeliverable(delivId);
-		if (deliv !== null && deliv.shouldProvision === true) {
-			const dbc = DatabaseController.getInstance();
-			await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, { delivId: delivId, repoId: repoId });
+		if (deliv === null || deliv.shouldProvision !== true) {
+			throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + " ) - null deliverable");
+		}
 
+		if (Array.isArray(repoIds) === false || repoIds.length === 0) {
+			throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + " ) - no repositories requested");
+		}
+
+		const dbc = DatabaseController.getInstance();
+		await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, { delivId: delivId, repoIds: repoIds });
+
+		const repos: Repository[] = [];
+		for (const repoId of repoIds) {
 			const repo = await dbc.getRepository(repoId);
-			if (repo !== null) {
-				Log.info("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning...");
-				await cc.performProvision([repo], deliv.importURL);
-				Log.info("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - provisioning complete.");
-				return [RepositoryController.repositoryToTransport(repo)];
-			} else {
+			if (repo === null) {
 				throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null repository");
 			}
-		} else {
-			throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null deliverable");
+			repos.push(repo);
 		}
+
+		Log.info("AdminRoutes::handleProvisionRepo( " + delivId + " ) - provisioning " + repos.length + " repo(s)...");
+		const provisioned = await cc.performProvision(repos, deliv.importURL);
+		Log.info("AdminRoutes::handleProvisionRepo( " + delivId + " ) - complete; provisioned " + provisioned.length + " of " + repos.length);
+		return provisioned;
 	}
 
 	private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
@@ -1381,6 +1428,7 @@ export default class AdminRoutes implements IREST {
 
 		server.post("/portal/admin/course", AdminRoutes.isAdmin, AdminRoutes.postCourse);
 		server.get("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.getProvision);
+		server.post("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.postProvisionBatch);
 		server.post("/portal/admin/provision/:delivId/:repoId", AdminRoutes.isAdmin, AdminRoutes.postProvision);
 		server.get("/portal/admin/release/:delivId", AdminRoutes.isAdmin, AdminRoutes.getRelease);
 		server.post("/portal/admin/release/:repoId", AdminRoutes.isAdmin, AdminRoutes.postRelease);

@@ -27,7 +27,7 @@ import * as restify from "restify";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { GitHubStatus } from "@backend/Types";
+import { GitHubStatus, PersonKind } from "@backend/Types";
 
 describe("Admin Routes", function () {
 	let app: restify.Server = null;
@@ -856,6 +856,10 @@ describe("Admin Routes", function () {
 		 * @param {string[]} teamNames
 		 * @returns {Promise<void>}
 		 */
+		// second team/repo used only by the batch provisioning test
+		const BATCH_TEAMNAME = "t_d0_" + TestHarness.GITHUB3.csId;
+		const BATCH_REPONAME = "d0_" + TestHarness.GITHUB3.csId;
+
 		async function clearAll(repoNames: string[], teamNames: string[]): Promise<void> {
 			// sometimes we need to clear resources on both github and the cache
 			Log.test("AdminRoutesSpec::clearAll() - start");
@@ -1043,6 +1047,91 @@ describe("Admin Routes", function () {
 			// expect(response.status).to.equal(200);
 			// expect(body.success).to.be.an("array");
 			// expect(body.success.length).to.equal(0);
+		}).timeout(TestHarness.TIMEOUTLONG);
+
+		it("Should be able to provision several repos in a single batch request", async function () {
+			// NOTE: this is the endpoint the admin UI actually uses. It matters that more than one
+			// repo goes over in a single request: that is what lets performProvision run them with
+			// bounded concurrency (AdminController.PROVISION_CONCURRENCY). One repo per request,
+			// which is what the UI used to do, makes that batching a no-op.
+			const dbc = DatabaseController.getInstance();
+			await dbc.clearData();
+
+			await clearAll([TestHarness.REPONAMEREAL, BATCH_REPONAME], [TestHarness.TEAMNAMEREAL, BATCH_TEAMNAME]);
+			await TestHarness.prepareAllReal(); // users + one team
+
+			// a second team, so the plan yields more than one repo and the batch is a real batch
+			const p3 = TestHarness.createPerson(TestHarness.GITHUB3.id, TestHarness.GITHUB3.csId, TestHarness.GITHUB3.github, PersonKind.STUDENT);
+			await dbc.writePerson(p3);
+			const team2 = await TestHarness.createTeam(BATCH_TEAMNAME, TestHarness.DELIVID0, [TestHarness.GITHUB3.id]);
+			await dbc.writeTeam(team2);
+
+			const url = "/portal/admin/provision/" + TestHarness.DELIVID0;
+
+			// planning creates the Repository records the batch call then refers to by id
+			let response = await request(app).get(url).set({ user: userName, token: userToken });
+			let body: Payload = response.body;
+			Log.test("batch plan: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(200);
+			expect(body.success).to.be.an("array");
+			const repoIds: string[] = (body.success as any[]).map((r) => r.id);
+			expect(repoIds.length, "need >1 planned repo for this to exercise batching").to.be.greaterThan(1);
+
+			// all of them, in ONE request
+			response = await request(app).post(url).send({ repoIds: repoIds }).set({ user: userName, token: userToken });
+			body = response.body;
+			Log.test("batch provision: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(200);
+			expect(body.success).to.be.an("array");
+			expect(body.success.length).to.equal(repoIds.length);
+
+			// and they exist on GitHub, not just in the response
+			const gh = GitHubActions.getInstance(true);
+			for (const repoId of repoIds) {
+				expect(await gh.repoExists(repoId), "repo not created: " + repoId).to.be.true;
+			}
+		}).timeout(TestHarness.TIMEOUTLONG);
+
+		it("Should fail a batch provision request that is malformed", async function () {
+			const url = "/portal/admin/provision/" + TestHarness.DELIVID0;
+			let response = null;
+			let body: Payload;
+
+			// bad token
+			response = await request(app)
+				.post(url)
+				.send({ repoIds: [TestHarness.REPONAMEREAL] })
+				.set({ user: userName, token: TestHarness.FAKETOKEN });
+			body = response.body;
+			Log.test("batch bad token: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(401);
+			expect(body.success).to.be.undefined;
+			expect(body.failure).to.not.be.undefined;
+
+			// no repos requested
+			response = await request(app).post(url).send({ repoIds: [] }).set({ user: userName, token: userToken });
+			body = response.body;
+			Log.test("batch empty: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(400);
+			expect(body.success).to.be.undefined;
+			expect(body.failure).to.not.be.undefined;
+
+			// missing body entirely
+			response = await request(app).post(url).set({ user: userName, token: userToken });
+			body = response.body;
+			Log.test("batch no body: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(400);
+			expect(body.failure).to.not.be.undefined;
+
+			// a repo that is not in the datastore
+			response = await request(app)
+				.post(url)
+				.send({ repoIds: ["REPO_THAT_DOES_NOT_EXIST_" + Date.now()] })
+				.set({ user: userName, token: userToken });
+			body = response.body;
+			Log.test("batch unknown repo: " + response.status + " -> " + JSON.stringify(body));
+			expect(response.status).to.equal(400);
+			expect(body.failure).to.not.be.undefined;
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should fail to provision a deliverable if invalid options are given", async function () {

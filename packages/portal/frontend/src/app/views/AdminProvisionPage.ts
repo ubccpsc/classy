@@ -10,6 +10,15 @@ import { AdminPage } from "./AdminPage";
 import { AdminView } from "./AdminView";
 
 export class AdminProvisionPage extends AdminPage {
+	/**
+	 * How many repos to ask the backend to provision per request.
+	 *
+	 * This is a request-duration budget, not a concurrency setting: the server decides how many
+	 * run at once (AdminController.PROVISION_CONCURRENCY). It is small because the proxy uses
+	 * proxy_read_timeout 90, and a batch that cannot finish in that window is cut off mid-provision.
+	 */
+	private static readonly PROVISION_BATCH_SIZE = 8;
+
 	private deliverables: DeliverableTransport[];
 
 	public constructor(remote: string) {
@@ -306,27 +315,37 @@ export class AdminProvisionPage extends AdminPage {
 			UI.showErrorToast("No repos selected for provisioning.");
 		}
 
-		for (let i = 0; i < selected.length; i++) {
-			const repoId = selected[i];
+		const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
+		let provisioned = 0;
+
+		// NOTE: repos are sent in batches so the server can provision them concurrently; one
+		// request per repo made AdminController.PROVISION_CONCURRENCY a no-op. The batches are
+		// kept small deliberately: the proxy uses proxy_read_timeout 90, so a request that cannot
+		// finish inside 90s is cut off by nginx even though the backend keeps working.
+		for (let i = 0; i < selected.length; i += AdminProvisionPage.PROVISION_BATCH_SIZE) {
+			const batch = selected.slice(i, i + AdminProvisionPage.PROVISION_BATCH_SIZE);
+			const start = Date.now();
 			try {
-				const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
-				const start = Date.now();
-				const success = await this.provisionRepo(delivId, repoId);
-				if (success) {
-					Log.info("AdminProvisionPage::handleProvision(..) - provisioning complete; repo: " + repoId + "; took: " + Util.took(start));
-					UI.showSuccessToast("Repo provisioned: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )", {
-						timeout: 10000,
-						force: true,
-					});
-				} else {
-					// should have already shown an error so just log
-					Log.warn("AdminProvisionPage::handleProvision(..) - provisioning failed; repo: " + repoId + "; took: " + Util.took(start));
-				}
+				const succeeded = await this.provisionRepos(delivId, batch);
+				provisioned += succeeded;
+				Log.info(
+					"AdminProvisionPage::handleProvision(..) - batch done; repos: " +
+						JSON.stringify(batch) +
+						"; provisioned: " +
+						succeeded +
+						"; took: " +
+						Util.took(start)
+				);
+				UI.showSuccessToast("Repos provisioned: " + Math.min(i + batch.length, selected.length) + " of " + selected.length, {
+					timeout: 10000,
+					force: true,
+				});
 			} catch (err) {
-				Log.error("AdminProvisionPage::handleProvision(..) - provisioning error for: " + repoId + "; ERROR: " + err.message);
-				UI.showErrorToast("Repo NOT provisioned: " + repoId + " (see error console)");
+				Log.error("AdminProvisionPage::handleProvision(..) - error for batch: " + JSON.stringify(batch) + "; ERROR: " + err.message);
+				UI.showErrorToast("Repos NOT provisioned: " + batch.join(", ") + " (see error console)");
 			}
 		}
+		Log.info("AdminProvisionPage::handleProvision(..) - provisioned " + provisioned + " of " + selected.length);
 
 		Log.info("AdminProvisionPage::handleProvision(..) - done");
 		if (selected.length > 0) {
@@ -384,6 +403,30 @@ export class AdminProvisionPage extends AdminPage {
 
 	public renderPage(pageName: string, opts: {}): void {
 		Log.info("AdminProvisionPage::renderPage( " + pageName + ", ... ) - start");
+	}
+
+	/**
+	 * Asks the backend to provision a set of repos in one request; returns how many were provisioned.
+	 */
+	private async provisionRepos(delivId: string, repoIds: string[]): Promise<number> {
+		Log.info("AdminProvisionPage::provisionRepos( " + delivId + ", " + repoIds.length + " repos ) - start");
+
+		const url = this.remote + "/portal/admin/provision/" + delivId;
+		const options: any = AdminView.getOptions();
+		options.method = "post";
+		options.body = JSON.stringify({ repoIds: repoIds });
+
+		this.disableElements();
+
+		const response = await fetch(url, options);
+		const body = await response.json();
+		if (typeof body.success !== "undefined") {
+			// success is the list of repos the backend actually provisioned
+			return Array.isArray(body.success) ? body.success.length : repoIds.length;
+		}
+		Log.error("Provision ERROR: " + body.failure.message);
+		UI.showError(body.failure.message);
+		return 0;
 	}
 
 	private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
