@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useFilenamingConvention: UI is an initialism, so it reads worse as Ui.ts
+
 /**
  * Created by rtholmes on 2017-10-04.
  */

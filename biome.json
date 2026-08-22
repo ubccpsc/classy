@@ -93,16 +93,6 @@
 	},
 	"overrides": [
 		{
-			"includes": ["packages/portal/backend/src/server/IREST.ts", "packages/portal/frontend/src/app/util/UI.ts"],
-			"linter": {
-				"rules": {
-					"style": {
-						"useFilenamingConvention": "off"
-					}
-				}
-			}
-		},
-		{
 			"includes": ["packages/**/test/**/*.ts"],
 			"linter": {
 				"rules": {

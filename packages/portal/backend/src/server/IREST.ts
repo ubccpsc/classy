@@ -1,3 +1,5 @@
+// biome-ignore-all lint/style/useFilenamingConvention: IREST is an interface name (the I-prefix convention this codebase uses), not camelCase or PascalCase
+
 import * as restify from "restify";
 
 export default interface IREST {
