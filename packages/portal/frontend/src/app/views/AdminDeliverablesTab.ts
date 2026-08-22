@@ -156,6 +156,7 @@ export class AdminDeliverablesTab extends AdminPage {
 		}
 	}
 
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: populates and wires one form; splitting it would spread a single screen's setup across several methods
 	public renderEditDeliverablePage(deliv: DeliverableTransport) {
 		Log.info("AdminView::renderEditDeliverablePage( " + JSON.stringify(deliv) + " ) - start");
 		const that = this;

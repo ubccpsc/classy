@@ -9,6 +9,7 @@ import parseLinkHeader from "parse-link-header";
 import { Factory } from "../Factory";
 import { DatabaseController } from "./DatabaseController";
 import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
+import { addAuthTokenToUrl, RepoImporter } from "./RepoImporter";
 import { TeamController } from "./TeamController";
 
 const tmp = require("tmp-promise");
@@ -1736,8 +1737,6 @@ export class GitHubActions implements IGitHubActions {
 
 	public async importRepoFS(importRepo: string, studentRepo: string, seedFilePath?: string): Promise<boolean> {
 		Log.info("GitHubAction::importRepoFS( " + importRepo + ", " + studentRepo + " ) - start");
-		const that = this;
-		const start = Date.now();
 
 		// if we do not need to do this step, just skip it rather than crashing later on
 		if (
@@ -1752,236 +1751,12 @@ export class GitHubActions implements IGitHubActions {
 			return true;
 		}
 
-		function addGithubAuthToken(url: string) {
-			try {
-				[url] = url.split(".git");
-				const startAppend = url.indexOf("//") + 2;
-				const token = that.gitHubAuthToken;
-				const authKey = token.substr(token.indexOf("token ") + 6) + "@";
-				// creates "longokenstring@githuburi"
-				return url.slice(0, startAppend) + authKey + url.slice(startAppend);
-			} catch (err) {
-				Log.error("GitHubActions::importRepoFS(..)::addGithubAuthToken() - Unexpected error", err);
-				return "";
-			}
-		}
-
-		function getImportBranch(url: string): string {
-			try {
-				const [_cloneUrl, specifiers] = url.split("#");
-				const [branch, _path] = (specifiers || "").split(":");
-				return branch;
-			} catch (err) {
-				Log.error("GitHubActions::importRepoFS(..)::getImportBranch() - Unexpected error", err);
-				return "";
-			}
-		}
-
-		function getPath(url: string): string {
-			try {
-				const [_cloneUrl, specifiers] = url.split(".git");
-				const [_branch, pathSpecifier] = (specifiers || "").split(":");
-				let path = pathSpecifier || "";
-				path = path.startsWith("/") ? path.slice(1) : path;
-				path = path.endsWith("/") ? path.slice(0, -1) : path;
-				return path;
-			} catch (err) {
-				Log.error("GitHubActions::importRepoFS(..)::getPath() - Unexpected error", err);
-				return "";
-			}
-		}
-
-		function selectPath(dirPath: string, filePath: string): string {
-			let finalPath = filePath;
-			if (dirPath && filePath) {
-				finalPath = `${dirPath}/${filePath}`;
-			} else if (dirPath) {
-				finalPath = `${dirPath}/*`;
-			}
-			return finalPath;
-		}
-
-		const exec = require("child-process-promise").exec;
-		const cloneTempDir = await tmp.dir({ dir: "/tmp", unsafeCleanup: true });
-		const authedStudentRepo = addGithubAuthToken(studentRepo);
-		const authedImportRepo = addGithubAuthToken(importRepo);
-		const importBranch = getImportBranch(importRepo);
-		const urlPath = getPath(importRepo);
-		const importPath = selectPath(urlPath, seedFilePath);
-		// this was just a github-dev testing issue; we might need to consider using per-org import test targets or something
-		// if (importRepo === "https://github.com/SECapstone/capstone" || importRepo === "https://github.com/SECapstone/bootstrap") {
-		//     authedImportRepo = importRepo; // HACK: for testing
-		// }
-
-		if (typeof importPath === "string" && importPath !== "") {
-			const seedTempDir = await tmp.dir({ dir: "/tmp", unsafeCleanup: true });
-			// First clone to a temporary directory, then move only the required files
-			return cloneRepo(seedTempDir.path).then(() => {
-				return checkout(seedTempDir.path, importBranch)
-					.then(() => {
-						return moveFiles(seedTempDir.path, importPath, cloneTempDir.path);
-					})
-					.then(() => {
-						return removeGitDir();
-					})
-					.then(() => {
-						return initGitDir();
-					})
-					.then(() => {
-						return changeGitRemote();
-					})
-					.then(() => {
-						return addFilesToRepo();
-					})
-					.then(() => {
-						return pushToNewRepo();
-					})
-					.then(() => {
-						Log.info("GitHubAction::cloneRepo() seedPath - done; took: " + Util.took(start));
-						seedTempDir.cleanup();
-						cloneTempDir.cleanup();
-						return Promise.resolve(true); // made it cleanly
-					})
-					.catch((err: any) => {
-						/* istanbul ignore next */
-						Log.error("GitHubAction::cloneRepo() seedPath - ERROR: " + err);
-						seedTempDir.cleanup();
-						cloneTempDir.cleanup();
-						return Promise.reject(err);
-					});
-			});
-		} else {
-			return cloneRepo(cloneTempDir.path).then(() => {
-				return checkout(cloneTempDir.path, importBranch)
-					.then(() => {
-						return removeGitDir();
-					})
-					.then(() => {
-						return initGitDir();
-					})
-					.then(() => {
-						return changeGitRemote();
-					})
-					.then(() => {
-						return addFilesToRepo();
-					})
-					.then(() => {
-						return pushToNewRepo();
-					})
-					.then(() => {
-						Log.info("GitHubAction::cloneRepo() - done; took: " + Util.took(start));
-						cloneTempDir.cleanup();
-						return Promise.resolve(true); // made it cleanly
-					})
-					.catch((err: any) => {
-						/* istanbul ignore next */
-						Log.error("GitHubAction::cloneRepo() - ERROR: " + err);
-						cloneTempDir.cleanup();
-						return Promise.reject(err);
-					});
-			});
-		}
-
-		function moveFiles(originPath: string, filesLocation: string, destPath: string) {
-			Log.info("GitHubActions::importRepoFS(..)::moveFiles( " + originPath + ", " + filesLocation + ", " + destPath + ") - moving files");
-			return exec(`cp -r ${originPath}/${filesLocation} ${destPath}`).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::moveFiles(..) - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::moveFiles(..)");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::moveFiles(..)");
-			});
-		}
-
-		function cloneRepo(repoPath: string) {
-			Log.info("GitHubActions::importRepoFS(..)::cloneRepo() - cloning: " + importRepo);
-			return exec(`git clone -q ${authedImportRepo} ${repoPath}`).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::cloneRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::cloneRepo()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::cloneRepo()");
-			});
-		}
-
-		function checkout(repoPath: string, branch: string) {
-			if (typeof branch === "string" && branch !== "") {
-				Log.info(`GitHubActions::importRepoFS(..)::checkout() - Checking out "${branch}"`);
-				return exec(`cd ${repoPath} && git checkout ${branch}`).then(function (result: any) {
-					Log.info("GitHubActions::importRepoFS(..)::checkout() - done");
-					that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::checkout()");
-					that.reportStdErr(result.stderr, "importRepoFS(..)::checkout()");
-				});
-			} else {
-				Log.info(`GitHubActions::importRepoFS(..)::checkout() - Using default branch`);
-				return Promise.resolve();
-			}
-		}
-
-		function removeGitDir() {
-			Log.info("GitHubActions::importRepoFS(..)::removeGitDir() - removing .git from cloned repo");
-			return exec(`cd ${cloneTempDir.path} && rm -rf .git`).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::removeGitDir() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::removeGitDir()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::removeGitDir()");
-			});
-		}
-
-		function initGitDir() {
-			Log.info("GitHubActions::importRepoFS(..)::initGitDir() - start");
-			return exec(`cd ${cloneTempDir.path} && git init -q && git branch -m main`).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::initGitDir() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::initGitDir()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::initGitDir()");
-			});
-		}
-
-		function changeGitRemote() {
-			Log.info("GitHubActions::importRepoFS(..)::changeGitRemote() - start");
-			const command = `cd ${cloneTempDir.path} && git remote add origin ${authedStudentRepo}.git && git fetch --all -q`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::changeGitRemote() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::changeGitRemote()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::changeGitRemote()");
-			});
-		}
-
-		function addFilesToRepo() {
-			Log.info("GitHubActions::importRepoFS(..)::addFilesToRepo() - start");
-			const command = `cd ${cloneTempDir.path} && git config user.email "classy@cs.ubc.ca" && git config user.name "classy" && git add . && git commit -q -m "Starter files"`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::addFilesToRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::addFilesToRepo()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::addFilesToRepo()");
-			});
-		}
-
-		function pushToNewRepo() {
-			const pushStart = Date.now();
-			Log.info("GitHubActions::importRepoFS(..)::pushToNewRepo() - start");
-			const command = `cd ${cloneTempDir.path} && git push -q origin main`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::importRepoFS(..)::pushToNewRepo() - done; took: " + Util.took(pushStart));
-				that.reportStdOut(result.stdout, "GitHubActions::importRepoFS(..)::pushToNewRepo()");
-				that.reportStdErr(result.stderr, "importRepoFS(..)::pushToNewRepo()");
-			});
-		}
-
-		// not used and not tested; trying graceful cleanup instead
-		// function removeTempPath() {
-		//     Log.info("GitHubActions::importRepoFS(..)::removeTempPath() - start");
-		//     const command = `rm -rf ${tempPath}`;
-		//     return exec(command)
-		//         .then(function(result: any) {
-		//             Log.info("GitHubActions::importRepoFS(..)::removeTempPath() - done ");
-		//             Log.trace("GitHubActions::importRepoFS(..)::removeTempPath() - stdout: " + result.stdout);
-		//             that.reportStdErr(result.stderr, "importRepoFS(..)::removeTempPath()");
-		//         });
-		// }
+		const importer = new RepoImporter(importRepo, studentRepo, this.gitHubAuthToken, seedFilePath);
+		return importer.import();
 	}
 
-	public addGithubAuthToken(url: string) {
-		const startAppend = url.indexOf("//") + 2;
-		const token = this.gitHubAuthToken;
-		const authKey = token.substring(token.indexOf("token ") + 6) + "@";
-		// creates "longokenstring@githuburi"
-		return url.slice(0, startAppend) + authKey + url.slice(startAppend);
+	public addGithubAuthToken(url: string): string {
+		return addAuthTokenToUrl(url, this.gitHubAuthToken);
 	}
 
 	/**

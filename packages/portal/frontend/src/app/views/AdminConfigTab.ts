@@ -29,6 +29,7 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	// called by reflection in renderPage
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: flat wiring of ~15 button handlers; grouping them into helpers would shorten this without making anything clearer or testable
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminConfigTab::init(..) - start");
 		const that = this;

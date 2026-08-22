@@ -188,6 +188,24 @@ export class AdminGradesTab extends AdminPage {
 	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
 		Log.trace("AdminGradesTab::renderSummary(..) - start");
 
+		const st = new SortableTable(AdminGradesTab.buildSummaryHeaders(), "#gradesSummaryTable");
+		const gradeMap = AdminGradesTab.collectScoresByDeliv(grades, students);
+
+		for (const delivId of Object.keys(gradeMap)) {
+			const delivGrades: number[] = gradeMap[delivId];
+			if (delivGrades.length > 0) {
+				st.addRow(AdminGradesTab.buildSummaryRow(delivId, delivGrades));
+			}
+		}
+
+		st.generate();
+	}
+
+	/**
+	 * Column definitions for the summary table: deliverable, average, median, then one column
+	 * per decile bin and a final column for perfect scores.
+	 */
+	private static buildSummaryHeaders(): TableHeader[] {
 		const headers: TableHeader[] = [
 			{
 				id: "delivId",
@@ -315,9 +333,14 @@ export class AdminGradesTab extends AdminPage {
 		//     headers.push(col);
 		// }
 
-		const st = new SortableTable(headers, "#gradesSummaryTable");
+		return headers;
+	}
 
-		// this loop could not possibly be less efficient
+	/**
+	 * Groups scores by deliverable, skipping grades without a numeric score and grades belonging
+	 * to withdrawn students (labId "W"), who should not affect the class summary.
+	 */
+	private static collectScoresByDeliv(grades: GradeTransport[], students: StudentTransport[]): { [delivId: string]: number[] } {
 		const gradeMap: { [delivId: string]: number[] } = {};
 
 		for (const grade of grades) {
@@ -338,53 +361,60 @@ export class AdminGradesTab extends AdminPage {
 			}
 		}
 
-		const inBin = function (list: number[], lower: number, upper: number): number {
-			const total = list.reduce(function (accumulator, currentValue) {
-				currentValue = Math.round(currentValue);
-				if (currentValue >= lower && currentValue <= upper) {
-					accumulator++;
-				}
-				return accumulator;
-			}, 0);
-			return total;
-		};
+		return gradeMap;
+	}
 
-		for (const delivId of Object.keys(gradeMap)) {
-			const delivGrades: number[] = gradeMap[delivId];
+	/**
+	 * Builds one summary row: average, median, and the distribution across decile bins.
+	 *
+	 * Pure given its arguments (aside from sorting the array it is handed), so it can be
+	 * exercised without a DOM.
+	 */
+	private static buildSummaryRow(delivId: string, delivGrades: number[]): TableCell[] {
+		const num = delivGrades.length;
+		const total = delivGrades.reduce(function (accumulator, currentValue) {
+			return accumulator + currentValue;
+		});
+		const avg = Number((total / num).toFixed(2));
 
-			const num = delivGrades.length;
-			if (num > 0) {
-				const total = delivGrades.reduce(function (accumulator, currentValue) {
-					return accumulator + currentValue;
-				});
-				const avg = Number((total / num).toFixed(2));
+		delivGrades.sort((a, b) => a - b);
+		const lowMiddle = Math.floor((num - 1) / 2);
+		const highMiddle = Math.ceil((num - 1) / 2);
+		let median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
+		median = Number(median.toFixed(2));
 
-				delivGrades.sort((a, b) => a - b);
-				const lowMiddle = Math.floor((num - 1) / 2);
-				const highMiddle = Math.ceil((num - 1) / 2);
-				let median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
-				median = Number(median.toFixed(2));
+		const row: TableCell[] = [
+			{ value: delivId, html: delivId },
+			{ value: avg + "", html: avg + "" },
+			{ value: median + "", html: median + "" },
+		];
 
-				const row: TableCell[] = [
-					{ value: delivId, html: delivId },
-					{ value: avg + "", html: avg + "" },
-					{ value: median + "", html: median + "" },
-				];
-
-				for (let i = 0; i < 10; i++) {
-					const lower = i * 10;
-					const upper = lower + 9;
-					const numInBin = inBin(delivGrades, lower, upper);
-					Log.trace("inBin( [..], " + lower + ", " + upper + "; #: " + numInBin);
-					row.push({ value: numInBin + "", html: numInBin + "" });
-				}
-				const numPerfect = inBin(delivGrades, 100, 100);
-				row.push({ value: numPerfect + "", html: numPerfect + "" });
-				st.addRow(row);
-			}
+		for (let i = 0; i < 10; i++) {
+			const lower = i * 10;
+			const upper = lower + 9;
+			const numInBin = AdminGradesTab.countInBin(delivGrades, lower, upper);
+			Log.trace("inBin( [..], " + lower + ", " + upper + "; #: " + numInBin);
+			row.push({ value: numInBin + "", html: numInBin + "" });
 		}
 
-		st.generate();
+		const numPerfect = AdminGradesTab.countInBin(delivGrades, 100, 100);
+		row.push({ value: numPerfect + "", html: numPerfect + "" });
+
+		return row;
+	}
+
+	/**
+	 * Counts how many scores fall within [lower, upper], rounding each score first.
+	 */
+	private static countInBin(list: number[], lower: number, upper: number): number {
+		const total = list.reduce(function (accumulator, currentValue) {
+			currentValue = Math.round(currentValue);
+			if (currentValue >= lower && currentValue <= upper) {
+				accumulator++;
+			}
+			return accumulator;
+		}, 0);
+		return total;
 	}
 
 	public static async getGrades(remote: string): Promise<GradeTransport[]> {
