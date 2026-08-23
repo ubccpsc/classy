@@ -398,6 +398,45 @@ describe("DatabaseController", () => {
 	});
 
 	// write & read result
+	it("Should refuse to clear data unless the instance is the test configuration.", async () => {
+		// the ConfigKey.name is the only thing keeping the db from being erased
+		const config = Config.getInstance();
+		const originalName = config.getProp(ConfigKey.name);
+
+		// seed something we can prove survived
+		const person = TestHarness.createPerson("clearDataGuard_" + Date.now(), "csid", "githubid", PersonKind.STUDENT);
+		await dc.writePerson(person);
+		expect(await dc.getPerson(person.id), "fixture person was not written").to.not.be.null;
+
+		let ex: Error = null;
+		try {
+			config.setProp(ConfigKey.name, "cs310"); // a real course name, i.e. NOT classytest
+			await dc.clearData();
+		} catch (err) {
+			ex = err;
+		} finally {
+			// restore before asserting; leaving this wrong would let a later suite wipe the wrong db
+			config.setProp(ConfigKey.name, originalName);
+		}
+
+		expect(ex, "clearData did not throw for a non-test configuration").to.not.be.null;
+		expect(ex.message).to.contain("can only be called on test configurations");
+
+		// nothing was deleted before it threw
+		expect(await dc.getPerson(person.id), "clearData deleted data despite refusing to run").to.not.be.null;
+		expect(config.getProp(ConfigKey.name), "config name was not restored").to.equal(originalName);
+	});
+
+	it("Should still write a grade whose person does not exist, but warn about it.", async () => {
+		const grade = TestHarness.createGrade("personThatDoesNotExist_" + Date.now(), TestHarness.DELIVID0, 50);
+		const worked = await dc.writeGrade(grade);
+		expect(worked, "grade for an unknown person was silently dropped").to.be.true;
+
+		const read = await dc.getGrade(grade.personId, grade.delivId);
+		expect(read, "grade was not readable after write").to.not.be.null;
+		expect(read.personId).to.equal(grade.personId);
+	});
+
 	it("Should be able to write and read a result.", async () => {
 		// this test seems like it is tangling a lot of things together, but the backend implementation
 		// for most of these convenience methods defer to one another so this is a reasonable sanity check.

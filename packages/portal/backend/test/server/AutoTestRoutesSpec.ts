@@ -168,6 +168,58 @@ describe("AutoTest Routes", function () {
 		expect(response?.body.failure).to.not.be.undefined;
 	}).timeout(TIMEOUT);
 
+	it("Should reject a feedbackDelay request with a bad secret", async function () {
+		const url = "/portal/at/feedbackDelay";
+		const body = { delivId: TestHarness.DELIVID0, personId: TestHarness.USER1.id, timestamp: Date.now() };
+
+		const response = await request(app).post(url).send(body).set("token", "INVALID");
+		Log.test("feedbackDelay bad secret: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(400);
+		expect(response.body?.success).to.be.undefined;
+		expect(response.body?.failure).to.not.be.undefined;
+	});
+
+	it("Should report feedbackDelay as not implemented for the default course controller", async function () {
+		// the default CourseController returns null here, which the route reports as 204 rather
+		// than as an error; a course plugin that implements it returns 200 with the delay instead
+		const url = "/portal/at/feedbackDelay";
+		const body = { delivId: TestHarness.DELIVID0, personId: TestHarness.USER1.id, timestamp: Date.now() };
+
+		const response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+		Log.test("feedbackDelay default: " + response.status + " -> " + JSON.stringify(response.body));
+
+		// 204 is the "no opinion" answer; it must not be conflated with a failure
+		expect(response.status).to.equal(204);
+		expect(response.body?.failure).to.be.undefined;
+	});
+
+	it("Should not grant staff or admin rights to an unknown githubId", async function () {
+		// isStaff is a permission question, so an unknown user is simply not staff (200/false)
+		const unknown = "githubUserThatDoesNotExist_" + Date.now();
+		const token = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+		const staffRes = await request(app)
+			.get("/portal/at/isStaff/" + unknown)
+			.set("token", token);
+		Log.test("isStaff unknown: " + staffRes.status + " -> " + JSON.stringify(staffRes.body));
+		expect(staffRes.status).to.equal(200);
+		expect(staffRes.body?.success?.isStaff, "unknown user was reported as staff").to.equal(false);
+		expect(staffRes.body?.success?.isAdmin, "unknown user was reported as admin").to.equal(false);
+	});
+
+	it("Should 404 a personId lookup for an unknown githubId", async function () {
+		const unknown = "githubUserThatDoesNotExist_" + Date.now();
+		const token = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+		const personRes = await request(app)
+			.get("/portal/at/personId/" + unknown)
+			.set("token", token);
+		Log.test("personId unknown: " + personRes.status + " -> " + JSON.stringify(personRes.body));
+		expect(personRes.status).to.equal(404);
+		expect(personRes.body?.failure).to.not.be.undefined;
+	});
+
 	it("Should respond to a valid result request", async function () {
 		let response = null;
 		const ref = encodeURIComponent("refs/heads/main");

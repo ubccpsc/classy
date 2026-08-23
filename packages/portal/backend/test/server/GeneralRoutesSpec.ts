@@ -540,7 +540,62 @@ describe("General Routes", function () {
 		expect(body.failure.message).to.equal("Invalid credentials");
 	});
 
-	// bad form (already on team)
+	it("Should not be able to form a team with an unregistered GitHub id.", async function () {
+		const dc: DatabaseController = DatabaseController.getInstance();
+		const auth = await dc.getAuth(TestHarness.USER1.id);
+		expect(auth).to.not.be.null;
+
+		const teamReq: TeamFormationTransport = {
+			delivId: TestHarness.DELIVID0,
+			githubIds: [TestHarness.USER1.github, "githubIdNotInThisCourse_" + Date.now()],
+		};
+		const response = await request(app).post("/portal/team").send(teamReq).set({ user: auth.personId, token: auth.token });
+		const body: Payload = response.body;
+		Log.test("unregistered id: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.success).to.be.undefined;
+		expect(body.failure).to.not.be.undefined;
+
+		// the message names the offending id so the student can correct it
+		expect(body.failure.message).to.contain("not associated with student registered in course");
+	});
+
+	it("Should not be able to form a team listing the same member twice.", async function () {
+		const dc: DatabaseController = DatabaseController.getInstance();
+		const auth = await dc.getAuth(TestHarness.USER1.id);
+		expect(auth).to.not.be.null;
+
+		const teamReq: TeamFormationTransport = {
+			delivId: TestHarness.DELIVID0,
+			githubIds: [TestHarness.USER1.github, TestHarness.USER1.github],
+		};
+		const response = await request(app).post("/portal/team").send(teamReq).set({ user: auth.personId, token: auth.token });
+		const body: Payload = response.body;
+		Log.test("duplicate member: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.failure).to.not.be.undefined;
+		expect(body.failure.message).to.contain("duplicate");
+	});
+
+	it("Should not be able to form a team with invalid credentials.", async function () {
+		const teamReq: TeamFormationTransport = {
+			delivId: TestHarness.DELIVID0,
+			githubIds: [TestHarness.USER1.github],
+		};
+		const response = await request(app)
+			.post("/portal/team")
+			.send(teamReq)
+			.set({ user: TestHarness.USER1.id, token: TestHarness.FAKETOKEN });
+		const body: Payload = response.body;
+		Log.test("bad credentials: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.success).to.be.undefined;
+		expect(body.failure).to.not.be.undefined;
+	});
+
 	it("Should not be able to form an invalid team.", async function () {
 		const dc: DatabaseController = DatabaseController.getInstance();
 

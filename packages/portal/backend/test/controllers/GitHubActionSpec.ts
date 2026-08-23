@@ -1,5 +1,6 @@
 import { expect } from "chai";
 import "mocha";
+import fetch, { type RequestInit } from "node-fetch";
 
 import "@common/GlobalSpec"; // load first
 
@@ -228,6 +229,55 @@ describe("GitHubActions", () => {
 	// NOTE: these run after the branch delete tests on purpose; REPONAME2 is not used by any
 	// later test in this spec, so protecting one of its branches cannot affect anything else
 	// (a protected branch cannot be deleted, which would break the tests above if run earlier).
+
+	it("Should actually delete a branch from a repo.", async function () {
+		const repoName = REPONAME2;
+		const branchName = "branchToDelete_" + Date.now();
+
+		const before = await gh.listRepoBranches(repoName);
+		Log.test("Branches before: " + JSON.stringify(before));
+
+		// like the other branch tests in this file, this depends on the template repo created
+		// earlier in the suite
+		expect(before, repoName + " does not exist; run the whole spec, not this test alone").to.not.be.null;
+		expect(before, "no branches to anchor the new one to").to.have.length.greaterThan(0);
+
+		// create the branch off whatever is already there (GitHubActions has no createBranch)
+		const c = Config.getInstance();
+		const api = c.getProp(ConfigKey.githubAPI);
+		const org = c.getProp(ConfigKey.org);
+		const headers = {
+			Authorization: c.getProp(ConfigKey.githubBotToken),
+			"User-Agent": c.getProp(ConfigKey.githubBotName),
+			Accept: "application/vnd.github+json",
+		};
+
+		const refRes = await fetch(api + "/repos/" + org + "/" + repoName + "/git/refs/heads/" + before[0], { headers });
+		expect(refRes.status, "could not read a ref to branch from").to.equal(200);
+		const sha = ((await refRes.json()) as any).object.sha;
+
+		const createOpts: RequestInit = {
+			method: "POST",
+			headers: headers,
+			body: JSON.stringify({ ref: "refs/heads/" + branchName, sha: sha }),
+		};
+		const createRes = await fetch(api + "/repos/" + org + "/" + repoName + "/git/refs", createOpts);
+		expect(createRes.status, "could not create the throwaway branch").to.equal(201);
+
+		const withBranch = await gh.listRepoBranches(repoName);
+		expect(withBranch, "throwaway branch was not created").to.contain(branchName);
+
+		// the actual assertion: deleting a real branch reports success and removes it
+		const deleted = await gh.deleteBranch(repoName, branchName);
+		expect(deleted, "deleteBranch reported failure for a branch that exists").to.be.true;
+
+		const after = await gh.listRepoBranches(repoName);
+		Log.test("Branches after: " + JSON.stringify(after));
+		expect(after, "branch still present after delete").to.not.contain(branchName);
+		// and nothing else was collateral damage
+		expect(after).to.contain(before[0]);
+	}).timeout(TIMEOUT);
+
 	it("Should be able to add a branch protection rule to a repo.", async function () {
 		const repoName = REPONAME2;
 
@@ -250,6 +300,76 @@ describe("GitHubActions", () => {
 	it("Should fail to add a branch protection rule to a repo that does not exist.", async function () {
 		const success = await gh.addBranchProtectionRule("INVALID_REPO_" + Date.now(), { name: "main", reviews: 1 });
 		expect(success).to.be.false;
+	}).timeout(TIMEOUT);
+
+	// checks that stop a bad call from reaching GitHub at all
+
+	it("Should reject invalid permissions rather than sending them to GitHub.", async function () {
+		// only pull/push/admin are meaningful; anything else must never reach the API
+		let ex: Error = null;
+		try {
+			await gh.createTeam(TEAMNAME, "notAPermission");
+		} catch (err) {
+			ex = err;
+		}
+		expect(ex, "createTeam accepted an invalid permission").to.not.be.null;
+		expect(ex.message).to.contain("invalid permission");
+
+		ex = null;
+		try {
+			await gh.addTeamToRepo(TEAMNAME, REPONAME, "notAPermission");
+		} catch (err) {
+			ex = err;
+		}
+		expect(ex, "addTeamToRepo accepted an invalid permission").to.not.be.null;
+		expect(ex.message).to.contain("invalid permission");
+	}).timeout(TIMEOUT);
+
+	it("Should reject null team names rather than querying GitHub for them.", async function () {
+		// NOTE: these two answer differently on purpose. deleteTeam reports "nothing to delete"
+		// rather than throwing, because cleanup code deletes teams speculatively and must not blow
+		// up on a name it never had. getTeamByName is a lookup, so a null name has no sensible
+		// answer and it throws instead.
+		expect(await gh.deleteTeam(null), "deleteTeam(null) should report false, not throw").to.be.false;
+		expect(await gh.deleteTeam(""), "deleteTeam('') should report false, not throw").to.be.false;
+
+		let ex: Error = null;
+		try {
+			await gh.getTeamByName(null);
+		} catch (err) {
+			ex = err;
+		}
+		expect(ex, "getTeamByName(null) was not rejected").to.not.be.null;
+	}).timeout(TIMEOUT);
+
+	it("Should report branch operations on a repo that does not exist without throwing.", async function () {
+		const missing = "repoThatDoesNotExist_" + Date.now();
+
+		expect(await gh.listRepoBranches(missing), "listRepoBranches should be null for a missing repo").to.be.null;
+		expect(await gh.deleteBranches(missing, ["main"]), "deleteBranches should be false for a missing repo").to.be.false;
+		expect(await gh.deleteBranch(missing, "main"), "deleteBranch should be false for a missing repo").to.be.false;
+		expect(await gh.renameBranch(missing, "main", "other"), "renameBranch should be false for a missing repo").to.be.false;
+	}).timeout(TIMEOUT);
+
+	it("Should report unknown teams and repos when linking them.", async function () {
+		const missingTeam = "teamThatDoesNotExist_" + Date.now();
+		// getTeamNumber answers -1 rather than throwing; TeamController treats that as "not provisioned"
+		expect(await gh.getTeamNumber(missingTeam), "unknown team should be -1").to.equal(-1);
+
+		let ex: Error = null;
+		try {
+			await gh.addTeamToRepo(missingTeam, REPONAME, "push");
+		} catch (err) {
+			ex = err;
+		}
+		expect(ex, "addTeamToRepo accepted a team that does not exist").to.not.be.null;
+		expect(ex.message).to.contain("team does not exist");
+	}).timeout(TIMEOUT);
+
+	it("Should skip an FS import when the import or student repo is missing.", async function () {
+		expect(await gh.importRepoFS("", "https://example.com/student"), "empty importRepo should be skipped").to.be.true;
+		expect(await gh.importRepoFS("https://example.com/import", ""), "empty studentRepo should be skipped").to.be.true;
+		expect(await gh.importRepoFS(null, null), "null repos should be skipped").to.be.true;
 	}).timeout(TIMEOUT);
 
 	it("Should be able to create a team.", async function () {
@@ -290,6 +410,19 @@ describe("GitHubActions", () => {
 	it("Should be possible to find a team that exists.", async function () {
 		const team = await gh.getTeamByName(TEAMNAME);
 		expect(team.teamName).to.be.equal(TEAMNAME);
+	}).timeout(TIMEOUT);
+
+	it("Should reject linking an existing team to a repo that does not exist.", async function () {
+		// placed after team creation on purpose (the team has to exist)
+		const missingRepo = "repoThatDoesNotExist_" + Date.now();
+		let ex: Error = null;
+		try {
+			await gh.addTeamToRepo(TEAMNAME, missingRepo, "push");
+		} catch (err) {
+			ex = err;
+		}
+		expect(ex, "addTeamToRepo accepted a repo that does not exist").to.not.be.null;
+		expect(ex.message).to.contain("repo does not exist");
 	}).timeout(TIMEOUT);
 
 	it("Should be possible to add members to a team that exists.", async function () {

@@ -1439,6 +1439,44 @@ describe("Admin Routes", function () {
 		expect(ex).to.be.null;
 	});
 
+	// NOTE: admin routes accept credentials either as user/token headers or from a cookie -- the
+	// cookie path is what makes attachment links work in the browser. Its branches were unexecuted,
+	// and cookie parsing is exactly the sort of thing a REST-layer swap re-implements.
+
+	it("Should authenticate an admin from a token cookie.", async function () {
+		// the frontend stores "<token>__<user>"; Firefox dislikes multiple cookies, hence the join
+		const response = await request(app)
+			.get("/portal/admin/deliverables")
+			.set("Cookie", "token=" + userToken + "__" + userName);
+		const body: Payload = response.body;
+		Log.test("cookie auth: " + response.status + " -> " + JSON.stringify(body).substring(0, 120));
+
+		expect(response.status).to.equal(200);
+		expect(body.success).to.not.be.undefined;
+	});
+
+	it("Should reject a token cookie that carries no user.", async function () {
+		// a single-part cookie yields a token but no user; partial credentials must not authenticate
+		const response = await request(app)
+			.get("/portal/admin/deliverables")
+			.set("Cookie", "token=" + userToken);
+		const body: Payload = response.body;
+		Log.test("partial cookie: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(401);
+		expect(body.success).to.be.undefined;
+		expect(body.failure).to.not.be.undefined;
+	});
+
+	it("Should reject a cookie that has no token at all.", async function () {
+		const response = await request(app).get("/portal/admin/deliverables").set("Cookie", "somethingElse=value");
+		const body: Payload = response.body;
+		Log.test("cookie without token: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(401);
+		expect(body.failure).to.not.be.undefined;
+	});
+
 	it("Should delete a deliverable and attribute the audit record to the caller", async function () {
 		const dbc = DatabaseController.getInstance();
 		const delivId = "delivToDelete_" + Date.now();
