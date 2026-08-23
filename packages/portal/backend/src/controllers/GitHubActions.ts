@@ -748,19 +748,15 @@ export class GitHubActions implements IGitHubActions {
 	 * @param teamName name of the team to delete
 	 */
 	public async deleteTeam(teamName: string): Promise<boolean> {
+		const start = Date.now();
+		Log.info("GitHubAction::deleteTeam( " + teamName + " ) - start");
+
+		if (typeof teamName !== "string" || teamName.length < 1) {
+			Log.warn("GitHubAction::deleteTeam( " + teamName + " ) - no team name given; nothing to delete");
+			return false;
+		}
+
 		try {
-			const start = Date.now();
-			Log.info("GitHubAction::deleteTeam( " + teamName + " ) - start");
-
-			if (teamName === null) {
-				throw new Error("GitHubAction::deleteTeam( null ) - null team requested");
-			}
-
-			if (teamName.length < 1) {
-				Log.info("GitHubAction::deleteTeam( " + teamName + " ) - team does not exist, not deleting; took: " + Util.took(start));
-				return false;
-			}
-
 			// DELETE /orgs/:org/teams/:team_slug
 			const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName;
 			const options: RequestInit = {
