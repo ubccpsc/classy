@@ -170,6 +170,51 @@ describe("AutoTest AutoTestServer", function () {
 		}
 	}).timeout(TIMEOUT * 10);
 
+	// NOTE: the image-build endpoint streams, so its response is hijacked from the framework and
+	// written to the raw socket. Validation therefore has to happen *before* the hijack -- once the
+	// socket is taken over there is no way to send a normal error response. These pin that split:
+	// a malformed request must still get a plain 400, not a truncated stream or a hung connection.
+
+	it("Should reject an image build that is missing required parameters.", async function () {
+		const cases = [
+			{ missing: "remote", body: { tag: "tagname", file: "Dockerfile" } },
+			{ missing: "tag", body: { remote: "https://github.com/minidocks/base.git", file: "Dockerfile" } },
+			{ missing: "file", body: { remote: "https://github.com/minidocks/base.git", tag: "tagname" } },
+		];
+
+		for (const c of cases) {
+			const res = await request(app).post("/docker/image").set("user", TestHarness.ADMIN1.github).send(c.body);
+			Log.test("missing " + c.missing + " -> " + res.status + "; body: " + JSON.stringify(res.text));
+
+			expect(res.status, "missing " + c.missing + " should be rejected").to.equal(400);
+			expect(res.text, "error should name the missing parameter").to.contain(c.missing);
+		}
+	}).timeout(TIMEOUT);
+
+	it("Should refuse to remove a docker image without the AutoTest secret.", async function () {
+		// the secret is checked before the daemon is contacted, so this holds even where Docker
+		// is unavailable; it is the only thing stopping an unauthenticated image deletion
+		const res = await request(app).del("/docker/image/sometag").set("user", TestHarness.ADMIN1.github).set("token", "NOT_THE_SECRET");
+		Log.test("remove with bad secret -> " + res.status + "; body: " + JSON.stringify(res.body));
+
+		expect(res.status).to.equal(403);
+		expect(res.body?.success).to.equal(false);
+		expect(res.body?.message).to.contain("secret mismatch");
+	}).timeout(TIMEOUT);
+
+	it("Should report a removal request for a tag that matches no image.", async function () {
+		const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+		const res = await request(app)
+			.del("/docker/image/tagThatMatchesNothing" + Date.now())
+			.set("user", TestHarness.ADMIN1.github)
+			.set("token", atSecret);
+		Log.test("remove unknown tag -> " + res.status + "; body: " + JSON.stringify(res.body));
+
+		expect(res.status).to.equal(400);
+		expect(res.body?.success).to.equal(false);
+		expect(res.body?.message, "should say the tag is unknown").to.be.a("string");
+	}).timeout(TIMEOUT);
+
 	xit("Should be able to remove a docker image.", async function () {
 		let res: any;
 		try {
