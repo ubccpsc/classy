@@ -4,10 +4,10 @@ import { CommitTarget } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 import * as crypto from "crypto";
 import Docker from "dockerode";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import * as fs from "fs";
 import * as http from "http";
 import * as querystring from "querystring";
-import * as restify from "restify";
 
 import { AutoTest } from "../autotest/AutoTest";
 import { ClassPortal } from "../autotest/ClassPortal";
@@ -50,7 +50,7 @@ export default class AutoTestRouteHandler {
 	/**
 	 * Makes sure the AutoTest server is started
 	 */
-	public static getAutoTestStatus(req: restify.Request, res: restify.Response, next: restify.Next) {
+	public static async getAutoTestStatus(_request: FastifyRequest, reply: FastifyReply) {
 		try {
 			Log.info("RouteHanlder::getAutoTestStatus(..) - start");
 
@@ -67,12 +67,11 @@ export default class AutoTestRouteHandler {
 			const status = at.getStatus();
 
 			Log.info("RouteHanlder::getAutoTestStatus(..) - done");
-			res.send(200, status);
+			return reply.code(200).send(status);
 		} catch (err) {
 			Log.info("RouteHanlder::getAutoTestStatus(..) - ERROR: " + err);
-			res.send(400, "Failed to check AutoTest: " + err.message);
+			return reply.code(400).send("Failed to check AutoTest: " + err.message);
 		}
-		return next();
 	}
 
 	/**
@@ -81,10 +80,12 @@ export default class AutoTestRouteHandler {
 	 * - commit_comment
 	 * - push
 	 */
-	public static postGithubHook(req: restify.Request, res: restify.Response, next: restify.Next) {
+	public static async postGithubHook(request: FastifyRequest, reply: FastifyReply) {
 		const start = Date.now();
-		const githubEvent: string = req.header("X-GitHub-Event");
-		let githubSecret: string = req.header("X-Hub-Signature");
+		// NOTE: restify offered req.header() with case-insensitive lookup; Fastify exposes the
+		// raw headers object, which Node has already lower-cased
+		const githubEvent: string = request.headers["x-github-event"] as string;
+		let githubSecret: string = request.headers["x-hub-signature"] as string;
 
 		// https://developer.github.com/webhooks/securing/
 		if (typeof githubSecret === "undefined") {
@@ -92,11 +93,11 @@ export default class AutoTestRouteHandler {
 		}
 
 		Log.info("AutoTestRouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
-		const body = req.body;
+		const body = request.body;
 
 		const handleError = function (msg: string) {
 			Log.error("AutoTestRouteHandler::postGithubHook() - failure; ERROR: " + msg + "; took: " + Util.took(start));
-			return res.send(400, "Failed to process commit: " + msg);
+			return reply.code(400).send("Failed to process commit: " + msg);
 		};
 
 		let secretVerified = false;
@@ -141,30 +142,29 @@ export default class AutoTestRouteHandler {
 			if (githubEvent === "ping") {
 				// github test packet; use to let the webhooks know we are listening
 				Log.info("AutoTestRouteHandler::postGithubHook() - <200> pong.");
-				return res.send(200, "pong");
-			} else {
-				Log.trace("AutoTestRouteHandler::postGithubHook() - starting handle");
-				AutoTestRouteHandler.handleWebhook(githubEvent, body)
-					.then(function (commitEvent) {
-						if (commitEvent !== null) {
-							Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
-							return res.send(200, commitEvent); // report back our interpretation of the hook
-						} else {
-							Log.info("AutoTestRouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
-							return res.send(204, {}); // report back that nothing happened
-						}
-					})
-					.catch(function (err) {
-						Log.error("AutoTestRouteHandler::postGithubHook() - ERROR: " + err);
-						handleError(err);
-					});
+				return reply.code(200).send("pong");
 			}
-		} else {
-			handleError("Invalid payload signature.");
+
+			// NOTE: awaited rather than left as a floating .then(). Fastify considers the request
+			// finished when the handler resolves, so returning before the webhook completes would
+			// close the response out from under it.
+			Log.trace("AutoTestRouteHandler::postGithubHook() - starting handle");
+			try {
+				const commitEvent = await AutoTestRouteHandler.handleWebhook(githubEvent, body as string);
+				Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
+				if (commitEvent !== null) {
+					Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
+					return reply.code(200).send(commitEvent); // report back our interpretation of the hook
+				}
+				Log.info("AutoTestRouteHandler::postGithubHook() - handle done (branch deleted); took: " + Util.took(start));
+				return reply.code(204).send(); // 204 carries no body
+			} catch (err) {
+				Log.error("AutoTestRouteHandler::postGithubHook() - ERROR: " + err);
+				return handleError(err.message ?? String(err));
+			}
 		}
 
-		Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
-		// no next() call here; .then clause above will finish the response
+		return handleError("Invalid payload signature.");
 	}
 
 	/**
@@ -226,10 +226,10 @@ export default class AutoTestRouteHandler {
 		return { socketPath: AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET };
 	}
 
-	public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
+	public static async getDockerImages(request: FastifyRequest, reply: FastifyReply) {
 		try {
 			const docker = AutoTestRouteHandler.getDocker();
-			const filtersStr = req.query.filters;
+			const filtersStr = (request.query as any).filters;
 			const options: any = {};
 			if (filtersStr) {
 				options.filters = JSON.parse(filtersStr);
@@ -238,17 +238,15 @@ export default class AutoTestRouteHandler {
 			const images = await docker.listImages(options);
 			Log.trace("AutoTestRouteHandler::getDockerImages(..) - images: " + JSON.stringify(images));
 			Log.info("AutoTestRouteHandler::getDockerImages(..) - done; # images: " + (images as any)?.length);
-			res.send(200, images);
+			return reply.code(200).send(images);
 		} catch (err) {
 			Log.error("AutoTestRouteHandler::getDockerImages(..) - ERROR Retrieving docker images: " + err.message);
 			if (err.statusCode) {
 				// Error from Docker daemon
-				res.send(err.statusCode, err.message);
-			} else {
-				res.send(400, err.message);
+				return reply.code(err.statusCode).send(err.message);
 			}
+			return reply.code(400).send(err.message);
 		}
-		next();
 	}
 
 	// public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
@@ -273,29 +271,75 @@ export default class AutoTestRouteHandler {
 	//     next();
 	// }
 
-	public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+	public static async postDockerImage(request: FastifyRequest, reply: FastifyReply) {
 		Log.info("AutoTestRouteHandler::postDockerImage(..) - start");
 
 		AutoTestRouteHandler.getDocker(); // make sure docker is configured
 
-		try {
-			if (typeof req.body.remote === "undefined") {
-				throw new Error("remote parameter missing");
-			}
-			if (typeof req.body.tag === "undefined") {
-				throw new Error("tag parameter missing");
-			}
-			if (typeof req.body.file === "undefined") {
-				throw new Error("file parameter missing");
-			}
+		const body = request.body as any;
 
-			const start = Date.now();
+		// NOTE: validation happens before the socket is hijacked below. Once hijacked, Fastify is
+		// out of the picture and there is no way to send a normal error response.
+		if (typeof body?.remote === "undefined") {
+			return reply.code(400).send("remote parameter missing");
+		}
+		if (typeof body?.tag === "undefined") {
+			return reply.code(400).send("tag parameter missing");
+		}
+		if (typeof body?.file === "undefined") {
+			return reply.code(400).send("file parameter missing");
+		}
+
+		const tag = body.tag;
+		const file = body.file;
+		let remote;
+
+		if (Config.getInstance().hasProp(ConfigKey.githubDockerToken) === true) {
+			// repo protected by the githubDockerToken from .env
+			const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
+			remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
+		} else {
+			// public repo
+			remote = body.remote;
+		}
+
+		const dockerOptions = { remote, t: tag, dockerfile: file };
+		const reqParams = querystring.stringify(dockerOptions);
+		const reqOptions = {
+			...AutoTestRouteHandler.getDockerRequestOptions(),
+			// v1.40 is the oldest API version modern daemons accept (Docker 29 reports
+			// MinAPIVersion 1.40 and rejects anything older outright)
+			path: "/v1.40/build?" + reqParams,
+			method: "POST",
+		};
+
+		Log.info("AutoTestRouteHandler::postDockerImage(..) - building tag: " + tag);
+
+		// NOTE: from here we own the socket. The Docker build emits progress for as long as the
+		// build runs, and the client renders it live, so the bytes are piped straight through
+		// rather than buffered into a single send. reply.hijack() tells Fastify not to send a
+		// response of its own; under restify this was implicit.
+		reply.hijack();
+		reply.raw.writeHead(200);
+
+		const start = Date.now();
+		await new Promise<void>((resolve) => {
+			let settled = false;
+			const finish = (why: string) => {
+				if (settled === true) {
+					return;
+				}
+				settled = true;
+				Log.info("AutoTestRouteHandler::postDockerImage(..) - stream done (" + why + "); took: " + Util.took(start));
+				resolve();
+			};
+
 			const handler = (stream: http.IncomingMessage) => {
-				let heartbeat: NodeJS.Timer = null;
+				let heartbeat: NodeJS.Timeout = null;
 				stream.on("data", (chunk: any) => {
 					Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
 
-					clearInterval(heartbeat as any); // if a timer exists, cancel it
+					clearInterval(heartbeat); // if a timer exists, cancel it
 					// start a new timer after every chunk to keep stream open
 					heartbeat = setInterval(function () {
 						Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
@@ -303,76 +347,50 @@ export default class AutoTestRouteHandler {
 						stream.push('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
 					}, 5000); // time between heartbeats
 				});
-				stream.on("end", (chunk: any) => {
+				stream.on("end", () => {
 					Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
-					clearInterval(heartbeat as any); // if a timer exists, cancel it
-					return next();
+					clearInterval(heartbeat);
+					finish("end"); // pipe() ends the response for us
 				});
-				stream.on("error", (chunk: any) => {
-					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + chunk);
-					clearInterval(heartbeat as any); // if a timer exists, cancel it
-					return next();
+				stream.on("error", (err: any) => {
+					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + err);
+					clearInterval(heartbeat);
+					reply.raw.end();
+					finish("stream error");
 				});
-				stream.pipe(res);
+				stream.pipe(reply.raw);
 			};
 
-			const body = req.body as any;
-			const tag = body.tag;
-			const file = body.file;
-			let remote;
-
-			if (Config.getInstance().hasProp(ConfigKey.githubDockerToken) === true) {
-				// repo protected by the githubDockerToken from .env
-				const token = Config.getInstance().getProp(ConfigKey.githubDockerToken);
-				remote = token ? body.remote.replace("https://", "https://" + token + "@") : body.remote;
-			} else {
-				// public repo
-				remote = body.remote;
-			}
-
-			const dockerOptions = { remote, t: tag, dockerfile: file };
-			const reqParams = querystring.stringify(dockerOptions);
-			const reqOptions = {
-				...AutoTestRouteHandler.getDockerRequestOptions(),
-				// v1.40 is the oldest API version modern daemons accept (Docker 29 reports
-				// MinAPIVersion 1.40 and rejects anything older outright)
-				path: "/v1.40/build?" + reqParams,
-				method: "POST",
-			};
-
-			Log.info("AutoTestRouteHandler::postDockerImage(..) - building tag: " + tag);
-			Log.trace("AutoTestRouteHandler::postDockerImage(..) - making request with opts: " + JSON.stringify(reqOptions));
 			const dockerReq = http.request(reqOptions, handler);
+			dockerReq.on("error", (err: any) => {
+				// e.g. the daemon socket does not exist; without this the request would hang
+				Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR contacting Docker: " + err.message);
+				reply.raw.end();
+				finish("request error");
+			});
 			dockerReq.end(0);
-			Log.trace("AutoTestRouteHandler::postDockerImage(..) - request made");
 
 			// write something to the response to keep it alive until the stream is emitting
-			res.write(""); // NOTE: this is required, if odd
-		} catch (err) {
-			Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR Building docker image: " + err.message);
-			return res.send(err.statusCode, err.message);
-		}
-		// next not here on purpose, must be in stream handler or socket will close early
+			reply.raw.write(""); // NOTE: this is required, if odd
+		});
 	}
 
-	public static async removeDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+	public static async removeDockerImage(request: FastifyRequest, reply: FastifyReply) {
 		let success = false;
 		let errorMsg = "";
 
 		try {
 			const docker = AutoTestRouteHandler.getDocker();
-			const tag = req.params.tag;
+			const tag = (request.params as any).tag;
 			Log.info("AutoTestRouteHandler::removeDockerImage(..) - start; tag: " + tag);
 
 			if (tag === undefined || tag.length < 1) {
 				throw new Error("Docker image tag not provided.");
 			}
 
-			const providedSecret = req.headers.token;
+			const providedSecret = request.headers.token;
 			if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-				res.send(403, { success: false, message: "Invalid request (secret mismatch)." });
-				next();
-				return;
+				return reply.code(403).send({ success: false, message: "Invalid request (secret mismatch)." });
 			} else {
 				Log.info("AutoTestRouteHandler::removeDockerImage(..) - valid request; token matched");
 			}
@@ -419,11 +437,9 @@ export default class AutoTestRouteHandler {
 		}
 
 		if (success === true) {
-			res.send(200, { success: success });
-		} else {
-			res.send(400, { success: false, message: errorMsg });
+			return reply.code(200).send({ success: success });
 		}
-		next();
+		return reply.code(400).send({ success: false, message: errorMsg });
 	}
 
 	private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {

@@ -6,12 +6,12 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 describe("AutoTest AutoTestServer", function () {
 	const TIMEOUT = 1000;
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 	let server: AutoTestServer = null;
 
 	before(async () => {
