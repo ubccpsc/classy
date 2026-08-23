@@ -2,7 +2,7 @@
 import { expect } from "chai";
 import "mocha";
 
-import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { DatabaseController, QueryKind } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import BackendServer from "@backend/server/BackendServer";
@@ -1438,6 +1438,33 @@ describe("Admin Routes", function () {
 		expect(body.success.message).to.be.an("string");
 		expect(ex).to.be.null;
 	});
+
+	it("Should delete a deliverable and attribute the audit record to the caller", async function () {
+		const dbc = DatabaseController.getInstance();
+		const delivId = "delivToDelete_" + Date.now();
+
+		const deliv = TestHarness.getDeliverable(delivId);
+		await dbc.writeDeliverable(deliv);
+		expect(await dbc.getDeliverable(delivId), "fixture deliverable was not written").to.not.be.null;
+
+		const response = await request(app)
+			.del("/portal/admin/deliverable/" + delivId)
+			.set({ user: userName, token: userToken });
+		const body: Payload = response.body;
+		Log.test("delete deliverable: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(200);
+		expect(body.success).to.not.be.undefined;
+
+		// the path param actually reached the handler
+		expect(await dbc.getDeliverable(delivId), "deliverable still present after delete").to.be.null;
+
+		// and the audit trail names who did it, rather than undefined
+		const audits = await dbc.readRecords("audit", QueryKind.SLOW, false, {});
+		const mine = audits.filter((a: any) => a?.before?.id === delivId);
+		expect(mine.length, "no audit record written for the delete").to.be.greaterThan(0);
+		expect(mine[0].personId, "audit record did not record the acting user").to.equal(userName);
+	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should fail to delete a deliverable if appropriate", async function () {
 		const url = "/portal/admin/deliverable/";

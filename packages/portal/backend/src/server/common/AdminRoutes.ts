@@ -424,8 +424,11 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::deleteDeliverable(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
-		// if these params are missing the client will get 404 since they are part of the path
-		const user = req.params.user;
+		// NOTE: the actor comes from the auth headers, like every other handler here. This used to
+		// read req.params.user, which is never populated: bodyParser({mapParams: true}) maps the
+		// body and query into params, not headers, so the audit record recorded an undefined actor.
+		const user = AdminRoutes.getUser(req);
+		// delivId is part of the path, so a missing one produces a 404 before we get here
 		const delivId = req.params.delivId;
 		AdminRoutes.handleDeleteDeliverable(user, delivId)
 			.then(function (success) {

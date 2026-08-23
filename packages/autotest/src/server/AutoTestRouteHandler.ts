@@ -4,6 +4,7 @@ import { CommitTarget } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 import * as crypto from "crypto";
 import Docker from "dockerode";
+import * as fs from "fs";
 import * as http from "http";
 import * as querystring from "querystring";
 import * as restify from "restify";
@@ -166,6 +167,65 @@ export default class AutoTestRouteHandler {
 		// no next() call here; .then clause above will finish the response
 	}
 
+	/**
+	 * The socket Docker listens on when DOCKER_HOST says nothing.
+	 */
+	private static readonly DEFAULT_DOCKER_SOCKET = "/var/run/docker.sock";
+
+	/**
+	 * Resolves how to reach the Docker daemon, honouring DOCKER_HOST.
+	 *
+	 * NOTE: AutoTestRouteHandler.docker (dockerode) already does this, because docker-modem reads
+	 * DOCKER_HOST itself. The image build below issues a raw http.request instead, so without this
+	 * the two talk to different daemons. Hardcoding /var/run/docker.sock only works where Docker
+	 * exposes the legacy path: Docker Desktop uses ~/.docker/run/docker.sock unless "Allow the
+	 * default Docker socket to be used" is enabled, and Colima and rootless Docker never create it.
+	 *
+	 * @returns the connection half of an http.request options object
+	 */
+	private static getDockerRequestOptions(): { socketPath?: string; host?: string; port?: number } {
+		const dockerHost = process.env.DOCKER_HOST;
+
+		if (typeof dockerHost === "string" && dockerHost.length > 0) {
+			if (dockerHost.indexOf("unix://") === 0) {
+				const socketPath = dockerHost.substring("unix://".length);
+				return { socketPath: socketPath.length > 0 ? socketPath : AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET };
+			}
+
+			const tcp = /(?:tcp:\/\/)?(.*?):([0-9]+)/.exec(dockerHost);
+			if (tcp !== null) {
+				return { host: tcp[1], port: Number(tcp[2]) };
+			}
+
+			Log.warn(
+				"AutoTestRouteHandler::getDockerRequestOptions() - unrecognized DOCKER_HOST: " +
+					dockerHost +
+					"; falling back to " +
+					AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET
+			);
+		}
+
+		// NOTE: unset is correct in production and under docker-compose, where the daemon socket is
+		// bind-mounted at the default path -- so this reports whether that path actually exists
+		// rather than just complaining. Silent ENOENT from a hardcoded path is what made the
+		// AutoTest Docker specs look broken on developer machines.
+		const defaultExists = fs.existsSync(AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET);
+		if (defaultExists === true) {
+			Log.info(
+				"AutoTestRouteHandler::getDockerRequestOptions() - DOCKER_HOST not set; using " + AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET
+			);
+		} else {
+			Log.warn(
+				"AutoTestRouteHandler::getDockerRequestOptions() - DOCKER_HOST not set and " +
+					AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET +
+					" does not exist; Docker requests will fail. Set DOCKER_HOST in .env " +
+					"(see `docker context ls` for the endpoint this host uses)."
+			);
+		}
+
+		return { socketPath: AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET };
+	}
+
 	public static async getDockerImages(req: restify.Request, res: restify.Response, next: restify.Next) {
 		try {
 			const docker = AutoTestRouteHandler.getDocker();
@@ -273,7 +333,7 @@ export default class AutoTestRouteHandler {
 			const dockerOptions = { remote, t: tag, dockerfile: file };
 			const reqParams = querystring.stringify(dockerOptions);
 			const reqOptions = {
-				socketPath: "/var/run/docker.sock",
+				...AutoTestRouteHandler.getDockerRequestOptions(),
 				// v1.40 is the oldest API version modern daemons accept (Docker 29 reports
 				// MinAPIVersion 1.40 and rejects anything older outright)
 				path: "/v1.40/build?" + reqParams,

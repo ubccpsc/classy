@@ -250,8 +250,14 @@ describe("General Routes", function () {
 			Log.test("ERROR: " + err);
 		}
 
-		Log.test(response.status + " -> " + JSON.stringify(body));
+		Log.test(response.status + " -> " + JSON.stringify(body) + "; location: " + response.headers.location);
 		expect(response.status).to.equal(302); // user should be redirected to the login page
+
+		const location = response.headers.location;
+		expect(location, "no Location header on the resource redirect").to.not.be.undefined;
+		expect(location).to.contain(Config.getInstance().getProp(ConfigKey.publichostname));
+		expect(location, "redirect dropped the ?ref= pointer back to the resource").to.contain("?ref=");
+		expect(location).to.contain("/ID/student/GUID/bar/baz.txt");
 	});
 
 	it("Invalid students should not be able to get student resources.", async function () {
@@ -365,10 +371,18 @@ describe("General Routes", function () {
 			Log.test("ERROR: " + err);
 		}
 
-		Log.test(response.status + " -> " + JSON.stringify(body));
+		Log.test(response.status + " -> " + JSON.stringify(body) + "; headers: " + JSON.stringify(response.headers));
 		expect(response.status).to.equal(200);
 		expect(body.for).to.not.be.undefined;
 		expect(body.for).to.equal("student");
+
+		// NOTE: this branch is rs.pipe(res) -- the file is streamed, not buffered. That matters for
+		// the large artifacts AutoTest produces, so assert the transfer is chunked rather than
+		// content-length delimited. A REST layer that buffers the whole file would still return the
+		// right bytes and pass every assertion above.
+		expect(response.headers["transfer-encoding"], "resource file was not streamed").to.equal("chunked");
+		// the frontend fetches these from the browser, so the CORS header has to survive the pipe
+		expect(response.headers["access-control-allow-origin"]).to.equal("*");
 	});
 
 	it("Student should be able to get get a student resource directory.", async function () {
@@ -392,6 +406,10 @@ describe("General Routes", function () {
 
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(200);
+
+		expect(response.headers["content-type"], "directory listing must be served as html").to.contain("text/html");
+		expect(response.headers["content-length"], "directory listing must declare its length").to.not.be.undefined;
+		expect(body, "directory listing body was empty").to.be.a("string").with.length.greaterThan(0);
 	});
 
 	it("Admin should be able to get get an admin resource.", async function () {

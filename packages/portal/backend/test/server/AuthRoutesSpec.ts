@@ -3,6 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";
+import Config, { ConfigKey } from "@common/Config";
 
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -40,6 +41,47 @@ describe("Auth Routes", function () {
 		Log.test("AuthRoutes::after - start");
 		await server.stop();
 		await TestHarness.suiteAfter("Auth Routes");
+	});
+
+	it("Should redirect /portal/auth to the GitHub OAuth authorize endpoint.", async function () {
+		const response = await request(app).get("/portal/auth");
+		Log.test("/portal/auth -> " + response.status + "; location: " + response.headers.location);
+
+		expect(response.status).to.equal(302);
+		expect(response.headers.location, "no Location header on the auth redirect").to.not.be.undefined;
+
+		const host = Config.getInstance().getProp(ConfigKey.githubHost);
+		expect(response.headers.location).to.contain(host + "/login/oauth/authorize");
+
+		// the redirect must carry the configured client id, or the OAuth flow cannot complete
+		expect(response.headers.location).to.contain(Config.getInstance().getProp(ConfigKey.githubClientId));
+	});
+
+	it("Should not authenticate a callback that has no OAuth code.", async function () {
+		const response = await request(app).get("/authCallback");
+		Log.test("/authCallback (no code) -> " + response.status + "; location: " + response.headers.location);
+
+		// must not hand out a session
+		expect(response.headers["set-cookie"], "a failed callback must not set a session cookie").to.be.undefined;
+
+		// and must not report success
+		expect(response.status).to.not.equal(200);
+	});
+
+	it("Should answer a CORS preflight with the headers the frontend needs.", async function () {
+		const response = await request(app)
+			.options("/portal/getCredentials")
+			.set({ origin: "https://localhost", "access-control-request-method": "GET" });
+		Log.test("preflight -> " + response.status + "; headers: " + JSON.stringify(response.headers));
+
+		expect(response.status).to.equal(204);
+		expect(response.headers["access-control-allow-credentials"]).to.equal("true");
+		expect(response.headers["access-control-allow-origin"]).to.equal("https://localhost");
+
+		// the frontend sends user/token headers on every call, so they must be allowed through
+		expect(response.headers["access-control-allow-headers"]).to.contain("user");
+		expect(response.headers["access-control-allow-headers"]).to.contain("token");
+		expect(response.headers["access-control-allow-methods"]).to.contain("GET");
 	});
 
 	it("Should be able to get some credentials for an admin.", async function () {

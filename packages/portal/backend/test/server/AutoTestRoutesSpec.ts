@@ -609,8 +609,18 @@ describe("AutoTest Routes", function () {
 				} catch (err) {
 					res = err;
 				} finally {
+					Log.test("proxy failure -> " + res?.status + "; headers: " + JSON.stringify(res?.headers));
 					expect(res).to.haveOwnProperty("status");
 					expect(res.status).to.equal(500);
+
+					// NOTE: this route writes an empty keep-alive chunk (res.write("")) and pipes the
+					// AutoTest response straight through, so by the time the forward fails the headers
+					// are already committed and the transfer is chunked. That is the fragile part to
+					// reproduce: a REST layer that buffers instead would either throw "headers already
+					// sent" here or hang the request rather than completing with a 500.
+					expect(res.headers["transfer-encoding"], "response was not already committed as a stream").to.equal("chunked");
+					// the admin UI reads this from the browser, so CORS has to survive the failure path
+					expect(res.headers["access-control-allow-origin"]).to.equal("*");
 				}
 			});
 

@@ -66,6 +66,31 @@ describe("AutoTest AutoTestServer", function () {
 		return { res: res, output: output };
 	}
 
+	it("Should report AutoTest status.", async function () {
+		const res = await request(app).get("/status").set("user", TestHarness.ADMIN1.github);
+		Log.test("/status -> " + res.status + "; body: " + JSON.stringify(res.body));
+
+		expect(res.status).to.equal(200);
+
+		// the payload is the queue status; assert it is a real object, not an empty 200
+		expect(res.body).to.be.an("object");
+		expect(Object.keys(res.body).length, "status payload was empty").to.be.greaterThan(0);
+	});
+
+	it("Should answer a GitHub ping webhook with pong.", async function () {
+		// this is the handshake GitHub performs when a webhook is added; if it stops working the
+		// hook is marked as failing on every repo, which is silent from the server side
+		const res = await request(app)
+			.post("/githubWebhook")
+			.set("X-GitHub-Event", "ping")
+			.set("Content-Type", "application/json")
+			.send({ zen: "test ping" });
+		Log.test("/githubWebhook ping -> " + res.status + "; text: " + res.text);
+
+		expect(res.status).to.equal(200);
+		expect(res.text, "ping did not produce a pong").to.contain("pong");
+	});
+
 	it("Should be able to list docker images.", async function () {
 		let res: any;
 		try {
