@@ -1,11 +1,13 @@
 import { expect } from "chai";
 import "mocha";
+import AutoTestRouteHandler from "@autotest/server/AutoTestRouteHandler";
 import AutoTestServer from "@autotest/server/AutoTestServer";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
+import * as crypto from "crypto";
 import type * as http from "http";
 import request from "supertest";
 
@@ -89,6 +91,68 @@ describe("AutoTest AutoTestServer", function () {
 
 		expect(res.status).to.equal(200);
 		expect(res.text, "ping did not produce a pong").to.contain("pong");
+	});
+
+	/**
+	 * These two exercise the webhook signature check end-to-end, including the raw-body capture
+	 * in AutoTestServer's content type parser.
+	 */
+	describe("GitHub webhook signature verification", function () {
+		/**
+		 * Signs a payload the way GitHub does: HMAC over the exact bytes sent.
+		 */
+		function sign(rawBody: string): string {
+			const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+			const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex");
+			return "sha256=" + crypto.createHmac("sha256", key).update(rawBody, "utf8").digest("hex");
+		}
+
+		beforeEach(function () {
+			// readonly is compile-time only; this is settable at runtime
+			(AutoTestRouteHandler as any).ENFORCE_WEBHOOK_SIGNATURE = true;
+		});
+
+		afterEach(function () {
+			(AutoTestRouteHandler as any).ENFORCE_WEBHOOK_SIGNATURE = false;
+		});
+
+		it("Should accept a correctly signed payload.", async function () {
+			const rawBody = JSON.stringify({ zen: "signed ping" });
+
+			const res = await request(app)
+				.post("/githubWebhook")
+				.set("X-GitHub-Event", "ping")
+				.set("Content-Type", "application/json")
+				.set("X-Hub-Signature-256", sign(rawBody))
+				.send(rawBody);
+			Log.test("signed webhook -> " + res.status + "; text: " + res.text);
+
+			expect(res.status).to.equal(200);
+			expect(res.text).to.contain("pong");
+		});
+
+		it("Should reject an unsigned or incorrectly signed payload when enforcing.", async function () {
+			const rawBody = JSON.stringify({ zen: "unsigned ping" });
+
+			let res = await request(app)
+				.post("/githubWebhook")
+				.set("X-GitHub-Event", "ping")
+				.set("Content-Type", "application/json")
+				.send(rawBody);
+			Log.test("unsigned webhook -> " + res.status + "; text: " + res.text);
+			expect(res.status).to.equal(400);
+
+			// a well-formed signature over _different_ bytes must not verify either
+			res = await request(app)
+				.post("/githubWebhook")
+				.set("X-GitHub-Event", "ping")
+				.set("Content-Type", "application/json")
+				.set("X-Hub-Signature-256", sign(JSON.stringify({ zen: "some other payload" })))
+				.send(rawBody);
+			Log.test("wrongly signed webhook -> " + res.status + "; text: " + res.text);
+			expect(res.status).to.equal(400);
+			expect(res.text).to.contain("Invalid payload signature");
+		});
 	});
 
 	it("Should be able to list docker images.", async function () {

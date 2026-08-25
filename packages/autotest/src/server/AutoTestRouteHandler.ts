@@ -15,9 +15,40 @@ import { MongoDataStore } from "../autotest/DataStore";
 import { GitHubAutoTest } from "../github/GitHubAutoTest";
 import { GitHubUtil } from "../github/GitHubUtil";
 
+declare module "fastify" {
+	interface FastifyRequest {
+		/**
+		 * The unparsed request body, stashed by the content type parsers in AutoTestServer.
+		 *
+		 * GitHub signs the exact bytes it sends, and those bytes cannot be recovered from the
+		 * parsed object, so the webhook signature check needs the original string.
+		 */
+		rawBody?: string;
+	}
+}
+
+/**
+ * Outcome of the webhook signature check.
+ */
+export interface WebhookSignatureResult {
+	verified: boolean;
+	detail: string;
+}
+
 export default class AutoTestRouteHandler {
 	public static docker: Docker = null;
 	public static autoTest: AutoTest = null;
+
+	/**
+	 * Whether a webhook whose signature does not verify should be rejected.
+	 *
+	 * NOTE: false on purpose. verifyWebhookSignature() below is computed and logged for every
+	 * delivery, but the result is _not_ enforced yet: if the check is wrong, enforcing it stops
+	 * all grading silently.
+	 *
+	 * Once deployed, make sure the signature check lines are right before removing this guard.
+	 */
+	private static readonly ENFORCE_WEBHOOK_SIGNATURE: boolean = false;
 
 	public static getDocker(): Docker {
 		if (AutoTestRouteHandler.docker === null) {
@@ -79,12 +110,6 @@ export default class AutoTestRouteHandler {
 		// NOTE: restify offered req.header() with case-insensitive lookup; Fastify exposes the
 		// raw headers object, which Node has already lower-cased
 		const githubEvent: string = request.headers["x-github-event"] as string;
-		let githubSecret: string = request.headers["x-hub-signature"] as string;
-
-		// https://developer.github.com/webhooks/securing/
-		if (typeof githubSecret === "undefined") {
-			githubSecret = null;
-		}
 
 		Log.info("AutoTestRouteHandler::postGithubHook(..) - start; handling event: " + githubEvent);
 		const body = request.body;
@@ -94,44 +119,17 @@ export default class AutoTestRouteHandler {
 			return reply.code(400).send("Failed to process commit: " + msg);
 		};
 
-		let secretVerified = false;
-		if (githubSecret !== null) {
-			try {
-				Log.trace("AutoTestRouteHandler::postGithubHook(..) - trying to compute webhook secrets");
-
-				const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-				const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex"); // secret w/ sha256
-				// Log.info("AutoTestRouteHandler::postGithubHook(..) - key: " + key); // should be same as webhook added key
-
-				const computed =
-					"sha1=" +
-					crypto
-						.createHmac("sha1", key) // payload w/ sha1
-						.update(JSON.stringify(body))
-						.digest("hex");
-
-				secretVerified = githubSecret === computed;
-				if (secretVerified === true) {
-					Log.trace(
-						"AutoTestRouteHandler::postGithubHook(..) - webhook secret verified: " + secretVerified + "; took: " + Util.took(start)
-					);
-				} else {
-					Log.warn("AutoTestRouteHandler::postGithubHook(..) - webhook secrets do not match");
-					Log.warn("AutoTestRouteHandler::postGithubHook(..) - GitHub header: " + githubSecret + "; computed: " + computed);
-				}
-			} catch (err) {
-				Log.error("AutoTestRouteHandler::postGithubHook(..) - ERROR computing HMAC: " + err.message);
-			}
+		const signature = AutoTestRouteHandler.verifyWebhookSignature(request);
+		if (signature.verified === true) {
+			Log.info("AutoTestRouteHandler::postGithubHook(..) - signature check; verified: true; " + signature.detail);
 		} else {
-			Log.warn("AutoTestRouteHandler::postGithubHook(..) - secret ignored (not present)");
+			// warn rather than error
+			Log.warn("AutoTestRouteHandler::postGithubHook(..) - signature check; verified: false; " + signature.detail);
 		}
 
-		// leave this on for a while; would like to verify that this works so we can replace the hardcode below
-		Log.info(
-			"AutoTestRouteHandler::postGithubHook(..) - hasSecret: " + (typeof githubSecret === "string") + "; secretVerified: " + secretVerified
-		);
+		// TODO: once validated that the signatures are right in prod, remove the ENFORCE back channel
+		const secretVerified = signature.verified === true || AutoTestRouteHandler.ENFORCE_WEBHOOK_SIGNATURE === false;
 
-		secretVerified = true; // TODO: stop overwriting this
 		if (secretVerified === true) {
 			if (githubEvent === "ping") {
 				// github test packet; use to let the webhooks know we are listening
@@ -159,6 +157,78 @@ export default class AutoTestRouteHandler {
 		}
 
 		return handleError("Invalid payload signature.");
+	}
+
+	/**
+	 * Verifies the HMAC signature GitHub attaches to each webhook delivery.
+	 *
+	 * GitHub signs the exact bytes it sent, so this hashes the untouched payload.
+	 *
+	 * https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries
+	 *
+	 * @param request the inbound webhook request
+	 * @returns {WebhookSignatureResult} whether it verified, and why not if it did not
+	 */
+	private static verifyWebhookSignature(request: FastifyRequest): WebhookSignatureResult {
+		// GitHub sends both; sha256 is current, sha1 is the legacy header older GHE still uses
+		const sha256Header = request.headers["x-hub-signature-256"] as string;
+		const sha1Header = request.headers["x-hub-signature"] as string;
+		const headersSeen = "sha256Header: " + (typeof sha256Header === "string") + "; sha1Header: " + (typeof sha1Header === "string");
+
+		const algorithm = typeof sha256Header === "string" ? "sha256" : "sha1";
+		const provided = typeof sha256Header === "string" ? sha256Header : sha1Header;
+		const rawBody = request.rawBody;
+
+		if (typeof provided !== "string" || provided.length === 0) {
+			return { verified: false, detail: "no signature header present; " + headersSeen };
+		}
+
+		if (typeof rawBody !== "string" || rawBody.length === 0) {
+			// the content type parser did not run, or ran on a body it could not retain
+			return { verified: false, detail: "raw body unavailable; " + headersSeen };
+		}
+
+		try {
+			const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+			if (typeof atSecret !== "string" || atSecret.length === 0) {
+				return { verified: false, detail: "autotestSecret is not configured; " + headersSeen };
+			}
+
+			const key = crypto.createHash("sha256").update(atSecret, "utf8").digest("hex");
+			const keyFingerprint = key.substring(0, 8);
+
+			const computed = algorithm + "=" + crypto.createHmac(algorithm, key).update(rawBody, "utf8").digest("hex");
+			const providedBuffer = Buffer.from(provided, "utf8");
+			const computedBuffer = Buffer.from(computed, "utf8");
+			const verified = providedBuffer.length === computedBuffer.length && crypto.timingSafeEqual(providedBuffer, computedBuffer) === true;
+
+			const detail =
+				"algorithm: " +
+				algorithm +
+				"; rawBodyLen: " +
+				rawBody.length +
+				"; keyFingerprint: " +
+				keyFingerprint +
+				"; provided: " +
+				AutoTestRouteHandler.signaturePrefix(provided) +
+				"; computed: " +
+				AutoTestRouteHandler.signaturePrefix(computed);
+
+			return { verified: verified, detail: detail };
+		} catch (err) {
+			return { verified: false, detail: "ERROR computing HMAC: " + err.message };
+		}
+	}
+
+	/**
+	 * Signatures are logged as a short prefix. That is enough to tell "stably different" from
+	 * "different every time" when diagnosing a mismatch, without writing a full MAC to the log.
+	 *
+	 * @param signature the full `algorithm=hex` signature
+	 * @returns {string} the algorithm and the first few digest characters
+	 */
+	private static signaturePrefix(signature: string): string {
+		return signature.substring(0, signature.indexOf("=") + 11) + "...";
 	}
 
 	/**

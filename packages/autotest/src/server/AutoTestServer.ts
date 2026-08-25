@@ -70,16 +70,32 @@ export default class AutoTestServer {
 				reply.header("Access-Control-Allow-Headers", "X-Requested-With");
 			});
 
+			// rawBody is needed for checking the HMAC signatures
+			this.rest.addContentTypeParser("application/json", { parseAs: "string" }, (request: FastifyRequest, body: string, done: any) => {
+				request.rawBody = body;
+				try {
+					done(null, body.length > 0 ? JSON.parse(body) : {});
+				} catch (err) {
+					err.statusCode = 400;
+					done(err);
+				}
+			});
+
 			// NOTE: the Docker build endpoint is posted to by the portal with a JSON body, but
 			// also by clients that do not set a content type. Fastify rejects unknown content
 			// types with 415, where restify simply parsed what it was given, so accept both.
-			this.rest.addContentTypeParser("application/octet-stream", { parseAs: "string" }, (_req: any, body: string, done: any) => {
-				try {
-					done(null, body.length > 0 ? JSON.parse(body) : {});
-				} catch {
-					done(null, {});
+			this.rest.addContentTypeParser(
+				"application/octet-stream",
+				{ parseAs: "string" },
+				(request: FastifyRequest, body: string, done: any) => {
+					request.rawBody = body;
+					try {
+						done(null, body.length > 0 ? JSON.parse(body) : {});
+					} catch {
+						done(null, {});
+					}
 				}
-			});
+			);
 
 			// Return the queue stats (also makes sure the server is running)
 			this.rest.get("/status", AutoTestRouteHandler.getAutoTestStatus);
