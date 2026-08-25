@@ -50,7 +50,7 @@ export default class AutoTestRouteHandler {
 	/**
 	 * Makes sure the AutoTest server is started
 	 */
-	public static async getAutoTestStatus(_request: FastifyRequest, reply: FastifyReply) {
+	public static async getAutoTestStatus(_request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 		try {
 			Log.info("RouteHanlder::getAutoTestStatus(..) - start");
 
@@ -80,7 +80,7 @@ export default class AutoTestRouteHandler {
 	 * - commit_comment
 	 * - push
 	 */
-	public static async postGithubHook(request: FastifyRequest, reply: FastifyReply) {
+	public static async postGithubHook(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 		const start = Date.now();
 		// NOTE: restify offered req.header() with case-insensitive lookup; Fastify exposes the
 		// raw headers object, which Node has already lower-cased
@@ -226,7 +226,7 @@ export default class AutoTestRouteHandler {
 		return { socketPath: AutoTestRouteHandler.DEFAULT_DOCKER_SOCKET };
 	}
 
-	public static async getDockerImages(request: FastifyRequest, reply: FastifyReply) {
+	public static async getDockerImages(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 		try {
 			const docker = AutoTestRouteHandler.getDocker();
 			const filtersStr = (request.query as any).filters;
@@ -271,7 +271,7 @@ export default class AutoTestRouteHandler {
 	//     next();
 	// }
 
-	public static async postDockerImage(request: FastifyRequest, reply: FastifyReply) {
+	public static async postDockerImage(request: FastifyRequest, reply: FastifyReply): Promise<void> {
 		Log.info("AutoTestRouteHandler::postDockerImage(..) - start");
 
 		AutoTestRouteHandler.getDocker(); // make sure docker is configured
@@ -281,13 +281,16 @@ export default class AutoTestRouteHandler {
 		// NOTE: validation happens before the socket is hijacked below. Once hijacked, Fastify is
 		// out of the picture and there is no way to send a normal error response.
 		if (typeof body?.remote === "undefined") {
-			return reply.code(400).send("remote parameter missing");
+			reply.code(400).send("remote parameter missing");
+			return;
 		}
 		if (typeof body?.tag === "undefined") {
-			return reply.code(400).send("tag parameter missing");
+			reply.code(400).send("tag parameter missing");
+			return;
 		}
 		if (typeof body?.file === "undefined") {
-			return reply.code(400).send("file parameter missing");
+			reply.code(400).send("file parameter missing");
+			return;
 		}
 
 		const tag = body.tag;
@@ -375,7 +378,7 @@ export default class AutoTestRouteHandler {
 		});
 	}
 
-	public static async removeDockerImage(request: FastifyRequest, reply: FastifyReply) {
+	public static async removeDockerImage(request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 		let success = false;
 		let errorMsg = "";
 

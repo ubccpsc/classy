@@ -1,6 +1,6 @@
 import Config from "@common/Config";
 import Log from "@common/Log";
-import Fastify, { type FastifyInstance } from "fastify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
 import * as http from "http";
 
 import AutoTestRouteHandler from "./AutoTestRouteHandler";
@@ -43,7 +43,7 @@ export default class AutoTestServer {
 	 * Sets the port on this instance of a server
 	 * @returns {void}
 	 */
-	public setPort(portNum: number) {
+	public setPort(portNum: number): void {
 		Log.info("AutoTestServer::setPort()");
 		this.port = portNum;
 	}
@@ -65,7 +65,7 @@ export default class AutoTestServer {
 			});
 
 			// support CORS
-			this.rest.addHook("onRequest", async (_request, reply) => {
+			this.rest.addHook("onRequest", async (_request: FastifyRequest, reply: FastifyReply): Promise<void> => {
 				reply.header("Access-Control-Allow-Origin", "*");
 				reply.header("Access-Control-Allow-Headers", "X-Requested-With");
 			});
