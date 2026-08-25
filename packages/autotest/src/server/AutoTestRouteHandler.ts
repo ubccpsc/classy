@@ -21,16 +21,10 @@ export default class AutoTestRouteHandler {
 
 	public static getDocker(): Docker {
 		if (AutoTestRouteHandler.docker === null) {
-			// NOTE: not sure what commenting this out will do in CI, but
-			// seems right for local dev and will be fine in production
-
-			// if (Config.getInstance().getProp(ConfigKey.name) === "classytest") {
-			//     // Running tests; do not need to connect to the Docker daemon
-			//     this.docker = null;
-			// } else {
-			// Connect to the Docker socket using defaults
+			// NOTE: constructed even under test. dockerode does not connect here, so this is cheap;
+			// the specs that actually build images need a real daemon anyway. Dockerode honours
+			// DOCKER_HOST itself (see getDockerRequestOptions for the raw-request equivalent).
 			AutoTestRouteHandler.docker = new Docker();
-			// }
 		}
 
 		return AutoTestRouteHandler.docker;
@@ -52,7 +46,7 @@ export default class AutoTestRouteHandler {
 	 */
 	public static async getAutoTestStatus(_request: FastifyRequest, reply: FastifyReply): Promise<FastifyReply> {
 		try {
-			Log.info("RouteHanlder::getAutoTestStatus(..) - start");
+			Log.info("AutoTestRouteHandler::getAutoTestStatus(..) - start");
 
 			// should load AutoTest, if it has not been loaded already
 			// if it is loading for the first time the queue will tick itself
@@ -66,10 +60,10 @@ export default class AutoTestRouteHandler {
 			// get the status
 			const status = at.getStatus();
 
-			Log.info("RouteHanlder::getAutoTestStatus(..) - done");
+			Log.info("AutoTestRouteHandler::getAutoTestStatus(..) - done");
 			return reply.code(200).send(status);
 		} catch (err) {
-			Log.info("RouteHanlder::getAutoTestStatus(..) - ERROR: " + err);
+			Log.info("AutoTestRouteHandler::getAutoTestStatus(..) - ERROR: " + err);
 			return reply.code(400).send("Failed to check AutoTest: " + err.message);
 		}
 	}
@@ -150,7 +144,7 @@ export default class AutoTestRouteHandler {
 			// close the response out from under it.
 			Log.trace("AutoTestRouteHandler::postGithubHook() - starting handle");
 			try {
-				const commitEvent = await AutoTestRouteHandler.handleWebhook(githubEvent, body as string);
+				const commitEvent = await AutoTestRouteHandler.handleWebhook(githubEvent, body);
 				Log.trace("AutoTestRouteHandler::postGithubHook(..) - done handling event: " + githubEvent);
 				if (commitEvent !== null) {
 					Log.info("AutoTestRouteHandler::postGithubHook() - handle done; took: " + Util.took(start));
@@ -248,28 +242,6 @@ export default class AutoTestRouteHandler {
 			return reply.code(400).send(err.message);
 		}
 	}
-
-	// public static getResource(req: restify.Request, res: restify.Response, next: restify.Next) {
-	//     const path = Config.getInstance().getProp(ConfigKey.persistDir) + "/" + req.url.split("/resource/")[1];
-	//     Log.info("AutoTestRouteHandler::getResource(..) - start; fetching resource: " + path);
-	//
-	//     const rs = fs.createReadStream(path);
-	//     rs.on("error", (err: any) => {
-	//         if (err.code === "ENOENT") {
-	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Requested resource does not exist: " + path);
-	//             res.send(404, err.message);
-	//         } else {
-	//             Log.error("AutoTestRouteHandler::getResource(..) - ERROR Reading requested resource: " + path);
-	//             res.send(500, err.message);
-	//         }
-	//     });
-	//     rs.on("end", () => {
-	//         rs.close();
-	//     });
-	//     rs.pipe(res);
-	//
-	//     next();
-	// }
 
 	public static async postDockerImage(request: FastifyRequest, reply: FastifyReply): Promise<void> {
 		Log.info("AutoTestRouteHandler::postDockerImage(..) - start");
@@ -445,7 +417,7 @@ export default class AutoTestRouteHandler {
 		return reply.code(400).send({ success: false, message: errorMsg });
 	}
 
-	private static async handleWebhook(event: string, body: string): Promise<CommitTarget> {
+	private static async handleWebhook(event: string, body: unknown): Promise<CommitTarget> {
 		// cast is unfortunate, but if we are listening to these routes it must be a GitHub AT instance
 		const at: GitHubAutoTest = AutoTestRouteHandler.getAutoTest() as GitHubAutoTest;
 
