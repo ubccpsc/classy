@@ -38,61 +38,16 @@ import * as cookie from "cookie";
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import * as http from "http";
 import fetch, { RequestInit } from "node-fetch";
-
 import { ClasslistAgent } from "./ClasslistAgent";
 import { CSVParser } from "./CSVParser";
+import { RouteUtil } from "./RouteUtil";
 
 export default class AdminRoutes implements IREST {
 	private static ghc = new GitHubController(GitHubActions.getInstance());
 	private static rc = new RepositoryController();
 
 	public static handleError(code: number, msg: string, res: FastifyReply): void {
-		const payload: Payload = { failure: { message: msg, shouldLogout: false } };
-		if (code !== 401) {
-			Log.error("AdminRoutes::handleError(..) - ERROR: ", msg);
-			Log.trace("AdminRoutes::handleError(..) - Payload: ", msg); // only needed when debugging
-		} else {
-			// common enough it should not be logged as error
-			Log.info("AdminRoutes::handleError(..) - ERROR: ", msg);
-		}
-		res.code(code).send(payload);
-		return;
-	}
-
-	public static processAuth(req: ClassyRequest): { user: string; token: string } {
-		try {
-			let user = req.headers.user;
-			let token = req.headers.token;
-
-			// fallback to getting token from cookies
-			// this is useful for providing links in for attachments, but also might become the default in the future
-			if ((typeof user === "undefined" || typeof token === "undefined") && typeof req.headers.cookie !== "undefined") {
-				// the following snippet is a tiny modification based on a snippet in App.validateCredentials()
-				// https://github.com/ubccpsc/classy/blob/bbe1d564f21d828101935892103b51453ed7863f/
-				// packages/portal/frontend/src/app/App.ts#L200
-				const tokenString = cookie.parse(req.headers.cookie).token;
-				if (typeof tokenString !== "undefined" && tokenString !== null && typeof tokenString.split !== "undefined") {
-					const tokenParts = tokenString.split("__"); // Firefox does not like multiple tokens
-					if (tokenParts.length === 1) {
-						token = tokenParts[0];
-					} else if (tokenParts.length === 2) {
-						token = tokenParts[0];
-						user = tokenParts[1];
-					}
-					Log.info("AdminRoutes::processAuth(..) - from cookies; user: " + user);
-				} else {
-					// we are here because user or token are not defined, but we do not have them here either
-					Log.info("AdminRoutes::processAuth(..) - cookies parsing failed; tokenString: " + tokenString);
-				}
-			}
-			// only return a valid object if both user and token exist (aka no partial credentials)
-			if (typeof user !== "undefined" && typeof token !== "undefined") {
-				return { user, token };
-			}
-		} catch (err) {
-			Log.error("AdminRoutes::processAuth(..) - ERROR: " + err.message);
-		}
-		return null;
+		RouteUtil.handleError("AdminRoutes", code, msg, res);
 	}
 
 	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -167,7 +122,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::teamCreate(..) - start");
 
 		// handled by isAdmin in the route chain
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		// NOTE: read from the body. These routes declare no path parameters; the values used to
 		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
 		// body into it. Fastify keeps params and body separate.
@@ -196,7 +151,7 @@ export default class AdminRoutes implements IREST {
 	// tolerate but which under Fastify would let the route handler run before the check resolved.
 	// A preHandler that sends a reply stops the chain; one that returns without sending continues.
 	private static async isPrivileged(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const auth = AdminRoutes.processAuth(req);
+		const auth = RouteUtil.processAuth(req);
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
 			Log.warn("AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.");
 			AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res);
@@ -227,7 +182,7 @@ export default class AdminRoutes implements IREST {
 	 * @param next
 	 */
 	private static async isAdmin(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const auth = AdminRoutes.processAuth(req);
+		const auth = RouteUtil.processAuth(req);
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
 			Log.warn("AdminRoutes::isAdmin(..) - undefined user or token; user not admin.");
 			AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res);
@@ -418,7 +373,7 @@ export default class AdminRoutes implements IREST {
 		// NOTE: the actor comes from the auth headers, like every other handler here. This used to
 		// read req.params.user, which is never populated: bodyParser({mapParams: true}) maps the
 		// body and query into params, not headers, so the audit record recorded an undefined actor.
-		const user = AdminRoutes.getUser(req);
+		const user = RouteUtil.getUser(req);
 		// delivId is part of the path, so a missing one produces a 404 before we get here
 		const delivId = req.params.delivId;
 		try {
@@ -491,22 +446,6 @@ export default class AdminRoutes implements IREST {
 
 		await GitHubActions.getInstance().deleteRepo(repoId);
 		return worked;
-	}
-
-	private static getUser(req: ClassyRequest): string {
-		const user = AdminRoutes.processAuth(req);
-		let userName = "UNKNOWN";
-		if (typeof user?.user === "string") {
-			userName = user.user;
-		}
-		// was too complex, but need to make sure this still works before removing
-		// if (user === null ||
-		//     typeof user !== "undefined" &&
-		//     typeof user.user !== "undefined" &&
-		//     user.user !== null) {
-		//     userName = user.user;
-		// }
-		return userName;
 	}
 
 	/**
@@ -643,7 +582,7 @@ export default class AdminRoutes implements IREST {
 		// authentication handled by preceding action in chain above (see registerRoutes)
 
 		try {
-			const userName = AdminRoutes.getUser(req);
+			const userName = RouteUtil.getUser(req);
 			const path = await AdminRoutes.getUploadedFilePath(req, "classlist");
 
 			// @fastify/multipart deletes the temp file saved by saveRequestFiles() as soon
@@ -673,7 +612,7 @@ export default class AdminRoutes implements IREST {
 		try {
 			const delivId = req.params.delivId;
 			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
-			const userName = AdminRoutes.getUser(req);
+			const userName = RouteUtil.getUser(req);
 			const csvParser = new CSVParser();
 
 			const grades = await csvParser.processGrades(userName, delivId, path);
@@ -699,7 +638,7 @@ export default class AdminRoutes implements IREST {
 		// authentication handled by preceding action in chain above (see registerRoutes)
 		try {
 			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
-			const userName = AdminRoutes.getUser(req);
+			const userName = RouteUtil.getUser(req);
 			const csvParser = new CSVPrairieLearnParser();
 
 			const grades = await csvParser.processGrades(userName, path);
@@ -723,7 +662,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postDeliverable(..) - start");
 
 		// isValid handled by preceding action in chain above (see registerRoutes)
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		const delivTrans = req.body as DeliverableTransport;
 		Log.info("AdminRoutes::postDeliverable() - body: " + JSON.stringify(delivTrans));
 		try {
@@ -781,7 +720,7 @@ export default class AdminRoutes implements IREST {
 	private static async postCourse(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postCourse(..) - start");
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		// NOTE: read from the body. These routes declare no path parameters; the values used to
 		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
 		// body into it. Fastify keeps params and body separate.
@@ -819,7 +758,7 @@ export default class AdminRoutes implements IREST {
 		const delivId = req.params.delivId;
 		const repoId = req.params.repoId;
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		Log.info("AdminRoutes::postProvision(..) - start; delivId: " + delivId + "; repoId: " + repoId);
 		// const provisionTrans: ProvisionTransport = req.params;
 		// Log.info("AdminRoutes::postProvision() - body: " + provisionTrans);
@@ -845,7 +784,7 @@ export default class AdminRoutes implements IREST {
 		const body = (req.body || {}) as { repoIds?: string[] };
 		const repoIds: string[] = Array.isArray(body.repoIds) ? body.repoIds : [];
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		Log.info("AdminRoutes::postProvisionBatch(..) - start; delivId: " + delivId + "; # repos: " + repoIds.length);
 
 		try {
@@ -939,7 +878,7 @@ export default class AdminRoutes implements IREST {
 	private static async postRelease(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postRelease(..) - start");
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		const repoId = req.params.repoId;
 
 		Log.info("AdminRoutes::postRelease() - repoId: " + repoId);
@@ -1092,7 +1031,7 @@ export default class AdminRoutes implements IREST {
 
 		// if these params are missing the client will get 404 since they are part of the path
 		const teamId = req.params.teamId;
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamDelete(userName, teamId);
 			Log.trace("AdminRoutes::teamDelete(..) - done; success: " + success);
@@ -1152,7 +1091,7 @@ export default class AdminRoutes implements IREST {
 		const memberId = req.params.memberId;
 		Log.info("AdminRoutes::teamAddMember(..) - team: " + teamId + "; member: " + memberId);
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamAddMember(userName, teamId, memberId);
 			const addedMembers = JSON.stringify(success.people);
@@ -1228,7 +1167,7 @@ export default class AdminRoutes implements IREST {
 		const memberId = req.params.memberId;
 		Log.info("AdminRoutes::teamRemoveMember(..) - team: " + teamId + "; member: " + memberId);
 
-		const userName = AdminRoutes.getUser(req);
+		const userName = RouteUtil.getUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamRemoveMember(userName, teamId, memberId);
 			Log.info("AdminRoutes::teamRemoveMember(..) - done; team: " + teamId + "; member: " + memberId); // + "; success:", success);
@@ -1286,97 +1225,6 @@ export default class AdminRoutes implements IREST {
 		return afterTeam;
 	}
 
-	// private static updatePatches(_req: ClassyRequest, res: FastifyReply): void {
-	// 	Log.trace("AdminRoutes::updatePatches(..) - start");
-	// 	const start = Date.now();
-	//
-	// 	const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/update";
-	// 	const opts: RequestInit = {
-	// 		method: "post",
-	// 		agent: new http.Agent(),
-	// 	};
-	// 	fetch(url, opts)
-	// 		.then((_result) => {
-	// 			Log.info("AdminRoutes::updatePatches(..) - done; took: " + Util.took(start));
-	// 			res.send({ success: "patches updated" });
-	// 			return;
-	// 		})
-	// 		.catch((err) => {
-	// 			return AdminRoutes.handleError(400, "Unable to update patches. Error: " + err.message, res);
-	// 		});
-	// }
-
-	// private static listPatches(_req: ClassyRequest, res: FastifyReply): void {
-	// 	Log.trace("AdminRoutes::listPatches(..) - start");
-	// 	const start = Date.now();
-	//
-	// 	const url = Config.getInstance().getProp(ConfigKey.patchToolUrl) + "/patches";
-	// 	const opts: RequestInit = {
-	// 		method: "get",
-	// 		agent: new http.Agent(),
-	// 	};
-	//
-	// 	fetch(url, opts)
-	// 		.then(async (result) => {
-	// 			try {
-	// 				const patches = (await result.json()).message;
-	// 				Log.info(
-	// 					"AdminRoutes::listPatches(..) - done; " +
-	// 						patches.length +
-	// 						" patch" +
-	// 						(patches.length === 1 ? "" : "es") +
-	// 						" found; took: " +
-	// 						Util.took(start)
-	// 				);
-	// 				res.send({ success: patches });
-	// 				return;
-	// 			} catch (err) {
-	// 				return AdminRoutes.handleError(400, "Patches not returned in expected format. Error: " + err.message, res);
-	// 			}
-	// 		})
-	// 		.catch((err) => {
-	// 			return AdminRoutes.handleError(400, "Unable to get patches. Error: " + err.message, res);
-	// 		});
-	// }
-
-	// private static patchRepo(req: ClassyRequest, res: FastifyReply): void {
-	// 	Log.trace("AdminRoutes::patchRepo(..) - start");
-	// 	const start = Date.now();
-	// 	const patch: string = req.params.patch;
-	// 	const repoId: string = req.params.repo;
-	// 	const root: boolean = req.params.root === "true";
-	// 	AdminRoutes.rc
-	// 		.getRepository(repoId)
-	// 		.then((repo: Repository) => {
-	// 			return AdminRoutes.ghc.createPullRequest(repo, patch, false, root);
-	// 		})
-	// 		.then((result: boolean) => {
-	// 			if (result) {
-	// 				Log.info("AdminRoutes::patchRepo(..) - done; took: " + Util.took(start));
-	// 				res.send({ success: repoId });
-	// 				return;
-	// 			} else {
-	// 				return AdminRoutes.handleError(400, "Unable to patch repo.", res);
-	// 			}
-	// 		})
-	// 		.catch((err: any) => {
-	// 			return AdminRoutes.handleError(400, "Unable to patch repo. ERROR: " + err.message, res);
-	// 		});
-	// }
-
-	// private static patchSource(_req: ClassyRequest, res: FastifyReply): void {
-	// 	Log.trace("AdminRoutes::patchSource(..) - start");
-	// 	const patchSourceRepo: string = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
-	// 	if (patchSourceRepo && patchSourceRepo !== "") {
-	// 		Log.trace("AdminRoutes::patchSource(..) - Responding with patch source (" + patchSourceRepo + ")");
-	// 		res.send({ success: patchSourceRepo });
-	// 		return;
-	// 	} else {
-	// 		Log.info("AdminRoutes::patchSource(..) - patch not found in environment");
-	// 		return AdminRoutes.handleError(424, "Patch source repo not found in environment", res);
-	// 	}
-	// }
-
 	public registerRoutes(server: FastifyInstance): void {
 		Log.trace("AdminRoutes::registerRoutes() - start");
 
@@ -1422,10 +1270,6 @@ export default class AdminRoutes implements IREST {
 		server.delete("/portal/admin/team/:teamId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamDelete);
 
 		// admin patch routes (no longer supported)
-		// server.get("/portal/admin/listPatches", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.listPatches);
-		// server.post("/portal/admin/patchRepo/:repo/:patch/:root", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.patchRepo);
-		// server.get("/portal/admin/patchSource", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.patchSource);
-		// server.post("/portal/admin/updatePatches", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.updatePatches);
 
 		// staff-only functions
 		// NOTHING

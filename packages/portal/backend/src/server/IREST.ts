@@ -11,16 +11,12 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
  * headers. That is enough for `req.params.delivId` and `req.headers.user` to type as `string`
  * rather than `any`, without per-route churn.
  *
- * NOTE: `Body` is deliberately `any`. Bodies here are validated by the *Transport validators in
- * the controllers rather than by a Fastify schema, so a stricter type would be a claim the code
- * does not actually check.
+ * `Body` is not declared; handlers that read a body cast it (`req.body as XTransport`).
  */
 export type ClassyRequest = FastifyRequest<{
 	Params: Record<string, string>;
 	Querystring: Record<string, string>;
 	Headers: Record<string, string>;
-	// biome-ignore lint/suspicious/noExplicitAny: request bodies are validated in the controllers
-	Body: any;
 }>;
 
 export default interface IREST {

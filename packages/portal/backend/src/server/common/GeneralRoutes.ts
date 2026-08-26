@@ -28,9 +28,9 @@ import { Factory } from "../../Factory";
 import { AuditLabel, GitHubStatus, Person } from "../../Types";
 
 import IREST, { type ClassyRequest } from "../IREST";
-import AdminRoutes from "./AdminRoutes";
 import { AuthRoutes } from "./AuthRoutes";
 import { ClasslistAgent } from "./ClasslistAgent";
+import { RouteUtil } from "./RouteUtil";
 
 export default class GeneralRoutes implements IREST {
 	public static async getConfig(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -44,18 +44,20 @@ export default class GeneralRoutes implements IREST {
 			.filter((d) => d.teamStudentsForm === true)
 			.map((d) => d.id);
 
-		let payload: ConfigTransportPayload;
 		if (org !== null) {
-			payload = { success: { org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds } };
+			const payload: ConfigTransportPayload = {
+				success: { org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds },
+			};
 			Log.trace("GeneralRoutes::getConfig(..) - done; took: " + Util.took(start));
 			Log.trace("GeneralRoutes::getConfig(..) - sending: " + JSON.stringify(payload));
 			res.code(200).send(payload);
 			return;
-		} else {
-			payload = { failure: { message: "Unable to retrieve config (server error)", shouldLogout: false } };
-			res.code(400).send(payload);
-			return;
 		}
+
+		const payload: ConfigTransportPayload = {
+			failure: { message: "Unable to retrieve config (server error)", shouldLogout: false },
+		};
+		res.code(400).send(payload);
 	}
 
 	public static async getPerson(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -118,7 +120,7 @@ export default class GeneralRoutes implements IREST {
 	public static async getResource(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("GeneralRoutes::getResource(..) - start; user: " + req.headers.user);
 
-		const auth = AdminRoutes.processAuth(req);
+		const auth = RouteUtil.processAuth(req);
 		// const user = req.headers.user;
 		// const token = req.headers.token;
 		// const params = req.params;
@@ -304,10 +306,8 @@ export default class GeneralRoutes implements IREST {
 			const data = await ca.fetchClasslist();
 			const classlistChanges = await ca.processClasslist(auditInfo, null, data);
 
-			let payload: Payload;
-
 			if (classlistChanges.classlist.length) {
-				payload = {
+				const payload: Payload = {
 					success: {
 						message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
 					},
@@ -325,9 +325,7 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static handleError(code: number, msg: string, res: FastifyReply): void {
-		Log.error("GeneralRoutes::handleError(..) - ERROR: " + msg);
-		res.code(code).send({ failure: { message: msg, shouldLogout: false } });
-		return;
+		RouteUtil.handleError("GeneralRoutes", code, msg, res);
 	}
 
 	private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
