@@ -28,8 +28,8 @@ From *within the installation directory*, to pull in changes:
 - Type `git branch` to ensure that you are on the `main` branch of the project.
   - If you are not on the `main` branch, then abort the update and check with the instructor for further instructions on how to proceed with the update.
 - If no changes are *staged* or *not staged* for a commit in the `git status` command, then type `git pull`. The `pull` command will bring in the latest changes from the branch.
-- Re-build the project by typing `docker-compose build`. This will compile the code and Dockerize the applications.
-- If the build successfully completes, then type `docker-compose up -d` to run the application in detached mode.
-- Go to the http path of the application (ie. https://classy-dev.students.cs.ubc.ca) to ensure that the application is running as intended.
+- Re-build the project by typing `docker compose build`. This will compile the code and Dockerize the applications.
+- If the build successfully completes, then type `docker compose up -d` to run the application in detached mode.
+- Go to the http path of the application (i.e. https://classy-dev.students.cs.ubc.ca) to ensure that the application is running as intended.
 
 In the case that software dependencies must be updated, then follow the [2.3 Starting/Stopping Classy](/docs/tech-staff/startstop.md) build, start, and stop steps in the `README.md` after updating the software.

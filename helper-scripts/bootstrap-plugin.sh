@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre-file to `docker-compose build` command when setting a plugin in Classy.
+# Pre-file to `docker compose build` command when setting a plugin in Classy.
 # This file needs to run on Linux boxes without Node dependencies. Node is introduced
 # during the Docker build, but not before, in a production environment.
 

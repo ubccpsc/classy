@@ -4,8 +4,6 @@
 # You can choose to override existing services in this file, by making changes to the service in this file,
 # or you can introduce new services here.
 
-version: "3.5"
-
 services:
     autotest:
         build:

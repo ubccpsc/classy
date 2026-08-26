@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre to `docker-compose build`. Performs plugin configuration.
+# Pre to `docker compose build`. Performs plugin configuration.
 # If nginx.rconf file found, it will overwrite default Classy nginx.rconf
 
 plugin=`awk -F = '/^PLUGIN[[:space:]]*=/{gsub(/[[:space:]]/, "", $2); print $2}' ./.env`

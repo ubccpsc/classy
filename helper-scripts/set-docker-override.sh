@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# Pre to `docker-compose build`. Performs plugin configuration.
+# Pre to `docker compose build`. Performs plugin configuration.
 # If docker-compose.override.yml file found, it will be copied to the root Classy folder to be
 # read by docker-compose at build time.
 
