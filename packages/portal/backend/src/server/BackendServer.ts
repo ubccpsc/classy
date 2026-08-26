@@ -198,14 +198,16 @@ export default class BackendServer {
 
 			// after the Classy backend is up, check AutoTest
 			// (Docker should load AutoTest first, but the delay should not hurt)
-			setTimeout(() => {
-				AutoTestRoutes.checkATStatus()
-					.then(function (_result) {
-						Log.trace("BackendServer::start() - AT status: success");
-					})
-					.catch(function (err) {
-						Log.trace("BackendServer::start() - AT status: failure; ERROR: " + err.message);
-					});
+			// NOTE: deliberately not awaited -- start() must resolve so the server is usable
+			// whether or not AutoTest happens to be up yet. The callback swallows its own errors,
+			// so this never produces an unhandled rejection.
+			setTimeout(async () => {
+				try {
+					await AutoTestRoutes.checkATStatus();
+					Log.trace("BackendServer::start() - AT status: success");
+				} catch (err) {
+					Log.trace("BackendServer::start() - AT status: failure; ERROR: " + err.message);
+				}
 			}, 500);
 
 			return true;

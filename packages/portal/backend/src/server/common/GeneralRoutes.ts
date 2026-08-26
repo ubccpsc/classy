@@ -58,67 +58,64 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	public static getPerson(req: ClassyRequest, res: FastifyReply): void {
+	public static async getPerson(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const user = req.headers.user;
 		const token = req.headers.token;
 		Log.trace("GeneralRoutes::getPerson(..) - start; user: " + user);
 
-		GeneralRoutes.performGetPerson(user, token)
-			.then(function (personTrans) {
-				const payload: Payload = { success: personTrans };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getPerson(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const personTrans = await GeneralRoutes.performGetPerson(user, token);
+			const payload: Payload = { success: personTrans };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getPerson(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static getGrades(req: ClassyRequest, res: FastifyReply): void {
+	public static async getGrades(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const user = req.headers.user;
 		const token = req.headers.token;
 
 		Log.trace("GeneralRoutes::getGrades(..) - start; user: " + user);
 
-		GeneralRoutes.performGetGrades(user, token)
-			.then(function (grades) {
-				const payload: GradeTransportPayload = { success: grades };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getGrades(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const grades = await GeneralRoutes.performGetGrades(user, token);
+			const payload: GradeTransportPayload = { success: grades };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getGrades(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static getTeams(req: ClassyRequest, res: FastifyReply): void {
+	public static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const user = req.headers.user;
 		const token = req.headers.token;
 		Log.trace("GeneralRoutes::getTeams(..) - start; user: " + user);
 		const start = Date.now();
 
-		GeneralRoutes.performGetTeams(user, token)
-			.then(function (teams) {
-				Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
-				const payload: TeamTransportPayload = { success: teams };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getTeams(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const teams = await GeneralRoutes.performGetTeams(user, token);
+			Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
+			const payload: TeamTransportPayload = { success: teams };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getTeams(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static getResource(req: ClassyRequest, res: FastifyReply): void {
+	public static async getResource(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("GeneralRoutes::getResource(..) - start; user: " + req.headers.user);
 
 		const auth = AdminRoutes.processAuth(req);
@@ -139,45 +136,52 @@ export default class GeneralRoutes implements IREST {
 
 		Log.info("GeneralRoutes::getResource(..) - user: " + auth.user + "; path: " + path);
 
-		GeneralRoutes.performGetResource(auth, path)
-			.then(function (resource: any) {
-				const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
-				Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+		try {
+			// NOTE: the resolved resource is not used; performGetResource is called for its
+			// authorization check, which throws when the user may not read this path.
+			await GeneralRoutes.performGetResource(auth, path);
 
-				try {
-					if (fs.lstatSync(filePath).isDirectory()) {
-						Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
-						const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
-						// NOTE: sending a string lets Fastify set Content-Length itself, which is
-						// what the directory-listing spec asserts; the previous writeHead/write/end
-						// wrote to the raw response to achieve the same thing.
-						res.code(200).header("Content-Type", "text/html").send(html);
-					} else {
-						// NOTE: handed to Fastify as a stream rather than piped to the response.
-						// Fastify pipes it and responds chunked, so large AutoTest artifacts are
-						// still streamed rather than buffered (the spec asserts the chunked
-						// encoding). Stream errors after the headers are sent are Fastify's to
-						// handle; a missing file is caught by the lstatSync above.
-						const rs = fs.createReadStream(filePath);
-						rs.on("end", () => {
-							Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
-						});
-						res.code(200).send(rs);
-					}
-				} catch (err) {
-					Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-					res.code(404).send(err.message);
-				}
-			})
-			.catch(function (err) {
-				Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
-				if (err.message === "401") {
-					return GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res);
+			const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
+			Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+
+			try {
+				if (fs.lstatSync(filePath).isDirectory()) {
+					Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
+					const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
+					// NOTE: sending a string lets Fastify set Content-Length itself, which is
+					// what the directory-listing spec asserts; the previous writeHead/write/end
+					// wrote to the raw response to achieve the same thing.
+					res.code(200).header("Content-Type", "text/html").send(html);
 				} else {
-					Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
-					return GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res);
+					// NOTE: handed to Fastify as a stream rather than piped to the response.
+					// Fastify pipes it and responds chunked, so large AutoTest artifacts are
+					// still streamed rather than buffered (the spec asserts the chunked
+					// encoding). Stream errors after the headers are sent are Fastify's to
+					// handle; a missing file is caught by the lstatSync above.
+					const rs = fs.createReadStream(filePath);
+					rs.on("end", () => {
+						Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+					});
+					// NOTE: awaited. In an async handler Fastify finalizes the reply as soon as the
+					// handler's promise resolves, which for a stream payload means closing the
+					// response before anything has been piped (a 200 with content-length: 0).
+					// FastifyReply is thenable and settles once the response is actually flushed,
+					// so awaiting it holds the handler open for the duration of the stream.
+					await res.code(200).send(rs);
 				}
-			});
+			} catch (err) {
+				Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+				res.code(404).send(err.message);
+			}
+		} catch (err) {
+			Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
+			if (err.message === "401") {
+				GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res);
+				return;
+			}
+			Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
+			GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res);
+		}
 	}
 
 	public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
@@ -234,26 +238,25 @@ export default class GeneralRoutes implements IREST {
 		return proceed;
 	}
 
-	public static getRepos(req: ClassyRequest, res: FastifyReply): void {
+	public static async getRepos(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const user = req.headers.user;
 		const token = req.headers.token;
 		Log.trace("GeneralRoutes::getRepos(..) - start; user: " + user);
 
-		GeneralRoutes.performGetRepos(user, token)
-			.then(function (repos) {
-				const payload: RepositoryPayload = { success: repos };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getRepos(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const repos = await GeneralRoutes.performGetRepos(user, token);
+			const payload: RepositoryPayload = { success: repos };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getRepos(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static postTeam(req: ClassyRequest, res: FastifyReply): void {
+	public static async postTeam(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const user = req.headers.user;
 		const token = req.headers.token;
 
@@ -267,19 +270,18 @@ export default class GeneralRoutes implements IREST {
 			res.code(400).send(payload);
 			return;
 		}
-		GeneralRoutes.performPostTeam(user, token, teamTrans)
-			.then(function (team) {
-				Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const team = await GeneralRoutes.performPostTeam(user, token, teamTrans);
+			Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
+			const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
 	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {

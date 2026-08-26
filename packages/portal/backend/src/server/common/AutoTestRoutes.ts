@@ -73,7 +73,7 @@ export class AutoTestRoutes implements IREST {
 		return;
 	}
 
-	public static atContainerDetails(req: ClassyRequest, res: FastifyReply): void {
+	public static async atContainerDetails(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - start GET");
 		const start = Date.now();
 
@@ -88,36 +88,35 @@ export class AutoTestRoutes implements IREST {
 			Log.trace("AutoTestRoutes::atContainerDetails(..) - name: " + name + "; delivId: " + delivId);
 
 			const dc = new DeliverablesController();
-			dc.getDeliverable(delivId)
-				.then(function (deliv) {
-					if (deliv !== null) {
-						const at: AutoTestConfigTransport = {
-							dockerImage: deliv.autotest.dockerImage,
-							studentDelay: deliv.autotest.studentDelay,
-							maxExecTime: deliv.autotest.maxExecTime,
-							regressionDelivIds: deliv.autotest.regressionDelivIds,
-							custom: deliv.autotest.custom,
-							openTimestamp: deliv.openTimestamp,
-							closeTimestamp: deliv.closeTimestamp,
-							lateAutoTest: deliv.lateAutoTest,
-						};
-						payload = { success: at };
-						Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; " + "took: " + Util.took(start));
-						res.code(200).send(payload);
-						return;
-					} else {
-						// This is more like a warning; if a deliverable is not configured this is going to happen
-						return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res);
-					}
-				})
-				.catch(function () {
-					// err
-					return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res);
-				});
+			try {
+				const deliv = await dc.getDeliverable(delivId);
+				if (deliv !== null) {
+					const at: AutoTestConfigTransport = {
+						dockerImage: deliv.autotest.dockerImage,
+						studentDelay: deliv.autotest.studentDelay,
+						maxExecTime: deliv.autotest.maxExecTime,
+						regressionDelivIds: deliv.autotest.regressionDelivIds,
+						custom: deliv.autotest.custom,
+						openTimestamp: deliv.openTimestamp,
+						closeTimestamp: deliv.closeTimestamp,
+						lateAutoTest: deliv.lateAutoTest,
+					};
+					payload = { success: at };
+					Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; " + "took: " + Util.took(start));
+					res.code(200).send(payload);
+					return;
+				} else {
+					// This is more like a warning; if a deliverable is not configured this is going to happen
+					return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res);
+				}
+			} catch {
+				// err
+				return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res);
+			}
 		}
 	}
 
-	public static atConfiguration(req: ClassyRequest, res: FastifyReply): void {
+	public static async atConfiguration(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atConfiguration(..) - /at - start");
 		const start = Date.now();
 
@@ -130,34 +129,32 @@ export class AutoTestRoutes implements IREST {
 			Log.trace("AutoTestRoutes::atConfiguration(..) - name: " + name + "; took: " + Util.took(start));
 
 			const cc = new AdminController(new GitHubController(GitHubActions.getInstance()));
-			let defaultDeliverable: string | null = null;
 			Log.trace("AutoTestRoutes::atConfiguration(..) - cc; took: " + Util.took(start));
 
-			cc.getCourse()
-				.then(function (course) {
-					defaultDeliverable = course.defaultDeliverableId;
-					Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
-					return cc.getDeliverables();
-				})
-				.then(function (deliverables) {
-					const delivIds = [];
-					for (const deliv of deliverables) {
-						delivIds.push(deliv.id);
-					}
-					payload = { success: { defaultDeliverable: defaultDeliverable, deliverableIds: delivIds } };
+			try {
+				// NOTE: these two are sequential rather than concurrent because that is what the
+				// original .then() chain did; getDeliverables() does not depend on the course, so
+				// they could be a Promise.all if this ever shows up as slow.
+				const course = await cc.getCourse();
+				const defaultDeliverable = course.defaultDeliverableId;
+				Log.trace("AutoTestRoutes::atConfiguration(..) - default: " + defaultDeliverable + "; took: " + Util.took(start));
 
-					Log.trace("AutoTestRoutes::atConfiguration(..) - /at - done; took: " + Util.took(start));
-					res.code(200).send(payload);
-					return;
-				})
-				.catch(function () {
-					// err
-					return AutoTestRoutes.handleError(400, "Error retrieving backend configuration.", res);
-				});
+				const deliverables = await cc.getDeliverables();
+				const delivIds = [];
+				for (const deliv of deliverables) {
+					delivIds.push(deliv.id);
+				}
+				payload = { success: { defaultDeliverable: defaultDeliverable, deliverableIds: delivIds } };
+
+				Log.trace("AutoTestRoutes::atConfiguration(..) - /at - done; took: " + Util.took(start));
+				res.code(200).send(payload);
+			} catch {
+				AutoTestRoutes.handleError(400, "Error retrieving backend configuration.", res);
+			}
 		}
 	}
 
-	public static atGrade(req: ClassyRequest, res: FastifyReply): void {
+	public static async atGrade(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atGrade(..) - start");
 		const start = Date.now();
 
@@ -168,16 +165,15 @@ export class AutoTestRoutes implements IREST {
 		} else {
 			const gradeRecord = req.body as AutoTestGradeTransport;
 
-			AutoTestRoutes.performPostGrade(gradeRecord)
-				.then(function (saved: any) {
-					payload = { success: { success: saved } };
-					Log.trace("AutoTestRoutes::atGrade(..) - done; took: " + Util.took(start));
-					res.code(200).send(payload);
-					return;
-				})
-				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Failed to receive grade; ERROR: " + err.message, res);
-				});
+			try {
+				const saved: any = await AutoTestRoutes.performPostGrade(gradeRecord);
+				payload = { success: { success: saved } };
+				Log.trace("AutoTestRoutes::atGrade(..) - done; took: " + Util.took(start));
+				res.code(200).send(payload);
+				return;
+			} catch (err) {
+				return AutoTestRoutes.handleError(400, "Failed to receive grade; ERROR: " + err.message, res);
+			}
 		}
 	}
 
@@ -206,7 +202,7 @@ export class AutoTestRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	public static atPostResult(req: ClassyRequest, res: FastifyReply): void {
+	public static async atPostResult(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atPostResult(..) - start");
 		const start = Date.now();
 
@@ -218,16 +214,15 @@ export class AutoTestRoutes implements IREST {
 		} else {
 			const resultRecord = req.body as AutoTestResultTransport;
 			// Log.trace("AutoTestRoutes::atPostResult(..) - body: " + JSON.stringify(resultRecord));
-			AutoTestRoutes.performPostResult(resultRecord)
-				.then(function () {
-					payload = { success: { message: "Result received" } };
-					Log.trace("AutoTestRoutes::atPostResult(..) - done; took: " + Util.took(start));
-					res.code(200).send(payload);
-					return;
-				})
-				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Error processing result: " + err.message, res);
-				});
+			try {
+				await AutoTestRoutes.performPostResult(resultRecord);
+				payload = { success: { message: "Result received" } };
+				Log.trace("AutoTestRoutes::atPostResult(..) - done; took: " + Util.took(start));
+				res.code(200).send(payload);
+				return;
+			} catch (err) {
+				return AutoTestRoutes.handleError(400, "Error processing result: " + err.message, res);
+			}
 		}
 	}
 
@@ -313,7 +308,7 @@ export class AutoTestRoutes implements IREST {
 		}
 	}
 
-	public static atPersonId(req: ClassyRequest, res: FastifyReply): void {
+	public static async atPersonId(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atPersonId(..) - /isStaff/:githubId - start GET");
 		const start = Date.now();
 
@@ -325,25 +320,24 @@ export class AutoTestRoutes implements IREST {
 			const githubId = req.params.githubId;
 
 			const pc = new PersonController();
-			pc.getGitHubPerson(githubId)
-				.then(function (person) {
-					if (person !== null) {
-						Log.info("AutoTestRoutes::atPersonId(..) - person: " + person.id + "; github: " + githubId + "; took: " + Util.took(start));
-						payload = { success: { personId: person.id } }; // PersonTransportPayload
-						res.code(200).send(payload);
-						return;
-					} else {
-						return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res);
-					}
-				})
-				.catch(function () {
-					// err
+			try {
+				const person = await pc.getGitHubPerson(githubId);
+				if (person !== null) {
+					Log.info("AutoTestRoutes::atPersonId(..) - person: " + person.id + "; github: " + githubId + "; took: " + Util.took(start));
+					payload = { success: { personId: person.id } }; // PersonTransportPayload
+					res.code(200).send(payload);
+					return;
+				} else {
 					return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res);
-				});
+				}
+			} catch {
+				// err
+				return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res);
+			}
 		}
 	}
 
-	public static atGetResult(req: ClassyRequest, res: FastifyReply): void {
+	public static async atGetResult(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atGetResult(..) - /at/result/:delivId/:repoId/:sha/:ref - start GET");
 
 		let payload: AutoTestResultPayload;
@@ -366,19 +360,18 @@ export class AutoTestRoutes implements IREST {
 			);
 
 			const rc = new ResultsController();
-			rc.getResult(delivId, repoId, sha, ref)
-				.then(function (result: AutoTestResult) {
-					if (result !== null) {
-						payload = { success: [result] };
-					} else {
-						payload = { success: [] };
-					}
-					res.code(200).send(payload);
-					return;
-				})
-				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Error retrieving result record: " + err.message, res);
-				});
+			try {
+				const result: AutoTestResult = await rc.getResult(delivId, repoId, sha, ref);
+				if (result !== null) {
+					payload = { success: [result] };
+				} else {
+					payload = { success: [] };
+				}
+				res.code(200).send(payload);
+				return;
+			} catch (err) {
+				return AutoTestRoutes.handleError(400, "Error retrieving result record: " + err.message, res);
+			}
 		}
 	}
 
@@ -443,31 +436,30 @@ export class AutoTestRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	public static githubWebhook(req: ClassyRequest, res: FastifyReply): void {
+	public static async githubWebhook(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AutoTestRoutes::githubWebhook(..) - start");
 		const start = Date.now();
 
-		AutoTestRoutes.handleWebhook(req)
-			.then(function (succ) {
-				Log.info("AutoTestRoutes::githubWebhook(..) - done; took: " + Util.took(start));
-				res.code(200).send(succ);
-			})
-			.catch(function (err) {
-				/* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
-				{
-					Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
-					if (err.message && err.message.indexOf("hang up") >= 0) {
-						Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: handling hangup; ending response");
-						// the client is already gone; take the reply out of Fastify's hands and
-						// close the socket rather than trying to send a response nobody will read
-						res.hijack();
-						res.raw.end();
-						return;
-					} else {
-						return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res);
-					}
+		try {
+			const succ = await AutoTestRoutes.handleWebhook(req);
+			Log.info("AutoTestRoutes::githubWebhook(..) - done; took: " + Util.took(start));
+			res.code(200).send(succ);
+		} catch (err) {
+			/* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
+			{
+				Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
+				if (err.message && err.message.indexOf("hang up") >= 0) {
+					Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: handling hangup; ending response");
+					// the client is already gone; take the reply out of Fastify's hands and
+					// close the socket rather than trying to send a response nobody will read
+					res.hijack();
+					res.raw.end();
+					return;
+				} else {
+					return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res);
 				}
-			});
+			}
+		}
 	}
 
 	/**

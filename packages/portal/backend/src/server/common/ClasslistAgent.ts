@@ -152,12 +152,11 @@ export class ClasslistAgent {
 
 	private duplicateDataCheck(data: any[], columnNames: string[]) {
 		Log.trace("ClasslistAgent::duplicateDataCheck -- start");
-		const that = this;
 		const dupColumnData: any = {};
-		columnNames.forEach(function (column) {
-			Object.assign(dupColumnData, { [column]: that.getDuplicateRowsByColumn(data, column) });
+		columnNames.forEach((column) => {
+			Object.assign(dupColumnData, { [column]: this.getDuplicateRowsByColumn(data, column) });
 		});
-		columnNames.forEach(function (column) {
+		columnNames.forEach((column) => {
 			if (dupColumnData[column].length) {
 				Log.error("ClasslistAgent::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error" + JSON.stringify(dupColumnData));
 				throw new Error("Duplicate Data Check Error: " + JSON.stringify(dupColumnData));
@@ -189,10 +188,9 @@ export class ClasslistAgent {
 
 	private missingDataCheck(data: any[], columns: string[]) {
 		Log.trace("ClasslistAgent::missingDataCheck -- start");
-		const that = this;
 		const missingData: any = {};
 		columns.forEach((column) => {
-			Object.assign(missingData, { [column]: that.getMissingDataRowsByColumn(data, column) });
+			Object.assign(missingData, { [column]: this.getMissingDataRowsByColumn(data, column) });
 		});
 		columns.forEach((column) => {
 			if (missingData[column].length) {

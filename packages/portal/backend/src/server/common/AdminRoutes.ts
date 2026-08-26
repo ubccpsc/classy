@@ -123,49 +123,47 @@ export default class AdminRoutes implements IREST {
 		}
 	}
 
-	public static postWithdraw(req: ClassyRequest, res: FastifyReply): void {
+	public static async postWithdraw(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postWithdraw(..) - start");
 
 		// handled by isAdmin in the route chain
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.performStudentWithdraw()
-			.then(function (msg) {
-				Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
-				const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			const msg = await cc.performStudentWithdraw();
+			Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
+			const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static postCheckDatabase(req: ClassyRequest, res: FastifyReply): void {
+	public static async postCheckDatabase(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postCheckDatabase(..) - start");
 
 		const dryRun = req.params.dryRun === "true";
 		Log.info("AdminRoutes::postCheckDatabase(..) - dryRun: " + dryRun + "; true? " + (dryRun === true) + "; false? " + (dryRun === false));
 
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.dbSanityCheck(dryRun)
-			.then(function () {
-				Log.info("AdminRoutes::postCheckDatabase(..) - done");
-				const payload: Payload = { success: { message: "Check complete" } };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::postCheckDatabase(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-				return;
-			});
+		try {
+			await cc.dbSanityCheck(dryRun);
+			Log.info("AdminRoutes::postCheckDatabase(..) - done");
+			const payload: Payload = { success: { message: "Check complete" } };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("AdminRoutes::postCheckDatabase(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static teamCreate(req: ClassyRequest, res: FastifyReply): void {
+	public static async teamCreate(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::teamCreate(..) - start");
 
 		// handled by isAdmin in the route chain
@@ -174,17 +172,16 @@ export default class AdminRoutes implements IREST {
 		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
 		// body into it. Fastify keeps params and body separate.
 		const teamTrans = req.body as TeamFormationTransport;
-		AdminRoutes.handleTeamCreate(userName, teamTrans)
-			.then(function (team) {
-				Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.info("AdminRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
-				return AdminRoutes.handleError(400, err.message, res);
-			});
+		try {
+			const team = await AdminRoutes.handleTeamCreate(userName, teamTrans);
+			Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
+			const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("AdminRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
+			return AdminRoutes.handleError(400, err.message, res);
+		}
 	}
 
 	/**
@@ -260,21 +257,20 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getStudents(req: ClassyRequest, res: FastifyReply): void {
+	private static async getStudents(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getStudents(..) - start");
 		const start = Date.now();
 
 		const ac = new AdminController(AdminRoutes.ghc);
-		ac.getStudents()
-			.then(function (students) {
-				Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
-				const payload: StudentTransportPayload = { success: students };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res);
-			});
+		try {
+			const students = await ac.getStudents();
+			Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
+			const payload: StudentTransportPayload = { success: students };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -284,21 +280,20 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getStaff(req: ClassyRequest, res: FastifyReply): void {
+	private static async getStaff(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getStaff(..) - start");
 		const start = Date.now();
 
 		const ac = new AdminController(AdminRoutes.ghc);
-		ac.getStaff()
-			.then(function (staff) {
-				Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
-				const payload: StudentTransportPayload = { success: staff };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve staff list. ERROR: " + err.message, res);
-			});
+		try {
+			const staff = await ac.getStaff();
+			Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
+			const payload: StudentTransportPayload = { success: staff };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve staff list. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -308,40 +303,38 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getTeams(req: ClassyRequest, res: FastifyReply): void {
+	private static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getTeams(..) - start");
 		const start = Date.now();
 
 		const cc = new AdminController(AdminRoutes.ghc);
 		// handled by preceding action in chain above (see registerRoutes)
-		cc.getTeams()
-			.then(function (teams) {
-				Log.info("AdminRoutes::getTeams() - # teams: " + teams.length + "; took: " + Util.took(start));
-				const payload: TeamTransportPayload = { success: teams };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
-			});
+		try {
+			const teams = await cc.getTeams();
+			Log.info("AdminRoutes::getTeams() - # teams: " + teams.length + "; took: " + Util.took(start));
+			const payload: TeamTransportPayload = { success: teams };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
+		}
 	}
 
-	private static getRepositories(_req: ClassyRequest, res: FastifyReply): void {
+	private static async getRepositories(_req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getRepositories() - start");
 		const start = Date.now();
 
 		const cc = new AdminController(AdminRoutes.ghc);
 		// handled by preceding action in chain above (see registerRoutes)
-		cc.getRepositories()
-			.then(function (repos) {
-				Log.info("AdminRoutes::getRepositories() - # repos: " + repos.length + "; took: " + Util.took(start));
-				const payload: RepositoryPayload = { success: repos };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve repository list. ERROR: " + err.message, res);
-			});
+		try {
+			const repos = await cc.getRepositories();
+			Log.info("AdminRoutes::getRepositories() - # repos: " + repos.length + "; took: " + Util.took(start));
+			const payload: RepositoryPayload = { success: repos };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve repository list. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -351,7 +344,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getResults(req: ClassyRequest, res: FastifyReply): void {
+	private static async getResults(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getResults(..) - start");
 		const start = Date.now();
 
@@ -361,60 +354,55 @@ export default class AdminRoutes implements IREST {
 
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getResults(delivId, repoId)
-			.then(function (results) {
-				Log.info(
-					"AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start)
-				);
-				const payload: AutoTestResultSummaryPayload = { success: results };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve results. ERROR: " + err.message, res);
-			});
+		try {
+			const results = await cc.getResults(delivId, repoId);
+			Log.info("AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start));
+			const payload: AutoTestResultSummaryPayload = { success: results };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve results. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
 	 * Returns AutoTestResultPayload[]
 	 */
-	private static getGradedResults(req: ClassyRequest, res: FastifyReply): void {
+	private static async getGradedResults(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getGradedResults(..) - start");
 		const start = Date.now();
 
 		const delivId = req.params.delivId;
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getDashboard(delivId, "any", Number.MAX_SAFE_INTEGER, ResultsKind.GRADED)
-			.then((results) => {
-				Log.info("AdminRoutes::getGradedResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
-				const payload: AutoTestResultSummaryPayload = { success: results };
-				res.send(payload);
-				return;
-			})
-			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to retrieve graded results. ERROR: " + err.message, res);
-			});
+		try {
+			const results = await cc.getDashboard(delivId, "any", Number.MAX_SAFE_INTEGER, ResultsKind.GRADED);
+			Log.info("AdminRoutes::getGradedResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+			const payload: AutoTestResultSummaryPayload = { success: results };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve graded results. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
 	 * Returns AutoTestResultPayload[]
 	 */
-	private static getBestResults(req: ClassyRequest, res: FastifyReply): void {
+	private static async getBestResults(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getBestResults(..) - start");
 		const start = Date.now();
 
 		const delivId = req.params.delivId;
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getDashboard(delivId, "any", Number.MAX_SAFE_INTEGER, ResultsKind.BEST)
-			.then((results) => {
-				Log.info("AdminRoutes::getBestResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
-				const payload: AutoTestResultSummaryPayload = { success: results };
-				res.send(payload);
-				return;
-			})
-			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to retrieve highest results. ERROR: " + err.message, res);
-			});
+		try {
+			const results = await cc.getDashboard(delivId, "any", Number.MAX_SAFE_INTEGER, ResultsKind.BEST);
+			Log.info("AdminRoutes::getBestResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
+			const payload: AutoTestResultSummaryPayload = { success: results };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve highest results. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -423,7 +411,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static deleteDeliverable(req: ClassyRequest, res: FastifyReply): void {
+	private static async deleteDeliverable(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::deleteDeliverable(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -433,16 +421,15 @@ export default class AdminRoutes implements IREST {
 		const user = AdminRoutes.getUser(req);
 		// delivId is part of the path, so a missing one produces a 404 before we get here
 		const delivId = req.params.delivId;
-		AdminRoutes.handleDeleteDeliverable(user, delivId)
-			.then(function (success) {
-				Log.trace("AdminRoutes::deleteDeliverable(..) - done; success: " + success);
-				const payload: Payload = { success: { message: "Deliverable deleted." } };
-				res.code(200).send(payload); // return as text rather than json
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete deliverable. " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handleDeleteDeliverable(user, delivId);
+			Log.trace("AdminRoutes::deleteDeliverable(..) - done; success: " + success);
+			const payload: Payload = { success: { message: "Deliverable deleted." } };
+			res.code(200).send(payload); // return as text rather than json
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to delete deliverable. " + err.message, res);
+		}
 	}
 
 	private static async handleDeleteDeliverable(personId: string, delivId: string): Promise<boolean> {
@@ -465,23 +452,22 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static deleteRepository(req: ClassyRequest, res: FastifyReply): void {
+	private static async deleteRepository(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::deleteRepository(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
 		// if these params are missing the client will get 404 since they are part of the path
 		const repoId = req.params.repoId;
 		const userId = req.headers.user;
-		AdminRoutes.handleDeleteRepository(userId, repoId)
-			.then(function (success) {
-				Log.info("AdminRoutes::deleteRepository(..) - done; success: " + success);
-				const payload: Payload = { success: { message: "Repository deleted." } };
-				res.code(200).send(payload); // return as text rather than json
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete repository. " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handleDeleteRepository(userId, repoId);
+			Log.info("AdminRoutes::deleteRepository(..) - done; success: " + success);
+			const payload: Payload = { success: { message: "Repository deleted." } };
+			res.code(200).send(payload); // return as text rather than json
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to delete repository. " + err.message, res);
+		}
 	}
 
 	private static async handleDeleteRepository(personId: string, repoId: string): Promise<boolean> {
@@ -530,7 +516,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDashboard(req: ClassyRequest, res: FastifyReply): void {
+	private static async getDashboard(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const start = Date.now();
 
 		// if these params are missing the client will get 404 since they are part of the path
@@ -540,25 +526,17 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - start");
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getDashboard(delivId, repoId)
-			.then(function (results) {
-				Log.info(
-					"AdminRoutes::getDashboard( " +
-						delivId +
-						", " +
-						repoId +
-						" ) - done; # results: " +
-						results.length +
-						"; took: " +
-						Util.took(start)
-				);
-				const payload: AutoTestResultSummaryPayload = { success: results };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
-			});
+		try {
+			const results = await cc.getDashboard(delivId, repoId);
+			Log.info(
+				"AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - done; # results: " + results.length + "; took: " + Util.took(start)
+			);
+			const payload: AutoTestResultSummaryPayload = { success: results };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -568,7 +546,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDashboardAll(req: ClassyRequest, res: FastifyReply): void {
+	private static async getDashboardAll(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::getDashboardAll(..) - start");
 
 		// if these params are missing the client will get 404 since they are part of the path
@@ -577,16 +555,15 @@ export default class AdminRoutes implements IREST {
 
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getDashboard(delivId, repoId, Number.MAX_SAFE_INTEGER)
-			.then(function (results) {
-				Log.trace("AdminRoutes::getDashboardAll(..) - in then; # results: " + results.length);
-				const payload: AutoTestResultSummaryPayload = { success: results };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
-			});
+		try {
+			const results = await cc.getDashboard(delivId, repoId, Number.MAX_SAFE_INTEGER);
+			Log.trace("AdminRoutes::getDashboardAll(..) - in then; # results: " + results.length);
+			const payload: AutoTestResultSummaryPayload = { success: results };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -596,22 +573,21 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getGrades(req: ClassyRequest, res: FastifyReply): void {
+	private static async getGrades(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::getGrades(..) - start");
 		const start = Date.now();
 
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getGrades()
-			.then(function (grades) {
-				Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
-				const payload: GradeTransportPayload = { success: grades };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
-			});
+		try {
+			const grades = await cc.getGrades();
+			Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
+			const payload: GradeTransportPayload = { success: grades };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -621,22 +597,21 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDeliverables(req: ClassyRequest, res: FastifyReply): void {
+	private static async getDeliverables(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getDeliverables() - start");
 		const start = Date.now();
 
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getDeliverables()
-			.then(function (delivs) {
-				Log.info("AdminRoutes::getDeliverables() - # delivs: " + delivs.length + "; took: " + Util.took(start));
-				const payload: DeliverableTransportPayload = { success: delivs };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to get deliverable list; ERROR: " + err.message, res);
-			});
+		try {
+			const delivs = await cc.getDeliverables();
+			Log.info("AdminRoutes::getDeliverables() - # delivs: " + delivs.length + "; took: " + Util.took(start));
+			const payload: DeliverableTransportPayload = { success: delivs };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to get deliverable list; ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -744,22 +719,21 @@ export default class AdminRoutes implements IREST {
 		}
 	}
 
-	private static postDeliverable(req: ClassyRequest, res: FastifyReply): void {
+	private static async postDeliverable(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postDeliverable(..) - start");
 
 		// isValid handled by preceding action in chain above (see registerRoutes)
 		const userName = AdminRoutes.getUser(req);
 		const delivTrans = req.body as DeliverableTransport;
 		Log.info("AdminRoutes::postDeliverable() - body: " + JSON.stringify(delivTrans));
-		AdminRoutes.handlePostDeliverable(userName, delivTrans)
-			.then(function (success) {
-				Log.info("AdminRoutes::postDeliverable() - done; success: " + success);
-				const payload: Payload = { success: { message: "Deliverable saved successfully" } };
-				res.code(200).send(payload);
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handlePostDeliverable(userName, delivTrans);
+			Log.info("AdminRoutes::postDeliverable() - done; success: " + success);
+			const payload: Payload = { success: { message: "Deliverable saved successfully" } };
+			res.code(200).send(payload);
+		} catch (err) {
+			return AdminRoutes.handleError(400, err.message, res);
+		}
 	}
 
 	private static async handlePostDeliverable(personId: string, delivTrans: DeliverableTransport): Promise<boolean> {
@@ -788,24 +762,23 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getCourse(req: ClassyRequest, res: FastifyReply): void {
+	private static async getCourse(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getCourse() - start");
 		const start = Date.now();
 
 		const cc = new AdminController(AdminRoutes.ghc);
-		cc.getCourse()
-			.then(function (course) {
-				Log.trace("AdminRoutes::getCourse() - done; took: " + Util.took(start));
-				const payload: CourseTransportPayload = { success: course };
-				res.send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve course object; ERROR: " + err.message, res);
-			});
+		try {
+			const course = await cc.getCourse();
+			Log.trace("AdminRoutes::getCourse() - done; took: " + Util.took(start));
+			const payload: CourseTransportPayload = { success: course };
+			res.send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve course object; ERROR: " + err.message, res);
+		}
 	}
 
-	private static postCourse(req: ClassyRequest, res: FastifyReply): void {
+	private static async postCourse(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postCourse(..) - start");
 
 		const userName = AdminRoutes.getUser(req);
@@ -814,16 +787,15 @@ export default class AdminRoutes implements IREST {
 		// body into it. Fastify keeps params and body separate.
 		const courseTrans = req.body as CourseTransport;
 		Log.info("AdminRoutes::postCourse() - body: " + JSON.stringify(courseTrans));
-		AdminRoutes.handlePostCourse(userName, courseTrans)
-			.then(function (success) {
-				Log.trace("AdminRoutes::postCourse() -handle done; success: " + success);
-				const payload: Payload = { success: { message: "Course object saved successfully" } };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to post course: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handlePostCourse(userName, courseTrans);
+			Log.trace("AdminRoutes::postCourse() -handle done; success: " + success);
+			const payload: Payload = { success: { message: "Course object saved successfully" } };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to post course: " + err.message, res);
+		}
 	}
 
 	private static async handlePostCourse(personId: string, courseTrans: CourseTransport): Promise<boolean> {
@@ -843,7 +815,7 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Course object not saved.");
 	}
 
-	private static postProvision(req: ClassyRequest, res: FastifyReply): void {
+	private static async postProvision(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const delivId = req.params.delivId;
 		const repoId = req.params.repoId;
 
@@ -851,15 +823,14 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postProvision(..) - start; delivId: " + delivId + "; repoId: " + repoId);
 		// const provisionTrans: ProvisionTransport = req.params;
 		// Log.info("AdminRoutes::postProvision() - body: " + provisionTrans);
-		AdminRoutes.handleProvisionRepo(userName, delivId, [repoId])
-			.then(function (success) {
-				const payload: Payload = { success: success };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handleProvisionRepo(userName, delivId, [repoId]);
+			const payload: Payload = { success: success };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res);
+		}
 	}
 
 	/**
@@ -869,7 +840,7 @@ export default class AdminRoutes implements IREST {
 	 * (packages/proxy/proxy.conf) uses proxy_read_timeout 90, so a request that provisions more
 	 * repos than fit in 90s is cut off by nginx even though the server keeps working.
 	 */
-	private static postProvisionBatch(req: ClassyRequest, res: FastifyReply): void {
+	private static async postProvisionBatch(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const delivId = req.params.delivId;
 		const body = (req.body || {}) as { repoIds?: string[] };
 		const repoIds: string[] = Array.isArray(body.repoIds) ? body.repoIds : [];
@@ -877,31 +848,29 @@ export default class AdminRoutes implements IREST {
 		const userName = AdminRoutes.getUser(req);
 		Log.info("AdminRoutes::postProvisionBatch(..) - start; delivId: " + delivId + "; # repos: " + repoIds.length);
 
-		AdminRoutes.handleProvisionRepo(userName, delivId, repoIds)
-			.then(function (success) {
-				const payload: Payload = { success: success };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handleProvisionRepo(userName, delivId, repoIds);
+			const payload: Payload = { success: success };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
+		}
 	}
 
-	private static getProvision(req: ClassyRequest, res: FastifyReply): void {
+	private static async getProvision(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::getProvision(..) - start");
 
 		const delivId = req.params.delivId;
 		Log.info("AdminRoutes::getProvision() - delivId: " + delivId);
-		AdminRoutes.planProvision({ delivId: delivId, formSingle: false })
-			.then(function (success) {
-				const payload: Payload = { success: success };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.planProvision({ delivId: delivId, formSingle: false });
+			const payload: Payload = { success: success };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
+		}
 	}
 
 	/**
@@ -967,39 +936,37 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Provisioning unsuccessful.");
 	}
 
-	private static postRelease(req: ClassyRequest, res: FastifyReply): void {
+	private static async postRelease(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postRelease(..) - start");
 
 		const userName = AdminRoutes.getUser(req);
 		const repoId = req.params.repoId;
 
 		Log.info("AdminRoutes::postRelease() - repoId: " + repoId);
-		AdminRoutes.performRelease(userName, repoId)
-			.then(function (success) {
-				const payload: Payload = { success: success };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				Log.exception(err);
-				return AdminRoutes.handleError(400, "Unable to release repos: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.performRelease(userName, repoId);
+			const payload: Payload = { success: success };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.exception(err);
+			return AdminRoutes.handleError(400, "Unable to release repos: " + err.message, res);
+		}
 	}
 
-	private static getRelease(req: ClassyRequest, res: FastifyReply): void {
+	private static async getRelease(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::getRelease(..) - start");
 
 		const delivId = req.params.delivId;
 		Log.info("AdminRoutes::getRelease() - delivId: " + delivId);
-		AdminRoutes.planRelease(delivId)
-			.then(function (success) {
-				const payload: Payload = { success: success };
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to plan release: " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.planRelease(delivId);
+			const payload: Payload = { success: success };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to plan release: " + err.message, res);
+		}
 	}
 
 	private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
@@ -1119,27 +1086,26 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamDelete(req: ClassyRequest, res: FastifyReply): void {
+	private static async teamDelete(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::teamDelete(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
 		// if these params are missing the client will get 404 since they are part of the path
 		const teamId = req.params.teamId;
 		const userName = AdminRoutes.getUser(req);
-		AdminRoutes.handleTeamDelete(userName, teamId)
-			.then(function (success) {
-				Log.trace("AdminRoutes::teamDelete(..) - done; success: " + success);
-				const payload: Payload = {
-					success: {
-						message: "Team " + teamId + " deleted; object: " + success.deletedObject + "; GitHub: " + success.deletedGithub,
-					},
-				};
-				res.code(200).send(payload);
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete team. " + err.message, res);
-			});
+		try {
+			const success = await AdminRoutes.handleTeamDelete(userName, teamId);
+			Log.trace("AdminRoutes::teamDelete(..) - done; success: " + success);
+			const payload: Payload = {
+				success: {
+					message: "Team " + teamId + " deleted; object: " + success.deletedObject + "; GitHub: " + success.deletedGithub,
+				},
+			};
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to delete team. " + err.message, res);
+		}
 	}
 
 	private static async handleTeamDelete(
@@ -1177,7 +1143,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamAddMember(req: ClassyRequest, res: FastifyReply): void {
+	private static async teamAddMember(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::teamAddMember(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -1187,22 +1153,21 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::teamAddMember(..) - team: " + teamId + "; member: " + memberId);
 
 		const userName = AdminRoutes.getUser(req);
-		AdminRoutes.handleTeamAddMember(userName, teamId, memberId)
-			.then(function (success) {
-				const addedMembers = JSON.stringify(success.people);
-				Log.info("AdminRoutes::teamAddMember(..) - done; team: " + teamId + "; members: " + addedMembers);
+		try {
+			const success = await AdminRoutes.handleTeamAddMember(userName, teamId, memberId);
+			const addedMembers = JSON.stringify(success.people);
+			Log.info("AdminRoutes::teamAddMember(..) - done; team: " + teamId + "; members: " + addedMembers);
 
-				const payload: Payload = {
-					success: {
-						message: "Team " + teamId + " updated; members: " + addedMembers,
-					},
-				};
-				res.code(200).send(payload); // return as text rather than json
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
-			});
+			const payload: Payload = {
+				success: {
+					message: "Team " + teamId + " updated; members: " + addedMembers,
+				},
+			};
+			res.code(200).send(payload); // return as text rather than json
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
+		}
 	}
 
 	private static async handleTeamAddMember(requestorName: string, teamId: string, githubId: string): Promise<TeamTransport> {
@@ -1254,7 +1219,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamRemoveMember(req: ClassyRequest, res: FastifyReply): void {
+	private static async teamRemoveMember(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::teamRemoveMember(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -1264,23 +1229,22 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::teamRemoveMember(..) - team: " + teamId + "; member: " + memberId);
 
 		const userName = AdminRoutes.getUser(req);
-		AdminRoutes.handleTeamRemoveMember(userName, teamId, memberId)
-			.then(function (success) {
-				Log.info("AdminRoutes::teamRemoveMember(..) - done; team: " + teamId + "; member: " + memberId); // + "; success:", success);
+		try {
+			const success = await AdminRoutes.handleTeamRemoveMember(userName, teamId, memberId);
+			Log.info("AdminRoutes::teamRemoveMember(..) - done; team: " + teamId + "; member: " + memberId); // + "; success:", success);
 
-				const payload: Payload = {
-					success: {
-						message: "Team " + teamId + " updated; members: " + JSON.stringify(success.people),
-					},
-				};
+			const payload: Payload = {
+				success: {
+					message: "Team " + teamId + " updated; members: " + JSON.stringify(success.people),
+				},
+			};
 
-				Log.trace("AdminRoutes::teamRemoveMember(..) - done; sending:", payload);
-				res.code(200).send(payload); // return as text rather than json
-				return;
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
-			});
+			Log.trace("AdminRoutes::teamRemoveMember(..) - done; sending:", payload);
+			res.code(200).send(payload); // return as text rather than json
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
+		}
 	}
 
 	private static async handleTeamRemoveMember(requestorName: string, teamId: string, githubId: string): Promise<TeamTransport> {

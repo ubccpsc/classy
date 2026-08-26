@@ -2,13 +2,13 @@ import { AuthController } from "@backend/controllers/AuthController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { Factory } from "@backend/Factory";
-import IREST from "@backend/server/IREST";
+import IREST, { type ClassyRequest } from "@backend/server/IREST";
 import { Auth } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AuthTransportPayload, Payload } from "@common/types/PortalTypes";
 import ClientOAuth2 from "client-oauth2";
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyReply } from "fastify";
 import fetch, { RequestInit } from "node-fetch";
 
 /**
@@ -37,10 +37,10 @@ export class AuthRoutes implements IREST {
 	// NOTE: handlers return Promise<void> rather than the reply. FastifyReply is itself thenable,
 	// so returning it out of a promise chain unwraps to Promise<unknown>; sending without
 	// returning keeps the signature honest. Fastify ends the request when the promise resolves.
-	public static async getLogout(req: FastifyRequest, res: FastifyReply): Promise<void> {
+	public static async getLogout(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRouteHandler::getLogout(..) - start");
-		let user: any = req.headers.user;
-		let token: any = req.headers.token;
+		let user: string = req.headers.user;
+		let token: string = req.headers.token;
 
 		if (typeof user === "undefined") {
 			user = null;
@@ -67,20 +67,19 @@ export class AuthRoutes implements IREST {
 			return;
 		}
 
-		await AuthRoutes.performLogout(user, token)
-			.then(function (success) {
-				if (success) {
-					Log.info("AuthRoutes::getLogout( " + user + " ) - logged out");
-					payload = { success: { message: "Logout successful" } };
-					res.code(200).send(payload);
-					return;
-				}
-				handleError("Logout unsuccessful.");
-			})
-			.catch(function (err) {
-				Log.error("AuthRoutes::getLogout(..) - unexpected ERROR: " + err.message);
-				handleError(err.message);
-			});
+		try {
+			const success = await AuthRoutes.performLogout(user, token);
+			if (success) {
+				Log.info("AuthRoutes::getLogout( " + user + " ) - logged out");
+				payload = { success: { message: "Logout successful" } };
+				res.code(200).send(payload);
+				return;
+			}
+			handleError("Logout unsuccessful.");
+		} catch (err) {
+			Log.error("AuthRoutes::getLogout(..) - unexpected ERROR: " + err.message);
+			handleError(err.message);
+		}
 	}
 
 	/**
@@ -104,32 +103,30 @@ export class AuthRoutes implements IREST {
 		return ac.removeAuthentication(user);
 	}
 
-	public static async getCredentials(req: FastifyRequest, res: FastifyReply): Promise<void> {
+	public static async getCredentials(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRoutes::getCredentials(..) - start");
-		// NOTE: Fastify types headers as string | string[]; these are always single-valued
-		const user = req.headers.user as string;
-		const token = req.headers.token as string;
+		const user = req.headers.user;
+		const token = req.headers.token;
 		Log.trace("AuthRoutes::getCredentials(..) - user: " + user + "; token: " + token);
 
 		let payload: AuthTransportPayload;
-		await AuthRoutes.performGetCredentials(user, token)
-			.then(function (isPrivileged) {
-				payload = {
-					success: {
-						personId: user,
-						token: token,
-						isAdmin: isPrivileged.isAdmin,
-						isStaff: isPrivileged.isStaff,
-					},
-				};
-				Log.trace("AuthRoutes::getCredentials(..) - sending 200; isPriv: " + (isPrivileged.isStaff || isPrivileged.isAdmin));
-				res.code(200).send(payload);
-			})
-			.catch(function (err) {
-				Log.warn("AuthRoutes::getCredentials(..) - ERROR: " + err.message);
-				payload = { failure: { message: err.message, shouldLogout: false } };
-				res.code(400).send(payload);
-			});
+		try {
+			const isPrivileged = await AuthRoutes.performGetCredentials(user, token);
+			payload = {
+				success: {
+					personId: user,
+					token: token,
+					isAdmin: isPrivileged.isAdmin,
+					isStaff: isPrivileged.isStaff,
+				},
+			};
+			Log.trace("AuthRoutes::getCredentials(..) - sending 200; isPriv: " + (isPrivileged.isStaff || isPrivileged.isAdmin));
+			res.code(200).send(payload);
+		} catch (err) {
+			Log.warn("AuthRoutes::getCredentials(..) - ERROR: " + err.message);
+			payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+		}
 	}
 
 	public static async performGetCredentials(
@@ -157,7 +154,7 @@ export class AuthRoutes implements IREST {
 	 */
 
 	/* istanbul ignore next */
-	public static getAuth(_req: FastifyRequest, res: FastifyReply): void {
+	public static getAuth(_req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
 		const config = Config.getInstance();
@@ -189,42 +186,42 @@ export class AuthRoutes implements IREST {
 	 */
 
 	/* istanbul ignore next */
-	public static async authCallback(req: FastifyRequest, res: FastifyReply): Promise<void> {
+	public static async authCallback(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRoutes::authCallback(..) - /authCallback - start");
 
-		await AuthRoutes.performAuthCallback(req.url, req.headers.host)
-			.then(function (redirectOptions) {
-				const cookie = redirectOptions.cookie;
-				if (cookie !== null) {
-					// this is tricky; need to redirect to the client with a cookie being set on the connection
-					res.header("Set-Cookie", cookie);
-					Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
-				} else {
-					Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect invalid credentials");
-				}
+		try {
+			const redirectOptions = await AuthRoutes.performAuthCallback(req.url, req.headers.host);
 
-				// NOTE: restify accepted a {hostname, pathname, port} object here and assembled the
-				// URL itself (choosing the protocol from whether the request was secure). Fastify
-				// takes a string, so that assembly is reproduced explicitly; performAuthCallback
-				// has already stripped any protocol from hostname and split the port out.
-				const protocol = req.protocol === "https" ? "https" : "http";
-				const url = protocol + "://" + redirectOptions.hostname + ":" + redirectOptions.port + "/" + redirectOptions.pathname;
-				Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirecting to: " + url);
-				res.redirect(url, 302);
-			})
-			.catch(function (err) {
-				Log.error("AuthRoutes::authCallback(..) - DB; typeof err: " + typeof err + "; err: " + err);
-				if (typeof err === "string" && err.indexOf("incorrect or expired") >= 0) {
-					// just a warning for auth expiry
-					Log.warn("AuthRoutes::authCallback(..) - /authCallback - WARN: " + err);
-				} else {
-					Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
-				}
-				// NOTE: restify's next(false) just ended the chain without a response, which left
-				// the request hanging until the client timed out. Fastify requires an explicit
-				// reply, so this now closes the request out.
-				res.code(400).send("Authentication failed.");
-			});
+			const cookie = redirectOptions.cookie;
+			if (cookie !== null) {
+				// this is tricky; need to redirect to the client with a cookie being set on the connection
+				res.header("Set-Cookie", cookie);
+				Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
+			} else {
+				Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect invalid credentials");
+			}
+
+			// NOTE: restify accepted a {hostname, pathname, port} object here and assembled the
+			// URL itself (choosing the protocol from whether the request was secure). Fastify
+			// takes a string, so that assembly is reproduced explicitly; performAuthCallback
+			// has already stripped any protocol from hostname and split the port out.
+			const protocol = req.protocol === "https" ? "https" : "http";
+			const url = protocol + "://" + redirectOptions.hostname + ":" + redirectOptions.port + "/" + redirectOptions.pathname;
+			Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirecting to: " + url);
+			res.redirect(url, 302);
+		} catch (err) {
+			Log.error("AuthRoutes::authCallback(..) - DB; typeof err: " + typeof err + "; err: " + err);
+			if (typeof err === "string" && err.indexOf("incorrect or expired") >= 0) {
+				// just a warning for auth expiry
+				Log.warn("AuthRoutes::authCallback(..) - /authCallback - WARN: " + err);
+			} else {
+				Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
+			}
+			// NOTE: restify's next(false) just ended the chain without a response, which left
+			// the request hanging until the client timed out. Fastify requires an explicit
+			// reply, so this now closes the request out.
+			res.code(400).send("Authentication failed.");
+		}
 	}
 
 	/* istanbul ignore next */
