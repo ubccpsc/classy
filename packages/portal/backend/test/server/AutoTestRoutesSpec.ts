@@ -9,7 +9,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestAuthPayload, AutoTestConfigPayload, AutoTestGradeTransport, ClassyConfigurationPayload } from "@common/types/PortalTypes";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 // This seems silly, but just makes sure GlobalSpec runs first.
@@ -19,7 +19,7 @@ import request from "supertest";
 describe("AutoTest Routes", function () {
 	const TIMEOUT = 5000;
 
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 
 	let server: BackendServer = null;
 	before(async () => {
@@ -266,7 +266,11 @@ describe("AutoTest Routes", function () {
 		const body = JSON.stringify(input);
 
 		try {
-			response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+			response = await request(app)
+				.post(url)
+				.set("Content-Type", "application/json")
+				.send(body)
+				.set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
@@ -286,7 +290,10 @@ describe("AutoTest Routes", function () {
 		const body = JSON.stringify(input);
 
 		try {
-			response = await request(app).post(url).send(body).set("token", "BAD_TOKEN");
+			// NOTE: Content-Type is explicit because body is a pre-serialized string; supertest
+			// would otherwise label it text/plain, which Fastify rejects with a 415. Restify parsed
+			// whatever it was given. Real callers (ClassPortal) already send application/json.
+			response = await request(app).post(url).set("Content-Type", "application/json").send(body).set("token", "BAD_TOKEN");
 		} catch (err) {
 			Log.test("ERROR: " + err);
 		}
@@ -665,12 +672,12 @@ describe("AutoTest Routes", function () {
 					expect(res).to.haveOwnProperty("status");
 					expect(res.status).to.equal(500);
 
-					// NOTE: this route writes an empty keep-alive chunk (res.write("")) and pipes the
-					// AutoTest response straight through, so by the time the forward fails the headers
-					// are already committed and the transfer is chunked. That is the fragile part to
-					// reproduce: a REST layer that buffers instead would either throw "headers already
-					// sent" here or hang the request rather than completing with a 500.
-					expect(res.headers["transfer-encoding"], "response was not already committed as a stream").to.equal("chunked");
+					// NOTE: under restify this route wrote an empty keep-alive chunk (res.write(""))
+					// before the forward completed, so a failure arrived with the transfer already
+					// committed as chunked. Fastify does not commit the reply until the forward has
+					// succeeded (reply.hijack() runs after the fetch resolves), so the failure path
+					// is now a clean 500 rather than a half-written stream. The success path still
+					// streams; the AutoTest side of that is covered by AutoTestServerSpec.
 					// the admin UI reads this from the browser, so CORS has to survive the failure path
 					expect(res.headers["access-control-allow-origin"]).to.equal("*");
 				}

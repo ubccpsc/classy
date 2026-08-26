@@ -1,4 +1,4 @@
-import * as restify from "restify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fetch from "node-fetch";
 
 import Log from "@common/Log";
@@ -15,7 +15,7 @@ import {CustomCourseController} from "./CustomCourseController";
 
 export default class CustomCourseRoutes implements IREST {
 
-    public registerRoutes(server: restify.Server) {
+    public registerRoutes(server: FastifyInstance): void {
         Log.trace('CustomCourseRoutes::registerRoutes()');
 
         // Create or import auth middleware where necessary (examples in AuthRoutes.ts, GeneralRoutes.ts)

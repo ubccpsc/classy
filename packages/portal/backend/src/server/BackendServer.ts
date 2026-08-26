@@ -7,8 +7,13 @@ import { GitHubController } from "@backend/controllers/GitHubController";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
+import fastifyCors from "@fastify/cors";
+import fastifyMultipart from "@fastify/multipart";
+import fastifyStatic from "@fastify/static";
+import Fastify, { type FastifyInstance } from "fastify";
 import * as fs from "fs";
-import * as restify from "restify";
+import * as http from "http";
+import * as path from "path";
 import { Factory } from "../Factory";
 import AdminRoutes from "./common/AdminRoutes";
 import { AuthRoutes } from "./common/AuthRoutes";
@@ -17,9 +22,19 @@ import GeneralRoutes from "./common/GeneralRoutes";
 
 /**
  * This configures the REST endpoints for the server.
+ *
+ * NOTE: this used to be restify. The differences worth knowing about:
+ *
+ * - Fastify parses JSON bodies and query strings itself, so the queryParser/bodyParser plugins
+ *   are gone. Multipart uploads are handled by @fastify/multipart instead (see the upload
+ *   handlers in AdminRoutes, which call request.saveRequestFiles()).
+ * - Handlers no longer take (and must not call) next(); returning the reply ends the request.
+ * - Routes are not live until ready() resolves, so start() awaits it before listen().
+ * - CORS and the OPTIONS preflight are handled by @fastify/cors. Restify raised a
+ *   "MethodNotAllowed" event for preflights, which Fastify has no equivalent for.
  */
 export default class BackendServer {
-	private rest: restify.Server;
+	private rest: FastifyInstance;
 	private config: Config = null;
 	private useHttps = false;
 
@@ -32,11 +47,14 @@ export default class BackendServer {
 	/**
 	 * Used in tests.
 	 *
-	 * @returns {Server}
+	 * NOTE: returns the raw Node server rather than the Fastify instance, because that is what
+	 * supertest attaches to. Only valid once start() has resolved.
+	 *
+	 * @returns {http.Server}
 	 */
-	public getServer(): restify.Server {
+	public getServer(): http.Server {
 		Log.trace("BackendServer::getServer()");
-		return this.rest;
+		return this.rest.server as http.Server;
 	}
 
 	/**
@@ -45,15 +63,14 @@ export default class BackendServer {
 	 *
 	 * @returns {Promise<boolean>}
 	 */
-	public stop(): Promise<boolean> {
+	public async stop(): Promise<boolean> {
 		Log.info("BackendServer::stop() - start");
-		const that = this;
-		return new Promise(function (fulfill) {
-			that.rest.close(function () {
-				Log.info("BackendServer::stop() - done");
-				fulfill(true);
-			});
-		});
+		if (typeof this.rest === "undefined" || this.rest === null) {
+			return true;
+		}
+		await this.rest.close();
+		Log.info("BackendServer::stop() - done");
+		return true;
 	}
 
 	/**
@@ -63,57 +80,79 @@ export default class BackendServer {
 	 *
 	 * @returns {Promise<boolean>}
 	 */
-	public start(): Promise<boolean> {
+	public async start(): Promise<boolean> {
 		Log.info("BackendServer::start() - start");
 
-		const that = this;
-		return new Promise(function (fulfill, reject) {
-			// noinspection TsLint
-			const httpsOptions: any = {
-				name: "backend",
+		try {
+			const serverOptions: any = {
+				// Classy logs through @common/Log; Fastify's own logger just duplicates every request
+				logger: false,
 			};
 
 			/* istanbul ignore else */
-			if (that.useHttps === false) {
+			if (this.useHttps === false) {
 				// test only
 				Log.warn("BackendServer::start() - disabling HTTPS; should only be used in testing!");
 			} else {
 				// prod only
-				httpsOptions.key = fs.readFileSync(that.config.getProp(ConfigKey.sslKeyPath));
-				httpsOptions.certificate = fs.readFileSync(that.config.getProp(ConfigKey.sslCertPath));
+				// NOTE: fastify calls this `cert`; restify called the same thing `certificate`
+				serverOptions.https = {
+					key: fs.readFileSync(this.config.getProp(ConfigKey.sslKeyPath)),
+					cert: fs.readFileSync(this.config.getProp(ConfigKey.sslCertPath)),
+				};
 			}
 
-			that.rest = restify.createServer(httpsOptions);
-			that.rest.use(restify.plugins.queryParser());
-			that.rest.use(restify.plugins.bodyParser({ mapParams: true }));
+			// NOTE: cast because serverOptions is built dynamically; with an https key present
+			// TypeScript otherwise resolves the Fastify() overload to the HTTP/2 secure server type
+			this.rest = Fastify(serverOptions) as unknown as FastifyInstance;
 
-			that.rest.use(function crossOrigin(req, res, next) {
-				res.header("Access-Control-Allow-Origin", "*");
-				res.header("Access-Control-Allow-Headers", "X-Requested-With Content-Type token user org");
-				return next();
+			// CORS, including the OPTIONS preflight.
+			//
+			// NOTE: this replaces both the hand-rolled crossOrigin hook and AuthRoutes.handlePreflight,
+			// which hung off restify's "MethodNotAllowed" event and mutated res.methods -- neither of
+			// which Fastify has. The values below are what the frontend actually needs: it sends
+			// user/token/org on every call, and the OAuth flow needs credentials allowed. Preflights
+			// answer 204 to match the previous behaviour.
+			await this.rest.register(fastifyCors, {
+				origin: true, // reflect the request origin, as the old handler did
+				credentials: true,
+				methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+				allowedHeaders: ["Accept", "Accept-Version", "Content-Type", "Api-Version", "user-agent", "user", "token", "org", "name"],
+				optionsSuccessStatus: 204,
 			});
 
-			// prevent caching, overrides cache headers in html files
-			that.rest.use(function (req, res, next) {
-				res.header("Last-Modified", new Date());
-				res.header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
-				return next();
+			// multipart uploads (classlist / grade CSVs); handlers call request.saveRequestFiles()
+			await this.rest.register(fastifyMultipart);
+
+			this.rest.addHook("onRequest", async (request, reply): Promise<void> => {
+				// NOTE: restify's crossOrigin hook set Access-Control-Allow-Origin on *every*
+				// response, including requests that carry no Origin header. @fastify/cors only
+				// sets it when an Origin is present, so this fills that gap. It is conditional so
+				// that it never overwrites the echoed origin a credentialed preflight needs --
+				// "*" and credentials are not a legal combination.
+				if (typeof request.headers.origin === "undefined") {
+					reply.header("Access-Control-Allow-Origin", "*");
+				}
+
+				// prevent caching, overrides cache headers in html files
+				reply.header("Last-Modified", new Date().toUTCString());
+				reply.header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
 			});
 
 			// Register handlers common between all classy instances
 			Log.info("BackendServer::start() - Registering common handlers");
 
 			// authentication
-			new AuthRoutes().registerRoutes(that.rest);
+			new AuthRoutes().registerRoutes(this.rest);
 
 			// autotest
-			new AutoTestRoutes().registerRoutes(that.rest);
+			new AutoTestRoutes().registerRoutes(this.rest);
 
 			// general
-			new GeneralRoutes().registerRoutes(that.rest);
+			new GeneralRoutes().registerRoutes(this.rest);
 
 			// admin
-			new AdminRoutes().registerRoutes(that.rest);
+			new AdminRoutes().registerRoutes(this.rest);
 
 			Log.info("BackendServer::start() - Registering common handlers; done");
 
@@ -124,61 +163,55 @@ export default class BackendServer {
 			// We do not need a Custom Course Controller here, but this is a good place
 			// to make sure that the CustomCourseController loads up as expected
 			// alongside the CustomRouteHandler.
-			Factory.getCourseController(new GitHubController(GitHubActions.getInstance()))
-				.then(function (cc) {
-					Log.info("BackendServer::start() - CustomCourseController loaded");
-				})
-				.catch(function (err) {
-					Log.error("BackendServer::start() - Unable to load CustomCourseController: " + err);
-				});
+			try {
+				await Factory.getCourseController(new GitHubController(GitHubActions.getInstance()));
+				Log.info("BackendServer::start() - CustomCourseController loaded");
+			} catch (err) {
+				Log.error("BackendServer::start() - Unable to load CustomCourseController: " + err);
+			}
 
 			Log.info("BackendServer::start() - Loading custom route handler");
-			Factory.getCustomRouteHandler()
-				.then(function (handler) {
-					Log.info("BackendServer::start() - CustomRouteHandler loaded");
-					handler.registerRoutes(that.rest);
-					Log.info("BackendServer::start() - CustomRouteHandler registered");
+			const handler = await Factory.getCustomRouteHandler();
+			Log.info("BackendServer::start() - CustomRouteHandler loaded");
+			handler.registerRoutes(this.rest);
+			Log.info("BackendServer::start() - CustomRouteHandler registered");
 
-					// serve up the static frontend resources
-					const frontendHTML = __dirname + "/../../../frontend/html";
-					Log.info("BackendServer::start() - Serving static from: " + frontendHTML);
-					that.rest.get(
-						"/*",
-						restify.plugins.serveStatic({
-							directory: frontendHTML,
-							default: "index.html",
-						})
-					);
+			// serve up the static frontend resources
+			//
+			// NOTE: registered last, as it was under restify. @fastify/static with wildcard:false
+			// serves files that exist and otherwise falls through to the notFound handler below,
+			// which is what keeps unknown /portal/ paths returning 404 rather than index.html.
+			const frontendHTML = path.join(__dirname, "/../../../frontend/html");
+			Log.info("BackendServer::start() - Serving static from: " + frontendHTML);
+			await this.rest.register(fastifyStatic, {
+				root: frontendHTML,
+				wildcard: false,
+				index: ["index.html"],
+			});
 
-					const port = that.config.getProp(ConfigKey.backendPort);
-					that.rest.listen(port, function () {
-						Log.info("BackendServer::start() - restify listening: " + that.rest.url + "; on port: " + port);
+			// routes are not registered until this resolves; getServer() would otherwise 404
+			await this.rest.ready();
 
-						// after the Classy backend is up, check AutoTest
-						// (Docker should load AutoTest first, but the delay should not hurt)
-						setTimeout(() => {
-							AutoTestRoutes.checkATStatus()
-								.then(function (_result) {
-									Log.trace("BackendServer::start() - AT status: success");
-								})
-								.catch(function (err) {
-									Log.trace("BackendServer::start() - AT status: failure; ERROR: " + err.message);
-								});
-						}, 500);
+			const port = this.config.getProp(ConfigKey.backendPort);
+			await this.rest.listen({ port: port, host: "0.0.0.0" });
+			Log.info("BackendServer::start() - fastify listening on port: " + port);
 
-						fulfill(true);
+			// after the Classy backend is up, check AutoTest
+			// (Docker should load AutoTest first, but the delay should not hurt)
+			setTimeout(() => {
+				AutoTestRoutes.checkATStatus()
+					.then(function (_result) {
+						Log.trace("BackendServer::start() - AT status: success");
+					})
+					.catch(function (err) {
+						Log.trace("BackendServer::start() - AT status: failure; ERROR: " + err.message);
 					});
+			}, 500);
 
-					/* istanbul ignore next */
-					that.rest.on("error", function (err: string) {
-						// catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-						Log.error("BackendServer::start() - restify ERROR: " + err);
-						reject(err);
-					});
-				})
-				.catch(function (err) {
-					Log.error("BackendServer::start() - Registering custom ERROR: " + err);
-				});
-		});
+			return true;
+		} catch (err) {
+			Log.error("BackendServer::start() - ERROR: " + err);
+			throw err;
+		}
 	}
 }

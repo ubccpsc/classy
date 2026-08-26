@@ -4,7 +4,7 @@ import {Deliverable, Person} from "@backend/Types";
 
 import Log from "@common/Log";
 
-import * as restify from "restify";
+import type {FastifyReply, FastifyRequest} from "fastify";
 
 import fetch from 'node-fetch';
 export class CustomCourseController extends CourseController {
@@ -18,9 +18,8 @@ export class CustomCourseController extends CourseController {
      * Relays JSON data from your HelloWorld! Docker service to be consumed by front-end.
      * @param req
      * @param res
-     * @param next
      */
-    public static getHelloWorldData(req: restify.Request, res: restify.Response, next: restify.Next) {
+    public static getHelloWorldData(req: FastifyRequest, res: FastifyReply) {
     fetch('http://helloworld:3001')
         .then((response) => {
             return response.json();

@@ -21,8 +21,7 @@
         "fastify": "^5.12.1",
         "fs-extra": "5.0.0",
         "jszip": "^3.8.0",
-        "mongodb": "^4.17.0",
-        "restify": "^10.0.0"
+        "mongodb": "^4.17.0"
     },
     "devDependencies": {
         "@babel/core": "^7.0.0-0",

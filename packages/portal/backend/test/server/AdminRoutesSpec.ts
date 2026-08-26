@@ -23,14 +23,14 @@ import {
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
 import { GitHubStatus, PersonKind } from "@backend/Types";
 
 describe("Admin Routes", function () {
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 	let server: BackendServer = null;
 
 	const userName = TestHarness.ADMIN1.id;

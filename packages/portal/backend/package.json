@@ -34,7 +34,6 @@
         "markdown-table": "^1.1.2",
         "mongodb": "^4.17.0",
         "parse-link-header": "^2.0.0",
-        "restify": "^10.0.0",
         "source-map-loader": "^0.2.3",
         "supertest": "^7.2.2",
         "tmp-promise": "^1.0.4",

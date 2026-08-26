@@ -7,7 +7,7 @@ import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { ResultsController } from "@backend/controllers/ResultsController";
 import { Factory } from "@backend/Factory";
-import IREST from "@backend/server/IREST";
+import IREST, { type ClassyRequest } from "@backend/server/IREST";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
@@ -24,15 +24,15 @@ import {
 	Payload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
 
 /**
  * Handle the REST interactions initiated by AutoTest
  * to be served by the Classy backend.
  */
 export class AutoTestRoutes implements IREST {
-	public registerRoutes(server: restify.Server) {
+	public registerRoutes(server: FastifyInstance): void {
 		Log.info("AutoTestRoutes::registerRoutes() - start");
 
 		server.get("/portal/at", AutoTestRoutes.atConfiguration); // deprecates defaultDeliverable endpoint
@@ -57,11 +57,11 @@ export class AutoTestRoutes implements IREST {
 
 		// Receives Grading Image admin events, and forwards them to AutoTest
 		server.get("/portal/at/docker/images", AutoTestRoutes.getDockerImages);
-		server.del("/portal/at/docker/image/:tag", AutoTestRoutes.deleteDockerImage);
+		server.delete("/portal/at/docker/image/:tag", AutoTestRoutes.deleteDockerImage);
 		server.post("/portal/at/docker/image", AutoTestRoutes.postDockerImage);
 	}
 
-	public static handleError(code: number, msg: string, res: any, next: any) {
+	public static handleError(code: number, msg: string, res: FastifyReply): void {
 		if (code < 400) {
 			// these are not errors
 			Log.info("AutoTestRoutes::handleError(..) - code: " + code + "; WARN: " + msg);
@@ -69,18 +69,18 @@ export class AutoTestRoutes implements IREST {
 			Log.error("AutoTestRoutes::handleError(..) - code: " + code + "; ERROR: " + msg);
 		}
 
-		res.send(code, { failure: { message: msg, shouldLogout: false } });
-		return next(false);
+		res.code(code).send({ failure: { message: msg, shouldLogout: false } });
+		return;
 	}
 
-	public static atContainerDetails(req: any, res: any, next: any) {
+	public static atContainerDetails(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - start GET");
 		const start = Date.now();
 
 		let payload: AutoTestConfigPayload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
 			const delivId = req.params.delivId;
 			const name = Config.getInstance().getProp(ConfigKey.name);
@@ -103,28 +103,28 @@ export class AutoTestRoutes implements IREST {
 						};
 						payload = { success: at };
 						Log.trace("AutoTestRoutes::atContainerDetails(..) - /at/container/:delivId - done; " + "took: " + Util.took(start));
-						res.send(200, payload);
-						return next(true);
+						res.code(200).send(payload);
+						return;
 					} else {
 						// This is more like a warning; if a deliverable is not configured this is going to happen
-						return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res, next);
+						return AutoTestRoutes.handleError(400, "Could not retrieve container details for delivId: " + delivId, res);
 					}
 				})
 				.catch(function () {
 					// err
-					return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res, next);
+					return AutoTestRoutes.handleError(400, "Could not retrieve container details.", res);
 				});
 		}
 	}
 
-	public static atConfiguration(req: any, res: any, next: any) {
+	public static atConfiguration(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atConfiguration(..) - /at - start");
 		const start = Date.now();
 
 		let payload: ClassyConfigurationPayload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
 			const name = Config.getInstance().getProp(ConfigKey.name);
 			Log.trace("AutoTestRoutes::atConfiguration(..) - name: " + name + "; took: " + Util.took(start));
@@ -147,36 +147,36 @@ export class AutoTestRoutes implements IREST {
 					payload = { success: { defaultDeliverable: defaultDeliverable, deliverableIds: delivIds } };
 
 					Log.trace("AutoTestRoutes::atConfiguration(..) - /at - done; took: " + Util.took(start));
-					res.send(200, payload);
-					return next(true);
+					res.code(200).send(payload);
+					return;
 				})
 				.catch(function () {
 					// err
-					return AutoTestRoutes.handleError(400, "Error retrieving backend configuration.", res, next);
+					return AutoTestRoutes.handleError(400, "Error retrieving backend configuration.", res);
 				});
 		}
 	}
 
-	public static atGrade(req: any, res: any, next: any) {
+	public static atGrade(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atGrade(..) - start");
 		const start = Date.now();
 
 		let payload: Payload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
-			const gradeRecord: AutoTestGradeTransport = req.body;
+			const gradeRecord = req.body as AutoTestGradeTransport;
 
 			AutoTestRoutes.performPostGrade(gradeRecord)
 				.then(function (saved: any) {
 					payload = { success: { success: saved } };
 					Log.trace("AutoTestRoutes::atGrade(..) - done; took: " + Util.took(start));
-					res.send(200, payload);
-					return next(true);
+					res.code(200).send(payload);
+					return;
 				})
 				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Failed to receive grade; ERROR: " + err.message, res, next);
+					return AutoTestRoutes.handleError(400, "Failed to receive grade; ERROR: " + err.message, res);
 				});
 		}
 	}
@@ -206,7 +206,7 @@ export class AutoTestRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	public static atPostResult(req: any, res: any, next: any) {
+	public static atPostResult(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atPostResult(..) - start");
 		const start = Date.now();
 
@@ -214,19 +214,19 @@ export class AutoTestRoutes implements IREST {
 
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
-			const resultRecord: AutoTestResultTransport = req.body;
+			const resultRecord = req.body as AutoTestResultTransport;
 			// Log.trace("AutoTestRoutes::atPostResult(..) - body: " + JSON.stringify(resultRecord));
 			AutoTestRoutes.performPostResult(resultRecord)
 				.then(function () {
 					payload = { success: { message: "Result received" } };
 					Log.trace("AutoTestRoutes::atPostResult(..) - done; took: " + Util.took(start));
-					res.send(200, payload);
-					return next(true);
+					res.code(200).send(payload);
+					return;
 				})
 				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Error processing result: " + err.message, res, next);
+					return AutoTestRoutes.handleError(400, "Error processing result: " + err.message, res);
 				});
 		}
 	}
@@ -283,14 +283,14 @@ export class AutoTestRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	public static async atIsStaff(req: any, res: any, next: any) {
+	public static async atIsStaff(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - start");
 		const start = Date.now();
 
 		let payload: AutoTestAuthPayload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
 			const githubId = req.params.githubId;
 
@@ -302,25 +302,25 @@ export class AutoTestRoutes implements IREST {
 				const priv = await ac.personPrivileged(person);
 				payload = { success: { personId: person.githubId, isStaff: priv.isStaff, isAdmin: priv.isAdmin } };
 				Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - done: " + JSON.stringify(payload) + "; took: " + Util.took(start));
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			} else {
 				payload = { success: { personId: githubId, isStaff: false, isAdmin: false } };
 				Log.trace("AutoTestRoutes::atIsStaff(..) - /isStaff/:githubId - unknown person; result: " + JSON.stringify(payload));
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			}
 		}
 	}
 
-	public static atPersonId(req: any, res: any, next: any) {
+	public static atPersonId(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atPersonId(..) - /isStaff/:githubId - start GET");
 		const start = Date.now();
 
 		let payload: Payload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
 			const githubId = req.params.githubId;
 
@@ -330,26 +330,26 @@ export class AutoTestRoutes implements IREST {
 					if (person !== null) {
 						Log.info("AutoTestRoutes::atPersonId(..) - person: " + person.id + "; github: " + githubId + "; took: " + Util.took(start));
 						payload = { success: { personId: person.id } }; // PersonTransportPayload
-						res.send(200, payload);
-						return next(true);
+						res.code(200).send(payload);
+						return;
 					} else {
-						return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res, next);
+						return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res);
 					}
 				})
 				.catch(function () {
 					// err
-					return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res, next);
+					return AutoTestRoutes.handleError(404, "Invalid person id: " + githubId, res);
 				});
 		}
 	}
 
-	public static atGetResult(req: any, res: any, next: any) {
+	public static atGetResult(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AutoTestRoutes::atGetResult(..) - /at/result/:delivId/:repoId/:sha/:ref - start GET");
 
 		let payload: AutoTestResultPayload;
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res, next);
+			return AutoTestRoutes.handleError(400, "Invalid AutoTest Secret: " + providedSecret, res);
 		} else {
 			const delivId = req.params.delivId;
 			const repoId = req.params.repoId;
@@ -373,64 +373,64 @@ export class AutoTestRoutes implements IREST {
 					} else {
 						payload = { success: [] };
 					}
-					res.send(200, payload);
-					return next(true);
+					res.code(200).send(payload);
+					return;
 				})
 				.catch(function (err) {
-					return AutoTestRoutes.handleError(400, "Error retrieving result record: " + err.message, res, next);
+					return AutoTestRoutes.handleError(400, "Error retrieving result record: " + err.message, res);
 				});
 		}
 	}
 
-	public static async atShouldPromotePush(req: any, res: any, next: any) {
+	public static async atShouldPromotePush(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AutoTestRoutes::atShouldPromotePush(..) - start");
 		const start = Date.now();
 
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res, next);
+			return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res);
 		} else {
 			try {
-				const info: CommitTarget = req.body;
+				const info = req.body as CommitTarget;
 				const courseController = await Factory.getCourseController();
 				const shouldPromote = await courseController.shouldPrioritizePushEvent(info);
 				Log.info("AutoTestRoutes::atShouldPromotePush(..) - done; shouldPromote: " + shouldPromote + "; took: " + Util.took(start));
 				const payload: Payload = { success: { shouldPromote } };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			} catch (_err) {
-				return AutoTestRoutes.handleError(400, "Failed to find push promotion details", res, next);
+				return AutoTestRoutes.handleError(400, "Failed to find push promotion details", res);
 			}
 		}
 	}
 
-	public static async atFeedbackDelay(req: any, res: any, next: any) {
+	public static async atFeedbackDelay(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AutoTestRoutes::atFeedbackDelay(..) - start");
 
 		const start = Date.now();
 
 		const providedSecret = req.headers.token;
 		if (Config.getInstance().getProp(ConfigKey.autotestSecret) !== providedSecret) {
-			return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res, next);
+			return AutoTestRoutes.handleError(400, `Invalid AutoTest Secret: ${providedSecret}`, res);
 		} else {
 			try {
-				const info: { delivId: string; personId: string; timestamp: number } = req.body;
+				const info = req.body as { delivId: string; personId: string; timestamp: number };
 				const courseController = await Factory.getCourseController();
 				const feedbackDelay = await courseController.requestFeedbackDelay(info);
 				if (feedbackDelay === null) {
 					// default implementation just says not implemented, although this is not an error
-					res.send(204, { success: { notImplemented: true } });
-					return next(true);
+					res.code(204).send({ success: { notImplemented: true } });
+					return;
 				} else {
 					Log.info(
 						"AutoTestRoutes::atFeedbackDelay(..) - done; feedbackDelay: " + JSON.stringify(feedbackDelay) + "; took: " + Util.took(start)
 					);
 					const payload: Payload = { success: { feedbackDelay } };
-					res.send(200, payload);
-					return next(true);
+					res.code(200).send(payload);
+					return;
 				}
 			} catch (_err) {
-				return AutoTestRoutes.handleError(400, "Failed to determine feedback eligibility", res, next);
+				return AutoTestRoutes.handleError(400, "Failed to determine feedback eligibility", res);
 			}
 		}
 	}
@@ -443,14 +443,14 @@ export class AutoTestRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	public static githubWebhook(req: any, res: any, next: any) {
+	public static githubWebhook(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AutoTestRoutes::githubWebhook(..) - start");
 		const start = Date.now();
 
 		AutoTestRoutes.handleWebhook(req)
 			.then(function (succ) {
 				Log.info("AutoTestRoutes::githubWebhook(..) - done; took: " + Util.took(start));
-				res.send(200, succ);
+				res.code(200).send(succ);
 			})
 			.catch(function (err) {
 				/* istanbul ignore next: braces needed for ignore (only reachable when deployed) */
@@ -458,9 +458,13 @@ export class AutoTestRoutes implements IREST {
 					Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: " + err.message + "; took: " + Util.took(start));
 					if (err.message && err.message.indexOf("hang up") >= 0) {
 						Log.error("AutoTestRoutes::githubWebhook(..) - ERROR: handling hangup; ending response");
-						return res.end();
+						// the client is already gone; take the reply out of Fastify's hands and
+						// close the socket rather than trying to send a response nobody will read
+						res.hijack();
+						res.raw.end();
+						return;
 					} else {
-						return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res, next);
+						return AutoTestRoutes.handleError(400, "Error processing webhook: " + err.message, res);
 					}
 				}
 			});
@@ -473,7 +477,7 @@ export class AutoTestRoutes implements IREST {
 	 * @param req
 	 * @returns {Promise<{}>}
 	 */
-	private static async handleWebhook(req: any): Promise<{}> {
+	private static async handleWebhook(req: ClassyRequest): Promise<{}> {
 		Log.trace("AutoTestRoutes::handleWebhook(..) - start");
 		const start = Date.now();
 
@@ -501,7 +505,7 @@ export class AutoTestRoutes implements IREST {
 		}
 	}
 
-	public static async getDockerImages(req: any, res: any, next: any) {
+	public static async getDockerImages(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AutoTestRoutes::getDockerImages(..) - start");
 		try {
 			const config = Config.getInstance();
@@ -517,12 +521,12 @@ export class AutoTestRoutes implements IREST {
 
 			if (!privileges.isAdmin) {
 				Log.warn("AutoTestRoutes::getDockerImages(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-				return res.send(401);
+				return res.code(401).send();
 			}
 
 			try {
 				const atHost = config.getProp(ConfigKey.autotestUrl);
-				const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+				const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.url.replace("/portal/at", "");
 				const options: RequestInit = {
 					method: "GET",
 				};
@@ -536,20 +540,19 @@ export class AutoTestRoutes implements IREST {
 				}
 
 				const body = await atResponse.json();
-				res.send(200, body);
+				res.code(200).send(body);
 			} catch (err) {
 				Log.error("AutoTestRoutes::getDockerImages(..) - ERROR Sending request to AutoTest service. " + err);
 				// TODO: this suggests a backend configuration problem and should be exposed to the user
-				res.send(500);
+				res.code(500).send();
 			}
 		} catch (err) {
 			Log.error("AutoTestRoutes::getDockerImages(..) - ERROR " + err);
-			res.send(400);
+			res.code(400).send();
 		}
-		next();
 	}
 
-	public static async deleteDockerImage(req: any, res: any, next: any) {
+	public static async deleteDockerImage(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		try {
 			const config = Config.getInstance();
 
@@ -565,11 +568,11 @@ export class AutoTestRoutes implements IREST {
 
 			if (!privileges.isAdmin) {
 				Log.warn("AutoTestRoutes::deleteDockerImage(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-				return res.send(401);
+				return res.code(401).send();
 			}
 
 			const atHost = config.getProp(ConfigKey.autotestUrl);
-			const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.href().replace("/portal/at", "");
+			const url = atHost + ":" + config.getProp(ConfigKey.autotestPort) + req.url.replace("/portal/at", "");
 			const options: RequestInit = {
 				method: "DELETE",
 				headers: { token: Config.getInstance().getProp(ConfigKey.autotestSecret) },
@@ -599,15 +602,22 @@ export class AutoTestRoutes implements IREST {
 				);
 			}
 
-			res.send(status, body);
+			res.code(status).send(body);
 		} catch (err) {
 			Log.error("AutoTestRoutes::deleteDockerImage(..) - ERROR " + err);
-			res.send(500);
+			res.code(500).send();
 		}
-		next();
 	}
 
-	public static async postDockerImage(req: restify.Request, res: restify.Response, next: restify.Next) {
+	/**
+	 * Forwards a Docker image build to AutoTest and streams the build output back to the browser.
+	 *
+	 * NOTE: this pipes to the raw Node response. Fastify will not let a handler write to the
+	 * socket directly, so reply.hijack() is called first to take the reply out of its hands --
+	 * after which nothing may call reply.send(). Validation therefore has to happen *before* the
+	 * hijack, which is why the authorization checks below all return early.
+	 */
+	public static async postDockerImage(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AutoTestRoutes::postDockerImage(..) - start");
 		try {
 			const githubId = req.headers.user as string;
@@ -628,7 +638,7 @@ export class AutoTestRoutes implements IREST {
 
 			if (!privileges.isAdmin) {
 				Log.warn("AutoTestRoutes::postDockerImage(..) - AUTHORIZATION FAILURE " + githubId + " is not an admin.");
-				return res.send(401);
+				return res.code(401).send();
 			}
 
 			const config = Config.getInstance();
@@ -640,11 +650,13 @@ export class AutoTestRoutes implements IREST {
 				Log.info("AutoTestRoutes::postDockerImage(..) - requesting; opts: " + JSON.stringify(options));
 				const atResponse = await fetch(url, options);
 
-				res.write(""); // keep alive
-				// seems odd to pipe _and_ do the writing below,
-				// but the pipe closes the connection while the
-				// writes seem to be required to actually send the data
-				atResponse.body.pipe(res);
+				// hand the socket over; after this point the reply is ours to write and close
+				res.hijack();
+				res.raw.writeHead(200, {
+					"Content-Type": "application/octet-stream",
+					"Access-Control-Allow-Origin": "*",
+				});
+				atResponse.body.pipe(res.raw);
 
 				try {
 					for await (const myChunk of atResponse.body) {
@@ -672,13 +684,22 @@ export class AutoTestRoutes implements IREST {
 				Log.trace("AutoTestRoutes::postDockerImage(..) - after write");
 			} catch (err) {
 				Log.error("AutoTestRoutes::postDockerImage(..) - ERROR Receiving response from AutoTest service. " + err);
-				return res.send(500);
+				// if the stream was already hijacked the reply is gone, so end the socket instead
+				if (res.raw.headersSent === true) {
+					res.raw.end();
+					return;
+				}
+				res.code(500).send();
+				return;
 			}
 		} catch (err) {
 			Log.error("AutoTestRoutes::postDockerImage(..) - ERROR " + err);
-			return res.send(400);
+			if (res.raw.headersSent === true) {
+				res.raw.end();
+				return;
+			}
+			res.code(400).send();
 		}
-		// next(); // intentionally not calling next here because we do not want to close the streaming response
 	}
 
 	/**

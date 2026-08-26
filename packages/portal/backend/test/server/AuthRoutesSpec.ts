@@ -8,11 +8,11 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import { AuthTransportPayload } from "@common/types/PortalTypes";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 describe("Auth Routes", function () {
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 	let server: BackendServer = null;
 
 	before(async () => {

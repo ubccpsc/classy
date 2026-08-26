@@ -8,19 +8,22 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { AuthTransportPayload, Payload } from "@common/types/PortalTypes";
 import ClientOAuth2 from "client-oauth2";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
 
 /**
- * Just a large body of static methods for translating between restify and the remainder of the system.
+ * Just a large body of static methods for translating between Fastify and the remainder of the system.
  */
 export class AuthRoutes implements IREST {
 	private static ac = new AuthController();
 
-	public registerRoutes(server: restify.Server) {
+	public registerRoutes(server: FastifyInstance): void {
 		Log.info("AuthRoutes::registerRoutes() - start");
 
-		server.on("MethodNotAllowed", AuthRoutes.handlePreflight); // preflights cors requests
+		// NOTE: CORS preflights used to be handled here by hanging handlePreflight off restify's
+		// "MethodNotAllowed" event, which Fastify has no equivalent for. @fastify/cors now answers
+		// them; the header values it is configured with in BackendServer are the ones the old
+		// handler produced, and AuthRoutesSpec asserts them.
 
 		// user endpoints
 		server.get("/portal/getCredentials", AuthRoutes.getCredentials); // verify Classy credentials
@@ -31,45 +34,13 @@ export class AuthRoutes implements IREST {
 		server.get("/authCallback", AuthRoutes.authCallback); // finalize GitHub OAuth flow
 	}
 
-	/**
-	 * Work around some CORS-related issues for OAuth. This looks manky, but do NOT change it.
-	 *
-	 * Really.
-	 *
-	 * Code originated in restify#284.
-	 *
-	 * Run often by browsers, but never with the unit test suite.
-	 *
-	 * @param req
-	 * @param res
-	 */
-
-	/* istanbul ignore next */
-	public static handlePreflight(req: any, res: any) {
-		Log.trace("AuthRoutes::handlePreflight(..) - " + req.method.toLowerCase() + "; uri: " + req.url);
-
-		const allowHeaders = ["Accept", "Accept-Version", "Content-Type", "Api-Version", "user-agent", "user", "token", "org", "name"];
-		if (res.methods.indexOf("OPTIONS") === -1) {
-			res.methods.push("OPTIONS");
-		}
-
-		if (res.methods.indexOf("GET") === -1) {
-			res.methods.push("GET");
-		}
-
-		res.header("Access-Control-Allow-Credentials", true);
-		res.header("Access-Control-Allow-Headers", allowHeaders.join(", "));
-		res.header("Access-Control-Allow-Methods", res.methods.join(", "));
-		res.header("Access-Control-Allow-Origin", req.headers.origin);
-
-		Log.trace("AuthRoutes::handlePreflight(..) - sending 204; headers: " + JSON.stringify(res.getHeaders()));
-		return res.send(204);
-	}
-
-	public static getLogout(req: any, res: any, next: any) {
+	// NOTE: handlers return Promise<void> rather than the reply. FastifyReply is itself thenable,
+	// so returning it out of a promise chain unwraps to Promise<unknown>; sending without
+	// returning keeps the signature honest. Fastify ends the request when the promise resolves.
+	public static async getLogout(req: FastifyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRouteHandler::getLogout(..) - start");
-		let user = req.headers.user;
-		let token = req.headers.token;
+		let user: any = req.headers.user;
+		let token: any = req.headers.token;
 
 		if (typeof user === "undefined") {
 			user = null;
@@ -81,35 +52,30 @@ export class AuthRoutes implements IREST {
 		Log.trace("AuthRoutes::getLogout(..) - user: " + user);
 		let payload: Payload;
 
-		const handleError = function (msg: string) {
+		const handleError = function (msg: string): void {
 			Log.warn("AuthRoutes::getLogout(..) - ERROR: " + msg);
 			payload = { failure: { message: "Logout failed: " + msg, shouldLogout: false } };
-			res.send(400, payload);
-			return next();
+			res.code(400).send(payload);
 		};
 
 		if (user === null) {
+			// NOTE: this now returns. Previously it fell through to the isValid() chain below and
+			// could send a second response; restify tolerated that, Fastify raises
+			// FST_ERR_REP_ALREADY_SENT.
 			Log.warn("AuthRoutes::getLogout(..) - cannot logout unspecified user: " + user);
 			handleError("unknown user.");
+			return;
 		}
 
-		AuthRoutes.ac
-			.isValid(user, token)
-			.then(function (isValid) {
-				Log.trace("AuthRoutes::getLogout( " + user + " ) - isValid: " + isValid);
-
-				// logout either way
-				const ac = new AuthController();
-				return ac.removeAuthentication(user);
-			})
+		await AuthRoutes.performLogout(user, token)
 			.then(function (success) {
 				if (success) {
 					Log.info("AuthRoutes::getLogout( " + user + " ) - logged out");
 					payload = { success: { message: "Logout successful" } };
-					res.send(200, payload);
-				} else {
-					handleError("Logout unsuccessful.");
+					res.code(200).send(payload);
+					return;
 				}
+				handleError("Logout unsuccessful.");
 			})
 			.catch(function (err) {
 				Log.error("AuthRoutes::getLogout(..) - unexpected ERROR: " + err.message);
@@ -117,14 +83,36 @@ export class AuthRoutes implements IREST {
 			});
 	}
 
-	public static getCredentials(req: any, res: any, next: any) {
+	/**
+	 * Validates the credentials and then removes the authentication either way.
+	 *
+	 * NOTE: extracted from getLogout so the handler has a single, statically-known return type;
+	 * the previous inline chain returned a boolean from one .then() and a reply from the next,
+	 * which infers as Promise<unknown>. Behaviour is unchanged: the logout happens regardless of
+	 * whether the credentials were valid.
+	 *
+	 * @param user
+	 * @param token
+	 * @returns {Promise<boolean>} whether the authentication was removed
+	 */
+	private static async performLogout(user: string, token: string): Promise<boolean> {
+		const isValid = await AuthRoutes.ac.isValid(user, token);
+		Log.trace("AuthRoutes::performLogout( " + user + " ) - isValid: " + isValid);
+
+		// logout either way
+		const ac = new AuthController();
+		return ac.removeAuthentication(user);
+	}
+
+	public static async getCredentials(req: FastifyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRoutes::getCredentials(..) - start");
-		const user = req.headers.user;
-		const token = req.headers.token;
+		// NOTE: Fastify types headers as string | string[]; these are always single-valued
+		const user = req.headers.user as string;
+		const token = req.headers.token as string;
 		Log.trace("AuthRoutes::getCredentials(..) - user: " + user + "; token: " + token);
 
 		let payload: AuthTransportPayload;
-		AuthRoutes.performGetCredentials(user, token)
+		await AuthRoutes.performGetCredentials(user, token)
 			.then(function (isPrivileged) {
 				payload = {
 					success: {
@@ -135,14 +123,12 @@ export class AuthRoutes implements IREST {
 					},
 				};
 				Log.trace("AuthRoutes::getCredentials(..) - sending 200; isPriv: " + (isPrivileged.isStaff || isPrivileged.isAdmin));
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
 			})
 			.catch(function (err) {
 				Log.warn("AuthRoutes::getCredentials(..) - ERROR: " + err.message);
 				payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
+				res.code(400).send(payload);
 			});
 	}
 
@@ -171,7 +157,7 @@ export class AuthRoutes implements IREST {
 	 */
 
 	/* istanbul ignore next */
-	public static getAuth(_req: any, res: any, next: any) {
+	public static getAuth(_req: FastifyRequest, res: FastifyReply): void {
 		Log.trace("AuthRoutes::getAuth(..) - /auth redirect start");
 
 		const config = Config.getInstance();
@@ -186,7 +172,7 @@ export class AuthRoutes implements IREST {
 		const githubAuth = new ClientOAuth2(setup);
 		const uri = githubAuth.code.getUri();
 		Log.trace("AuthRoutes::getAuth(..) - /auth uri: " + uri + "; setup: " + JSON.stringify(setup));
-		res.redirect(uri, next);
+		res.redirect(uri, 302);
 	}
 
 	/**
@@ -203,22 +189,28 @@ export class AuthRoutes implements IREST {
 	 */
 
 	/* istanbul ignore next */
-	public static authCallback(req: any, res: any, next: any) {
+	public static async authCallback(req: FastifyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AuthRoutes::authCallback(..) - /authCallback - start");
 
-		AuthRoutes.performAuthCallback(req.url, req.headers.host)
+		await AuthRoutes.performAuthCallback(req.url, req.headers.host)
 			.then(function (redirectOptions) {
 				const cookie = redirectOptions.cookie;
-				delete redirectOptions.cookie;
 				if (cookie !== null) {
 					// this is tricky; need to redirect to the client with a cookie being set on the connection
-					// only header method that worked for me
-					res.setHeader("Set-Cookie", cookie);
+					res.header("Set-Cookie", cookie);
 					Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect homepage; cookie: " + cookie);
 				} else {
 					Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirect invalid credentials");
 				}
-				res.redirect(redirectOptions, next);
+
+				// NOTE: restify accepted a {hostname, pathname, port} object here and assembled the
+				// URL itself (choosing the protocol from whether the request was secure). Fastify
+				// takes a string, so that assembly is reproduced explicitly; performAuthCallback
+				// has already stripped any protocol from hostname and split the port out.
+				const protocol = req.protocol === "https" ? "https" : "http";
+				const url = protocol + "://" + redirectOptions.hostname + ":" + redirectOptions.port + "/" + redirectOptions.pathname;
+				Log.trace("AuthRoutes::authCallback(..) - /authCallback - redirecting to: " + url);
+				res.redirect(url, 302);
 			})
 			.catch(function (err) {
 				Log.error("AuthRoutes::authCallback(..) - DB; typeof err: " + typeof err + "; err: " + err);
@@ -228,8 +220,10 @@ export class AuthRoutes implements IREST {
 				} else {
 					Log.error("AuthRoutes::authCallback(..) - /authCallback - ERROR: " + err);
 				}
-				// TODO: should this be returning 400 or something?
-				return next(false);
+				// NOTE: restify's next(false) just ended the chain without a response, which left
+				// the request hanging until the client timed out. Fastify requires an explicit
+				// reply, so this now closes the request out.
+				res.code(400).send("Authentication failed.");
 			});
 	}
 

@@ -12,7 +12,7 @@ import { ResultsKind } from "@backend/controllers/ResultsController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
 import { CSVPrairieLearnParser } from "@backend/server/common/CSVPrairieLearnParser";
-import IREST from "@backend/server/IREST";
+import IREST, { type ClassyRequest } from "@backend/server/IREST";
 import { AuditLabel, GitHubStatus, Person, Repository } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -35,9 +35,9 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import * as cookie from "cookie";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import * as http from "http";
 import fetch, { RequestInit } from "node-fetch";
-import * as restify from "restify";
 
 import { ClasslistAgent } from "./ClasslistAgent";
 import { CSVParser } from "./CSVParser";
@@ -46,7 +46,7 @@ export default class AdminRoutes implements IREST {
 	private static ghc = new GitHubController(GitHubActions.getInstance());
 	private static rc = new RepositoryController();
 
-	public static handleError(code: number, msg: string, res: any, next: any) {
+	public static handleError(code: number, msg: string, res: FastifyReply): void {
 		const payload: Payload = { failure: { message: msg, shouldLogout: false } };
 		if (code !== 401) {
 			Log.error("AdminRoutes::handleError(..) - ERROR: ", msg);
@@ -55,11 +55,11 @@ export default class AdminRoutes implements IREST {
 			// common enough it should not be logged as error
 			Log.info("AdminRoutes::handleError(..) - ERROR: ", msg);
 		}
-		res.send(code, payload);
-		return next(false);
+		res.code(code).send(payload);
+		return;
 	}
 
-	public static processAuth(req: any): { user: string; token: string } {
+	public static processAuth(req: ClassyRequest): { user: string; token: string } {
 		try {
 			let user = req.headers.user;
 			let token = req.headers.token;
@@ -95,7 +95,7 @@ export default class AdminRoutes implements IREST {
 		return null;
 	}
 
-	public static async updateClasslist(req: any, res: any, next: any) {
+	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::updateClasslist(..) - start");
 
 		const auditUser = req.headers.user;
@@ -106,7 +106,7 @@ export default class AdminRoutes implements IREST {
 
 			if (classlistChanges.classlist.length) {
 				const payload: ClasslistChangesTransportPayload = { success: classlistChanges };
-				res.send(200, payload);
+				res.code(200).send(payload);
 				Log.info(
 					"AdminRoutes::updateClasslist(..) - done: " +
 						"Classlist upload successful. " +
@@ -115,15 +115,15 @@ export default class AdminRoutes implements IREST {
 				);
 			} else {
 				const msg = "Classlist upload not successful; no students were processed from classlist service.";
-				return AdminRoutes.handleError(400, msg, res, next);
+				return AdminRoutes.handleError(400, msg, res);
 			}
 		} catch (_err) {
 			const msg = "Classlist upload not successful; no students were processed from classlist service.";
-			return AdminRoutes.handleError(400, msg, res, next);
+			return AdminRoutes.handleError(400, msg, res);
 		}
 	}
 
-	public static postWithdraw(req: any, res: any, next: any) {
+	public static postWithdraw(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::postWithdraw(..) - start");
 
 		// handled by isAdmin in the route chain
@@ -132,18 +132,18 @@ export default class AdminRoutes implements IREST {
 			.then(function (msg) {
 				Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
 				const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
 				Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
 				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
+				res.code(400).send(payload);
+				return;
 			});
 	}
 
-	public static postCheckDatabase(req: any, res: any, next: any) {
+	public static postCheckDatabase(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::postCheckDatabase(..) - start");
 
 		const dryRun = req.params.dryRun === "true";
@@ -154,33 +154,36 @@ export default class AdminRoutes implements IREST {
 			.then(function () {
 				Log.info("AdminRoutes::postCheckDatabase(..) - done");
 				const payload: Payload = { success: { message: "Check complete" } };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
 				Log.info("AdminRoutes::postCheckDatabase(..) - ERROR: " + err.message); // intentionally info
 				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
+				res.code(400).send(payload);
+				return;
 			});
 	}
 
-	public static teamCreate(req: any, res: any, next: any) {
+	public static teamCreate(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::teamCreate(..) - start");
 
 		// handled by isAdmin in the route chain
 		const userName = AdminRoutes.getUser(req);
-		const teamTrans: TeamFormationTransport = req.params;
+		// NOTE: read from the body. These routes declare no path parameters; the values used to
+		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
+		// body into it. Fastify keeps params and body separate.
+		const teamTrans = req.body as TeamFormationTransport;
 		AdminRoutes.handleTeamCreate(userName, teamTrans)
 			.then(function (team) {
 				Log.info("AdminRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
 				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
 				Log.info("AdminRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
-				return AdminRoutes.handleError(400, err.message, res, next);
+				return AdminRoutes.handleError(400, err.message, res);
 			});
 	}
 
@@ -191,30 +194,32 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static isPrivileged(req: any, res: any, next: any) {
+	// NOTE: registered as a Fastify preHandler rather than a restify middleware. The await below
+	// matters: the previous version started an un-awaited promise chain, which restify happened to
+	// tolerate but which under Fastify would let the route handler run before the check resolved.
+	// A preHandler that sends a reply stops the chain; one that returns without sending continues.
+	private static async isPrivileged(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const auth = AdminRoutes.processAuth(req);
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
 			Log.warn("AdminRoutes::isPrivileged(..) - undefined user or token; user not admin.");
-			return AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res, next);
+			AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res);
+			return;
 		}
 
 		const user = auth.user;
 		const token = auth.token;
-		const ac = new AuthController();
-		ac.isPrivileged(user, token)
-			.then(function (priv) {
-				Log.trace("AdminRoutes::isPrivileged(..) - in isPrivileged: " + JSON.stringify(priv));
-				if (priv.isStaff === true || priv.isAdmin === true) {
-					Log.trace("AdminRoutes::isPrivileged( " + user + ", ... ) - is priv");
-					return next();
-				} else {
-					Log.info("AdminRoutes::isPrivileged( " + user + ", ... ) - NOT priv");
-					return AdminRoutes.handleError(401, "Authorization error; user not privileged", res, next);
-				}
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(401, "Authorization error; user not privileged. ERROR: " + err.message, res, next);
-			});
+		try {
+			const priv = await new AuthController().isPrivileged(user, token);
+			Log.trace("AdminRoutes::isPrivileged(..) - in isPrivileged: " + JSON.stringify(priv));
+			if (priv.isStaff === true || priv.isAdmin === true) {
+				Log.trace("AdminRoutes::isPrivileged( " + user + ", ... ) - is priv");
+				return; // falls through to the route handler
+			}
+			Log.info("AdminRoutes::isPrivileged( " + user + ", ... ) - NOT priv");
+			AdminRoutes.handleError(401, "Authorization error; user not privileged", res);
+		} catch (err) {
+			AdminRoutes.handleError(401, "Authorization error; user not privileged. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -224,30 +229,28 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static isAdmin(req: any, res: any, next: any) {
+	private static async isAdmin(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		const auth = AdminRoutes.processAuth(req);
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
 			Log.warn("AdminRoutes::isAdmin(..) - undefined user or token; user not admin.");
-			return AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res, next);
+			AdminRoutes.handleError(401, "Authorization credentials error; user not admin.", res);
+			return;
 		}
 
 		const user = auth.user;
 		const token = auth.token;
-		const ac = new AuthController();
-		ac.isPrivileged(user, token)
-			.then(function (priv) {
-				Log.trace("AdminRoutes::isAdmin(..) - in isAdmin: " + JSON.stringify(priv));
-				if (priv.isAdmin === true) {
-					Log.trace("AdminRoutes::isAdmin(..) - isAdmin = true");
-					return next();
-				} else {
-					Log.info("AdminRoutes::isAdmin(..) - isAdmin NOT true");
-					return AdminRoutes.handleError(401, "Authorization error; user not admin.", res, next);
-				}
-			})
-			.catch(function (err) {
-				return AdminRoutes.handleError(401, "Authorization error; user not admin. ERROR: " + err.message, res, next);
-			});
+		try {
+			const priv = await new AuthController().isPrivileged(user, token);
+			Log.trace("AdminRoutes::isAdmin(..) - in isAdmin: " + JSON.stringify(priv));
+			if (priv.isAdmin === true) {
+				Log.trace("AdminRoutes::isAdmin(..) - isAdmin = true");
+				return; // falls through to the route handler
+			}
+			Log.info("AdminRoutes::isAdmin(..) - isAdmin NOT true");
+			AdminRoutes.handleError(401, "Authorization error; user not admin.", res);
+		} catch (err) {
+			AdminRoutes.handleError(401, "Authorization error; user not admin. ERROR: " + err.message, res);
+		}
 	}
 
 	/**
@@ -257,7 +260,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getStudents(req: any, res: any, next: any) {
+	private static getStudents(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getStudents(..) - start");
 		const start = Date.now();
 
@@ -267,10 +270,10 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
 				const payload: StudentTransportPayload = { success: students };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res);
 			});
 	}
 
@@ -281,7 +284,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getStaff(req: any, res: any, next: any) {
+	private static getStaff(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getStaff(..) - start");
 		const start = Date.now();
 
@@ -291,10 +294,10 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
 				const payload: StudentTransportPayload = { success: staff };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve staff list. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve staff list. ERROR: " + err.message, res);
 			});
 	}
 
@@ -305,7 +308,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getTeams(req: any, res: any, next: any) {
+	private static getTeams(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getTeams(..) - start");
 		const start = Date.now();
 
@@ -316,14 +319,14 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getTeams() - # teams: " + teams.length + "; took: " + Util.took(start));
 				const payload: TeamTransportPayload = { success: teams };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
 			});
 	}
 
-	private static getRepositories(_req: any, res: any, next: any) {
+	private static getRepositories(_req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getRepositories() - start");
 		const start = Date.now();
 
@@ -334,10 +337,10 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getRepositories() - # repos: " + repos.length + "; took: " + Util.took(start));
 				const payload: RepositoryPayload = { success: repos };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve repository list. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve repository list. ERROR: " + err.message, res);
 			});
 	}
 
@@ -348,7 +351,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getResults(req: any, res: any, next: any) {
+	private static getResults(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getResults(..) - start");
 		const start = Date.now();
 
@@ -365,17 +368,17 @@ export default class AdminRoutes implements IREST {
 				);
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve results. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve results. ERROR: " + err.message, res);
 			});
 	}
 
 	/**
 	 * Returns AutoTestResultPayload[]
 	 */
-	private static getGradedResults(req: any, res: any, next: any) {
+	private static getGradedResults(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getGradedResults(..) - start");
 		const start = Date.now();
 
@@ -386,17 +389,17 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getGradedResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to retrieve graded results. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve graded results. ERROR: " + err.message, res);
 			});
 	}
 
 	/**
 	 * Returns AutoTestResultPayload[]
 	 */
-	private static getBestResults(req: any, res: any, next: any) {
+	private static getBestResults(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getBestResults(..) - start");
 		const start = Date.now();
 
@@ -407,10 +410,10 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getBestResults(..) - done; # results: " + results.length + "; took: " + Util.took(start));
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch((err) => {
-				return AdminRoutes.handleError(400, "Unable to retrieve highest results. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve highest results. ERROR: " + err.message, res);
 			});
 	}
 
@@ -420,7 +423,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static deleteDeliverable(req: any, res: any, next: any) {
+	private static deleteDeliverable(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::deleteDeliverable(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -434,11 +437,11 @@ export default class AdminRoutes implements IREST {
 			.then(function (success) {
 				Log.trace("AdminRoutes::deleteDeliverable(..) - done; success: " + success);
 				const payload: Payload = { success: { message: "Deliverable deleted." } };
-				res.send(200, payload); // return as text rather than json
-				return next();
+				res.code(200).send(payload); // return as text rather than json
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete deliverable. " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to delete deliverable. " + err.message, res);
 			});
 	}
 
@@ -462,7 +465,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static deleteRepository(req: any, res: any, next: any) {
+	private static deleteRepository(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::deleteRepository(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -473,11 +476,11 @@ export default class AdminRoutes implements IREST {
 			.then(function (success) {
 				Log.info("AdminRoutes::deleteRepository(..) - done; success: " + success);
 				const payload: Payload = { success: { message: "Repository deleted." } };
-				res.send(200, payload); // return as text rather than json
-				return next();
+				res.code(200).send(payload); // return as text rather than json
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete repository. " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to delete repository. " + err.message, res);
 			});
 	}
 
@@ -504,7 +507,7 @@ export default class AdminRoutes implements IREST {
 		return worked;
 	}
 
-	private static getUser(req: any): string {
+	private static getUser(req: ClassyRequest): string {
 		const user = AdminRoutes.processAuth(req);
 		let userName = "UNKNOWN";
 		if (typeof user?.user === "string") {
@@ -527,7 +530,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDashboard(req: any, res: any, next: any) {
+	private static getDashboard(req: ClassyRequest, res: FastifyReply): void {
 		const start = Date.now();
 
 		// if these params are missing the client will get 404 since they are part of the path
@@ -551,10 +554,10 @@ export default class AdminRoutes implements IREST {
 				);
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
 			});
 	}
 
@@ -565,7 +568,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDashboardAll(req: any, res: any, next: any) {
+	private static getDashboardAll(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::getDashboardAll(..) - start");
 
 		// if these params are missing the client will get 404 since they are part of the path
@@ -579,10 +582,10 @@ export default class AdminRoutes implements IREST {
 				Log.trace("AdminRoutes::getDashboardAll(..) - in then; # results: " + results.length);
 				const payload: AutoTestResultSummaryPayload = { success: results };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve dashboard. ERROR: " + err.message, res);
 			});
 	}
 
@@ -593,7 +596,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getGrades(req: any, res: any, next: any) {
+	private static getGrades(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::getGrades(..) - start");
 		const start = Date.now();
 
@@ -604,10 +607,10 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
 				const payload: GradeTransportPayload = { success: grades };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
 			});
 	}
 
@@ -618,7 +621,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getDeliverables(req: any, res: any, next: any) {
+	private static getDeliverables(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getDeliverables() - start");
 		const start = Date.now();
 
@@ -629,128 +632,133 @@ export default class AdminRoutes implements IREST {
 				Log.info("AdminRoutes::getDeliverables() - # delivs: " + delivs.length + "; took: " + Util.took(start));
 				const payload: DeliverableTransportPayload = { success: delivs };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to get deliverable list; ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to get deliverable list; ERROR: " + err.message, res);
 			});
 	}
 
-	private static postClasslist(req: any, res: any, next: any) {
+	/**
+	 * Saves the uploaded file to disk and returns its path.
+	 *
+	 * NOTE: restify's bodyParser wrote multipart uploads to a temp file and exposed the location
+	 * as req.files.<field>.path. @fastify/multipart streams instead, so saveRequestFiles() is used
+	 * to get the same on-disk behaviour; that keeps CSVParser and CSVPrairieLearnParser (which
+	 * take a path) untouched. Fastify cleans the temp files up when the request completes.
+	 *
+	 * @param req
+	 * @param fieldName the multipart field the client uploaded under (e.g. "classlist")
+	 * @returns {Promise<string>} the path of the uploaded file on disk
+	 */
+	private static async getUploadedFilePath(req: ClassyRequest, fieldName: string): Promise<string> {
+		const saved = await req.saveRequestFiles();
+		const match = saved.files.find(function (file: any) {
+			return file.fieldname === fieldName;
+		});
+		if (typeof match === "undefined" || match === null) {
+			throw new Error("No file uploaded for field: " + fieldName);
+		}
+		Log.trace("AdminRoutes::getUploadedFilePath( " + fieldName + " ) - path: " + match.filepath);
+		return match.filepath;
+	}
+
+	private static async postClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postClasslist(..) - start");
 		// authentication handled by preceding action in chain above (see registerRoutes)
 
 		try {
 			const userName = AdminRoutes.getUser(req);
-			const path = req.files.classlist.path; // this is brittle, but if it fails it will just trigger the exception
+			const path = await AdminRoutes.getUploadedFilePath(req, "classlist");
 
+			// @fastify/multipart deletes the temp file saved by saveRequestFiles() as soon
+			// as the handler resolves
 			const ca = new ClasslistAgent();
-			ca.processClasslist(userName, path, null)
-				.then(function (classlistChanges) {
-					if (classlistChanges.classlist.length) {
-						const payload: ClasslistChangesTransportPayload = {
-							success: classlistChanges,
-						};
-						res.send(200, payload);
-						Log.info(
-							"AdminRoutes::postClasslist(..) - done: Classlist upload successful. " +
-								classlistChanges.classlist.length +
-								" students processed."
-						);
-					} else {
-						const msg = "Classlist upload not successful; no students were processed from CSV.";
-						return AdminRoutes.handleError(400, msg, res, next);
-					}
-				})
-				.catch(function (err: Error) {
-					return AdminRoutes.handleError(400, "Classlist upload unsuccessful. ERROR: " + err.message, res, next);
-				});
+			const classlistChanges = await ca.processClasslist(userName, path, null);
+			if (classlistChanges.classlist.length) {
+				const payload: ClasslistChangesTransportPayload = { success: classlistChanges };
+				res.code(200).send(payload);
+				Log.info(
+					"AdminRoutes::postClasslist(..) - done: Classlist upload successful. " +
+						classlistChanges.classlist.length +
+						" students processed."
+				);
+				return;
+			}
+			AdminRoutes.handleError(400, "Classlist upload not successful; no students were processed from CSV.", res);
 		} catch (err) {
-			return AdminRoutes.handleError(400, "Classlist upload unsuccessful. ERROR: " + err.message, res, next);
+			return AdminRoutes.handleError(400, "Classlist upload unsuccessful. ERROR: " + err.message, res);
 		}
 	}
 
-	private static postGrades(req: any, res: any, next: any) {
+	private static async postGrades(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postGrades(..) - start");
 
 		// authentication handled by preceding action in chain above (see registerRoutes)
 		try {
 			const delivId = req.params.delivId;
-			const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
-
+			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
 			const userName = AdminRoutes.getUser(req);
 			const csvParser = new CSVParser();
-			csvParser
-				.processGrades(userName, delivId, path)
-				.then(function (grades) {
-					if (grades.length > 0) {
-						const payload: Payload = {
-							success: {
-								message: "Grades upload successful. " + grades.length + " grades processed.",
-							},
-						};
-						res.send(200, payload);
-						Log.info("AdminRoutes::postGrades(..) - done: " + payload.success.message);
-					} else {
-						const msg = "Grades upload not successful; no grades were processed from CSV.";
-						return AdminRoutes.handleError(400, msg, res, next);
-					}
-				})
-				.catch(function (err: Error) {
-					return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res, next);
-				});
+
+			const grades = await csvParser.processGrades(userName, delivId, path);
+			if (grades.length > 0) {
+				const payload: Payload = {
+					success: {
+						message: "Grades upload successful. " + grades.length + " grades processed.",
+					},
+				};
+				res.code(200).send(payload);
+				Log.info("AdminRoutes::postGrades(..) - done: " + payload.success.message);
+				return;
+			}
+			AdminRoutes.handleError(400, "Grades upload not successful; no grades were processed from CSV.", res);
 		} catch (err) {
-			return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res, next);
+			return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res);
 		}
 	}
 
-	private static postGradesPrairie(req: any, res: any, next: any) {
+	private static async postGradesPrairie(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postGradesPrairie(..) - start");
 
 		// authentication handled by preceding action in chain above (see registerRoutes)
 		try {
-			const path = req.files.gradelist.path; // this is brittle, but if it fails it will just trigger the exception
+			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
 			const userName = AdminRoutes.getUser(req);
 			const csvParser = new CSVPrairieLearnParser();
-			csvParser
-				.processGrades(userName, path)
-				.then(function (grades) {
-					if (grades.length > 0) {
-						const payload: Payload = {
-							success: {
-								message: "Grades upload successful. " + grades.length + " grades processed.",
-							},
-						};
-						res.send(200, payload);
-						Log.info("AdminRoutes::postGradesPrairie(..) - done: " + payload.success.message);
-					} else {
-						const msg = "Grades upload not successful; no grades were processed from CSV.";
-						return AdminRoutes.handleError(400, msg, res, next);
-					}
-				})
-				.catch(function (err: Error) {
-					return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res, next);
-				});
+
+			const grades = await csvParser.processGrades(userName, path);
+			if (grades.length > 0) {
+				const payload: Payload = {
+					success: {
+						message: "Grades upload successful. " + grades.length + " grades processed.",
+					},
+				};
+				res.code(200).send(payload);
+				Log.info("AdminRoutes::postGradesPrairie(..) - done: " + payload.success.message);
+				return;
+			}
+			AdminRoutes.handleError(400, "Grades upload not successful; no grades were processed from CSV.", res);
 		} catch (err) {
-			return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res, next);
+			return AdminRoutes.handleError(400, "Grades upload unsuccessful. ERROR: " + err.message, res);
 		}
 	}
 
-	private static postDeliverable(req: any, res: any, next: any) {
+	private static postDeliverable(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::postDeliverable(..) - start");
 
 		// isValid handled by preceding action in chain above (see registerRoutes)
 		const userName = AdminRoutes.getUser(req);
-		const delivTrans: DeliverableTransport = req.params;
-		Log.info("AdminRoutes::postDeliverable() - body: " + delivTrans);
+		const delivTrans = req.body as DeliverableTransport;
+		Log.info("AdminRoutes::postDeliverable() - body: " + JSON.stringify(delivTrans));
 		AdminRoutes.handlePostDeliverable(userName, delivTrans)
 			.then(function (success) {
 				Log.info("AdminRoutes::postDeliverable() - done; success: " + success);
 				const payload: Payload = { success: { message: "Deliverable saved successfully" } };
-				res.send(200, payload);
+				res.code(200).send(payload);
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, err.message, res, next);
+				return AdminRoutes.handleError(400, err.message, res);
 			});
 	}
 
@@ -780,7 +788,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static getCourse(req: any, res: any, next: any) {
+	private static getCourse(req: ClassyRequest, res: FastifyReply): void {
 		Log.trace("AdminRoutes::getCourse() - start");
 		const start = Date.now();
 
@@ -790,28 +798,31 @@ export default class AdminRoutes implements IREST {
 				Log.trace("AdminRoutes::getCourse() - done; took: " + Util.took(start));
 				const payload: CourseTransportPayload = { success: course };
 				res.send(payload);
-				return next();
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to retrieve course object; ERROR: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to retrieve course object; ERROR: " + err.message, res);
 			});
 	}
 
-	private static postCourse(req: any, res: any, next: any) {
+	private static postCourse(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::postCourse(..) - start");
 
 		const userName = AdminRoutes.getUser(req);
-		const courseTrans: CourseTransport = req.params;
-		Log.info("AdminRoutes::postCourse() - body: " + courseTrans);
+		// NOTE: read from the body. These routes declare no path parameters; the values used to
+		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
+		// body into it. Fastify keeps params and body separate.
+		const courseTrans = req.body as CourseTransport;
+		Log.info("AdminRoutes::postCourse() - body: " + JSON.stringify(courseTrans));
 		AdminRoutes.handlePostCourse(userName, courseTrans)
 			.then(function (success) {
 				Log.trace("AdminRoutes::postCourse() -handle done; success: " + success);
 				const payload: Payload = { success: { message: "Course object saved successfully" } };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to post course: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to post course: " + err.message, res);
 			});
 	}
 
@@ -832,7 +843,7 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Course object not saved.");
 	}
 
-	private static postProvision(req: any, res: any, next: any) {
+	private static postProvision(req: ClassyRequest, res: FastifyReply): void {
 		const delivId = req.params.delivId;
 		const repoId = req.params.repoId;
 
@@ -843,11 +854,11 @@ export default class AdminRoutes implements IREST {
 		AdminRoutes.handleProvisionRepo(userName, delivId, [repoId])
 			.then(function (success) {
 				const payload: Payload = { success: success };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res);
 			});
 	}
 
@@ -858,9 +869,9 @@ export default class AdminRoutes implements IREST {
 	 * (packages/proxy/proxy.conf) uses proxy_read_timeout 90, so a request that provisions more
 	 * repos than fit in 90s is cut off by nginx even though the server keeps working.
 	 */
-	private static postProvisionBatch(req: any, res: any, next: any) {
+	private static postProvisionBatch(req: ClassyRequest, res: FastifyReply): void {
 		const delivId = req.params.delivId;
-		const body = req.body || {};
+		const body = (req.body || {}) as { repoIds?: string[] };
 		const repoIds: string[] = Array.isArray(body.repoIds) ? body.repoIds : [];
 
 		const userName = AdminRoutes.getUser(req);
@@ -869,15 +880,15 @@ export default class AdminRoutes implements IREST {
 		AdminRoutes.handleProvisionRepo(userName, delivId, repoIds)
 			.then(function (success) {
 				const payload: Payload = { success: success };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
 			});
 	}
 
-	private static getProvision(req: any, res: any, next: any) {
+	private static getProvision(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::getProvision(..) - start");
 
 		const delivId = req.params.delivId;
@@ -885,11 +896,11 @@ export default class AdminRoutes implements IREST {
 		AdminRoutes.planProvision({ delivId: delivId, formSingle: false })
 			.then(function (success) {
 				const payload: Payload = { success: success };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
 			});
 	}
 
@@ -956,7 +967,7 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Provisioning unsuccessful.");
 	}
 
-	private static postRelease(req: any, res: any, next: any) {
+	private static postRelease(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::postRelease(..) - start");
 
 		const userName = AdminRoutes.getUser(req);
@@ -966,16 +977,16 @@ export default class AdminRoutes implements IREST {
 		AdminRoutes.performRelease(userName, repoId)
 			.then(function (success) {
 				const payload: Payload = { success: success };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
 				Log.exception(err);
-				return AdminRoutes.handleError(400, "Unable to release repos: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to release repos: " + err.message, res);
 			});
 	}
 
-	private static getRelease(req: any, res: any, next: any) {
+	private static getRelease(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::getRelease(..) - start");
 
 		const delivId = req.params.delivId;
@@ -983,11 +994,11 @@ export default class AdminRoutes implements IREST {
 		AdminRoutes.planRelease(delivId)
 			.then(function (success) {
 				const payload: Payload = { success: success };
-				res.send(200, payload);
-				return next(true);
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to plan release: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to plan release: " + err.message, res);
 			});
 	}
 
@@ -1108,7 +1119,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamDelete(req: any, res: any, next: any) {
+	private static teamDelete(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::teamDelete(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -1123,11 +1134,11 @@ export default class AdminRoutes implements IREST {
 						message: "Team " + teamId + " deleted; object: " + success.deletedObject + "; GitHub: " + success.deletedGithub,
 					},
 				};
-				res.send(200, payload);
-				return next();
+				res.code(200).send(payload);
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to delete team. " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to delete team. " + err.message, res);
 			});
 	}
 
@@ -1166,7 +1177,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamAddMember(req: any, res: any, next: any) {
+	private static teamAddMember(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::teamAddMember(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -1186,11 +1197,11 @@ export default class AdminRoutes implements IREST {
 						message: "Team " + teamId + " updated; members: " + addedMembers,
 					},
 				};
-				res.send(200, payload); // return as text rather than json
-				return next();
+				res.code(200).send(payload); // return as text rather than json
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
 			});
 	}
 
@@ -1243,7 +1254,7 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
-	private static teamRemoveMember(req: any, res: any, next: any) {
+	private static teamRemoveMember(req: ClassyRequest, res: FastifyReply): void {
 		Log.info("AdminRoutes::teamRemoveMember(..) - start");
 		// isAdmin pre-handler verifies that only valid users can do this
 
@@ -1264,11 +1275,11 @@ export default class AdminRoutes implements IREST {
 				};
 
 				Log.trace("AdminRoutes::teamRemoveMember(..) - done; sending:", payload);
-				res.send(200, payload); // return as text rather than json
-				return next();
+				res.code(200).send(payload); // return as text rather than json
+				return;
 			})
 			.catch(function (err) {
-				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res, next);
+				return AdminRoutes.handleError(400, "Unable to update team: " + err.message, res);
 			});
 	}
 
@@ -1311,7 +1322,7 @@ export default class AdminRoutes implements IREST {
 		return afterTeam;
 	}
 
-	// private static updatePatches(_req: any, res: any, next: any) {
+	// private static updatePatches(_req: ClassyRequest, res: FastifyReply): void {
 	// 	Log.trace("AdminRoutes::updatePatches(..) - start");
 	// 	const start = Date.now();
 	//
@@ -1324,14 +1335,14 @@ export default class AdminRoutes implements IREST {
 	// 		.then((_result) => {
 	// 			Log.info("AdminRoutes::updatePatches(..) - done; took: " + Util.took(start));
 	// 			res.send({ success: "patches updated" });
-	// 			return next();
+	// 			return;
 	// 		})
 	// 		.catch((err) => {
-	// 			return AdminRoutes.handleError(400, "Unable to update patches. Error: " + err.message, res, next);
+	// 			return AdminRoutes.handleError(400, "Unable to update patches. Error: " + err.message, res);
 	// 		});
 	// }
 
-	// private static listPatches(_req: any, res: any, next: any) {
+	// private static listPatches(_req: ClassyRequest, res: FastifyReply): void {
 	// 	Log.trace("AdminRoutes::listPatches(..) - start");
 	// 	const start = Date.now();
 	//
@@ -1354,17 +1365,17 @@ export default class AdminRoutes implements IREST {
 	// 						Util.took(start)
 	// 				);
 	// 				res.send({ success: patches });
-	// 				return next();
+	// 				return;
 	// 			} catch (err) {
-	// 				return AdminRoutes.handleError(400, "Patches not returned in expected format. Error: " + err.message, res, next);
+	// 				return AdminRoutes.handleError(400, "Patches not returned in expected format. Error: " + err.message, res);
 	// 			}
 	// 		})
 	// 		.catch((err) => {
-	// 			return AdminRoutes.handleError(400, "Unable to get patches. Error: " + err.message, res, next);
+	// 			return AdminRoutes.handleError(400, "Unable to get patches. Error: " + err.message, res);
 	// 		});
 	// }
 
-	// private static patchRepo(req: any, res: any, next: any) {
+	// private static patchRepo(req: ClassyRequest, res: FastifyReply): void {
 	// 	Log.trace("AdminRoutes::patchRepo(..) - start");
 	// 	const start = Date.now();
 	// 	const patch: string = req.params.patch;
@@ -1379,78 +1390,78 @@ export default class AdminRoutes implements IREST {
 	// 			if (result) {
 	// 				Log.info("AdminRoutes::patchRepo(..) - done; took: " + Util.took(start));
 	// 				res.send({ success: repoId });
-	// 				return next();
+	// 				return;
 	// 			} else {
-	// 				return AdminRoutes.handleError(400, "Unable to patch repo.", res, next);
+	// 				return AdminRoutes.handleError(400, "Unable to patch repo.", res);
 	// 			}
 	// 		})
 	// 		.catch((err: any) => {
-	// 			return AdminRoutes.handleError(400, "Unable to patch repo. ERROR: " + err.message, res, next);
+	// 			return AdminRoutes.handleError(400, "Unable to patch repo. ERROR: " + err.message, res);
 	// 		});
 	// }
 
-	// private static patchSource(_req: any, res: any, next: any) {
+	// private static patchSource(_req: ClassyRequest, res: FastifyReply): void {
 	// 	Log.trace("AdminRoutes::patchSource(..) - start");
 	// 	const patchSourceRepo: string = Config.getInstance().getProp(ConfigKey.patchSourceRepo);
 	// 	if (patchSourceRepo && patchSourceRepo !== "") {
 	// 		Log.trace("AdminRoutes::patchSource(..) - Responding with patch source (" + patchSourceRepo + ")");
 	// 		res.send({ success: patchSourceRepo });
-	// 		return next();
+	// 		return;
 	// 	} else {
 	// 		Log.info("AdminRoutes::patchSource(..) - patch not found in environment");
-	// 		return AdminRoutes.handleError(424, "Patch source repo not found in environment", res, next);
+	// 		return AdminRoutes.handleError(424, "Patch source repo not found in environment", res);
 	// 	}
 	// }
 
-	public registerRoutes(server: restify.Server) {
+	public registerRoutes(server: FastifyInstance): void {
 		Log.trace("AdminRoutes::registerRoutes() - start");
 
 		// visible to non-privileged users
 		// NOTHING
 
 		// visible to all privileged users
-		server.get("/portal/admin/course", AdminRoutes.isPrivileged, AdminRoutes.getCourse);
-		server.get("/portal/admin/deliverables", AdminRoutes.isPrivileged, AdminRoutes.getDeliverables);
-		server.get("/portal/admin/students", AdminRoutes.isPrivileged, AdminRoutes.getStudents);
-		server.get("/portal/admin/staff", AdminRoutes.isPrivileged, AdminRoutes.getStaff);
-		server.get("/portal/admin/teams", AdminRoutes.isPrivileged, AdminRoutes.getTeams);
-		server.get("/portal/admin/repositories", AdminRoutes.isPrivileged, AdminRoutes.getRepositories);
-		server.get("/portal/admin/grades", AdminRoutes.isPrivileged, AdminRoutes.getGrades);
-		server.get("/portal/admin/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboard); // detailed results
-		server.get("/portal/admin/export/dashboard/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getDashboardAll); // no num limit
-		server.get("/portal/admin/results/:delivId/:repoId", AdminRoutes.isPrivileged, AdminRoutes.getResults); // result summaries
-		server.get("/portal/admin/gradedResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getGradedResults); // graded results
-		server.get("/portal/admin/bestResults/:delivId", AdminRoutes.isPrivileged, AdminRoutes.getBestResults); // results with best score
+		server.get("/portal/admin/course", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getCourse);
+		server.get("/portal/admin/deliverables", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDeliverables);
+		server.get("/portal/admin/students", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStudents);
+		server.get("/portal/admin/staff", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStaff);
+		server.get("/portal/admin/teams", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getTeams);
+		server.get("/portal/admin/repositories", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getRepositories);
+		server.get("/portal/admin/grades", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
+		server.get("/portal/admin/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard); // detailed results
+		server.get("/portal/admin/export/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboardAll); // no num limit
+		server.get("/portal/admin/results/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults); // result summaries
+		server.get("/portal/admin/gradedResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGradedResults); // graded results
+		server.get("/portal/admin/bestResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getBestResults); // results with best score
 
 		// admin-only functions
-		server.post("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.postClasslist);
-		server.put("/portal/admin/classlist", AdminRoutes.isAdmin, AdminRoutes.updateClasslist);
-		server.post("/portal/admin/grades/csv/:delivId", AdminRoutes.isAdmin, AdminRoutes.postGrades);
-		server.post("/portal/admin/grades/prairie", AdminRoutes.isAdmin, AdminRoutes.postGradesPrairie);
-		server.post("/portal/admin/deliverable", AdminRoutes.isAdmin, AdminRoutes.postDeliverable);
+		server.post("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postClasslist);
+		server.put("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.updateClasslist);
+		server.post("/portal/admin/grades/csv/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGrades);
+		server.post("/portal/admin/grades/prairie", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGradesPrairie);
+		server.post("/portal/admin/deliverable", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postDeliverable);
 
-		server.post("/portal/admin/course", AdminRoutes.isAdmin, AdminRoutes.postCourse);
-		server.get("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.getProvision);
-		server.post("/portal/admin/provision/:delivId", AdminRoutes.isAdmin, AdminRoutes.postProvisionBatch);
-		server.post("/portal/admin/provision/:delivId/:repoId", AdminRoutes.isAdmin, AdminRoutes.postProvision);
-		server.get("/portal/admin/release/:delivId", AdminRoutes.isAdmin, AdminRoutes.getRelease);
-		server.post("/portal/admin/release/:repoId", AdminRoutes.isAdmin, AdminRoutes.postRelease);
-		server.post("/portal/admin/withdraw", AdminRoutes.isAdmin, AdminRoutes.postWithdraw);
-		server.post("/portal/admin/checkDatabase/:dryRun", AdminRoutes.isAdmin, AdminRoutes.postCheckDatabase);
-		server.del("/portal/admin/deliverable/:delivId", AdminRoutes.isAdmin, AdminRoutes.deleteDeliverable);
-		server.del("/portal/admin/repository/:repoId", AdminRoutes.isAdmin, AdminRoutes.deleteRepository);
+		server.post("/portal/admin/course", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postCourse);
+		server.get("/portal/admin/provision/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getProvision);
+		server.post("/portal/admin/provision/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postProvisionBatch);
+		server.post("/portal/admin/provision/:delivId/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postProvision);
+		server.get("/portal/admin/release/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getRelease);
+		server.post("/portal/admin/release/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postRelease);
+		server.post("/portal/admin/withdraw", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postWithdraw);
+		server.post("/portal/admin/checkDatabase/:dryRun", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postCheckDatabase);
+		server.delete("/portal/admin/deliverable/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteDeliverable);
+		server.delete("/portal/admin/repository/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteRepository);
 
 		// admin team functions
-		server.post("/portal/admin/team", AdminRoutes.isAdmin, AdminRoutes.teamCreate);
-		server.post("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamAddMember);
-		server.del("/portal/admin/team/:teamId/members/:memberId", AdminRoutes.isAdmin, AdminRoutes.teamRemoveMember);
-		server.del("/portal/admin/team/:teamId", AdminRoutes.isAdmin, AdminRoutes.teamDelete);
+		server.post("/portal/admin/team", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamCreate);
+		server.post("/portal/admin/team/:teamId/members/:memberId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamAddMember);
+		server.delete("/portal/admin/team/:teamId/members/:memberId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamRemoveMember);
+		server.delete("/portal/admin/team/:teamId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamDelete);
 
 		// admin patch routes (no longer supported)
-		// server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
-		// server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
-		// server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
-		// server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
+		// server.get("/portal/admin/listPatches", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.listPatches);
+		// server.post("/portal/admin/patchRepo/:repo/:patch/:root", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.patchRepo);
+		// server.get("/portal/admin/patchSource", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.patchSource);
+		// server.post("/portal/admin/updatePatches", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.updatePatches);
 
 		// staff-only functions
 		// NOTHING
