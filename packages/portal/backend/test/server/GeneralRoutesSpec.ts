@@ -814,4 +814,38 @@ describe("General Routes", function () {
 		expect(ex).to.be.null;
 		expect(body.failure.message).to.be.an("string");
 	});
+
+	describe("REST framework portability", function () {
+		it("Should reject a team request with no body rather than failing internally.", async function () {
+			const dc: DatabaseController = DatabaseController.getInstance();
+			const auth = await dc.getAuth(TestHarness.USER1.id);
+			expect(auth).to.not.be.null;
+
+			const response = await request(app).post("/portal/team").set({ user: auth.personId, token: auth.token });
+			const body: Payload = response.body;
+			Log.test("empty team body: " + response.status + " -> " + JSON.stringify(body));
+
+			expect(response.status).to.equal(400);
+			expect(body.success).to.be.undefined;
+			expect(body.failure, "an empty body must produce a handled failure, not a crash").to.not.be.undefined;
+			// a deliberate message, not a TypeError from deep in the controller leaking to the client
+			expect(body.failure.message).to.contain("no body sent");
+		});
+
+		it("Should serve the static frontend assets.", async function () {
+			const response = await request(app).get("/style.css");
+			Log.test("static /style.css -> " + response.status + "; type: " + response.headers["content-type"]);
+
+			expect(response.status).to.equal(200);
+			expect(response.headers["content-type"], "css was not served as css").to.contain("css");
+			expect(response.text, "static asset body was empty").to.be.a("string").with.length.greaterThan(0);
+		});
+
+		it("Should not let the static handler swallow unknown API routes.", async function () {
+			const response = await request(app).get("/portal/thisRouteDoesNotExist");
+			Log.test("unknown API path -> " + response.status + "; type: " + response.headers["content-type"]);
+
+			expect(response.status).to.equal(404);
+		});
+	});
 });

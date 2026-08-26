@@ -130,14 +130,21 @@ export class Network {
 	public static async httpPostFile(url: string, opts: any, formData: FormData): Promise<Response> {
 		Log.trace("Network::httpPostFile( " + url + " ) - start");
 
-		let postOptions: {} = {
-			method: "post",
-			cors: "enabled",
-			body: formData,
-		};
+		const headers: { [header: string]: string } = {};
+		if (opts !== null && typeof opts === "object" && typeof opts.headers === "object" && opts.headers !== null) {
+			for (const name of Object.keys(opts.headers)) {
+				if (name.toLowerCase() === "content-type") {
+					Log.trace("Network::httpPostFile( " + url + " ) - dropping caller Content-Type: " + opts.headers[name]);
+					continue;
+				}
+				headers[name] = opts.headers[name];
+			}
+		}
+
+		// opts is still merged for any other fields it carries, but the sanitized headers win
+		const postOptions: {} = Object.assign({ method: "post", cors: "enabled", body: formData }, opts, { headers: headers });
 
 		try {
-			postOptions = Object.assign(postOptions, opts); // add in user & token
 			const data = await fetch(url, postOptions);
 			Log.trace("Network::httpPostFile( " + url + " ) - success");
 			return data;

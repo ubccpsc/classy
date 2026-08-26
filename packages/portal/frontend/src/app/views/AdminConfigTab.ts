@@ -441,7 +441,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},
@@ -489,7 +489,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},
@@ -534,7 +534,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},

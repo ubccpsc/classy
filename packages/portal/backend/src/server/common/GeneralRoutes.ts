@@ -271,7 +271,14 @@ export default class GeneralRoutes implements IREST {
 
 		Log.info("GeneralRoutes::teamCreate(..) - start; user: " + user);
 
-		const teamTrans: TeamFormationTransport = req.params;
+		const teamTrans: TeamFormationTransport = req.body;
+
+		if (typeof teamTrans !== "object" || teamTrans === null) {
+			const payload: Payload = { failure: { message: "Invalid team creation request; no body sent.", shouldLogout: false } };
+			Log.info("GeneralRoutes::teamCreate(..) - ERROR: no body sent");
+			res.send(400, payload);
+			return next(false);
+		}
 		GeneralRoutes.performPostTeam(user, token, teamTrans)
 			.then(function (team) {
 				Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
