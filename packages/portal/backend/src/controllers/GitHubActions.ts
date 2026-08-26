@@ -1819,8 +1819,6 @@ export class GitHubActions implements IGitHubActions {
 		// NOTE: fileContent is omitted above; it can be large and can carry sensitive content.
 		// Uncomment only for local debugging.
 		// Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" + " , " + fileContent + " , " + force + " ) - start");
-		const that = this;
-
 		if (typeof force === "undefined") {
 			force = false;
 		}
@@ -1833,6 +1831,57 @@ export class GitHubActions implements IGitHubActions {
 		const authedRepo = this.addGithubAuthToken(repoURL);
 
 		// clone repository
+		// NOTE: these were function declarations placed after the try block, relying on hoisting,
+		// with a `const that = this` because both the declaration and its .then() callback rebind
+		// `this`. As arrow functions they close over `this` directly, but they are no longer
+		// hoisted, so they have to be defined before the calls below.
+		const run = async (command: string, label: string): Promise<void> => {
+			const result = await exec(command);
+			Log.info("GitHubActions::writeFileToRepo(..)::" + label + "() - done");
+			this.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::" + label + "()");
+			this.reportStdErr(result.stderr, "writeFileToRepo(..)::" + label + "()");
+		};
+
+		const cloneRepo = async (repoPath: string): Promise<void> => {
+			const cloneStart = Date.now();
+			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: " + repoURL);
+			await run(`git clone -q ${authedRepo} ${repoPath}`, "cloneRepo");
+			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - took: " + Util.took(cloneStart));
+		};
+
+		const enterRepoPath = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: " + tempPath);
+			await run(`cd ${tempPath}`, "enterRepoPath");
+		};
+
+		const createNewFileForce = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: " + fileName);
+			await run(
+				`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo "${fileContent}" >> ${fileName};`,
+				"createNewFileForce"
+			);
+		};
+
+		const createNewFile = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - writing: " + fileName);
+			await run(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`, "createNewFile");
+		};
+
+		const addFilesToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - start");
+			await run(`cd ${tempPath} && git add ${fileName}`, "addFilesToRepo");
+		};
+
+		const commitFilesToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start");
+			await run(`cd ${tempPath} && git commit -q -m "Update ${fileName}"`, "commitFilesToRepo");
+		};
+
+		const pushToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::pushToRepo() - start");
+			await run(`cd ${tempPath} && git push -q`, "pushToNewRepo");
+		};
+
 		try {
 			await cloneRepo(tempPath);
 			await enterRepoPath();
@@ -1857,78 +1906,6 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		return true;
-
-		function cloneRepo(repoPath: string) {
-			const cloneStart = Date.now();
-			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: " + repoURL);
-			return exec(`git clone -q ${authedRepo} ${repoPath}`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - done; took: " + Util.took(cloneStart));
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::cloneRepo()");
-				// if (result.stderr) {
-				//     Log.warn("GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: " + result.stderr);
-				// }
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::cloneRepo()");
-			});
-		}
-
-		function enterRepoPath() {
-			Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: " + tempPath);
-			return exec(`cd ${tempPath}`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::enterRepoPath()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::enterRepoPath()");
-			});
-		}
-
-		function createNewFileForce() {
-			Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: " + fileName);
-			return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo "${fileContent}" >> ${fileName};`).then(
-				function (result: any) {
-					Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - done");
-					that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::createNewFileForce()");
-					that.reportStdErr(result.stderr, "writeFileToRepo(..)::createNewFileForce()");
-				}
-			);
-		}
-
-		function createNewFile() {
-			Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - writing: " + fileName);
-			return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::createNewFile()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::createNewFile()");
-			});
-		}
-
-		function addFilesToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - start");
-			const command = `cd ${tempPath} && git add ${fileName}`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::addFilesToRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::addFilesToRepo()");
-			});
-		}
-
-		function commitFilesToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start");
-			const command = `cd ${tempPath} && git commit -q -m "Update ${fileName}"`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::commitFilesToRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::commitFilesToRepo()");
-			});
-		}
-
-		function pushToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::pushToRepo() - start");
-			const command = `cd ${tempPath} && git push -q`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::pushToNewRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::pushToNewRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::pushToNewRepo()");
-			});
-		}
 	}
 
 	/**
