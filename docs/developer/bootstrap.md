@@ -98,6 +98,20 @@ In WebStorm, create a Mocha target with node options `-r tsconfig-paths/register
 
 ## Building and launching the containers
 
+### Checking that the images build
+
+Building an image on its own is quicker than waiting for CI, needs no `.env.docker`, and
+reproduces the first step of CI's `build_only` task:
+
+```
+docker build -f packages/portal/Dockerfile -t classy-portal .
+docker build -f packages/autotest/Dockerfile -t classy-autotest .
+```
+
+Do this after changing any `package.json`, any import, or anything either `Dockerfile` copies.
+
+### Running the full stack
+
 Containers need different configuration than host-local development, because inside a container
 `localhost` is that container rather than its neighbour. Keep a second `.env.docker` (also gitignored)
 that differs only in:
@@ -154,8 +168,11 @@ unchanged code is a real signal, not a flake.
 1. [ ] Portal backend, Portal frontend, and AutoTest all compile
 2. [ ] `yarn lint` is clean (`yarn lint:fix` to apply)
 3. [ ] Portal and AutoTest suites pass
-4. [ ] Containers build and come up — only when changing something they depend on
+4. [ ] `docker build -f packages/portal/Dockerfile .` and the AutoTest equivalent succeed — whenever
+   a `package.json`, an import, or a `Dockerfile` changed
+5. [ ] The stack comes up — only when changing something it depends on at runtime
 
-Items 1–3 are exactly what `build_and_test` checks. Some specs behave differently locally than on CI
-(the AutoTest Docker ones, and anything gated on live GitHub), so a green local run is not proof of a
-green build, nor the reverse.
+Items 1–3 are exactly what `build_and_test` checks; item 4 is the first step of `build_only`, and the
+only one of these that catches a dependency declared in the wrong workspace. Some specs behave
+differently locally than on CI (the AutoTest Docker ones, and anything gated on live GitHub), so a
+green local run is not proof of a green build, nor the reverse.
