@@ -265,6 +265,15 @@ export interface Job {
 	params: any; // kind-specific input
 }
 
+/**
+ * How much of a job has completed got with one unit of work, so an interrupted or incremental run can resume.
+ */
+export interface JobWatermark {
+	readonly kind: string; // which job wrote this row (e.g. "prairielearn-sync")
+	readonly key: string; // identifies the unit of work, unique within the kind
+	syncedAt: number;
+}
+
 export enum AuditLabel {
 	COURSE = "Course",
 	DELIVERABLE = "Deliverable",

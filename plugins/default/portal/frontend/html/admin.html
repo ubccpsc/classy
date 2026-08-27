@@ -333,6 +333,35 @@
                     </div>
                 </ons-list-item>
 
+                <!-- Hidden unless PRAIRIELEARN_* is configured in .env; see AdminConfigTab::initPrairieLearn -->
+                <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-rotate"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Sync grades from PrairieLearn.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
+                            <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div id="adminPrairieLearnStatus" style="padding-top: 0.5em; font-size: smaller;">
+                            Never synced.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Pulls grading records for each PrairieLearn assessment and records the best
+                        <em>on-time</em> bucket as the Classy grade. Runs in the background, so this page can be
+                        closed while it works; press Sync Now again to resume an interrupted run.
+                        <br/><br/>
+                        Only attempts made before a deliverable&apos;s close date are graded, so tightening a
+                        close date and re-syncing will lower a grade &mdash; but grades already recorded are
+                        never removed automatically.
+                        <br/><br/>
+                        Deliverables are created automatically for assessments that do not have one, with grades
+                        unreleased and hidden from students. They are never renamed or deleted.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Team Management</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">

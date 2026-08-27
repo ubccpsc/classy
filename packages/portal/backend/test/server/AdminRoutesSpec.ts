@@ -5,6 +5,7 @@ import "mocha";
 import { DatabaseController, QueryKind } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { JobController } from "@backend/controllers/JobController";
 import BackendServer from "@backend/server/BackendServer";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -1757,6 +1758,101 @@ describe("Admin Routes", function () {
 	//     expect(body.success.message).to.be.an("string");
 	// });
 	//
+	describe("Background jobs", function () {
+		/**
+		 * A synthetic kind, so these exercise the routes rather than any real handler.
+		 */
+		const KIND = "route-test-job";
+
+		before(function () {
+			JobController.getInstance().register(KIND, async () => {
+				return { ok: true };
+			});
+		});
+
+		it("Should reject an unauthenticated job start.", async function () {
+			const response = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({});
+			Log.test("unauthenticated job start -> " + response.status);
+			expect(response.status).to.equal(401);
+		});
+
+		it("Should start a job and return it immediately.", async function () {
+			const response = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({ some: "param" })
+				.set({ user: userName, token: userToken });
+			Log.test("job start -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			const job = response.body.success;
+			expect(job.id).to.be.a("string");
+			expect(job.kind).to.equal(KIND);
+			// the request must not wait for the work: a real sync runs far past the 90s proxy timeout
+			expect(job.state).to.equal("RUNNING");
+			expect(job.requestedBy).to.equal(userName); // audit
+			expect(job.params.some).to.equal("param");
+		});
+
+		it("Should reject an unknown job kind.", async function () {
+			const response = await request(app).post("/portal/admin/job/noSuchKind").send({}).set({ user: userName, token: userToken });
+			Log.test("unknown kind -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure.message).to.contain("Unknown job kind");
+		});
+
+		it("Should retrieve a job by id.", async function () {
+			const created = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({})
+				.set({ user: userName, token: userToken });
+			const id = created.body.success.id;
+
+			const response = await request(app)
+				.get("/portal/admin/job/" + id)
+				.set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id).to.equal(id);
+		});
+
+		it("Should 404 an unknown job id.", async function () {
+			const response = await request(app).get("/portal/admin/job/noSuchJob").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(404);
+		});
+
+		it("Should list jobs, newest first.", async function () {
+			const response = await request(app).get("/portal/admin/jobs").set({ user: userName, token: userToken });
+			Log.test("job list -> " + response.status + "; count: " + (response.body.success || []).length);
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			expect(response.body.success.length).to.be.greaterThan(0);
+		});
+
+		it("Should accept a cancellation request.", async function () {
+			const created = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({})
+				.set({ user: userName, token: userToken });
+			const id = created.body.success.id;
+
+			const response = await request(app)
+				.delete("/portal/admin/job/" + id)
+				.set({ user: userName, token: userToken });
+			Log.test("job cancel -> " + response.status);
+
+			// cancellation is cooperative: this returns before the job has actually stopped
+			expect(response.status).to.equal(200);
+		});
+
+		it("Should 404 cancelling an unknown job.", async function () {
+			const response = await request(app).delete("/portal/admin/job/noSuchJob").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(404);
+		});
+	});
+
 	// server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
 	// server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
 	// server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);

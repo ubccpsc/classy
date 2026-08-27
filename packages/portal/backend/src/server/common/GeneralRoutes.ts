@@ -26,10 +26,10 @@ import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
 import { Factory } from "../../Factory";
 import { AuditLabel, GitHubStatus, Person } from "../../Types";
-
 import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
 import { ClasslistAgent } from "./ClasslistAgent";
+import { PrairieLearnAgent } from "./PrairieLearnAgent";
 import { RouteUtil } from "./RouteUtil";
 
 export default class GeneralRoutes implements IREST {
@@ -46,7 +46,13 @@ export default class GeneralRoutes implements IREST {
 
 		if (org !== null) {
 			const payload: ConfigTransportPayload = {
-				success: { org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds },
+				success: {
+					org: org,
+					name: name,
+					githubAPI: githubAPI,
+					studentsFormTeamDelivIds,
+					prairieLearnEnabled: PrairieLearnAgent.isConfigured(),
+				},
 			};
 			Log.trace("GeneralRoutes::getConfig(..) - done; took: " + Util.took(start));
 			Log.trace("GeneralRoutes::getConfig(..) - sending: " + JSON.stringify(payload));

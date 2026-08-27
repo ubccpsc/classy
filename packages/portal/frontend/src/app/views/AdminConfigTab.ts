@@ -11,6 +11,11 @@ import { AdminProvisionPage } from "./AdminProvisionPage";
 import { AdminView } from "./AdminView";
 
 export class AdminConfigTab extends AdminPage {
+	private static readonly PL_JOB_KIND = "prairielearn-sync";
+
+	private prairieLearnJobId: string | null = null;
+	private prairieLearnTimer: any = null;
+
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
 
@@ -36,6 +41,8 @@ export class AdminConfigTab extends AdminPage {
 		// Can init frame here if needed
 
 		await this.deliverablesPage.init(opts);
+
+		await this.initPrairieLearn();
 
 		(document.querySelector("#adminSubmitClasslist") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed");
@@ -755,6 +762,171 @@ export class AdminConfigTab extends AdminPage {
 				header: "Removed: NOT in latest Classlist upload. To Be Withdrawn",
 				listContent: removedList,
 			});
+		}
+	}
+
+	/**
+	 * PrairieLearn grade sync. Hidden unless PL enabled in Classy.
+	 */
+	private async initPrairieLearn(): Promise<void> {
+		const item = document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement;
+		if (item === null) {
+			return; // course has customised admin.html and removed the section
+		}
+
+		let enabled = false;
+		try {
+			const response = await fetch(this.remote + "/portal/config", AdminView.getOptions());
+			const json = await response.json();
+			enabled = json?.success?.prairieLearnEnabled === true;
+		} catch (err) {
+			Log.warn("AdminConfigTab::initPrairieLearn() - could not read config; ERROR: " + err.message);
+		}
+
+		if (enabled === false) {
+			Log.info("AdminConfigTab::initPrairieLearn() - PrairieLearn is not configured; section hidden");
+			return;
+		}
+		item.style.display = "";
+
+		(document.querySelector("#adminPrairieLearnSyncButton") as OnsButtonElement).onclick = (evt: any) => {
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+			this.prairieLearnSyncPressed().catch((err) => {
+				Log.error("AdminConfigTab::initPrairieLearn() - sync ERROR: " + err.message);
+			});
+		};
+
+		(document.querySelector("#adminPrairieLearnCancelButton") as OnsButtonElement).onclick = (evt: any) => {
+			evt.preventDefault();
+			evt.stopPropagation();
+			this.prairieLearnCancelPressed().catch((err) => {
+				Log.error("AdminConfigTab::initPrairieLearn() - cancel ERROR: " + err.message);
+			});
+		};
+
+		// show whatever the last run did, so a stale sync is visible on arrival rather than only
+		// after someone presses the button
+		await this.refreshPrairieLearnStatus();
+	}
+
+	private async prairieLearnSyncPressed(): Promise<void> {
+		Log.info("AdminConfigTab::prairieLearnSyncPressed() - start");
+
+		const options: any = AdminView.getOptions();
+		options.method = "post";
+		options.body = JSON.stringify({});
+
+		const response = await fetch(this.remote + "/portal/admin/job/" + AdminConfigTab.PL_JOB_KIND, options);
+		const json = await response.json();
+
+		if (typeof json.failure !== "undefined") {
+			UI.showError(json.failure.message);
+			return;
+		}
+
+		// starting returns immediately; the work continues in the backend
+		this.prairieLearnJobId = json.success.id;
+		this.pollPrairieLearnJob();
+	}
+
+	private async prairieLearnCancelPressed(): Promise<void> {
+		if (this.prairieLearnJobId === null) {
+			return;
+		}
+		Log.info("AdminConfigTab::prairieLearnCancelPressed() - cancelling: " + this.prairieLearnJobId);
+
+		const options: any = AdminView.getOptions();
+		options.method = "delete";
+		await fetch(this.remote + "/portal/admin/job/" + this.prairieLearnJobId, options);
+
+		// cooperative: the job stops at its next safe point, so the state change arrives by polling
+		this.setPrairieLearnStatus("Cancelling; finishing the current record...");
+	}
+
+	/**
+	 * Polls the running job. Cheap (one document read), and stops as soon as the job is terminal.
+	 */
+	private pollPrairieLearnJob(): void {
+		if (this.prairieLearnTimer !== null) {
+			clearInterval(this.prairieLearnTimer);
+		}
+		this.prairieLearnTimer = setInterval(() => {
+			this.refreshPrairieLearnStatus().catch((err) => {
+				Log.warn("AdminConfigTab::pollPrairieLearnJob() - ERROR: " + err.message);
+			});
+		}, 2000);
+	}
+
+	private async refreshPrairieLearnStatus(): Promise<void> {
+		const url =
+			this.prairieLearnJobId === null
+				? this.remote + "/portal/admin/jobs?kind=" + AdminConfigTab.PL_JOB_KIND
+				: this.remote + "/portal/admin/job/" + this.prairieLearnJobId;
+
+		const response = await fetch(url, AdminView.getOptions());
+		const json = await response.json();
+		if (typeof json.success === "undefined") {
+			return;
+		}
+
+		const job = Array.isArray(json.success) ? json.success[0] : json.success;
+		if (typeof job === "undefined" || job === null) {
+			this.setPrairieLearnStatus("Never synced.");
+			return;
+		}
+		this.prairieLearnJobId = job.id;
+
+		const running = job.state === "RUNNING";
+		(document.querySelector("#adminPrairieLearnCancelButton") as HTMLElement).style.display = running ? "" : "none";
+		(document.querySelector("#adminPrairieLearnSyncButton") as OnsButtonElement).disabled = running;
+
+		if (running === false && this.prairieLearnTimer !== null) {
+			clearInterval(this.prairieLearnTimer);
+			this.prairieLearnTimer = null;
+		}
+
+		this.setPrairieLearnStatus(AdminConfigTab.describePrairieLearnJob(job));
+	}
+
+	/**
+	 * A one-line description of a sync run.
+	 */
+	private static describePrairieLearnJob(job: any): string {
+		const when = job.completedAt ?? job.startedAt ?? job.createdAt;
+		const stamp = new Date(when).toLocaleString();
+
+		if (job.state === "RUNNING") {
+			const p = job.progress ?? { done: 0, total: 0 };
+			return "Running since " + stamp + " &mdash; " + p.done + " of " + p.total + " records.";
+		}
+
+		const s = job.summary;
+		let detail = "";
+		if (s !== null && typeof s !== "undefined") {
+			detail = " &mdash; " + s.gradesWritten + " grades, " + s.resultsWritten + " results, " + s.instancesSkipped + " unchanged";
+			if (s.deliverablesCreated?.length > 0) {
+				detail += "; created " + s.deliverablesCreated.join(", ");
+			}
+			if (s.submissionsAfterClose > 0) {
+				detail += "; " + s.submissionsAfterClose + " attempt(s) after close (not graded)";
+			}
+			if (s.unmatchedUids?.length > 0) {
+				// a systematic mismatch looks like "nobody has submitted"; make it loud
+				detail += "; <b>" + s.unmatchedUids.length + " unmatched user(s)</b>";
+			}
+		}
+		if (job.errors?.length > 0) {
+			detail += "; <b>" + job.errors.length + " error(s)</b>";
+		}
+
+		return "Last synced " + stamp + " (" + job.state.toLowerCase() + ")" + detail + ".";
+	}
+
+	private setPrairieLearnStatus(html: string): void {
+		const el = document.querySelector("#adminPrairieLearnStatus") as HTMLElement;
+		if (el !== null) {
+			el.innerHTML = html;
 		}
 	}
 

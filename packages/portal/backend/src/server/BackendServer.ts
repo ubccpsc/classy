@@ -4,6 +4,8 @@
 
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
+import { JobController } from "@backend/controllers/JobController";
+import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -138,6 +140,24 @@ export default class BackendServer {
 				reply.header("Last-Modified", new Date().toUTCString());
 				reply.header("Cache-Control", "no-cache, no-store, must-revalidate, max-age=0");
 			});
+
+			// Register background job kinds before anything can start one.
+			//
+			// This sweep matters. With `restart: always`, a deploy or crash during a long job
+			// leaves its record claiming to be RUNNING forever.
+			const jc = JobController.getInstance();
+			jc.register("prairielearn-sync", async (job, ctx) => {
+				return await new PrairieLearnAgent().sync(job.requestedBy, ctx);
+			});
+			try {
+				const swept = await jc.sweepInterrupted();
+				if (swept > 0) {
+					Log.warn("BackendServer::start() - jobs interrupted by a previous shutdown: " + swept);
+				}
+			} catch (err) {
+				// a failed sweep must not stop the server from starting
+				Log.error("BackendServer::start() - job sweep ERROR: " + err.message);
+			}
 
 			// Register handlers common between all classy instances
 			Log.info("BackendServer::start() - Registering common handlers");

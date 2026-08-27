@@ -6,6 +6,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
+import { JobController } from "@backend/controllers/JobController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { ResultsKind } from "@backend/controllers/ResultsController";
@@ -701,6 +702,77 @@ export default class AdminRoutes implements IREST {
 	 * @param res
 	 * @param next
 	 */
+	/**
+	 * Starts a background job of the given kind.
+	 *
+	 * Returns as soon as the job is recorded, NOT when it finishes: a sync can run for 20 minutes,
+	 * and the proxy cuts any request off at 90s. The client polls getJob for progress.
+	 *
+	 * @param req
+	 * @param res
+	 * @returns {Promise<void>}
+	 */
+	private static async postJob(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const kind = req.params.kind;
+		Log.info("AdminRoutes::postJob( " + kind + " ) - start");
+
+		try {
+			const user = RouteUtil.getUser(req);
+			const job = await JobController.getInstance().start(kind, user, req.body ?? {});
+			res.send({ success: job });
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to start job; ERROR: " + err.message, res);
+		}
+	}
+
+	private static async getJobs(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		Log.trace("AdminRoutes::getJobs() - start");
+		try {
+			const kind = req.query.kind;
+			const query = typeof kind === "string" && kind !== "" ? { kind: kind } : {};
+			const jobs = await DatabaseController.getInstance().getJobs(query);
+			res.send({ success: jobs });
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve jobs; ERROR: " + err.message, res);
+		}
+	}
+
+	private static async getJob(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const jobId = req.params.jobId;
+		Log.trace("AdminRoutes::getJob( " + jobId + " ) - start");
+		try {
+			const job = await DatabaseController.getInstance().getJob(jobId);
+			if (job === null) {
+				return AdminRoutes.handleError(404, "Unknown job: " + jobId, res);
+			}
+			res.send({ success: job });
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to retrieve job; ERROR: " + err.message, res);
+		}
+	}
+
+	/**
+	 * Requests cancellation. Cooperative, so this returns before the job has actually stopped; the
+	 * handler stops at its next safe point and the client sees the state change by polling.
+	 */
+	private static async deleteJob(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const jobId = req.params.jobId;
+		Log.info("AdminRoutes::deleteJob( " + jobId + " ) - start");
+		try {
+			const job = await JobController.getInstance().cancel(jobId);
+			if (job === null) {
+				return AdminRoutes.handleError(404, "Unknown job: " + jobId, res);
+			}
+			res.send({ success: job });
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to cancel job; ERROR: " + err.message, res);
+		}
+	}
+
 	private static async getCourse(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getCourse() - start");
 		const start = Date.now();
@@ -825,9 +897,6 @@ export default class AdminRoutes implements IREST {
 	 */
 	private static async handleProvisionRepo(personId: string, delivId: string, repoIds: string[]): Promise<RepositoryTransport[]> {
 		const cc = new AdminController(AdminRoutes.ghc);
-
-		// TODO: if course is SDMM, always fail
-
 		const dc = new DeliverablesController();
 		const deliv = await dc.getDeliverable(delivId);
 		if (deliv === null || deliv.shouldProvision !== true) {
@@ -857,7 +926,6 @@ export default class AdminRoutes implements IREST {
 	}
 
 	private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-		// TODO: if course is SDMM, always fail
 		const result = AdminController.validateProvisionTransport(provisionTrans);
 		if (result === null) {
 			const dc = new DeliverablesController();
@@ -909,7 +977,6 @@ export default class AdminRoutes implements IREST {
 	}
 
 	private static async planRelease(delivId: string): Promise<RepositoryTransport[]> {
-		// TODO: if course is SDMM, always fail
 		const start = Date.now();
 
 		const dc = new DeliverablesController();
@@ -930,7 +997,6 @@ export default class AdminRoutes implements IREST {
 	}
 
 	private static async performRelease(personId: string, repoId: string): Promise<RepositoryTransport[]> {
-		// TODO: if course is SDMM, always fail
 		const start = Date.now();
 		const rc = new RepositoryController();
 
@@ -1246,6 +1312,13 @@ export default class AdminRoutes implements IREST {
 		server.get("/portal/admin/bestResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getBestResults); // results with best score
 
 		// admin-only functions
+
+		// headless jobs
+		server.get("/portal/admin/jobs", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJobs);
+		server.get("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJob);
+		server.post("/portal/admin/job/:kind", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postJob);
+		server.delete("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteJob);
+
 		server.post("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postClasslist);
 		server.put("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.updateClasslist);
 		server.post("/portal/admin/grades/csv/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGrades);
@@ -1268,8 +1341,6 @@ export default class AdminRoutes implements IREST {
 		server.post("/portal/admin/team/:teamId/members/:memberId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamAddMember);
 		server.delete("/portal/admin/team/:teamId/members/:memberId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamRemoveMember);
 		server.delete("/portal/admin/team/:teamId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.teamDelete);
-
-		// admin patch routes (no longer supported)
 
 		// staff-only functions
 		// NOTHING

@@ -49,6 +49,7 @@ export interface ConfigTransport {
 	name: string;
 	githubAPI: string;
 	studentsFormTeamDelivIds: string[];
+	prairieLearnEnabled: boolean; // Whether PL is configured in .env
 }
 
 export interface CourseTransportPayload {

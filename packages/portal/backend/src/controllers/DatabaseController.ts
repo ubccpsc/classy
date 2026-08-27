@@ -13,6 +13,7 @@ import {
 	GitHubStatus,
 	Grade,
 	Job,
+	JobWatermark,
 	Person,
 	Repository,
 	Result,
@@ -37,6 +38,9 @@ export class DatabaseController {
 	private readonly TICKERCOLL = "ids";
 	private readonly FEEDBACKCOLL = "feedback";
 	private readonly JOBCOLL = "jobs";
+	// NOTE: shared across job kinds; rows are scoped by their `kind` field. Generic from the
+	// start because renaming a populated collection later needs a data migration.
+	private readonly JOBWATERMARKCOLL = "jobWatermarks";
 
 	/**
 	 * use getInstance() instead.
@@ -486,6 +490,31 @@ export class DatabaseController {
 		return await this.updateRecord(this.JOBCOLL, { id: record.id }, record);
 	}
 
+	/**
+	 * @param kind which job the watermark belongs to
+	 * @param key the job-scoped identifier for the unit of work
+	 * @returns {Promise<T | null>} the caller's kind-specific watermark type
+	 */
+	public async getJobWatermark<T extends JobWatermark>(kind: string, key: string): Promise<T | null> {
+		return (await this.readSingleRecord(this.JOBWATERMARKCOLL, { kind: kind, key: key })) as T;
+	}
+
+	/**
+	 * Upsert on (kind, key). The extra fields a job kind carries are stored verbatim; this does not
+	 * interpret them.
+	 *
+	 * @param record
+	 * @returns {Promise<boolean>}
+	 */
+	public async writeJobWatermark(record: JobWatermark): Promise<boolean> {
+		const query = { kind: record.kind, key: record.key };
+		const exists = await this.getJobWatermark(record.kind, record.key);
+		if (exists === null) {
+			return await this.writeRecord(this.JOBWATERMARKCOLL, record);
+		}
+		return await this.updateRecord(this.JOBWATERMARKCOLL, query, record);
+	}
+
 	public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
 		const isEmpty = function (obj: any): boolean {
 			if (typeof obj === "undefined" || obj === null) {
@@ -624,6 +653,7 @@ export class DatabaseController {
 				this.AUDITCOLL,
 				this.TICKERCOLL,
 				this.JOBCOLL,
+				this.JOBWATERMARKCOLL,
 			];
 
 			for (const col of cols) {
