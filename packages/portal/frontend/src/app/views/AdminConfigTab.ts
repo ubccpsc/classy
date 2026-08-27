@@ -728,7 +728,9 @@ export class AdminConfigTab extends AdminPage {
 			UI.notificationToast(msg);
 			this.showClasslistChanges(body.success);
 		} else {
-			UI.showAlert(body.failure.message);
+			// NOTE: via showError, not body.failure.message. The backend can reject a request before
+			// it reaches the route handler, and that response has no `failure` field at all.
+			UI.showError(body);
 		}
 	}
 
@@ -926,7 +928,7 @@ export class AdminConfigTab extends AdminPage {
 	private setPrairieLearnStatus(html: string): void {
 		const el = document.querySelector("#adminPrairieLearnStatus") as HTMLElement;
 		if (el !== null) {
-			el.innerHTML = html;
+			el.innerHTML = "&nbsp;&nbsp;" + html;
 		}
 	}
 

@@ -63,8 +63,42 @@
 Settings Page
  */
 
+/*
+ * Settings rows are laid out [icon][label][control] using Onsen's .left / .center / .right.
+ * Onsen gives .center flex:1 and sizes .right to its content, so text inputs end up very narrow
+ * while the label keeps horizontal space it does not need. Give the label a fixed, readable basis
+ * and let the control take the remainder.
+ *
+ * NOTE: only rows whose control is a text input, date picker, or select are widened. Switches are
+ * deliberately excluded: stretching a toggle just pushes it away from its own label.
+ */
+.settingLabel {
+    flex: 0 0 14em;
+    /* Onsen sets margin-right:auto on .list-item__center. Per the flexbox spec an auto margin
+       absorbs positive free space BEFORE flex-grow is applied ("the flex grow factor is treated as
+       zero"), so leaving it here would silently cancel the flex:1 below and nothing would widen. */
+    margin-right: 0;
+}
+
+.settingRight:has(ons-input),
+.settingRight:has(input),
+.settingRight:has(select) {
+    flex: 1 1 auto;
+    margin-left: 0; /* same reason: .list-item__right sets margin-left:auto */
+    min-width: 0; /* let the control shrink below its intrinsic width on narrow viewports */
+}
+
 .settingTextInput {
     background-color: lightsteelblue;
+    width: 100%;
+}
+
+/* ons-input renders an inner <input>; it has to fill too or the outer element stays narrow */
+.settingTextInput input,
+.settingRight > input,
+.settingRight > select {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .noResultsRow {
