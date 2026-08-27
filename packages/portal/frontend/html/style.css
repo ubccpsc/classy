@@ -80,21 +80,42 @@ Settings Page
     margin-right: 0;
 }
 
-.settingRight:has(ons-input),
-.settingRight:has(input),
-.settingRight:has(select) {
+/* Keep whatever the control is against the right edge. Only matters for controls that do not
+   fill their container (switches); inputs below are width:100% so it makes no difference to them. */
+.settingRight {
+    justify-content: flex-end;
+}
+
+/*
+ * NOTE: direct children only. An ons-switch contains its own <input type="checkbox">, so a
+ * descendant :has(input) also matches every switch row -- which widened those containers and left
+ * the toggle stranded at the far left of the row. Matching only direct children leaves switch rows
+ * alone, so Onsen's own margin-left:auto keeps them right-aligned.
+ */
+.settingRight:has(> ons-input),
+.settingRight:has(> input),
+.settingRight:has(> select) {
     flex: 1 1 auto;
-    margin-left: 0; /* same reason: .list-item__right sets margin-left:auto */
+    margin-left: 0; /* .list-item__right sets margin-left:auto; see the note on .settingLabel */
     min-width: 0; /* let the control shrink below its intrinsic width on narrow viewports */
 }
 
 .settingTextInput {
     background-color: lightsteelblue;
-    width: 100%;
 }
 
-/* ons-input renders an inner <input>; it has to fill too or the outer element stays narrow */
-.settingTextInput input,
+/*
+ * Widening is scoped to .settingRight, i.e. the [icon][label][control] settings rows used by the
+ * editDeliverable and createDockerImage pages.
+ *
+ * NOTE: scoped deliberately. .settingTextInput is also used inline elsewhere -- the team
+ * add/remove-member fields on the main admin page sit beside their own labels and buttons rather
+ * than in a settings row, and stretching those to 100% squeezes the label out.
+ *
+ * ons-input renders an inner <input>, which has to fill too or the outer element stays narrow.
+ */
+.settingRight .settingTextInput,
+.settingRight .settingTextInput input,
 .settingRight > input,
 .settingRight > select {
     width: 100%;
