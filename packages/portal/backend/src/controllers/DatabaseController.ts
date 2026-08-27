@@ -12,6 +12,7 @@ import {
 	FeedbackRecord,
 	GitHubStatus,
 	Grade,
+	Job,
 	Person,
 	Repository,
 	Result,
@@ -35,6 +36,7 @@ export class DatabaseController {
 	private readonly AUDITCOLL = "audit";
 	private readonly TICKERCOLL = "ids";
 	private readonly FEEDBACKCOLL = "feedback";
+	private readonly JOBCOLL = "jobs";
 
 	/**
 	 * use getInstance() instead.
@@ -450,6 +452,40 @@ export class DatabaseController {
 		}
 	}
 
+	/**
+	 * @param jobId
+	 * @returns {Promise<Job | null>}
+	 */
+	public async getJob(jobId: string): Promise<Job | null> {
+		return (await this.readSingleRecord(this.JOBCOLL, { id: jobId })) as Job;
+	}
+
+	/**
+	 * Jobs matching a query, newest first.
+	 *
+	 * @param query e.g. {} for all, or { kind: "prairielearn-sync" }, or { state: JobState.RUNNING }
+	 * @param limit how many to return; the admin UI only ever wants the most recent handful
+	 * @returns {Promise<Job[]>}
+	 */
+	public async getJobs(query: {} = {}, limit = 25): Promise<Job[]> {
+		const records = await this.readRecords(this.JOBCOLL, QueryKind.FAST, false, query, { createdAt: -1 });
+		return records.slice(0, limit) as Job[];
+	}
+
+	/**
+	 * Upsert on Job.id.
+	 *
+	 * @param record
+	 * @returns {Promise<boolean>}
+	 */
+	public async writeJob(record: Job): Promise<boolean> {
+		const exists = await this.getJob(record.id);
+		if (exists === null) {
+			return await this.writeRecord(this.JOBCOLL, record);
+		}
+		return await this.updateRecord(this.JOBCOLL, { id: record.id }, record);
+	}
+
 	public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
 		const isEmpty = function (obj: any): boolean {
 			if (typeof obj === "undefined" || obj === null) {
@@ -587,6 +623,7 @@ export class DatabaseController {
 				this.COURSECOLL,
 				this.AUDITCOLL,
 				this.TICKERCOLL,
+				this.JOBCOLL,
 			];
 
 			for (const col of cols) {

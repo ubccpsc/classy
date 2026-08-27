@@ -216,6 +216,55 @@ export interface Course {
 	};
 }
 
+/**
+ * The lifecycle of a background Job.
+ *
+ * NOTE: INTERRUPTED is deliberately distinct from FAILED. FAILED means the handler threw and the work
+ * is suspect; INTERRUPTED means the process died underneath a running job (a deploy, a crash) and the
+ * work is simply unfinished. With `restart: always` in docker-compose, that happens routinely, and the
+ * two need different responses: investigate a FAILED job, just re-run an INTERRUPTED one.
+ */
+export enum JobState {
+	RUNNING = "RUNNING",
+	SUCCEEDED = "SUCCEEDED",
+	FAILED = "FAILED",
+	CANCELLED = "CANCELLED",
+	INTERRUPTED = "INTERRUPTED",
+}
+
+/**
+ * A unit of long-running background work.
+ *
+ * Jobs exist because the proxy enforces `proxy_read_timeout 90`: any operation that cannot finish
+ * inside 90s is cut off by nginx while the backend keeps working. Rather than have the browser drive
+ * batches to stay under that ceiling, a Job runs in the backend and records its progress here, so the
+ * request that starts it returns immediately and the tab can be closed.
+ */
+export interface Job {
+	readonly id: string; // primary key
+	readonly kind: string; // which handler runs this (e.g. "prairielearn-sync")
+
+	state: JobState;
+	readonly requestedBy: string; // Person.id of whoever started it; for audit
+	readonly createdAt: number;
+
+	startedAt: number | null;
+	heartbeatAt: number | null; // advanced while running; used to detect a job whose process died
+	completedAt: number | null;
+
+	cancelRequested: boolean; // cooperative; the handler decides where it is safe to stop
+
+	progress: {
+		done: number;
+		total: number;
+		message: string;
+	};
+
+	summary: any; // kind-specific report, rendered in the admin UI
+	errors: string[]; // BOUNDED; see JobController.MAX_ERRORS
+	params: any; // kind-specific input
+}
+
 export enum AuditLabel {
 	COURSE = "Course",
 	DELIVERABLE = "Deliverable",
