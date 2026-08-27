@@ -1758,6 +1758,24 @@ describe("Admin Routes", function () {
 	//     expect(body.success.message).to.be.an("string");
 	// });
 	//
+	it("Should return a Classy failure payload when a body-less PUT is sent.", async function () {
+		// NOTE: the admin UI sends PUT /portal/admin/classlist with AdminView.getOptions(), which
+		// sets Content-Type: application/json but attaches NO body. Fastify's default JSON parser
+		// rejects that with its own error shape ({statusCode, code, error, message}), which has no
+		// `failure` field -- so the client crashed on body.failure.message. Restify accepted it.
+		const response = await request(app)
+			.put("/portal/admin/classlist")
+			.set({ user: userName, token: userToken, "Content-Type": "application/json" });
+
+		Log.test("body-less PUT -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+		// whatever the outcome, the response must be a payload the frontend can read
+		if (response.status !== 200) {
+			expect(response.body.failure, "error response must carry a Classy failure payload").to.not.be.undefined;
+			expect(response.body.failure.message).to.be.a("string");
+		}
+	});
+
 	describe("Background jobs", function () {
 		/**
 		 * A synthetic kind, so these exercise the routes rather than any real handler.

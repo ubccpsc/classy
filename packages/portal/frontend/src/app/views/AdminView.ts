@@ -136,9 +136,13 @@ export class AdminView implements IView {
 		if (typeof failure === "string") {
 			Log.error("AdminView::showError(..) - failure: " + failure);
 			UI.showAlert(failure);
-		} else if (typeof failure.failure !== "undefined") {
+		} else if (typeof failure?.failure?.message === "string") {
 			Log.error("AdminView::showError(..) - failure message: " + failure.failure.message);
 			UI.showAlert(failure.failure.message);
+		} else if (typeof failure?.message === "string") {
+			// not a Classy payload (e.g. a Fastify or proxy error); show what it does carry
+			Log.error("AdminView::showError(..) - non-Classy failure: " + failure.message);
+			UI.showAlert(failure.message);
 		} else {
 			Log.error("AdminView::showError(..) - Unknown message: " + failure);
 			UI.showAlert("Action unsuccessful.");

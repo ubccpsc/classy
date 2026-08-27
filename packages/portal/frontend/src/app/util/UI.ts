@@ -161,13 +161,25 @@ export class UI {
 		}
 	}
 
+	/**
+	 * Shows an error to the user, whatever shape it arrived in.
+	 *
+	 * NOTE: not every error reaching here is a Classy FailurePayload. A request the backend rejects
+	 * before it reaches a route handler -- a body-less POST/PUT, an unparseable body -- comes back
+	 * in Fastify's own shape ({statusCode, code, error, message}), and proxy or network failures
+	 * have neither. Reading .failure.message directly throws a TypeError in those cases and the user
+	 * sees nothing at all, so each shape is checked before it is used.
+	 */
 	public static showError(failure: any) {
 		// FailurePayload
 		Log.error("UI::showError(..) - failure: " + JSON.stringify(failure));
 		if (typeof failure === "string") {
 			return UI.showAlert(failure);
-		} else if (typeof failure.failure !== "undefined") {
+		} else if (typeof failure?.failure?.message === "string") {
 			return UI.showAlert(failure.failure.message);
+		} else if (typeof failure?.message === "string") {
+			// a non-Classy error; its message is still far more useful than a generic string
+			return UI.showAlert(failure.message);
 		} else {
 			Log.error("Unknown message: " + JSON.stringify(failure));
 			return UI.showAlert("Action unsuccessful.");

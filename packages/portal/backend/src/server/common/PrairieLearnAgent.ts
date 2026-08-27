@@ -117,6 +117,16 @@ export class PrairieLearnAgent {
 	private static readonly RESULT_REF = "prairielearn";
 
 	/**
+	 * Dates given to a deliverable this agent creates, in the course timezone (Canada/Pacific).
+	 *
+	 * These are only ever defaults for a deliverable that did not exist: the agent never rewrites an
+	 * existing one, so editing a date in Classy sticks. PrairieLearn owns the real availability
+	 * windows; these exist so the Classy record is sensible rather than showing 1969.
+	 */
+	private static readonly DEFAULT_OPEN = Date.parse("2026-09-01T00:00:00-07:00"); // PDT
+	private static readonly DEFAULT_CLOSE = Date.parse("2035-12-31T18:00:00-08:00"); // PST
+
+	/**
 	 * The `kind` this agent's watermark rows are stored under, in the shared jobWatermarks
 	 * collection. Matches the job kind registered in BackendServer.
 	 */
@@ -488,8 +498,8 @@ export class PrairieLearnAgent {
 			const deliv: Deliverable = {
 				id: delivId,
 				URL: this.assessmentUrl(assessment.assessment_id),
-				openTimestamp: 0,
-				closeTimestamp: Number.MAX_SAFE_INTEGER, // PrairieLearn owns the real dates
+				openTimestamp: PrairieLearnAgent.DEFAULT_OPEN,
+				closeTimestamp: PrairieLearnAgent.DEFAULT_CLOSE,
 				gradesReleased: false, // never expose on creation
 				visibleToStudents: false, // flip deliberately, not as a side effect of a sync
 				rubric: {},
