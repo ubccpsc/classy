@@ -444,13 +444,9 @@ export abstract class AutoTest implements IAutoTest {
 					this.lowQueue.length()
 			);
 
-			this.persistQueues()
-				.then(function (success: boolean) {
-					Log.trace("AutoTest::tick() - persist complete: " + success);
-				})
-				.catch(function (err) {
-					Log.error("AutoTest::tick() - persist queue ERROR: " + err.message);
-				});
+			// NOTE: not awaited on purpose, like the grading jobs above: tick() is synchronous
+			// (IAutoTest::tick) and none of its callers await it
+			void this.persistQueuesInBackground();
 		} catch (err) {
 			Log.error("AutoTest::tick() - ERROR: " + err.message);
 		}
@@ -530,6 +526,21 @@ export abstract class AutoTest implements IAutoTest {
 			Log.error("AutoTest::isOnQueue() - ERROR: " + err);
 		}
 		return onQueue;
+	}
+
+	/**
+	 * Persists the queues without holding up the tick that started it.
+	 *
+	 * NOTE: persistQueues() handles its own errors, so the catch here is only a backstop: a floating
+	 * promise that rejects would otherwise be an unhandled rejection.
+	 */
+	private async persistQueuesInBackground(): Promise<void> {
+		try {
+			const success = await this.persistQueues();
+			Log.trace("AutoTest::persistQueuesInBackground() - persist complete: " + success);
+		} catch (err) {
+			Log.error("AutoTest::persistQueuesInBackground() - persist queue ERROR: " + err.message);
+		}
 	}
 
 	private async persistQueues(): Promise<boolean> {
