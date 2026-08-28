@@ -1348,13 +1348,10 @@
                         <div>
                             Prepare teams and repositories.&nbsp;&nbsp;
                             <ons-button id="adminManagePrepareButton" modifier="medium">Prepare</ons-button>
+                            &nbsp;&nbsp;<input type="checkbox" id="provisionFormSingleCheckbox">
+                            <label for="provisionFormSingleCheckbox">Include students not in a team</label>
                         </div>
-                        <div style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em;">
-                            <input type="checkbox" id="provisionFormSingleCheckbox">
-                            <label for="provisionFormSingleCheckbox">Also create individual repos for students who are
-                                not in a team</label>
-                        </div>
-                        <div id="adminProvisionPrepareStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminProvisionPrepareStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
@@ -1381,7 +1378,7 @@
                         </ons-button>
                         <ons-button id="adminManageProvisionCancelButton" modifier="quiet" style="display: none;">Cancel
                         </ons-button>
-                        <div id="adminProvisionCreateStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminProvisionCreateStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
@@ -1407,7 +1404,7 @@
                         <ons-button id="adminManageReleaseButton" modifier="medium">Release Repositories</ons-button>
                         <ons-button id="adminManageReleaseCancelButton" modifier="quiet" style="display: none;">Cancel
                         </ons-button>
-                        <div id="adminProvisionReleaseStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminProvisionReleaseStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
