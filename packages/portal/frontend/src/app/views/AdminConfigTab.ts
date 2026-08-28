@@ -719,9 +719,7 @@ export class AdminConfigTab extends AdminPage {
 				statusId: "adminUpdateClasslistStatus",
 				ran: "Last updated",
 				detail: function (summary: any): string {
-					return (
-						" &mdash; " + summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed"
-					);
+					return summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed.";
 				},
 				// only for the run this page started; arriving at a finished job should not reopen it
 				onFinished: (summary: any) => {
@@ -735,7 +733,7 @@ export class AdminConfigTab extends AdminPage {
 				statusId: "adminPerformWithdrawStatus",
 				ran: "Last run",
 				detail: function (summary: any): string {
-					return " &mdash; " + summary.message;
+					return summary.message;
 				},
 				onFinished: (summary: any) => {
 					UI.notificationToast("Withdraw marking successful: " + summary.message, 5000);
@@ -913,7 +911,8 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
-	 * A one-line description of a job run, for the status line under its button.
+	 * A description of a job run, for the status block under its button: when it ran and how it
+	 * ended on the first line, what it did on the second.
 	 */
 	private static describeJob(job: any, section: JobSection): string {
 		const when = job.completedAt ?? job.startedAt ?? job.createdAt;
@@ -921,9 +920,9 @@ export class AdminConfigTab extends AdminPage {
 
 		if (job.state === "RUNNING") {
 			const progress = job.progress ?? { done: 0, total: 0, message: "" };
-			const counts = progress.total > 0 ? " &mdash; " + progress.done + " of " + progress.total : "";
-			const message = progress.message ? " (" + progress.message + ")" : "";
-			return "Running since " + stamp + counts + message + ".";
+			const counts = progress.total > 0 ? progress.done + " of " + progress.total : "";
+			const message = progress.message ? (counts === "" ? "" : " ") + "(" + progress.message + ")" : "";
+			return AdminConfigTab.twoLines("Running since " + stamp + ".", counts + message);
 		}
 
 		let detail = "";
@@ -932,13 +931,23 @@ export class AdminConfigTab extends AdminPage {
 		}
 		if (job.errors?.length > 0) {
 			// the message matters here: "no students were processed" is the usual failure
-			detail += " &mdash; <b>" + job.errors[0] + "</b>";
+			if (detail !== "") {
+				detail += " ";
+			}
+			detail += "<b>" + job.errors[0] + "</b>";
 			if (job.errors.length > 1) {
 				detail += " (and " + (job.errors.length - 1) + " more)";
 			}
 		}
 
-		return section.ran + " " + stamp + " (" + job.state.toLowerCase() + ")" + detail + ".";
+		return AdminConfigTab.twoLines(section.ran + " " + stamp + " (" + job.state.toLowerCase() + ").", detail);
+	}
+
+	private static twoLines(first: string, second: string): string {
+		if (second === "") {
+			return "<div>" + first + "</div>";
+		}
+		return "<div>" + first + "</div><div>" + second + "</div>";
 	}
 
 	private static describeJobFailure(job: any): string {
@@ -949,8 +958,7 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	private static describePrairieLearnSummary(summary: any): string {
-		let detail =
-			" &mdash; " + summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
+		let detail = summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
 		if (summary.deliverablesCreated?.length > 0) {
 			detail += "; created " + summary.deliverablesCreated.join(", ");
 		}
@@ -961,7 +969,7 @@ export class AdminConfigTab extends AdminPage {
 			// a systematic mismatch looks like "nobody has submitted"; make it loud
 			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
 		}
-		return detail;
+		return detail + ".";
 	}
 
 	private setJobStatus(section: JobSection, html: string): void {
