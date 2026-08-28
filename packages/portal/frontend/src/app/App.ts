@@ -521,7 +521,7 @@ export class App {
 		App.setLoginMessage("Checking the connection to " + App.hostLabel(host) + "...", false);
 		let reachable: boolean;
 		try {
-			reachable = await App.isAuthHostReachable(host);
+			reachable = await App.isAuthHostReachable(host, 2000);
 		} finally {
 			button.disabled = false;
 			this.loginCheckInFlight = false;
@@ -547,7 +547,7 @@ export class App {
 			return;
 		}
 
-		const reachable = await App.isAuthHostReachable(host);
+		const reachable = await App.isAuthHostReachable(host, 2000);
 		if (reachable === true || this.loginCheckInFlight === true) {
 			// the press does its own check; its result is the fresher one, so do not race it
 			return;
@@ -563,9 +563,8 @@ export class App {
 			"<b>Cannot reach " +
 			App.hostLabel(host) +
 			".</b><br/>" +
-			"You must be connected to ubcsecure on campus or using the UBC VPN (myVPN) to sign in to Classy, " +
-			"because the UBC GitHub server that verifies your account is only reachable from the UBC network." +
-			"<br/><br/>Connect to the VPN and press the button again."
+			"You must be connected to ubcsecure on campus or using the UBC VPN to sign in. " +
+			"<br/><br/>Please connect to the VPN and try again."
 		);
 	}
 
