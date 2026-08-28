@@ -22,6 +22,7 @@ import { DeliverablesController } from "./DeliverablesController";
 import { GitHubActions } from "./GitHubActions";
 import { GitHubController, IGitHubController } from "./GitHubController";
 import { GradesController } from "./GradesController";
+import { JobContext } from "./JobController";
 import { PersonController } from "./PersonController";
 import { RepositoryController } from "./RepositoryController";
 import { ResultsController, ResultsKind } from "./ResultsController";
@@ -462,10 +463,13 @@ export class AdminController {
 	 * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
 	 * does not exist or is empty.
 	 *
-	 * @returns {Promise<string>} A message summarizing the outcome of the operation.
+	 * @param requesterId Person.id of whoever asked; audited. Null skips the audit record.
+	 * @param ctx when this runs as a job: for progress
+	 * @returns {Promise<string>} a human-readable summary
 	 */
-	public async performStudentWithdraw(): Promise<string> {
+	public async performStudentWithdraw(requesterId: string = null, ctx: JobContext = null): Promise<string> {
 		Log.info("AdminController::performStudentWithdraw() - start");
+		await ctx?.progress(0, 0, "reading the students team from GitHub");
 		const gha = GitHubActions.getInstance(true);
 		// const tc = new TeamController();
 		// const teamNum = await tc.getTeamNumber("students"); // await gha.getTeamNumber("students");
@@ -473,9 +477,15 @@ export class AdminController {
 		const registeredGithubIds = await gha.getTeamMembers("students");
 
 		if (registeredGithubIds.length > 0) {
+			await ctx?.progress(0, registeredGithubIds.length, "marking withdrawn students");
 			const pc = new PersonController();
 			const msg = await pc.markStudentsWithdrawn(registeredGithubIds);
 			Log.info("AdminController::performStudentWithdraw() - done; msg: " + msg);
+			await ctx?.progress(registeredGithubIds.length, registeredGithubIds.length, msg);
+
+			if (requesterId !== null) {
+				await this.dbc.writeAudit(AuditLabel.STUDENT_WITHDRAW, requesterId, {}, {}, { message: msg });
+			}
 			return msg;
 		} else {
 			throw new Error("No students specified in the students team on GitHub; operation aborted.");

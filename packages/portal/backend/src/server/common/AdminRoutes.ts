@@ -51,52 +51,12 @@ export default class AdminRoutes implements IREST {
 		RouteUtil.handleError("AdminRoutes", code, msg, res);
 	}
 
-	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("AdminRoutes::updateClasslist(..) - start");
-
-		const auditUser = req.headers.user;
-		try {
-			const ca = new ClasslistAgent();
-			const data = await ca.fetchClasslist();
-			const classlistChanges = await ca.processClasslist(auditUser, null, data);
-
-			if (classlistChanges.classlist.length) {
-				const payload: ClasslistChangesTransportPayload = { success: classlistChanges };
-				res.code(200).send(payload);
-				Log.info(
-					"AdminRoutes::updateClasslist(..) - done: " +
-						"Classlist upload successful. " +
-						classlistChanges.classlist.length +
-						" students processed."
-				);
-			} else {
-				const msg = "Classlist upload not successful; no students were processed from classlist service.";
-				return AdminRoutes.handleError(400, msg, res);
-			}
-		} catch (_err) {
-			const msg = "Classlist upload not successful; no students were processed from classlist service.";
-			return AdminRoutes.handleError(400, msg, res);
-		}
-	}
-
-	public static async postWithdraw(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("AdminRoutes::postWithdraw(..) - start");
-
-		// handled by isAdmin in the route chain
-		const cc = new AdminController(AdminRoutes.ghc);
-		try {
-			const msg = await cc.performStudentWithdraw();
-			Log.info("AdminRoutes::postWithdraw(..) - done; msg: " + msg);
-			const payload: Payload = { success: { message: msg } }; // really should not be an array, but it beats having another type
-			res.code(200).send(payload);
-			return;
-		} catch (err) {
-			Log.info("AdminRoutes::postWithdraw(..) - ERROR: " + err.message); // intentionally info
-			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-			res.code(400).send(payload);
-			return;
-		}
-	}
+	// Updating the classlist from the Classlist API, and marking withdrawn students, used to
+	// be PUT /portal/admin/classlist and POST /portal/admin/withdraw. Both now run as background
+	// jobs ("classlist-update" and "student-withdraw"; registered in BackendServer) started through
+	// postJob below, so neither can be cut off by the proxy's 90s read timeout mid-write.
+	//
+	// Uploading a classlist CSV is still a request: it carries a file, and it is bounded by it.
 
 	public static async postCheckDatabase(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postCheckDatabase(..) - start");
@@ -1314,13 +1274,14 @@ export default class AdminRoutes implements IREST {
 		// admin-only functions
 
 		// headless jobs
+		// last-run state for admin actions that are not background jobs
+
 		server.get("/portal/admin/jobs", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJobs);
 		server.get("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJob);
 		server.post("/portal/admin/job/:kind", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postJob);
 		server.delete("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteJob);
 
 		server.post("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postClasslist);
-		server.put("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.updateClasslist);
 		server.post("/portal/admin/grades/csv/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGrades);
 		server.post("/portal/admin/grades/prairie", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGradesPrairie);
 		server.post("/portal/admin/deliverable", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postDeliverable);
@@ -1331,7 +1292,6 @@ export default class AdminRoutes implements IREST {
 		server.post("/portal/admin/provision/:delivId/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postProvision);
 		server.get("/portal/admin/release/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getRelease);
 		server.post("/portal/admin/release/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postRelease);
-		server.post("/portal/admin/withdraw", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postWithdraw);
 		server.post("/portal/admin/checkDatabase/:dryRun", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postCheckDatabase);
 		server.delete("/portal/admin/deliverable/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteDeliverable);
 		server.delete("/portal/admin/repository/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteRepository);

@@ -2,9 +2,11 @@
  * Created by rtholmes on 2018-02-23.
  */
 
+import { AdminController } from "@backend/controllers/AdminController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
+import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 
 import Config, { ConfigKey } from "@common/Config";
@@ -164,6 +166,13 @@ export default class BackendServer {
 			const jc = JobController.getInstance();
 			jc.register("prairielearn-sync", async (job, ctx) => {
 				return await new PrairieLearnAgent().sync(job.requestedBy, ctx);
+			});
+			jc.register("classlist-update", async (job, ctx) => {
+				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);
+			});
+			jc.register("student-withdraw", async (job, ctx) => {
+				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
+				return { message: await ac.performStudentWithdraw(job.requestedBy, ctx) };
 			});
 			try {
 				const swept = await jc.sweepInterrupted();

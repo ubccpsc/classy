@@ -962,15 +962,15 @@ describe("Admin Routes", function () {
 		//     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
 		// }).timeout(TIMEOUT * 30);
 
-		it("Should be able to perform a withdraw task", async function () {
+		it("Should be able to start a withdraw task", async function () {
 			// This is tricky because the live github data will have a different team id than we"re using locally
 
-			// const pc = new PersonController();
-			// const dc = DatabaseController.getInstance();
-
+			// NOTE: marking withdrawn students used to be POST /portal/admin/withdraw; it is now the
+			// "student-withdraw" job, so this returns as soon as the job is recorded rather than when
+			// the withdraw finishes. Whether the work itself succeeds depends on live GitHub data.
 			let response = null;
 			let body: Payload;
-			const url = "/portal/admin/withdraw";
+			const url = "/portal/admin/job/student-withdraw";
 			try {
 				response = await request(app).post(url).send({}).set({ user: userName, token: userToken });
 				body = response.body;
@@ -980,7 +980,8 @@ describe("Admin Routes", function () {
 			Log.test(response.status + " -> " + JSON.stringify(body));
 			expect(response.status).to.equal(200);
 			expect(body.success).to.not.be.undefined;
-			expect(body.success.message).to.be.an("string");
+			expect(body.success.kind).to.equal("student-withdraw");
+			expect(body.success.state).to.equal("RUNNING");
 		}).timeout(TIMEOUT * 10);
 
 		it("Should be able to sanity check a database", async function () {
@@ -1683,57 +1684,15 @@ describe("Admin Routes", function () {
 		expect(ex).to.be.null;
 	});
 
-	it("Should be able to update a classlist if authorized as admin", async function () {
-		if (TestHarness.isCI() === false) {
-			// skip locally; requires credentials devs should not have (but are encrypted for CI)
-			Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
-			return;
-		}
+	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
+		// NOTE: updating from the Classlist API used to be PUT /portal/admin/classlist. It is now
+		// the "classlist-update" job, because for a large class the API call plus the per-student
+		// writes can outlast the proxy's 90s read timeout.
+		const response = await request(app).post("/portal/admin/job/classlist-update").send({});
+		Log.test("unauthorized classlist job start -> " + response.status + "; body: " + JSON.stringify(response.body));
 
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url).set({ user: userName, token: userToken });
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-
-		expect(body).to.haveOwnProperty("success");
-		expect(body.success).to.haveOwnProperty("created");
-		expect(body.success).to.haveOwnProperty("updated");
-		expect(body.success).to.haveOwnProperty("removed");
-	});
-
-	it("Should NOT be able to update a classlist if not authorized as admin", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url);
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-
-		expect(body).to.haveOwnProperty("failure");
-	});
-
-	it("Should be able to initiate a class list update request", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url).send().set({ user: userName, token: userToken });
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-		Log.test(response.status + " -> " + JSON.stringify(body));
-		expect(response.status).to.equal(200);
-		expect(body.success).to.not.be.undefined;
-		expect(body.success.message).to.be.an("string");
+		expect(response.status).to.equal(401);
+		expect(response.body).to.haveOwnProperty("failure");
 	});
 
 	// /**
@@ -1758,22 +1717,23 @@ describe("Admin Routes", function () {
 	//     expect(body.success.message).to.be.an("string");
 	// });
 	//
-	it("Should return a Classy failure payload when a body-less PUT is sent.", async function () {
-		// NOTE: the admin UI sends PUT /portal/admin/classlist with AdminView.getOptions(), which
-		// sets Content-Type: application/json but attaches NO body. Fastify's default JSON parser
+	it("Should return a Classy failure payload when a body-less request is sent.", async function () {
+		// NOTE: the admin UI sends requests with AdminView.getOptions(), which sets
+		// Content-Type: application/json but often attaches NO body. Fastify's default JSON parser
 		// rejects that with its own error shape ({statusCode, code, error, message}), which has no
 		// `failure` field -- so the client crashed on body.failure.message. Restify accepted it.
+		//
+		// The 400 below therefore has to come from the handler (an unknown job kind), not from the
+		// parser: reaching the handler at all is what proves the empty body was accepted.
 		const response = await request(app)
-			.put("/portal/admin/classlist")
+			.post("/portal/admin/job/noSuchKind")
 			.set({ user: userName, token: userToken, "Content-Type": "application/json" });
 
-		Log.test("body-less PUT -> " + response.status + "; body: " + JSON.stringify(response.body));
+		Log.test("body-less POST -> " + response.status + "; body: " + JSON.stringify(response.body));
 
-		// whatever the outcome, the response must be a payload the frontend can read
-		if (response.status !== 200) {
-			expect(response.body.failure, "error response must carry a Classy failure payload").to.not.be.undefined;
-			expect(response.body.failure.message).to.be.a("string");
-		}
+		expect(response.status).to.equal(400);
+		expect(response.body.failure, "error response must carry a Classy failure payload").to.not.be.undefined;
+		expect(response.body.failure.message).to.contain("Unknown job kind");
 	});
 
 	describe("Background jobs", function () {
@@ -1811,6 +1771,14 @@ describe("Admin Routes", function () {
 			expect(job.state).to.equal("RUNNING");
 			expect(job.requestedBy).to.equal(userName); // audit
 			expect(job.params.some).to.equal("param");
+		});
+
+		it("Should have registered the kinds the admin UI starts.", async function () {
+			// these are registered by BackendServer::start(); without them the buttons 400
+			const jc = JobController.getInstance();
+			expect(jc.isRegistered("classlist-update"), "classlist-update").to.be.true;
+			expect(jc.isRegistered("student-withdraw"), "student-withdraw").to.be.true;
+			expect(jc.isRegistered("prairielearn-sync"), "prairielearn-sync").to.be.true;
 		});
 
 		it("Should reject an unknown job kind.", async function () {

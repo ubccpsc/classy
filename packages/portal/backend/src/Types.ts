@@ -287,6 +287,7 @@ export enum AuditLabel {
 	REPO_PROVISION = "RepositoryProvision",
 	REPO_RELEASE = "RepositoryRelease",
 	CLASSLIST_UPLOAD = "Classlist_Upload",
+	STUDENT_WITHDRAW = "Student_Withdraw",
 	CLASSLIST_PRUNE = "Classlist_Prune",
 }
 

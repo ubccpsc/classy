@@ -10,11 +10,28 @@ import { AdminPage } from "./AdminPage";
 import { AdminProvisionPage } from "./AdminProvisionPage";
 import { AdminView } from "./AdminView";
 
-export class AdminConfigTab extends AdminPage {
-	private static readonly PL_JOB_KIND = "prairielearn-sync";
+/**
+ * A button whose work runs as a background job (see JobController), rather than in the request that
+ * starts it.
+ */
+interface JobSection {
+	kind: string; // the registered job kind (BackendServer)
+	buttonId: string;
+	statusId: string; // where the one-line status goes
+	ran: string; // e.g. "Last synced"; prefixes the status line
+	detail: (summary: any) => string; // renders the job's kind-specific summary
+	cancelButtonId?: string; // only for jobs long enough to be worth cancelling
+	neverRun?: string; // shown before the first run; defaults to "Never run."
+	onFinished?: (summary: any) => void; // reported once, only for a run started on this page
+}
 
-	private prairieLearnJobId: string | null = null;
-	private prairieLearnTimer: any = null;
+export class AdminConfigTab extends AdminPage {
+	/**
+	 * Job id and poll timer per kind, for the jobs this page is watching.
+	 */
+	private readonly jobIds: { [kind: string]: string } = {};
+	private readonly jobTimers: { [kind: string]: any } = {};
+	private readonly jobsStartedHere: { [kind: string]: boolean } = {};
 
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
@@ -42,7 +59,7 @@ export class AdminConfigTab extends AdminPage {
 
 		await this.deliverablesPage.init(opts);
 
-		await this.initPrairieLearn();
+		await this.initJobSections();
 
 		(document.querySelector("#adminSubmitClasslist") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed");
@@ -60,20 +77,6 @@ export class AdminConfigTab extends AdminPage {
 						Log.error("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: " + err.message);
 					});
 			}
-		};
-
-		(document.querySelector("#adminUpdateClasslist") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - update classlist pressed");
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.updateClasslistPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.error("AdminConfigTab::handleAdminConfig(..) - update classlist pressed; ERROR: " + err.message);
-				});
 		};
 
 		(document.querySelector("#adminSubmitGradeCSV") as OnsButtonElement).onclick = function (evt) {
@@ -338,21 +341,6 @@ export class AdminConfigTab extends AdminPage {
 		//         Log.error("AdminConfigTab - adminPullRequests ERROR: " + err.message);
 		//     });
 		// };
-
-		(document.querySelector("#adminPerformWithdrawButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed");
-			evt.stopPropagation(); // prevents list item expansion
-			evt.preventDefault();
-
-			that
-				.performWithdraw()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: " + err.message);
-				});
-		};
 
 		UI.showModal("Retriving config / deliverable details.");
 
@@ -683,57 +671,6 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
-	private async performWithdraw(): Promise<void> {
-		Log.trace("AdminConfigTab::performWithdraw(..) - start");
-
-		const url = this.remote + "/portal/admin/withdraw";
-		const options: any = AdminView.getOptions();
-		options.method = "post";
-
-		Log.trace("AdminConfigTab::performWithdraw(..)");
-
-		options.body = JSON.stringify({}); // no params
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-
-		if (typeof body.success !== "undefined") {
-			UI.notificationToast("Withrdaw marking successful: " + body.success.message, 5000);
-		} else {
-			UI.showAlert(body.failure.message);
-		}
-	}
-
-	private async updateClasslistPressed(): Promise<void> {
-		Log.trace("AdminConfigTab::updateClasslistPressed(..) - start");
-
-		const url = this.remote + "/portal/admin/classlist";
-		const options: any = AdminView.getOptions();
-		options.method = "put";
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-
-		if (typeof body.success !== "undefined") {
-			let msg = "Classlist successfully updated:";
-			if (typeof body.success.created !== "undefined") {
-				msg = msg + " " + body.success.created.length + " added,";
-			}
-			if (typeof body.success.updated !== "undefined") {
-				msg = msg + " " + body.success.updated.length + " updated,";
-			}
-			if (typeof body.success.removed !== "undefined") {
-				msg = msg + " " + body.success.removed.length + " removed.";
-			}
-			UI.notificationToast(msg);
-			this.showClasslistChanges(body.success);
-		} else {
-			// NOTE: via showError, not body.failure.message. The backend can reject a request before
-			// it reaches the route handler, and that response has no `failure` field at all.
-			UI.showError(body);
-		}
-	}
-
 	private showClasslistChanges(classlistChanges: any): void {
 		Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
 		const mapToTextAndSubtext = function (people: StudentTransport[]) {
@@ -768,103 +705,171 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
-	 * PrairieLearn grade sync. Hidden unless PL enabled in Classy.
+	 * Wires every button whose work runs as a background job.
+	 *
+	 * These used to be plain requests, which the proxy cuts off at 90s (`proxy_read_timeout`) while
+	 * the backend keeps writing -- the browser saw an error mid-update. Now the button starts a job
+	 * and the page just watches it, so the work finishes whether or not this page stays open.
 	 */
-	private async initPrairieLearn(): Promise<void> {
-		const item = document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement;
-		if (item === null) {
-			return; // course has customised admin.html and removed the section
+	private async initJobSections(): Promise<void> {
+		const sections: JobSection[] = [
+			{
+				kind: "classlist-update",
+				buttonId: "adminUpdateClasslist",
+				statusId: "adminUpdateClasslistStatus",
+				ran: "Last updated",
+				detail: function (summary: any): string {
+					return (
+						" &mdash; " + summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed"
+					);
+				},
+				// only for the run this page started; arriving at a finished job should not reopen it
+				onFinished: (summary: any) => {
+					UI.notificationToast("Classlist updated: " + summary.classlist.length + " students processed.");
+					this.showClasslistChanges(summary);
+				},
+			},
+			{
+				kind: "student-withdraw",
+				buttonId: "adminPerformWithdrawButton",
+				statusId: "adminPerformWithdrawStatus",
+				ran: "Last run",
+				detail: function (summary: any): string {
+					return " &mdash; " + summary.message;
+				},
+				onFinished: (summary: any) => {
+					UI.notificationToast("Withdraw marking successful: " + summary.message, 5000);
+				},
+			},
+		];
+
+		if ((await this.isPrairieLearnEnabled()) === true) {
+			(document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement).style.display = "";
+			sections.push({
+				kind: "prairielearn-sync",
+				buttonId: "adminPrairieLearnSyncButton",
+				cancelButtonId: "adminPrairieLearnCancelButton",
+				statusId: "adminPrairieLearnStatus",
+				ran: "Last synced",
+				neverRun: "Never synced.",
+				detail: AdminConfigTab.describePrairieLearnSummary,
+			});
 		}
 
-		let enabled = false;
+		for (const section of sections) {
+			this.initJobSection(section);
+		}
+
+		// show what the last run did, so a stale or still-running job is visible on arrival rather
+		// than only after someone presses the button
+		await Promise.all(
+			sections.map((section) => {
+				return this.refreshJobStatus(section).catch((err) => {
+					Log.warn("AdminConfigTab::initJobSections() - " + section.kind + " ERROR: " + err.message);
+				});
+			})
+		);
+	}
+
+	/**
+	 * PrairieLearn is hidden unless PRAIRIELEARN_* is configured in Classy's .env.
+	 */
+	private async isPrairieLearnEnabled(): Promise<boolean> {
+		if (document.querySelector("#adminPrairieLearnSyncItem") === null) {
+			return false; // course has customised admin.html and removed the section
+		}
 		try {
 			const response = await fetch(this.remote + "/portal/config", AdminView.getOptions());
 			const json = await response.json();
-			enabled = json?.success?.prairieLearnEnabled === true;
+			return json?.success?.prairieLearnEnabled === true;
 		} catch (err) {
-			Log.warn("AdminConfigTab::initPrairieLearn() - could not read config; ERROR: " + err.message);
+			Log.warn("AdminConfigTab::isPrairieLearnEnabled() - could not read config; ERROR: " + err.message);
+			return false;
 		}
-
-		if (enabled === false) {
-			Log.info("AdminConfigTab::initPrairieLearn() - PrairieLearn is not configured; section hidden");
-			return;
-		}
-		item.style.display = "";
-
-		(document.querySelector("#adminPrairieLearnSyncButton") as OnsButtonElement).onclick = (evt: any) => {
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-			this.prairieLearnSyncPressed().catch((err) => {
-				Log.error("AdminConfigTab::initPrairieLearn() - sync ERROR: " + err.message);
-			});
-		};
-
-		(document.querySelector("#adminPrairieLearnCancelButton") as OnsButtonElement).onclick = (evt: any) => {
-			evt.preventDefault();
-			evt.stopPropagation();
-			this.prairieLearnCancelPressed().catch((err) => {
-				Log.error("AdminConfigTab::initPrairieLearn() - cancel ERROR: " + err.message);
-			});
-		};
-
-		// show whatever the last run did, so a stale sync is visible on arrival rather than only
-		// after someone presses the button
-		await this.refreshPrairieLearnStatus();
 	}
 
-	private async prairieLearnSyncPressed(): Promise<void> {
-		Log.info("AdminConfigTab::prairieLearnSyncPressed() - start");
+	private initJobSection(section: JobSection): void {
+		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement;
+		if (button === null) {
+			return; // course has customised admin.html and removed the button
+		}
+
+		button.onclick = (evt: any) => {
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+			this.startJob(section).catch((err) => {
+				Log.error("AdminConfigTab::initJobSection( " + section.kind + " ) - start ERROR: " + err.message);
+			});
+		};
+
+		if (typeof section.cancelButtonId === "string") {
+			(document.querySelector("#" + section.cancelButtonId) as OnsButtonElement).onclick = (evt: any) => {
+				evt.preventDefault();
+				evt.stopPropagation();
+				this.cancelJob(section).catch((err) => {
+					Log.error("AdminConfigTab::initJobSection( " + section.kind + " ) - cancel ERROR: " + err.message);
+				});
+			};
+		}
+	}
+
+	private async startJob(section: JobSection): Promise<void> {
+		Log.info("AdminConfigTab::startJob( " + section.kind + " ) - start");
 
 		const options: any = AdminView.getOptions();
 		options.method = "post";
 		options.body = JSON.stringify({});
 
-		const response = await fetch(this.remote + "/portal/admin/job/" + AdminConfigTab.PL_JOB_KIND, options);
+		const response = await fetch(this.remote + "/portal/admin/job/" + section.kind, options);
 		const json = await response.json();
 
-		if (typeof json.failure !== "undefined") {
-			UI.showError(json.failure.message);
+		if (typeof json.success === "undefined") {
+			// NOTE: via showError, not json.failure.message. The backend can reject a request before
+			// it reaches the route handler, and that response has no `failure` field at all.
+			UI.showError(json);
 			return;
 		}
 
 		// starting returns immediately; the work continues in the backend
-		this.prairieLearnJobId = json.success.id;
-		this.pollPrairieLearnJob();
+		this.jobIds[section.kind] = json.success.id;
+		this.jobsStartedHere[section.kind] = true;
+		this.setJobStatus(section, "Starting...");
+		this.pollJob(section);
 	}
 
-	private async prairieLearnCancelPressed(): Promise<void> {
-		if (this.prairieLearnJobId === null) {
+	private async cancelJob(section: JobSection): Promise<void> {
+		const jobId = this.jobIds[section.kind];
+		if (typeof jobId !== "string") {
 			return;
 		}
-		Log.info("AdminConfigTab::prairieLearnCancelPressed() - cancelling: " + this.prairieLearnJobId);
+		Log.info("AdminConfigTab::cancelJob( " + section.kind + " ) - cancelling: " + jobId);
 
 		const options: any = AdminView.getOptions();
 		options.method = "delete";
-		await fetch(this.remote + "/portal/admin/job/" + this.prairieLearnJobId, options);
+		await fetch(this.remote + "/portal/admin/job/" + jobId, options);
 
 		// cooperative: the job stops at its next safe point, so the state change arrives by polling
-		this.setPrairieLearnStatus("Cancelling; finishing the current record...");
+		this.setJobStatus(section, "Cancelling; finishing the current record...");
 	}
 
 	/**
-	 * Polls the running job. Cheap (one document read), and stops as soon as the job is terminal.
+	 * Polls a running job. Cheap (one document read), and stops as soon as the job is terminal.
 	 */
-	private pollPrairieLearnJob(): void {
-		if (this.prairieLearnTimer !== null) {
-			clearInterval(this.prairieLearnTimer);
+	private pollJob(section: JobSection): void {
+		if (typeof this.jobTimers[section.kind] !== "undefined") {
+			clearInterval(this.jobTimers[section.kind]);
 		}
-		this.prairieLearnTimer = setInterval(() => {
-			this.refreshPrairieLearnStatus().catch((err) => {
-				Log.warn("AdminConfigTab::pollPrairieLearnJob() - ERROR: " + err.message);
+		this.jobTimers[section.kind] = setInterval(() => {
+			this.refreshJobStatus(section).catch((err) => {
+				Log.warn("AdminConfigTab::pollJob( " + section.kind + " ) - ERROR: " + err.message);
 			});
 		}, 2000);
 	}
 
-	private async refreshPrairieLearnStatus(): Promise<void> {
+	private async refreshJobStatus(section: JobSection): Promise<void> {
+		const jobId = this.jobIds[section.kind];
 		const url =
-			this.prairieLearnJobId === null
-				? this.remote + "/portal/admin/jobs?kind=" + AdminConfigTab.PL_JOB_KIND
-				: this.remote + "/portal/admin/job/" + this.prairieLearnJobId;
+			typeof jobId === "string" ? this.remote + "/portal/admin/job/" + jobId : this.remote + "/portal/admin/jobs?kind=" + section.kind;
 
 		const response = await fetch(url, AdminView.getOptions());
 		const json = await response.json();
@@ -874,61 +879,95 @@ export class AdminConfigTab extends AdminPage {
 
 		const job = Array.isArray(json.success) ? json.success[0] : json.success;
 		if (typeof job === "undefined" || job === null) {
-			this.setPrairieLearnStatus("Never synced.");
+			this.setJobStatus(section, section.neverRun ?? "Never run.");
 			return;
 		}
-		this.prairieLearnJobId = job.id;
+		this.jobIds[section.kind] = job.id;
 
 		const running = job.state === "RUNNING";
-		(document.querySelector("#adminPrairieLearnCancelButton") as HTMLElement).style.display = running ? "" : "none";
-		(document.querySelector("#adminPrairieLearnSyncButton") as OnsButtonElement).disabled = running;
-
-		if (running === false && this.prairieLearnTimer !== null) {
-			clearInterval(this.prairieLearnTimer);
-			this.prairieLearnTimer = null;
+		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement;
+		if (button !== null) {
+			button.disabled = running;
+		}
+		if (typeof section.cancelButtonId === "string") {
+			(document.querySelector("#" + section.cancelButtonId) as HTMLElement).style.display = running ? "" : "none";
 		}
 
-		this.setPrairieLearnStatus(AdminConfigTab.describePrairieLearnJob(job));
+		if (running === false && typeof this.jobTimers[section.kind] !== "undefined") {
+			clearInterval(this.jobTimers[section.kind]);
+			delete this.jobTimers[section.kind];
+
+			// report the outcome once, and only for a run this page started: someone arriving on a
+			// finished job should see the status line, not a stack of dialogs
+			if (this.jobsStartedHere[section.kind] === true) {
+				delete this.jobsStartedHere[section.kind];
+				if (job.state === "SUCCEEDED" && job.summary !== null && typeof section.onFinished === "function") {
+					section.onFinished(job.summary);
+				} else if (job.state !== "SUCCEEDED") {
+					UI.showAlert(AdminConfigTab.describeJobFailure(job));
+				}
+			}
+		}
+
+		this.setJobStatus(section, AdminConfigTab.describeJob(job, section));
 	}
 
 	/**
-	 * A one-line description of a sync run.
+	 * A one-line description of a job run, for the status line under its button.
 	 */
-	private static describePrairieLearnJob(job: any): string {
+	private static describeJob(job: any, section: JobSection): string {
 		const when = job.completedAt ?? job.startedAt ?? job.createdAt;
 		const stamp = new Date(when).toLocaleString();
 
 		if (job.state === "RUNNING") {
-			const p = job.progress ?? { done: 0, total: 0 };
-			return "Running since " + stamp + " &mdash; " + p.done + " of " + p.total + " records.";
+			const progress = job.progress ?? { done: 0, total: 0, message: "" };
+			const counts = progress.total > 0 ? " &mdash; " + progress.done + " of " + progress.total : "";
+			const message = progress.message ? " (" + progress.message + ")" : "";
+			return "Running since " + stamp + counts + message + ".";
 		}
 
-		const s = job.summary;
 		let detail = "";
-		if (s !== null && typeof s !== "undefined") {
-			detail = " &mdash; " + s.gradesWritten + " grades, " + s.resultsWritten + " results, " + s.instancesSkipped + " unchanged";
-			if (s.deliverablesCreated?.length > 0) {
-				detail += "; created " + s.deliverablesCreated.join(", ");
-			}
-			if (s.submissionsAfterClose > 0) {
-				detail += "; " + s.submissionsAfterClose + " attempt(s) after close (not graded)";
-			}
-			if (s.unmatchedUids?.length > 0) {
-				// a systematic mismatch looks like "nobody has submitted"; make it loud
-				detail += "; <b>" + s.unmatchedUids.length + " unmatched user(s)</b>";
-			}
+		if (job.summary !== null && typeof job.summary !== "undefined") {
+			detail = section.detail(job.summary);
 		}
 		if (job.errors?.length > 0) {
-			detail += "; <b>" + job.errors.length + " error(s)</b>";
+			// the message matters here: "no students were processed" is the usual failure
+			detail += " &mdash; <b>" + job.errors[0] + "</b>";
+			if (job.errors.length > 1) {
+				detail += " (and " + (job.errors.length - 1) + " more)";
+			}
 		}
 
-		return "Last synced " + stamp + " (" + job.state.toLowerCase() + ")" + detail + ".";
+		return section.ran + " " + stamp + " (" + job.state.toLowerCase() + ")" + detail + ".";
 	}
 
-	private setPrairieLearnStatus(html: string): void {
-		const el = document.querySelector("#adminPrairieLearnStatus") as HTMLElement;
+	private static describeJobFailure(job: any): string {
+		if (job.errors?.length > 0) {
+			return job.errors[0];
+		}
+		return "Job " + job.state.toLowerCase() + ".";
+	}
+
+	private static describePrairieLearnSummary(summary: any): string {
+		let detail =
+			" &mdash; " + summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
+		if (summary.deliverablesCreated?.length > 0) {
+			detail += "; created " + summary.deliverablesCreated.join(", ");
+		}
+		if (summary.submissionsAfterClose > 0) {
+			detail += "; " + summary.submissionsAfterClose + " attempt(s) after close (not graded)";
+		}
+		if (summary.unmatchedUids?.length > 0) {
+			// a systematic mismatch looks like "nobody has submitted"; make it loud
+			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
+		}
+		return detail;
+	}
+
+	private setJobStatus(section: JobSection, html: string): void {
+		const el = document.querySelector("#" + section.statusId) as HTMLElement;
 		if (el !== null) {
-			el.innerHTML = "&nbsp;&nbsp;" + html;
+			el.innerHTML = html;
 		}
 	}
 

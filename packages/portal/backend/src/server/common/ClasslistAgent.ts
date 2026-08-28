@@ -1,3 +1,4 @@
+import { JobContext } from "@backend/controllers/JobController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
@@ -32,6 +33,35 @@ export class ClasslistAgent {
 			Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
 			throw new Error("Could not fetch Classlist " + err.message);
 		}
+	}
+
+	/**
+	 * Pulls the classlist from the Classlist API and applies it. This job is
+	 * not cancellable: the people are written in one Promise.all, so there is
+	 * no safe checkpoint to stop at.
+	 *
+	 * @param personId Person.id of whoever asked; audited by processClasslist
+	 * @param ctx when this runs as a job: for progress
+	 * @returns {Promise<ClasslistChangesTransport>}
+	 */
+	public async updateClasslist(personId: string = null, ctx: JobContext = null): Promise<ClasslistChangesTransport> {
+		Log.info("ClasslistAgent::updateClasslist( " + personId + " ) - start");
+
+		await ctx?.progress(0, 0, "fetching the classlist");
+		const data = await this.fetchClasslist();
+
+		const total = Array.isArray(data) ? data.length : 0;
+		await ctx?.progress(0, total, "processing " + total + " records");
+		const changes = await this.processClasslist(personId, null, data);
+
+		if (changes.classlist.length === 0) {
+			// the old route answered 400 here; as a job this is a failure the UI can show
+			throw new Error("Classlist update not successful; no students were processed from classlist service.");
+		}
+
+		await ctx?.progress(changes.classlist.length, total, "done");
+		Log.info("ClasslistAgent::updateClasslist( " + personId + " ) - done; # students: " + changes.classlist.length);
+		return changes;
 	}
 
 	public async processClasslist(personId: string = null, path: string = null, data: any): Promise<ClasslistChangesTransport> {
