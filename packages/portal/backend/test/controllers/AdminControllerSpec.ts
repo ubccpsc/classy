@@ -459,45 +459,6 @@ describe("AdminController", () => {
 		expect(res.repoName).to.equal(rExpected);
 	});
 
-	it("Should resume finalization for a repo that was created but never finalized.", async () => {
-		// NOTE: the other half of the failed-provision story. If the repo reaches GitHub but
-		// finalization fails (no webhook, no staff teams), the repo is deliberately kept -- it may
-		// already hold student content. It used to be marked PROVISIONED_UNLINKED by createRepo, so
-		// performProvision skipped it forever and it could never be finished. It now stays
-		// NOT_PROVISIONED with a URL, which means "created by us, not finalized", and provisioning
-		// it again resumes at finalization instead of refusing because the repo already exists.
-		const dbc = DatabaseController.getInstance();
-		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
-
-		await clearAndPreparePartial();
-		const plan = await ac.prepareProvision(deliv, false);
-		expect(plan.length).to.equal(1);
-		const repoId = plan[0].id;
-
-		// provision it properly first, so the repo really does exist on GitHub
-		const repos = [await rc.getRepository(repoId)];
-		const provisioned = await ac.performProvision(repos, deliv.importURL);
-		expect(provisioned.length, "setup: the repo must provision").to.equal(1);
-		expect(await gha.repoExists(repoId)).to.be.true;
-
-		// now put the record into the state a finalization failure leaves behind
-		const halfDone = await dbc.getRepository(repoId);
-		halfDone.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
-		await dbc.writeRepository(halfDone);
-		expect(halfDone.URL, "the URL is what marks it as ours").to.not.be.null;
-
-		// provisioning again must finish it rather than skip or refuse it
-		const retried = await ac.performProvision([await rc.getRepository(repoId)], deliv.importURL);
-		expect(
-			retried.map((repo) => repo.id),
-			"the repo must be picked up again"
-		).to.contain(repoId);
-
-		const after = await dbc.getRepository(repoId);
-		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
-		expect(await gha.repoExists(repoId), "the existing repo must not have been deleted").to.be.true;
-	}).timeout(TestHarness.TIMEOUTLONG);
-
 	it("Should leave a repo provisionable after a failed provision.", async () => {
 		// NOTE: GitHubActions::createRepo writes URL/cloneURL/PROVISIONED_UNLINKED as soon as GitHub
 		// answers, so a failure later in provisioning (a template or import that cannot be reached)
@@ -788,6 +749,48 @@ describe("AdminController", () => {
 
 			expect(allNewRepos.length).to.equal(3);
 			expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
+		}).timeout(TestHarness.TIMEOUTLONG * 5);
+
+		// NOTE: last on purpose. This clears the database (clearAndPreparePartial), and the withdraw
+		// test at the top of this suite needs the full dataset the suite's before() hook prepares.
+		// It also provisions for real on CI, which is what this whole suite is for.
+		it("Should resume finalization for a repo that was created but never finalized.", async () => {
+			// NOTE: the other half of the failed-provision story. If the repo reaches GitHub but
+			// finalization fails (no webhook, no staff teams), the repo is deliberately kept -- it may
+			// already hold student content. It used to be marked PROVISIONED_UNLINKED by createRepo, so
+			// performProvision skipped it forever and it could never be finished. It now stays
+			// NOT_PROVISIONED with a URL, which means "created by us, not finalized", and provisioning
+			// it again resumes at finalization instead of refusing because the repo already exists.
+			const dbc = DatabaseController.getInstance();
+			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+
+			await clearAndPreparePartial();
+			const plan = await ac.prepareProvision(deliv, false);
+			expect(plan.length).to.equal(1);
+			const repoId = plan[0].id;
+
+			// provision it properly first, so the repo really does exist on GitHub
+			const repos = [await rc.getRepository(repoId)];
+			const provisioned = await ac.performProvision(repos, deliv.importURL);
+			expect(provisioned.length, "setup: the repo must provision").to.equal(1);
+			expect(await gha.repoExists(repoId)).to.be.true;
+
+			// now put the record into the state a finalization failure leaves behind
+			const halfDone = await dbc.getRepository(repoId);
+			halfDone.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
+			await dbc.writeRepository(halfDone);
+			expect(halfDone.URL, "the URL is what marks it as ours").to.not.be.null;
+
+			// provisioning again must finish it rather than skip or refuse it
+			const retried = await ac.performProvision([await rc.getRepository(repoId)], deliv.importURL);
+			expect(
+				retried.map((repo) => repo.id),
+				"the repo must be picked up again"
+			).to.contain(repoId);
+
+			const after = await dbc.getRepository(repoId);
+			expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+			expect(await gha.repoExists(repoId), "the existing repo must not have been deleted").to.be.true;
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
 	});
 });
