@@ -477,6 +477,12 @@ describe("PrairieLearnAgent", function () {
 		expect(created.gradesReleased).to.be.false; // never expose on creation
 		expect(created.visibleToStudents).to.be.false;
 		expect(created.shouldProvision).to.be.false; // no repos involved
+
+		// sensible dates, not the 1969 epoch: open at the start of term, close far enough out that
+		// the close-date gating does not silently drop attempts before a real date is set
+		expect(created.openTimestamp).to.equal(Date.parse("2026-09-01T00:00:00-07:00"));
+		expect(created.closeTimestamp).to.equal(Date.parse("2035-12-31T18:00:00-08:00"));
+		expect(created.openTimestamp).to.be.lessThan(created.closeTimestamp);
 	});
 
 	it("Should not overwrite an existing deliverable.", async function () {

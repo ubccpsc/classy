@@ -87,6 +87,7 @@ describe("General Routes", function () {
 		expect(body.success.org).to.not.be.undefined;
 		expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org)); // valid .org usage
 		expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
+		expect(body.success.githubHost).to.equal(Config.getInstance().getProp(ConfigKey.githubHost));
 		expect(body.success.studentsFormTeamDelivIds.length).to.equal(4);
 		expect(body.success.studentsFormTeamDelivIds).to.eql(studentsFormTeamDelivIds);
 	});

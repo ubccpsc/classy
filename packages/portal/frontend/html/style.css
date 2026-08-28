@@ -63,8 +63,63 @@
 Settings Page
  */
 
+/*
+ * Settings rows are laid out [icon][label][control] using Onsen's .left / .center / .right.
+ * Onsen gives .center flex:1 and sizes .right to its content, so text inputs end up very narrow
+ * while the label keeps horizontal space it does not need. Give the label a fixed, readable basis
+ * and let the control take the remainder.
+ *
+ * NOTE: only rows whose control is a text input, date picker, or select are widened. Switches are
+ * deliberately excluded: stretching a toggle just pushes it away from its own label.
+ */
+.settingLabel {
+    flex: 0 0 14em;
+    /* Onsen sets margin-right:auto on .list-item__center. Per the flexbox spec an auto margin
+       absorbs positive free space BEFORE flex-grow is applied ("the flex grow factor is treated as
+       zero"), so leaving it here would silently cancel the flex:1 below and nothing would widen. */
+    margin-right: 0;
+}
+
+/* Keep whatever the control is against the right edge. Only matters for controls that do not
+   fill their container (switches); inputs below are width:100% so it makes no difference to them. */
+.settingRight {
+    justify-content: flex-end;
+}
+
+/*
+ * NOTE: direct children only. An ons-switch contains its own <input type="checkbox">, so a
+ * descendant :has(input) also matches every switch row -- which widened those containers and left
+ * the toggle stranded at the far left of the row. Matching only direct children leaves switch rows
+ * alone, so Onsen's own margin-left:auto keeps them right-aligned.
+ */
+.settingRight:has(> ons-input),
+.settingRight:has(> input),
+.settingRight:has(> select) {
+    flex: 1 1 auto;
+    margin-left: 0; /* .list-item__right sets margin-left:auto; see the note on .settingLabel */
+    min-width: 0; /* let the control shrink below its intrinsic width on narrow viewports */
+}
+
 .settingTextInput {
     background-color: lightsteelblue;
+}
+
+/*
+ * Widening is scoped to .settingRight, i.e. the [icon][label][control] settings rows used by the
+ * editDeliverable and createDockerImage pages.
+ *
+ * NOTE: scoped deliberately. .settingTextInput is also used inline elsewhere -- the team
+ * add/remove-member fields on the main admin page sit beside their own labels and buttons rather
+ * than in a settings row, and stretching those to 100% squeezes the label out.
+ *
+ * ons-input renders an inner <input>, which has to fill too or the outer element stays narrow.
+ */
+.settingRight .settingTextInput,
+.settingRight .settingTextInput input,
+.settingRight > input,
+.settingRight > select {
+    width: 100%;
+    box-sizing: border-box;
 }
 
 .noResultsRow {

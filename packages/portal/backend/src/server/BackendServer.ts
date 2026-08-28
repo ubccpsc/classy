@@ -2,9 +2,11 @@
  * Created by rtholmes on 2018-02-23.
  */
 
+import { AdminController } from "@backend/controllers/AdminController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
+import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 
 import Config, { ConfigKey } from "@common/Config";
@@ -123,6 +125,22 @@ export default class BackendServer {
 				optionsSuccessStatus: 204,
 			});
 
+			// Fastify will not allow a body to be empty {}.
+			// This overrides that behaviour, since the UI relies on this a lot. Updating
+			// the UI and removing this is left as a future (probably not worth it) task.
+			this.rest.addContentTypeParser("application/json", { parseAs: "string" }, (_req: any, body: string, done: any) => {
+				if (typeof body !== "string" || body.trim() === "") {
+					done(null, {});
+					return;
+				}
+				try {
+					done(null, JSON.parse(body));
+				} catch (err) {
+					err.statusCode = 400; // matches Fastify's own behaviour for malformed JSON
+					done(err);
+				}
+			});
+
 			// multipart uploads (classlist / grade CSVs); handlers call request.saveRequestFiles()
 			await this.rest.register(fastifyMultipart);
 
@@ -148,6 +166,13 @@ export default class BackendServer {
 			const jc = JobController.getInstance();
 			jc.register("prairielearn-sync", async (job, ctx) => {
 				return await new PrairieLearnAgent().sync(job.requestedBy, ctx);
+			});
+			jc.register("classlist-update", async (job, ctx) => {
+				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);
+			});
+			jc.register("student-withdraw", async (job, ctx) => {
+				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
+				return { message: await ac.performStudentWithdraw(job.requestedBy, ctx) };
 			});
 			try {
 				const swept = await jc.sweepInterrupted();
