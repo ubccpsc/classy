@@ -1,8 +1,11 @@
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
+import Util from "@common/Util";
+
 import * as https from "https";
 import fetch from "node-fetch";
+
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { PersonController } from "../../controllers/PersonController";
 import { AuditLabel, Person, PersonKind } from "../../Types";
@@ -146,7 +149,10 @@ export class ClasslistAgent {
 			}
 		});
 
-		Log.info("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(changeReport));
+		const crPrint = Util.clone(changeReport);
+		delete crPrint.classlist; // this field is too verbose
+		Log.info("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(crPrint));
+
 		return changeReport;
 	}
 
