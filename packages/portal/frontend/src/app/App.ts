@@ -562,7 +562,7 @@ export class App {
 		return (
 			"<b>Cannot reach " +
 			App.hostLabel(host) +
-			".</b><br/>" +
+			".</b><br/><br/>" +
 			"You must be connected to ubcsecure on campus or using the UBC VPN to sign in. " +
 			"<br/><br/>Please connect to the VPN and try again."
 		);
@@ -623,7 +623,7 @@ export class App {
 			el = document.createElement("div");
 			el.id = "loginMessage";
 			el.style.paddingTop = "1em";
-			el.style.textAlign = "left";
+			el.style.textAlign = "center";
 			button.parentElement.appendChild(el);
 		}
 
