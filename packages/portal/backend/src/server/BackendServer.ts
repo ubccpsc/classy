@@ -8,6 +8,7 @@ import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
+import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -173,6 +174,19 @@ export default class BackendServer {
 			jc.register("student-withdraw", async (job, ctx) => {
 				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
 				return { message: await ac.performStudentWithdraw(job.requestedBy, ctx) };
+			});
+
+			// provisioning: prepare (database records) -> create (GitHub repos) -> release (teams).
+			// Only one job per kind runs at a time, which is what we want: two deliverables
+			// provisioning at once would compete for the same GitHub secondary rate limits.
+			jc.register("provision-prepare", async (job, ctx) => {
+				return await new ProvisionAgent().prepare(job.params?.delivId, job.params?.formSingle === true, job.requestedBy, ctx);
+			});
+			jc.register("provision-create", async (job, ctx) => {
+				return await new ProvisionAgent().create(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
+			});
+			jc.register("provision-release", async (job, ctx) => {
+				return await new ProvisionAgent().release(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
 			});
 			try {
 				const swept = await jc.sweepInterrupted();

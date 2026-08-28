@@ -786,138 +786,30 @@ export default class AdminRoutes implements IREST {
 		throw new Error("Course object not saved.");
 	}
 
-	private static async postProvision(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const delivId = req.params.delivId;
-		const repoId = req.params.repoId;
-
-		const userName = RouteUtil.getUser(req);
-		Log.info("AdminRoutes::postProvision(..) - start; delivId: " + delivId + "; repoId: " + repoId);
-		// const provisionTrans: ProvisionTransport = req.params;
-		// Log.info("AdminRoutes::postProvision() - body: " + provisionTrans);
-		try {
-			const success = await AdminRoutes.handleProvisionRepo(userName, delivId, [repoId]);
-			const payload: Payload = { success: success };
-			res.code(200).send(payload);
-			return;
-		} catch (err) {
-			return AdminRoutes.handleError(400, "Unable to provision repo: " + err.message, res);
-		}
-	}
+	/**
 
 	/**
-	 * Provisions a set of repos in one request, so the server can batch them.
+	 * Lists the repositories that exist for a deliverable, and whether GitHub knows about them.
 	 *
-	 * NOTE: callers should keep batches modest. The proxy in front of this
-	 * (packages/proxy/proxy.conf) uses proxy_read_timeout 90, so a request that provisions more
-	 * repos than fit in 90s is cut off by nginx even though the server keeps working.
+	 * Does not directly call planProvision, as that creates Team/Repository records.
 	 */
-	private static async postProvisionBatch(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const delivId = req.params.delivId;
-		const body = (req.body || {}) as { repoIds?: string[] };
-		const repoIds: string[] = Array.isArray(body.repoIds) ? body.repoIds : [];
-
-		const userName = RouteUtil.getUser(req);
-		Log.info("AdminRoutes::postProvisionBatch(..) - start; delivId: " + delivId + "; # repos: " + repoIds.length);
-
-		try {
-			const success = await AdminRoutes.handleProvisionRepo(userName, delivId, repoIds);
-			const payload: Payload = { success: success };
-			res.code(200).send(payload);
-			return;
-		} catch (err) {
-			return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
-		}
-	}
-
 	private static async getProvision(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("AdminRoutes::getProvision(..) - start");
-
 		const delivId = req.params.delivId;
-		Log.info("AdminRoutes::getProvision() - delivId: " + delivId);
+		Log.info("AdminRoutes::getProvision( " + delivId + " ) - start");
+
 		try {
-			const success = await AdminRoutes.planProvision({ delivId: delivId, formSingle: false });
-			const payload: Payload = { success: success };
-			res.code(200).send(payload);
-			return;
-		} catch (err) {
-			return AdminRoutes.handleError(400, "Unable to provision repos: " + err.message, res);
-		}
-	}
-
-	/**
-	 * Provisions one or more repos for a deliverable.
-	 *
-	 * NOTE: the repos are handed to performProvision as a batch so it can provision them with
-	 * bounded concurrency (AdminController.PROVISION_CONCURRENCY). Passing them one at a time,
-	 * as this used to, made that batching a no-op.
-	 *
-	 * @param personId the admin performing the operation (for the audit record)
-	 * @param delivId
-	 * @param repoIds
-	 */
-	private static async handleProvisionRepo(personId: string, delivId: string, repoIds: string[]): Promise<RepositoryTransport[]> {
-		const cc = new AdminController(AdminRoutes.ghc);
-		const dc = new DeliverablesController();
-		const deliv = await dc.getDeliverable(delivId);
-		if (deliv === null || deliv.shouldProvision !== true) {
-			throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + " ) - null deliverable");
-		}
-
-		if (Array.isArray(repoIds) === false || repoIds.length === 0) {
-			throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + " ) - no repositories requested");
-		}
-
-		const dbc = DatabaseController.getInstance();
-		await dbc.writeAudit(AuditLabel.REPO_PROVISION, personId, {}, {}, { delivId: delivId, repoIds: repoIds });
-
-		const repos: Repository[] = [];
-		for (const repoId of repoIds) {
-			const repo = await dbc.getRepository(repoId);
-			if (repo === null) {
-				throw new Error("AdminRoutes::handleProvisionRepo( " + delivId + ", " + repoId + " ) - null repository");
-			}
-			repos.push(repo);
-		}
-
-		Log.info("AdminRoutes::handleProvisionRepo( " + delivId + " ) - provisioning " + repos.length + " repo(s)...");
-		const provisioned = await cc.performProvision(repos, deliv.importURL);
-		Log.info("AdminRoutes::handleProvisionRepo( " + delivId + " ) - complete; provisioned " + provisioned.length + " of " + repos.length);
-		return provisioned;
-	}
-
-	private static async planProvision(provisionTrans: ProvisionTransport): Promise<RepositoryTransport[]> {
-		const result = AdminController.validateProvisionTransport(provisionTrans);
-		if (result === null) {
 			const dc = new DeliverablesController();
-			const deliv = await dc.getDeliverable(provisionTrans.delivId);
-			if (deliv !== null && deliv.shouldProvision === true) {
-				const cc = new AdminController(AdminRoutes.ghc);
-				const ret = await cc.planProvision(deliv, provisionTrans.formSingle);
-				Log.info("AdminRoutes::planProvision() - success; # results: " + ret.length);
-				return ret;
-			} else {
-				throw new Error("Provisioning planning unsuccessful; cannot provision: " + provisionTrans.delivId);
+			const deliv = await dc.getDeliverable(delivId);
+			if (deliv === null || deliv.shouldProvision !== true) {
+				return AdminRoutes.handleError(400, "Cannot provision deliverable: " + delivId, res);
 			}
-		}
-		// should never get here unless something goes wrong
-		throw new Error("Provisioning unsuccessful.");
-	}
 
-	private static async postRelease(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("AdminRoutes::postRelease(..) - start");
-
-		const userName = RouteUtil.getUser(req);
-		const repoId = req.params.repoId;
-
-		Log.info("AdminRoutes::postRelease() - repoId: " + repoId);
-		try {
-			const success = await AdminRoutes.performRelease(userName, repoId);
+			const success = await new AdminController(AdminRoutes.ghc).listProvisionState(deliv);
 			const payload: Payload = { success: success };
 			res.code(200).send(payload);
 			return;
 		} catch (err) {
-			Log.exception(err);
-			return AdminRoutes.handleError(400, "Unable to release repos: " + err.message, res);
+			return AdminRoutes.handleError(400, "Unable to list provisioning state: " + err.message, res);
 		}
 	}
 
@@ -954,29 +846,6 @@ export default class AdminRoutes implements IREST {
 			// should never get here unless something goes wrong
 			throw new Error("Release planning unsuccessful.");
 		}
-	}
-
-	private static async performRelease(personId: string, repoId: string): Promise<RepositoryTransport[]> {
-		const start = Date.now();
-		const rc = new RepositoryController();
-
-		const repo = await rc.getRepository(repoId);
-		Log.info("AdminRoutes::performRelease( " + personId + ", " + repoId + " ) - start");
-		if (repo !== null) {
-			const dbc = DatabaseController.getInstance();
-			await dbc.writeAudit(AuditLabel.REPO_RELEASE, personId, {}, {}, { repoId: repoId });
-
-			const ac = new AdminController(AdminRoutes.ghc);
-			const releaseSucceeded = await ac.performRelease([repo]);
-			Log.info(
-				"AdminRoutes::performRelease() - done; repo: " + repoId + ";  results: " + releaseSucceeded.length + "; took: " + Util.took(start)
-			);
-			return releaseSucceeded;
-		} else {
-			Log.error("AdminRoutes::performRelease() - unknown repository: " + repoId);
-		}
-		// should never get here unless something goes wrong
-		throw new Error("Perform release unsuccessful.");
 	}
 
 	private static async handleTeamCreate(personId: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
@@ -1287,12 +1156,11 @@ export default class AdminRoutes implements IREST {
 		server.post("/portal/admin/deliverable", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postDeliverable);
 
 		server.post("/portal/admin/course", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postCourse);
-		server.get("/portal/admin/provision/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getProvision);
-		server.post("/portal/admin/provision/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postProvisionBatch);
-		server.post("/portal/admin/provision/:delivId/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postProvision);
-		server.get("/portal/admin/release/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getRelease);
-		server.post("/portal/admin/release/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postRelease);
 		server.post("/portal/admin/checkDatabase/:dryRun", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postCheckDatabase);
+
+		server.get("/portal/admin/provision/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getProvision);
+		server.get("/portal/admin/release/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getRelease);
+
 		server.delete("/portal/admin/deliverable/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteDeliverable);
 		server.delete("/portal/admin/repository/:repoId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteRepository);
 

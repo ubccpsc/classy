@@ -459,6 +459,53 @@ describe("AdminController", () => {
 		expect(res.repoName).to.equal(rExpected);
 	});
 
+	it("Should keep provisioning after a repo fails, and report progress.", async () => {
+		// NOTE: this pins the behaviour change made when provisioning moved to the job framework.
+		// performProvision used to rethrow, which stopped every remaining repo from being scheduled:
+		// survivable when the browser drove one small batch at a time, fatal for a single job, where
+		// one bad repo would abandon the rest of the class.
+		//
+		// No GitHub involved: a repo that is not in the datastore fails in
+		// GitHubController::checkDatabase, before anything is sent.
+		const broken: Repository[] = [1, 2].map((n) => {
+			return {
+				id: "REPO_NOT_IN_DB_" + n + "_" + Date.now(),
+				delivId: TestHarness.DELIVIDPROJ,
+				teamIds: ["TEAM_THAT_DOES_NOT_EXIST"],
+				URL: null,
+				cloneURL: null,
+				gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+				custom: {},
+			} as Repository;
+		});
+
+		const progress: Array<{ done: number; total: number }> = [];
+		const errors: string[] = [];
+		const ctx = {
+			isCancelled: () => false,
+			progress: async (done: number, total: number) => {
+				progress.push({ done: done, total: total });
+			},
+			error: async (msg: string) => {
+				errors.push(msg);
+			},
+		};
+
+		const res = await ac.performProvision(broken, "https://example.com/import", 1, ctx);
+		Log.test("provisioned: " + JSON.stringify(res) + "; errors: " + JSON.stringify(errors));
+
+		expect(res).to.have.lengthOf(0);
+		// both were attempted: the first failure did not stop the second from being scheduled
+		expect(errors.length, "both failures must be recorded").to.equal(2);
+		expect(errors[0]).to.contain(broken[0].id);
+		expect(errors[1]).to.contain(broken[1].id);
+
+		// and every repo reports progress, whether it worked or not
+		expect(progress).to.have.lengthOf(2);
+		expect(progress[1].done).to.equal(2);
+		expect(progress[1].total).to.equal(2);
+	}).timeout(TestHarness.TIMEOUT);
+
 	describe("Slow AdminController Tests", () => {
 		// before(async function() {
 		//     await clearAndPreparePartial();
@@ -516,7 +563,7 @@ describe("AdminController", () => {
 			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED); // not provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
-			const plan = await ac.planProvision(deliv, false);
+			const plan = await ac.prepareProvision(deliv, false);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
@@ -599,7 +646,7 @@ describe("AdminController", () => {
 			expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-			const plan = await ac.planProvision(deliv, true);
+			const plan = await ac.prepareProvision(deliv, true);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
@@ -646,7 +693,7 @@ describe("AdminController", () => {
 			expect(allTeams.length).to.equal(4);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-			const plan = await ac.planProvision(deliv, false);
+			const plan = await ac.prepareProvision(deliv, false);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
