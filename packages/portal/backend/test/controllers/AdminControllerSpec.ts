@@ -459,6 +459,84 @@ describe("AdminController", () => {
 		expect(res.repoName).to.equal(rExpected);
 	});
 
+	it("Should resume finalization for a repo that was created but never finalized.", async () => {
+		// NOTE: the other half of the failed-provision story. If the repo reaches GitHub but
+		// finalization fails (no webhook, no staff teams), the repo is deliberately kept -- it may
+		// already hold student content. It used to be marked PROVISIONED_UNLINKED by createRepo, so
+		// performProvision skipped it forever and it could never be finished. It now stays
+		// NOT_PROVISIONED with a URL, which means "created by us, not finalized", and provisioning
+		// it again resumes at finalization instead of refusing because the repo already exists.
+		const dbc = DatabaseController.getInstance();
+		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+
+		await clearAndPreparePartial();
+		const plan = await ac.prepareProvision(deliv, false);
+		expect(plan.length).to.equal(1);
+		const repoId = plan[0].id;
+
+		// provision it properly first, so the repo really does exist on GitHub
+		const repos = [await rc.getRepository(repoId)];
+		const provisioned = await ac.performProvision(repos, deliv.importURL);
+		expect(provisioned.length, "setup: the repo must provision").to.equal(1);
+		expect(await gha.repoExists(repoId)).to.be.true;
+
+		// now put the record into the state a finalization failure leaves behind
+		const halfDone = await dbc.getRepository(repoId);
+		halfDone.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
+		await dbc.writeRepository(halfDone);
+		expect(halfDone.URL, "the URL is what marks it as ours").to.not.be.null;
+
+		// provisioning again must finish it rather than skip or refuse it
+		const retried = await ac.performProvision([await rc.getRepository(repoId)], deliv.importURL);
+		expect(
+			retried.map((repo) => repo.id),
+			"the repo must be picked up again"
+		).to.contain(repoId);
+
+		const after = await dbc.getRepository(repoId);
+		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(await gha.repoExists(repoId), "the existing repo must not have been deleted").to.be.true;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
+	it("Should leave a repo provisionable after a failed provision.", async () => {
+		// NOTE: GitHubActions::createRepo writes URL/cloneURL/PROVISIONED_UNLINKED as soon as GitHub
+		// answers, so a failure later in provisioning (a template or import that cannot be reached)
+		// used to leave a record claiming to be provisioned for a repo that had just been deleted
+		// again. It then vanished from the unprovisioned list, showed up as releasable, and could
+		// never be retried, because performProvision only touches NOT_PROVISIONED repos.
+		const dbc = DatabaseController.getInstance();
+		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+
+		const repoId = "PROVISION_FAILURE_" + Date.now();
+		const repo: Repository = {
+			id: repoId,
+			delivId: deliv.id,
+			teamIds: ["TEAM_THAT_DOES_NOT_EXIST"],
+			URL: "https://example.com/stale",
+			cloneURL: "https://example.com/stale.git",
+			gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED, // as createRepo would have left it
+			custom: {},
+		};
+		await dbc.writeRepository(repo);
+
+		const ghc = new GitHubController(gha);
+		let threw = false;
+		try {
+			// the import cannot succeed, so this fails and takes the rollback path. The URL points at
+			// a closed local port on purpose: the clone is refused immediately, with no DNS lookup
+			// and nothing left outside this process.
+			await ghc.provisionRepository(repoId, [], "https://localhost:1/does-not-exist.git");
+		} catch (_err) {
+			threw = true;
+		}
+		expect(threw, "provisioning a repo whose import cannot be reached must fail").to.be.true;
+
+		const after = await dbc.getRepository(repoId);
+		expect(after.gitHubStatus, "must be provisionable again").to.equal(GitHubStatus.NOT_PROVISIONED);
+		expect(after.URL, "a repo that is not on GitHub must not carry a URL").to.be.null;
+		expect(after.cloneURL).to.be.null;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
 	it("Should keep provisioning after a repo fails, and report progress.", async () => {
 		// NOTE: this pins the behaviour change made when provisioning moved to the job framework.
 		// performProvision used to rethrow, which stopped every remaining repo from being scheduled:

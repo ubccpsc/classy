@@ -1041,7 +1041,13 @@ export class AdminController {
 				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
 				// 	repo.custom.githubCreated = true;
 				// }
-				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
+				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED && repo.URL !== null) {
+					// NOT_PROVISIONED with a URL means Classy created this repo but never finished
+					// finalizing it (no webhook, no staff teams). Leave it alone: provisioning it
+					// again resumes finalization, and marking it provisioned here would hide it from
+					// that retry -- which is the state this check exists to get repos out of.
+					Log.warn("AdminController::dbSanityCheck() - created but not finalized; leaving provisionable: " + repo.id);
+				} else if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
 					Log.warn("AdminController::dbSanityCheck() - gitHubStatus should be PROVISIONED for created: " + repo.id);
 					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // linking does not matter for repos
 				}
@@ -1065,6 +1071,12 @@ export class AdminController {
 				if (repo.URL !== null) {
 					Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
 					repo.URL = null;
+				}
+
+				if (repo.cloneURL !== null) {
+					// written alongside URL by GitHubActions::createRepo, so it goes stale the same way
+					Log.warn("AdminController::dbSanityCheck() - repo.cloneURL should be null for: " + repo.id);
+					repo.cloneURL = null;
 				}
 			}
 

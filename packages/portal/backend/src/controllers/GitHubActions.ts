@@ -477,7 +477,11 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
-			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			// NOTE: gitHubStatus is deliberately NOT set here. The repo exists on GitHub but has no
+			// webhook and no staff teams yet, so it is not provisioned in any useful sense; only
+			// GitHubController::finalizeAndMark says so, once finalization has actually worked.
+			// Marking it here made a half-provisioned repo look finished, and because
+			// performProvision only retries NOT_PROVISIONED repos, it could never be completed.
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
@@ -573,7 +577,11 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
-			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			// NOTE: gitHubStatus is deliberately NOT set here. The repo exists on GitHub but has no
+			// webhook and no staff teams yet, so it is not provisioned in any useful sense; only
+			// GitHubController::finalizeAndMark says so, once finalization has actually worked.
+			// Marking it here made a half-provisioned repo look finished, and because
+			// performProvision only retries NOT_PROVISIONED repos, it could never be completed.
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
 			Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; took: " + Util.took(start));
