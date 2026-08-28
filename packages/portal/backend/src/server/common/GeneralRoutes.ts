@@ -40,6 +40,7 @@ export default class GeneralRoutes implements IREST {
 		const org = Config.getInstance().getProp(ConfigKey.org);
 		const name = Config.getInstance().getProp(ConfigKey.name);
 		const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
+		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
 		const studentsFormTeamDelivIds = (await new DeliverablesController().getAllDeliverables())
 			.filter((d) => d.teamStudentsForm === true)
 			.map((d) => d.id);
@@ -50,6 +51,7 @@ export default class GeneralRoutes implements IREST {
 					org: org,
 					name: name,
 					githubAPI: githubAPI,
+					githubHost: githubHost,
 					studentsFormTeamDelivIds,
 					prairieLearnEnabled: PrairieLearnAgent.isConfigured(),
 				},
