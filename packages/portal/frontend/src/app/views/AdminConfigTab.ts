@@ -9,29 +9,10 @@ import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminProvisionPage } from "./AdminProvisionPage";
 import { AdminView } from "./AdminView";
-
-/**
- * A button whose work runs as a background job (see JobController), rather than in the request that
- * starts it.
- */
-interface JobSection {
-	kind: string; // the registered job kind (BackendServer)
-	buttonId: string;
-	statusId: string; // where the one-line status goes
-	ran: string; // e.g. "Last synced"; prefixes the status line
-	detail: (summary: any) => string; // renders the job's kind-specific summary
-	cancelButtonId?: string; // only for jobs long enough to be worth cancelling
-	neverRun?: string; // shown before the first run; defaults to "Never run."
-	onFinished?: (summary: any) => void; // reported once, only for a run started on this page
-}
+import { JobRunner, type JobSection } from "./JobRunner";
 
 export class AdminConfigTab extends AdminPage {
-	/**
-	 * Job id and poll timer per kind, for the jobs this page is watching.
-	 */
-	private readonly jobIds: { [kind: string]: string } = {};
-	private readonly jobTimers: { [kind: string]: any } = {};
-	private readonly jobsStartedHere: { [kind: string]: boolean } = {};
+	private readonly jobs: JobRunner;
 
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
@@ -42,6 +23,7 @@ export class AdminConfigTab extends AdminPage {
 	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		this.isAdmin = isAdmin;
+		this.jobs = new JobRunner(remote);
 		this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
 	}
 
@@ -129,66 +111,6 @@ export class AdminConfigTab extends AdminPage {
 				})
 				.catch(function (err) {
 					Log.info("AdminConfigTab::handleAdminConfig(..) - default deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminProvisionButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.provisionDeliverablePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReleaseButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.releaseDeliverablePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReadWriteButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.repoEnableWritePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReadOnlyButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.repoDisableWritePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed; ERROR: " + err.message);
 				});
 		};
 
@@ -349,21 +271,12 @@ export class AdminConfigTab extends AdminPage {
 		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
 		const gradesDeliverableDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 		const defaultDeliverableDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const provisionDropdown = document.querySelector("#adminProvisionDeliverableSelect") as HTMLSelectElement;
-		const releaseDropdown = document.querySelector("#adminReleaseDeliverableSelect") as HTMLSelectElement;
 		const teamDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
-
-		const repoReadDropdown = document.querySelector("#adminReadOnlyDeliverableSelect") as HTMLSelectElement;
-		const repoReadWriteDropdown = document.querySelector("#adminReadWriteDeliverableSelect") as HTMLSelectElement;
 
 		const defaultDeliverableOptions = ["--Not Set--"];
 		const provisionOptions = ["--Select--"];
-		const releaseOptions = ["--Select--"];
 		const gradesOptions = ["--Select--"];
 		const allDeliverables = ["--Select--"];
-
-		const repoReadOptions = ["--Select--"];
-		const repoWriteOptions = ["--Select--"];
 
 		for (const deliv of deliverables) {
 			if (deliv.shouldAutoTest === true) {
@@ -373,21 +286,14 @@ export class AdminConfigTab extends AdminPage {
 			if (deliv.shouldProvision === true) {
 				// can only provision or release deliverables that are provisionable
 				provisionOptions.push(deliv.id);
-				releaseOptions.push(deliv.id);
 				gradesOptions.push(deliv.id);
-				repoReadOptions.push(deliv.id);
-				repoWriteOptions.push(deliv.id);
 			}
 			allDeliverables.push(deliv.id);
 		}
 
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
 		this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
-		this.populateDelivSelect(provisionOptions, provisionDropdown);
-		this.populateDelivSelect(releaseOptions, releaseDropdown);
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
-		this.populateDelivSelect(repoReadOptions, repoReadDropdown);
-		this.populateDelivSelect(repoWriteOptions, repoReadWriteDropdown);
 
 		// set default deliverable, if it exists
 		for (const o of (defaultDeliverableDropdown as any).children) {
@@ -705,11 +611,8 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
-	 * Wires every button whose work runs as a background job.
-	 *
-	 * These used to be plain requests, which the proxy cuts off at 90s (`proxy_read_timeout`) while
-	 * the backend keeps writing -- the browser saw an error mid-update. Now the button starts a job
-	 * and the page just watches it, so the work finishes whether or not this page stays open.
+	 * Describes every button on this page whose work runs as a background job; JobRunner does the
+	 * starting and watching.
 	 */
 	private async initJobSections(): Promise<void> {
 		const sections: JobSection[] = [
@@ -754,19 +657,7 @@ export class AdminConfigTab extends AdminPage {
 			});
 		}
 
-		for (const section of sections) {
-			this.initJobSection(section);
-		}
-
-		// show what the last run did, so a stale or still-running job is visible on arrival rather
-		// than only after someone presses the button
-		await Promise.all(
-			sections.map((section) => {
-				return this.refreshJobStatus(section).catch((err) => {
-					Log.warn("AdminConfigTab::initJobSections() - " + section.kind + " ERROR: " + err.message);
-				});
-			})
-		);
+		await Promise.all(sections.map((section) => this.jobs.init(section)));
 	}
 
 	/**
@@ -786,177 +677,6 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
-	private initJobSection(section: JobSection): void {
-		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement;
-		if (button === null) {
-			return; // course has customised admin.html and removed the button
-		}
-
-		button.onclick = (evt: any) => {
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-			this.startJob(section).catch((err) => {
-				Log.error("AdminConfigTab::initJobSection( " + section.kind + " ) - start ERROR: " + err.message);
-			});
-		};
-
-		if (typeof section.cancelButtonId === "string") {
-			(document.querySelector("#" + section.cancelButtonId) as OnsButtonElement).onclick = (evt: any) => {
-				evt.preventDefault();
-				evt.stopPropagation();
-				this.cancelJob(section).catch((err) => {
-					Log.error("AdminConfigTab::initJobSection( " + section.kind + " ) - cancel ERROR: " + err.message);
-				});
-			};
-		}
-	}
-
-	private async startJob(section: JobSection): Promise<void> {
-		Log.info("AdminConfigTab::startJob( " + section.kind + " ) - start");
-
-		const options: any = AdminView.getOptions();
-		options.method = "post";
-		options.body = JSON.stringify({});
-
-		const response = await fetch(this.remote + "/portal/admin/job/" + section.kind, options);
-		const json = await response.json();
-
-		if (typeof json.success === "undefined") {
-			// NOTE: via showError, not json.failure.message. The backend can reject a request before
-			// it reaches the route handler, and that response has no `failure` field at all.
-			UI.showError(json);
-			return;
-		}
-
-		// starting returns immediately; the work continues in the backend
-		this.jobIds[section.kind] = json.success.id;
-		this.jobsStartedHere[section.kind] = true;
-		this.setJobStatus(section, "Starting...");
-		this.pollJob(section);
-	}
-
-	private async cancelJob(section: JobSection): Promise<void> {
-		const jobId = this.jobIds[section.kind];
-		if (typeof jobId !== "string") {
-			return;
-		}
-		Log.info("AdminConfigTab::cancelJob( " + section.kind + " ) - cancelling: " + jobId);
-
-		const options: any = AdminView.getOptions();
-		options.method = "delete";
-		await fetch(this.remote + "/portal/admin/job/" + jobId, options);
-
-		// cooperative: the job stops at its next safe point, so the state change arrives by polling
-		this.setJobStatus(section, "Cancelling; finishing the current record...");
-	}
-
-	/**
-	 * Polls a running job. Cheap (one document read), and stops as soon as the job is terminal.
-	 */
-	private pollJob(section: JobSection): void {
-		if (typeof this.jobTimers[section.kind] !== "undefined") {
-			clearInterval(this.jobTimers[section.kind]);
-		}
-		this.jobTimers[section.kind] = setInterval(() => {
-			this.refreshJobStatus(section).catch((err) => {
-				Log.warn("AdminConfigTab::pollJob( " + section.kind + " ) - ERROR: " + err.message);
-			});
-		}, 2000);
-	}
-
-	private async refreshJobStatus(section: JobSection): Promise<void> {
-		const jobId = this.jobIds[section.kind];
-		const url =
-			typeof jobId === "string" ? this.remote + "/portal/admin/job/" + jobId : this.remote + "/portal/admin/jobs?kind=" + section.kind;
-
-		const response = await fetch(url, AdminView.getOptions());
-		const json = await response.json();
-		if (typeof json.success === "undefined") {
-			return;
-		}
-
-		const job = Array.isArray(json.success) ? json.success[0] : json.success;
-		if (typeof job === "undefined" || job === null) {
-			this.setJobStatus(section, section.neverRun ?? "Never run.");
-			return;
-		}
-		this.jobIds[section.kind] = job.id;
-
-		const running = job.state === "RUNNING";
-		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement;
-		if (button !== null) {
-			button.disabled = running;
-		}
-		if (typeof section.cancelButtonId === "string") {
-			(document.querySelector("#" + section.cancelButtonId) as HTMLElement).style.display = running ? "" : "none";
-		}
-
-		if (running === false && typeof this.jobTimers[section.kind] !== "undefined") {
-			clearInterval(this.jobTimers[section.kind]);
-			delete this.jobTimers[section.kind];
-
-			// report the outcome once, and only for a run this page started: someone arriving on a
-			// finished job should see the status line, not a stack of dialogs
-			if (this.jobsStartedHere[section.kind] === true) {
-				delete this.jobsStartedHere[section.kind];
-				if (job.state === "SUCCEEDED" && job.summary !== null && typeof section.onFinished === "function") {
-					section.onFinished(job.summary);
-				} else if (job.state !== "SUCCEEDED") {
-					UI.showAlert(AdminConfigTab.describeJobFailure(job));
-				}
-			}
-		}
-
-		this.setJobStatus(section, AdminConfigTab.describeJob(job, section));
-	}
-
-	/**
-	 * A description of a job run, for the status block under its button: when it ran and how it
-	 * ended on the first line, what it did on the second.
-	 */
-	private static describeJob(job: any, section: JobSection): string {
-		const when = job.completedAt ?? job.startedAt ?? job.createdAt;
-		const stamp = new Date(when).toLocaleString();
-
-		if (job.state === "RUNNING") {
-			const progress = job.progress ?? { done: 0, total: 0, message: "" };
-			const counts = progress.total > 0 ? progress.done + " of " + progress.total : "";
-			const message = progress.message ? (counts === "" ? "" : " ") + "(" + progress.message + ")" : "";
-			return AdminConfigTab.twoLines("Running since " + stamp + ".", counts + message);
-		}
-
-		let detail = "";
-		if (job.summary !== null && typeof job.summary !== "undefined") {
-			detail = section.detail(job.summary);
-		}
-		if (job.errors?.length > 0) {
-			// the message matters here: "no students were processed" is the usual failure
-			if (detail !== "") {
-				detail += " ";
-			}
-			detail += "<b>" + job.errors[0] + "</b>";
-			if (job.errors.length > 1) {
-				detail += " (and " + (job.errors.length - 1) + " more)";
-			}
-		}
-
-		return AdminConfigTab.twoLines(section.ran + " " + stamp + " (" + job.state.toLowerCase() + ").", detail);
-	}
-
-	private static twoLines(first: string, second: string): string {
-		if (second === "") {
-			return "<div>" + first + "</div>";
-		}
-		return "<div>" + first + "</div><div>" + second + "</div>";
-	}
-
-	private static describeJobFailure(job: any): string {
-		if (job.errors?.length > 0) {
-			return job.errors[0];
-		}
-		return "Job " + job.state.toLowerCase() + ".";
-	}
-
 	private static describePrairieLearnSummary(summary: any): string {
 		let detail = summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
 		if (summary.deliverablesCreated?.length > 0) {
@@ -970,13 +690,6 @@ export class AdminConfigTab extends AdminPage {
 			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
 		}
 		return detail + ".";
-	}
-
-	private setJobStatus(section: JobSection, html: string): void {
-		const el = document.querySelector("#" + section.statusId) as HTMLElement;
-		if (el !== null) {
-			el.innerHTML = html;
-		}
 	}
 
 	private async defaultDeliverablePressed(): Promise<void> {
@@ -1001,102 +714,5 @@ export class AdminConfigTab extends AdminPage {
 		} else {
 			UI.showAlert(body.failure.message);
 		}
-	}
-
-	private async provisionDeliverablePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - start");
-		const start = Date.now();
-		const delivDropdown = document.querySelector("#adminProvisionDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - value: " + value);
-
-		if (value !== null && value !== "null") {
-			const url = this.remote + "/portal/admin/provision";
-			const options: any = AdminView.getOptions();
-			options.method = "post";
-
-			const provision: ProvisionTransport = { delivId: value, formSingle: false };
-			options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
-
-			UI.showAlert(
-				"This is going to be a long-running operation;" +
-					" you can monitor progress by watching your GitHub org for newly created repos " +
-					"(and teams, although they will not be added to the repos until you release). " +
-					"Please make sure this operation completes before you provision again or release these repos."
-			);
-
-			Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - POSTing to: " + url);
-			const response = await fetch(url, options);
-
-			if (response.status === 200 || response.status === 400) {
-				const body = await response.json();
-				if (typeof body.success !== "undefined") {
-					Log.info("Repositories provisioned: " + JSON.stringify(body.success));
-					UI.showAlert("Repositories provisioned: " + body.success.length);
-				} else {
-					if (typeof body.failure !== "undefined") {
-						UI.showAlert(body.failure.message);
-					} else {
-						UI.showAlert(body);
-					}
-				}
-			} else {
-				UI.showAlert("Unexpected problem encountered: " + response.statusText);
-			}
-		}
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - done; took: " + UI.took(start));
-	}
-
-	private async repoEnableWritePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::repoEnableWritePressed(..) - start");
-	}
-
-	private async repoDisableWritePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::repoDisableWritePressed(..) - start");
-	}
-
-	private async releaseDeliverablePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - start");
-		const start = Date.now();
-		const delivDropdown = document.querySelector("#adminReleaseDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - value: " + value);
-
-		if (value !== null && value !== "null") {
-			const url = this.remote + "/portal/admin/release";
-			const options: any = AdminView.getOptions();
-			options.method = "post";
-
-			UI.showAlert(
-				"This is going to be a long-running operation;" +
-					" you can monitor progress by watching the teams in your GitHub org" +
-					" as teams are added to repos. " +
-					"Please make sure this operation completes before you release again or provision new repos."
-			);
-
-			const provision: ProvisionTransport = { delivId: value, formSingle: false };
-			options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
-
-			Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - POSTing to: " + url);
-			const response = await fetch(url, options);
-
-			if (response.status === 200 || response.status === 400) {
-				const body = await response.json();
-				if (typeof body.success !== "undefined") {
-					UI.showAlert("Repositories released: " + body.success.length);
-					Log.info("Repositories released: " + JSON.stringify(body.success));
-				} else {
-					if (typeof body.failure !== "undefined") {
-						UI.showAlert(body.failure.message);
-					} else {
-						UI.showAlert(body);
-					}
-				}
-			} else {
-				Log.error("Unexpected problem: " + response.statusText);
-				UI.showAlert("Unexpected problem: " + response.statusText);
-			}
-		}
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - done; took: " + UI.took(start));
 	}
 }

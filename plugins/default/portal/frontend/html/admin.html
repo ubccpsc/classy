@@ -258,7 +258,7 @@
                         Update class list via API
                         <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update Class list
                         </ons-button>
-                        <div id="adminUpdateClasslistStatus" style="padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminUpdateClasslistStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
@@ -282,7 +282,7 @@
                         <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark
                             withdrawn students
                         </ons-button>
-                        <div id="adminPerformWithdrawStatus" style="padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminPerformWithdrawStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
@@ -353,7 +353,7 @@
                             <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
                             <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
                         </div>
-                        <div id="adminPrairieLearnStatus" style="padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never synced.
                         </div>
                     </div>
@@ -511,87 +511,7 @@
                 </ons-list-item>
 -->
 
-                <div style="display:none;">
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            Provision Repositories for Deliverable
-                            <select id="adminProvisionDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Creates the repositories for any provisionable Deliverable using all of the settings
-                            specified in the
-                            deliverable
-                            page. This is an incremental function; you can provision a deliverable several times as
-                            teams are formed, or
-                            after
-                            the class composition changes. It will also provision deliverables for all staff members who
-                            have previously
-                            logged
-                            into Classy (e.g., so they can see what the students see). This is a slow action (up to 30
-                            seconds / repository)
-                            so
-                            do not leave this until the last second, and make sure multiple of these requests are not
-                            running concurrently.
-                            Cannot be undone, so use this with care.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            Enable write access for deliverable repositories
-                            <select id="adminReleaseDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Releases any provisoined repositories so students can make commits to their repositories.
-                            This is an incremental
-                            function; you can release a deliverable several times as teams are formed, or after the
-                            class composition
-                            changes.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            NOT IMPLEMENTED: Disable write access for deliverable repositories
-                            <select id="adminReadOnlyDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Sets any repositories to be read only so students can no longer make changes.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            NOT IMPLEMENTED: Enable write access for deliverable repositories
-                            <select id="adminReadWriteDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Sets any repositories to be writeable so students make changes.
-                        </div>
-                    </ons-list-item>
-
-                </div>
-
+                
                 <ons-list-header>Delete Inconsistent Repositories and Teams</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
@@ -1419,6 +1339,34 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Prepare</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-list-ol"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Prepare teams and repositories.&nbsp;&nbsp;
+                            <ons-button id="adminManagePrepareButton" modifier="medium">Prepare</ons-button>
+                        </div>
+                        <div style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em;">
+                            <input type="checkbox" id="provisionFormSingleCheckbox">
+                            <label for="provisionFormSingleCheckbox">Also create individual repos for students who are
+                                not in a team</label>
+                        </div>
+                        <div id="adminProvisionPrepareStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Works out which teams and repositories this deliverable needs and records them in Classy.
+                        Nothing is created on GitHub, and nothing is visible to students. The lists below are empty
+                        until this has been run.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Select Repositories to Provision</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -1431,9 +1379,18 @@
                                 id="repositoryProvisionSelect"></select>
                         <ons-button id="adminManageProvisionButton" modifier="medium">Provision Repositories
                         </ons-button>
+                        <ons-button id="adminManageProvisionCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionCreateStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         Select the repositories you wish to provision.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works. Cancelling stops after the
+                        repositories currently being created finish; those already created are kept, and provisioning
+                        again creates the rest.
                     </div>
                 </ons-list-item>
 
@@ -1448,9 +1405,16 @@
                                 style="width: 20em; margin-left: 1em; margin-right: 1em;"
                                 id="repositoryReleaseSelect"></select>
                         <ons-button id="adminManageReleaseButton" modifier="medium">Release Repositories</ons-button>
+                        <ons-button id="adminManageReleaseCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionReleaseStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         Select the repositories you wish to release.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
