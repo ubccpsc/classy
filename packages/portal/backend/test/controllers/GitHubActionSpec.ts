@@ -390,6 +390,56 @@ describe("GitHubActions", () => {
 		expect(val.githubTeamNumber > 0).to.be.true;
 	}).timeout(TIMEOUT);
 
+	it("Should report a team that does not exist as -1.", async function () {
+		// NOTE: provisioning and releasing both branch on this, and the miss path was never
+		// exercised: a team that cannot be found must be -1, not a throw and not 0.
+		const val = await gh.getTeamNumber("TEAM_THAT_DOES_NOT_EXIST_" + Date.now());
+		Log.test("team number: " + val);
+		expect(val).to.equal(-1);
+	}).timeout(TIMEOUT);
+
+	it("Should fail loudly when a team member cannot be added.", async function () {
+		// NOTE: these responses used to be discarded, so a member that was never added looked exactly
+		// like success -- and the team was left without the student it exists for. One bogus username
+		// is enough to prove the failure is reported rather than swallowed.
+		const bogus = "userThatDoesNotExistOnGitHub_" + Date.now();
+
+		let message: string = null;
+		try {
+			await gh.addMembersToTeam(TEAMNAME, [bogus]);
+		} catch (err) {
+			message = err.message;
+		}
+		Log.test("message: " + message);
+
+		expect(message, "adding an unknown member must throw").to.not.be.null;
+		expect(message).to.contain(bogus); // the message has to name who was not added
+	}).timeout(TIMEOUT);
+
+	it("Should refuse to delete branches on a repo that does not exist.", async function () {
+		// deleteBranches is what prunes a template import down to one branch; on a missing repo it
+		// must report failure rather than carrying on
+		const val = await gh.deleteBranches("REPO_THAT_DOES_NOT_EXIST_" + Date.now(), ["main"]);
+		expect(val).to.be.false;
+	}).timeout(TIMEOUT);
+
+	it("Should return an empty list rather than throwing when the token is bad.", async function () {
+		// NOTE: this is what an expired or wrongly-scoped GH_BOT_TOKEN looks like in production, and
+		// handlePagination has a specific branch for it. The listing must come back empty rather than
+		// exploding somewhere further up, and the "Bad Credentials" line in the log is the signal to
+		// look for when Classy suddenly sees an empty org.
+		// NOTE: the token is swapped on a throwaway instance rather than through Config::setProp,
+		// which logs the value it is given -- restoring the real token that way would print it into
+		// the CI log.
+		const badActions = new (GitHubActions as any)();
+		badActions.gitHubAuthToken = "token " + "0".repeat(40);
+
+		const res = await (badActions as IGitHubActions).listTeams();
+		Log.test("# teams with a bad token: " + res.length);
+		expect(res).to.be.an("array");
+		expect(res.length).to.equal(0);
+	}).timeout(TIMEOUT);
+
 	it("Should be possible to list the repos in an org.", async function () {
 		const res = await gh.listRepos();
 		Log.test("# repos " + res.length);
@@ -1207,15 +1257,6 @@ describe("GitHubActions", () => {
 		}
 		expect(exists).to.be.true;
 	}).timeout(TIMEOUT);
-
-	// it("Should be possible to find the members of a team.", async function () {
-	//     const val = await gh.listTeamMembers(TEAMNAME);
-	//     Log.test("listed members: " + JSON.stringify(val));
-	//     expect(val).to.be.an("array");
-	//     expect(val.length).to.equal(2);
-	//     expect(val).to.include(Test.GITHUB1.github);
-	//     expect(val).to.include(Test.GITHUB2.github);
-	// }).timeout(TIMEOUT);
 
 	it("Clear stale repos and teams.", async function () {
 		const del = await deleteStale();

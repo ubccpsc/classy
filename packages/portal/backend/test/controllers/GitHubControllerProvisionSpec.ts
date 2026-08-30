@@ -22,7 +22,7 @@ import { TestGitHubActions } from "./TestGitHubActions";
  * up (no webhook, no staff teams). Calling that state "provisioned" is what used to make such repos
  * invisible to a retry: performProvision only provisions repos that are NOT_PROVISIONED.
  */
-describe("GitHubController provisioning failures", function () {
+describe("GitHubController provisioning paths", function () {
 	const dbc = DatabaseController.getInstance();
 
 	const REPO_FINALIZE_FAILS = "ghcProvisionSpecFinalizeFails";
@@ -59,6 +59,32 @@ describe("GitHubController provisioning failures", function () {
 	}
 
 	/**
+	 * The branch operations the template import needs. TestGitHubActions throws for these, because
+	 * nothing exercised them before.
+	 */
+	class TemplateActions extends RecordingActions {
+		public deleteBranchesCalls: string[][] = [];
+		public renames: string[] = [];
+		public branches: string[] = ["main"];
+
+		public async listRepoBranches(_repoId: string): Promise<string[]> {
+			return this.branches;
+		}
+
+		public async deleteBranches(_repoId: string, branchesToKeep: string[]): Promise<boolean> {
+			this.deleteBranchesCalls.push(branchesToKeep);
+			this.branches = branchesToKeep;
+			return true;
+		}
+
+		public async renameBranch(_repoId: string, oldName: string, newName: string): Promise<boolean> {
+			this.renames.push(oldName + "->" + newName);
+			this.branches = [newName];
+			return true;
+		}
+	}
+
+	/**
 	 * A team that cannot be created on GitHub makes finalization fail, which is the only part of
 	 * provisioning that happens after the repo exists.
 	 */
@@ -69,8 +95,17 @@ describe("GitHubController provisioning failures", function () {
 		}
 	}
 
+	/**
+	 * Adding the team to the repo is the one step release depends on.
+	 */
+	class TeamAttachFailsActions extends RecordingActions {
+		public async addTeamToRepo(teamName: string, _repoName: string, _permission: string): Promise<GitTeamTuple> {
+			return { teamName: teamName, githubTeamNumber: -1 };
+		}
+	}
+
 	before(async function () {
-		await TestHarness.suiteBefore("GitHubController provisioning failures");
+		await TestHarness.suiteBefore("GitHubController provisioning paths");
 		await TestHarness.prepareDeliverables();
 
 		const person = TestHarness.createPerson(TestHarness.USER1.id, TestHarness.USER1.csId, TestHarness.USER1.github, null);
@@ -81,7 +116,7 @@ describe("GitHubController provisioning failures", function () {
 	});
 
 	after(function () {
-		TestHarness.suiteAfter("GitHubController provisioning failures");
+		TestHarness.suiteAfter("GitHubController provisioning paths");
 	});
 
 	async function makeRepo(repoId: string): Promise<Repository> {
@@ -154,5 +189,123 @@ describe("GitHubController provisioning failures", function () {
 
 		const after = await dbc.getRepository(REPO_RESUMED);
 		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+	});
+
+	it("Should prune a template import to the requested branch and rename it to main.", async function () {
+		// NOTE: this is how CPSC 310 provisions: importURL is "owner/template#branch". The parsing
+		// of that string had a bug that silently disabled pruning, and the rename that follows it was
+		// never exercised at all.
+		const repoId = "ghcProvisionSpecTemplateBranch";
+		await makeRepo(repoId);
+		const team = await dbc.getTeam(TEAM_ID);
+
+		const gha = new TemplateActions();
+		gha.branches = ["starter", "solution"]; // what the template repo carries
+		const ghc = new GitHubController(gha);
+
+		const provisioned = await ghc.provisionRepository(repoId, [team], "someOwner/someTemplate#starter");
+		expect(provisioned).to.be.true;
+
+		expect(gha.deleteBranchesCalls, "the requested branch must be the only one kept").to.deep.equal([["starter"]]);
+		expect(gha.renames, "a single remaining branch must end up called main").to.deep.equal(["starter->main"]);
+
+		const after = await dbc.getRepository(repoId);
+		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+	});
+
+	it("Should keep every branch when the template import names none.", async function () {
+		const repoId = "ghcProvisionSpecTemplateAll";
+		await makeRepo(repoId);
+		const team = await dbc.getTeam(TEAM_ID);
+
+		const gha = new TemplateActions();
+		gha.branches = ["main", "extra"];
+		const ghc = new GitHubController(gha);
+
+		expect(await ghc.provisionRepository(repoId, [team], "someOwner/someTemplate")).to.be.true;
+
+		expect(gha.deleteBranchesCalls, "nothing should be pruned").to.have.lengthOf(0);
+		expect(gha.renames, "more than one branch remains, so nothing is renamed").to.have.lengthOf(0);
+	});
+
+	it("Should create nothing when the template importURL is malformed.", async function () {
+		// an importURL that is neither a git URL nor owner/template is a deliverable configuration
+		// mistake; it must not leave a half-made repo behind
+		for (const importUrl of ["notatemplate", "someOwner/someTemplate.git"]) {
+			const repoId = "ghcProvisionSpecBadImport" + importUrl.length;
+			await makeRepo(repoId);
+			const team = await dbc.getTeam(TEAM_ID);
+
+			const gha = new TemplateActions();
+			const ghc = new GitHubController(gha);
+
+			let message: string = null;
+			try {
+				await ghc.provisionRepository(repoId, [team], importUrl);
+			} catch (err) {
+				message = err.message;
+			}
+			Log.test(importUrl + " -> " + message);
+			expect(message, "a malformed importURL must fail the provision").to.not.be.null;
+
+			const after = await dbc.getRepository(repoId);
+			expect(after.gitHubStatus, "and must leave the repo provisionable").to.equal(GitHubStatus.NOT_PROVISIONED);
+			expect(after.URL).to.be.null;
+		}
+	});
+
+	it("Should report a failed release rather than marking the repo released.", async function () {
+		// NOTE: this used to return true and mark the repo PROVISIONED_LINKED even though the team
+		// was never attached, so the admin UI showed the students had access when they did not, and
+		// performRelease counted it as a success.
+		const repoId = "ghcProvisionSpecReleaseFails";
+		await makeRepo(repoId);
+		const repo = await dbc.getRepository(repoId);
+		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // provisioned, awaiting release
+		await dbc.writeRepository(repo);
+
+		const team = await dbc.getTeam(TEAM_ID);
+		team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		await dbc.writeTeam(team);
+
+		const ghc = new GitHubController(new TeamAttachFailsActions());
+		const released = await ghc.releaseRepository(repo, [team], false);
+		expect(released, "a release that could not attach its team is not a release").to.be.false;
+
+		const afterTeam = await dbc.getTeam(TEAM_ID);
+		expect(afterTeam.gitHubStatus, "the team must not claim to be linked").to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+
+		// and the repo stays releasable, so pressing Release again retries it
+		const afterRepo = await dbc.getRepository(repoId);
+		expect(afterRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+	});
+
+	it("Should refuse to configure a repo GitHub does not have.", async function () {
+		const missing: Repository = {
+			id: "ghcProvisionSpecMissingRepo",
+			delivId: TestHarness.DELIVID0,
+			teamIds: [],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			custom: {},
+		};
+		const ghc = new GitHubController(new RecordingActions());
+
+		let message: string = null;
+		try {
+			await ghc.updateBranchProtection(missing, []);
+		} catch (err) {
+			message = err.message;
+		}
+		expect(message).to.contain(missing.id);
+
+		message = null;
+		try {
+			await ghc.createIssues(missing, []);
+		} catch (err) {
+			message = err.message;
+		}
+		expect(message).to.contain(missing.id);
 	});
 });

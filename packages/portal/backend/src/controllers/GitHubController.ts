@@ -424,6 +424,11 @@ export class GitHubController implements IGitHubController {
 
 		// const gh = GitHubActions.getInstance(true);
 
+		// NOTE: every team has to be attached for the release to count. Marking the repo released
+		// when one of them failed would tell the admin UI the students have access when they do not,
+		// and performRelease would count it as a success.
+		let allAttached = true;
+
 		for (const team of teams) {
 			if (asCollaborators) {
 				Log.info("GitHubController::releaseRepository(..) - releasing repository as " + "individual collaborators");
@@ -447,6 +452,7 @@ export class GitHubController implements IGitHubController {
 					// team.custom.githubAttached = false;
 					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_UNLINKED);
 					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					allAttached = false;
 				}
 
 				await this.dbc.writeTeam(team); // add new properties to the team
@@ -459,6 +465,13 @@ export class GitHubController implements IGitHubController {
 						")"
 				);
 			}
+		}
+
+		if (allAttached === false) {
+			// the repo keeps whatever status it had: it is provisioned, but not released. Releasing
+			// again retries, since planRelease looks for exactly that state.
+			Log.error("GitHubController::releaseRepository( " + repo.id + " ) - not released; a team could not be attached");
+			return false;
 		}
 
 		// update the repo status to be linked

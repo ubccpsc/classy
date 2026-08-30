@@ -103,14 +103,6 @@ export interface IGitHubActions {
 	 */
 	listTeams(): Promise<GitTeamTuple[]>;
 
-	/**
-	 * Lists the GitHub IDs of members for a teamName (e.g. students).
-	 *
-	 * @param {string} teamName
-	 * @returns {Promise<string[]>} // list of githubIds
-	 */
-	listTeamMembers(teamName: string): Promise<string[]>;
-
 	listWebhooks(repoName: string): Promise<Array<{}>>;
 
 	updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
@@ -1476,15 +1468,6 @@ export class GitHubActions implements IGitHubActions {
 		// only info by default if you are _on_ a team
 		Log.trace("GitHubAction::isOnTeam( " + userName + " ) - is NOT on team: " + teamName + "; took: " + Util.took(start));
 		return false;
-	}
-
-	public async listTeamMembers(teamName: string): Promise<string[]> {
-		Log.info("GitHubAction::listTeamMembers( " + teamName + " ) - start");
-
-		const gh = this;
-		const teamMembers = await gh.getTeamMembers(teamName);
-
-		return teamMembers;
 	}
 
 	public async listRepoBranches(repoId: string): Promise<string[]> {
