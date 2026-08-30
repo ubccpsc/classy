@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 
+import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -48,6 +49,84 @@ describe("ClasslistAgent", function () {
 	];
 
 	const ca: ClasslistAgent = new ClasslistAgent();
+
+	/**
+	 * updateClasslist is what the "classlist-update" job runs (see BackendServer). It is the whole
+	 * job body, so the parts worth pinning are the ones the admin UI shows: the failure message, and
+	 * that progress is reported.
+	 *
+	 * NOTE: no network. fetchClasslist is replaced on the instance, which is all the injection this
+	 * needs -- the same trick PrairieLearnAgent solves with an injectable fetcher.
+	 */
+	// NOTE: deliberately different students from mockAPIData. "Should produce a list of CREATED
+	// users" asserts that every row it processes is new, so a test that runs earlier must not have
+	// created those people already.
+	const mockJobData = [
+		{
+			SNUM: "5555555",
+			FIRST: "Jane",
+			LAST: "Jones",
+			PREF: "Janey",
+			ACCT: "j1j1j",
+			CRS: "210",
+			CWL: "jjones5",
+			SEC: "101",
+			LAB: "L1A",
+			TUT: "",
+		},
+		{ SNUM: "4444444", FIRST: "Ravi", LAST: "Patel", PREF: "", ACCT: "r1r1r", CRS: "210", CWL: "rpatel4", SEC: "101", LAB: "L1A", TUT: "" },
+	];
+
+	function agentReturning(rows: any[]): { agent: ClasslistAgent; progress: string[] } {
+		const agent = new ClasslistAgent();
+		const progress: string[] = [];
+		(agent as any).fetchClasslist = async () => rows;
+		return { agent: agent, progress: progress };
+	}
+
+	function contextRecording(progress: string[]): any {
+		return {
+			isCancelled: () => false,
+			progress: async (done: number, total: number, message: string) => {
+				progress.push(done + "/" + total + " " + message);
+			},
+			error: async () => {
+				//
+			},
+		};
+	}
+
+	it("Should update the classlist from the API, reporting progress", async function () {
+		const { agent, progress } = agentReturning(mockJobData);
+
+		const changes = await agent.updateClasslist(TestHarness.ADMIN1.id, contextRecording(progress));
+		Log.test("changes: " + JSON.stringify(changes.classlist.map((s) => s.id)) + "; progress: " + JSON.stringify(progress));
+
+		expect(changes.classlist.length).to.equal(mockJobData.length);
+
+		// the status line under the button is driven by these
+		expect(progress.length).to.be.greaterThan(1);
+		expect(progress[0]).to.contain("fetching");
+		expect(progress[progress.length - 1]).to.contain("done");
+	});
+
+	it("Should fail the classlist update when the service returns no students", async function () {
+		// NOTE: this is the common real failure (bad credentials, wrong course), and as a job it has
+		// to surface as a rejection: JobController records it, and the admin UI shows it in the
+		// status line. Returning an empty change set instead would look like a successful no-op.
+		const { agent, progress } = agentReturning([]);
+
+		let message: string = null;
+		try {
+			await agent.updateClasslist(TestHarness.ADMIN1.id, contextRecording(progress));
+		} catch (err) {
+			message = err.message;
+		}
+		Log.test("message: " + message);
+
+		expect(message).to.not.be.null;
+		expect(message).to.contain("no students were processed");
+	});
 
 	it("Should be able to process an empty classlist", async function () {
 		const path = __dirname + "/data/classlistEmpty.csv";
@@ -129,6 +208,19 @@ describe("ClasslistAgent", function () {
 
 	it("Should produce a list of CREATED users if a new user has been created via classlist API", async function () {
 		const data = mockAPIData.slice();
+
+		// NOTE: "created" only counts people who did not exist yet, so this test is about the state
+		// of the datastore as much as the classlist. It used to fail intermittently in full-suite
+		// runs, where an earlier suite could leave these people behind; removing them first makes it
+		// mean what its name says regardless of what ran before.
+		const dbc = DatabaseController.getInstance();
+		for (const row of data) {
+			const existing = await dbc.getPerson(row.ACCT.toLowerCase());
+			if (existing !== null) {
+				await dbc.deletePerson(existing);
+			}
+		}
+
 		const classlistChanges = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
 		expect(classlistChanges.created.length).to.equal(data.length);
 	});

@@ -10,6 +10,7 @@ import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubAction
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
+import { GitHubStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -151,6 +152,15 @@ describe("GitHubActions", () => {
 		const val = await gh.createRepo(REPONAME);
 		const name = Config.getInstance().getProp(ConfigKey.githubHost) + "/" + Config.getInstance().getProp(ConfigKey.org) + "/" + REPONAME;
 		expect(val).to.equal(name);
+
+		// NOTE: the repo now exists on GitHub, but it has no webhook and no staff teams, so it is not
+		// provisioned in any useful sense: only GitHubController marks it so, once finalization has
+		// actually worked. Recording the URL here is what later identifies a repo as one Classy
+		// created but did not finish; recording the status too would make a half-provisioned repo
+		// look finished, and performProvision would then skip it forever.
+		const record = await rc.getRepository(REPONAME);
+		expect(record.URL, "createRepo must record the URL").to.equal(name);
+		expect(record.gitHubStatus, "createRepo must not claim the repo is provisioned").to.equal(GitHubStatus.NOT_PROVISIONED);
 	}).timeout(TIMEOUT);
 
 	it("Should be able to create a repo from a template and update it to have the right features.", async function () {

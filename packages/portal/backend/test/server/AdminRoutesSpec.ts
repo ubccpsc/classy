@@ -2,9 +2,11 @@
 import { expect } from "chai";
 import "mocha";
 
+import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController, QueryKind } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import BackendServer from "@backend/server/BackendServer";
 import Config, { ConfigKey } from "@common/Config";
@@ -1636,6 +1638,77 @@ describe("Admin Routes", function () {
 		expect(body?.failure).to.not.be.undefined;
 		expect(ex).to.be.null;
 	});
+
+	it("Should reject a provisioning or release listing for a deliverable that cannot be provisioned", async function () {
+		// NOTE: both of these only read now (the writing half is the "provision-prepare" job), so the
+		// only way they fail is a deliverable that does not exist or is not provisionable.
+		let response = await request(app).get("/portal/admin/provision/FAKEDELIVERABLE").set({ user: userName, token: userToken });
+		Log.test("unknown deliverable (provision): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
+		expect(response.body.failure.message).to.contain("FAKEDELIVERABLE");
+
+		// DELIVID1 exists but has shouldProvision false
+		response = await request(app)
+			.get("/portal/admin/provision/" + TestHarness.DELIVID1)
+			.set({ user: userName, token: userToken });
+		Log.test("non-provisionable (provision): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
+
+		response = await request(app).get("/portal/admin/release/FAKEDELIVERABLE").set({ user: userName, token: userToken });
+		Log.test("unknown deliverable (release): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
+		expect(response.body.failure).to.not.be.undefined;
+	});
+
+	it("Should list repositories that are ready to be released", async function () {
+		// NOTE: the release plan is only non-empty once repos exist and have been provisioned, so the
+		// other release test only ever sees an empty list -- and never checks the shape of what comes
+		// back. This seeds that state directly (no GitHub involved) so the transport the admin UI
+		// reads is actually exercised.
+		//
+		// It builds its own deliverable and student rather than reusing the shared fixtures: earlier
+		// tests in this file delete deliverables, so nothing here can assume they still exist.
+		const dbc = DatabaseController.getInstance();
+
+		const delivId = "releasePlanSpecDeliv";
+		const deliv = TestHarness.createDeliverable(delivId);
+		deliv.shouldProvision = true;
+		deliv.teamMinSize = 1;
+		deliv.teamMaxSize = 1; // so a singleton team can be formed for one student
+		await dbc.writeDeliverable(deliv);
+
+		const person = TestHarness.createPerson("releasePlanSpecPerson", "releasePlanSpecPerson", "releasePlanSpecGithub", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const ac = new AdminController(new GitHubController(GitHubActions.getInstance(true)));
+		const planned = await ac.prepareProvision(deliv, true); // creates the Team and Repository records
+		expect(planned.length, "setup: preparing must plan at least one repo").to.be.greaterThan(0);
+
+		// mark one repo and its team as provisioned-but-not-yet-attached, which is what planRelease
+		// looks for
+		const repo = await dbc.getRepository(planned[0].id);
+		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		repo.URL = "https://example.com/" + repo.id;
+		await dbc.writeRepository(repo);
+		for (const teamId of repo.teamIds) {
+			const team = await dbc.getTeam(teamId);
+			team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			await dbc.writeTeam(team);
+		}
+
+		const response = await request(app)
+			.get("/portal/admin/release/" + delivId)
+			.set({ user: userName, token: userToken });
+		Log.test("release plan: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(200);
+		expect(response.body.success).to.be.an("array");
+		const entry = (response.body.success as any[]).find((r) => r.id === repo.id);
+		expect(entry, "the provisioned repo must be in the release plan").to.not.be.undefined;
+		expect(entry.delivId).to.equal(delivId);
+		expect(entry.gitHubStatus).to.equal("PROVISIONED_UNLINKED");
+		expect(entry.URL).to.equal(repo.URL);
+	}).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
 		// NOTE: updating from the Classlist API used to be PUT /portal/admin/classlist. It is now
