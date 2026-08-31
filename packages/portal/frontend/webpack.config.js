@@ -39,21 +39,10 @@ module.exports = {
         }),
         new CopyPlugin({
             patterns: [
-                // Copy plugin frontend files if plugin enabled or copy default Classy logic into place
-                // Docker and native compilation working dir: /classy/packages/portal/frontend
-                // frontend/CustomStudentView.ts, CustomAdminView.ts, with their supporting files,
-                // will be moved to their appropriate directories
-                //
-                // Course-specific plugins should be in classy/plugins/process.env.PLUGIN
-                // When run, plugin will be copied to classy/packages/portal/frontend/app/plugs/
-                {
-                    from: "../../../plugins/" + process.env.PLUGIN + "/portal/frontend/",
-                    to: "../../src/app/plugs/",
-                    toType: "dir",
-                    force: true,
-                    noErrorOnMissing: false,
-                    force: true
-                },
+                // The plugin's CustomStudentView / CustomAdminView are no longer copied into
+                // src/app/plugs; they are resolved from the plugin directory by the "@plugs" alias
+                // below. Copying them here and requiring them relatively was a build-order trap: the
+                // copy happens during the run that already resolved the require.
                 {
                     from: "../../../plugins/" + process.env.PLUGIN + "/portal/frontend/html",
                     // to: "../html/" + process.env.NAME, // puts it in ./html/{name}
@@ -88,7 +77,18 @@ module.exports = {
         alias: {
             "@frontend": path.resolve(__dirname, "./src/app"),
             "@common": path.resolve(__dirname, "../../common/src"),
-            "@backend": path.resolve(__dirname, "../../portal/backend/src")
+            "@backend": path.resolve(__dirname, "../../portal/backend/src"),
+
+            // The course plugin's frontend, resolved where it actually lives.
+            //
+            // This used to be a relative require of ./src/app/plugs, a directory CopyPlugin
+            // fills in during this same webpack run -- so on a build where it did not already exist
+            // (a fresh checkout, which is every Docker build) webpack resolved the require before the
+            // copy happened and emitted a module that throws "Cannot find module" at runtime. The
+            // admin view silently fell back to the default one; the student view has no fallback, so
+            // every student got an empty page. Resolving the plugin directly removes the ordering
+            // problem: there is nothing to copy first.
+            "@plugs": path.resolve(__dirname, "../../../plugins/" + process.env.PLUGIN + "/portal/frontend")
         }
     },
 
