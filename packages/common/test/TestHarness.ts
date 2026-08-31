@@ -6,7 +6,7 @@ import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Auth, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Repository, Result, Team } from "@backend/Types";
+import { Auth, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "@backend/Types";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -605,7 +605,7 @@ export class TestHarness {
 			id: teamId,
 			delivId: delivId,
 			githubId: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: TeamStatus.NOT_CREATED,
 			// URL:       Config.getInstance().getProp(ConfigKey.githubHost) + "/" +
 			//            Config.getInstance().getProp(ConfigKey.org) + "/teams/" + teamId,
 			// repoName:  null,
@@ -621,7 +621,7 @@ export class TestHarness {
 		const repo: Repository = {
 			id: id,
 			delivId: delivId,
-			gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED,
+			gitHubStatus: RepoStatus.READY,
 			URL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id,
 			cloneURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + id + ".git",
 			teamIds: [teamId],

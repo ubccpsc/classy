@@ -109,21 +109,58 @@ export interface Deliverable {
 }
 
 /**
- * Tracks the GitHub status of Teams and Repositories.
+ * How far a repository has been provisioned **on GitHub**.
  *
- * Creating a Team or Repository object in the database does not mean that it has
- * been provisioned on the GitHub instance.
+ * This describes GitHub's side of the world, not Classy's: NOT_CREATED means GitHub does not have
+ * the repo, not that Classy is unaware of it -- the record you are reading exists either way.
+ * Creating a Repository record does not create anything on GitHub.
  *
- * NOT_PROVISIONED: The team/repo exists in the DB but not on GitHub.
- *
- * LINKED / UNLINKED: Differentiates between teams and repos that have been
- * provisioned, but not linked to each other. This is important because an
- * unlinked team or repo is effectively read-only to students.
+ * Each value is strictly further along than the one before it. Teams have their own vocabulary
+ * (TeamStatus), because "linked" used to mean two different things depending on which object you
+ * were holding.
  */
-export enum GitHubStatus {
-	NOT_PROVISIONED = "NOT_PROVISIONED", // team/repo not provisioned on GitHub
-	PROVISIONED_UNLINKED = "PROVISIONED_UNLINKED", // team/repo provisioned on GitHub (team: not linked to repo, repo: no assigned team)
-	PROVISIONED_LINKED = "PROVISIONED_LINKED", // team/repo provisioned on GitHub and linked to each other
+export enum RepoStatus {
+	/**
+	 * A Repository record exists; nothing exists on GitHub.
+	 */
+	NOT_CREATED = "NOT_CREATED",
+
+	/**
+	 * The repo exists on GitHub but is NOT usable yet: no webhook, no staff/admin teams. This is
+	 * what a failed import or a failed finalization leaves behind, and provisioning such a repo
+	 * again resumes at finalization rather than creating it a second time.
+	 */
+	CREATED = "CREATED",
+
+	/**
+	 * Finalized: the webhook and the staff/admin teams are attached. Students still cannot see it.
+	 */
+	READY = "READY",
+
+	/**
+	 * The student team is attached, so the students can see it.
+	 */
+	RELEASED = "RELEASED",
+}
+
+/**
+ * How far a team has been provisioned **on GitHub**; see RepoStatus for what "on GitHub" means.
+ */
+export enum TeamStatus {
+	/**
+	 * A Team record exists; nothing exists on GitHub.
+	 */
+	NOT_CREATED = "NOT_CREATED",
+
+	/**
+	 * The GitHub team exists, but has not been added to a repository.
+	 */
+	CREATED = "CREATED",
+
+	/**
+	 * The team has been added to its repository.
+	 */
+	ATTACHED = "ATTACHED",
 }
 
 export interface Team {
@@ -149,9 +186,11 @@ export interface Team {
 	URL: string | null;
 
 	/**
-	 * The GitHub status for the team.
+	 * How far this team has been provisioned on GitHub.
+	 *
+	 * The single source of truth for that question: do not infer it from URL or githubId.
 	 */
-	gitHubStatus: GitHubStatus;
+	gitHubStatus: TeamStatus;
 
 	/**
 	 * GitHub assigns a numeric value to team objects. Looking this up can be slow,
@@ -197,9 +236,13 @@ export interface Repository {
 	cloneURL: string | null; // git clone URL for project; null if not yet created
 
 	/**
-	 * The GitHub status for the team.
+	 * How far this repository has been provisioned on GitHub.
+	 *
+	 * The single source of truth for that question: do not infer it from URL, cloneURL, or teamIds.
+	 * URL is set when the repo is created on GitHub and cleared when it is deleted again, but it is
+	 * informational -- nothing branches on it.
 	 */
-	gitHubStatus: GitHubStatus;
+	gitHubStatus: RepoStatus;
 
 	custom: {};
 }

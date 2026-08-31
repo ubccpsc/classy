@@ -3,7 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubController, GitTeamTuple } from "@backend/controllers/GitHubController";
-import { GitHubStatus, Repository, Team } from "@backend/Types";
+import { RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -17,10 +17,10 @@ import { TestGitHubActions } from "./TestGitHubActions";
  * cases worth pinning are the ones that are hard to produce against real GitHub: a repo that is
  * created and then fails during finalization, and a finalization that runs a second time.
  *
- * The failure mode this protects against is subtle. GitHubActions::createRepo writes the repo's URL
- * as soon as GitHub answers, so a repo can exist on GitHub while Classy has not finished setting it
- * up (no webhook, no staff teams). Calling that state "provisioned" is what used to make such repos
- * invisible to a retry: performProvision only provisions repos that are NOT_PROVISIONED.
+ * The failure mode this protects against is subtle: a repo can exist on GitHub while Classy has not
+ * finished setting it up (no webhook, no staff teams). That is RepoStatus.CREATED, and it is the
+ * state the previous three-value vocabulary had no name for -- which is what used to make such repos
+ * invisible to a retry.
  */
 describe("GitHubController provisioning paths", function () {
 	const dbc = DatabaseController.getInstance();
@@ -126,7 +126,7 @@ describe("GitHubController provisioning paths", function () {
 			teamIds: [TEAM_ID],
 			URL: null,
 			cloneURL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			custom: {},
 		};
 		await dbc.writeRepository(repo);
@@ -155,8 +155,8 @@ describe("GitHubController provisioning paths", function () {
 
 		// and the record must say "created by us, not finished": a URL, but still provisionable
 		const after = await dbc.getRepository(REPO_FINALIZE_FAILS);
-		expect(after.gitHubStatus, "must stay retryable").to.equal(GitHubStatus.NOT_PROVISIONED);
-		expect(after.URL, "the URL is what marks it as ours").to.not.be.null;
+		expect(after.gitHubStatus, "must stay retryable").to.equal(RepoStatus.CREATED);
+		expect(after.URL, "informational, but it should still be recorded").to.not.be.null;
 	});
 
 	it("Should resume such a repo without adding a second webhook.", async function () {
@@ -173,10 +173,10 @@ describe("GitHubController provisioning paths", function () {
 
 		// put the record back into the state a finalization failure leaves behind
 		const halfDone = await dbc.getRepository(REPO_RESUMED);
-		halfDone.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
+		halfDone.gitHubStatus = RepoStatus.CREATED;
 		await dbc.writeRepository(halfDone);
 		const teamAgain = await dbc.getTeam(TEAM_ID);
-		teamAgain.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
+		teamAgain.gitHubStatus = TeamStatus.NOT_CREATED;
 		await dbc.writeTeam(teamAgain);
 
 		// second pass: the repo already exists, so this resumes at finalization
@@ -188,7 +188,7 @@ describe("GitHubController provisioning paths", function () {
 		expect(gha.deleteRepoCalls, "resuming must not delete the repo").to.equal(0);
 
 		const after = await dbc.getRepository(REPO_RESUMED);
-		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(after.gitHubStatus).to.equal(RepoStatus.READY);
 	});
 
 	it("Should prune a template import to the requested branch and rename it to main.", async function () {
@@ -210,7 +210,7 @@ describe("GitHubController provisioning paths", function () {
 		expect(gha.renames, "a single remaining branch must end up called main").to.deep.equal(["starter->main"]);
 
 		const after = await dbc.getRepository(repoId);
-		expect(after.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(after.gitHubStatus).to.equal(RepoStatus.READY);
 	});
 
 	it("Should keep every branch when the template import names none.", async function () {
@@ -249,7 +249,7 @@ describe("GitHubController provisioning paths", function () {
 			expect(message, "a malformed importURL must fail the provision").to.not.be.null;
 
 			const after = await dbc.getRepository(repoId);
-			expect(after.gitHubStatus, "and must leave the repo provisionable").to.equal(GitHubStatus.NOT_PROVISIONED);
+			expect(after.gitHubStatus, "and must leave the repo provisionable").to.equal(RepoStatus.NOT_CREATED);
 			expect(after.URL).to.be.null;
 		}
 	});
@@ -261,11 +261,11 @@ describe("GitHubController provisioning paths", function () {
 		const repoId = "ghcProvisionSpecReleaseFails";
 		await makeRepo(repoId);
 		const repo = await dbc.getRepository(repoId);
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // provisioned, awaiting release
+		repo.gitHubStatus = RepoStatus.READY; // provisioned, awaiting release
 		await dbc.writeRepository(repo);
 
 		const team = await dbc.getTeam(TEAM_ID);
-		team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		team.gitHubStatus = TeamStatus.CREATED;
 		await dbc.writeTeam(team);
 
 		const ghc = new GitHubController(new TeamAttachFailsActions());
@@ -273,11 +273,11 @@ describe("GitHubController provisioning paths", function () {
 		expect(released, "a release that could not attach its team is not a release").to.be.false;
 
 		const afterTeam = await dbc.getTeam(TEAM_ID);
-		expect(afterTeam.gitHubStatus, "the team must not claim to be linked").to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(afterTeam.gitHubStatus, "the team must not claim to be linked").to.equal(TeamStatus.CREATED);
 
 		// and the repo stays releasable, so pressing Release again retries it
 		const afterRepo = await dbc.getRepository(repoId);
-		expect(afterRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(afterRepo.gitHubStatus).to.equal(RepoStatus.READY);
 	});
 
 	it("Should refuse to configure a repo GitHub does not have.", async function () {
@@ -287,7 +287,7 @@ describe("GitHubController provisioning paths", function () {
 			teamIds: [],
 			URL: null,
 			cloneURL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			custom: {},
 		};
 		const ghc = new GitHubController(new RecordingActions());

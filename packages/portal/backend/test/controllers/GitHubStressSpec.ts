@@ -6,7 +6,7 @@ import "@common/GlobalSpec"; // load first
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubStatus, Repository, Team } from "@backend/Types";
+import { RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -150,7 +150,7 @@ describe("GitHubStress", function () {
 			teamIds: [],
 			URL: null,
 			cloneURL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			custom: {},
 		};
 		await dbc.writeRepository(repo);
@@ -162,7 +162,7 @@ describe("GitHubStress", function () {
 			delivId: TestHarness.DELIVID0,
 			personIds: [],
 			URL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: TeamStatus.NOT_CREATED,
 			githubId: null,
 			custom: {},
 		};
@@ -408,7 +408,9 @@ describe("GitHubStress", function () {
 			const record = await dbc.getRepository(name);
 			expect(record, "no db record for " + name).to.not.be.null;
 			expect(record.URL, "db URL not set for " + name).to.not.be.null;
-			expect(record.gitHubStatus, "db status not updated for " + name).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+			// createRepo records the URL but not the status: the repo exists on GitHub with no
+			// webhook and no staff teams, which is GitHubController's job to finish
+			expect(record.gitHubStatus, "createRepo must not change status: " + name).to.equal(RepoStatus.NOT_CREATED);
 		}
 	}).timeout(TIMEOUT);
 

@@ -3,7 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
-import { GitHubStatus, Repository } from "@backend/Types";
+import { RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -35,7 +35,7 @@ describe("ProvisionAgent", function () {
 			teamIds: [],
 			URL: null,
 			cloneURL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			custom: {},
 		};
 		await dbc.writeRepository(repo);

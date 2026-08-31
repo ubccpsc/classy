@@ -30,7 +30,7 @@ import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { GitHubStatus, PersonKind } from "@backend/Types";
+import { PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
 
 describe("Admin Routes", function () {
 	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
@@ -1527,7 +1527,7 @@ describe("Admin Routes", function () {
 		const team = await DatabaseController.getInstance().getTeam(TestHarness.TEAMNAME1);
 		Log.test("Team: " + JSON.stringify(team));
 		// expect(team.custom.githubAttached).to.be.false; // not attached
-		expect(team.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // team still exists but is unlinked
+		expect(team.gitHubStatus).to.equal(TeamStatus.CREATED); // team still exists but is unlinked
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should fail to delete a repository if appropriate", async function () {
@@ -1687,12 +1687,12 @@ describe("Admin Routes", function () {
 		// mark one repo and its team as provisioned-but-not-yet-attached, which is what planRelease
 		// looks for
 		const repo = await dbc.getRepository(planned[0].id);
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		repo.gitHubStatus = RepoStatus.READY;
 		repo.URL = "https://example.com/" + repo.id;
 		await dbc.writeRepository(repo);
 		for (const teamId of repo.teamIds) {
 			const team = await dbc.getTeam(teamId);
-			team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			team.gitHubStatus = TeamStatus.CREATED;
 			await dbc.writeTeam(team);
 		}
 
@@ -1706,7 +1706,7 @@ describe("Admin Routes", function () {
 		const entry = (response.body.success as any[]).find((r) => r.id === repo.id);
 		expect(entry, "the provisioned repo must be in the release plan").to.not.be.undefined;
 		expect(entry.delivId).to.equal(delivId);
-		expect(entry.gitHubStatus).to.equal("PROVISIONED_UNLINKED");
+		expect(entry.gitHubStatus).to.equal("READY"); // finalized, not yet released
 		expect(entry.URL).to.equal(repo.URL);
 	}).timeout(TestHarness.TIMEOUTLONG);
 

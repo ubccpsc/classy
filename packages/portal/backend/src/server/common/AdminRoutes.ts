@@ -14,7 +14,7 @@ import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
 import { CSVPrairieLearnParser } from "@backend/server/common/CSVPrairieLearnParser";
 import IREST, { type ClassyRequest } from "@backend/server/IREST";
-import { AuditLabel, GitHubStatus, Person, Repository } from "@backend/Types";
+import { AuditLabel, Person, Repository, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import {
@@ -393,7 +393,7 @@ export default class AdminRoutes implements IREST {
 		if (repo !== null) {
 			const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
 				const team = await dbc.getTeam(teamId);
-				const newTeam = { ...team, gitHubStatus: GitHubStatus.PROVISIONED_UNLINKED, custom: { ...team.custom } };
+				const newTeam = { ...team, gitHubStatus: TeamStatus.CREATED, custom: { ...team.custom } };
 				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);
 				await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});
@@ -956,7 +956,7 @@ export default class AdminRoutes implements IREST {
 		const team = await dbc.getTeam(teamId);
 		if (team !== null) {
 			// if (team.URL !== null) {
-			if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+			if (team.gitHubStatus !== TeamStatus.NOT_CREATED) {
 				deletedGithub = await GitHubActions.getInstance().deleteTeam(teamId);
 				Log.info("AdminRoutes::handleTeamDelete( " + teamId + " ) - team deleted from GitHub");
 			}
@@ -1031,7 +1031,7 @@ export default class AdminRoutes implements IREST {
 		}
 
 		// if (team.URL !== null) {
-		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+		if (team.gitHubStatus !== TeamStatus.NOT_CREATED) {
 			await GitHubActions.getInstance().addMembersToTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamAddMember( t: " + teamId + ", u: " + githubId + " ) - member added to GitHub team");
 		}
@@ -1104,7 +1104,7 @@ export default class AdminRoutes implements IREST {
 		const beforeTeam = new TeamController().teamToTransport(team);
 
 		// if (team.URL !== null) {
-		if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+		if (team.gitHubStatus !== TeamStatus.NOT_CREATED) {
 			await GitHubActions.getInstance().removeMembersFromTeam(team.id, [githubId]);
 			Log.info("AdminRoutes::handleTeamRemoveMember( t: " + teamId + ", u: " + githubId + " ) - member removed from GitHub team");
 		}

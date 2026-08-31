@@ -16,7 +16,7 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { AuditLabel, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
+import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubActions } from "./GitHubActions";
@@ -24,6 +24,8 @@ import { GitHubController, IGitHubController } from "./GitHubController";
 import { GradesController } from "./GradesController";
 import { JobContext } from "./JobController";
 import { PersonController } from "./PersonController";
+import { ProvisionFailurePolicy } from "./ProvisionFailurePolicy";
+import { ProvisionState } from "./ProvisionState";
 import { RepositoryController } from "./RepositoryController";
 import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
@@ -799,6 +801,8 @@ export class AdminController {
 		// GitHub, so they are run with bounded concurrency rather than strictly one at a time.
 		// The cap matters: GitHub applies secondary rate limits to bursts of concurrent writes.
 		let done = 0;
+		const policy = new ProvisionFailurePolicy("provisioning");
+
 		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
 			// one repository is the unit of work: a repo is never abandoned half-created, and
 			// re-running provisions whatever is still NOT_PROVISIONED
@@ -808,7 +812,8 @@ export class AdminController {
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
-				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
+				// CREATED repos exist on GitHub but were never finalized; provisioning resumes there
+				if (repo.gitHubStatus === RepoStatus.NOT_CREATED || repo.gitHubStatus === RepoStatus.CREATED) {
 					const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
 					const teams: Team[] = await Promise.all(futureTeams);
 					Log.trace("AdminController::performProvision(..) - about to provision: " + repo.id);
@@ -819,8 +824,13 @@ export class AdminController {
 					if (success === true) {
 						Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
 						provisionedRepos.push(repo);
+						policy.recordSuccess();
 					} else {
 						Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
 					}
 
 					Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " + repo.id + "; took: " + Util.took(start));
@@ -835,6 +845,14 @@ export class AdminController {
 				// NOT_PROVISIONED.
 				Log.error("AdminController::performProvision(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
 				await ctx?.error(repo.id + ": " + err.message);
+
+				// ...unless continuing is pointless: a failure that is about GitHub rather than about
+				// this repo, or a pattern that says the whole run is not going to work. Throwing here
+				// is what stops processConcurrently from scheduling anything further.
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
 			}
 			done++;
 			// the deliverable is in the message so the admin UI can say which one is running: only
@@ -917,10 +935,10 @@ export class AdminController {
 
 				/* istanbul ignore else */
 				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
-				if (team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
+				if (team.gitHubStatus === TeamStatus.CREATED) {
 					/* istanbul ignore else */
 					// if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
-					if (repo !== null && repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					if (repo !== null && repo.gitHubStatus === RepoStatus.READY) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
 						// aka only release provisioned repos
 						reposToRelease.push(repo);
@@ -943,14 +961,11 @@ export class AdminController {
 
 		Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
 
-		// we want to know all repos whether they are released or not
-		const allRepos: Repository[] = reposAlreadyReleased;
-		for (const toReleaseRepo of reposToRelease) {
-			// toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
-			toReleaseRepo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // denotes that repo has not been released yet
-			allRepos.push(toReleaseRepo);
-		}
-		return allRepos;
+		// This used to overwrite gitHubStatus on the way out, to "denote that repo has not been
+		// released yet" -- a read path assigning status, so what the admin UI displayed was not always
+		// what the database held. The repos below already carry the right status (READY when they can
+		// be released, RELEASED when they already have been), so they are returned as they are.
+		return reposAlreadyReleased.concat(reposToRelease);
 	}
 
 	public async performRelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
@@ -962,6 +977,8 @@ export class AdminController {
 
 		const releasedRepos = [];
 		let done = 0;
+		const policy = new ProvisionFailurePolicy("releasing");
+
 		for (const repo of repos) {
 			// one repository is the unit of work; see performProvision
 			if (ctx?.isCancelled() === true) {
@@ -970,9 +987,8 @@ export class AdminController {
 			}
 			try {
 				const startRepo = Date.now();
-				// if (repo.URL !== null) {
-				// can only release repos that are provisioned
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+				// can only release repos that are finalized; a CREATED repo has no webhook yet
+				if (repo.gitHubStatus === RepoStatus.READY) {
 					const teams: Team[] = [];
 					for (const teamId of repo.teamIds) {
 						teams.push(await this.dbc.getTeam(teamId));
@@ -984,8 +1000,13 @@ export class AdminController {
 					if (success === true) {
 						Log.info("AdminController::performRelease(..) - success: " + repo.id + "; took: " + Util.took(startRepo));
 						releasedRepos.push(repo);
+						policy.recordSuccess();
 					} else {
 						Log.warn("AdminController::performRelease(..) - FAILED: " + repo.id);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
 					}
 
 					await Util.delay(200); // after any releasing wait a short bit
@@ -995,6 +1016,11 @@ export class AdminController {
 			} catch (err) {
 				Log.error("AdminController::performRelease(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
 				await ctx?.error(repo.id + ": " + err.message);
+
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
 			}
 			done++;
 			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
@@ -1037,36 +1063,26 @@ export class AdminController {
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-				// if (repo.custom.githubCreated !== true) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
-				// 	repo.custom.githubCreated = true;
-				// }
-				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED && repo.URL !== null) {
-					// NOT_PROVISIONED with a URL means Classy created this repo but never finished
-					// finalizing it (no webhook, no staff teams). Leave it alone: provisioning it
-					// again resumes finalization, and marking it provisioned here would hide it from
-					// that retry -- which is the state this check exists to get repos out of.
-					Log.warn("AdminController::dbSanityCheck() - created but not finalized; leaving provisionable: " + repo.id);
-				} else if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - gitHubStatus should be PROVISIONED for created: " + repo.id);
-					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // linking does not matter for repos
+
+				// The status is derived from what GitHub has rather than corrected from what the
+				// record said. That is also what lets this repair records written by an older version
+				// of Classy: their vocabulary does not have to be understood, only replaced.
+				//
+				// A repo that exists but has no webhook is CREATED, not READY: it was never
+				// finalized, and calling it READY would hide it from the retry that would fix it. The
+				// extra listWebhooks call is affordable in a check an admin presses by hand.
+				if (repo.gitHubStatus !== RepoStatus.RELEASED) {
+					const hooks = await gha.listWebhooks(repo.id);
+					const finalized = hooks.length > 0;
+					await ProvisionState.repairRepoStatus(
+						repo,
+						finalized ? RepoStatus.READY : RepoStatus.CREATED,
+						finalized ? "exists on GitHub and is finalized" : "exists on GitHub but has no webhook"
+					);
 				}
 			} else {
-				// if (repo.custom.githubCreated !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
-				// 	repo.custom.githubCreated = false; // does not exist, must not be created
-				// }
-				//
-				// if (repo.custom.githubReleased !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
-				// 	repo.custom.githubReleased = false; // does not exist, must not be released
-				// }
-
 				// repo does not exist
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - gitHubStatus can only be NOT_PROVISIONED for !created: " + repo.id);
-					repo.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
-				}
+				await ProvisionState.repairRepoStatus(repo, RepoStatus.NOT_CREATED, "absent on GitHub");
 
 				if (repo.URL !== null) {
 					Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
@@ -1116,15 +1132,7 @@ export class AdminController {
 					team.githubId = null; // does not exist, must not have a number
 				}
 
-				// if (team.custom.githubAttached !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
-				// 	team.custom.githubAttached = false; // does not exist, must not be attached
-				// }
-
-				if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - team should not exist: " + team.id);
-					team.gitHubStatus = GitHubStatus.NOT_PROVISIONED; // does not exist, must not be attached
-				}
+				await ProvisionState.repairTeamStatus(team, TeamStatus.NOT_CREATED, "absent on GitHub");
 			}
 
 			if (dryRun === false) {
@@ -1154,27 +1162,9 @@ export class AdminController {
 				}
 
 				if (isTeamOnRepo === true) {
-					// if (repo.custom.githubReleased !== true) {
-					// 	repo.custom.githubReleased = true;
-					// 	Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
-					// }
-
 					// if a team is on a repo, it must be provisioned and linked
-					if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
-						// repo.custom.githubReleased = true;
-						repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-						Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
-					}
-
-					// if (team.custom.githubAttached !== true) {
-					// 	team.custom.githubAttached = true;
-					// 	Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
-					// }
-
-					if (team.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
-						team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-						Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_LINKED: " + team.id);
-					}
+					await ProvisionState.repairRepoStatus(repo, RepoStatus.RELEASED, "a student team is attached on GitHub");
+					await ProvisionState.repairTeamStatus(team, TeamStatus.ATTACHED, "attached to " + repo.id + " on GitHub");
 
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
@@ -1185,12 +1175,10 @@ export class AdminController {
 
 			if (repoHasBeenChecked === false) {
 				// repos that were not found to have teams must not be released
-				// if (repo.custom.githubReleased !== false) {
-				// 	repo.custom.githubReleased = false; // was not found above, must be unreleased
-				if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
-					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-					Log.warn("AdminController::dbSanityCheck() - repo.gitHubStatus should be PROVISIONED_UNLINKED: " + repo.gitHubStatus);
 
+				// no team is attached on GitHub, so it cannot be released; it keeps CREATED or READY
+				if (repo.gitHubStatus === RepoStatus.RELEASED) {
+					await ProvisionState.repairRepoStatus(repo, RepoStatus.READY, "no team is attached on GitHub");
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
 					}
@@ -1208,12 +1196,8 @@ export class AdminController {
 			}
 			if (checked === false) {
 				// teams that were not found with repos must not be attached
-				// if (team.custom.githubAttached !== false) {
-				// 	team.custom.githubAttached = false;
-				if (team.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-					Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_UNLINKED: " + team.id);
-
+				if (team.gitHubStatus === TeamStatus.ATTACHED) {
+					await ProvisionState.repairTeamStatus(team, TeamStatus.CREATED, "not attached to any repo on GitHub");
 					if (dryRun === false) {
 						await this.dbc.writeTeam(team);
 					}

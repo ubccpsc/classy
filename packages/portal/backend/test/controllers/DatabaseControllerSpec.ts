@@ -2,7 +2,7 @@ import { expect } from "chai";
 import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
-import { GitHubStatus, PersonKind } from "@backend/Types";
+import { PersonKind, RepoStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -382,7 +382,7 @@ describe("DatabaseController", () => {
 		expect(res).to.not.be.null;
 		expect(res.id).to.equal(TestHarness.REPONAME1);
 		expect(res.URL).to.equal(null);
-		expect(res.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
+		expect(res.gitHubStatus).to.equal(RepoStatus.NOT_CREATED);
 		expect((res.custom as any).foo).to.be.undefined;
 
 		(res.custom as any).foo = true;

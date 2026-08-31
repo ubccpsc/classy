@@ -1,5 +1,4 @@
 // biome-ignore-all lint/style/noExcessiveLinesPerFile: this class is a facade over the whole GitHub API surface; splitting it by resource is tracked separately
-import { GitHubStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
@@ -14,6 +13,52 @@ import { TeamController } from "./TeamController";
 
 const tmp = require("tmp-promise");
 tmp.setGracefulCleanup(); // cleanup files when done
+
+/**
+ * A failed GitHub call, with enough information to tell "this repository is broken" from "nothing is
+ * going to work".
+ *
+ * This status is to catch `fatal` problems. Provisioning continues past an ordinary failure, one repo that
+ * cannot be created should not abandon the other 449, but a fatal failure is one that will happen
+ * to every remaining item too, so continuing just wastes time and makes a bunch of incomplete work.
+ */
+export class GitHubError extends Error {
+	public readonly status: number; // HTTP status, or 0 for a transport-level failure
+	public readonly fatal: boolean;
+
+	public constructor(message: string, status: number, body: string = "") {
+		super(message);
+		this.name = "GitHubError";
+		this.status = status;
+		this.fatal = GitHubError.isFatal(status, body);
+	}
+
+	/**
+	 * Whether a failure means the next call will fail too.
+	 *
+	 * @param status HTTP status; 0 for a transport failure
+	 * @param body the response body, for the cases GitHub distinguishes only in text
+	 */
+	public static isFatal(status: number, body: string = ""): boolean {
+		const text = (body ?? "").toLowerCase();
+
+		if (status === 401 || text.indexOf("bad credentials") >= 0) {
+			return true; // the token is expired, revoked, or wrong
+		}
+
+		if (status === 403 && (text.indexOf("rate limit") >= 0 || text.indexOf("abuse") >= 0)) {
+			return true; // every subsequent call is rejected too; continuing makes it worse
+		}
+
+		if (status === 0) {
+			return true; // the host is unreachable (DNS, connection refused, a VPN-only host)
+		}
+
+		// everything else -- 404 on one repo, 422, a bad importURL, a missing team -- is about this
+		// item. A single 5xx is GitHub having a bad minute; a run of them trips the failure rate.
+		return false;
+	}
+}
 
 export interface IGitHubActions {
 	/**
@@ -460,7 +505,11 @@ export class GitHubActions implements IGitHubActions {
 			// this a failed creation still writes an undefined URL and PROVISIONED_UNLINKED to the db
 			if (response.ok === false || typeof body.html_url === "undefined" || body.html_url.length < 5) {
 				Log.error("GitHubAction::createRepo( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-				throw new Error("GitHub returned " + response.status + "; " + JSON.stringify(body.message));
+				throw new GitHubError(
+					"GitHub returned " + response.status + "; " + JSON.stringify(body.message),
+					response.status,
+					JSON.stringify(body)
+				);
 			}
 
 			const url = body.html_url;
@@ -561,7 +610,11 @@ export class GitHubActions implements IGitHubActions {
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
 			if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
 				Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-				throw new Error("Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?");
+				throw new GitHubError(
+					"Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?",
+					response.status,
+					JSON.stringify(body)
+				);
 			}
 			const url = body.html_url;
 

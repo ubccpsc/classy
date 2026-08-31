@@ -10,7 +10,7 @@ import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubAction
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { GitHubStatus } from "@backend/Types";
+import { RepoStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -160,7 +160,7 @@ describe("GitHubActions", () => {
 		// look finished, and performProvision would then skip it forever.
 		const record = await rc.getRepository(REPONAME);
 		expect(record.URL, "createRepo must record the URL").to.equal(name);
-		expect(record.gitHubStatus, "createRepo must not claim the repo is provisioned").to.equal(GitHubStatus.NOT_PROVISIONED);
+		expect(record.gitHubStatus, "createRepo must not claim the repo is provisioned").to.equal(RepoStatus.NOT_CREATED);
 	}).timeout(TIMEOUT);
 
 	it("Should be able to create a repo from a template and update it to have the right features.", async function () {

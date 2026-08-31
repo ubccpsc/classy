@@ -4,8 +4,11 @@ import { DeliverablesController } from "@backend/controllers/DeliverablesControl
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobContext } from "@backend/controllers/JobController";
-import { AuditLabel, Deliverable, Repository } from "@backend/Types";
+import { ProvisionAbortedError } from "@backend/controllers/ProvisionFailurePolicy";
+import { RepositoryController } from "@backend/controllers/RepositoryController";
+import { AuditLabel, Deliverable, RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
+import { RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
 export interface ProvisionPrepareSummary {
@@ -19,18 +22,22 @@ export interface ProvisionCreateSummary {
 	delivId: string;
 	requested: number;
 	provisioned: number;
-	skipped: number; // already existed on GitHub
-	failed: string[]; // see AdminController.performProvision: a failure no longer stops the run
+	skipped: number; // already finalized, so there was nothing to do
+	failed: string[]; // one bad repo does not stop the run; see ProvisionFailurePolicy
 	cancelled: boolean;
+	stoppedEarly: boolean; // the run gave up; everything provisioned so far is kept
+	stopReason: string | null;
 }
 
 export interface ProvisionReleaseSummary {
 	delivId: string;
 	requested: number;
 	released: number;
-	skipped: number; // not provisioned yet, so there is nothing to attach a team to
+	skipped: number; // not finalized yet, so there is nothing to attach a team to
 	failed: string[];
 	cancelled: boolean;
+	stoppedEarly: boolean;
+	stopReason: string | null;
 }
 
 /**
@@ -123,7 +130,9 @@ export class ProvisionAgent {
 
 		// performProvision skips repos GitHub already knows about; count them here so the summary can
 		// distinguish "nothing to do" from "did not work"
-		const toCreate = repos.filter((repo) => repo.gitHubStatus === "NOT_PROVISIONED");
+		// NOT_CREATED needs the whole flow; CREATED exists on GitHub but was never finalized, and
+		// provisioning it again resumes there
+		const toCreate = repos.filter((repo) => repo.gitHubStatus === RepoStatus.NOT_CREATED || repo.gitHubStatus === RepoStatus.CREATED);
 		const skipped = repos.length - toCreate.length;
 
 		await this.dbc.writeAudit(
@@ -138,17 +147,33 @@ export class ProvisionAgent {
 			}
 		);
 
-		const provisioned = await ac.performProvision(repos, deliv.importURL, undefined, ctx);
-		const provisionedIds = provisioned.map((repo) => repo.id);
-
-		const summary: ProvisionCreateSummary = {
-			delivId: delivId,
-			requested: repos.length,
-			provisioned: provisioned.length,
-			skipped: skipped,
-			failed: toCreate.filter((repo) => provisionedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
-			cancelled: ctx?.isCancelled() === true,
+		const summarize = (created: RepositoryTransport[], stopReason: string | null): ProvisionCreateSummary => {
+			const provisionedIds = created.map((repo) => repo.id);
+			return {
+				delivId: delivId,
+				requested: repos.length,
+				provisioned: created.length,
+				skipped: skipped,
+				failed: toCreate.filter((repo) => provisionedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
+				cancelled: ctx?.isCancelled() === true,
+				stoppedEarly: stopReason !== null,
+				stopReason: stopReason,
+			};
 		};
+
+		let provisioned: RepositoryTransport[] = [];
+		try {
+			provisioned = await ac.performProvision(repos, deliv.importURL, undefined, ctx);
+		} catch (err) {
+			// the run gave up part way; report what it did manage, and fail the job
+			if (err instanceof ProvisionAbortedError) {
+				const partial = await this.provisionedSoFar(repos);
+				throw new ProvisionAbortedError(err.message, summarize(partial, err.message));
+			}
+			throw err;
+		}
+
+		const summary = summarize(provisioned, null);
 
 		Log.info("ProvisionAgent::create( " + delivId + " ) - done; " + JSON.stringify(summary) + "; took: " + Util.took(start));
 		return summary;
@@ -172,7 +197,7 @@ export class ProvisionAgent {
 		const ac = ProvisionAgent.getAdminController();
 
 		// a repo that is not on GitHub yet has nothing to attach a team to
-		const releasable = repos.filter((repo) => repo.gitHubStatus !== "NOT_PROVISIONED");
+		const releasable = repos.filter((repo) => repo.gitHubStatus === RepoStatus.READY);
 		const skipped = repos.length - releasable.length;
 
 		await this.dbc.writeAudit(
@@ -186,17 +211,32 @@ export class ProvisionAgent {
 			}
 		);
 
-		const released = await ac.performRelease(repos, ctx);
-		const releasedIds = released.map((repo) => repo.id);
-
-		const summary: ProvisionReleaseSummary = {
-			delivId: delivId,
-			requested: repos.length,
-			released: released.length,
-			skipped: skipped,
-			failed: releasable.filter((repo) => releasedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
-			cancelled: ctx?.isCancelled() === true,
+		const summarize = (attached: RepositoryTransport[], stopReason: string | null): ProvisionReleaseSummary => {
+			const releasedIds = attached.map((repo) => repo.id);
+			return {
+				delivId: delivId,
+				requested: repos.length,
+				released: attached.length,
+				skipped: skipped,
+				failed: releasable.filter((repo) => releasedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
+				cancelled: ctx?.isCancelled() === true,
+				stoppedEarly: stopReason !== null,
+				stopReason: stopReason,
+			};
 		};
+
+		let released: RepositoryTransport[] = [];
+		try {
+			released = await ac.performRelease(repos, ctx);
+		} catch (err) {
+			if (err instanceof ProvisionAbortedError) {
+				const partial = await this.releasedSoFar(repos);
+				throw new ProvisionAbortedError(err.message, summarize(partial, err.message));
+			}
+			throw err;
+		}
+
+		const summary = summarize(released, null);
 
 		Log.info("ProvisionAgent::release( " + delivId + " ) - done; " + JSON.stringify(summary) + "; took: " + Util.took(start));
 		return summary;
@@ -223,6 +263,32 @@ export class ProvisionAgent {
 			repos.push(repo);
 		}
 		return repos;
+	}
+
+	/**
+	 * What actually got done before an aborted run stopped.
+	 *
+	 * Read back from the database rather than tracked in memory. performProvision throws out of
+	 * a concurrent loop, so its return value is lost, but every repo it finished has already been
+	 * recorded.
+	 */
+	private async provisionedSoFar(repos: Repository[]): Promise<RepositoryTransport[]> {
+		return await this.statusIs(repos, [RepoStatus.READY, RepoStatus.RELEASED]);
+	}
+
+	private async releasedSoFar(repos: Repository[]): Promise<RepositoryTransport[]> {
+		return await this.statusIs(repos, [RepoStatus.RELEASED]);
+	}
+
+	private async statusIs(repos: Repository[], wanted: RepoStatus[]): Promise<RepositoryTransport[]> {
+		const matched: RepositoryTransport[] = [];
+		for (const repo of repos) {
+			const current = await this.dbc.getRepository(repo.id);
+			if (current !== null && wanted.indexOf(current.gitHubStatus) >= 0) {
+				matched.push(RepositoryController.repositoryToTransport(current));
+			}
+		}
+		return matched;
 	}
 
 	private static countFor(records: Array<{ delivId: string }>, delivId: string): number {

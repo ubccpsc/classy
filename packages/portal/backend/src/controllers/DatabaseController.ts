@@ -10,7 +10,6 @@ import {
 	Course,
 	Deliverable,
 	FeedbackRecord,
-	GitHubStatus,
 	Grade,
 	Job,
 	JobWatermark,
@@ -18,6 +17,7 @@ import {
 	Repository,
 	Result,
 	Team,
+	TeamStatus,
 } from "../Types";
 import { TeamController } from "./TeamController";
 
@@ -1100,7 +1100,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams
@@ -1116,7 +1116,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams
@@ -1132,7 +1132,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams

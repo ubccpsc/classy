@@ -263,6 +263,9 @@ export class JobController {
 			current.state = JobState.FAILED;
 			current.completedAt = Date.now();
 			current.heartbeatAt = Date.now();
+			// A handler that gives up part way can attach what it managed to do, so a failed
+			// job can still report "37 of 450 provisioned" rather than just an error string
+			current.summary = typeof err?.summary === "undefined" ? null : err.summary;
 			current.errors = JobController.appendError(current.errors, err?.message ?? String(err));
 			await this.db.writeJob(current);
 

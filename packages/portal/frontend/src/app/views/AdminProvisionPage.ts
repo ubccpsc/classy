@@ -166,6 +166,10 @@ export class AdminProvisionPage extends AdminPage {
 			if (summary.cancelled === true) {
 				detail += " Cancelled; press again to finish the rest.";
 			}
+			if (summary.stoppedEarly === true) {
+				// everything already done is kept, so pressing again resumes
+				detail += " <b>Stopped early: " + summary.stopReason + "</b> Press again to continue.";
+			}
 			return detail;
 		};
 	}
@@ -275,7 +279,9 @@ export class AdminProvisionPage extends AdminPage {
 			const toProvision: string[] = [];
 
 			for (const repo of provisionRepo) {
-				if (repo.gitHubStatus === "NOT_PROVISIONED") {
+				// NOT_CREATED has nothing on GitHub; CREATED exists but was never finalized, so both still
+				// need provisioning (the second resumes at finalization)
+				if (repo.gitHubStatus === "NOT_CREATED" || repo.gitHubStatus === "CREATED") {
 					toProvision.push(repo.id);
 				} else {
 					provisioned.push(repo.id);
@@ -297,7 +303,7 @@ export class AdminProvisionPage extends AdminPage {
 			const toRelease: string[] = [];
 
 			for (const repo of reposToRelease) {
-				if (repo.gitHubStatus === "PROVISIONED_UNLINKED") {
+				if (repo.gitHubStatus === "READY") {
 					toRelease.push(repo.id);
 				} else {
 					released.push(repo.id);

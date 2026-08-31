@@ -6,7 +6,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import BackendServer from "@backend/server/BackendServer";
-import { GitHubStatus } from "@backend/Types";
+import { RepoStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -765,7 +765,7 @@ describe("General Routes", function () {
 
 		// now simulate the repo being released
 		repo.URL = "https://provisioned!";
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		repo.gitHubStatus = RepoStatus.READY;
 		await dc.writeRepository(repo);
 
 		ex = null;

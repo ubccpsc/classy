@@ -2,9 +2,10 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { GitHubStatus, Repository, Team } from "../Types";
+import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
+import { ProvisionState } from "./ProvisionState";
 import { TeamController } from "./TeamController";
 
 export interface IGitHubController {
@@ -198,10 +199,9 @@ export class GitHubController implements IGitHubController {
 
 		Log.info("GitHubController::finalizeAndMark( " + repoName + " ) - finalization successful");
 		const repo = await this.dbc.getRepository(repoName);
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-		repo.URL = this.getRepositoryUrl(repo);
+		repo.URL = this.getRepositoryUrl(repo); // informational; the status below is what gets checked
 		await this.dbc.writeRepository(repo);
-		return true;
+		return await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "finalized");
 	}
 
 	/**
@@ -215,6 +215,10 @@ export class GitHubController implements IGitHubController {
 	 * @returns {Promise<boolean>} whether the repo now exists on GitHub with its content
 	 */
 	private async createOnGitHub(repoName: string, importUrl: string): Promise<boolean> {
+		// The NOT_CREATED -> CREATED transition is performed here rather than in
+		// GitHubActions::createRepo. That method records the URL, because it is the only code that
+		// knows it, but a low-level API wrapper should not be deciding lifecycle: doing so is what
+		// used to mark a repo provisioned before it had a webhook or any staff teams.
 		let provisionSuccessful = false;
 		const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
 
@@ -270,6 +274,11 @@ export class GitHubController implements IGitHubController {
 
 			// NOTE: path param not provided here (nor available); not used by 310 so this is ok for now
 			provisionSuccessful = await this.provisionRepositoryFromFS(repoName, importUrl);
+		}
+
+		if (provisionSuccessful === true) {
+			const repo = await this.dbc.getRepository(repoName);
+			await ProvisionState.setRepoStatus(repo, RepoStatus.CREATED, "created on GitHub");
 		}
 
 		return provisionSuccessful;
@@ -443,19 +452,12 @@ export class GitHubController implements IGitHubController {
 				// now, add the team to the repository
 				// const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
 				if (res.githubTeamNumber > 0) {
-					// keep track of team addition
-					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_LINKED);
-					team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-					// team.custom.githubAttached = true;
+					await ProvisionState.setTeamStatus(team, TeamStatus.ATTACHED, "added to " + repo.id);
 				} else {
+					// the team keeps whatever status it had; releasing again retries it
 					Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
-					// team.custom.githubAttached = false;
-					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_UNLINKED);
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 					allAttached = false;
 				}
-
-				await this.dbc.writeTeam(team); // add new properties to the team
 				Log.info(
 					"GitHubController::releaseRepository(..) - " +
 						" added team (" +
@@ -474,9 +476,7 @@ export class GitHubController implements IGitHubController {
 			return false;
 		}
 
-		// update the repo status to be linked
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-		await this.dbc.writeRepository(repo);
+		await ProvisionState.setRepoStatus(repo, RepoStatus.RELEASED, "student teams attached");
 
 		Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
 		return true;
@@ -511,15 +511,11 @@ export class GitHubController implements IGitHubController {
 		let resuming = false;
 
 		if (isRepoProvisioned === true) {
-			// A repo that exists on GitHub while its record still says NOT_PROVISIONED, but carries
-			// a URL, is one *we* created and then failed to finalize: createRepo writes the URL as
-			// soon as GitHub answers, and only successful finalization marks the record provisioned.
-			//
-			// Resume finalization rather than refusing. Refusing left the repo with no webhook and
-			// no staff teams, and no way to fix it from the admin UI, because performProvision only
-			// touches repos that are NOT_PROVISIONED -- so it silently skipped this one forever.
+			// CREATED means Classy made this repo and never finished finalizing it (no webhook, no
+			// staff teams). Resume there rather than refusing: refusing left such a repo unusable,
+			// with no way to fix it from the admin UI.
 			const existing = await this.dbc.getRepository(repoName);
-			const unfinished = existing !== null && existing.URL !== null && existing.gitHubStatus === GitHubStatus.NOT_PROVISIONED;
+			const unfinished = existing !== null && existing.gitHubStatus === RepoStatus.CREATED;
 
 			if (unfinished === true) {
 				Log.warn("GitHubController::provisionRepository( " + repoName + " ) - exists but was never finalized; resuming");
@@ -592,11 +588,10 @@ export class GitHubController implements IGitHubController {
 			if (repo === null) {
 				return;
 			}
-			repo.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
 			repo.URL = null;
 			repo.cloneURL = null;
 			await this.dbc.writeRepository(repo);
-			Log.info("GitHubController::markNotProvisioned( " + repoName + " ) - record reset; repo can be provisioned again");
+			await ProvisionState.setRepoStatus(repo, RepoStatus.NOT_CREATED, "deleted from GitHub after a failed provision");
 		} catch (err) {
 			Log.error("GitHubController::markNotProvisioned( " + repoName + " ) - ERROR: " + err.message);
 		}
@@ -613,8 +608,7 @@ export class GitHubController implements IGitHubController {
 
 			const teamNum = await tc.getTeamNumber(team.id);
 			Log.trace("GitHubController::provisionTeam( " + team.id + " ) - dbT team Number: " + teamNum);
-			// if (team.URL !== null && teamNum !== null) {
-			if (team.gitHubStatus === GitHubStatus.PROVISIONED_LINKED || team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
+			if (team.gitHubStatus === TeamStatus.ATTACHED || team.gitHubStatus === TeamStatus.CREATED) {
 				// already exists
 				Log.warn("GitHubController::provisionTeam( " + team.id + " ) - " + "- team already provisioned: " + JSON.stringify(team));
 				return true;
@@ -624,10 +618,10 @@ export class GitHubController implements IGitHubController {
 				if (teamValue.githubTeamNumber > 0) {
 					// worked
 					Log.info("GitHubController::provisionTeam( " + team.id + " ) - team created: " + JSON.stringify(teamValue));
-					team.URL = await this.getTeamUrl(team);
+					team.URL = await this.getTeamUrl(team); // informational
 					team.githubId = teamValue.githubTeamNumber;
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 					await this.dbc.writeTeam(team);
+					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub");
 				} else {
 					// never observed in practice, but logged just in case
 					Log.error("GitHubController::provisionTeam( " + team.id + " ) - team NOT created: " + JSON.stringify(teamValue));

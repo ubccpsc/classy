@@ -25,7 +25,7 @@ import { PersonController } from "../../controllers/PersonController";
 import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
 import { Factory } from "../../Factory";
-import { AuditLabel, GitHubStatus, Person } from "../../Types";
+import { AuditLabel, Person, RepoStatus } from "../../Types";
 import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
 import { ClasslistAgent } from "./ClasslistAgent";
@@ -482,8 +482,7 @@ export default class GeneralRoutes implements IREST {
 			Log.trace("GeneralRoutes::performGetRepos(..) - #repos: " + repos.length);
 			const repoTrans: RepositoryTransport[] = [];
 			for (const repo of repos) {
-				// if (repo.URL !== null) {
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+				if (repo.gitHubStatus !== RepoStatus.NOT_CREATED) {
 					// provisioned repos
 					repoTrans.push(RepositoryController.repositoryToTransport(repo));
 				}
