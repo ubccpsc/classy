@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import "mocha";
 
+import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { DeliverablesController } from "@backend/controllers/DeliverablesController";
+import { GitHubError } from "@backend/controllers/GitHubActions";
+import { ProvisionState } from "@backend/controllers/ProvisionState";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
 import { RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
@@ -93,5 +97,71 @@ describe("ProvisionAgent", function () {
 		expect(await messageFrom(agent.release(TestHarness.DELIVID0, [OTHER_DELIV_REPO], TestHarness.ADMIN1.id))).to.contain(
 			"does not belong to"
 		);
+	});
+
+	describe("when a run gives up", function () {
+		// NOTE: the create side of this is covered in AdminControllerSpec; release had nothing, and it
+		// is the half that reads back what it managed to do (performRelease throws out of its loop, so
+		// its return value is lost -- the statuses in the database are the record).
+		it("Should report what it released before a fatal failure stopped it.", async function () {
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+
+			// three repos ready to release; the second one kills the run
+			const repoIds: string[] = [];
+			for (const n of [1, 2, 3]) {
+				const repo: Repository = {
+					id: "provisionAgentSpecRelease" + n,
+					delivId: TestHarness.DELIVID0,
+					teamIds: [],
+					URL: "https://example.com/r" + n,
+					cloneURL: null,
+					gitHubStatus: RepoStatus.READY,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				repoIds.push(repo.id);
+			}
+
+			// the first release works, the second is fatal
+			let calls = 0;
+			const failingController: any = {
+				releaseRepository: async (repo: Repository) => {
+					calls++;
+					if (calls === 1) {
+						await ProvisionState.setRepoStatus(repo, RepoStatus.RELEASED, "spec");
+						return true;
+					}
+					throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
+				},
+				provisionRepository: async () => true,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+
+			const failingAgent = new ProvisionAgent(new AdminController(failingController));
+
+			let caught: any = null;
+			try {
+				await failingAgent.release(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught, "a fatal failure must stop the release").to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+
+			// and the job must still be able to say what happened
+			const partial = caught.summary;
+			expect(partial, "a stopped run still reports what it did").to.not.be.null;
+			expect(partial.released, "the one that worked is kept").to.equal(1);
+			expect(partial.stoppedEarly).to.be.true;
+			expect(partial.stopReason).to.contain("fatally");
+			expect(calls, "it must not try the third").to.equal(2);
+		});
 	});
 });

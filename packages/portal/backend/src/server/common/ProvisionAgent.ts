@@ -58,6 +58,16 @@ export interface ProvisionReleaseSummary {
  */
 export class ProvisionAgent {
 	private readonly dbc = DatabaseController.getInstance();
+	private readonly controller: AdminController;
+
+	/**
+	 * @param controller the AdminController to work through. Defaults to one built on the live
+	 * GitHub client; specs pass a double, which is the only way to exercise what a run reports when
+	 * GitHub fails part way through.
+	 */
+	public constructor(controller: AdminController = null) {
+		this.controller = controller;
+	}
 
 	/**
 	 * Creates the Team and Repository records for a deliverable. Nothing reaches GitHub.
@@ -78,7 +88,7 @@ export class ProvisionAgent {
 		Log.info("ProvisionAgent::prepare( " + delivId + ", " + formSingle + " ) - start");
 
 		const deliv = await ProvisionAgent.getProvisionableDeliverable(delivId);
-		const ac = ProvisionAgent.getAdminController();
+		const ac = this.getAdminController();
 
 		// counted for this deliverable rather than the whole database: only one provisioning job runs
 		// at a time, but teams can also be formed by students while it does
@@ -126,7 +136,7 @@ export class ProvisionAgent {
 
 		const deliv = await ProvisionAgent.getProvisionableDeliverable(delivId);
 		const repos = await this.resolveRepos(delivId, repoIds);
-		const ac = ProvisionAgent.getAdminController();
+		const ac = this.getAdminController();
 
 		// performProvision skips repos GitHub already knows about; count them here so the summary can
 		// distinguish "nothing to do" from "did not work"
@@ -194,7 +204,7 @@ export class ProvisionAgent {
 
 		await ProvisionAgent.getProvisionableDeliverable(delivId); // validate before doing any work
 		const repos = await this.resolveRepos(delivId, repoIds);
-		const ac = ProvisionAgent.getAdminController();
+		const ac = this.getAdminController();
 
 		// a repo that is not on GitHub yet has nothing to attach a team to
 		const releasable = repos.filter((repo) => repo.gitHubStatus === RepoStatus.READY);
@@ -306,7 +316,10 @@ export class ProvisionAgent {
 		return deliv;
 	}
 
-	private static getAdminController(): AdminController {
+	private getAdminController(): AdminController {
+		if (this.controller !== null) {
+			return this.controller;
+		}
 		return new AdminController(new GitHubController(GitHubActions.getInstance()));
 	}
 }

@@ -12,6 +12,8 @@ import { AutoTestAuthPayload, AutoTestConfigPayload, AutoTestGradeTransport, Cla
 import type * as http from "http";
 import request from "supertest";
 
+import { StubAutoTestService } from "./StubAutoTestService";
+
 // This seems silly, but just makes sure GlobalSpec runs first.
 // It should be at the top of every test file.
 // const loadFirst = require("../GlobalSpec");
@@ -52,6 +54,184 @@ describe("AutoTest Routes", function () {
 		Log.test("AutoTestRoutes::after - start");
 		TestHarness.suiteAfter("AutoTestRoutes");
 		await server.stop();
+	});
+
+	describe("what the endpoints say when they cannot answer", function () {
+		// NOTE: AutoTest is the only caller of these, and it has to be able to tell "no" from
+		// "broken": a 404 for a student who is not in this course is normal, an error is not. Only
+		// the happy paths were covered before.
+		const token = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+		it("Should 404 a GitHub id that is not a person in this course.", async function () {
+			const response = await request(app).get("/portal/at/personId/userThatIsNotEnrolled").set("token", token);
+			Log.test("unknown person -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(404);
+			expect(response.body.failure.message).to.contain("userThatIsNotEnrolled");
+		});
+
+		it("Should answer a known GitHub id with its person id.", async function () {
+			const response = await request(app)
+				.get("/portal/at/personId/" + TestHarness.USER1.github)
+				.set("token", token);
+			Log.test("known person -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success.personId).to.equal(TestHarness.USER1.id);
+		});
+
+		it("Should return an empty result list rather than an error when there is no result.", async function () {
+			// AutoTest asks about a commit it has not graded yet on every push; that is not a failure
+			const url = "/portal/at/result/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAME1 + "/noSuchSha/" + encodeURIComponent("<ANY>");
+			const response = await request(app).get(url).set("token", token);
+			Log.test("missing result -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array").that.is.empty;
+		});
+
+		it("Should 400 container details for a deliverable that does not exist.", async function () {
+			const response = await request(app).get("/portal/at/container/noSuchDeliverable").set("token", token);
+			Log.test("unknown deliverable -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure).to.not.be.undefined;
+		});
+
+		it("Should answer a push promotion request even when the push details are empty.", async function () {
+			// NOTE: not an error. AutoTest asks this for every push, and the default course controller
+			// answers "no" without inspecting the payload; only a course whose plugin throws would
+			// produce the 400 branch, which is why that branch stays uncovered here.
+			const response = await request(app).post("/portal/at/promotePush").send({}).set("token", token);
+			Log.test("empty promotePush -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success.shouldPromote).to.be.false;
+		});
+
+		it("Should 400 a result that is not a valid result record.", async function () {
+			// a malformed record must be refused rather than stored: everything downstream (grades,
+			// the dashboard, AutoTest's own bookkeeping) reads these back
+			const response = await request(app).post("/portal/at/result").send({ notA: "result" }).set("token", token);
+			Log.test("malformed result -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure).to.not.be.undefined;
+		});
+	});
+
+	describe("the endpoints that proxy to AutoTest", function () {
+		// NOTE: these handlers check the caller and then hand the request to the AutoTest service.
+		// With nothing listening, only their failure paths can run, which is why they were the least
+		// covered code in the backend. StubAutoTestService stands in for that service and points
+		// Classy's config at itself, so this works the same on a dev machine and on CI.
+		const stub = new StubAutoTestService();
+
+		before(async function () {
+			await stub.start();
+		});
+
+		after(async function () {
+			await stub.stop();
+		});
+
+		beforeEach(function () {
+			stub.reset();
+		});
+
+		it("Should refuse to list Docker images for a student.", async function () {
+			// the Docker endpoints are admin-only, and nothing exercised that check
+			const response = await request(app).get("/portal/at/docker/images").set({ user: TestHarness.USER1.github });
+			Log.test("student list -> " + response.status);
+
+			expect(response.status).to.equal(401);
+			expect(stub.requests, "an unauthorized request must not reach AutoTest").to.have.lengthOf(0);
+		});
+
+		it("Should refuse to list Docker images for an unknown user.", async function () {
+			const response = await request(app).get("/portal/at/docker/images").set({ user: "userThatDoesNotExist" });
+			Log.test("unknown user list -> " + response.status);
+
+			expect(response.status).to.equal(400);
+			expect(stub.requests).to.have.lengthOf(0);
+		});
+
+		it("Should pass the image list through for an admin.", async function () {
+			stub.body = [{ Id: "sha256:abc", RepoTags: ["d0:latest"] }];
+
+			const response = await request(app).get("/portal/at/docker/images").set({ user: TestHarness.ADMIN1.github });
+			Log.test("admin list -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body).to.deep.equal(stub.body); // the answer is AutoTest's, not the portal's
+			expect(stub.onlyRequest().url, "the /portal/at prefix is stripped when forwarding").to.equal("/docker/images");
+		});
+
+		it("Should report a failure from the AutoTest service rather than a bad image list.", async function () {
+			stub.status = 500;
+
+			const response = await request(app).get("/portal/at/docker/images").set({ user: TestHarness.ADMIN1.github });
+			Log.test("failing service -> " + response.status);
+
+			expect(response.status).to.equal(500);
+			expect(stub.requests, "it did try").to.have.lengthOf(1);
+		});
+
+		it("Should refuse to delete a Docker image for a student.", async function () {
+			const response = await request(app).delete("/portal/at/docker/image/d0-latest").set({ user: TestHarness.USER1.github });
+			Log.test("student delete -> " + response.status);
+
+			expect(response.status).to.equal(401);
+			expect(stub.requests, "a student must not be able to reach the delete endpoint").to.have.lengthOf(0);
+		});
+
+		it("Should forward an image deletion for an admin.", async function () {
+			stub.body = { deleted: true };
+
+			const response = await request(app).delete("/portal/at/docker/image/d0-latest").set({ user: TestHarness.ADMIN1.github });
+			Log.test("admin delete -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.method).to.equal("DELETE");
+			expect(forwarded.url).to.equal("/docker/image/d0-latest");
+		});
+
+		it("Should pass a deletion failure back with its status.", async function () {
+			stub.status = 404;
+			stub.body = { message: "no such image" };
+
+			const response = await request(app).delete("/portal/at/docker/image/nosuchtag").set({ user: TestHarness.ADMIN1.github });
+			Log.test("failed delete -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(404);
+			expect(stub.requests).to.have.lengthOf(1);
+		});
+
+		it("Should hand a GitHub webhook to AutoTest.", async function () {
+			// the portal is the address GitHub posts to; forwarding is all this route does
+			stub.body = { queued: true };
+			const payload = { action: "opened", repository: { name: "d0_team1" } };
+
+			const response = await request(app).post("/portal/githubWebhook").send(payload);
+			Log.test("webhook -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.method).to.equal("POST");
+			expect(JSON.parse(forwarded.body), "the payload must arrive unchanged").to.deep.equal(payload);
+		});
+
+		it("Should report a webhook AutoTest would not accept.", async function () {
+			stub.status = 400;
+			stub.body = { message: "nope" };
+
+			const response = await request(app).post("/portal/githubWebhook").send({ action: "opened" });
+			Log.test("rejected webhook -> " + response.status);
+
+			expect(response.status).to.equal(400);
+			expect(stub.requests).to.have.lengthOf(1);
+		});
 	});
 
 	it("Should reject an unauthorized backend detail request", async function () {

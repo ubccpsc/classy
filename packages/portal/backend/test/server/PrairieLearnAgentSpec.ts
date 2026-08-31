@@ -165,6 +165,65 @@ describe("PrairieLearnAgent", function () {
 		expect(BUCKET_SCORE[grade.custom.displayScore]).to.equal(grade.score);
 	});
 
+	describe("Submissions that carry no usable bucket", function () {
+		// NOTE: PrairieLearn returns every submission, including ones the grader never finished and
+		// ones from a grader version that reported nothing useful. Those must be skipped rather than
+		// scored, and skipping them must not hide the attempts that *are* gradeable.
+		function submission(): any {
+			return JSON.parse(JSON.stringify(allBuckets[0]));
+		}
+
+		it("Should ignore a submission whose grader did not succeed.", function () {
+			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+			const sub = submission();
+			sub.feedback.succeeded = false;
+
+			expect(agent.bucketOf(sub), "a failed grading run has no bucket to report").to.be.null;
+			expect(agent.bestSubmission([sub]), "and cannot be anyone's best attempt").to.be.null;
+		});
+
+		it("Should ignore a submission with no feedback at all.", function () {
+			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+			const sub = submission();
+			sub.feedback = null;
+
+			expect(agent.bucketOf(sub)).to.be.null;
+		});
+
+		it("Should ignore a submission whose report carries no bucket.", function () {
+			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+			const sub = submission();
+			delete sub.feedback.results.report.overall.bucket;
+
+			expect(agent.bucketOf(sub)).to.be.null;
+		});
+
+		it("Should still find the best attempt among a mix of graded and ungraded ones.", function () {
+			// the case that matters: one bad submission must not cost a student their real grade
+			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+			const ungraded = submission();
+			ungraded.feedback.succeeded = false;
+
+			const graded = submission();
+			graded.feedback.results.report.overall.bucket = "proficient";
+
+			const best = agent.bestSubmission([ungraded, graded, ungraded]);
+			expect(best, "the graded attempt must still win").to.not.be.null;
+			expect(best.bucket).to.equal("proficient");
+		});
+
+		it("Should prefer the report bucket when the envelope disagrees.", function () {
+			// the two come from different parts of the grader output; if they disagree the report is
+			// the one the student was actually graded on, and the mismatch is logged
+			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+			const sub = submission();
+			sub.feedback.results.report.overall.bucket = "developing";
+			sub.feedback.results.bucket = "beginning";
+
+			expect(agent.bucketOf(sub)).to.equal("developing");
+		});
+	});
+
 	describe("Explicit numeric score", function () {
 		/**
 		 * Builds one submission carrying a given bucket and (optionally) report.overall.score.
