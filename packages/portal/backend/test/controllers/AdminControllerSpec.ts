@@ -645,7 +645,7 @@ describe("AdminController", () => {
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
 			expect(allTeams[0].URL).to.be.null;
-			expect(allTeams[0].gitHubStatus).to.equal(RepoStatus.NOT_CREATED); // not provisioned yet
+			expect(allTeams[0].gitHubStatus).to.equal(TeamStatus.NOT_CREATED); // not provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const plan = await ac.prepareProvision(deliv, false);
@@ -677,7 +677,7 @@ describe("AdminController", () => {
 			expect(teamNum).to.be.an("number");
 			expect(teamNum).to.be.greaterThan(0);
 			expect(allNewTeams[0].URL).to.not.be.null;
-			expect(allNewTeams[0].gitHubStatus).to.equal(RepoStatus.READY); // not attached yet
+			expect(allNewTeams[0].gitHubStatus).to.equal(TeamStatus.CREATED); // exists on GitHub, not attached yet
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should release repos.", async () => {
@@ -690,7 +690,7 @@ describe("AdminController", () => {
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
 			// expect(allTeams[0].URL).to.not.be.null;
-			expect(allTeams[0].gitHubStatus).to.equal(RepoStatus.READY);
+			expect(allTeams[0].gitHubStatus).to.equal(TeamStatus.CREATED);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const relPlan = await ac.planRelease(deliv);
