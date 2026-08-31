@@ -5,8 +5,8 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { ICourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
-import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
+import { GitHubActions, GitHubError, IGitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -497,6 +497,69 @@ describe("AdminController", () => {
 		expect(after.URL, "a repo that is not on GitHub must not carry a URL").to.be.null;
 		expect(after.cloneURL).to.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
+
+	it("Should abandon a provisioning run as soon as a failure is fatal.", async () => {
+		// NOTE: three failures are needed before the startup rule fires, but a fatal failure -- an
+		// expired token, an exhausted rate limit -- will happen to every remaining repo too, so the
+		// run stops on the first one. This is only testable because performProvision now uses the
+		// controller it was constructed with rather than building its own.
+		class FatalController implements IGitHubController {
+			public attempts = 0;
+
+			public async provisionRepository(): Promise<boolean> {
+				this.attempts++;
+				throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
+			}
+
+			public async releaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async updateBranchProtection(): Promise<boolean> {
+				return true;
+			}
+
+			public async createIssues(): Promise<boolean> {
+				return true;
+			}
+
+			public getRepositoryUrl(): string {
+				return "https://example.com";
+			}
+
+			public async getTeamUrl(): Promise<string> {
+				return "https://example.com";
+			}
+		}
+
+		const repos: Repository[] = [1, 2, 3, 4, 5].map((n) => {
+			return {
+				id: "REPO_FATAL_" + n + "_" + Date.now(),
+				delivId: TestHarness.DELIVIDPROJ,
+				teamIds: [],
+				URL: null,
+				cloneURL: null,
+				gitHubStatus: RepoStatus.NOT_CREATED,
+				custom: {},
+			} as Repository;
+		});
+
+		const gh = new FatalController();
+		const controller = new AdminController(gh);
+
+		let aborted: any = null;
+		try {
+			await controller.performProvision(repos, "https://example.com/import", 1);
+		} catch (err) {
+			aborted = err;
+		}
+		Log.test("aborted: " + aborted?.message + "; attempts: " + gh.attempts);
+
+		expect(aborted, "a fatal failure must stop the run").to.not.be.null;
+		expect(aborted.name).to.equal("ProvisionAbortedError");
+		expect(aborted.message).to.contain("fatally");
+		expect(gh.attempts, "it must not try the other four").to.equal(1);
+	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should give up on a provisioning run where nothing is working.", async () => {
 		// NOTE: the other half of the continue-on-failure story. Recording and continuing is right

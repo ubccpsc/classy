@@ -399,13 +399,20 @@ export default class AdminRoutes implements IREST {
 				await dbc.writeAudit(AuditLabel.TEAM, personId, team, newTeam, {});
 			});
 			await Promise.all(futureTeamUpdates);
+
+			// Deleted from GitHub first. Deleting the record first meant that a refused deletion left Classy
+			// with no record of a repository that still existed, so nothing could reconcile it
+			const removedFromGitHub = await GitHubActions.getInstance().deleteRepo(repoId);
+			if (removedFromGitHub === false) {
+				Log.warn("AdminRoutes::handleDeleteRepository( " + repoId + " ) - not on GitHub (or not removed); deleting record anyway");
+			}
+
 			worked = await dbc.deleteRepository(repo);
 			await dbc.writeAudit(AuditLabel.REPOSITORY, personId, repo, null, {});
 		} else {
 			throw new Error("Unknown repository: " + repoId);
 		}
 
-		await GitHubActions.getInstance().deleteRepo(repoId);
 		return worked;
 	}
 

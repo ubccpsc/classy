@@ -104,6 +104,16 @@ describe("GitHubController provisioning paths", function () {
 		}
 	}
 
+	/**
+	 * A repo GitHub will not accept a webhook for.
+	 */
+	class WebhookFailsActions extends RecordingActions {
+		public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
+			await super.addWebhook(repoName, webhookEndpoint); // still counted
+			return false;
+		}
+	}
+
 	before(async function () {
 		await TestHarness.suiteBefore("GitHubController provisioning paths");
 		await TestHarness.prepareDeliverables();
@@ -307,5 +317,32 @@ describe("GitHubController provisioning paths", function () {
 			message = err.message;
 		}
 		expect(message).to.contain(missing.id);
+	});
+
+	it("Should not call a repo READY when its webhook could not be added.", async function () {
+		// NOTE: a repo without its webhook is not finished, whatever else worked: AutoTest never hears
+		// about pushes to it, silently, for the whole term. This used to be a warning, so such a repo
+		// was marked provisioned and nothing ever revisited it.
+		const repoId = "ghcProvisionSpecNoWebhook";
+		await makeRepo(repoId);
+		const team = await dbc.getTeam(TEAM_ID);
+
+		const gha = new WebhookFailsActions();
+		const ghc = new GitHubController(gha);
+
+		let message: string = null;
+		try {
+			await ghc.provisionRepository(repoId, [team], IMPORT_URL);
+		} catch (err) {
+			message = err.message;
+		}
+		Log.test("message: " + message);
+		expect(message, "a repo with no webhook is not provisioned").to.contain("finalization failed");
+
+		// it stays CREATED: the repo is on GitHub and must not be deleted, but provisioning it again
+		// retries the webhook
+		const after = await dbc.getRepository(repoId);
+		expect(after.gitHubStatus).to.equal(RepoStatus.CREATED);
+		expect(gha.deleteRepoCalls, "the repo must be kept").to.equal(0);
 	});
 });

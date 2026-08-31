@@ -770,6 +770,18 @@ export class GitHubActions implements IGitHubActions {
 	 * @param repoName
 	 * @returns {Promise<boolean>}
 	 */
+
+	/**
+	 * Rethrows a response that means nothing else will work either.
+	 *
+	 */
+	private static throwIfFatal(status: number, body: string, context: string): void {
+		if (GitHubError.isFatal(status, body) === true) {
+			Log.error("GitHubAction::" + context + " - FATAL; status: " + status);
+			throw new GitHubError(context + " failed; GitHub returned " + status, status, body);
+		}
+	}
+
 	public async repoExists(repoName: string): Promise<boolean> {
 		const start = Date.now();
 		const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
@@ -787,6 +799,11 @@ export class GitHubActions implements IGitHubActions {
 			Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
 			return false;
 		}
+
+		// Without this, a 401 would look exactly like "the repo is there", and provisioning
+		// would go on to fail one repo at a time for a reason that has nothing to do with the repos
+		GitHubActions.throwIfFatal(res.status, await res.clone().text(), "repoExists( " + repoName + " )");
+
 		Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
 		return true;
 	}
@@ -1001,6 +1018,7 @@ export class GitHubActions implements IGitHubActions {
 			// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 			const respBody = await response.text();
 			Log.error("GitHubAction::addWebhook( " + repoName + " ) - failed; status: " + response.status + "; response: " + respBody);
+			GitHubActions.throwIfFatal(response.status, respBody, "addWebhook( " + repoName + " )");
 			return false;
 		}
 
@@ -1321,6 +1339,7 @@ export class GitHubActions implements IGitHubActions {
 
 			const response = await fetch(uri, options);
 			if (!response.ok) {
+				GitHubActions.throwIfFatal(response.status, await response.text(), "addTeamToRepo( " + teamName + ", " + repoName + " )");
 				throw new Error(response.statusText);
 			}
 

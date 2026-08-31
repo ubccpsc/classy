@@ -778,8 +778,7 @@ export class AdminController {
 		concurrency?: number,
 		ctx: JobContext = null
 	): Promise<RepositoryTransport[]> {
-		const gha = GitHubActions.getInstance(true);
-		const ghc = new GitHubController(gha);
+		const ghc = this.gh;
 		const cc = await Factory.getCourseController(this.gh);
 
 		if (typeof concurrency === "undefined") {
@@ -969,8 +968,7 @@ export class AdminController {
 	}
 
 	public async performRelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
-		const gha = GitHubActions.getInstance(true);
-		const ghc = new GitHubController(gha);
+		const ghc = this.gh; // see performProvision
 
 		Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length);
 		const start = Date.now();

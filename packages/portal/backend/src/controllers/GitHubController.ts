@@ -14,13 +14,15 @@ export interface IGitHubController {
 	 *
 	 * Assumptions: a "staff" repo must also exist.
 	 *
+	 * This declaration used to take a fourth `shouldRelease` parameter that the implementation
+	 * never had; nothing passed it, and releasing is a separate step (releaseRepository).
+	 *
 	 * @param {string} repoName
 	 * @param {Team[]} teams
-	 * @param {string} sourceRepo
-	 * @param {boolean} shouldRelease whether the student team should be added to the repo
+	 * @param {string} importUrl
 	 * @returns {Promise<boolean>}
 	 */
-	provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
+	provisionRepository(repoName: string, teams: Team[], importUrl: string): Promise<boolean>;
 
 	updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean>;
 
@@ -306,11 +308,17 @@ export class GitHubController implements IGitHubController {
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - webhook successful: " + createHook);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - done repo settings: " + updateWorked);
 
-			// NOTE: as before, only team provisioning affects the return value; a failed webhook or
-			// settings update is logged but does not fail finalization
+			// NOTE: a repo without its webhook is not finished, whatever else worked: AutoTest never
+			// hears about pushes to it, silently, for the whole term. This used to be a warning, which
+			// was survivable when "provisioned" was vague, but RepoStatus.READY now means "webhook and
+			// staff teams are attached" -- and dbSanityCheck uses the webhook as its test for exactly
+			// that. Failing here leaves the repo CREATED, which is retryable.
 			if (createHook === false) {
-				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added");
+				Log.error("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added; not finalized");
+				return false;
 			}
+
+			// repo settings are cosmetic by comparison, so they stay a warning
 			if (updateWorked === false) {
 				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - repo settings NOT updated");
 			}
