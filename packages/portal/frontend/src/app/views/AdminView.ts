@@ -14,6 +14,7 @@ import { CourseTransport, CourseTransportPayload } from "@common/types/PortalTyp
 
 import { Factory } from "../Factory";
 import { UI } from "../util/UI";
+import { ViewAs } from "../util/ViewAs";
 
 import { AdminConfigTab } from "./AdminConfigTab";
 import { AdminDashboardTab } from "./AdminDashboardTab";
@@ -151,11 +152,13 @@ export class AdminView implements IView {
 
 	public static getOptions() {
 		return {
-			headers: {
+			// NOTE: ViewAs::addHeader is applied to every request helper in the frontend, so an admin
+			// driving Classy as a student cannot have one page quietly answer with their own data
+			headers: ViewAs.addHeader({
 				"Content-Type": "application/json",
 				user: localStorage.user,
 				token: localStorage.token,
-			},
+			}),
 		};
 	}
 

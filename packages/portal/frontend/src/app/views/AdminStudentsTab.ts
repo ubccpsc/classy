@@ -3,6 +3,7 @@ import { StudentTransport, StudentTransportPayload } from "@common/types/PortalT
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
+import { ViewAs } from "../util/ViewAs";
 
 import { AdminView } from "./AdminView";
 
@@ -75,6 +76,14 @@ export class AdminStudentsTab {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
+				id: "viewAs",
+				text: "View As",
+				sortable: false,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
+			{
 				id: "labId",
 				text: "Lab",
 				sortable: true,
@@ -102,6 +111,20 @@ export class AdminStudentsTab {
 				{ value: student.id, html: student.id }, // Should be CSID
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
+				{
+					// NOTE: the entry point for driving Classy as this student. The button only asks the
+					// backend to open a session (which audits it); the backend re-checks the caller on
+					// every request afterwards, so this is convenience, not authorization.
+					value: student.id,
+					html:
+						"<button class='viewAsButton' data-id='" +
+						student.id +
+						"' data-name='" +
+						student.firstName +
+						" " +
+						student.lastName +
+						"'>View As</button>",
+				},
 				{ value: labId, html: labId },
 			];
 			if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== "" && student.labId !== null) {
@@ -117,6 +140,7 @@ export class AdminStudentsTab {
 		}
 
 		st.generate();
+		this.wireViewAsButtons();
 
 		labSectionsOptions = labSectionsOptions.sort();
 		UI.setDropdownOptions("studentsListSelect", labSectionsOptions, labSection);
@@ -139,6 +163,43 @@ export class AdminStudentsTab {
 		} else {
 			UI.showSection("studentListTable");
 			UI.hideSection("studentListTableNone");
+		}
+	}
+
+	/**
+	 * Wires the per-student "View As" buttons.
+	 *
+	 * Pressing one opens a session (which the backend audits) and then reloads into the student view.
+	 * The reload is deliberate: it guarantees every view is rebuilt with the header in place, rather
+	 * than leaving some already-rendered admin page holding data fetched as the admin.
+	 */
+	private wireViewAsButtons(): void {
+		const buttons = document.querySelectorAll(".viewAsButton");
+		for (const element of Array.from(buttons)) {
+			const button = element as HTMLButtonElement;
+			button.onclick = async () => {
+				const personId = button.getAttribute("data-id");
+				const name = button.getAttribute("data-name");
+				Log.info("AdminStudentsTab::viewAs( " + personId + " ) - start");
+
+				try {
+					const options: any = AdminView.getOptions();
+					options.method = "post";
+					const response = await fetch(this.remote + "/portal/admin/viewAs/" + personId, options);
+					const json = await response.json();
+
+					if (typeof json.success === "undefined") {
+						UI.showError(json);
+						return;
+					}
+
+					ViewAs.start(personId, name + " (" + personId + ")");
+					window.location.reload();
+				} catch (err) {
+					Log.error("AdminStudentsTab::viewAs( " + personId + " ) - ERROR: " + err.message);
+					UI.showError(err.message);
+				}
+			};
 		}
 	}
 

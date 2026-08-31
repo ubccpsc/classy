@@ -515,6 +515,20 @@ export class DatabaseController {
 		return await this.updateRecord(this.JOBWATERMARKCOLL, query, record);
 	}
 
+	/**
+	 * The most recent audit events for a label, newest first. Audit records
+	 * are written from many places but never read back in Classy, so this
+	 * exists for tests and for post-hoc analysis where needed.
+	 *
+	 * @param label
+	 * @param limit
+	 * @returns {Promise<AuditEvent[]>}
+	 */
+	public async getAudits(label: string, limit: number = 10): Promise<AuditEvent[]> {
+		const records = (await this.readRecords(this.AUDITCOLL, QueryKind.FAST, false, { label: label }, { timestamp: -1 })) as AuditEvent[];
+		return records.slice(0, limit);
+	}
+
 	public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
 		const isEmpty = function (obj: any): boolean {
 			if (typeof obj === "undefined" || obj === null) {

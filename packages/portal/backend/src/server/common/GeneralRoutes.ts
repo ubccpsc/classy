@@ -30,7 +30,7 @@ import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
 import { ClasslistAgent } from "./ClasslistAgent";
 import { PrairieLearnAgent } from "./PrairieLearnAgent";
-import { RouteUtil } from "./RouteUtil";
+import { type ClassyIdentity, RouteUtil, ViewAsError } from "./RouteUtil";
 
 export default class GeneralRoutes implements IREST {
 	public static async getConfig(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -69,12 +69,15 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static async getPerson(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const user = req.headers.user;
-		const token = req.headers.token;
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 		Log.trace("GeneralRoutes::getPerson(..) - start; user: " + user);
 
 		try {
-			const personTrans = await GeneralRoutes.performGetPerson(user, token);
+			const personTrans = await GeneralRoutes.performGetPerson(identity);
 			const payload: Payload = { success: personTrans };
 			res.code(200).send(payload);
 			return;
@@ -87,13 +90,16 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static async getGrades(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const user = req.headers.user;
-		const token = req.headers.token;
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 
 		Log.trace("GeneralRoutes::getGrades(..) - start; user: " + user);
 
 		try {
-			const grades = await GeneralRoutes.performGetGrades(user, token);
+			const grades = await GeneralRoutes.performGetGrades(identity);
 			const payload: GradeTransportPayload = { success: grades };
 			res.code(200).send(payload);
 			return;
@@ -106,13 +112,16 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const user = req.headers.user;
-		const token = req.headers.token;
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 		Log.trace("GeneralRoutes::getTeams(..) - start; user: " + user);
 		const start = Date.now();
 
 		try {
-			const teams = await GeneralRoutes.performGetTeams(user, token);
+			const teams = await GeneralRoutes.performGetTeams(identity);
 			Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
 			const payload: TeamTransportPayload = { success: teams };
 			res.code(200).send(payload);
@@ -134,6 +143,11 @@ export default class GeneralRoutes implements IREST {
 		// const params = req.params;
 		const path = req.url.substring(16); // this strips off the route prefix (i.e., /portal/resource)
 
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // refused; the response has already been sent
+		}
+
 		// right now this means requests _must_ be by an authorized user (admin, staff, or student)
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
 			Log.warn("GeneralRoutes::isAdmin(..) - undefined user or token for resource: " + path);
@@ -149,7 +163,7 @@ export default class GeneralRoutes implements IREST {
 		try {
 			// NOTE: the resolved resource is not used; performGetResource is called for its
 			// authorization check, which throws when the user may not read this path.
-			await GeneralRoutes.performGetResource(auth, path);
+			await GeneralRoutes.performGetResource(identity, path);
 
 			const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
 			Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
@@ -205,13 +219,21 @@ export default class GeneralRoutes implements IREST {
 		return body;
 	}
 
-	public static async performGetResource(auth: { user: string; token: string }, path: string): Promise<boolean> {
+	public static async performGetResource(identity: ClassyIdentity, path: string): Promise<boolean> {
 		Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - start");
 
 		let proceed = false;
 		// if user/token does not have access to resource request should return 401
 		try {
-			const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
+			// This is the one student route whose *authorization* depends on who is asking, so
+			// while viewing as someone the check is made as that person. Without this an admin would
+			// see staff and admin artifacts a student cannot, and the preview would be a lie. It is
+			// safe in one direction only, which is what makes it acceptable: the admin could already
+			// see everything the target can, so evaluating as the target can only narrow access.
+			const priv =
+				identity.actedAs === null
+					? await AuthRoutes.performGetCredentials(identity.actedBy, identity.token)
+					: await new AuthController().personPrivileged(await new PersonController().getPerson(identity.actedAs));
 
 			if (/\/student(\/|$)/.test(path)) {
 				Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - student resource; is valid");
@@ -249,12 +271,15 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static async getRepos(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const user = req.headers.user;
-		const token = req.headers.token;
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 		Log.trace("GeneralRoutes::getRepos(..) - start; user: " + user);
 
 		try {
-			const repos = await GeneralRoutes.performGetRepos(user, token);
+			const repos = await GeneralRoutes.performGetRepos(identity);
 			const payload: RepositoryPayload = { success: repos };
 			res.code(200).send(payload);
 			return;
@@ -267,8 +292,11 @@ export default class GeneralRoutes implements IREST {
 	}
 
 	public static async postTeam(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		const user = req.headers.user;
-		const token = req.headers.token;
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 
 		Log.info("GeneralRoutes::teamCreate(..) - start; user: " + user);
 
@@ -281,7 +309,7 @@ export default class GeneralRoutes implements IREST {
 			return;
 		}
 		try {
-			const team = await GeneralRoutes.performPostTeam(user, token, teamTrans);
+			const team = await GeneralRoutes.performPostTeam(identity, teamTrans);
 			Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
 			const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
 			res.code(200).send(payload);
@@ -332,13 +360,34 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
+	/**
+	 * The identity for a student-facing request: who is calling, and whose data they are asking for.
+	 *
+	 * Returns null when a view-as request is refused, having already answered 403. The routes
+	 * check for that rather than letting a refusal look like an ordinary 400.
+	 */
+	private static async identityFor(req: ClassyRequest, res: FastifyReply): Promise<ClassyIdentity> {
+		try {
+			return await RouteUtil.resolveIdentity(req);
+		} catch (err) {
+			if (err instanceof ViewAsError) {
+				GeneralRoutes.handleError(err.status, err.message, res);
+				return null;
+			}
+			throw err;
+		}
+	}
+
 	public static handleError(code: number, msg: string, res: FastifyReply): void {
 		RouteUtil.handleError("GeneralRoutes", code, msg, res);
 	}
 
-	private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
+	private static async performGetPerson(identity: ClassyIdentity): Promise<StudentTransport> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// NOTE: validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -353,10 +402,13 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+	private static async performPostTeam(identity: ClassyIdentity, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performPostTeam(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -414,7 +466,11 @@ export default class GeneralRoutes implements IREST {
 			}
 
 			const dbc = DatabaseController.getInstance();
-			await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
+			// personId is the authenticated caller, always. When an admin forms this team while
+			// viewing as a student, custom.actedAs records who they were acting as
+			await dbc.writeAudit(AuditLabel.TEAM_STUDENT, identity.actedBy, {}, team, {
+				actedAs: identity.actedAs,
+			});
 
 			const teamTrans: TeamTransport = {
 				id: team.id,
@@ -428,9 +484,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetGrades(user: string, token: string): Promise<GradeTransport[]> {
+	private static async performGetGrades(identity: ClassyIdentity): Promise<GradeTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -446,9 +505,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetTeams(user: string, token: string): Promise<TeamTransport[]> {
+	private static async performGetTeams(identity: ClassyIdentity): Promise<TeamTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.error("GeneralRoutes::performGetTeams(..) - isValid === false");
 			throw new Error("Invalid credentials");
@@ -467,9 +529,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetRepos(user: string, token: string): Promise<RepositoryTransport[]> {
+	private static async performGetRepos(identity: ClassyIdentity): Promise<RepositoryTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.error("GeneralRoutes::performGetRepos(..) - isValid === false");
 			throw new Error("Invalid credentials");

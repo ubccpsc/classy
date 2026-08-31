@@ -14,7 +14,7 @@ import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
 import { CSVPrairieLearnParser } from "@backend/server/common/CSVPrairieLearnParser";
 import IREST, { type ClassyRequest } from "@backend/server/IREST";
-import { AuditLabel, Person, Repository, TeamStatus } from "@backend/Types";
+import { AuditLabel, Person, PersonKind, Repository, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import {
@@ -45,6 +45,12 @@ import { RouteUtil } from "./RouteUtil";
 
 export default class AdminRoutes implements IREST {
 	private static ghc = new GitHubController(GitHubActions.getInstance());
+
+	/**
+	 * Who may be viewed as; must agree with RouteUtil::resolveIdentity, which is what actually
+	 * enforces it on every request.
+	 */
+	private static readonly VIEW_AS_KINDS: PersonKind[] = [PersonKind.STUDENT, PersonKind.WITHDRAWN, PersonKind.STAFF];
 	private static rc = new RepositoryController();
 
 	public static handleError(code: number, msg: string, res: FastifyReply): void {
@@ -83,7 +89,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::teamCreate(..) - start");
 
 		// handled by isAdmin in the route chain
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		// NOTE: read from the body. These routes declare no path parameters; the values used to
 		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
 		// body into it. Fastify keeps params and body separate.
@@ -334,7 +340,7 @@ export default class AdminRoutes implements IREST {
 		// NOTE: the actor comes from the auth headers, like every other handler here. This used to
 		// read req.params.user, which is never populated: bodyParser({mapParams: true}) maps the
 		// body and query into params, not headers, so the audit record recorded an undefined actor.
-		const user = RouteUtil.getUser(req);
+		const user = RouteUtil.getAuthenticatedUser(req);
 		// delivId is part of the path, so a missing one produces a 404 before we get here
 		const delivId = req.params.delivId;
 		try {
@@ -550,7 +556,7 @@ export default class AdminRoutes implements IREST {
 		// authentication handled by preceding action in chain above (see registerRoutes)
 
 		try {
-			const userName = RouteUtil.getUser(req);
+			const userName = RouteUtil.getAuthenticatedUser(req);
 			const path = await AdminRoutes.getUploadedFilePath(req, "classlist");
 
 			// @fastify/multipart deletes the temp file saved by saveRequestFiles() as soon
@@ -580,7 +586,7 @@ export default class AdminRoutes implements IREST {
 		try {
 			const delivId = req.params.delivId;
 			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
-			const userName = RouteUtil.getUser(req);
+			const userName = RouteUtil.getAuthenticatedUser(req);
 			const csvParser = new CSVParser();
 
 			const grades = await csvParser.processGrades(userName, delivId, path);
@@ -606,7 +612,7 @@ export default class AdminRoutes implements IREST {
 		// authentication handled by preceding action in chain above (see registerRoutes)
 		try {
 			const path = await AdminRoutes.getUploadedFilePath(req, "gradelist");
-			const userName = RouteUtil.getUser(req);
+			const userName = RouteUtil.getAuthenticatedUser(req);
 			const csvParser = new CSVPrairieLearnParser();
 
 			const grades = await csvParser.processGrades(userName, path);
@@ -630,7 +636,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postDeliverable(..) - start");
 
 		// isValid handled by preceding action in chain above (see registerRoutes)
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		const delivTrans = req.body as DeliverableTransport;
 		Log.info("AdminRoutes::postDeliverable() - body: " + JSON.stringify(delivTrans));
 		try {
@@ -670,6 +676,47 @@ export default class AdminRoutes implements IREST {
 	 * @param next
 	 */
 	/**
+	 * Records that an admin is about to start previewing Classy as another user, and answers with who
+	 * that is so the UI can name them in its banner. This grants nothing. The view-as header is what
+	 * each student route checks, on every request.
+	 *
+	 * @param req
+	 * @param res
+	 * @returns {Promise<void>}
+	 */
+	private static async postViewAs(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const target = req.params.personId;
+		const actedBy = RouteUtil.getAuthenticatedUser(req);
+		Log.info("AdminRoutes::postViewAs( " + target + " ) - start; admin: " + actedBy);
+
+		try {
+			const person = await new PersonController().getPerson(target);
+			if (person === null) {
+				return AdminRoutes.handleError(404, "Cannot view as unknown user: " + target, res);
+			}
+			if (AdminRoutes.VIEW_AS_KINDS.indexOf(person.kind) < 0) {
+				return AdminRoutes.handleError(403, "Cannot view as " + target + "; only students and staff can be viewed as.", res);
+			}
+
+			await DatabaseController.getInstance().writeAudit(
+				AuditLabel.IMPERSONATE,
+				actedBy,
+				{},
+				{},
+				{
+					viewAs: person.id,
+					started: Date.now(),
+				}
+			);
+
+			res.send({ success: PersonController.personToTransport(person) });
+			return;
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to start view-as session; ERROR: " + err.message, res);
+		}
+	}
+
+	/**
 	 * Starts a background job of the given kind.
 	 *
 	 * Returns as soon as the job is recorded, NOT when it finishes: a sync can run for 20 minutes,
@@ -684,7 +731,7 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::postJob( " + kind + " ) - start");
 
 		try {
-			const user = RouteUtil.getUser(req);
+			const user = RouteUtil.getAuthenticatedUser(req);
 			const job = await JobController.getInstance().start(kind, user, req.body ?? {});
 			res.send({ success: job });
 			return;
@@ -759,7 +806,7 @@ export default class AdminRoutes implements IREST {
 	private static async postCourse(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("AdminRoutes::postCourse(..) - start");
 
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		// NOTE: read from the body. These routes declare no path parameters; the values used to
 		// arrive via req.params only because restify's bodyParser({ mapParams: true }) folded the
 		// body into it. Fastify keeps params and body separate.
@@ -933,7 +980,7 @@ export default class AdminRoutes implements IREST {
 
 		// if these params are missing the client will get 404 since they are part of the path
 		const teamId = req.params.teamId;
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamDelete(userName, teamId);
 			Log.trace("AdminRoutes::teamDelete(..) - done; success: " + success);
@@ -993,7 +1040,7 @@ export default class AdminRoutes implements IREST {
 		const memberId = req.params.memberId;
 		Log.info("AdminRoutes::teamAddMember(..) - team: " + teamId + "; member: " + memberId);
 
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamAddMember(userName, teamId, memberId);
 			const addedMembers = JSON.stringify(success.people);
@@ -1069,7 +1116,7 @@ export default class AdminRoutes implements IREST {
 		const memberId = req.params.memberId;
 		Log.info("AdminRoutes::teamRemoveMember(..) - team: " + teamId + "; member: " + memberId);
 
-		const userName = RouteUtil.getUser(req);
+		const userName = RouteUtil.getAuthenticatedUser(req);
 		try {
 			const success = await AdminRoutes.handleTeamRemoveMember(userName, teamId, memberId);
 			Log.info("AdminRoutes::teamRemoveMember(..) - done; team: " + teamId + "; member: " + memberId); // + "; success:", success);
@@ -1155,6 +1202,8 @@ export default class AdminRoutes implements IREST {
 		server.get("/portal/admin/jobs", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJobs);
 		server.get("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getJob);
 		server.post("/portal/admin/job/:kind", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postJob);
+
+		server.post("/portal/admin/viewAs/:personId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postViewAs);
 		server.delete("/portal/admin/job/:jobId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteJob);
 
 		server.post("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postClasslist);

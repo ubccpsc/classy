@@ -9,6 +9,7 @@ import { OnsButtonElement, OnsPageElement } from "onsenui";
 import { Factory } from "./Factory";
 import { Network } from "./util/Network";
 import { UI } from "./util/UI";
+import { ViewAs } from "./util/ViewAs";
 import { IView } from "./views/IView";
 
 declare let classportal: any;
@@ -99,6 +100,11 @@ export class App {
 
 				// update login button result
 				that.toggleLoginButton();
+
+				// drawn on every page: an admin must never be able to lose track of whose Classy this is
+				ViewAs.renderBanner(() => {
+					window.location.reload();
+				});
 
 				if (that.view !== null) {
 					Log.trace("App::init()::show - calling view.renderPage for: " + pageName);
@@ -213,6 +219,16 @@ export class App {
 			// push to correct handler
 			params.isAdmin = localStorage.isAdmin === "true"; // localStorage returns strings
 			params.isStaff = localStorage.isStaff === "true"; // localStorage returns strings
+
+			// While viewing as someone, the student view is the only view. One mode at a time,
+			// so a click is never ambiguous about which identity it belongs to; the banner's Return
+			// button is the way out.
+			if (ViewAs.isActive() === true) {
+				Log.info("App::handleMainPageClick(..) - viewing as: " + ViewAs.target());
+				params.isAdmin = false;
+				params.isStaff = false;
+			}
+
 			if (params.isAdmin || params.isStaff) {
 				Log.trace("App::handleMainPageClick(..) - admin");
 				// if we"re admin, keep the logging on
