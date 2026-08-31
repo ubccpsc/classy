@@ -4,6 +4,7 @@ import "mocha";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubController, GitTeamTuple } from "@backend/controllers/GitHubController";
 import { RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -169,38 +170,6 @@ describe("GitHubController provisioning paths", function () {
 		expect(after.URL, "informational, but it should still be recorded").to.not.be.null;
 	});
 
-	it("Should resume such a repo without adding a second webhook.", async function () {
-		await makeRepo(REPO_RESUMED);
-		const team = await dbc.getTeam(TEAM_ID);
-
-		const gha = new RecordingActions();
-		const ghc = new GitHubController(gha);
-
-		// first pass: a normal provision, which adds the webhook
-		const first = await ghc.provisionRepository(REPO_RESUMED, [team], IMPORT_URL);
-		expect(first, "setup: the first provision must succeed").to.be.true;
-		expect(gha.addWebhookCalls).to.equal(1);
-
-		// put the record back into the state a finalization failure leaves behind
-		const halfDone = await dbc.getRepository(REPO_RESUMED);
-		halfDone.gitHubStatus = RepoStatus.CREATED;
-		await dbc.writeRepository(halfDone);
-		const teamAgain = await dbc.getTeam(TEAM_ID);
-		teamAgain.gitHubStatus = TeamStatus.NOT_CREATED;
-		await dbc.writeTeam(teamAgain);
-
-		// second pass: the repo already exists, so this resumes at finalization
-		const second = await ghc.provisionRepository(REPO_RESUMED, [teamAgain], IMPORT_URL);
-		expect(second, "resuming must finish the repo").to.be.true;
-
-		// re-running finalization must not add a duplicate hook: every push would fire AutoTest twice
-		expect(gha.addWebhookCalls, "the webhook must not be added again").to.equal(1);
-		expect(gha.deleteRepoCalls, "resuming must not delete the repo").to.equal(0);
-
-		const after = await dbc.getRepository(REPO_RESUMED);
-		expect(after.gitHubStatus).to.equal(RepoStatus.READY);
-	});
-
 	it("Should prune a template import to the requested branch and rename it to main.", async function () {
 		// NOTE: this is how CPSC 310 provisions: importURL is "owner/template#branch". The parsing
 		// of that string had a bug that silently disabled pruning, and the rename that follows it was
@@ -319,30 +288,110 @@ describe("GitHubController provisioning paths", function () {
 		expect(message).to.contain(missing.id);
 	});
 
-	it("Should not call a repo READY when its webhook could not be added.", async function () {
-		// NOTE: a repo without its webhook is not finished, whatever else worked: AutoTest never hears
-		// about pushes to it, silently, for the whole term. This used to be a warning, so such a repo
-		// was marked provisioned and nothing ever revisited it.
-		const repoId = "ghcProvisionSpecNoWebhook";
-		await makeRepo(repoId);
-		const team = await dbc.getTeam(TEAM_ID);
+	describe("webhooks", function () {
+		const config = Config.getInstance();
+		let realHost: string;
 
-		const gha = new WebhookFailsActions();
-		const ghc = new GitHubController(gha);
+		beforeEach(function () {
+			realHost = config.getProp(ConfigKey.publichostname);
+		});
 
-		let message: string = null;
-		try {
-			await ghc.provisionRepository(repoId, [team], IMPORT_URL);
-		} catch (err) {
-			message = err.message;
-		}
-		Log.test("message: " + message);
-		expect(message, "a repo with no webhook is not provisioned").to.contain("finalization failed");
+		afterEach(function () {
+			config.setProp(ConfigKey.publichostname, realHost);
+		});
 
-		// it stays CREATED: the repo is on GitHub and must not be deleted, but provisioning it again
-		// retries the webhook
-		const after = await dbc.getRepository(repoId);
-		expect(after.gitHubStatus).to.equal(RepoStatus.CREATED);
-		expect(gha.deleteRepoCalls, "the repo must be kept").to.equal(0);
+		it("Should recognize which deployments GitHub can reach.", function () {
+			// GitHub refuses a hook it cannot reach, so this decides whether a missing webhook is a
+			// failure or simply impossible here
+			expect(GitHubController.webhooksSupported("https://classy.cs.ubc.ca/portal/githubWebhook")).to.be.true;
+			expect(GitHubController.webhooksSupported("https://localhost/portal/githubWebhook")).to.be.false;
+			expect(GitHubController.webhooksSupported("https://localhost:3000/portal/githubWebhook")).to.be.false;
+			expect(GitHubController.webhooksSupported("http://127.0.0.1:3000/portal/githubWebhook")).to.be.false;
+			expect(GitHubController.webhooksSupported("https://192.168.1.10/portal/githubWebhook")).to.be.false;
+			expect(GitHubController.webhooksSupported("https://10.0.0.4/portal/githubWebhook")).to.be.false;
+			expect(GitHubController.webhooksSupported("")).to.be.false;
+		});
+
+		it("Should not call a repo READY when its webhook could not be added.", async function () {
+			// NOTE: a repo without its webhook is not finished, whatever else worked: AutoTest never
+			// hears about pushes to it, silently, for the whole term. This used to be a warning, so
+			// such a repo was marked provisioned and nothing ever revisited it.
+			config.setProp(ConfigKey.publichostname, "https://classy.example.com"); // a host GitHub could reach
+
+			const repoId = "ghcProvisionSpecNoWebhook";
+			await makeRepo(repoId);
+			const team = await dbc.getTeam(TEAM_ID);
+
+			const gha = new WebhookFailsActions();
+			const ghc = new GitHubController(gha);
+
+			let message: string = null;
+			try {
+				await ghc.provisionRepository(repoId, [team], IMPORT_URL);
+			} catch (err) {
+				message = err.message;
+			}
+			Log.test("message: " + message);
+			expect(message, "a repo with no webhook is not provisioned").to.contain("finalization failed");
+
+			// it stays CREATED: the repo is on GitHub and must not be deleted, but provisioning it
+			// again retries the webhook
+			const after = await dbc.getRepository(repoId);
+			expect(after.gitHubStatus).to.equal(RepoStatus.CREATED);
+			expect(gha.deleteRepoCalls, "the repo must be kept").to.equal(0);
+		});
+
+		it("Should resume such a repo without adding a second webhook.", async function () {
+			config.setProp(ConfigKey.publichostname, "https://classy.example.com"); // a host GitHub could reach
+			await makeRepo(REPO_RESUMED);
+			const team = await dbc.getTeam(TEAM_ID);
+
+			const gha = new RecordingActions();
+			const ghc = new GitHubController(gha);
+
+			// first pass: a normal provision, which adds the webhook
+			const first = await ghc.provisionRepository(REPO_RESUMED, [team], IMPORT_URL);
+			expect(first, "setup: the first provision must succeed").to.be.true;
+			expect(gha.addWebhookCalls).to.equal(1);
+
+			// put the record back into the state a finalization failure leaves behind
+			const halfDone = await dbc.getRepository(REPO_RESUMED);
+			halfDone.gitHubStatus = RepoStatus.CREATED;
+			await dbc.writeRepository(halfDone);
+			const teamAgain = await dbc.getTeam(TEAM_ID);
+			teamAgain.gitHubStatus = TeamStatus.NOT_CREATED;
+			await dbc.writeTeam(teamAgain);
+
+			// second pass: the repo already exists, so this resumes at finalization
+			const second = await ghc.provisionRepository(REPO_RESUMED, [teamAgain], IMPORT_URL);
+			expect(second, "resuming must finish the repo").to.be.true;
+
+			// re-running finalization must not add a duplicate hook: every push would fire AutoTest twice
+			expect(gha.addWebhookCalls, "the webhook must not be added again").to.equal(1);
+			expect(gha.deleteRepoCalls, "resuming must not delete the repo").to.equal(0);
+
+			const after = await dbc.getRepository(REPO_RESUMED);
+			expect(after.gitHubStatus).to.equal(RepoStatus.READY);
+		});
+
+		it("Should still provision where GitHub cannot deliver webhooks at all.", async function () {
+			// dev and CI deployments are not reachable from GitHub, which rejects the hook with a 422
+			// every time. Provisioning must not be held to a requirement the environment makes
+			// impossible -- it would just fail every repo, forever.
+			config.setProp(ConfigKey.publichostname, "https://localhost:3000");
+
+			const repoId = "ghcProvisionSpecLocalhostWebhook";
+			await makeRepo(repoId);
+			const team = await dbc.getTeam(TEAM_ID);
+
+			const gha = new WebhookFailsActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.provisionRepository(repoId, [team], IMPORT_URL), "provisioning must still work").to.be.true;
+			expect(gha.addWebhookCalls, "and must not waste a call GitHub will reject").to.equal(0);
+
+			const after = await dbc.getRepository(repoId);
+			expect(after.gitHubStatus).to.equal(RepoStatus.READY);
+		});
 	});
 });

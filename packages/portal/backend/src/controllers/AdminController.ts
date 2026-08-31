@@ -1069,9 +1069,12 @@ export class AdminController {
 				// A repo that exists but has no webhook is CREATED, not READY: it was never
 				// finalized, and calling it READY would hide it from the retry that would fix it. The
 				// extra listWebhooks call is affordable in a check an admin presses by hand.
+				//
+				// Unless GitHub cannot reach this deployment at all (dev, CI), in GitHub cannot
+				// create a localhost webook.
 				if (repo.gitHubStatus !== RepoStatus.RELEASED) {
-					const hooks = await gha.listWebhooks(repo.id);
-					const finalized = hooks.length > 0;
+					const webhooksPossible = GitHubController.webhooksSupported(config.getProp(ConfigKey.publichostname) + "/portal/githubWebhook");
+					const finalized = webhooksPossible === false || (await gha.listWebhooks(repo.id)).length > 0;
 					await ProvisionState.repairRepoStatus(
 						repo,
 						finalized ? RepoStatus.READY : RepoStatus.CREATED,

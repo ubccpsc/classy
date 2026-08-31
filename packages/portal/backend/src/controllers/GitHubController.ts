@@ -175,10 +175,41 @@ export class GitHubController implements IGitHubController {
 	 * @param resuming whether an earlier attempt already created this repo on GitHub
 	 * @returns {Promise<boolean>}
 	 */
+
+	/**
+	 * Whether GitHub could deliver a webhook to this Classy instance. GitHub refuses to create a
+	 * hook whose URL is not reachable over the public internet.
+	 *
+	 * @param webhookAddress the address that would be registered (PUBLICHOSTNAME based)
+	 * @returns {boolean}
+	 */
+	public static webhooksSupported(webhookAddress: string): boolean {
+		if (typeof webhookAddress !== "string" || webhookAddress.length === 0) {
+			return false;
+		}
+
+		const host = webhookAddress
+			.replace(/^https?:\/\//, "")
+			.split("/")[0]
+			.split(":")[0]
+			.toLowerCase();
+
+		if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "" || host.endsWith(".local")) {
+			return false;
+		}
+
+		// RFC1918: GitHub cannot reach these either
+		if (/^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
+			return false;
+		}
+
+		return true;
+	}
+
 	/**
 	 * Adds the AutoTest webhook, without adding a second one when finalization is being re-run.
 	 *
-	 * NOTE: the existence check is skipped for a repo that was just created, which has no hooks; it
+	 * The existence check is skipped for a repo that was just created, which has no hooks; it
 	 * would otherwise cost an extra API call per repo on the provisioning path.
 	 */
 	private async addWebhookOnce(repoName: string, endpoint: string, checkExisting: boolean): Promise<boolean> {
@@ -297,10 +328,24 @@ export class GitHubController implements IGitHubController {
 		try {
 			// NOTE: these four calls do not depend on each other, so they are issued together
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add teams, webhook and settings");
+			// NOTE: in a deployment GitHub cannot reach (dev, CI), the hook is skipped rather than
+			// attempted: GitHub would reject it with a 422 every time, and provisioning must not be
+			// held to a requirement the environment makes impossible.
+			const webhooksPossible = GitHubController.webhooksSupported(WEBHOOK_ADDRESS);
+			if (webhooksPossible === false) {
+				Log.warn(
+					"GitHubController::finalizeProvisionRepository( " +
+						repoName +
+						" ) - webhooks are not possible for " +
+						WEBHOOK_ADDRESS +
+						"; AutoTest will not see pushes to this repo"
+				);
+			}
+
 			const [staffAdd, adminAdd, createHook, updateWorked] = await Promise.all([
 				this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin"),
 				this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin"),
-				this.addWebhookOnce(repoName, WEBHOOK_ADDRESS, resuming),
+				webhooksPossible === true ? this.addWebhookOnce(repoName, WEBHOOK_ADDRESS, resuming) : Promise.resolve(true),
 				this.gha.updateRepo(repoName),
 			]);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - staff team: " + staffAdd.teamName);
@@ -308,11 +353,11 @@ export class GitHubController implements IGitHubController {
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - webhook successful: " + createHook);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - done repo settings: " + updateWorked);
 
-			// NOTE: a repo without its webhook is not finished, whatever else worked: AutoTest never
-			// hears about pushes to it, silently, for the whole term. This used to be a warning, which
-			// was survivable when "provisioned" was vague, but RepoStatus.READY now means "webhook and
-			// staff teams are attached" -- and dbSanityCheck uses the webhook as its test for exactly
-			// that. Failing here leaves the repo CREATED, which is retryable.
+			// NOTE: where a webhook *is* possible, a repo without one is not finished, whatever else
+			// worked: AutoTest never hears about pushes to it, silently, for the whole term. This used
+			// to be a warning, which was survivable when "provisioned" was vague, but RepoStatus.READY
+			// now means "webhook and staff teams are attached". Failing here leaves the repo CREATED,
+			// which is retryable.
 			if (createHook === false) {
 				Log.error("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added; not finalized");
 				return false;
