@@ -198,9 +198,9 @@ export class AdminProvisionPage extends AdminPage {
 
 	private clearLists() {
 		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const provisionedUL = document.getElementById("repositoryProvisionedUL") as HTMLUListElement;
+		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
 		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
+		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
 
 		const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
 		delivSelect.disabled = false;
@@ -209,9 +209,13 @@ export class AdminProvisionPage extends AdminPage {
 		toReleaseSelect.disabled = false;
 
 		toProvisionSelect.innerHTML = "";
-		provisionedUL.innerHTML = "";
 		toReleaseSelect.innerHTML = "";
-		releasedUL.innerHTML = "";
+		if (provisionedSelect !== null) {
+			provisionedSelect.innerHTML = "";
+		}
+		if (releasedSelect !== null) {
+			releasedSelect.innerHTML = "";
+		}
 	}
 
 	private async handleDelivChanged(): Promise<void> {
@@ -265,9 +269,9 @@ export class AdminProvisionPage extends AdminPage {
 		}
 
 		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const provisionedUL = document.getElementById("repositoryProvisionedUL") as HTMLUListElement;
+		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
 		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
+		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
 
 		try {
 			this.clearLists();
@@ -288,7 +292,7 @@ export class AdminProvisionPage extends AdminPage {
 				}
 			}
 
-			AdminProvisionPage.fillList(provisionedUL, provisioned.sort(), "No provisioned repositories");
+			AdminProvisionPage.fillSelect(provisionedSelect, provisioned.sort(), "No provisioned repositories");
 			// nothing exists until Prepare has been run, which is a different state from "all done"
 			AdminProvisionPage.fillSelect(
 				toProvisionSelect,
@@ -310,25 +314,19 @@ export class AdminProvisionPage extends AdminPage {
 				}
 			}
 
-			AdminProvisionPage.fillList(releasedUL, released.sort(), "No released repositories");
+			AdminProvisionPage.fillSelect(releasedSelect, released.sort(), "No released repositories");
 			AdminProvisionPage.fillSelect(toReleaseSelect, toRelease.sort(), "Nothing to release");
 		} catch (err) {
 			Log.error("AdminProvisionPage::refreshLists(..) - ERROR: " + err);
 		}
 	}
 
-	private static fillList(list: HTMLUListElement, names: string[], emptyText: string): void {
-		if (names.length === 0) {
-			names = [emptyText];
-		}
-		for (const name of names) {
-			const li = document.createElement("li");
-			li.appendChild(document.createTextNode(name));
-			list.appendChild(li);
-		}
-	}
-
 	private static fillSelect(select: HTMLSelectElement, names: string[], emptyText: string): void {
+		if (select === null) {
+			// course has customised its admin.html and removed (or not yet synced) this list; the
+			// other lists on the page must still fill, so this is not an error
+			return;
+		}
 		if (names.length === 0) {
 			const option = document.createElement("option");
 			option.text = emptyText;
