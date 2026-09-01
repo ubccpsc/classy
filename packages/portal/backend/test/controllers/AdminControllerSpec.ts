@@ -498,6 +498,173 @@ describe("AdminController", () => {
 		expect(after.cloneURL).to.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
 
+	describe("performUnrelease", function () {
+		/**
+		 * A controller whose unreleaseRepository can be told how to behave per repo.
+		 *
+		 * performUnrelease is the loop between the job agent and GitHubController: the failure
+		 * policy, cancellation, and the skip-if-not-released branch all live here, and none of them
+		 * are reachable from the GitHubController tests.
+		 */
+		class ScriptedUnreleaseController implements IGitHubController {
+			public seen: string[] = [];
+
+			public constructor(private readonly behaviour: (repoId: string) => boolean | Error) {}
+
+			public async provisionRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async releaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async unreleaseRepository(repo: Repository): Promise<boolean> {
+				this.seen.push(repo.id);
+				const outcome = this.behaviour(repo.id);
+				if (outcome instanceof Error) {
+					throw outcome;
+				}
+				return outcome;
+			}
+
+			public async updateBranchProtection(): Promise<boolean> {
+				return true;
+			}
+
+			public async createIssues(): Promise<boolean> {
+				return true;
+			}
+
+			public getRepositoryUrl(): string {
+				return "https://example.com";
+			}
+
+			public async getTeamUrl(): Promise<string> {
+				return "https://example.com";
+			}
+		}
+
+		function makeRepos(prefix: string, count: number, status: RepoStatus): Repository[] {
+			const stamp = Date.now();
+			const repos: Repository[] = [];
+			for (let n = 1; n <= count; n++) {
+				repos.push({
+					id: prefix + "_" + n + "_" + stamp,
+					delivId: TestHarness.DELIVIDPROJ,
+					teamIds: [],
+					URL: "https://example.com/x",
+					cloneURL: "https://example.com/x.git",
+					gitHubStatus: status,
+					custom: {},
+				} as Repository);
+			}
+			return repos;
+		}
+
+		it("Should skip a repo that is not released rather than failing it.", async () => {
+			// only a RELEASED repo has student teams to detach; anything else is a no-op, not an error
+			const repos = makeRepos("UNREL_SKIP", 3, RepoStatus.READY);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen, "GitHub must not be asked about a repo that is not released").to.deep.equal([]);
+			expect(result.length, "and nothing is reported as un-released").to.equal(0);
+		});
+
+		it("Should un-release every released repo and report them.", async () => {
+			const repos = makeRepos("UNREL_OK", 3, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen.length).to.equal(3);
+			expect(result.map((repo) => repo.id)).to.deep.equal(repos.map((repo) => repo.id));
+		});
+
+		it("Should keep going when one repo cannot be un-released.", async () => {
+			// the continue-on-failure half: one bad repo must not cost the other four
+			const repos = makeRepos("UNREL_ONEBAD", 5, RepoStatus.RELEASED);
+			const bad = repos[1].id;
+			const gh = new ScriptedUnreleaseController((id) => id !== bad);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen.length, "every repo is still attempted").to.equal(5);
+			expect(result.length, "the failure is excluded from the result").to.equal(4);
+			expect(result.map((repo) => repo.id)).to.not.contain(bad);
+		});
+
+		it("Should record a thrown failure through the job context and continue.", async () => {
+			const repos = makeRepos("UNREL_THROW", 4, RepoStatus.RELEASED);
+			const bad = repos[0].id;
+			const gh = new ScriptedUnreleaseController((id) => (id === bad ? new Error("detach exploded") : true));
+
+			const errors: string[] = [];
+			const progress: number[] = [];
+			const ctx = {
+				isCancelled: () => false,
+				progress: async (done: number) => {
+					progress.push(done);
+				},
+				error: async (msg: string) => {
+					errors.push(msg);
+				},
+			};
+
+			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+
+			expect(errors.length, "the error is reported to the job").to.equal(1);
+			expect(errors[0]).to.contain("detach exploded");
+			expect(result.length).to.equal(3);
+			expect(progress.length, "progress is reported once per repo, failures included").to.equal(4);
+		});
+
+		it("Should stop when the job is cancelled, keeping what it already did.", async () => {
+			const repos = makeRepos("UNREL_CANCEL", 5, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			// cancellation is checked before each repo, so this stops the run after the second
+			let calls = 0;
+			const ctx = {
+				isCancelled: () => {
+					calls++;
+					return calls > 2;
+				},
+				progress: async () => {
+					//
+				},
+				error: async () => {
+					//
+				},
+			};
+
+			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+
+			expect(gh.seen.length, "the run stops early").to.equal(2);
+			expect(result.length, "and keeps what it finished").to.equal(2);
+		});
+
+		it("Should abandon the run as soon as a failure is fatal.", async () => {
+			// same rule as provisioning: an expired token fails every remaining repo identically,
+			// so the run stops rather than making partial state across the whole course
+			const repos = makeRepos("UNREL_FATAL", 5, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}'));
+
+			let aborted: any = null;
+			try {
+				await new AdminController(gh).performUnrelease(repos);
+			} catch (err) {
+				aborted = err;
+			}
+
+			expect(aborted, "a fatal failure must stop the run").to.not.be.null;
+			expect(aborted.name).to.equal("ProvisionAbortedError");
+			expect(gh.seen.length, "it must not try the other four").to.equal(1);
+		});
+	});
+
 	it("Should abandon a provisioning run as soon as a failure is fatal.", async () => {
 		// NOTE: three failures are needed before the startup rule fires, but a fatal failure -- an
 		// expired token, an exhausted rate limit -- will happen to every remaining repo too, so the

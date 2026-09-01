@@ -139,6 +139,44 @@ describe("AutoTest Routes", function () {
 			stub.reset();
 		});
 
+		it("Should not count the AutoTest health poll as a forwarded request.", async function () {
+			// BackendServer::start polls GET /status on an un-awaited 500ms timer. Once this stub has
+			// redirected autotestUrl/autotestPort, that poll arrives *here*, at whatever point in the
+			// suite the timer happens to fire -- which used to be recorded as a phantom extra request
+			// and fail whichever unrelated test was running at the time (seen in 2 of 4 full-suite
+			// runs, on a different test each time).
+			//
+			// Driven directly rather than by waiting out the timer, so this is deterministic.
+			const config = Config.getInstance();
+			const url = config.getProp(ConfigKey.autotestUrl) + ":" + config.getProp(ConfigKey.autotestPort) + "/status";
+
+			const before = stub.healthChecks;
+			const response = await fetch(url, { method: "GET" });
+
+			expect(response.status, "the poll is still answered").to.equal(200);
+
+			// NOTE: greaterThan, not exactly +1. The background timer can fire during this test as
+			// well, making it +2 -- asserting an exact count here would reintroduce exactly the
+			// timing dependency this fix removes (it failed 2 of 5 runs before this was loosened).
+			// The invariant that matters is the line below: polls never land in `requests`.
+			expect(stub.healthChecks, "and counted as a health check").to.be.greaterThan(before);
+			expect(stub.requests, "but never as a request the routes forwarded").to.have.lengthOf(0);
+		});
+
+		it("Should still record a real forwarded request after a health poll.", async function () {
+			// the filter must not swallow traffic that matters
+			const config = Config.getInstance();
+			const url = config.getProp(ConfigKey.autotestUrl) + ":" + config.getProp(ConfigKey.autotestPort) + "/status";
+			await fetch(url, { method: "GET" });
+
+			stub.body = { deleted: true };
+			const response = await request(app).delete("/portal/at/docker/image/d0-latest").set({ user: TestHarness.ADMIN1.github });
+
+			expect(response.status).to.equal(200);
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.url).to.equal("/docker/image/d0-latest");
+		});
+
 		it("Should refuse to list Docker images for a student.", async function () {
 			// the Docker endpoints are admin-only, and nothing exercised that check
 			const response = await request(app).get("/portal/at/docker/images").set({ user: TestHarness.USER1.github });

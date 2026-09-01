@@ -7,7 +7,7 @@ import { DeliverablesController } from "@backend/controllers/DeliverablesControl
 import { GitHubError } from "@backend/controllers/GitHubActions";
 import { ProvisionState } from "@backend/controllers/ProvisionState";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
-import { RepoStatus, Repository } from "@backend/Types";
+import { AuditLabel, RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -179,6 +179,188 @@ describe("ProvisionAgent", function () {
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
 			expect(calls, "it must not try the third").to.equal(2);
+		});
+
+		it("Should report what it un-released before a fatal failure stopped it.", async function () {
+			// the mirror of the release case; this is the path unreleasedSoFar exists for
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+
+			const repoIds: string[] = [];
+			for (const n of [1, 2, 3]) {
+				const repo: Repository = {
+					id: "provisionAgentSpecUnrelease" + n,
+					delivId: TestHarness.DELIVID0,
+					teamIds: [],
+					URL: "https://example.com/u" + n,
+					cloneURL: null,
+					gitHubStatus: RepoStatus.RELEASED,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				repoIds.push(repo.id);
+			}
+
+			let calls = 0;
+			const failingController: any = {
+				unreleaseRepository: async (repo: Repository) => {
+					calls++;
+					if (calls === 1) {
+						await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "spec");
+						return true;
+					}
+					throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
+				},
+				releaseRepository: async () => true,
+				provisionRepository: async () => true,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+
+			const failingAgent = new ProvisionAgent(new AdminController(failingController));
+
+			let caught: any = null;
+			try {
+				await failingAgent.unrelease(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught, "a fatal failure must stop the un-release").to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+
+			// read back from the database, since performUnrelease throws out of its loop
+			const partial = caught.summary;
+			expect(partial, "a stopped run still reports what it did").to.not.be.null;
+			expect(partial.unreleased, "the one that worked is kept").to.equal(1);
+			expect(partial.stoppedEarly).to.be.true;
+			expect(partial.stopReason).to.contain("fatally");
+			expect(calls, "it must not try the third").to.equal(2);
+		});
+	});
+
+	describe("un-release summaries", function () {
+		/**
+		 * The summary is what the admin UI renders, so its counts are a contract: the status line
+		 * says "N of M un-released" and lists what failed.
+		 */
+		async function makeRepo(id: string, status: RepoStatus): Promise<string> {
+			const repo: Repository = {
+				id: id,
+				delivId: TestHarness.DELIVID0,
+				teamIds: [],
+				URL: "https://example.com/" + id,
+				cloneURL: null,
+				gitHubStatus: status,
+				custom: {},
+			};
+			await dbc.writeRepository(repo);
+			return repo.id;
+		}
+
+		function controllerFor(behaviour: (repo: Repository) => Promise<boolean>): any {
+			return {
+				unreleaseRepository: behaviour,
+				releaseRepository: async () => true,
+				provisionRepository: async () => true,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+		}
+
+		before(async function () {
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+		});
+
+		it("Should count what it un-released, skipped, and failed.", async function () {
+			const ok = await makeRepo("agentUnrelOk_" + Date.now(), RepoStatus.RELEASED);
+			const bad = await makeRepo("agentUnrelBad_" + Date.now(), RepoStatus.RELEASED);
+			// not released, so there is nothing to detach: skipped, not failed
+			const skipped = await makeRepo("agentUnrelSkip_" + Date.now(), RepoStatus.READY);
+
+			const gh = controllerFor(async (repo: Repository) => {
+				if (repo.id === bad) {
+					return false;
+				}
+				await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "spec");
+				return true;
+			});
+
+			const summary = await new ProvisionAgent(new AdminController(gh)).unrelease(
+				TestHarness.DELIVID0,
+				[ok, bad, skipped],
+				TestHarness.ADMIN1.id
+			);
+
+			expect(summary.delivId).to.equal(TestHarness.DELIVID0);
+			expect(summary.requested).to.equal(3);
+			expect(summary.unreleased).to.equal(1);
+			expect(summary.skipped, "a repo that was not released is skipped").to.equal(1);
+			expect(summary.failed).to.deep.equal([bad]);
+			expect(summary.cancelled).to.be.false;
+			expect(summary.stoppedEarly).to.be.false;
+			expect(summary.stopReason).to.be.null;
+		});
+
+		it("Should write exactly one audit record naming the requester.", async function () {
+			const repoId = await makeRepo("agentUnrelAudit_" + Date.now(), RepoStatus.RELEASED);
+			const gh = controllerFor(async (repo: Repository) => {
+				await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "spec");
+				return true;
+			});
+
+			const before = await dbc.getAudits(AuditLabel.REPO_UNRELEASE, 1000);
+			await new ProvisionAgent(new AdminController(gh)).unrelease(TestHarness.DELIVID0, [repoId], TestHarness.ADMIN1.id);
+			const after = await dbc.getAudits(AuditLabel.REPO_UNRELEASE, 1000);
+
+			expect(after.length).to.equal(before.length + 1);
+			expect(after[0].personId).to.equal(TestHarness.ADMIN1.id);
+			expect((after[0].custom as any).delivId).to.equal(TestHarness.DELIVID0);
+			expect((after[0].custom as any).repoIds).to.deep.equal([repoId]);
+		});
+
+		it("Should report a cancelled run as cancelled.", async function () {
+			const first = await makeRepo("agentUnrelCancelA_" + Date.now(), RepoStatus.RELEASED);
+			const second = await makeRepo("agentUnrelCancelB_" + Date.now(), RepoStatus.RELEASED);
+
+			const gh = controllerFor(async (repo: Repository) => {
+				await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "spec");
+				return true;
+			});
+
+			// cancelled before the second repo starts
+			let checks = 0;
+			const ctx = {
+				isCancelled: () => {
+					checks++;
+					return checks > 1;
+				},
+				progress: async () => {
+					//
+				},
+				error: async () => {
+					//
+				},
+			};
+
+			const summary = await new ProvisionAgent(new AdminController(gh)).unrelease(
+				TestHarness.DELIVID0,
+				[first, second],
+				TestHarness.ADMIN1.id,
+				ctx
+			);
+
+			expect(summary.cancelled, "the summary must say the run was cancelled").to.be.true;
+			expect(summary.unreleased).to.equal(1);
+			expect(summary.failed, "the repo it never reached is not a failure").to.deep.equal([second]);
 		});
 	});
 });
