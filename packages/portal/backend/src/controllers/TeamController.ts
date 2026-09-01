@@ -3,7 +3,7 @@ import Log from "@common/Log";
 import { TeamTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
-import { Deliverable, GitHubStatus, Person, PersonKind, Team } from "../Types";
+import { Deliverable, Person, PersonKind, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { GitHubActions, IGitHubActions } from "./GitHubActions";
 
@@ -276,7 +276,7 @@ export class TeamController {
 					id: name,
 					delivId: deliv.id,
 					githubId: null,
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+					gitHubStatus: TeamStatus.NOT_CREATED,
 					URL: null,
 					personIds: peopleIds,
 					custom: custom,

@@ -1,4 +1,4 @@
-import * as restify from "restify";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import IREST from "@backend/server/IREST";
 
@@ -10,7 +10,7 @@ import Log from "@common/Log";
  * Nothing should be added to this class.
  */
 export default class DefaultCourseRoutes implements IREST {
-    public registerRoutes(server: restify.Server) {
+    public registerRoutes(server: FastifyInstance): void {
         Log.trace('DefaultCourseRoutes::registerRoutes()');
     }
 }

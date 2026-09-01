@@ -9,8 +9,11 @@ import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminProvisionPage } from "./AdminProvisionPage";
 import { AdminView } from "./AdminView";
+import { JobRunner, type JobSection } from "./JobRunner";
 
 export class AdminConfigTab extends AdminPage {
+	private readonly jobs: JobRunner;
+
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
 
@@ -20,6 +23,7 @@ export class AdminConfigTab extends AdminPage {
 	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		this.isAdmin = isAdmin;
+		this.jobs = new JobRunner(remote);
 		this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
 	}
 
@@ -37,6 +41,8 @@ export class AdminConfigTab extends AdminPage {
 
 		await this.deliverablesPage.init(opts);
 
+		await this.initJobSections();
+
 		(document.querySelector("#adminSubmitClasslist") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed");
 			evt.stopPropagation(); // prevents list item expansion
@@ -53,20 +59,6 @@ export class AdminConfigTab extends AdminPage {
 						Log.error("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: " + err.message);
 					});
 			}
-		};
-
-		(document.querySelector("#adminUpdateClasslist") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - update classlist pressed");
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.updateClasslistPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.error("AdminConfigTab::handleAdminConfig(..) - update classlist pressed; ERROR: " + err.message);
-				});
 		};
 
 		(document.querySelector("#adminSubmitGradeCSV") as OnsButtonElement).onclick = function (evt) {
@@ -119,66 +111,6 @@ export class AdminConfigTab extends AdminPage {
 				})
 				.catch(function (err) {
 					Log.info("AdminConfigTab::handleAdminConfig(..) - default deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminProvisionButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.provisionDeliverablePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - provision deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReleaseButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.releaseDeliverablePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - release deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReadWriteButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.repoEnableWritePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - read/write deliverable pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminReadOnlyButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.repoDisableWritePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - read only deliverable pressed; ERROR: " + err.message);
 				});
 		};
 
@@ -332,21 +264,6 @@ export class AdminConfigTab extends AdminPage {
 		//     });
 		// };
 
-		(document.querySelector("#adminPerformWithdrawButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed");
-			evt.stopPropagation(); // prevents list item expansion
-			evt.preventDefault();
-
-			that
-				.performWithdraw()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - perform withdraw pressed; ERROR: " + err.message);
-				});
-		};
-
 		UI.showModal("Retriving config / deliverable details.");
 
 		this.course = await AdminView.getCourse(this.remote);
@@ -354,21 +271,12 @@ export class AdminConfigTab extends AdminPage {
 		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
 		const gradesDeliverableDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 		const defaultDeliverableDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const provisionDropdown = document.querySelector("#adminProvisionDeliverableSelect") as HTMLSelectElement;
-		const releaseDropdown = document.querySelector("#adminReleaseDeliverableSelect") as HTMLSelectElement;
 		const teamDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
-
-		const repoReadDropdown = document.querySelector("#adminReadOnlyDeliverableSelect") as HTMLSelectElement;
-		const repoReadWriteDropdown = document.querySelector("#adminReadWriteDeliverableSelect") as HTMLSelectElement;
 
 		const defaultDeliverableOptions = ["--Not Set--"];
 		const provisionOptions = ["--Select--"];
-		const releaseOptions = ["--Select--"];
 		const gradesOptions = ["--Select--"];
 		const allDeliverables = ["--Select--"];
-
-		const repoReadOptions = ["--Select--"];
-		const repoWriteOptions = ["--Select--"];
 
 		for (const deliv of deliverables) {
 			if (deliv.shouldAutoTest === true) {
@@ -378,21 +286,14 @@ export class AdminConfigTab extends AdminPage {
 			if (deliv.shouldProvision === true) {
 				// can only provision or release deliverables that are provisionable
 				provisionOptions.push(deliv.id);
-				releaseOptions.push(deliv.id);
 				gradesOptions.push(deliv.id);
-				repoReadOptions.push(deliv.id);
-				repoWriteOptions.push(deliv.id);
 			}
 			allDeliverables.push(deliv.id);
 		}
 
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
 		this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
-		this.populateDelivSelect(provisionOptions, provisionDropdown);
-		this.populateDelivSelect(releaseOptions, releaseDropdown);
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
-		this.populateDelivSelect(repoReadOptions, repoReadDropdown);
-		this.populateDelivSelect(repoWriteOptions, repoReadWriteDropdown);
 
 		// set default deliverable, if it exists
 		for (const o of (defaultDeliverableDropdown as any).children) {
@@ -441,7 +342,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},
@@ -489,7 +390,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},
@@ -534,7 +435,7 @@ export class AdminConfigTab extends AdminPage {
 
 			const opts = {
 				headers: {
-					// "Content-Type": "application/json", // violates CORS; leave commented out
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
 					user: localStorage.user,
 					token: localStorage.token,
 				},
@@ -676,55 +577,6 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
-	private async performWithdraw(): Promise<void> {
-		Log.trace("AdminConfigTab::performWithdraw(..) - start");
-
-		const url = this.remote + "/portal/admin/withdraw";
-		const options: any = AdminView.getOptions();
-		options.method = "post";
-
-		Log.trace("AdminConfigTab::performWithdraw(..)");
-
-		options.body = JSON.stringify({}); // no params
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-
-		if (typeof body.success !== "undefined") {
-			UI.notificationToast("Withrdaw marking successful: " + body.success.message, 5000);
-		} else {
-			UI.showAlert(body.failure.message);
-		}
-	}
-
-	private async updateClasslistPressed(): Promise<void> {
-		Log.trace("AdminConfigTab::updateClasslistPressed(..) - start");
-
-		const url = this.remote + "/portal/admin/classlist";
-		const options: any = AdminView.getOptions();
-		options.method = "put";
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-
-		if (typeof body.success !== "undefined") {
-			let msg = "Classlist successfully updated:";
-			if (typeof body.success.created !== "undefined") {
-				msg = msg + " " + body.success.created.length + " added,";
-			}
-			if (typeof body.success.updated !== "undefined") {
-				msg = msg + " " + body.success.updated.length + " updated,";
-			}
-			if (typeof body.success.removed !== "undefined") {
-				msg = msg + " " + body.success.removed.length + " removed.";
-			}
-			UI.notificationToast(msg);
-			this.showClasslistChanges(body.success);
-		} else {
-			UI.showAlert(body.failure.message);
-		}
-	}
-
 	private showClasslistChanges(classlistChanges: any): void {
 		Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
 		const mapToTextAndSubtext = function (people: StudentTransport[]) {
@@ -758,6 +610,88 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
+	/**
+	 * Describes every button on this page whose work runs as a background job; JobRunner does the
+	 * starting and watching.
+	 */
+	private async initJobSections(): Promise<void> {
+		const sections: JobSection[] = [
+			{
+				kind: "classlist-update",
+				buttonId: "adminUpdateClasslist",
+				statusId: "adminUpdateClasslistStatus",
+				ran: "Last updated",
+				detail: function (summary: any): string {
+					return summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed.";
+				},
+				// only for the run this page started; arriving at a finished job should not reopen it
+				onFinished: (summary: any) => {
+					UI.notificationToast("Classlist updated: " + summary.classlist.length + " students processed.");
+					this.showClasslistChanges(summary);
+				},
+			},
+			{
+				kind: "student-withdraw",
+				buttonId: "adminPerformWithdrawButton",
+				statusId: "adminPerformWithdrawStatus",
+				ran: "Last run",
+				detail: function (summary: any): string {
+					return summary.message;
+				},
+				onFinished: (summary: any) => {
+					UI.notificationToast("Withdraw marking successful: " + summary.message, 5000);
+				},
+			},
+		];
+
+		if ((await this.isPrairieLearnEnabled()) === true) {
+			(document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement).style.display = "";
+			sections.push({
+				kind: "prairielearn-sync",
+				buttonId: "adminPrairieLearnSyncButton",
+				cancelButtonId: "adminPrairieLearnCancelButton",
+				statusId: "adminPrairieLearnStatus",
+				ran: "Last synced",
+				neverRun: "Never synced.",
+				detail: AdminConfigTab.describePrairieLearnSummary,
+			});
+		}
+
+		await Promise.all(sections.map((section) => this.jobs.init(section)));
+	}
+
+	/**
+	 * PrairieLearn is hidden unless PRAIRIELEARN_* is configured in Classy's .env.
+	 */
+	private async isPrairieLearnEnabled(): Promise<boolean> {
+		if (document.querySelector("#adminPrairieLearnSyncItem") === null) {
+			return false; // course has customised admin.html and removed the section
+		}
+		try {
+			const response = await fetch(this.remote + "/portal/config", AdminView.getOptions());
+			const json = await response.json();
+			return json?.success?.prairieLearnEnabled === true;
+		} catch (err) {
+			Log.warn("AdminConfigTab::isPrairieLearnEnabled() - could not read config; ERROR: " + err.message);
+			return false;
+		}
+	}
+
+	private static describePrairieLearnSummary(summary: any): string {
+		let detail = summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
+		if (summary.deliverablesCreated?.length > 0) {
+			detail += "; created " + summary.deliverablesCreated.join(", ");
+		}
+		if (summary.submissionsAfterClose > 0) {
+			detail += "; " + summary.submissionsAfterClose + " attempt(s) after close (not graded)";
+		}
+		if (summary.unmatchedUids?.length > 0) {
+			// a systematic mismatch looks like "nobody has submitted"; make it loud
+			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
+		}
+		return detail + ".";
+	}
+
 	private async defaultDeliverablePressed(): Promise<void> {
 		Log.trace("AdminConfigTab::defaultDeliverablePressed(..) - start");
 		const delivDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
@@ -780,102 +714,5 @@ export class AdminConfigTab extends AdminPage {
 		} else {
 			UI.showAlert(body.failure.message);
 		}
-	}
-
-	private async provisionDeliverablePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - start");
-		const start = Date.now();
-		const delivDropdown = document.querySelector("#adminProvisionDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - value: " + value);
-
-		if (value !== null && value !== "null") {
-			const url = this.remote + "/portal/admin/provision";
-			const options: any = AdminView.getOptions();
-			options.method = "post";
-
-			const provision: ProvisionTransport = { delivId: value, formSingle: false };
-			options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
-
-			UI.showAlert(
-				"This is going to be a long-running operation;" +
-					" you can monitor progress by watching your GitHub org for newly created repos " +
-					"(and teams, although they will not be added to the repos until you release). " +
-					"Please make sure this operation completes before you provision again or release these repos."
-			);
-
-			Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - POSTing to: " + url);
-			const response = await fetch(url, options);
-
-			if (response.status === 200 || response.status === 400) {
-				const body = await response.json();
-				if (typeof body.success !== "undefined") {
-					Log.info("Repositories provisioned: " + JSON.stringify(body.success));
-					UI.showAlert("Repositories provisioned: " + body.success.length);
-				} else {
-					if (typeof body.failure !== "undefined") {
-						UI.showAlert(body.failure.message);
-					} else {
-						UI.showAlert(body);
-					}
-				}
-			} else {
-				UI.showAlert("Unexpected problem encountered: " + response.statusText);
-			}
-		}
-		Log.trace("AdminConfigTab::provisionDeliverablePressed(..) - done; took: " + UI.took(start));
-	}
-
-	private async repoEnableWritePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::repoEnableWritePressed(..) - start");
-	}
-
-	private async repoDisableWritePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::repoDisableWritePressed(..) - start");
-	}
-
-	private async releaseDeliverablePressed(): Promise<void> {
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - start");
-		const start = Date.now();
-		const delivDropdown = document.querySelector("#adminReleaseDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - value: " + value);
-
-		if (value !== null && value !== "null") {
-			const url = this.remote + "/portal/admin/release";
-			const options: any = AdminView.getOptions();
-			options.method = "post";
-
-			UI.showAlert(
-				"This is going to be a long-running operation;" +
-					" you can monitor progress by watching the teams in your GitHub org" +
-					" as teams are added to repos. " +
-					"Please make sure this operation completes before you release again or provision new repos."
-			);
-
-			const provision: ProvisionTransport = { delivId: value, formSingle: false };
-			options.body = JSON.stringify(provision); // TODO: handle formSingle correctly
-
-			Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - POSTing to: " + url);
-			const response = await fetch(url, options);
-
-			if (response.status === 200 || response.status === 400) {
-				const body = await response.json();
-				if (typeof body.success !== "undefined") {
-					UI.showAlert("Repositories released: " + body.success.length);
-					Log.info("Repositories released: " + JSON.stringify(body.success));
-				} else {
-					if (typeof body.failure !== "undefined") {
-						UI.showAlert(body.failure.message);
-					} else {
-						UI.showAlert(body);
-					}
-				}
-			} else {
-				Log.error("Unexpected problem: " + response.statusText);
-				UI.showAlert("Unexpected problem: " + response.statusText);
-			}
-		}
-		Log.trace("AdminConfigTab::releaseDeliverablePressed(..) - done; took: " + UI.took(start));
 	}
 }

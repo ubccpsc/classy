@@ -30,6 +30,15 @@ export enum ConfigKey {
 	classlist_username = "classlist_username",
 	classlist_password = "classlist_password",
 
+	// PrairieLearn grade connector; optional, the admin UI hides the section when unset.
+	prairieLearnUrl = "prairieLearnUrl",
+	prairieLearnToken = "prairieLearnToken",
+	prairieLearnCourseInstanceId = "prairieLearnCourseInstanceId",
+	prairieLearnUidDomain = "prairieLearnUidDomain",
+
+	// Grade export API; optional. Comma-separated consumer:token pairs. Unset disables the routes.
+	apiTokens = "apiTokens",
+
 	minimum_student_delay = "minimum_student_delay",
 	publichostname = "publichostname",
 
@@ -106,6 +115,13 @@ export default class Config {
 				classlist_uri: process.env.CLASSLIST_URI,
 				classlist_username: process.env.CLASSLIST_USERNAME,
 				classlist_password: process.env.CLASSLIST_PASSWORD,
+
+				prairieLearnUrl: process.env.PRAIRIELEARN_URL,
+				prairieLearnToken: process.env.PRAIRIELEARN_TOKEN,
+				prairieLearnCourseInstanceId: process.env.PRAIRIELEARN_COURSE_INSTANCE_ID,
+				prairieLearnUidDomain: process.env.PRAIRIELEARN_UID_DOMAIN,
+
+				apiTokens: process.env.API_TOKENS,
 
 				minimum_student_delay: process.env.MINIMUM_STUDENT_DELAY,
 				publichostname: process.env.PUBLICHOSTNAME,

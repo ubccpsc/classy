@@ -10,12 +10,14 @@ import {
 	Course,
 	Deliverable,
 	FeedbackRecord,
-	GitHubStatus,
 	Grade,
+	Job,
+	JobWatermark,
 	Person,
 	Repository,
 	Result,
 	Team,
+	TeamStatus,
 } from "../Types";
 import { TeamController } from "./TeamController";
 
@@ -35,6 +37,10 @@ export class DatabaseController {
 	private readonly AUDITCOLL = "audit";
 	private readonly TICKERCOLL = "ids";
 	private readonly FEEDBACKCOLL = "feedback";
+	private readonly JOBCOLL = "jobs";
+	// NOTE: shared across job kinds; rows are scoped by their `kind` field. Generic from the
+	// start because renaming a populated collection later needs a data migration.
+	private readonly JOBWATERMARKCOLL = "jobWatermarks";
 
 	/**
 	 * use getInstance() instead.
@@ -270,6 +276,22 @@ export class DatabaseController {
 		return grades;
 	}
 
+	/**
+	 * All grades for a single deliverable.
+	 *
+	 * getGrades() reads the whole collection; the grade export only ever wants one column, so this
+	 * pushes the filter into mongo rather than pulling every grade in the course across the wire.
+	 */
+	public async getGradesForDeliverable(delivId: string): Promise<Grade[]> {
+		const start = Date.now();
+		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - start");
+		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, { delivId: delivId })) as Grade[];
+		grades.forEach((g) => delete g?.custom?.previousGrade); // as getGrades() does; can be large
+
+		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - done; #: " + grades.length + "; took: " + Util.took(start));
+		return grades;
+	}
+
 	public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
 		const grade = (await this.readSingleRecord(this.GRADECOLL, { personId: personId, delivId: delivId })) as Grade;
 		if (grade !== null) {
@@ -450,6 +472,79 @@ export class DatabaseController {
 		}
 	}
 
+	/**
+	 * @param jobId
+	 * @returns {Promise<Job | null>}
+	 */
+	public async getJob(jobId: string): Promise<Job | null> {
+		return (await this.readSingleRecord(this.JOBCOLL, { id: jobId })) as Job;
+	}
+
+	/**
+	 * Jobs matching a query, newest first.
+	 *
+	 * @param query e.g. {} for all, or { kind: "prairielearn-sync" }, or { state: JobState.RUNNING }
+	 * @param limit how many to return; the admin UI only ever wants the most recent handful
+	 * @returns {Promise<Job[]>}
+	 */
+	public async getJobs(query: {} = {}, limit = 25): Promise<Job[]> {
+		const records = await this.readRecords(this.JOBCOLL, QueryKind.FAST, false, query, { createdAt: -1 });
+		return records.slice(0, limit) as Job[];
+	}
+
+	/**
+	 * Upsert on Job.id.
+	 *
+	 * @param record
+	 * @returns {Promise<boolean>}
+	 */
+	public async writeJob(record: Job): Promise<boolean> {
+		const exists = await this.getJob(record.id);
+		if (exists === null) {
+			return await this.writeRecord(this.JOBCOLL, record);
+		}
+		return await this.updateRecord(this.JOBCOLL, { id: record.id }, record);
+	}
+
+	/**
+	 * @param kind which job the watermark belongs to
+	 * @param key the job-scoped identifier for the unit of work
+	 * @returns {Promise<T | null>} the caller's kind-specific watermark type
+	 */
+	public async getJobWatermark<T extends JobWatermark>(kind: string, key: string): Promise<T | null> {
+		return (await this.readSingleRecord(this.JOBWATERMARKCOLL, { kind: kind, key: key })) as T;
+	}
+
+	/**
+	 * Upsert on (kind, key). The extra fields a job kind carries are stored verbatim; this does not
+	 * interpret them.
+	 *
+	 * @param record
+	 * @returns {Promise<boolean>}
+	 */
+	public async writeJobWatermark(record: JobWatermark): Promise<boolean> {
+		const query = { kind: record.kind, key: record.key };
+		const exists = await this.getJobWatermark(record.kind, record.key);
+		if (exists === null) {
+			return await this.writeRecord(this.JOBWATERMARKCOLL, record);
+		}
+		return await this.updateRecord(this.JOBWATERMARKCOLL, query, record);
+	}
+
+	/**
+	 * The most recent audit events for a label, newest first. Audit records
+	 * are written from many places but never read back in Classy, so this
+	 * exists for tests and for post-hoc analysis where needed.
+	 *
+	 * @param label
+	 * @param limit
+	 * @returns {Promise<AuditEvent[]>}
+	 */
+	public async getAudits(label: string, limit: number = 10): Promise<AuditEvent[]> {
+		const records = (await this.readRecords(this.AUDITCOLL, QueryKind.FAST, false, { label: label }, { timestamp: -1 })) as AuditEvent[];
+		return records.slice(0, limit);
+	}
+
 	public async writeAudit(label: AuditLabel, personId: string, before: any, after: any, custom: any): Promise<boolean> {
 		const isEmpty = function (obj: any): boolean {
 			if (typeof obj === "undefined" || obj === null) {
@@ -587,6 +682,8 @@ export class DatabaseController {
 				this.COURSECOLL,
 				this.AUDITCOLL,
 				this.TICKERCOLL,
+				this.JOBCOLL,
+				this.JOBWATERMARKCOLL,
 			];
 
 			for (const col of cols) {
@@ -1033,7 +1130,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams
@@ -1049,7 +1146,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams
@@ -1065,7 +1162,7 @@ export class DatabaseController {
 					id: teamName,
 					delivId: null, // null for special teams
 					githubId: null, // to be filled in later
-					gitHubStatus: GitHubStatus.NOT_PROVISIONED, // to be filled in later
+					gitHubStatus: TeamStatus.NOT_CREATED, // to be filled in later
 					URL: null, // to be filled in later
 					personIds: [], // empty for special teams
 					// repoName:  null, // null for special teams

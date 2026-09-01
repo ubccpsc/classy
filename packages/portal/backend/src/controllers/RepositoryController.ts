@@ -1,7 +1,7 @@
 import Log from "@common/Log";
 import { RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { Deliverable, GitHubStatus, Person, Repository, Team } from "../Types";
+import { Deliverable, Person, RepoStatus, Repository, Team } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
@@ -136,7 +136,7 @@ export class RepositoryController {
 				id: name,
 				delivId: deliv.id,
 				URL: null,
-				gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+				gitHubStatus: RepoStatus.NOT_CREATED,
 				cloneURL: null,
 				teamIds: teamIds,
 				custom: custom,

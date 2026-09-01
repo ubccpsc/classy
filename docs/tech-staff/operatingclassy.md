@@ -18,13 +18,13 @@ docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.
 ./helper-scripts/bootstrap-plugin.sh
 
 # then build Classy with Docker
-docker-compose build
+docker compose build
 ```
 
 You can also build just a subset of classy, which can save time; the main modules that need rebuilding are:
 
 ```bash
-docker-compose build portal autotest
+docker compose build portal autotest
 ```
 
 ## Starting Classy
@@ -34,7 +34,7 @@ Classy is a containerized application that requires containers are built before 
 If this is a new instance of Classy OR code has been updated, it is necessary to build or re-build Classy. See [Building Classy](#building-classy) for instructions on how to build Classy.
 
 ```bash
-# docker-compose commands must be run from the following directory
+# docker compose commands must be run from the following directory
 cd /opt/classy
 ```
 
@@ -42,7 +42,7 @@ Start up everything:
 
     ```
     bash
-    docker-compose up --detach
+    docker compose up --detach
     ```
 
     You should now be able to open portal on the host you've installed classy on (e.g. <https://$(hostname)>).
@@ -50,7 +50,7 @@ Start up everything:
 
 If you want to start a single service, execute: (where `<service>` is something like 'db')
 ```bash
-docker-compose up -d <service>
+docker compose up -d <service>
 ```
 
 If you want to run the db for testing, execute:
@@ -68,20 +68,20 @@ docker run -p 27017:27017 -v /var/opt/classy/db:/data/db mongo
 To shut down everything:
 
 ```bash
-docker-compose down
+docker compose down
 ```
 ## Restarting Classy
 
 To restart Classy (this restarts the _current_ containers and is not sufficient if you are building new images):
 
 ```bash
-docker-compose restart
+docker compose restart
 ```
 
 If you're restarting after updating images, use:
 
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ## Viewing Classy Runtime Logs
@@ -89,19 +89,19 @@ docker-compose up -d
 To view the logs while Classy is running:
 
 ```bash
-docker-compose logs
+docker compose logs
 ```
 
 To watch the logs stream as Classy is executing:
 
 ```bash
-docker-compose logs --tail 1000 -f
+docker compose logs --tail 1000 -f
 ```
 
 To see only what the most recent logs say:
 
 ```bash
-docker-compose logs --tail 1000
+docker compose logs --tail 1000
 ```
 
 ## Reclaiming disk space

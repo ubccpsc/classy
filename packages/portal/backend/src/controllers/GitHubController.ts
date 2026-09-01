@@ -2,9 +2,10 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { GitHubStatus, Repository, Team } from "../Types";
+import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
+import { ProvisionState } from "./ProvisionState";
 import { TeamController } from "./TeamController";
 
 export interface IGitHubController {
@@ -13,13 +14,24 @@ export interface IGitHubController {
 	 *
 	 * Assumptions: a "staff" repo must also exist.
 	 *
+	 * This declaration used to take a fourth `shouldRelease` parameter that the implementation
+	 * never had; nothing passed it, and releasing is a separate step (releaseRepository).
+	 *
 	 * @param {string} repoName
 	 * @param {Team[]} teams
-	 * @param {string} sourceRepo
-	 * @param {boolean} shouldRelease whether the student team should be added to the repo
+	 * @param {string} importUrl
 	 * @returns {Promise<boolean>}
 	 */
-	provisionRepository(repoName: string, teams: Team[], sourceRepo: string, shouldRelease: boolean): Promise<boolean>;
+	provisionRepository(repoName: string, teams: Team[], importUrl: string): Promise<boolean>;
+
+	/**
+	 * Detaches the student teams from a repository, undoing a release.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams the repo's teams; only those made up entirely of students are detached
+	 * @returns {Promise<boolean>} whether the repo is now un-released
+	 */
+	unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean>;
 
 	updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean>;
 
@@ -160,7 +172,161 @@ export class GitHubController implements IGitHubController {
 	 * @param teams
 	 * @private
 	 */
-	private async finalizeProvisionRepository(repoName: string, teams: Team[]): Promise<boolean> {
+	/**
+	 * Finalizes a repo and, if that works, records it as provisioned.
+	 *
+	 * NOTE: marking the record is deliberately here and not in GitHubActions::createRepo. A repo
+	 * that exists on GitHub but has not been finalized has no webhook and no staff teams; calling
+	 * that "provisioned" is what made a half-provisioned repo look finished to the admin UI.
+	 *
+	 * @param repoName
+	 * @param teams
+	 * @param resuming whether an earlier attempt already created this repo on GitHub
+	 * @returns {Promise<boolean>}
+	 */
+
+	/**
+	 * Whether GitHub could deliver a webhook to this Classy instance. GitHub refuses to create a
+	 * hook whose URL is not reachable over the public internet.
+	 *
+	 * @param webhookAddress the address that would be registered (PUBLICHOSTNAME based)
+	 * @returns {boolean}
+	 */
+	public static webhooksSupported(webhookAddress: string): boolean {
+		if (typeof webhookAddress !== "string" || webhookAddress.length === 0) {
+			return false;
+		}
+
+		const host = webhookAddress
+			.replace(/^https?:\/\//, "")
+			.split("/")[0]
+			.split(":")[0]
+			.toLowerCase();
+
+		if (host === "localhost" || host === "127.0.0.1" || host === "::1" || host === "" || host.endsWith(".local")) {
+			return false;
+		}
+
+		// RFC1918: GitHub cannot reach these either
+		if (/^10\./.test(host) || /^192\.168\./.test(host) || /^172\.(1[6-9]|2\d|3[01])\./.test(host)) {
+			return false;
+		}
+
+		return true;
+	}
+
+	/**
+	 * Adds the AutoTest webhook, without adding a second one when finalization is being re-run.
+	 *
+	 * The existence check is skipped for a repo that was just created, which has no hooks; it
+	 * would otherwise cost an extra API call per repo on the provisioning path.
+	 */
+	private async addWebhookOnce(repoName: string, endpoint: string, checkExisting: boolean): Promise<boolean> {
+		if (checkExisting === true) {
+			const hooks = await this.gha.listWebhooks(repoName);
+			if (hooks.length > 0) {
+				Log.info("GitHubController::addWebhookOnce( " + repoName + " ) - webhook already present; not adding another");
+				return true;
+			}
+		}
+		return await this.gha.addWebhook(repoName, endpoint);
+	}
+
+	private async finalizeAndMark(repoName: string, teams: Team[], resuming: boolean): Promise<boolean> {
+		const finalizeSuccessful = await this.finalizeProvisionRepository(repoName, teams, resuming);
+		if (finalizeSuccessful === false) {
+			Log.warn("GitHubController::finalizeAndMark( " + repoName + " ) - finalization NOT successful");
+			return false;
+		}
+
+		Log.info("GitHubController::finalizeAndMark( " + repoName + " ) - finalization successful");
+		const repo = await this.dbc.getRepository(repoName);
+		repo.URL = this.getRepositoryUrl(repo); // informational; the status below is what gets checked
+		await this.dbc.writeRepository(repo);
+		return await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "finalized");
+	}
+
+	/**
+	 * Creates the repository on GitHub, from a template or by importing from a git URL.
+	 *
+	 * NOTE: this is only the GitHub side; the repo is not usable until finalization has attached the
+	 * staff teams and the webhook (see finalizeProvisionRepository).
+	 *
+	 * @param repoName
+	 * @param importUrl ownerName/templateName#branchName for a template, or a git URL
+	 * @returns {Promise<boolean>} whether the repo now exists on GitHub with its content
+	 */
+	private async createOnGitHub(repoName: string, importUrl: string): Promise<boolean> {
+		// The NOT_CREATED -> CREATED transition is performed here rather than in
+		// GitHubActions::createRepo. That method records the URL, because it is the only code that
+		// knows it, but a low-level API wrapper should not be deciding lifecycle: doing so is what
+		// used to mark a repo provisioned before it had a webhook or any staff teams.
+		let provisionSuccessful = false;
+		const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+
+		if (provisionWithTemplate) {
+			Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from template; importURL: " + importUrl);
+
+			if (importUrl.split("/").length !== 2) {
+				const msg =
+					"GitHubController::provisionRepository( " +
+					repoName +
+					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
+					importUrl;
+				Log.error(msg);
+				throw new Error(msg);
+			}
+
+			const templateOwner = importUrl.split("/")[0];
+			let templateRepo = importUrl.split("/")[1];
+
+			const branchesToKeep: string[] = [];
+			if (templateRepo.indexOf("#") > 0) {
+				// NOTE: split once and read both halves; reading the branch back off templateRepo
+				// after reassigning it always yielded undefined, silently disabling branch pruning
+				const templateParts = templateRepo.split("#");
+				templateRepo = templateParts[0];
+				const branchName = templateParts[1];
+				if (typeof branchName === "string" && branchName.length > 0) {
+					branchesToKeep.push(branchName);
+				} else {
+					Log.warn(
+						"GitHubController::provisionRepository( " +
+							repoName +
+							" ) - importUrl has an empty branch after #; keeping all branches; was: " +
+							importUrl
+					);
+				}
+			}
+
+			if (templateRepo.indexOf(".git") > 0) {
+				// this is a git URL, not a org/repo pair
+				const msg =
+					"GitHubController::provisionRepository( " +
+					repoName +
+					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
+					importUrl;
+				Log.error(msg);
+				throw new Error(msg);
+			}
+
+			provisionSuccessful = await this.provisionRepositoryFromTemplate(repoName, templateOwner, templateRepo, branchesToKeep);
+		} else {
+			Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from FS; importURL: " + importUrl);
+
+			// NOTE: path param not provided here (nor available); not used by 310 so this is ok for now
+			provisionSuccessful = await this.provisionRepositoryFromFS(repoName, importUrl);
+		}
+
+		if (provisionSuccessful === true) {
+			const repo = await this.dbc.getRepository(repoName);
+			await ProvisionState.setRepoStatus(repo, RepoStatus.CREATED, "created on GitHub");
+		}
+
+		return provisionSuccessful;
+	}
+
+	private async finalizeProvisionRepository(repoName: string, teams: Team[], resuming: boolean = false): Promise<boolean> {
 		const start = Date.now();
 		Log.info("GitHubController::finalizeProvisionRepository( " + repoName + " ) - finalizing repo provisioning");
 
@@ -171,10 +337,24 @@ export class GitHubController implements IGitHubController {
 		try {
 			// NOTE: these four calls do not depend on each other, so they are issued together
 			Log.trace("GitHubController::finalizeProvisionRepository( " + repoName + " ) - add teams, webhook and settings");
+			// NOTE: in a deployment GitHub cannot reach (dev, CI), the hook is skipped rather than
+			// attempted: GitHub would reject it with a 422 every time, and provisioning must not be
+			// held to a requirement the environment makes impossible.
+			const webhooksPossible = GitHubController.webhooksSupported(WEBHOOK_ADDRESS);
+			if (webhooksPossible === false) {
+				Log.warn(
+					"GitHubController::finalizeProvisionRepository( " +
+						repoName +
+						" ) - webhooks are not possible for " +
+						WEBHOOK_ADDRESS +
+						"; AutoTest will not see pushes to this repo"
+				);
+			}
+
 			const [staffAdd, adminAdd, createHook, updateWorked] = await Promise.all([
 				this.gha.addTeamToRepo(TeamController.STAFF_NAME, repoName, "admin"),
 				this.gha.addTeamToRepo(TeamController.ADMIN_NAME, repoName, "admin"),
-				this.gha.addWebhook(repoName, WEBHOOK_ADDRESS),
+				webhooksPossible === true ? this.addWebhookOnce(repoName, WEBHOOK_ADDRESS, resuming) : Promise.resolve(true),
 				this.gha.updateRepo(repoName),
 			]);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - staff team: " + staffAdd.teamName);
@@ -182,11 +362,17 @@ export class GitHubController implements IGitHubController {
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - webhook successful: " + createHook);
 			Log.trace("GitHubController::finalizeProvisionRepository(..) - done repo settings: " + updateWorked);
 
-			// NOTE: as before, only team provisioning affects the return value; a failed webhook or
-			// settings update is logged but does not fail finalization
+			// NOTE: where a webhook *is* possible, a repo without one is not finished, whatever else
+			// worked: AutoTest never hears about pushes to it, silently, for the whole term. This used
+			// to be a warning, which was survivable when "provisioned" was vague, but RepoStatus.READY
+			// now means "webhook and staff teams are attached". Failing here leaves the repo CREATED,
+			// which is retryable.
 			if (createHook === false) {
-				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added");
+				Log.error("GitHubController::finalizeProvisionRepository( " + repoName + " ) - webhook NOT added; not finalized");
+				return false;
 			}
+
+			// repo settings are cosmetic by comparison, so they stay a warning
 			if (updateWorked === false) {
 				Log.warn("GitHubController::finalizeProvisionRepository( " + repoName + " ) - repo settings NOT updated");
 			}
@@ -309,6 +495,11 @@ export class GitHubController implements IGitHubController {
 
 		// const gh = GitHubActions.getInstance(true);
 
+		// NOTE: every team has to be attached for the release to count. Marking the repo released
+		// when one of them failed would tell the admin UI the students have access when they do not,
+		// and performRelease would count it as a success.
+		let allAttached = true;
+
 		for (const team of teams) {
 			if (asCollaborators) {
 				Log.info("GitHubController::releaseRepository(..) - releasing repository as " + "individual collaborators");
@@ -323,18 +514,12 @@ export class GitHubController implements IGitHubController {
 				// now, add the team to the repository
 				// const res = await this.gha.addTeamToRepo(team.id, repo.id, "push");
 				if (res.githubTeamNumber > 0) {
-					// keep track of team addition
-					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_LINKED);
-					team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-					// team.custom.githubAttached = true;
+					await ProvisionState.setTeamStatus(team, TeamStatus.ATTACHED, "added to " + repo.id);
 				} else {
+					// the team keeps whatever status it had; releasing again retries it
 					Log.error("GitHubController::releaseRepository(..) - ERROR adding team to repo: " + JSON.stringify(res));
-					// team.custom.githubAttached = false;
-					Log.info("GitHubController::releaseRepository(..) - setting GitHubStatus: " + GitHubStatus.PROVISIONED_UNLINKED);
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+					allAttached = false;
 				}
-
-				await this.dbc.writeTeam(team); // add new properties to the team
 				Log.info(
 					"GitHubController::releaseRepository(..) - " +
 						" added team (" +
@@ -346,12 +531,114 @@ export class GitHubController implements IGitHubController {
 			}
 		}
 
-		// update the repo status to be linked
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-		await this.dbc.writeRepository(repo);
+		if (allAttached === false) {
+			// the repo keeps whatever status it had: it is provisioned, but not released. Releasing
+			// again retries, since planRelease looks for exactly that state.
+			Log.error("GitHubController::releaseRepository( " + repo.id + " ) - not released; a team could not be attached");
+			return false;
+		}
+
+		await ProvisionState.setRepoStatus(repo, RepoStatus.RELEASED, "student teams attached");
 
 		Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
 		return true;
+	}
+
+	/**
+	 * Detaches a repository's student teams, undoing a release.
+	 *
+	 * The inverse of releaseRepository: the repo and its content are untouched, the teams still
+	 * exist, and the staff/admin teams stay attached, so staff keep their access. The repo returns
+	 * to READY, which is the status that means "finalized, students cannot see it", and each
+	 * detached team returns to CREATED, which is what planRelease looks for -- so a repo un-released
+	 * by mistake can simply be released again.
+	 *
+	 * NOTE: for a private repository, detaching the team revokes the students' access entirely
+	 * rather than leaving them read-only. Leaving them able to read but not push would mean
+	 * re-adding the team with "pull" permission, which is a different state than this model has.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams
+	 * @returns {Promise<boolean>}
+	 */
+	public async unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean> {
+		Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - start");
+		const start = Date.now();
+
+		await this.checkDatabase(repo.id, null);
+
+		// Detach exactly what releaseRepository attached: the repo's own teams. The org-wide staff
+		// and admin teams are excluded, but they are attached by name during finalization and are
+		// not Classy Team records, so this is belt and braces rather than the thing keeping staff
+		// out of trouble -- see isProtectedTeam.
+		const teamsToDetach: Team[] = [];
+		for (const team of teams) {
+			if (team === null) {
+				continue;
+			}
+			if (GitHubController.isProtectedTeam(team) === true) {
+				Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - keeping org-wide team: " + team.id);
+			} else {
+				teamsToDetach.push(team);
+			}
+		}
+
+		if (teamsToDetach.length === 0) {
+			// the repo says RELEASED but has no team to detach; do not silently rewrite the status,
+			// because that would hide the inconsistency
+			Log.warn("GitHubController::unreleaseRepository( " + repo.id + " ) - no teams to detach");
+			return false;
+		}
+
+		let allDetached = true;
+		for (const team of teamsToDetach) {
+			await this.checkDatabase(null, team.id);
+			try {
+				const removed = await this.gha.removeTeamFromRepo(team.id, repo.id);
+				if (removed === true) {
+					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "removed from " + repo.id);
+					Log.info("GitHubController::unreleaseRepository(..) - detached team ( " + team.id + " ) from repository ( " + repo.id + " )");
+				} else {
+					// the team keeps ATTACHED, so un-releasing again retries it
+					Log.error("GitHubController::unreleaseRepository(..) - ERROR removing team from repo: " + team.id);
+					allDetached = false;
+				}
+			} catch (err) {
+				Log.error("GitHubController::unreleaseRepository(..) - ERROR removing team " + team.id + ": " + err.message);
+				allDetached = false;
+			}
+		}
+
+		if (allDetached === false) {
+			// as with releaseRepository: a partial result must not be reported as done, or the admin
+			// UI would say the students are locked out when some of them are not
+			Log.error("GitHubController::unreleaseRepository( " + repo.id + " ) - not un-released; a team could not be detached");
+			return false;
+		}
+
+		await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "student teams detached");
+
+		Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - done; took: " + Util.took(start));
+		return true;
+	}
+
+	/**
+	 * Whether a team must never be detached from a repository.
+	 *
+	 * Only the org-wide staff and admin teams qualify. They are what actually keeps staff in a
+	 * repository: finalization adds them by name with "admin" permission, independently of whatever
+	 * teams a release attaches, so un-releasing cannot lock staff out however it treats repo.teamIds.
+	 * They are not Classy Team records either, so they should never reach this check -- it is here
+	 * so a course that did make them Teams is still safe.
+	 *
+	 * NOTE: membership is deliberately NOT consulted. Asking "does this team contain a staff
+	 * member?" gets two real cases wrong. Classy provisions repositories for staff so they can see
+	 * what students see, and the team on such a repo is a staff member -- refusing to detach it
+	 * makes those repos impossible to un-release. And a mixed student/staff team is still a team a
+	 * release attached, so un-release, being the inverse of release, has to be able to remove it.
+	 */
+	private static isProtectedTeam(team: Team): boolean {
+		return team.id === TeamController.STAFF_NAME || team.id === TeamController.ADMIN_NAME;
 	}
 
 	/**
@@ -374,108 +661,49 @@ export class GitHubController implements IGitHubController {
 		// (outside try to allow throw)
 		await this.checkDatabase(repoName, null);
 
-		// ensure repo not already provisioned
-		// return false for these rather than throwing (and deleting existing repos)
 		const isRepoProvisioned = await this.gha.repoExists(repoName);
 		Log.info("GitHubController::provisionRepository( " + repoName + " ) - isProvisioned: " + isRepoProvisioned);
-		if (isRepoProvisioned === true) {
-			// this is fatal, we cannot provision a repo that already exists
-			Log.warn("GitHubController::provisionRepository( " + repoName + " ) - repo already exists on GitHub; provisioning failed");
-			// throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; " + repoName + " already provisioned.");
-			return false;
-		}
 
 		// tracks whether the repo exists on GitHub (and may already hold imported content);
 		// if it does, the failure path below must not delete it
 		let repoCreated = false;
+		let resuming = false;
+
+		if (isRepoProvisioned === true) {
+			// CREATED means Classy made this repo and never finished finalizing it (no webhook, no
+			// staff teams). Resume there rather than refusing: refusing left such a repo unusable,
+			// with no way to fix it from the admin UI.
+			const existing = await this.dbc.getRepository(repoName);
+			const unfinished = existing !== null && existing.gitHubStatus === RepoStatus.CREATED;
+
+			if (unfinished === true) {
+				Log.warn("GitHubController::provisionRepository( " + repoName + " ) - exists but was never finalized; resuming");
+				repoCreated = true;
+				resuming = true;
+			} else {
+				// this is fatal, we cannot provision a repo that already exists
+				Log.warn("GitHubController::provisionRepository( " + repoName + " ) - repo already exists on GitHub; provisioning failed");
+				return false;
+			}
+		}
 
 		try {
-			let provisionSuccessful = false;
-			const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
-
-			if (provisionWithTemplate) {
-				Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from template; importURL: " + importUrl);
-
-				if (importUrl.split("/").length !== 2) {
-					const msg =
-						"GitHubController::provisionRepository( " +
-						repoName +
-						" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-						importUrl;
-					Log.error(msg);
-					throw new Error(msg);
+			if (resuming === false) {
+				const provisionSuccessful = await this.createOnGitHub(repoName, importUrl);
+				if (provisionSuccessful === true) {
+					Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning successful");
+					repoCreated = true; // the repo now exists on GitHub, with its imported content
+				} else {
+					Log.warn("GitHubController::provisionRepository( " + repoName + " ) - provisioning NOT successful");
 				}
-
-				const templateOwner = importUrl.split("/")[0];
-				let templateRepo = importUrl.split("/")[1];
-
-				const branchesToKeep: string[] = [];
-				if (templateRepo.indexOf("#") > 0) {
-					// NOTE: split once and read both halves; reading the branch back off templateRepo
-					// after reassigning it always yielded undefined, silently disabling branch pruning
-					const templateParts = templateRepo.split("#");
-					templateRepo = templateParts[0];
-					const branchName = templateParts[1];
-					if (typeof branchName === "string" && branchName.length > 0) {
-						branchesToKeep.push(branchName);
-					} else {
-						Log.warn(
-							"GitHubController::provisionRepository( " +
-								repoName +
-								" ) - importUrl has an empty branch after #; keeping all branches; was: " +
-								importUrl
-						);
-					}
-				}
-
-				if (templateRepo.indexOf(".git") > 0) {
-					// this is a git URL, not a org/repo pair
-					const msg =
-						"GitHubController::provisionRepository( " +
-						repoName +
-						" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-						importUrl;
-					Log.error(msg);
-					throw new Error(msg);
-				}
-
-				provisionSuccessful = await this.provisionRepositoryFromTemplate(repoName, templateOwner, templateRepo, branchesToKeep);
-			} else {
-				Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from FS; importURL: " + importUrl);
-
-				// NOTE: path param not provided here (nor available); not used by 310 so this is ok for now
-				provisionSuccessful = await this.provisionRepositoryFromFS(repoName, importUrl);
 			}
 
-			if (provisionSuccessful === true) {
-				Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning successful");
-				repoCreated = true; // the repo now exists on GitHub, with its imported content
+			if (repoCreated === true) {
 				// attach admin/staff teams, add webhooks, provision student teams (but do not attach them)
-				const finalizeSuccessful = await this.finalizeProvisionRepository(repoName, teams);
-
-				if (finalizeSuccessful === true) {
-					Log.info("GitHubController::provisionRepository( " + repoName + " ) - finalization successful");
-					// we consider the repo to be provisioned once the whole flow is done
-					// callers of this method should instead set the URL field
-					const repo = await this.dbc.getRepository(repoName);
-					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-					repo.URL = this.getRepositoryUrl(repo);
-					await this.dbc.writeRepository(repo);
-
-					Log.info(
-						"GitHubController::provisionRepository( " +
-							repoName +
-							" ) - provisioned; success: " +
-							provisionSuccessful +
-							"; took: " +
-							Util.took(start)
-					);
+				if ((await this.finalizeAndMark(repoName, teams, resuming)) === true) {
+					Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioned; took: " + Util.took(start));
 					return true;
-				} else {
-					Log.warn("GitHubController::provisionRepository( " + repoName + " ) - finalization NOT successful");
 				}
-			} else {
-				Log.warn("GitHubController::provisionRepository( " + repoName + " ) - provisioning NOT successful");
 			}
 		} catch (err) {
 			// if we encounter an exception, something critical must have failed above
@@ -496,7 +724,36 @@ export class GitHubController implements IGitHubController {
 		// try to unprovision the repo, just so we can try again in the future
 		const res = await this.gha.deleteRepo(repoName);
 		Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
+
+		// and put the Repository record back the way it was. GitHubActions::createRepo writes URL and
+		// cloneURL as soon as GitHub answers, so a failure after that point (an import that cannot
+		// reach the source repo, say) would otherwise leave a record pointing at a repo that no
+		// longer exists -- and, since a URL now means "we created this on GitHub", would look like a
+		// repo waiting to be finalized rather than one waiting to be created.
+		await this.markNotProvisioned(repoName);
+
 		throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; failed to create repo");
+	}
+
+	/**
+	 * Rolls a Repository record back to its pre-provisioning state.
+	 *
+	 * NOTE: never throws. This runs on a path that is already failing, and the caller's error is the
+	 * one worth reporting; a database problem here is logged instead of replacing it.
+	 */
+	private async markNotProvisioned(repoName: string): Promise<void> {
+		try {
+			const repo = await this.dbc.getRepository(repoName);
+			if (repo === null) {
+				return;
+			}
+			repo.URL = null;
+			repo.cloneURL = null;
+			await this.dbc.writeRepository(repo);
+			await ProvisionState.setRepoStatus(repo, RepoStatus.NOT_CREATED, "deleted from GitHub after a failed provision");
+		} catch (err) {
+			Log.error("GitHubController::markNotProvisioned( " + repoName + " ) - ERROR: " + err.message);
+		}
 	}
 
 	private async provisionTeam(team: Team): Promise<boolean> {
@@ -510,8 +767,7 @@ export class GitHubController implements IGitHubController {
 
 			const teamNum = await tc.getTeamNumber(team.id);
 			Log.trace("GitHubController::provisionTeam( " + team.id + " ) - dbT team Number: " + teamNum);
-			// if (team.URL !== null && teamNum !== null) {
-			if (team.gitHubStatus === GitHubStatus.PROVISIONED_LINKED || team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
+			if (team.gitHubStatus === TeamStatus.ATTACHED || team.gitHubStatus === TeamStatus.CREATED) {
 				// already exists
 				Log.warn("GitHubController::provisionTeam( " + team.id + " ) - " + "- team already provisioned: " + JSON.stringify(team));
 				return true;
@@ -521,10 +777,10 @@ export class GitHubController implements IGitHubController {
 				if (teamValue.githubTeamNumber > 0) {
 					// worked
 					Log.info("GitHubController::provisionTeam( " + team.id + " ) - team created: " + JSON.stringify(teamValue));
-					team.URL = await this.getTeamUrl(team);
+					team.URL = await this.getTeamUrl(team); // informational
 					team.githubId = teamValue.githubTeamNumber;
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
 					await this.dbc.writeTeam(team);
+					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub");
 				} else {
 					// never observed in practice, but logged just in case
 					Log.error("GitHubController::provisionTeam( " + team.id + " ) - team NOT created: " + JSON.stringify(teamValue));

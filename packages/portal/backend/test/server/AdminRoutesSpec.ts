@@ -2,9 +2,12 @@
 import { expect } from "chai";
 import "mocha";
 
+import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController, QueryKind } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController } from "@backend/controllers/GitHubController";
+import { JobController } from "@backend/controllers/JobController";
 import BackendServer from "@backend/server/BackendServer";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -23,14 +26,14 @@ import {
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { GitHubStatus, PersonKind } from "@backend/Types";
+import { PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
 
 describe("Admin Routes", function () {
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 	let server: BackendServer = null;
 
 	const userName = TestHarness.ADMIN1.id;
@@ -883,7 +886,39 @@ describe("Admin Routes", function () {
 			Log.test("AdminRoutesSpec::clearAll() - done; took: " + Util.took(start));
 		}
 
-		it("Should be able to get a provision plan for a deliverable", async function () {
+		/**
+		 * Starts a job and waits for it to reach a terminal state.
+		 *
+		 * NOTE: starting a job returns as soon as it is recorded, not when the work is done -- that
+		 * is the whole point of the job framework. Tests that care about the outcome have to poll,
+		 * exactly as the admin UI does.
+		 */
+		async function runJob(kind: string, params: any, timeoutMs: number = TestHarness.TIMEOUTLONG - 5000): Promise<any> {
+			const started = await request(app)
+				.post("/portal/admin/job/" + kind)
+				.send(params)
+				.set({ user: userName, token: userToken });
+			Log.test("runJob( " + kind + " ) - started: " + started.status + " -> " + JSON.stringify(started.body));
+			expect(started.status).to.equal(200);
+			expect(started.body.success.state).to.equal("RUNNING");
+
+			const jobId = started.body.success.id;
+			const deadline = Date.now() + timeoutMs;
+			while (Date.now() < deadline) {
+				const response = await request(app)
+					.get("/portal/admin/job/" + jobId)
+					.set({ user: userName, token: userToken });
+				const job = response.body.success;
+				if (job.state !== "RUNNING") {
+					Log.test("runJob( " + kind + " ) - " + job.state + "; summary: " + JSON.stringify(job.summary));
+					return job;
+				}
+				await Util.delay(250);
+			}
+			expect.fail("job did not finish in time: " + kind);
+		}
+
+		it("Should be able to list the provisioning state for a deliverable", async function () {
 			let response = null;
 			let body: RepositoryPayload;
 			const url = "/portal/admin/provision/" + TestHarness.DELIVIDPROJ;
@@ -961,15 +996,15 @@ describe("Admin Routes", function () {
 		//     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
 		// }).timeout(TIMEOUT * 30);
 
-		it("Should be able to perform a withdraw task", async function () {
+		it("Should be able to start a withdraw task", async function () {
 			// This is tricky because the live github data will have a different team id than we"re using locally
 
-			// const pc = new PersonController();
-			// const dc = DatabaseController.getInstance();
-
+			// NOTE: marking withdrawn students used to be POST /portal/admin/withdraw; it is now the
+			// "student-withdraw" job, so this returns as soon as the job is recorded rather than when
+			// the withdraw finishes. Whether the work itself succeeds depends on live GitHub data.
 			let response = null;
 			let body: Payload;
-			const url = "/portal/admin/withdraw";
+			const url = "/portal/admin/job/student-withdraw";
 			try {
 				response = await request(app).post(url).send({}).set({ user: userName, token: userToken });
 				body = response.body;
@@ -979,7 +1014,8 @@ describe("Admin Routes", function () {
 			Log.test(response.status + " -> " + JSON.stringify(body));
 			expect(response.status).to.equal(200);
 			expect(body.success).to.not.be.undefined;
-			expect(body.success.message).to.be.an("string");
+			expect(body.success.kind).to.equal("student-withdraw");
+			expect(body.success.state).to.equal("RUNNING");
 		}).timeout(TIMEOUT * 10);
 
 		it("Should be able to sanity check a database", async function () {
@@ -998,62 +1034,51 @@ describe("Admin Routes", function () {
 			expect(body.success.message).to.be.an("string");
 		}).timeout(TIMEOUT * 10);
 
-		it("Should be able to provision a deliverable", async function () {
+		it("Should be able to prepare and provision a deliverable", async function () {
 			const dbc = DatabaseController.getInstance();
 			await dbc.clearData();
 
 			await clearAll([TestHarness.REPONAMEREAL], []);
 
-			// const gha = GitHubActions.getInstance();
-			// await gha.deleteRepo(Test.REPONAMEREAL);
-
 			await TestHarness.prepareAllReal(); // create a valid set of users and teams
 
-			let response = null;
-			let body: Payload;
-			let url = "/portal/admin/provision/" + TestHarness.DELIVID0;
+			// the GET only reads now: nothing has been prepared, so there is nothing to list
+			const url = "/portal/admin/provision/" + TestHarness.DELIVID0;
+			let response = await request(app).get(url).set({ user: userName, token: userToken });
+			Log.test("before prepare: " + response.status + " -> " + JSON.stringify(response.body));
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			expect(response.body.success).to.have.lengthOf(0);
 
-			Log.test("planning the provisioning");
-			// first plan the url
+			// preparing is what creates the Team and Repository records
+			const prepared = await runJob("provision-prepare", { delivId: TestHarness.DELIVID0, formSingle: false });
+			expect(prepared.state).to.equal("SUCCEEDED");
+			expect(prepared.summary.delivId).to.equal(TestHarness.DELIVID0);
+			expect(prepared.summary.repos).to.be.greaterThan(0);
+
 			response = await request(app).get(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("plan: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(200);
-			expect(body.success).to.be.an("array");
-			expect(body.success.length).to.be.greaterThan(0);
+			Log.test("after prepare: " + response.status + " -> " + JSON.stringify(response.body));
+			const planned: string[] = (response.body.success as any[]).map((repo) => repo.id);
+			expect(planned.length).to.be.greaterThan(0);
+			expect(planned).to.contain(TestHarness.REPONAMEREAL);
 
-			// const provision: ProvisionTransport = {
-			//     delivId:    Test.DELIVID0,
-			//     formSingle: false
-			// };
+			// and creating is what reaches GitHub; a subset, as the admin UI sends
+			const created = await runJob("provision-create", {
+				delivId: TestHarness.DELIVID0,
+				repoIds: [TestHarness.REPONAMEREAL],
+			});
+			expect(created.state).to.equal("SUCCEEDED");
+			expect(created.summary.provisioned).to.equal(1);
+			expect(created.summary.failed).to.have.lengthOf(0);
 
-			Log.test("performing the provisioning");
-			url = "/portal/admin/provision/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAMEREAL;
-			// response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("first provision: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(200);
-			expect(body.success).to.not.be.undefined;
-			expect(body.success).to.be.an("array");
-			expect(body.success.length).to.be.greaterThan(0);
-
-			// Log.test("performing the provisioning a second time");
-			// // provision again; should not make anything new
-			// // response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-			// response = await request(app).post(url).set({user: userName, token: userToken});
-			// body = response.body;
-			// Log.test("second provision: " + response.status + " -> " + JSON.stringify(body));
-			// expect(response.status).to.equal(200);
-			// expect(body.success).to.be.an("array");
-			// expect(body.success.length).to.equal(0);
+			const gh = GitHubActions.getInstance(true);
+			expect(await gh.repoExists(TestHarness.REPONAMEREAL), "repo not created").to.be.true;
 		}).timeout(TestHarness.TIMEOUTLONG);
 
-		it("Should be able to provision several repos in a single batch request", async function () {
-			// NOTE: this is the endpoint the admin UI actually uses. It matters that more than one
-			// repo goes over in a single request: that is what lets performProvision run them with
-			// bounded concurrency (AdminController.PROVISION_CONCURRENCY). One repo per request,
-			// which is what the UI used to do, makes that batching a no-op.
+		it("Should be able to provision several repos in one job", async function () {
+			// NOTE: it matters that all the repos go into a single job: that is what lets
+			// performProvision run them with bounded concurrency (PROVISION_CONCURRENCY). The UI
+			// used to send one request per repo, which made that batching a no-op.
 			const dbc = DatabaseController.getInstance();
 			await dbc.clearData();
 
@@ -1068,25 +1093,24 @@ describe("Admin Routes", function () {
 
 			const url = "/portal/admin/provision/" + TestHarness.DELIVID0;
 
-			// planning creates the Repository records the batch call then refers to by id
-			let response = await request(app).get(url).set({ user: userName, token: userToken });
-			let body: Payload = response.body;
-			Log.test("batch plan: " + response.status + " -> " + JSON.stringify(body));
+			// preparing creates the Repository records the create job then refers to by id
+			const prepared = await runJob("provision-prepare", { delivId: TestHarness.DELIVID0, formSingle: false });
+			expect(prepared.state).to.equal("SUCCEEDED");
+
+			const response = await request(app).get(url).set({ user: userName, token: userToken });
+			Log.test("prepared: " + response.status + " -> " + JSON.stringify(response.body));
 			expect(response.status).to.equal(200);
-			expect(body.success).to.be.an("array");
-			const repoIds: string[] = (body.success as any[]).map((r) => r.id);
+			const repoIds: string[] = (response.body.success as any[]).map((r) => r.id);
 			expect(repoIds.length, "need >1 planned repo for this to exercise batching").to.be.greaterThan(1);
 
 			// clean up
 			await clearAll(repoIds, []);
 
-			// all of them, in ONE request
-			response = await request(app).post(url).send({ repoIds: repoIds }).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("batch provision: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(200);
-			expect(body.success).to.be.an("array");
-			expect(body.success.length).to.equal(repoIds.length);
+			// all of them, in ONE job
+			const created = await runJob("provision-create", { delivId: TestHarness.DELIVID0, repoIds: repoIds });
+			expect(created.state).to.equal("SUCCEEDED");
+			expect(created.summary.provisioned).to.equal(repoIds.length);
+			expect(created.summary.failed).to.have.lengthOf(0);
 
 			// and they exist on GitHub, not just in the response
 			const gh = GitHubActions.getInstance(true);
@@ -1099,138 +1123,71 @@ describe("Admin Routes", function () {
 			// start of this test is what makes it order-independent anyway.
 		}).timeout(TestHarness.TIMEOUTLONG);
 
-		it("Should fail a batch provision request that is malformed", async function () {
-			const url = "/portal/admin/provision/" + TestHarness.DELIVID0;
-			let response = null;
-			let body: Payload;
-
-			// bad token
-			response = await request(app)
-				.post(url)
-				.send({ repoIds: [TestHarness.REPONAMEREAL] })
+		it("Should reject a provisioning job that is not authorized", async function () {
+			const response = await request(app)
+				.post("/portal/admin/job/provision-create")
+				.send({ delivId: TestHarness.DELIVID0, repoIds: [TestHarness.REPONAMEREAL] })
 				.set({ user: userName, token: TestHarness.FAKETOKEN });
-			body = response.body;
-			Log.test("batch bad token: " + response.status + " -> " + JSON.stringify(body));
+			Log.test("bad token: " + response.status + " -> " + JSON.stringify(response.body));
 			expect(response.status).to.equal(401);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
+			expect(response.body.success).to.be.undefined;
+			expect(response.body.failure).to.not.be.undefined;
+		});
+
+		it("Should fail a provisioning job with invalid params", async function () {
+			// NOTE: params are validated inside the job, not by the route: starting always succeeds
+			// (the request must return before the work begins), so bad input surfaces as a FAILED
+			// job with a message, which is what the admin UI renders in the status line.
 
 			// no repos requested
-			response = await request(app).post(url).send({ repoIds: [] }).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("batch empty: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
-
-			// missing body entirely
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("batch no body: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.failure).to.not.be.undefined;
+			let job = await runJob("provision-create", { delivId: TestHarness.DELIVID0, repoIds: [] });
+			expect(job.state).to.equal("FAILED");
+			expect(job.errors[0]).to.contain("No repositories");
 
 			// a repo that is not in the datastore
-			response = await request(app)
-				.post(url)
-				.send({ repoIds: ["REPO_THAT_DOES_NOT_EXIST_" + Date.now()] })
-				.set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("batch unknown repo: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.failure).to.not.be.undefined;
-		}).timeout(TestHarness.TIMEOUTLONG);
-
-		it("Should fail to provision a deliverable if invalid options are given", async function () {
-			let response = null;
-			let body: Payload;
-			let url = "/portal/admin/provision/" + TestHarness.DELIVID0 + "/" + TestHarness.REPONAMEREAL;
-
-			// const provision: ProvisionTransport = {
-			//     delivId:    Test.DELIVID0,
-			//     formSingle: false
-			// };
-			// bad token
-			response = await request(app).post(url).set({ user: userName, token: TestHarness.FAKETOKEN });
-			body = response.body;
-			Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(401);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
+			job = await runJob("provision-create", {
+				delivId: TestHarness.DELIVID0,
+				repoIds: ["REPO_THAT_DOES_NOT_EXIST_" + Date.now()],
+			});
+			expect(job.state).to.equal("FAILED");
+			expect(job.errors[0]).to.contain("Unknown repository");
 
 			// invalid deliverable
-			url = "/portal/admin/provision/" + "FAKEDELIVERABLE" + "/" + TestHarness.REPONAMEREAL;
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("invalid deliverable: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
+			job = await runJob("provision-create", { delivId: "FAKEDELIVERABLE", repoIds: [TestHarness.REPONAMEREAL] });
+			expect(job.state).to.equal("FAILED");
+			expect(job.errors[0]).to.contain("Unknown deliverable");
 
-			// non-provisioning deliverable
-			url = "/portal/admin/provision/" + TestHarness.DELIVID1 + "/" + TestHarness.REPONAMEREAL;
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("non-provisioning deliverable: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
-		});
+			// a deliverable that is not provisionable
+			job = await runJob("provision-create", { delivId: TestHarness.DELIVID1, repoIds: [TestHarness.REPONAMEREAL] });
+			expect(job.state).to.equal("FAILED");
+			expect(job.errors[0]).to.contain("not provisionable");
+		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should be able to release a deliverable", async function () {
-			let response = null;
-			const url = "/portal/admin/release/" + TestHarness.REPONAMEREAL;
+			const released = await runJob("provision-release", {
+				delivId: TestHarness.DELIVID0,
+				repoIds: [TestHarness.REPONAMEREAL],
+			});
+			Log.test("release: " + released.state + " -> " + JSON.stringify(released.summary));
 
-			// const provision: ProvisionTransport = {
-			//     delivId:    Test.DELIVID0,
-			//     formSingle: false
-			// };
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			const body: Payload = response.body;
-			Log.test("first release: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(200);
-			expect(body.success).to.not.be.undefined;
-			expect(body.success).to.be.an("array");
-			expect(body.success.length).to.be.greaterThan(0);
-
-			// release again; should not release anything new
-			// response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-			// body = response.body;
-			// Log.test("second release: " + response.status + " -> " + JSON.stringify(body));
-			// expect(response.status).to.equal(200);
-			// expect(body.success).to.be.an("array");
-			// expect(body.success.length).to.equal(0);
+			expect(released.state).to.equal("SUCCEEDED");
+			expect(released.summary.released).to.equal(1);
+			expect(released.summary.failed).to.have.lengthOf(0);
 		}).timeout(TestHarness.TIMEOUTLONG);
 
-		it("Should fail to release a deliverable if invalid options are given", async function () {
-			let response = null;
-			let body: Payload;
-			const url = "/portal/admin/release/repoId";
+		it("Should fail a release job with invalid params", async function () {
+			const unauthorized = await request(app)
+				.post("/portal/admin/job/provision-release")
+				.send({ delivId: TestHarness.DELIVID0, repoIds: [TestHarness.REPONAMEREAL] })
+				.set({ user: userName, token: TestHarness.FAKETOKEN });
+			Log.test("bad token: " + unauthorized.status);
+			expect(unauthorized.status).to.equal(401);
 
-			response = await request(app).post(url).set({ user: userName, token: TestHarness.FAKETOKEN });
-			body = response.body;
-			Log.test("bad token: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(401);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
-
-			// invalid deliverable
-			response = await request(app).post(url).set({ user: userName, token: userToken });
-			body = response.body;
-			Log.test("invalid deliverable: " + response.status + " -> " + JSON.stringify(body));
-			expect(response.status).to.equal(400);
-			expect(body.success).to.be.undefined;
-			expect(body.failure).to.not.be.undefined;
-
-			// non-provisioning deliverable
-			// provision.delivId = Test.DELIVID1;
-			// response = await request(app).post(url).send(provision).set({user: userName, token: userToken});
-			// body = response.body;
-			// Log.test("non-provisioning deliverable: " + response.status + " -> " + JSON.stringify(body));
-			// expect(response.status).to.equal(400);
-			// expect(body.success).to.be.undefined;
-			// expect(body.failure).to.not.be.undefined;
-		});
+			// a repo that is not in the datastore; see the note on provisioning params above
+			const job = await runJob("provision-release", { delivId: TestHarness.DELIVID0, repoIds: ["repoId"] });
+			expect(job.state).to.equal("FAILED");
+			expect(job.errors[0]).to.contain("Unknown repository");
+		}).timeout(TestHarness.TIMEOUTLONG);
 	});
 
 	it("Should be able to create a team for a deliverable.", async function () {
@@ -1570,7 +1527,33 @@ describe("Admin Routes", function () {
 		const team = await DatabaseController.getInstance().getTeam(TestHarness.TEAMNAME1);
 		Log.test("Team: " + JSON.stringify(team));
 		// expect(team.custom.githubAttached).to.be.false; // not attached
-		expect(team.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // team still exists but is unlinked
+		expect(team.gitHubStatus).to.equal(TeamStatus.CREATED); // team still exists but is unlinked
+	}).timeout(TestHarness.TIMEOUT);
+
+	it("Should be able to delete a repository whose team record no longer exists", async function () {
+		// A repo can outlive the teams it references (e.g., the team was deleted separately).
+		// Unlinking used to dereference the missing team and fail the whole delete with a 400.
+		const dbc = DatabaseController.getInstance();
+		const repo = await dbc.getRepository(TestHarness.REPONAME2);
+		repo.teamIds = ["team_that_does_not_exist_" + Date.now()];
+		await dbc.writeRepository(repo);
+
+		const url = "/portal/admin/repository/" + TestHarness.REPONAME2;
+		let response = null;
+		let body: Payload;
+		try {
+			response = await request(app).del(url).set({ user: userName, token: userToken });
+			body = response.body;
+		} catch (err) {
+			Log.test("ERROR: " + err);
+		}
+		Log.test(response.status + " -> " + JSON.stringify(body));
+		expect(response.status).to.equal(200);
+		expect(body.success).to.not.be.undefined;
+
+		// the repo record should be gone, despite the dangling team reference
+		const deleted = await dbc.getRepository(TestHarness.REPONAME2);
+		expect(deleted).to.be.null;
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should fail to delete a repository if appropriate", async function () {
@@ -1682,57 +1665,86 @@ describe("Admin Routes", function () {
 		expect(ex).to.be.null;
 	});
 
-	it("Should be able to update a classlist if authorized as admin", async function () {
-		if (TestHarness.isCI() === false) {
-			// skip locally; requires credentials devs should not have (but are encrypted for CI)
-			Log.warn("Skipping AdminRouteSpec classlist update test on dev machine");
-			return;
-		}
+	it("Should reject a provisioning or release listing for a deliverable that cannot be provisioned", async function () {
+		// NOTE: both of these only read now (the writing half is the "provision-prepare" job), so the
+		// only way they fail is a deliverable that does not exist or is not provisionable.
+		let response = await request(app).get("/portal/admin/provision/FAKEDELIVERABLE").set({ user: userName, token: userToken });
+		Log.test("unknown deliverable (provision): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
+		expect(response.body.failure.message).to.contain("FAKEDELIVERABLE");
 
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url).set({ user: userName, token: userToken });
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
+		// DELIVID1 exists but has shouldProvision false
+		response = await request(app)
+			.get("/portal/admin/provision/" + TestHarness.DELIVID1)
+			.set({ user: userName, token: userToken });
+		Log.test("non-provisionable (provision): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
 
-		expect(body).to.haveOwnProperty("success");
-		expect(body.success).to.haveOwnProperty("created");
-		expect(body.success).to.haveOwnProperty("updated");
-		expect(body.success).to.haveOwnProperty("removed");
+		response = await request(app).get("/portal/admin/release/FAKEDELIVERABLE").set({ user: userName, token: userToken });
+		Log.test("unknown deliverable (release): " + response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(400);
+		expect(response.body.failure).to.not.be.undefined;
 	});
 
-	it("Should NOT be able to update a classlist if not authorized as admin", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url);
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
+	it("Should list repositories that are ready to be released", async function () {
+		// NOTE: the release plan is only non-empty once repos exist and have been provisioned, so the
+		// other release test only ever sees an empty list -- and never checks the shape of what comes
+		// back. This seeds that state directly (no GitHub involved) so the transport the admin UI
+		// reads is actually exercised.
+		//
+		// It builds its own deliverable and student rather than reusing the shared fixtures: earlier
+		// tests in this file delete deliverables, so nothing here can assume they still exist.
+		const dbc = DatabaseController.getInstance();
+
+		const delivId = "releasePlanSpecDeliv";
+		const deliv = TestHarness.createDeliverable(delivId);
+		deliv.shouldProvision = true;
+		deliv.teamMinSize = 1;
+		deliv.teamMaxSize = 1; // so a singleton team can be formed for one student
+		await dbc.writeDeliverable(deliv);
+
+		const person = TestHarness.createPerson("releasePlanSpecPerson", "releasePlanSpecPerson", "releasePlanSpecGithub", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const ac = new AdminController(new GitHubController(GitHubActions.getInstance(true)));
+		const planned = await ac.prepareProvision(deliv, true); // creates the Team and Repository records
+		expect(planned.length, "setup: preparing must plan at least one repo").to.be.greaterThan(0);
+
+		// mark one repo and its team as provisioned-but-not-yet-attached, which is what planRelease
+		// looks for
+		const repo = await dbc.getRepository(planned[0].id);
+		repo.gitHubStatus = RepoStatus.READY;
+		repo.URL = "https://example.com/" + repo.id;
+		await dbc.writeRepository(repo);
+		for (const teamId of repo.teamIds) {
+			const team = await dbc.getTeam(teamId);
+			team.gitHubStatus = TeamStatus.CREATED;
+			await dbc.writeTeam(team);
 		}
 
-		expect(body).to.haveOwnProperty("failure");
-	});
+		const response = await request(app)
+			.get("/portal/admin/release/" + delivId)
+			.set({ user: userName, token: userToken });
+		Log.test("release plan: " + response.status + " -> " + JSON.stringify(response.body));
 
-	it("Should be able to initiate a class list update request", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/admin/classlist";
-		try {
-			response = await request(app).put(url).send().set({ user: userName, token: userToken });
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(200);
-		expect(body.success).to.not.be.undefined;
-		expect(body.success.message).to.be.an("string");
+		expect(response.body.success).to.be.an("array");
+		const entry = (response.body.success as any[]).find((r) => r.id === repo.id);
+		expect(entry, "the provisioned repo must be in the release plan").to.not.be.undefined;
+		expect(entry.delivId).to.equal(delivId);
+		expect(entry.gitHubStatus).to.equal("READY"); // finalized, not yet released
+		expect(entry.URL).to.equal(repo.URL);
+	}).timeout(TestHarness.TIMEOUTLONG);
+
+	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
+		// NOTE: updating from the Classlist API used to be PUT /portal/admin/classlist. It is now
+		// the "classlist-update" job, because for a large class the API call plus the per-student
+		// writes can outlast the proxy's 90s read timeout.
+		const response = await request(app).post("/portal/admin/job/classlist-update").send({});
+		Log.test("unauthorized classlist job start -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(401);
+		expect(response.body).to.haveOwnProperty("failure");
 	});
 
 	// /**
@@ -1757,6 +1769,131 @@ describe("Admin Routes", function () {
 	//     expect(body.success.message).to.be.an("string");
 	// });
 	//
+	it("Should return a Classy failure payload when a body-less request is sent.", async function () {
+		// NOTE: the admin UI sends requests with AdminView.getOptions(), which sets
+		// Content-Type: application/json but often attaches NO body. Fastify's default JSON parser
+		// rejects that with its own error shape ({statusCode, code, error, message}), which has no
+		// `failure` field -- so the client crashed on body.failure.message. Restify accepted it.
+		//
+		// The 400 below therefore has to come from the handler (an unknown job kind), not from the
+		// parser: reaching the handler at all is what proves the empty body was accepted.
+		const response = await request(app)
+			.post("/portal/admin/job/noSuchKind")
+			.set({ user: userName, token: userToken, "Content-Type": "application/json" });
+
+		Log.test("body-less POST -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(400);
+		expect(response.body.failure, "error response must carry a Classy failure payload").to.not.be.undefined;
+		expect(response.body.failure.message).to.contain("Unknown job kind");
+	});
+
+	describe("Background jobs", function () {
+		/**
+		 * A synthetic kind, so these exercise the routes rather than any real handler.
+		 */
+		const KIND = "route-test-job";
+
+		before(function () {
+			JobController.getInstance().register(KIND, async () => {
+				return { ok: true };
+			});
+		});
+
+		it("Should reject an unauthenticated job start.", async function () {
+			const response = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({});
+			Log.test("unauthenticated job start -> " + response.status);
+			expect(response.status).to.equal(401);
+		});
+
+		it("Should start a job and return it immediately.", async function () {
+			const response = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({ some: "param" })
+				.set({ user: userName, token: userToken });
+			Log.test("job start -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			const job = response.body.success;
+			expect(job.id).to.be.a("string");
+			expect(job.kind).to.equal(KIND);
+			// the request must not wait for the work: a real sync runs far past the 90s proxy timeout
+			expect(job.state).to.equal("RUNNING");
+			expect(job.requestedBy).to.equal(userName); // audit
+			expect(job.params.some).to.equal("param");
+		});
+
+		it("Should have registered the kinds the admin UI starts.", async function () {
+			// these are registered by BackendServer::start(); without them the buttons 400
+			const jc = JobController.getInstance();
+			expect(jc.isRegistered("classlist-update"), "classlist-update").to.be.true;
+			expect(jc.isRegistered("student-withdraw"), "student-withdraw").to.be.true;
+			expect(jc.isRegistered("prairielearn-sync"), "prairielearn-sync").to.be.true;
+			expect(jc.isRegistered("provision-prepare"), "provision-prepare").to.be.true;
+			expect(jc.isRegistered("provision-create"), "provision-create").to.be.true;
+			expect(jc.isRegistered("provision-release"), "provision-release").to.be.true;
+		});
+
+		it("Should reject an unknown job kind.", async function () {
+			const response = await request(app).post("/portal/admin/job/noSuchKind").send({}).set({ user: userName, token: userToken });
+			Log.test("unknown kind -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure.message).to.contain("Unknown job kind");
+		});
+
+		it("Should retrieve a job by id.", async function () {
+			const created = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({})
+				.set({ user: userName, token: userToken });
+			const id = created.body.success.id;
+
+			const response = await request(app)
+				.get("/portal/admin/job/" + id)
+				.set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id).to.equal(id);
+		});
+
+		it("Should 404 an unknown job id.", async function () {
+			const response = await request(app).get("/portal/admin/job/noSuchJob").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(404);
+		});
+
+		it("Should list jobs, newest first.", async function () {
+			const response = await request(app).get("/portal/admin/jobs").set({ user: userName, token: userToken });
+			Log.test("job list -> " + response.status + "; count: " + (response.body.success || []).length);
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			expect(response.body.success.length).to.be.greaterThan(0);
+		});
+
+		it("Should accept a cancellation request.", async function () {
+			const created = await request(app)
+				.post("/portal/admin/job/" + KIND)
+				.send({})
+				.set({ user: userName, token: userToken });
+			const id = created.body.success.id;
+
+			const response = await request(app)
+				.delete("/portal/admin/job/" + id)
+				.set({ user: userName, token: userToken });
+			Log.test("job cancel -> " + response.status);
+
+			// cancellation is cooperative: this returns before the job has actually stopped
+			expect(response.status).to.equal(200);
+		});
+
+		it("Should 404 cancelling an unknown job.", async function () {
+			const response = await request(app).delete("/portal/admin/job/noSuchJob").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(404);
+		});
+	});
+
 	// server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
 	// server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
 	// server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);

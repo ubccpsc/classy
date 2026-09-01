@@ -1,5 +1,4 @@
 // biome-ignore-all lint/style/noExcessiveLinesPerFile: this class is a facade over the whole GitHub API surface; splitting it by resource is tracked separately
-import { GitHubStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
@@ -14,6 +13,52 @@ import { TeamController } from "./TeamController";
 
 const tmp = require("tmp-promise");
 tmp.setGracefulCleanup(); // cleanup files when done
+
+/**
+ * A failed GitHub call, with enough information to tell "this repository is broken" from "nothing is
+ * going to work".
+ *
+ * This status is to catch `fatal` problems. Provisioning continues past an ordinary failure, one repo that
+ * cannot be created should not abandon the other 449, but a fatal failure is one that will happen
+ * to every remaining item too, so continuing just wastes time and makes a bunch of incomplete work.
+ */
+export class GitHubError extends Error {
+	public readonly status: number; // HTTP status, or 0 for a transport-level failure
+	public readonly fatal: boolean;
+
+	public constructor(message: string, status: number, body: string = "") {
+		super(message);
+		this.name = "GitHubError";
+		this.status = status;
+		this.fatal = GitHubError.isFatal(status, body);
+	}
+
+	/**
+	 * Whether a failure means the next call will fail too.
+	 *
+	 * @param status HTTP status; 0 for a transport failure
+	 * @param body the response body, for the cases GitHub distinguishes only in text
+	 */
+	public static isFatal(status: number, body: string = ""): boolean {
+		const text = (body ?? "").toLowerCase();
+
+		if (status === 401 || text.indexOf("bad credentials") >= 0) {
+			return true; // the token is expired, revoked, or wrong
+		}
+
+		if (status === 403 && (text.indexOf("rate limit") >= 0 || text.indexOf("abuse") >= 0)) {
+			return true; // every subsequent call is rejected too; continuing makes it worse
+		}
+
+		if (status === 0) {
+			return true; // the host is unreachable (DNS, connection refused, a VPN-only host)
+		}
+
+		// everything else -- 404 on one repo, 422, a bad importURL, a missing team -- is about this
+		// item. A single 5xx is GitHub having a bad minute; a run of them trips the failure rate.
+		return false;
+	}
+}
 
 export interface IGitHubActions {
 	/**
@@ -103,14 +148,6 @@ export interface IGitHubActions {
 	 */
 	listTeams(): Promise<GitTeamTuple[]>;
 
-	/**
-	 * Lists the GitHub IDs of members for a teamName (e.g. students).
-	 *
-	 * @param {string} teamName
-	 * @returns {Promise<string[]>} // list of githubIds
-	 */
-	listTeamMembers(teamName: string): Promise<string[]>;
-
 	listWebhooks(repoName: string): Promise<Array<{}>>;
 
 	updateWebhook(repoName: string, webhookEndpoint: string): Promise<boolean>;
@@ -153,6 +190,18 @@ export interface IGitHubActions {
 	 * @returns {Promise<GitTeamTuple>}
 	 */
 	addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple>;
+
+	/**
+	 * Removes a team from a repository, revoking the access that team conferred.
+	 *
+	 * The inverse of addTeamToRepo. Returns true when the team is no longer on the repo, which
+	 * includes the case where it was not on it to begin with (GitHub answers 204 either way).
+	 *
+	 * @param {string} teamName
+	 * @param {string} repoName
+	 * @returns {Promise<boolean>}
+	 */
+	removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean>;
 
 	/**
 	 * Gets the internal number for a team.
@@ -468,7 +517,11 @@ export class GitHubActions implements IGitHubActions {
 			// this a failed creation still writes an undefined URL and PROVISIONED_UNLINKED to the db
 			if (response.ok === false || typeof body.html_url === "undefined" || body.html_url.length < 5) {
 				Log.error("GitHubAction::createRepo( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-				throw new Error("GitHub returned " + response.status + "; " + JSON.stringify(body.message));
+				throw new GitHubError(
+					"GitHub returned " + response.status + "; " + JSON.stringify(body.message),
+					response.status,
+					JSON.stringify(body)
+				);
 			}
 
 			const url = body.html_url;
@@ -477,7 +530,11 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
-			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			// NOTE: gitHubStatus is deliberately NOT set here. The repo exists on GitHub but has no
+			// webhook and no staff teams yet, so it is not provisioned in any useful sense; only
+			// GitHubController::finalizeAndMark says so, once finalization has actually worked.
+			// Marking it here made a half-provisioned repo look finished, and because
+			// performProvision only retries NOT_PROVISIONED repos, it could never be completed.
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepo( " + repoName + " ) - db done");
 
@@ -565,7 +622,11 @@ export class GitHubActions implements IGitHubActions {
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
 			if (typeof body.html_url === "undefined" || body.html_url.length < 5) {
 				Log.error("GitHubAction::createRepoFromTemplate( " + repoName + " ) - repo not created; ERROR: " + JSON.stringify(body));
-				throw new Error("Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?");
+				throw new GitHubError(
+					"Is the import repo (" + templateOwner + "/" + templateRepo + ") configured in GitHub as a template repository?",
+					response.status,
+					JSON.stringify(body)
+				);
 			}
 			const url = body.html_url;
 
@@ -573,7 +634,11 @@ export class GitHubActions implements IGitHubActions {
 			const repo = await this.dc.getRepository(repoName);
 			repo.URL = url; // only update this field in the existing Repository record
 			repo.cloneURL = body.clone_url; // only update this field in the existing Repository record
-			repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+			// NOTE: gitHubStatus is deliberately NOT set here. The repo exists on GitHub but has no
+			// webhook and no staff teams yet, so it is not provisioned in any useful sense; only
+			// GitHubController::finalizeAndMark says so, once finalization has actually worked.
+			// Marking it here made a half-provisioned repo look finished, and because
+			// performProvision only retries NOT_PROVISIONED repos, it could never be completed.
 			await this.dc.writeRepository(repo);
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - db done");
 			Log.info("GitHubAction::createRepoFromTemplate(..) - success; URL: " + url + "; took: " + Util.took(start));
@@ -717,6 +782,18 @@ export class GitHubActions implements IGitHubActions {
 	 * @param repoName
 	 * @returns {Promise<boolean>}
 	 */
+
+	/**
+	 * Rethrows a response that means nothing else will work either.
+	 *
+	 */
+	private static throwIfFatal(status: number, body: string, context: string): void {
+		if (GitHubError.isFatal(status, body) === true) {
+			Log.error("GitHubAction::" + context + " - FATAL; status: " + status);
+			throw new GitHubError(context + " failed; GitHub returned " + status, status, body);
+		}
+	}
+
 	public async repoExists(repoName: string): Promise<boolean> {
 		const start = Date.now();
 		const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
@@ -734,6 +811,11 @@ export class GitHubActions implements IGitHubActions {
 			Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
 			return false;
 		}
+
+		// Without this, a 401 would look exactly like "the repo is there", and provisioning
+		// would go on to fail one repo at a time for a reason that has nothing to do with the repos
+		GitHubActions.throwIfFatal(res.status, await res.clone().text(), "repoExists( " + repoName + " )");
+
 		Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
 		return true;
 	}
@@ -948,6 +1030,7 @@ export class GitHubActions implements IGitHubActions {
 			// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 			const respBody = await response.text();
 			Log.error("GitHubAction::addWebhook( " + repoName + " ) - failed; status: " + response.status + "; response: " + respBody);
+			GitHubActions.throwIfFatal(response.status, respBody, "addWebhook( " + repoName + " )");
 			return false;
 		}
 
@@ -1268,6 +1351,7 @@ export class GitHubActions implements IGitHubActions {
 
 			const response = await fetch(uri, options);
 			if (!response.ok) {
+				GitHubActions.throwIfFatal(response.status, await response.text(), "addTeamToRepo( " + teamName + ", " + repoName + " )");
 				throw new Error(response.statusText);
 			}
 
@@ -1277,6 +1361,55 @@ export class GitHubActions implements IGitHubActions {
 			return { githubTeamNumber: team.githubTeamNumber, teamName: "NOTSETHERE" }; // TODO: why NOTSETHERE?
 		} catch (err) {
 			Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
+			throw err;
+		}
+	}
+
+	/**
+	 * Removes a team from a repository. The inverse of addTeamToRepo.
+	 *
+	 * NOTE: for a private repository this revokes the team's access outright; it does not downgrade
+	 * it to read-only. Making a repo readable-but-not-writable would mean re-adding the team with
+	 * "pull" instead, which is a different operation from un-releasing.
+	 *
+	 * @param {string} teamName
+	 * @param {string} repoName
+	 * @returns {Promise<boolean>}
+	 */
+	public async removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean> {
+		Log.trace("GitHubAction::removeTeamFromRepo( " + teamName + ", " + repoName + " ) - start");
+		const start = Date.now();
+
+		try {
+			const team = await this.getTeamByName(teamName);
+			if (team === null) {
+				// nothing on GitHub to detach; the caller's records are ahead of the org
+				Log.warn("GitHubAction::removeTeamFromRepo(..) - team does not exist: " + teamName);
+				return false;
+			}
+
+			// DELETE /orgs/:org/teams/:team_slug/repos/:owner/:repo
+			const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/repos/" + this.org + "/" + repoName;
+			Log.trace("GitHubAction::removeTeamFromRepo(..) - uri: " + uri);
+			const options: RequestInit = {
+				method: "DELETE",
+				headers: {
+					Authorization: this.gitHubAuthToken,
+					"User-Agent": this.gitHubUserName,
+					Accept: "application/vnd.github+json",
+				},
+			};
+
+			const response = await fetch(uri, options);
+			if (!response.ok) {
+				GitHubActions.throwIfFatal(response.status, await response.text(), "removeTeamFromRepo( " + teamName + ", " + repoName + " )");
+				throw new Error(response.statusText);
+			}
+
+			Log.info("GitHubAction::removeTeamFromRepo(..) - success; team: " + teamName + "; repo: " + repoName + "; took: " + Util.took(start));
+			return true;
+		} catch (err) {
+			Log.error("GitHubAction::removeTeamFromRepo(..) - ERROR: " + err);
 			throw err;
 		}
 	}
@@ -1468,15 +1601,6 @@ export class GitHubActions implements IGitHubActions {
 		// only info by default if you are _on_ a team
 		Log.trace("GitHubAction::isOnTeam( " + userName + " ) - is NOT on team: " + teamName + "; took: " + Util.took(start));
 		return false;
-	}
-
-	public async listTeamMembers(teamName: string): Promise<string[]> {
-		Log.info("GitHubAction::listTeamMembers( " + teamName + " ) - start");
-
-		const gh = this;
-		const teamMembers = await gh.getTeamMembers(teamName);
-
-		return teamMembers;
 	}
 
 	public async listRepoBranches(repoId: string): Promise<string[]> {
@@ -1819,8 +1943,6 @@ export class GitHubActions implements IGitHubActions {
 		// NOTE: fileContent is omitted above; it can be large and can carry sensitive content.
 		// Uncomment only for local debugging.
 		// Log.info("GithubAction::writeFileToRepo( " + repoURL + " , " + fileName + "" + " , " + fileContent + " , " + force + " ) - start");
-		const that = this;
-
 		if (typeof force === "undefined") {
 			force = false;
 		}
@@ -1833,6 +1955,57 @@ export class GitHubActions implements IGitHubActions {
 		const authedRepo = this.addGithubAuthToken(repoURL);
 
 		// clone repository
+		// NOTE: these were function declarations placed after the try block, relying on hoisting,
+		// with a `const that = this` because both the declaration and its .then() callback rebind
+		// `this`. As arrow functions they close over `this` directly, but they are no longer
+		// hoisted, so they have to be defined before the calls below.
+		const run = async (command: string, label: string): Promise<void> => {
+			const result = await exec(command);
+			Log.info("GitHubActions::writeFileToRepo(..)::" + label + "() - done");
+			this.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::" + label + "()");
+			this.reportStdErr(result.stderr, "writeFileToRepo(..)::" + label + "()");
+		};
+
+		const cloneRepo = async (repoPath: string): Promise<void> => {
+			const cloneStart = Date.now();
+			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: " + repoURL);
+			await run(`git clone -q ${authedRepo} ${repoPath}`, "cloneRepo");
+			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - took: " + Util.took(cloneStart));
+		};
+
+		const enterRepoPath = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: " + tempPath);
+			await run(`cd ${tempPath}`, "enterRepoPath");
+		};
+
+		const createNewFileForce = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: " + fileName);
+			await run(
+				`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo "${fileContent}" >> ${fileName};`,
+				"createNewFileForce"
+			);
+		};
+
+		const createNewFile = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - writing: " + fileName);
+			await run(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`, "createNewFile");
+		};
+
+		const addFilesToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - start");
+			await run(`cd ${tempPath} && git add ${fileName}`, "addFilesToRepo");
+		};
+
+		const commitFilesToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start");
+			await run(`cd ${tempPath} && git commit -q -m "Update ${fileName}"`, "commitFilesToRepo");
+		};
+
+		const pushToRepo = async (): Promise<void> => {
+			Log.info("GitHubActions::writeFileToRepo(..)::pushToRepo() - start");
+			await run(`cd ${tempPath} && git push -q`, "pushToNewRepo");
+		};
+
 		try {
 			await cloneRepo(tempPath);
 			await enterRepoPath();
@@ -1857,78 +2030,6 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		return true;
-
-		function cloneRepo(repoPath: string) {
-			const cloneStart = Date.now();
-			Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - cloning: " + repoURL);
-			return exec(`git clone -q ${authedRepo} ${repoPath}`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::cloneRepo() - done; took: " + Util.took(cloneStart));
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::cloneRepo()");
-				// if (result.stderr) {
-				//     Log.warn("GitHubActions::writeFileToRepo(..)::cloneRepo() - stderr: " + result.stderr);
-				// }
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::cloneRepo()");
-			});
-		}
-
-		function enterRepoPath() {
-			Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - entering: " + tempPath);
-			return exec(`cd ${tempPath}`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::enterRepoPath() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::enterRepoPath()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::enterRepoPath()");
-			});
-		}
-
-		function createNewFileForce() {
-			Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - writing: " + fileName);
-			return exec(`cd ${tempPath} && if [ -f ${fileName} ]; then rm ${fileName};  fi; echo "${fileContent}" >> ${fileName};`).then(
-				function (result: any) {
-					Log.info("GitHubActions::writeFileToRepo(..)::createNewFileForce() - done");
-					that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::createNewFileForce()");
-					that.reportStdErr(result.stderr, "writeFileToRepo(..)::createNewFileForce()");
-				}
-			);
-		}
-
-		function createNewFile() {
-			Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - writing: " + fileName);
-			return exec(`cd ${tempPath} && if [ ! -f ${fileName} ]; then echo \"${fileContent}\" >> ${fileName};fi`).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::createNewFile() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::createNewFile()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::createNewFile()");
-			});
-		}
-
-		function addFilesToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - start");
-			const command = `cd ${tempPath} && git add ${fileName}`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::addFilesToRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::addFilesToRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::addFilesToRepo()");
-			});
-		}
-
-		function commitFilesToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - start");
-			const command = `cd ${tempPath} && git commit -q -m "Update ${fileName}"`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::commitFilesToRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::commitFilesToRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::commitFilesToRepo()");
-			});
-		}
-
-		function pushToRepo() {
-			Log.info("GitHubActions::writeFileToRepo(..)::pushToRepo() - start");
-			const command = `cd ${tempPath} && git push -q`;
-			return exec(command).then(function (result: any) {
-				Log.info("GitHubActions::writeFileToRepo(..)::pushToNewRepo() - done");
-				that.reportStdOut(result.stdout, "GitHubActions::writeFileToRepo(..)::pushToNewRepo()");
-				that.reportStdErr(result.stderr, "writeFileToRepo(..)::pushToNewRepo()");
-			});
-		}
 	}
 
 	/**

@@ -1,8 +1,12 @@
+import { JobContext } from "@backend/controllers/JobController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
+import Util from "@common/Util";
+
 import * as https from "https";
 import fetch from "node-fetch";
+
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { PersonController } from "../../controllers/PersonController";
 import { AuditLabel, Person, PersonKind } from "../../Types";
@@ -32,6 +36,35 @@ export class ClasslistAgent {
 			Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
 			throw new Error("Could not fetch Classlist " + err.message);
 		}
+	}
+
+	/**
+	 * Pulls the classlist from the Classlist API and applies it. This job is
+	 * not cancellable: the people are written in one Promise.all, so there is
+	 * no safe checkpoint to stop at.
+	 *
+	 * @param personId Person.id of whoever asked; audited by processClasslist
+	 * @param ctx when this runs as a job: for progress
+	 * @returns {Promise<ClasslistChangesTransport>}
+	 */
+	public async updateClasslist(personId: string = null, ctx: JobContext = null): Promise<ClasslistChangesTransport> {
+		Log.info("ClasslistAgent::updateClasslist( " + personId + " ) - start");
+
+		await ctx?.progress(0, 0, "fetching the classlist");
+		const data = await this.fetchClasslist();
+
+		const total = Array.isArray(data) ? data.length : 0;
+		await ctx?.progress(0, total, "processing " + total + " records");
+		const changes = await this.processClasslist(personId, null, data);
+
+		if (changes.classlist.length === 0) {
+			// the old route answered 400 here; as a job this is a failure the UI can show
+			throw new Error("Classlist update not successful; no students were processed from classlist service.");
+		}
+
+		await ctx?.progress(changes.classlist.length, total, "done");
+		Log.info("ClasslistAgent::updateClasslist( " + personId + " ) - done; # students: " + changes.classlist.length);
+		return changes;
 	}
 
 	public async processClasslist(personId: string = null, path: string = null, data: any): Promise<ClasslistChangesTransport> {
@@ -146,18 +179,20 @@ export class ClasslistAgent {
 			}
 		});
 
-		Log.info("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(changeReport));
+		const crPrint = Util.clone(changeReport);
+		delete crPrint.classlist; // this field is too verbose
+		Log.info("ClasslistAgent::getClasslistChanges(..) - results: " + JSON.stringify(crPrint));
+
 		return changeReport;
 	}
 
 	private duplicateDataCheck(data: any[], columnNames: string[]) {
 		Log.trace("ClasslistAgent::duplicateDataCheck -- start");
-		const that = this;
 		const dupColumnData: any = {};
-		columnNames.forEach(function (column) {
-			Object.assign(dupColumnData, { [column]: that.getDuplicateRowsByColumn(data, column) });
+		columnNames.forEach((column) => {
+			Object.assign(dupColumnData, { [column]: this.getDuplicateRowsByColumn(data, column) });
 		});
-		columnNames.forEach(function (column) {
+		columnNames.forEach((column) => {
 			if (dupColumnData[column].length) {
 				Log.error("ClasslistAgent::duplicateDataCheck(..) - ERROR: Duplicate Data Check Error" + JSON.stringify(dupColumnData));
 				throw new Error("Duplicate Data Check Error: " + JSON.stringify(dupColumnData));
@@ -189,10 +224,9 @@ export class ClasslistAgent {
 
 	private missingDataCheck(data: any[], columns: string[]) {
 		Log.trace("ClasslistAgent::missingDataCheck -- start");
-		const that = this;
 		const missingData: any = {};
 		columns.forEach((column) => {
-			Object.assign(missingData, { [column]: that.getMissingDataRowsByColumn(data, column) });
+			Object.assign(missingData, { [column]: this.getMissingDataRowsByColumn(data, column) });
 		});
 		columns.forEach((column) => {
 			if (missingData[column].length) {

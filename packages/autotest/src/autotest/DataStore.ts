@@ -432,7 +432,7 @@ export class MongoDataStore implements IDataStore {
 	 *
 	 * Usage:
 	 *
-	 *   (await getCollection("users")).find().toArray().then( ... )
+	 *   const users = await (await getCollection("users")).find().toArray();
 	 */
 	private async getCollection(collectionName: string): Promise<Collection> {
 		const db = await this.open();

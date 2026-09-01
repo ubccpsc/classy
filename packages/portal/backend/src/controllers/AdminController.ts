@@ -16,13 +16,16 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { AuditLabel, Course, Deliverable, GitHubStatus, Grade, Person, PersonKind, Repository, Result, Team } from "../Types";
+import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubActions } from "./GitHubActions";
 import { GitHubController, IGitHubController } from "./GitHubController";
 import { GradesController } from "./GradesController";
+import { JobContext } from "./JobController";
 import { PersonController } from "./PersonController";
+import { ProvisionFailurePolicy } from "./ProvisionFailurePolicy";
+import { ProvisionState } from "./ProvisionState";
 import { RepositoryController } from "./RepositoryController";
 import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
@@ -462,10 +465,13 @@ export class AdminController {
 	 * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
 	 * does not exist or is empty.
 	 *
-	 * @returns {Promise<string>} A message summarizing the outcome of the operation.
+	 * @param requesterId Person.id of whoever asked; audited. Null skips the audit record.
+	 * @param ctx when this runs as a job: for progress
+	 * @returns {Promise<string>} a human-readable summary
 	 */
-	public async performStudentWithdraw(): Promise<string> {
+	public async performStudentWithdraw(requesterId: string = null, ctx: JobContext = null): Promise<string> {
 		Log.info("AdminController::performStudentWithdraw() - start");
+		await ctx?.progress(0, 0, "reading the students team from GitHub");
 		const gha = GitHubActions.getInstance(true);
 		// const tc = new TeamController();
 		// const teamNum = await tc.getTeamNumber("students"); // await gha.getTeamNumber("students");
@@ -473,9 +479,15 @@ export class AdminController {
 		const registeredGithubIds = await gha.getTeamMembers("students");
 
 		if (registeredGithubIds.length > 0) {
+			await ctx?.progress(0, registeredGithubIds.length, "marking withdrawn students");
 			const pc = new PersonController();
 			const msg = await pc.markStudentsWithdrawn(registeredGithubIds);
 			Log.info("AdminController::performStudentWithdraw() - done; msg: " + msg);
+			await ctx?.progress(registeredGithubIds.length, registeredGithubIds.length, msg);
+
+			if (requesterId !== null) {
+				await this.dbc.writeAudit(AuditLabel.STUDENT_WITHDRAW, requesterId, {}, {}, { message: msg });
+			}
 			return msg;
 		} else {
 			throw new Error("No students specified in the students team on GitHub; operation aborted.");
@@ -564,53 +576,56 @@ export class AdminController {
 	 *
 	 * @returns {Promise<RepositoryTransport[]>}
 	 */
-	public async planProvision(deliv: Deliverable, formSingleTeams: boolean): Promise<RepositoryTransport[]> {
-		Log.info("AdminController::planProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
+	public async prepareProvision(deliv: Deliverable, formSingleTeams: boolean, ctx: JobContext = null): Promise<RepositoryTransport[]> {
+		Log.info("AdminController::prepareProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
+		await ctx?.progress(0, 0, deliv.id + ": reading people and teams");
 		const cc = await Factory.getCourseController(this.gh);
 
 		let allPeople: Person[] = await this.pc.getAllPeople();
-		Log.info("AdminController::planProvision( .. ) - # people (all): " + allPeople.length);
+		Log.info("AdminController::prepareProvision( .. ) - # people (all): " + allPeople.length);
 
 		// remove all withdrawn people, we do not need to provision these
 		allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
-		Log.info("AdminController::planProvision( .. ) - # people (not withdrawn): " + allPeople.length);
+		Log.info("AdminController::prepareProvision( .. ) - # people (not withdrawn): " + allPeople.length);
 
 		// teams were either formed by students (or the admin in the UI)
 		// _or_ the deliv is for single students and we will form them below
 		let allTeams: Team[] = await this.tc.getAllTeams();
-		Log.info("AdminController::planProvision( .. ) - # teams: " + allTeams.length);
+		Log.info("AdminController::prepareProvision( .. ) - # teams: " + allTeams.length);
 
 		// just for logging, will remove with filter below
 		for (const team of allTeams) {
 			if (team.personIds.length < 1) {
-				Log.warn("AdminController::planProvision(..) - team has no people: " + team.id);
+				Log.warn("AdminController::prepareProvision(..) - team has no people: " + team.id);
 			}
 		}
 
 		// remove teams that have no people
 		allTeams = allTeams.filter((team) => team.personIds.length > 0);
-		Log.info("AdminController::planProvision(..) - # teams after removing teams without people: " + allTeams.length);
+		Log.info("AdminController::prepareProvision(..) - # teams after removing teams without people: " + allTeams.length);
 
 		if (deliv.teamMaxSize === 1) {
 			formSingleTeams = true;
-			Log.info("AdminController::planProvision(..) - team maxSize 1: formSingleTeams forced to true");
+			Log.info("AdminController::prepareProvision(..) - team maxSize 1: formSingleTeams forced to true");
 		} else {
-			Log.info("AdminController::planProvision(..) - team maxSize > 1: formSingleTeams not forced");
+			Log.info("AdminController::prepareProvision(..) - team maxSize > 1: formSingleTeams not forced");
 		}
 
 		const delivTeams: Team[] = [];
 		for (const team of allTeams) {
 			if (team === null || deliv === null || team.id === null || deliv.id === null) {
 				// seeing this during 310 provisioning, need to figure this out
-				Log.error("AdminController::planProvision(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv));
+				Log.error(
+					"AdminController::prepareProvision(..) - ERROR! null team: " + JSON.stringify(team) + " or deliv: " + JSON.stringify(deliv)
+				);
 			} else {
 				if (team.delivId === deliv.id) {
-					Log.info("AdminController::planProvision(..) - adding team: " + team.id + " to delivTeams");
+					Log.info("AdminController::prepareProvision(..) - adding team: " + team.id + " to delivTeams");
 					delivTeams.push(team);
 				}
 			}
 		}
-		Log.info("AdminController::planProvision(..) - # deliv teams: " + delivTeams.length);
+		Log.info("AdminController::prepareProvision(..) - # deliv teams: " + delivTeams.length);
 
 		// remove any people who are already on teams
 		for (const team of delivTeams) {
@@ -621,56 +636,61 @@ export class AdminController {
 					})
 					.indexOf(personId);
 				if (index >= 0) {
-					Log.info("AdminController::planProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
+					Log.info("AdminController::prepareProvision(..) - person already on team: " + personId + " ( team: " + team.id + " )");
 					allPeople.splice(index, 1);
 				} else {
-					Log.warn("AdminController::planProvision(..) - allPeople does not contain: " + personId);
+					Log.warn("AdminController::prepareProvision(..) - allPeople does not contain: " + personId);
 					const person = await this.pc.getPerson(personId);
 					if (person !== null) {
-						Log.warn("AdminController::planProvision(..) - person details: " + JSON.stringify(person));
+						Log.warn("AdminController::prepareProvision(..) - person details: " + JSON.stringify(person));
 					} else {
-						Log.warn("AdminController::planProvision(..) - person is not in database");
+						Log.warn("AdminController::prepareProvision(..) - person is not in database");
 					}
 				}
 			}
 		}
-		Log.trace("AdminController::planProvision(..) - # people not on teams: " + allPeople.length);
+		Log.trace("AdminController::prepareProvision(..) - # people not on teams: " + allPeople.length);
 
 		if (formSingleTeams === true) {
 			// now create teams for individuals
-			Log.info("AdminController::planProvision(..) - handling single teams");
+			Log.info("AdminController::prepareProvision(..) - handling single teams");
 			for (const individual of allPeople) {
 				try {
 					const name = await cc.computeNames(deliv, [individual]);
 					const team = await this.tc.formTeam(name.teamName, deliv, [individual], false);
 					delivTeams.push(team);
 				} catch (err) {
-					Log.error("AdminController::planProvision(..) - single team creation ERROR: " + err.message);
+					Log.error("AdminController::prepareProvision(..) - single team creation ERROR: " + err.message);
 				}
 			}
-			Log.info("AdminController::planProvision(..) - single teams done");
+			Log.info("AdminController::prepareProvision(..) - single teams done");
 		}
 
-		Log.info("AdminController::planProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
+		Log.info("AdminController::prepareProvision(..) - # delivTeams after individual teams added: " + delivTeams.length);
 
 		const reposToProvision: Repository[] = [];
 		// now process the teams to create their repos
+		let prepared = 0;
 		for (const delivTeam of delivTeams) {
-			Log.info("AdminController::planProvision(..) - preparing to provision team: " + delivTeam.id);
+			Log.info("AdminController::prepareProvision(..) - preparing to provision team: " + delivTeam.id);
+			prepared++;
+			if (prepared % 25 === 0) {
+				await ctx?.progress(prepared, delivTeams.length, deliv.id + ": preparing teams and repositories");
+			}
 
 			const people: Person[] = [];
 			for (const pId of delivTeam.personIds) {
 				people.push(await this.pc.getPerson(pId));
 			}
-			Log.trace("AdminController::planProvision(..) - preparing to provision pIds: " + JSON.stringify(delivTeam.personIds));
+			Log.trace("AdminController::prepareProvision(..) - preparing to provision pIds: " + JSON.stringify(delivTeam.personIds));
 			if (delivTeam.personIds.length !== people.length) {
-				Log.warn("AdminController::planProvision(..) - preparing to provision missing people; people: " + JSON.stringify(people));
+				Log.warn("AdminController::prepareProvision(..) - preparing to provision missing people; people: " + JSON.stringify(people));
 			}
 
 			const names = await cc.computeNames(deliv, people);
 
 			Log.info(
-				"AdminController::planProvision(..) - delivTeam: " +
+				"AdminController::prepareProvision(..) - delivTeam: " +
 					delivTeam.id +
 					"; computed team: " +
 					names.teamName +
@@ -683,7 +703,7 @@ export class AdminController {
 
 			if (team === null) {
 				// sanity checking team must not be null given what we have done above (should never happen)
-				throw new Error("AdminController::planProvision(..) - team unexpectedly null: " + name); // s.teamName);
+				throw new Error("AdminController::prepareProvision(..) - team unexpectedly null: " + name); // s.teamName);
 			}
 
 			if (repo === null) {
@@ -692,24 +712,24 @@ export class AdminController {
 
 			if (repo === null) {
 				// sanity checking repo must not be null given what we have done above (should never happen)
-				throw new Error("AdminController::planProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
+				throw new Error("AdminController::prepareProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
 			}
 
 			// /* istanbul ignore if */
 			// if (typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true && repo.URL === null) {
 			//     // HACK: this is just for dealing with inconsistent databases
 			//     // This whole block should be removed in the future
-			//     Log.warn("AdminController::planProvision(..) - repo URL should not be null: " + repo.id);
+			//     Log.warn("AdminController::prepareProvision(..) - repo URL should not be null: " + repo.id);
 			//     const config = Config.getInstance();
 			//     repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
 			//     await this.dbc.writeRepository(repo);
 			// }
 
 			reposToProvision.push(repo);
-			Log.info("AdminController::planProvision(..) - team planning done for team: " + delivTeam.id);
+			Log.info("AdminController::prepareProvision(..) - team planning done for team: " + delivTeam.id);
 		}
 
-		Log.info("AdminController::planProvision(..) - # repos to provision: " + reposToProvision.length);
+		Log.info("AdminController::prepareProvision(..) - # repos to provision: " + reposToProvision.length);
 
 		const repoTrans: RepositoryTransport[] = [];
 		for (const repo of reposToProvision) {
@@ -718,6 +738,25 @@ export class AdminController {
 		}
 
 		return repoTrans;
+	}
+
+	/**
+	 * The repositories that exist for a deliverable, and whether GitHub knows about them yet.
+	 *
+	 * This read-only action enables planning without building team/repo objects.
+	 *
+	 * @param {Deliverable} deliv
+	 * @returns {Promise<RepositoryTransport[]>}
+	 */
+	public async listProvisionState(deliv: Deliverable): Promise<RepositoryTransport[]> {
+		Log.info("AdminController::listProvisionState( " + deliv.id + " ) - start");
+		const start = Date.now();
+
+		const allRepos = await this.rc.getAllRepos();
+		const repos = allRepos.filter((repo) => repo.delivId === deliv.id);
+
+		Log.info("AdminController::listProvisionState( " + deliv.id + " ) - # repos: " + repos.length + "; took: " + Util.took(start));
+		return repos.map((repo) => RepositoryController.repositoryToTransport(repo));
 	}
 
 	/**
@@ -733,9 +772,13 @@ export class AdminController {
 	 * @param {string} importURL
 	 * @returns {Promise<Repository[]>}
 	 */
-	public async performProvision(repos: Repository[], importURL: string, concurrency?: number): Promise<RepositoryTransport[]> {
-		const gha = GitHubActions.getInstance(true);
-		const ghc = new GitHubController(gha);
+	public async performProvision(
+		repos: Repository[],
+		importURL: string,
+		concurrency?: number,
+		ctx: JobContext = null
+	): Promise<RepositoryTransport[]> {
+		const ghc = this.gh;
 		const cc = await Factory.getCourseController(this.gh);
 
 		if (typeof concurrency === "undefined") {
@@ -756,11 +799,20 @@ export class AdminController {
 		// NOTE: provisioning each repo is independent, and each one is dominated by waiting on
 		// GitHub, so they are run with bounded concurrency rather than strictly one at a time.
 		// The cap matters: GitHub applies secondary rate limits to bursts of concurrent writes.
+		let done = 0;
+		const policy = new ProvisionFailurePolicy("provisioning");
+
 		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
+			// one repository is the unit of work: a repo is never abandoned half-created, and
+			// re-running provisions whatever is still NOT_PROVISIONED
+			if (ctx?.isCancelled() === true) {
+				return;
+			}
 			try {
 				const start = Date.now();
 				Log.info("AdminController::performProvision(..) ***** START *****; repo: " + repo.id);
-				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
+				// CREATED repos exist on GitHub but were never finalized; provisioning resumes there
+				if (repo.gitHubStatus === RepoStatus.NOT_CREATED || repo.gitHubStatus === RepoStatus.CREATED) {
 					const futureTeams: Array<Promise<Team>> = repo.teamIds.map((teamId) => this.dbc.getTeam(teamId));
 					const teams: Team[] = await Promise.all(futureTeams);
 					Log.trace("AdminController::performProvision(..) - about to provision: " + repo.id);
@@ -771,8 +823,13 @@ export class AdminController {
 					if (success === true) {
 						Log.trace("AdminController::performProvision(..) - success: " + repo.id + "; URL: " + repo.URL);
 						provisionedRepos.push(repo);
+						policy.recordSuccess();
 					} else {
 						Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
 					}
 
 					Log.info("AdminController::performProvision(..) ***** DONE *****; repo: " + repo.id + "; took: " + Util.took(start));
@@ -780,11 +837,26 @@ export class AdminController {
 					Log.info("AdminController::performProvision(..) - skipped; already provisioned: " + repo.id + "; URL: " + repo.URL);
 				}
 			} catch (err) {
+				// NOTE: deliberately not rethrown. This used to stop every remaining repo from being
+				// scheduled, which was survivable when the browser drove one small batch at a time,
+				// but as a single job one bad repo would abandon the whole class. The failure is
+				// recorded and the run continues; re-running retries only what is still
+				// NOT_PROVISIONED.
 				Log.error("AdminController::performProvision(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
-				// would prefer not to rethrow, but the extra logging can be helpful
-				// NOTE: this stops further repos from being scheduled; those already in flight still finish
-				throw err;
+				await ctx?.error(repo.id + ": " + err.message);
+
+				// ...unless continuing is pointless: a failure that is about GitHub rather than about
+				// this repo, or a pattern that says the whole run is not going to work. Throwing here
+				// is what stops processConcurrently from scheduling anything further.
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
 			}
+			done++;
+			// the deliverable is in the message so the admin UI can say which one is running: only
+			// one provisioning job runs at a time, whichever deliverable started it
+			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
 		});
 
 		Log.info(
@@ -862,10 +934,10 @@ export class AdminController {
 
 				/* istanbul ignore else */
 				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
-				if (team.gitHubStatus === GitHubStatus.PROVISIONED_UNLINKED) {
+				if (team.gitHubStatus === TeamStatus.CREATED) {
 					/* istanbul ignore else */
 					// if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
-					if (repo !== null && repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+					if (repo !== null && repo.gitHubStatus === RepoStatus.READY) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
 						// aka only release provisioned repos
 						reposToRelease.push(repo);
@@ -888,30 +960,33 @@ export class AdminController {
 
 		Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
 
-		// we want to know all repos whether they are released or not
-		const allRepos: Repository[] = reposAlreadyReleased;
-		for (const toReleaseRepo of reposToRelease) {
-			// toReleaseRepo.URL = null; // HACK, but denotes that it has not been released yet
-			toReleaseRepo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // denotes that repo has not been released yet
-			allRepos.push(toReleaseRepo);
-		}
-		return allRepos;
+		// This used to overwrite gitHubStatus on the way out, to "denote that repo has not been
+		// released yet" -- a read path assigning status, so what the admin UI displayed was not always
+		// what the database held. The repos below already carry the right status (READY when they can
+		// be released, RELEASED when they already have been), so they are returned as they are.
+		return reposAlreadyReleased.concat(reposToRelease);
 	}
 
-	public async performRelease(repos: Repository[]): Promise<RepositoryTransport[]> {
-		const gha = GitHubActions.getInstance(true);
-		const ghc = new GitHubController(gha);
+	public async performRelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
+		const ghc = this.gh; // see performProvision
 
 		Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length);
 		const start = Date.now();
 
 		const releasedRepos = [];
+		let done = 0;
+		const policy = new ProvisionFailurePolicy("releasing");
+
 		for (const repo of repos) {
+			// one repository is the unit of work; see performProvision
+			if (ctx?.isCancelled() === true) {
+				Log.info("AdminController::performRelease(..) - cancelled; released " + releasedRepos.length + " of " + repos.length);
+				break;
+			}
 			try {
 				const startRepo = Date.now();
-				// if (repo.URL !== null) {
-				// can only release repos that are provisioned
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+				// can only release repos that are finalized; a CREATED repo has no webhook yet
+				if (repo.gitHubStatus === RepoStatus.READY) {
 					const teams: Team[] = [];
 					for (const teamId of repo.teamIds) {
 						teams.push(await this.dbc.getTeam(teamId));
@@ -923,8 +998,13 @@ export class AdminController {
 					if (success === true) {
 						Log.info("AdminController::performRelease(..) - success: " + repo.id + "; took: " + Util.took(startRepo));
 						releasedRepos.push(repo);
+						policy.recordSuccess();
 					} else {
 						Log.warn("AdminController::performRelease(..) - FAILED: " + repo.id);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
 					}
 
 					await Util.delay(200); // after any releasing wait a short bit
@@ -933,7 +1013,15 @@ export class AdminController {
 				}
 			} catch (err) {
 				Log.error("AdminController::performRelease(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
+				await ctx?.error(repo.id + ": " + err.message);
+
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
 			}
+			done++;
+			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
 		}
 
 		const releasedRepositoryTransport: RepositoryTransport[] = [];
@@ -947,14 +1035,83 @@ export class AdminController {
 		return releasedRepositoryTransport;
 	}
 
-	public async makeReposReadOnly(deliv: Deliverable): Promise<RepositoryTransport[]> {
-		Log.info("AdminController::makeReposReadOnly( " + deliv.id + " ) - start");
-		return [];
-	}
+	/**
+	 * Detaches the student teams from repositories that have been released.
+	 *
+	 * The mirror of performRelease, including its failure policy: a repo that cannot be un-released
+	 * keeps RELEASED, so running this again retries only what is still outstanding.
+	 *
+	 * @param {Repository[]} repos
+	 * @param {JobContext} ctx
+	 * @returns {Promise<RepositoryTransport[]>}
+	 */
+	public async performUnrelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
+		const ghc = this.gh; // see performProvision
 
-	public async makeReposWriteable(deliv: Deliverable): Promise<RepositoryTransport[]> {
-		Log.info("AdminController::makeReposReadOnly( " + deliv.id + " ) - start");
-		return [];
+		Log.info("AdminController::performUnrelease(..) - start; # repos: " + repos.length);
+		const start = Date.now();
+
+		const unreleasedRepos = [];
+		let done = 0;
+		const policy = new ProvisionFailurePolicy("un-releasing");
+
+		for (const repo of repos) {
+			if (ctx?.isCancelled() === true) {
+				Log.info("AdminController::performUnrelease(..) - cancelled; un-released " + unreleasedRepos.length + " of " + repos.length);
+				break;
+			}
+			try {
+				const startRepo = Date.now();
+				// only a released repo has student teams to detach
+				if (repo.gitHubStatus === RepoStatus.RELEASED) {
+					const teams: Team[] = [];
+					for (const teamId of repo.teamIds) {
+						teams.push(await this.dbc.getTeam(teamId));
+					}
+
+					const success = await ghc.unreleaseRepository(repo, teams);
+
+					if (success === true) {
+						Log.info("AdminController::performUnrelease(..) - success: " + repo.id + "; took: " + Util.took(startRepo));
+						unreleasedRepos.push(repo);
+						policy.recordSuccess();
+					} else {
+						Log.warn("AdminController::performUnrelease(..) - FAILED: " + repo.id);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
+					}
+
+					await Util.delay(200); // as with releasing, do not hammer the API
+				} else {
+					Log.info("AdminController::performUnrelease(..) - skipped; repo not released: " + repo.id);
+				}
+			} catch (err) {
+				Log.error("AdminController::performUnrelease(..) - FAILED: " + repo.id + "; ERROR: " + err.message);
+				await ctx?.error(repo.id + ": " + err.message);
+
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
+			}
+			done++;
+			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
+		}
+
+		const unreleasedRepositoryTransport: RepositoryTransport[] = [];
+		for (const repo of unreleasedRepos) {
+			unreleasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
+		}
+		Log.info(
+			"AdminController::performUnrelease(..) - complete; # un-released: " +
+				unreleasedRepositoryTransport.length +
+				"; took: " +
+				Util.took(start)
+		);
+
+		return unreleasedRepositoryTransport;
 	}
 
 	/* istanbul ignore next */
@@ -983,34 +1140,39 @@ export class AdminController {
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-				// if (repo.custom.githubCreated !== true) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be false for created: " + repo.id);
-				// 	repo.custom.githubCreated = true;
-				// }
-				if (repo.gitHubStatus === GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - gitHubStatus should be PROVISIONED for created: " + repo.id);
-					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED; // linking does not matter for repos
+
+				// The status is derived from what GitHub has rather than corrected from what the
+				// record said. That is also what lets this repair records written by an older version
+				// of Classy: their vocabulary does not have to be understood, only replaced.
+				//
+				// A repo that exists but has no webhook is CREATED, not READY: it was never
+				// finalized, and calling it READY would hide it from the retry that would fix it. The
+				// extra listWebhooks call is affordable in a check an admin presses by hand.
+				//
+				// Unless GitHub cannot reach this deployment at all (dev, CI), in GitHub cannot
+				// create a localhost webook.
+				if (repo.gitHubStatus !== RepoStatus.RELEASED) {
+					const webhooksPossible = GitHubController.webhooksSupported(config.getProp(ConfigKey.publichostname) + "/portal/githubWebhook");
+					const finalized = webhooksPossible === false || (await gha.listWebhooks(repo.id)).length > 0;
+					await ProvisionState.repairRepoStatus(
+						repo,
+						finalized ? RepoStatus.READY : RepoStatus.CREATED,
+						finalized ? "exists on GitHub and is finalized" : "exists on GitHub but has no webhook"
+					);
 				}
 			} else {
-				// if (repo.custom.githubCreated !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubCreated should not be true for !created: " + repo.id);
-				// 	repo.custom.githubCreated = false; // does not exist, must not be created
-				// }
-				//
-				// if (repo.custom.githubReleased !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - repo.custom.githubReleased should not be true for !created: " + repo.id);
-				// 	repo.custom.githubReleased = false; // does not exist, must not be released
-				// }
-
 				// repo does not exist
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - gitHubStatus can only be NOT_PROVISIONED for !created: " + repo.id);
-					repo.gitHubStatus = GitHubStatus.NOT_PROVISIONED;
-				}
+				await ProvisionState.repairRepoStatus(repo, RepoStatus.NOT_CREATED, "absent on GitHub");
 
 				if (repo.URL !== null) {
 					Log.warn("AdminController::dbSanityCheck() - repo.URL should be null for: " + repo.id);
 					repo.URL = null;
+				}
+
+				if (repo.cloneURL !== null) {
+					// written alongside URL by GitHubActions::createRepo, so it goes stale the same way
+					Log.warn("AdminController::dbSanityCheck() - repo.cloneURL should be null for: " + repo.id);
+					repo.cloneURL = null;
 				}
 			}
 
@@ -1050,15 +1212,7 @@ export class AdminController {
 					team.githubId = null; // does not exist, must not have a number
 				}
 
-				// if (team.custom.githubAttached !== false) {
-				// 	Log.warn("AdminController::dbSanityCheck() - team.custom.githubAttached should be false: " + team.id);
-				// 	team.custom.githubAttached = false; // does not exist, must not be attached
-				// }
-
-				if (team.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
-					Log.warn("AdminController::dbSanityCheck() - team should not exist: " + team.id);
-					team.gitHubStatus = GitHubStatus.NOT_PROVISIONED; // does not exist, must not be attached
-				}
+				await ProvisionState.repairTeamStatus(team, TeamStatus.NOT_CREATED, "absent on GitHub");
 			}
 
 			if (dryRun === false) {
@@ -1088,27 +1242,9 @@ export class AdminController {
 				}
 
 				if (isTeamOnRepo === true) {
-					// if (repo.custom.githubReleased !== true) {
-					// 	repo.custom.githubReleased = true;
-					// 	Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
-					// }
-
 					// if a team is on a repo, it must be provisioned and linked
-					if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
-						// repo.custom.githubReleased = true;
-						repo.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-						Log.warn("AdminController::dbSanityCheck() - repo2.custom.githubReleased should be true: " + repo.id);
-					}
-
-					// if (team.custom.githubAttached !== true) {
-					// 	team.custom.githubAttached = true;
-					// 	Log.warn("AdminController::dbSanityCheck() - team2.custom.githubAttached should be true: " + team.id);
-					// }
-
-					if (team.gitHubStatus !== GitHubStatus.PROVISIONED_LINKED) {
-						team.gitHubStatus = GitHubStatus.PROVISIONED_LINKED;
-						Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_LINKED: " + team.id);
-					}
+					await ProvisionState.repairRepoStatus(repo, RepoStatus.RELEASED, "a student team is attached on GitHub");
+					await ProvisionState.repairTeamStatus(team, TeamStatus.ATTACHED, "attached to " + repo.id + " on GitHub");
 
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
@@ -1119,12 +1255,10 @@ export class AdminController {
 
 			if (repoHasBeenChecked === false) {
 				// repos that were not found to have teams must not be released
-				// if (repo.custom.githubReleased !== false) {
-				// 	repo.custom.githubReleased = false; // was not found above, must be unreleased
-				if (repo.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
-					repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-					Log.warn("AdminController::dbSanityCheck() - repo.gitHubStatus should be PROVISIONED_UNLINKED: " + repo.gitHubStatus);
 
+				// no team is attached on GitHub, so it cannot be released; it keeps CREATED or READY
+				if (repo.gitHubStatus === RepoStatus.RELEASED) {
+					await ProvisionState.repairRepoStatus(repo, RepoStatus.READY, "no team is attached on GitHub");
 					if (dryRun === false) {
 						await this.dbc.writeRepository(repo);
 					}
@@ -1142,12 +1276,8 @@ export class AdminController {
 			}
 			if (checked === false) {
 				// teams that were not found with repos must not be attached
-				// if (team.custom.githubAttached !== false) {
-				// 	team.custom.githubAttached = false;
-				if (team.gitHubStatus !== GitHubStatus.PROVISIONED_UNLINKED) {
-					team.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
-					Log.warn("AdminController::dbSanityCheck() - team.gitHubStatus should be PROVISIONED_UNLINKED: " + team.id);
-
+				if (team.gitHubStatus === TeamStatus.ATTACHED) {
+					await ProvisionState.repairTeamStatus(team, TeamStatus.CREATED, "not attached to any repo on GitHub");
 					if (dryRun === false) {
 						await this.dbc.writeTeam(team);
 					}

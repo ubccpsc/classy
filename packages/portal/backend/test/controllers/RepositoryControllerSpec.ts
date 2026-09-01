@@ -5,7 +5,7 @@ import { DeliverablesController } from "@backend/controllers/DeliverablesControl
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { GitHubStatus, Repository } from "@backend/Types";
+import { RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -129,7 +129,7 @@ describe("RepositoryController", () => {
 			id: Date.now() + "_id",
 			delivId: TestHarness.DELIVID0,
 			URL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			cloneURL: null,
 			custom: {},
 			teamIds: [],
@@ -153,7 +153,7 @@ describe("RepositoryController", () => {
 			id: Date.now() + "_id",
 			delivId: TestHarness.DELIVID0,
 			URL: null,
-			gitHubStatus: GitHubStatus.NOT_PROVISIONED,
+			gitHubStatus: RepoStatus.NOT_CREATED,
 			cloneURL: null,
 			custom: {},
 			teamIds: [],

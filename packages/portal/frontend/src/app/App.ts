@@ -9,6 +9,7 @@ import { OnsButtonElement, OnsPageElement } from "onsenui";
 import { Factory } from "./Factory";
 import { Network } from "./util/Network";
 import { UI } from "./util/UI";
+import { ViewAs } from "./util/ViewAs";
 import { IView } from "./views/IView";
 
 declare let classportal: any;
@@ -21,6 +22,12 @@ export class App {
 
 	private validated = false;
 	private config: ConfigTransport = null;
+
+	/**
+	 * True while the login button's own reachability check is running, so the page-load check does
+	 * not overwrite its message.
+	 */
+	private loginCheckInFlight = false;
 
 	public constructor() {
 		Log.trace("App::<init> - start");
@@ -93,6 +100,11 @@ export class App {
 
 				// update login button result
 				that.toggleLoginButton();
+
+				// drawn on every page: an admin must never be able to lose track of whose Classy this is
+				ViewAs.renderBanner(() => {
+					window.location.reload();
+				});
 
 				if (that.view !== null) {
 					Log.trace("App::init()::show - calling view.renderPage for: " + pageName);
@@ -168,11 +180,16 @@ export class App {
 			Log.trace("App::performInit() - loginPage init; attaching login button");
 
 			(document.querySelector("#loginButton") as OnsButtonElement).onclick = function () {
-				// localStorage.setItem("org", org);
-				const url = that.backendURL + "/portal/auth?name=" + name;
-				Log.trace("App::performInit() - login pressed for: " + name + "; url: " + url);
-				window.location.replace(url);
+				that.loginPressed(name).catch(function (err) {
+					Log.error("App::performInit() - login ERROR: " + err.message);
+				});
 			};
+
+			// deliberately not awaited: a student off the VPN should see why before they press the
+			// button, rather than after waiting out the same check on the click
+			that.warnIfAuthHostUnreachable().catch(function (err) {
+				Log.warn("App::performInit() - auth host check ERROR: " + err.message);
+			});
 		}
 	}
 
@@ -202,6 +219,16 @@ export class App {
 			// push to correct handler
 			params.isAdmin = localStorage.isAdmin === "true"; // localStorage returns strings
 			params.isStaff = localStorage.isStaff === "true"; // localStorage returns strings
+
+			// While viewing as someone, the student view is the only view. One mode at a time,
+			// so a click is never ambiguous about which identity it belongs to; the banner's Return
+			// button is the way out.
+			if (ViewAs.isActive() === true) {
+				Log.info("App::handleMainPageClick(..) - viewing as: " + ViewAs.target());
+				params.isAdmin = false;
+				params.isStaff = false;
+			}
+
 			if (params.isAdmin || params.isStaff) {
 				Log.trace("App::handleMainPageClick(..) - admin");
 				// if we"re admin, keep the logging on
@@ -490,6 +517,143 @@ export class App {
 			});
 	}
 
+	/**
+	 * Starts the GitHub OAuth flow, but only once the GitHub host is known to be reachable.
+	 *
+	 * NOTE: /portal/auth just 302s the browser to GH_HOST. At UBC that host is only reachable from
+	 * the campus network, so a student off the VPN used to land on the browser's own "site cannot
+	 * be reached" page, which says nothing about Classy or the VPN. Classy itself is reachable from
+	 * anywhere, so nothing before this point hints at the problem.
+	 */
+	private async loginPressed(name: string): Promise<void> {
+		const url = this.backendURL + "/portal/auth?name=" + name;
+		Log.info("App::loginPressed() - login pressed for: " + name + "; url: " + url);
+
+		const host = this.config === null ? null : this.config.githubHost;
+		const button = document.querySelector("#loginButton") as OnsButtonElement;
+
+		button.disabled = true;
+		this.loginCheckInFlight = true;
+		App.setLoginMessage("Checking the connection to " + App.hostLabel(host) + "...", false);
+		let reachable: boolean;
+		try {
+			reachable = await App.isAuthHostReachable(host, 2000);
+		} finally {
+			button.disabled = false;
+			this.loginCheckInFlight = false;
+		}
+
+		if (reachable === false) {
+			Log.warn("App::loginPressed() - auth host unreachable: " + host);
+			App.setLoginMessage(App.vpnMessage(host), true);
+			return;
+		}
+
+		App.setLoginMessage(null, false);
+		window.location.replace(url);
+	}
+
+	/**
+	 * Checks the GitHub host when the login page opens, so the VPN message is already on screen by
+	 * the time a student off the VPN presses the button.
+	 */
+	private async warnIfAuthHostUnreachable(): Promise<void> {
+		const host = this.config === null ? null : this.config.githubHost;
+		if (typeof host !== "string" || host === "") {
+			return;
+		}
+
+		const reachable = await App.isAuthHostReachable(host, 2000);
+		if (reachable === true || this.loginCheckInFlight === true) {
+			// the press does its own check; its result is the fresher one, so do not race it
+			return;
+		}
+		if (document.querySelector("#loginButton") !== null) {
+			Log.warn("App::warnIfAuthHostUnreachable() - auth host unreachable: " + host);
+			App.setLoginMessage(App.vpnMessage(host), true);
+		}
+	}
+
+	private static vpnMessage(host: string): string {
+		return (
+			"<b>Cannot reach " +
+			App.hostLabel(host) +
+			".</b><br/><br/>" +
+			"You must be connected to ubcsecure on campus or using the UBC VPN to sign in. " +
+			"<br/><br/>Please connect to the VPN and try again."
+		);
+	}
+
+	/**
+	 * Whether the GitHub host can be reached from _this browser_. This has to be checked client-side.
+	 * The backend runs inside the UBC network, so it can always reach GitHub.
+	 *
+	 * @param host GH_HOST, from /portal/config
+	 * @param timeoutMs off the VPN the request usually hangs rather than failing, so a timeout --
+	 * not an error -- is the common signal
+	 * @returns {Promise<boolean>} true if the host answered, or if it could not be checked at all
+	 */
+	private static async isAuthHostReachable(host: string, timeoutMs: number = 5000): Promise<boolean> {
+		if (typeof host !== "string" || host === "") {
+			Log.warn("App::isAuthHostReachable() - no host configured; skipping check");
+			return true; // cannot check; behave as Classy did before and let the redirect happen
+		}
+
+		const controller = new AbortController();
+		const timer = setTimeout(function () {
+			controller.abort();
+		}, timeoutMs);
+
+		try {
+			// mode: no-cors because only the connection matters, not the response: GitHub sends no
+			// CORS headers, so a normal fetch would reject even when the host IS reachable
+			await fetch(host + "/favicon.ico", {
+				mode: "no-cors",
+				cache: "no-store",
+				credentials: "omit",
+				signal: controller.signal,
+			});
+			return true;
+		} catch (err) {
+			// an AbortError (timed out; the usual case off the VPN) or a TypeError (name did not
+			// resolve, connection refused)
+			Log.warn("App::isAuthHostReachable( " + host + " ) - not reachable: " + err.name);
+			return false;
+		} finally {
+			clearTimeout(timer);
+		}
+	}
+
+	/**
+	 * The message under the login button. Created if the course's login.html does not have one, so
+	 * a customized login page does not silently lose it.
+	 */
+	private static setLoginMessage(html: string | null, isError: boolean): void {
+		let el = document.querySelector("#loginMessage") as HTMLElement;
+
+		if (el === null) {
+			const button = document.querySelector("#loginButton");
+			if (button === null || button.parentElement === null) {
+				return;
+			}
+			el = document.createElement("div");
+			el.id = "loginMessage";
+			el.style.paddingTop = "1em";
+			el.style.textAlign = "center";
+			button.parentElement.appendChild(el);
+		}
+
+		el.style.color = isError === true ? "#b00020" : "";
+		el.innerHTML = html === null ? "" : html;
+	}
+
+	private static hostLabel(host: string): string {
+		if (typeof host !== "string" || host === "") {
+			return "the UBC GitHub server";
+		}
+		return host.replace(/^https?:\/\//, "").replace(/\/$/, "");
+	}
+
 	private async retrieveConfig(): Promise<ConfigTransport> {
 		const url = this.backendURL + "/portal/config";
 		Log.trace("App::retrieveConfig() - start; url: " + url);
@@ -512,11 +676,18 @@ export class App {
 				return json.success;
 			} else {
 				Log.error("App::retrieveConfig() - failed: " + JSON.stringify(json) + ")");
-				return { org: "ERROR", name: "ERROR", githubAPI: null, studentsFormTeamDelivIds: null };
+				return {
+					org: "ERROR",
+					name: "ERROR",
+					githubAPI: null,
+					githubHost: null,
+					studentsFormTeamDelivIds: null,
+					prairieLearnEnabled: false,
+				};
 			}
 		} else {
 			Log.error("App::retrieveConfig() - ERROR");
-			return { org: "ERROR", name: "ERROR", githubAPI: null, studentsFormTeamDelivIds: null };
+			return { org: "ERROR", name: "ERROR", githubAPI: null, githubHost: null, studentsFormTeamDelivIds: null, prairieLearnEnabled: false };
 		}
 	}
 

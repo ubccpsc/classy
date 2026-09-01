@@ -255,10 +255,12 @@
                         <ons-icon icon="fa-user-edit"></ons-icon>
                     </div>
                     <div class="center">
-                        Update classlist via Classlist API
-                        <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update
-                            Classlist
+                        Update class list via API
+                        <ons-button id="adminUpdateClasslist" modifier="medium" style="margin-left: 1em">Update Class list
                         </ons-button>
+                        <div id="adminUpdateClasslistStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         BETA: This will update your classlist with the latest Classlist data
@@ -266,6 +268,8 @@
                         This will act as if you uploaded your own classlist. The goal is to set this on a timer and
                         automatically update it
                         once we further understand the implications of this logic.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
@@ -278,6 +282,9 @@
                         <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark
                             withdrawn students
                         </ons-button>
+                        <div id="adminPerformWithdrawStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP
@@ -288,6 +295,8 @@
                         course statistics are
                         correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab
                         sections, etc.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
@@ -330,6 +339,35 @@
                         The UID columns should be in CWL@ubc.ca format. Any empty grade cell will be ignored,
                         but any present grade cell will overwrite whatever is already available online.
                         This cannot be undone.
+                    </div>
+                </ons-list-item>
+
+                <!-- Hidden unless PRAIRIELEARN_* is configured in .env; see AdminConfigTab::initJobSections -->
+                <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-rotate"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Sync grades from PrairieLearn.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
+                            <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never synced.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Pulls grading records for each PrairieLearn assessment and records the best
+                        <em>on-time</em> bucket as the Classy grade. Runs in the background, so this page can be
+                        closed while it works; press Sync Now again to resume an interrupted run.
+                        <br/><br/>
+                        Only attempts made before a deliverable&apos;s close date are graded, so tightening a
+                        close date and re-syncing will lower a grade &mdash; but grades already recorded are
+                        never removed automatically.
+                        <br/><br/>
+                        Deliverables are created automatically for assessments that do not have one, with grades
+                        unreleased and hidden from students. They are never renamed or deleted.
                     </div>
                 </ons-list-item>
 
@@ -438,7 +476,7 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Provision and Release Repositories</ons-list-header>
+                <ons-list-header>Manage Repositories</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
@@ -473,87 +511,7 @@
                 </ons-list-item>
 -->
 
-                <div style="display:none;">
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            Provision Repositories for Deliverable
-                            <select id="adminProvisionDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminProvisionButton" modifier="medium">Provision</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Creates the repositories for any provisionable Deliverable using all of the settings
-                            specified in the
-                            deliverable
-                            page. This is an incremental function; you can provision a deliverable several times as
-                            teams are formed, or
-                            after
-                            the class composition changes. It will also provision deliverables for all staff members who
-                            have previously
-                            logged
-                            into Classy (e.g., so they can see what the students see). This is a slow action (up to 30
-                            seconds / repository)
-                            so
-                            do not leave this until the last second, and make sure multiple of these requests are not
-                            running concurrently.
-                            Cannot be undone, so use this with care.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            Enable write access for deliverable repositories
-                            <select id="adminReleaseDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReleaseButton" modifier="medium">Release</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Releases any provisoined repositories so students can make commits to their repositories.
-                            This is an incremental
-                            function; you can release a deliverable several times as teams are formed, or after the
-                            class composition
-                            changes.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            NOT IMPLEMENTED: Disable write access for deliverable repositories
-                            <select id="adminReadOnlyDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReadOnlyButton" modifier="medium">Disable write access</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Sets any repositories to be read only so students can no longer make changes.
-                        </div>
-                    </ons-list-item>
-
-                    <ons-list-item expandable>
-                        <div class="left settingIcon">
-                            <ons-icon icon="fa-cogs"></ons-icon>
-                        </div>
-                        <div class="center">
-                            NOT IMPLEMENTED: Enable write access for deliverable repositories
-                            <select id="adminReadWriteDeliverableSelect"
-                                    style="margin-left: 1em; margin-right: 1em;"></select>
-                            <ons-button id="adminReadWriteButton" modifier="medium">Enable write access</ons-button>
-                        </div>
-                        <div class="expandable-content">
-                            Sets any repositories to be writeable so students make changes.
-                        </div>
-                    </ons-list-item>
-
-                </div>
-
+                
                 <ons-list-header>Delete Inconsistent Repositories and Teams</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
@@ -1330,7 +1288,7 @@
                 <div class="left">
                     <ons-back-button></ons-back-button>
                 </div>
-                <div class="center">Provision & Release Repositories</div>
+                <div class="center">Manage Repositories</div>
                 <div id='indexLogin' class="right">
                     <ons-toolbar-button onclick="myApp.logout();">
                         <ons-icon icon="fa-sign-out"></ons-icon>
@@ -1350,7 +1308,7 @@
             <ons-list>
                 <ons-list-header>Overview</ons-list-header>
                 <ons-list-item>
-                    This page is used for creating GitHub repositories for learners. The process has been split into two
+                    This page is used for creating GitHub repositories for learners. The process has been split into
                     parts:
                     <ul style="margin-bottom: 0;">
                         <li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being
@@ -1359,6 +1317,9 @@
                         </li>
                         <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick
                             operation.
+                        </li>
+                        <li><b>Un-releasing</b> takes that access away again: learner teams are detached, so
+                            learners can no longer see or push to the repository. Staff keep their access.
                         </li>
                     </ul>
                     Please do not start a release until a provision is complete.
@@ -1381,6 +1342,31 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Prepare</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-list-ol"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Prepare teams and repositories.&nbsp;&nbsp;
+                            <ons-button id="adminManagePrepareButton" modifier="medium">Prepare</ons-button>
+                            &nbsp;&nbsp;<input type="checkbox" id="provisionFormSingleCheckbox">
+                            <label for="provisionFormSingleCheckbox">Include students not in a team</label>
+                        </div>
+                        <div id="adminProvisionPrepareStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Works out which teams and repositories this deliverable needs and records them in Classy.
+                        Nothing is created on GitHub, and nothing is visible to students. The lists below are empty
+                        until this has been run.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Select Repositories to Provision</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -1393,9 +1379,18 @@
                                 id="repositoryProvisionSelect"></select>
                         <ons-button id="adminManageProvisionButton" modifier="medium">Provision Repositories
                         </ons-button>
+                        <ons-button id="adminManageProvisionCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionCreateStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         Select the repositories you wish to provision.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works. Cancelling stops after the
+                        repositories currently being created finish; those already created are kept, and provisioning
+                        again creates the rest.
                     </div>
                 </ons-list-item>
 
@@ -1410,11 +1405,19 @@
                                 style="width: 20em; margin-left: 1em; margin-right: 1em;"
                                 id="repositoryReleaseSelect"></select>
                         <ons-button id="adminManageReleaseButton" modifier="medium">Release Repositories</ons-button>
+                        <ons-button id="adminManageReleaseCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionReleaseStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
                         Select the repositories you wish to release.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
+
 
                 <ons-list-header>Provisioned Repositories</ons-list-header>
                 <ons-list-item expandable>
@@ -1423,7 +1426,9 @@
                     </div>
                     <div class="center">
                         Provisioned Repositories:
-                        <ul id="repositoryProvisionedUL"></ul>
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryProvisionedSelect"></select>
                     </div>
                     <div class="expandable-content">
                         These are the repositories that have already been provisioned.
@@ -1437,10 +1442,25 @@
                     </div>
                     <div class="center">
                         Released Repositories:
-                        <ul id="repositoryReleasedUL"></ul>
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryReleasedSelect"></select>
+                        <ons-button id="adminManageUnreleaseButton" modifier="medium">Un-Release</ons-button>
+                        <ons-button id="adminManageUnreleaseCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionUnreleaseStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
-                        These are the repositories that have already been released.
+                        These are the repositories that have already been released. Select any of them and press
+                        Un-Release to detach the student teams: students can no longer see or push to the repository,
+                        staff keep their access, and nothing in the repository is changed or deleted.
+                        <br/><br/>
+                        Un-released repositories move back to the un-release list above, so anything un-released by
+                        mistake can simply be released again.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 

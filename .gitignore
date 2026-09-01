@@ -40,16 +40,12 @@ packages/portal/frontend/**/*.map
 # tracked; every subdirectory (including html/js/) is build output.
 packages/portal/frontend/html/*/
 
+# pugins sometimes get put here during debugging but should be ignored
+packages/portal/frontend/src/app/plugs/
+
 ## Fork-specific resources
 packages/portal/backend/test/cs310/
 packages/portal/frontend/html/cs310/
-packages/portal/frontend/src/app/custom/CustomAdminView.ts
-packages/portal/frontend/src/app/custom/CustomStudentView.ts
-packages/portal/backend/src/custom/CustomCourseController.ts
-packages/portal/backend/src/custom/CustomCourseRoutes.ts
-
-# Plugins
-packages/portal/frontend/src/app/plugs/
 
 .circleci/
 

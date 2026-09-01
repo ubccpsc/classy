@@ -3,6 +3,7 @@ import { GradeTransport, RepositoryTransport, StudentTransport } from "@common/t
 import { Factory } from "../Factory";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
+import { ViewAs } from "../util/ViewAs";
 import { IView } from "./IView";
 
 export abstract class AbstractStudentView implements IView {
@@ -70,12 +71,13 @@ export abstract class AbstractStudentView implements IView {
 
 	protected getOptions(): { headers: { [header: string]: string } } {
 		return {
-			headers: {
+			// see AdminView::getOptions; the header is added in one place for every request
+			headers: ViewAs.addHeader({
 				"Content-Type": "application/json",
 				user: localStorage.user,
 				token: localStorage.token,
 				org: localStorage.org,
-			},
+			}),
 		};
 	}
 
@@ -220,7 +222,7 @@ export abstract class AbstractStudentView implements IView {
 
 		if (this.repos === null || this.repos.length < 1) {
 			const el = document.getElementById("studentRepoTable");
-			el.innerHTML = "None released.";
+			el.innerHTML = "Repositories not yet provisioned.";
 		} else {
 			const headers: TableHeader[] = [
 				{

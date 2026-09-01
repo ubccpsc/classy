@@ -14,6 +14,7 @@ import { CourseTransport, CourseTransportPayload } from "@common/types/PortalTyp
 
 import { Factory } from "../Factory";
 import { UI } from "../util/UI";
+import { ViewAs } from "../util/ViewAs";
 
 import { AdminConfigTab } from "./AdminConfigTab";
 import { AdminDashboardTab } from "./AdminDashboardTab";
@@ -136,9 +137,13 @@ export class AdminView implements IView {
 		if (typeof failure === "string") {
 			Log.error("AdminView::showError(..) - failure: " + failure);
 			UI.showAlert(failure);
-		} else if (typeof failure.failure !== "undefined") {
+		} else if (typeof failure?.failure?.message === "string") {
 			Log.error("AdminView::showError(..) - failure message: " + failure.failure.message);
 			UI.showAlert(failure.failure.message);
+		} else if (typeof failure?.message === "string") {
+			// not a Classy payload (e.g. a Fastify or proxy error); show what it does carry
+			Log.error("AdminView::showError(..) - non-Classy failure: " + failure.message);
+			UI.showAlert(failure.message);
 		} else {
 			Log.error("AdminView::showError(..) - Unknown message: " + failure);
 			UI.showAlert("Action unsuccessful.");
@@ -147,11 +152,13 @@ export class AdminView implements IView {
 
 	public static getOptions() {
 		return {
-			headers: {
+			// NOTE: ViewAs::addHeader is applied to every request helper in the frontend, so an admin
+			// driving Classy as a student cannot have one page quietly answer with their own data
+			headers: ViewAs.addHeader({
 				"Content-Type": "application/json",
 				user: localStorage.user,
 				token: localStorage.token,
-			},
+			}),
 		};
 	}
 

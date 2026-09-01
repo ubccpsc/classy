@@ -13,8 +13,8 @@ import {
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
+import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 import * as fs from "fs-extra";
-import * as restify from "restify";
 import { AuthController } from "../../controllers/AuthController";
 import { DatabaseController } from "../../controllers/DatabaseController";
 import { DeliverablesController } from "../../controllers/DeliverablesController";
@@ -25,107 +25,128 @@ import { PersonController } from "../../controllers/PersonController";
 import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
 import { Factory } from "../../Factory";
-import { AuditLabel, GitHubStatus, Person } from "../../Types";
-
-import IREST from "../IREST";
-import AdminRoutes from "./AdminRoutes";
+import { AuditLabel, Person, RepoStatus } from "../../Types";
+import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
 import { ClasslistAgent } from "./ClasslistAgent";
+import { PrairieLearnAgent } from "./PrairieLearnAgent";
+import { type ClassyIdentity, RouteUtil, ViewAsError } from "./RouteUtil";
 
 export default class GeneralRoutes implements IREST {
-	public static async getConfig(req: any, res: any, next: any) {
+	public static async getConfig(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("GeneralRoutes::getConfig(..) - start");
 		const start = Date.now();
 
 		const org = Config.getInstance().getProp(ConfigKey.org);
 		const name = Config.getInstance().getProp(ConfigKey.name);
 		const githubAPI = Config.getInstance().getProp(ConfigKey.githubAPI);
+		const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);
 		const studentsFormTeamDelivIds = (await new DeliverablesController().getAllDeliverables())
 			.filter((d) => d.teamStudentsForm === true)
 			.map((d) => d.id);
 
-		let payload: ConfigTransportPayload;
 		if (org !== null) {
-			payload = { success: { org: org, name: name, githubAPI: githubAPI, studentsFormTeamDelivIds } };
+			const payload: ConfigTransportPayload = {
+				success: {
+					org: org,
+					name: name,
+					githubAPI: githubAPI,
+					githubHost: githubHost,
+					studentsFormTeamDelivIds,
+					prairieLearnEnabled: PrairieLearnAgent.isConfigured(),
+				},
+			};
 			Log.trace("GeneralRoutes::getConfig(..) - done; took: " + Util.took(start));
 			Log.trace("GeneralRoutes::getConfig(..) - sending: " + JSON.stringify(payload));
-			res.send(200, payload);
-			return next(false);
-		} else {
-			payload = { failure: { message: "Unable to retrieve config (server error)", shouldLogout: false } };
-			res.send(400, payload);
-			return next(false);
+			res.code(200).send(payload);
+			return;
+		}
+
+		const payload: ConfigTransportPayload = {
+			failure: { message: "Unable to retrieve config (server error)", shouldLogout: false },
+		};
+		res.code(400).send(payload);
+	}
+
+	public static async getPerson(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
+		Log.trace("GeneralRoutes::getPerson(..) - start; user: " + user);
+
+		try {
+			const personTrans = await GeneralRoutes.performGetPerson(identity);
+			const payload: Payload = { success: personTrans };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getPerson(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
 		}
 	}
 
-	public static getPerson(req: any, res: any, next: any) {
-		const user = req.headers.user;
-		const token = req.headers.token;
-		Log.trace("GeneralRoutes::getPerson(..) - start; user: " + user);
-
-		GeneralRoutes.performGetPerson(user, token)
-			.then(function (personTrans) {
-				const payload: Payload = { success: personTrans };
-				res.send(200, payload);
-				return next(false);
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getPerson(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
-	}
-
-	public static getGrades(req: any, res: any, next: any) {
-		const user = req.headers.user;
-		const token = req.headers.token;
+	public static async getGrades(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 
 		Log.trace("GeneralRoutes::getGrades(..) - start; user: " + user);
 
-		GeneralRoutes.performGetGrades(user, token)
-			.then(function (grades) {
-				const payload: GradeTransportPayload = { success: grades };
-				res.send(200, payload);
-				return next(false);
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getGrades(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
+		try {
+			const grades = await GeneralRoutes.performGetGrades(identity);
+			const payload: GradeTransportPayload = { success: grades };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getGrades(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static getTeams(req: any, res: any, next: any) {
-		const user = req.headers.user;
-		const token = req.headers.token;
+	public static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 		Log.trace("GeneralRoutes::getTeams(..) - start; user: " + user);
 		const start = Date.now();
 
-		GeneralRoutes.performGetTeams(user, token)
-			.then(function (teams) {
-				Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
-				const payload: TeamTransportPayload = { success: teams };
-				res.send(200, payload);
-				return next(false);
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getTeams(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
+		try {
+			const teams = await GeneralRoutes.performGetTeams(identity);
+			Log.trace("GeneralRoutes::getTeams(..) - done; user: " + user + ": #teams: " + teams.length + "; took: " + Util.took(start));
+			const payload: TeamTransportPayload = { success: teams };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getTeams(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static getResource(req: any, res: any, next: any) {
+	public static async getResource(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("GeneralRoutes::getResource(..) - start; user: " + req.headers.user);
 
-		const auth = AdminRoutes.processAuth(req);
+		const auth = RouteUtil.processAuth(req);
 		// const user = req.headers.user;
 		// const token = req.headers.token;
 		// const params = req.params;
 		const path = req.url.substring(16); // this strips off the route prefix (i.e., /portal/resource)
+
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // refused; the response has already been sent
+		}
 
 		// right now this means requests _must_ be by an authorized user (admin, staff, or student)
 		if (auth === null || typeof auth.user === "undefined" || typeof auth.token === "undefined") {
@@ -133,63 +154,58 @@ export default class GeneralRoutes implements IREST {
 			// If the requester is not authenticated forward them back to the front page.
 			// TODO: use ref for forwarding the user to their original resource once they have logged in
 			const loc = Config.getInstance().getProp(ConfigKey.publichostname) + "?ref=" + path;
-			return res.redirect(loc, next);
+			res.redirect(loc, 302);
+			return;
 		}
 
 		Log.info("GeneralRoutes::getResource(..) - user: " + auth.user + "; path: " + path);
 
-		GeneralRoutes.performGetResource(auth, path)
-			.then(function (resource: any) {
-				const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
-				Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+		try {
+			// NOTE: the resolved resource is not used; performGetResource is called for its
+			// authorization check, which throws when the user may not read this path.
+			await GeneralRoutes.performGetResource(identity, path);
 
-				try {
-					if (fs.lstatSync(filePath).isDirectory()) {
-						Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
-						const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
-						res.writeHead(200, {
-							"Content-Length": Buffer.byteLength(html),
-							"Content-Type": "text/html",
-						});
-						res.write(html);
-						res.end();
-					} else {
-						const rs = fs.createReadStream(filePath);
-						rs.on("error", (err: any) => {
-							if (err.code === "ENOENT") {
-								Log.error(
-									"GeneralRoutes::getResource(..) - ERROR Requested resource does not exist. " +
-										"This really should not have reached here: " +
-										path
-								);
-								res.send(404, err.message);
-							} else {
-								Log.error("GeneralRoutes::getResource(..) - ERROR Reading requested resource: " + path);
-								res.send(500, err.message);
-							}
-							return next();
-						});
-						rs.on("end", () => {
-							Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
-							rs.close();
-							return next();
-						});
-						rs.pipe(res);
-					}
-				} catch (err) {
-					Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-					res.send(404, err.message);
-				}
-			})
-			.catch(function (err) {
-				Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
-				if (err.message === "401") {
-					return GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res, next);
+			const filePath = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs" + path;
+			Log.trace("GeneralRoutes::getResource(..) - start; trying to read file: " + filePath);
+
+			try {
+				if (fs.lstatSync(filePath).isDirectory()) {
+					Log.trace("GeneralRoutes::getResource(..) - File was actually a directory: " + filePath);
+					const html = GeneralRoutes.generateDirectoryHtml(filePath, path, req.url);
+					// NOTE: sending a string lets Fastify set Content-Length itself, which is
+					// what the directory-listing spec asserts; the previous writeHead/write/end
+					// wrote to the raw response to achieve the same thing.
+					res.code(200).header("Content-Type", "text/html").send(html);
 				} else {
-					Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
-					return GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res, next);
+					// NOTE: handed to Fastify as a stream rather than piped to the response.
+					// Fastify pipes it and responds chunked, so large AutoTest artifacts are
+					// still streamed rather than buffered (the spec asserts the chunked
+					// encoding). Stream errors after the headers are sent are Fastify's to
+					// handle; a missing file is caught by the lstatSync above.
+					const rs = fs.createReadStream(filePath);
+					rs.on("end", () => {
+						Log.trace("GeneralRoutes::getResource(..) - done; finished reading file: " + filePath);
+					});
+					// NOTE: awaited. In an async handler Fastify finalizes the reply as soon as the
+					// handler's promise resolves, which for a stream payload means closing the
+					// response before anything has been piped (a 200 with content-length: 0).
+					// FastifyReply is thenable and settles once the response is actually flushed,
+					// so awaiting it holds the handler open for the duration of the stream.
+					await res.code(200).send(rs);
 				}
-			});
+			} catch (err) {
+				Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
+				res.code(404).send(err.message);
+			}
+		} catch (err) {
+			Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
+			if (err.message === "401") {
+				GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res);
+				return;
+			}
+			Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
+			GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res);
+		}
 	}
 
 	public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
@@ -203,13 +219,21 @@ export default class GeneralRoutes implements IREST {
 		return body;
 	}
 
-	public static async performGetResource(auth: { user: string; token: string }, path: string): Promise<boolean> {
+	public static async performGetResource(identity: ClassyIdentity, path: string): Promise<boolean> {
 		Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - start");
 
 		let proceed = false;
 		// if user/token does not have access to resource request should return 401
 		try {
-			const priv = await AuthRoutes.performGetCredentials(auth.user, auth.token);
+			// This is the one student route whose *authorization* depends on who is asking, so
+			// while viewing as someone the check is made as that person. Without this an admin would
+			// see staff and admin artifacts a student cannot, and the preview would be a lie. It is
+			// safe in one direction only, which is what makes it acceptable: the admin could already
+			// see everything the target can, so evaluating as the target can only narrow access.
+			const priv =
+				identity.actedAs === null
+					? await AuthRoutes.performGetCredentials(identity.actedBy, identity.token)
+					: await new AuthController().personPrivileged(await new PersonController().getPerson(identity.actedAs));
 
 			if (/\/student(\/|$)/.test(path)) {
 				Log.trace("GeneralRoutes::performGetResource( .., " + path + " ) - student resource; is valid");
@@ -246,56 +270,70 @@ export default class GeneralRoutes implements IREST {
 		return proceed;
 	}
 
-	public static getRepos(req: any, res: any, next: any) {
-		const user = req.headers.user;
-		const token = req.headers.token;
+	public static async getRepos(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 		Log.trace("GeneralRoutes::getRepos(..) - start; user: " + user);
 
-		GeneralRoutes.performGetRepos(user, token)
-			.then(function (repos) {
-				const payload: RepositoryPayload = { success: repos };
-				res.send(200, payload);
-				return next(false);
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::getRepos(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
+		try {
+			const repos = await GeneralRoutes.performGetRepos(identity);
+			const payload: RepositoryPayload = { success: repos };
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::getRepos(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static postTeam(req: any, res: any, next: any) {
-		const user = req.headers.user;
-		const token = req.headers.token;
+	public static async postTeam(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		const user = identity.user;
 
 		Log.info("GeneralRoutes::teamCreate(..) - start; user: " + user);
 
-		const teamTrans: TeamFormationTransport = req.params;
-		GeneralRoutes.performPostTeam(user, token, teamTrans)
-			.then(function (team) {
-				Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
-				const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
-				res.send(200, payload);
-				return next(true);
-			})
-			.catch(function (err) {
-				Log.info("GeneralRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
-				const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
-				res.send(400, payload);
-				return next(false);
-			});
+		const teamTrans = req.body as TeamFormationTransport;
+
+		if (typeof teamTrans !== "object" || teamTrans === null) {
+			const payload: Payload = { failure: { message: "Invalid team creation request; no body sent.", shouldLogout: false } };
+			Log.info("GeneralRoutes::teamCreate(..) - ERROR: no body sent");
+			res.code(400).send(payload);
+			return;
+		}
+		try {
+			const team = await GeneralRoutes.performPostTeam(identity, teamTrans);
+			Log.info("GeneralRoutes::teamCreate(..) - done; team: " + JSON.stringify(team));
+			const payload: TeamTransportPayload = { success: [team] }; // really should not be an array, but it beats having another type
+			res.code(200).send(payload);
+			return;
+		} catch (err) {
+			Log.info("GeneralRoutes::teamCreate(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+			return;
+		}
 	}
 
-	public static async updateClasslist(req: any, res: any, next: any) {
+	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.info("GeneralRoutes::updateClasslist(..) - start");
 		const ca = new ClasslistAgent();
-		const ipAddr = req.headers["x-forwarded-for"] || req.connection.remoteAddress;
+		// NOTE: req.ip replaces restify's req.connection.remoteAddress, which Fastify does not
+		// expose. Fastify resolves it from the socket (and honours x-forwarded-for when trustProxy
+		// is on), but the explicit header check is kept because trustProxy is not enabled here.
+		const ipAddr = req.headers["x-forwarded-for"] || req.ip;
 		const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
 		let auditInfo: string;
 
 		if (ipReg.test(ipAddr) === false) {
-			return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res, next);
+			return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res);
 		}
 
 		auditInfo = req.headers.user || ipAddr;
@@ -304,35 +342,52 @@ export default class GeneralRoutes implements IREST {
 			const data = await ca.fetchClasslist();
 			const classlistChanges = await ca.processClasslist(auditInfo, null, data);
 
-			let payload: Payload;
-
 			if (classlistChanges.classlist.length) {
-				payload = {
+				const payload: Payload = {
 					success: {
 						message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
 					},
 				};
-				res.send(200, payload);
+				res.code(200).send(payload);
 				Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
 			} else {
 				const msg = "Classlist upload not successful; no students were processed from CSV.";
-				return GeneralRoutes.handleError(400, msg, res, next);
+				return GeneralRoutes.handleError(400, msg, res);
 			}
 		} catch (_err) {
 			const msg = "Classlist upload not successful; no students were processed from CSV.";
-			return GeneralRoutes.handleError(400, msg, res, next);
+			return GeneralRoutes.handleError(400, msg, res);
 		}
 	}
 
-	public static handleError(code: number, msg: string, res: any, next: any) {
-		Log.error("GeneralRoutes::handleError(..) - ERROR: " + msg);
-		res.send(code, { failure: { message: msg, shouldLogout: false } });
-		return next(false);
+	/**
+	 * The identity for a student-facing request: who is calling, and whose data they are asking for.
+	 *
+	 * Returns null when a view-as request is refused, having already answered 403. The routes
+	 * check for that rather than letting a refusal look like an ordinary 400.
+	 */
+	private static async identityFor(req: ClassyRequest, res: FastifyReply): Promise<ClassyIdentity> {
+		try {
+			return await RouteUtil.resolveIdentity(req);
+		} catch (err) {
+			if (err instanceof ViewAsError) {
+				GeneralRoutes.handleError(err.status, err.message, res);
+				return null;
+			}
+			throw err;
+		}
 	}
 
-	private static async performGetPerson(user: string, token: string): Promise<StudentTransport> {
+	public static handleError(code: number, msg: string, res: FastifyReply): void {
+		RouteUtil.handleError("GeneralRoutes", code, msg, res);
+	}
+
+	private static async performGetPerson(identity: ClassyIdentity): Promise<StudentTransport> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// NOTE: validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -347,10 +402,13 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performPostTeam(user: string, token: string, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
+	private static async performPostTeam(identity: ClassyIdentity, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performPostTeam(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -408,7 +466,11 @@ export default class GeneralRoutes implements IREST {
 			}
 
 			const dbc = DatabaseController.getInstance();
-			await dbc.writeAudit(AuditLabel.TEAM_STUDENT, user, {}, team, {});
+			// personId is the authenticated caller, always. When an admin forms this team while
+			// viewing as a student, custom.actedAs records who they were acting as
+			await dbc.writeAudit(AuditLabel.TEAM_STUDENT, identity.actedBy, {}, team, {
+				actedAs: identity.actedAs,
+			});
 
 			const teamTrans: TeamTransport = {
 				id: team.id,
@@ -422,9 +484,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetGrades(user: string, token: string): Promise<GradeTransport[]> {
+	private static async performGetGrades(identity: ClassyIdentity): Promise<GradeTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.trace("GeneralRoutes::performGetGrades(..) - in isValid: " + isValid);
 			throw new Error("Invalid credentials");
@@ -440,9 +505,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetTeams(user: string, token: string): Promise<TeamTransport[]> {
+	private static async performGetTeams(identity: ClassyIdentity): Promise<TeamTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.error("GeneralRoutes::performGetTeams(..) - isValid === false");
 			throw new Error("Invalid credentials");
@@ -461,9 +529,12 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	private static async performGetRepos(user: string, token: string): Promise<RepositoryTransport[]> {
+	private static async performGetRepos(identity: ClassyIdentity): Promise<RepositoryTransport[]> {
 		const ac = new AuthController();
-		const isValid = await ac.isValid(user, token);
+		// Validated as the caller; `user` below is whose data this is about, which differs
+		// only when an admin is viewing as one of their students
+		const isValid = await ac.isValid(identity.actedBy, identity.token);
+		const user = identity.user;
 		if (isValid === false) {
 			Log.error("GeneralRoutes::performGetRepos(..) - isValid === false");
 			throw new Error("Invalid credentials");
@@ -476,8 +547,7 @@ export default class GeneralRoutes implements IREST {
 			Log.trace("GeneralRoutes::performGetRepos(..) - #repos: " + repos.length);
 			const repoTrans: RepositoryTransport[] = [];
 			for (const repo of repos) {
-				// if (repo.URL !== null) {
-				if (repo.gitHubStatus !== GitHubStatus.NOT_PROVISIONED) {
+				if (repo.gitHubStatus !== RepoStatus.NOT_CREATED) {
 					// provisioned repos
 					repoTrans.push(RepositoryController.repositoryToTransport(repo));
 				}
@@ -486,7 +556,7 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	public registerRoutes(server: restify.Server) {
+	public registerRoutes(server: FastifyInstance): void {
 		Log.trace("GeneralRoutes::registerRoutes() - start");
 
 		// returns the org that the backend is currently configured to serve

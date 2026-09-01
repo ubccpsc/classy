@@ -6,16 +6,16 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import BackendServer from "@backend/server/BackendServer";
-import { GitHubStatus } from "@backend/Types";
+import { AuditLabel, RepoStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import { ConfigTransportPayload, Payload, TeamFormationTransport } from "@common/types/PortalTypes";
-import * as restify from "restify";
+import type * as http from "http";
 import request from "supertest";
 
 describe("General Routes", function () {
-	let app: restify.Server = null;
+	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
 
 	let server: BackendServer = null;
 
@@ -87,6 +87,7 @@ describe("General Routes", function () {
 		expect(body.success.org).to.not.be.undefined;
 		expect(body.success.org).to.equal(Config.getInstance().getProp(ConfigKey.org)); // valid .org usage
 		expect(body.success.name).to.equal(Config.getInstance().getProp(ConfigKey.name));
+		expect(body.success.githubHost).to.equal(Config.getInstance().getProp(ConfigKey.githubHost));
 		expect(body.success.studentsFormTeamDelivIds.length).to.equal(4);
 		expect(body.success.studentsFormTeamDelivIds).to.eql(studentsFormTeamDelivIds);
 	});
@@ -764,7 +765,7 @@ describe("General Routes", function () {
 
 		// now simulate the repo being released
 		repo.URL = "https://provisioned!";
-		repo.gitHubStatus = GitHubStatus.PROVISIONED_UNLINKED;
+		repo.gitHubStatus = RepoStatus.READY;
 		await dc.writeRepository(repo);
 
 		ex = null;
@@ -813,5 +814,205 @@ describe("General Routes", function () {
 		expect(body.success).to.be.undefined;
 		expect(ex).to.be.null;
 		expect(body.failure.message).to.be.an("string");
+	});
+
+	describe("REST framework portability", function () {
+		it("Should reject a team request with no body rather than failing internally.", async function () {
+			const dc: DatabaseController = DatabaseController.getInstance();
+			const auth = await dc.getAuth(TestHarness.USER1.id);
+			expect(auth).to.not.be.null;
+
+			const response = await request(app).post("/portal/team").set({ user: auth.personId, token: auth.token });
+			const body: Payload = response.body;
+			Log.test("empty team body: " + response.status + " -> " + JSON.stringify(body));
+
+			expect(response.status).to.equal(400);
+			expect(body.success).to.be.undefined;
+			expect(body.failure, "an empty body must produce a handled failure, not a crash").to.not.be.undefined;
+			// a deliberate message, not a TypeError from deep in the controller leaking to the client
+			expect(body.failure.message).to.contain("no body sent");
+		});
+
+		it("Should serve the static frontend assets.", async function () {
+			const response = await request(app).get("/style.css");
+			Log.test("static /style.css -> " + response.status + "; type: " + response.headers["content-type"]);
+
+			expect(response.status).to.equal(200);
+			expect(response.headers["content-type"], "css was not served as css").to.contain("css");
+			expect(response.text, "static asset body was empty").to.be.a("string").with.length.greaterThan(0);
+		});
+
+		it("Should not let the static handler swallow unknown API routes.", async function () {
+			const response = await request(app).get("/portal/thisRouteDoesNotExist");
+			Log.test("unknown API path -> " + response.status + "; type: " + response.headers["content-type"]);
+
+			expect(response.status).to.equal(404);
+		});
+	});
+
+	describe("an admin viewing Classy as another user", function () {
+		// NOTE: this is the feature's security boundary, so these are the tests that matter: the UI
+		// hiding a button is not what makes it safe. "Who is acting" stays the caller everywhere;
+		// only "whose data is this" changes.
+		const VIEW_AS = "x-classy-view-as";
+		const dc = DatabaseController.getInstance();
+
+		async function authFor(personId: string): Promise<{ user: string; token: string }> {
+			// NOTE: not every fixture person has logged in, so give them credentials if they have none.
+			// What is being tested is what the *header* is allowed to do, not who has a session.
+			let auth = await dc.getAuth(personId);
+			if (auth === null) {
+				await dc.writeAuth({ personId: personId, token: "viewAsSpecToken_" + personId });
+				auth = await dc.getAuth(personId);
+			}
+			expect(auth, "setup: " + personId + " must be able to authenticate").to.not.be.null;
+			return { user: auth.personId, token: auth.token };
+		}
+
+		it("Should answer with the target's person record, not the admin's.", async function () {
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, TestHarness.USER1.id);
+			Log.test("view-as person -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id, "the student's record is the point").to.equal(TestHarness.USER1.id);
+			expect(response.body.success.id).to.not.equal(admin.user);
+		});
+
+		it("Should answer with the target's grades.", async function () {
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/grades")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, TestHarness.USER1.id);
+			Log.test("view-as grades -> " + response.status + "; # grades: " + (response.body.success || []).length);
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			for (const grade of response.body.success) {
+				expect(grade.personId, "every grade must belong to the student").to.equal(TestHarness.USER1.id);
+			}
+		});
+
+		it("Should let an admin view as a staff member.", async function () {
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, TestHarness.STAFF1.id);
+			Log.test("view-as staff -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id).to.equal(TestHarness.STAFF1.id);
+		});
+
+		it("Should refuse a staff member who tries to view as someone.", async function () {
+			// staff can already read grades through the admin UI, but acting *as* a student is a
+			// different power, and it is admin-only
+			const staff = await authFor(TestHarness.STAFF1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", staff.user)
+				.set("token", staff.token)
+				.set(VIEW_AS, TestHarness.USER1.id);
+			Log.test("staff view-as -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(403);
+			expect(response.body.failure.message).to.contain("admin");
+		});
+
+		it("Should refuse a student who tries to view as another student.", async function () {
+			const student = await authFor(TestHarness.USER1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", student.user)
+				.set("token", student.token)
+				.set(VIEW_AS, TestHarness.USER2.id);
+			Log.test("student view-as -> " + response.status);
+
+			expect(response.status).to.equal(403);
+		});
+
+		it("Should refuse an unknown target.", async function () {
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, "personThatDoesNotExist");
+			Log.test("unknown target -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(403);
+			expect(response.body.failure.message).to.contain("personThatDoesNotExist");
+		});
+
+		it("Should refuse viewing as an admin.", async function () {
+			// it would grant nothing, but the set of people who can be viewed as stays smaller than
+			// the set who can view
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/person")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, TestHarness.ADMIN1.id);
+			Log.test("view-as admin -> " + response.status);
+
+			expect(response.status).to.equal(403);
+		});
+
+		it("Should ignore the header on an admin route.", async function () {
+			// authorization is always the real caller: this must not become a way to act as someone
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.get("/portal/admin/students")
+				.set("user", admin.user)
+				.set("token", admin.token)
+				.set(VIEW_AS, TestHarness.USER1.id);
+			Log.test("admin route with header -> " + response.status);
+
+			// still served as the admin; a student could never call this
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+		});
+
+		it("Should not change anything when the header is absent.", async function () {
+			const student = await authFor(TestHarness.USER1.id);
+
+			const response = await request(app).get("/portal/person").set("user", student.user).set("token", student.token);
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id).to.equal(TestHarness.USER1.id);
+		});
+
+		it("Should record one audit entry when a session starts.", async function () {
+			const admin = await authFor(TestHarness.ADMIN1.id);
+
+			const response = await request(app)
+				.post("/portal/admin/viewAs/" + TestHarness.USER1.id)
+				.set("user", admin.user)
+				.set("token", admin.token);
+			Log.test("start session -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body.success.id).to.equal(TestHarness.USER1.id);
+
+			const audits = await dc.getAudits(AuditLabel.IMPERSONATE);
+			expect(audits, "the session must be recorded").to.have.lengthOf.at.least(1);
+			expect(audits[0].personId, "the admin is who acted").to.equal(admin.user);
+			expect((audits[0].custom as any).viewAs).to.equal(TestHarness.USER1.id);
+		});
 	});
 });

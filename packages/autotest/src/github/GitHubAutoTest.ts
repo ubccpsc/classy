@@ -583,7 +583,6 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 
 	protected async processExecution(data: AutoTestResult): Promise<void> {
 		try {
-			const that = this;
 			const delivId = data.input.target.delivId;
 
 			const standardFeedbackRequested: CommitTarget = await this.getRequester(data.commitURL, delivId, "standard");
@@ -646,7 +645,7 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 			) {
 				// handle user-requested feedback
 
-				const giveFeedback = async function (target: CommitTarget, kind: string): Promise<void> {
+				const giveFeedback = async (target: CommitTarget, kind: string): Promise<void> => {
 					Log.info(
 						"GitHubAutoTest::processExecution() - " +
 							kind +
@@ -659,9 +658,9 @@ export class GitHubAutoTest extends AutoTest implements IGitHubTestManager {
 							"; for: " +
 							target.personId
 					);
-					const msg = await that.classPortal.formatFeedback(data);
-					await that.postToGitHub(data.input.target, { url: data.input.target.postbackURL, message: msg });
-					await that.saveFeedbackGiven(delivId, target.personId, target.timestamp, data.commitURL, kind);
+					const msg = await this.classPortal.formatFeedback(data);
+					await this.postToGitHub(data.input.target, { url: data.input.target.postbackURL, message: msg });
+					await this.saveFeedbackGiven(delivId, target.personId, target.timestamp, data.commitURL, kind);
 					return;
 				};
 				if (standardFeedbackRequested !== null) {

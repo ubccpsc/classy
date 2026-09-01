@@ -1,40 +1,36 @@
 import Log from "@common/Log";
 import { DeliverableTransport, Payload, RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
 import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminView } from "./AdminView";
+import { JobRunner, type JobSection } from "./JobRunner";
 
 export class AdminProvisionPage extends AdminPage {
-	/**
-	 * How many repos to ask the backend to provision per request.
-	 *
-	 * This is a request-duration budget, not a concurrency setting: the server decides how many
-	 * run at once (AdminController.PROVISION_CONCURRENCY). It is small because the proxy uses
-	 * proxy_read_timeout 90, and a batch that cannot finish in that window is cut off mid-provision.
-	 */
-	private static readonly PROVISION_BATCH_SIZE = 8;
-
 	private deliverables: DeliverableTransport[];
+	private readonly jobs: JobRunner;
+
+	/**
+	 * The three provisioning jobs. Built once; each reads the page's current selection when its
+	 * button is pressed.
+	 */
+	private readonly sections: JobSection[];
 
 	public constructor(remote: string) {
 		super(remote);
+		this.jobs = new JobRunner(remote);
+		this.sections = this.buildSections();
 	}
 
 	public async init(opts: any): Promise<void> {
-		const that = this;
 		Log.info("AdminProvisionPage::init(..) - start");
 
 		UI.showModal("Retrieving Deliverables.");
 
 		this.deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
-
-		// this.teams = await AdminTeamsTab.getTeams(this.remote);
-		// this.repos = await AdminResultsTab.getRepositories(this.remote);
 
 		this.deliverables = this.deliverables.sort(function compare(a: DeliverableTransport, b: DeliverableTransport) {
 			return a.id.localeCompare(b.id);
@@ -51,61 +47,175 @@ export class AdminProvisionPage extends AdminPage {
 
 		this.clearLists();
 
-		(document.querySelector("#adminManageProvisionButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminProvisionPage::manageProvisionButton(..) - button pressed");
-			evt.stopPropagation(); // prevents list item expansion
-			that
-				.handleProvisionPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					// did not
-					Log.info("AdminProvisionPage::manageProvisionButton(..) - ERROR: " + err);
-				});
-		};
-
-		(document.querySelector("#adminManageReleaseButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminProvisionPage::manageReleaseButton(..) - button pressed");
-			evt.stopPropagation(); // prevents list item expansion
-			that
-				.handleReleasePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					// did not
-					Log.warn("AdminProvisionPage::manageReleaseButton(..) - ERROR: " + err);
-				});
-		};
-
 		const delivSelector = document.querySelector("#provisionRepoDeliverableSelect") as HTMLSelectElement;
-		delivSelector.onchange = function (evt) {
+		delivSelector.onchange = (evt: any) => {
 			evt.stopPropagation(); // prevents list item expansion
 
-			that
-				.handleDelivChanged()
-				.then(function () {
-					//
-				})
-				.catch(function (err) {
-					Log.warn("AdminProvisionPage::init(..) - handleDelivChanged ERROR: " + err);
-				});
+			this.handleDelivChanged().catch(function (err) {
+				Log.warn("AdminProvisionPage::init(..) - handleDelivChanged ERROR: " + err);
+			});
 		};
+
+		// wires the buttons and shows what each job last did, including one still running
+		await Promise.all(this.sections.map((section) => this.jobs.init(section)));
 
 		UI.hideModal();
 	}
 
+	/**
+	 * Perform work on backend; frontend only checks for status.
+	 */
+	private buildSections(): JobSection[] {
+		return [
+			{
+				kind: "provision-prepare",
+				buttonId: "adminManagePrepareButton",
+				statusId: "adminProvisionPrepareStatus",
+				ran: "Last prepared",
+				params: () => {
+					const delivId = AdminProvisionPage.selectedDeliverable();
+					if (delivId === null) {
+						UI.showErrorToast("Select a deliverable first.");
+						return null;
+					}
+					const checkbox = document.querySelector("#provisionFormSingleCheckbox") as HTMLInputElement;
+					return { delivId: delivId, formSingle: checkbox !== null && checkbox.checked === true };
+				},
+				detail: function (summary: any): string {
+					return (
+						summary.delivId +
+						": " +
+						summary.teamsCreated +
+						" team(s) and " +
+						summary.reposCreated +
+						" repository record(s) created; " +
+						summary.repos +
+						" repo(s) planned."
+					);
+				},
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
+			{
+				kind: "provision-create",
+				buttonId: "adminManageProvisionButton",
+				cancelButtonId: "adminManageProvisionCancelButton",
+				statusId: "adminProvisionCreateStatus",
+				ran: "Last provisioned",
+				confirmCancel:
+					"Stop provisioning after the repositories currently being created finish?\n\n" +
+					"Repositories already created are kept; pressing Provision again creates the rest.",
+				params: () => this.repoParams("repositoryProvisionSelect", "provisioning"),
+				detail: AdminProvisionPage.describeRepoSummary("provisioned"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
+			{
+				kind: "provision-release",
+				buttonId: "adminManageReleaseButton",
+				cancelButtonId: "adminManageReleaseCancelButton",
+				statusId: "adminProvisionReleaseStatus",
+				ran: "Last released",
+				confirmCancel:
+					"Stop releasing after the current repository finishes?\n\n" +
+					"Repositories already released stay released; pressing Release again releases the rest.",
+				params: () => this.repoParams("repositoryReleaseSelect", "releasing"),
+				detail: AdminProvisionPage.describeRepoSummary("released"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
+			{
+				kind: "provision-unrelease",
+				buttonId: "adminManageUnreleaseButton",
+				cancelButtonId: "adminManageUnreleaseCancelButton",
+				statusId: "adminProvisionUnreleaseStatus",
+				ran: "Last un-released",
+				confirmCancel:
+					"Stop un-releasing after the current repository finishes?\n\n" +
+					"Repositories already un-released stay un-released; pressing Un-Release again does the rest.",
+				params: () => this.repoParams("repositoryReleasedSelect", "un-releasing"),
+				detail: AdminProvisionPage.describeRepoSummary("unreleased"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
+		];
+	}
+
+	/**
+	 * The selected repos for one of the multi-selects, as job params.
+	 *
+	 * Allows staff to validate provisioning is working with sample repos before
+	 * running the job for the whole course.
+	 */
+	private repoParams(selectId: string, action: string): any {
+		const delivId = AdminProvisionPage.selectedDeliverable();
+		if (delivId === null) {
+			UI.showErrorToast("Select a deliverable first.");
+			return null;
+		}
+
+		const repoIds = AdminProvisionPage.selectedOptions(selectId);
+		if (repoIds.length === 0) {
+			UI.showErrorToast("No repos selected for " + action + ".");
+			return null;
+		}
+		return { delivId: delivId, repoIds: repoIds };
+	}
+
+	private static describeRepoSummary(verb: string): (summary: any) => string {
+		return function (summary: any): string {
+			let detail = summary.delivId + ": " + summary[verb] + " of " + summary.requested + " " + verb + ".";
+			if (summary.skipped > 0) {
+				detail += " " + summary.skipped + " already done.";
+			}
+			if (summary.failed?.length > 0) {
+				detail += " <b>" + summary.failed.length + " failed: " + summary.failed.slice(0, 5).join(", ") + "</b>";
+				if (summary.failed.length > 5) {
+					detail += " (and " + (summary.failed.length - 5) + " more)";
+				}
+			}
+			if (summary.cancelled === true) {
+				detail += " Cancelled; press again to finish the rest.";
+			}
+			if (summary.stoppedEarly === true) {
+				// everything already done is kept, so pressing again resumes
+				detail += " <b>Stopped early: " + summary.stopReason + "</b> Press again to continue.";
+			}
+			return detail;
+		};
+	}
+
+	private static selectedDeliverable(): string | null {
+		const value = UI.getDropdownValue("provisionRepoDeliverableSelect");
+		if (typeof value !== "string" || value === "" || value === "-None-") {
+			return null;
+		}
+		return value;
+	}
+
+	private static selectedOptions(selectId: string): string[] {
+		const select = document.getElementById(selectId) as HTMLSelectElement;
+		const selected: string[] = [];
+		if (select === null) {
+			return selected;
+		}
+		for (const opt of select.options) {
+			if (opt.selected && opt.disabled === false) {
+				selected.push(opt.value || opt.text);
+			}
+		}
+		return selected;
+	}
+
 	private clearLists() {
 		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const provisionedUL = document.getElementById("repositoryProvisionedUL") as HTMLUListElement;
+		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
 		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
-
-		const releaseButton = document.getElementById("adminManageReleaseButton") as HTMLButtonElement;
-		const provisionButton = document.getElementById("adminManageProvisionButton") as HTMLButtonElement;
-		releaseButton.disabled = false;
-		provisionButton.disabled = false;
+		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
 
 		const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
 		delivSelect.disabled = false;
@@ -114,249 +224,141 @@ export class AdminProvisionPage extends AdminPage {
 		toReleaseSelect.disabled = false;
 
 		toProvisionSelect.innerHTML = "";
-		provisionedUL.innerHTML = "";
 		toReleaseSelect.innerHTML = "";
-		releasedUL.innerHTML = "";
-	}
-
-	private disableElements() {
-		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const releaseButton = document.getElementById("adminManageReleaseButton") as HTMLButtonElement;
-		const provisionButton = document.getElementById("adminManageProvisionButton") as HTMLButtonElement;
-		const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
-		delivSelect.disabled = true;
-		releaseButton.disabled = true;
-		provisionButton.disabled = true;
-		toReleaseSelect.disabled = true;
-		toProvisionSelect.disabled = true;
+		if (provisionedSelect !== null) {
+			provisionedSelect.innerHTML = "";
+		}
+		if (releasedSelect !== null) {
+			releasedSelect.innerHTML = "";
+		}
 	}
 
 	private async handleDelivChanged(): Promise<void> {
-		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const provisionedUL = document.getElementById("repositoryProvisionedUL") as HTMLUListElement;
-		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const releasedUL = document.getElementById("repositoryReleasedUL") as HTMLUListElement;
-
 		const val = UI.getDropdownValue("provisionRepoDeliverableSelect");
-
 		Log.info("AdminProvisionPage::handleDelivChanged(..) - new deliverable selected: " + val);
-		UI.showModal("Retrieving provisioning and releasing details for " + val + ".");
-		if (val !== "-None-") {
-			try {
-				this.clearLists();
 
-				// update provisioned
-				const provisionRepo = await this.getProvisionDetails(val);
-				Log.info("AdminProvisionPage::handleDelivChanged(..) - planning provisioning worked");
+		this.setFormSingleForDeliverable(val);
 
-				let provisioned = [];
-				let toProvision = [];
-
-				for (const repo of provisionRepo) {
-					if (repo.gitHubStatus === "NOT_PROVISIONED") {
-						// Log.trace("Repo to provision: " + repo.id + "; URL: " + repo.URL);
-						toProvision.push(repo.id);
-					} else {
-						// Log.trace("Repo already provisioned: " + repo.id + "; URL: " + repo.URL);
-						provisioned.push(repo.id);
-					}
-				}
-
-				provisioned = provisioned.sort();
-				toProvision = toProvision.sort();
-
-				if (provisioned.length === 0) {
-					const li = document.createElement("li");
-					li.appendChild(document.createTextNode("No provisioned repositories"));
-					provisionedUL.appendChild(li);
-				}
-
-				if (toProvision.length === 0) {
-					const option = document.createElement("option");
-					option.text = "Nothing to provision";
-					toProvisionSelect.add(option);
-				}
-
-				for (const provisionedName of provisioned) {
-					const li = document.createElement("li");
-					li.appendChild(document.createTextNode(provisionedName));
-					provisionedUL.appendChild(li);
-				}
-
-				for (const toProvisionName of toProvision) {
-					const option = document.createElement("option");
-					option.text = toProvisionName;
-					toProvisionSelect.add(option);
-				}
-
-				// release
-
-				// update provisioned
-				const reposToRelease = await this.getReleaseDetails(val);
-				Log.info("AdminProvisionPage::handleDelivChanged(..) - planning releasing worked");
-
-				let released: string[] = [];
-				let toRelease: string[] = [];
-
-				for (const repo of reposToRelease) {
-					// Log.info("repo for release: " + JSON.stringify(repo));
-					if (repo.gitHubStatus === "PROVISIONED_UNLINKED") {
-						toRelease.push(repo.id);
-					} else {
-						released.push(repo.id);
-					}
-				}
-
-				released = released.sort();
-				toRelease = toRelease.sort();
-
-				if (released.length === 0) {
-					const li = document.createElement("li");
-					li.appendChild(document.createTextNode("No released repositories"));
-					releasedUL.appendChild(li);
-				}
-
-				if (toRelease.length === 0) {
-					const option = document.createElement("option");
-					option.text = "Nothing to release";
-					toReleaseSelect.add(option);
-				}
-
-				for (const releasedName of released) {
-					const li = document.createElement("li");
-					li.appendChild(document.createTextNode(releasedName));
-					releasedUL.appendChild(li);
-				}
-
-				for (const toReleaseName of toRelease) {
-					const option = document.createElement("option");
-					option.text = toReleaseName;
-					toReleaseSelect.add(option);
-				}
-			} catch (err) {
-				Log.error("AdminProvisionPage::init(..) - ERROR planning provisioning / releasing: " + err);
-			}
-		} else {
-			// none selected; clear selects
+		if (val === "-None-") {
 			this.clearLists();
+			return;
 		}
 
-		UI.hideModal();
+		UI.showModal("Retrieving provisioning and releasing details for " + val + ".");
+		try {
+			await this.refreshLists();
+		} finally {
+			UI.hideModal();
+		}
 	}
 
-	private async handleReleasePressed(): Promise<boolean> {
-		Log.info("AdminProvisionPage::handleReleasePressed(..) - start");
-
-		const releaseList = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
-		const selected = [];
-
-		for (const opt of releaseList.options) {
-			if (opt.selected) {
-				selected.push(opt.value || opt.text);
-			}
+	/**
+	 * `AdminController.prepareProvision` forces formSingle to true when `Deliverable.teamMaxSize`
+	 * is 1 (`maxTeamSize` on the transport), so for those deliverables the checkbox is not a live
+	 * choice: show it checked and disabled rather than offering an option the backend ignores.
+	 */
+	private setFormSingleForDeliverable(delivId: string): void {
+		const checkbox = document.querySelector("#provisionFormSingleCheckbox") as HTMLInputElement;
+		if (checkbox === null) {
+			return;
 		}
 
-		Log.info("AdminProvisionPage::handleReleasePressed(..) - start; # repos to provision: " + selected.length);
-		if (selected.length > 0) {
-			UI.showSuccessToast("Repo releasing in progress; this will take a while. Do not close this browser window.");
-		} else {
-			UI.showErrorToast("No repos selected for releasing.");
+		const deliv = (this.deliverables ?? []).find((d) => d.id === delivId);
+		const singleton = typeof deliv !== "undefined" && deliv.maxTeamSize === 1;
+
+		checkbox.disabled = singleton;
+		if (singleton === true) {
+			checkbox.checked = true;
+		}
+	}
+
+	/**
+	 * Repopulates the four lists from the backend. Read-only: choosing a deliverable no longer
+	 * creates teams and repositories as a side effect (that is what Prepare is for).
+	 */
+	private async refreshLists(): Promise<void> {
+		const val = AdminProvisionPage.selectedDeliverable();
+		if (val === null) {
+			this.clearLists();
+			return;
 		}
 
-		for (let i = 0; i < selected.length; i++) {
-			const repoId = selected[i];
-			try {
-				const start = Date.now();
-				const success = await this.releaseRepo(repoId);
-				if (success) {
-					Log.info("AdminProvisionPage::handleReleasePressed(..) - releasing complete; repo: " + repoId + "; took: " + Util.took(start));
-					UI.showSuccessToast("Repo released: " + repoId + " ( " + (i + 1) + " of " + selected.length + " )", {
-						timeout: 1000,
-						animation: "none",
-					});
+		const toProvisionSelect = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
+		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
+		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
+		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
+
+		try {
+			this.clearLists();
+
+			const provisionRepo = await this.getProvisionDetails(val);
+			Log.info("AdminProvisionPage::refreshLists(..) - # repos known for " + val + ": " + provisionRepo.length);
+
+			const provisioned: string[] = [];
+			const toProvision: string[] = [];
+
+			for (const repo of provisionRepo) {
+				// NOT_CREATED has nothing on GitHub; CREATED exists but was never finalized, so both still
+				// need provisioning (the second resumes at finalization)
+				if (repo.gitHubStatus === "NOT_CREATED" || repo.gitHubStatus === "CREATED") {
+					toProvision.push(repo.id);
 				} else {
-					// should have already displayed an error
-					Log.warn("AdminProvisionPage::handleReleasePressed(..) - releasing failed; repo: " + repoId + "; took: " + Util.took(start));
+					provisioned.push(repo.id);
 				}
-			} catch (err) {
-				Log.error("AdminProvisionPage::handleReleasePressed(..) - releasing error for: " + repoId + "; ERROR: " + err.message);
-				UI.showErrorToast("Repo NOT released: " + repoId + " (see error console)");
 			}
-		}
 
-		Log.info("AdminProvisionPage::handleReleasePressed(..) - done");
-		if (selected.length > 0) {
-			UI.showSuccessToast("Repository releasing complete.", { timeout: 1000 * 60 * 60 * 24, buttonLabel: "Ok" });
+			AdminProvisionPage.fillSelect(provisionedSelect, provisioned.sort(), "No provisioned repositories");
+			// nothing exists until Prepare has been run, which is a different state from "all done"
+			AdminProvisionPage.fillSelect(
+				toProvisionSelect,
+				toProvision.sort(),
+				provisionRepo.length === 0 ? "Nothing planned yet; press Prepare" : "Nothing to provision"
+			);
+
+			const reposToRelease = await this.getReleaseDetails(val);
+			Log.info("AdminProvisionPage::refreshLists(..) - # repos in release plan: " + reposToRelease.length);
+
+			const released: string[] = [];
+			const toRelease: string[] = [];
+
+			for (const repo of reposToRelease) {
+				if (repo.gitHubStatus === "READY") {
+					toRelease.push(repo.id);
+				} else {
+					released.push(repo.id);
+				}
+			}
+
+			// The released list doubles as the un-release selection: every repo in it is one whose
+			// Repository and Team records exist on both sides, so there is nothing to plan.
+			AdminProvisionPage.fillSelect(releasedSelect, released.sort(), "No released repositories");
+			AdminProvisionPage.fillSelect(toReleaseSelect, toRelease.sort(), "Nothing to release");
+		} catch (err) {
+			Log.error("AdminProvisionPage::refreshLists(..) - ERROR: " + err);
 		}
-		// refresh the page
-		await this.init({});
-		return true;
 	}
 
-	private async handleProvisionPressed(): Promise<boolean> {
-		Log.info("AdminProvisionPage::handleProvisionPressed(..) - start");
-
-		const provisionList = document.getElementById("repositoryProvisionSelect") as HTMLSelectElement;
-		const selected = [];
-
-		for (const opt of provisionList.options) {
-			if (opt.selected) {
-				selected.push(opt.value || opt.text);
-			}
+	private static fillSelect(select: HTMLSelectElement, names: string[], emptyText: string): void {
+		if (select === null) {
+			// The other lists on the page must still fill, so a missing one is not fatal. It is
+			// logged rather than ignored: the usual cause is admin.html being older than this code
+			// (the served copy is webpack CopyPlugin output, so it goes stale until the frontend is
+			// rebuilt), and an empty list with no explanation is a genuinely hard thing to diagnose.
+			Log.warn("AdminProvisionPage::fillSelect(..) - list element missing from admin.html; rebuild the frontend");
+			return;
 		}
-
-		Log.info("AdminProvisionPage::handleProvisionPressed(..) - start; # repos to provision: " + selected.length);
-		if (selected.length > 0) {
-			UI.showSuccessToast("Repo provisioning in progress; this will take a while. Do not close this browser window.", {
-				timeout: 10000,
-			});
-		} else {
-			UI.showErrorToast("No repos selected for provisioning.");
+		if (names.length === 0) {
+			const option = document.createElement("option");
+			option.text = emptyText;
+			option.disabled = true; // so it can never be sent as a repo id
+			select.add(option);
+			return;
 		}
-
-		const delivId = UI.getDropdownValue("provisionRepoDeliverableSelect");
-		let provisioned = 0;
-
-		// NOTE: repos are sent in batches so the server can provision them concurrently; one
-		// request per repo made AdminController.PROVISION_CONCURRENCY a no-op. The batches are
-		// kept small deliberately: the proxy uses proxy_read_timeout 90, so a request that cannot
-		// finish inside 90s is cut off by nginx even though the backend keeps working.
-		for (let i = 0; i < selected.length; i += AdminProvisionPage.PROVISION_BATCH_SIZE) {
-			const batch = selected.slice(i, i + AdminProvisionPage.PROVISION_BATCH_SIZE);
-			const start = Date.now();
-			try {
-				const succeeded = await this.provisionRepos(delivId, batch);
-				provisioned += succeeded;
-				Log.info(
-					"AdminProvisionPage::handleProvision(..) - batch done; repos: " +
-						JSON.stringify(batch) +
-						"; provisioned: " +
-						succeeded +
-						"; took: " +
-						Util.took(start)
-				);
-				UI.showSuccessToast("Repos provisioned: " + Math.min(i + batch.length, selected.length) + " of " + selected.length, {
-					timeout: 10000,
-					force: true,
-				});
-			} catch (err) {
-				Log.error("AdminProvisionPage::handleProvision(..) - error for batch: " + JSON.stringify(batch) + "; ERROR: " + err.message);
-				UI.showErrorToast("Repos NOT provisioned: " + batch.join(", ") + " (see error console)");
-			}
+		for (const name of names) {
+			const option = document.createElement("option");
+			option.text = name;
+			select.add(option);
 		}
-		Log.info("AdminProvisionPage::handleProvision(..) - provisioned " + provisioned + " of " + selected.length);
-
-		Log.info("AdminProvisionPage::handleProvision(..) - done");
-		if (selected.length > 0) {
-			UI.showSuccessToast("Repository provisioning complete.", {
-				timeout: 1000 * 60 * 60 * 24,
-				buttonLabel: "Ok",
-			});
-		}
-		// refresh the page
-		await this.init({});
-		return true;
 	}
 
 	private async getProvisionDetails(delivId: any): Promise<RepositoryTransport[]> {
@@ -366,7 +368,6 @@ export class AdminProvisionPage extends AdminPage {
 		const options: any = AdminView.getOptions();
 		options.method = "get";
 
-		Log.trace("AdminProvisionPage::getProvisionDetails(..) - GET from: " + url);
 		const start = Date.now();
 		const response = await fetch(url, options);
 		const json: Payload = await response.json();
@@ -387,7 +388,6 @@ export class AdminProvisionPage extends AdminPage {
 		const options: any = AdminView.getOptions();
 		options.method = "get";
 
-		Log.trace("AdminProvisionPage::getReleaseDetails(..) - GET from: " + url);
 		const start = Date.now();
 		const response = await fetch(url, options);
 		const json: Payload = await response.json();
@@ -403,60 +403,5 @@ export class AdminProvisionPage extends AdminPage {
 
 	public renderPage(pageName: string, opts: {}): void {
 		Log.info("AdminProvisionPage::renderPage( " + pageName + ", ... ) - start");
-	}
-
-	/**
-	 * Asks the backend to provision a set of repos in one request; returns how many were provisioned.
-	 */
-	private async provisionRepos(delivId: string, repoIds: string[]): Promise<number> {
-		Log.info("AdminProvisionPage::provisionRepos( " + delivId + ", " + repoIds.length + " repos ) - start");
-
-		const url = this.remote + "/portal/admin/provision/" + delivId;
-		const options: any = AdminView.getOptions();
-		options.method = "post";
-		options.body = JSON.stringify({ repoIds: repoIds });
-
-		this.disableElements();
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-		if (typeof body.success !== "undefined") {
-			// success is the list of repos the backend actually provisioned
-			return Array.isArray(body.success) ? body.success.length : repoIds.length;
-		}
-		Log.error("Provision ERROR: " + body.failure.message);
-		UI.showError(body.failure.message);
-		return 0;
-	}
-
-	private async provisionRepo(delivId: string, repoId: string): Promise<boolean> {
-		Log.info("AdminProvisionPage::provisionRepo( " + delivId + ", " + repoId + " ) - start");
-
-		const url = this.remote + "/portal/admin/provision/" + delivId + "/" + repoId;
-		return await this.performAction(url);
-	}
-
-	private async releaseRepo(repoId: string): Promise<boolean> {
-		Log.info("AdminProvisionPage::releaseRepo( " + repoId + " ) - start");
-
-		const url = this.remote + "/portal/admin/release/" + repoId;
-		return await this.performAction(url);
-	}
-
-	private async performAction(url: string): Promise<boolean> {
-		const options: any = AdminView.getOptions();
-		options.method = "post";
-
-		this.disableElements();
-
-		const response = await fetch(url, options);
-		const body = await response.json();
-		if (typeof body.success !== "undefined") {
-			return true;
-		} else {
-			Log.error("Provision ERROR: " + body.failure.message);
-			UI.showError(body.failure.message);
-			return false;
-		}
 	}
 }

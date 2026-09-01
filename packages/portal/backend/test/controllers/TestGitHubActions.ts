@@ -48,6 +48,11 @@ export class TestGitHubActions implements IGitHubActions {
 		return { teamName: "team_" + repoName, githubTeamNumber: 1 };
 	}
 
+	public async removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean> {
+		Log.info("TestGitHubActions::removeTeamFromRepo( " + teamName + ", " + repoName + " )");
+		return true;
+	}
+
 	public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
 		Log.info("TestGitHubActions::addWebhook(..)");
 		if (typeof this.webHookState[repoName] === "undefined") {
@@ -224,26 +229,6 @@ export class TestGitHubActions implements IGitHubActions {
 	public async isOnTeam(teamName: string, userName: string): Promise<boolean> {
 		Log.info("TestGitHubActions::isOnTeam( t: " + teamName + ", u: " + userName + " )");
 		return true;
-	}
-
-	public async listTeamMembers(teamName: string): Promise<string[]> {
-		Log.info("TestGitHubActions::listTeamMembers( " + teamName + " )");
-
-		const db: DatabaseController = DatabaseController.getInstance();
-
-		const teamRecord = await db.getTeam(teamName);
-		if (teamRecord === null) {
-			const teamMembers: string[] = [];
-
-			const allPeople = await db.getPeople();
-			for (const person of allPeople) {
-				teamMembers.push(person.githubId);
-			}
-
-			return teamMembers;
-		} else {
-			return teamRecord.personIds;
-		}
 	}
 
 	public async listPeople(): Promise<GitPersonTuple[]> {

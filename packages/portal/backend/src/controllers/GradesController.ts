@@ -5,7 +5,7 @@ import { AutoTestGradeTransport, GradeTransport } from "@common/types/PortalType
 import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { Grade, PersonKind } from "../Types";
+import { Grade, Person, PersonKind } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
@@ -51,6 +51,63 @@ export class GradesController {
 				Util.took(start)
 		);
 		return returnGrades;
+	}
+
+	/**
+	 * Every grade for a deliverable, paired with the person it belongs to.
+	 *
+	 * This is getAllGrades() narrowed to one deliverable, with two differences that matter to the
+	 * grade export:
+	 *
+	 * - WITHDRAWN people are included. getAllGrades(true) keeps only PersonKind.STUDENT, but a
+	 *   student who withdraws still has the grades they earned, and whether that matters is the
+	 *   consumer's policy rather than ours.
+	 * - The Person is returned alongside the Grade. A Grade only carries a personId, and every
+	 *   caller here needs the student number, so joining once beats making each of them do it.
+	 *
+	 * Staff and admin records are dropped: they accumulate grades from testing that no external
+	 * system should ever see.
+	 *
+	 * @param delivId
+	 */
+	public async getGradesForDeliverable(delivId: string): Promise<Array<{ grade: Grade; person: Person }>> {
+		Log.info("GradesController::getGradesForDeliverable( " + delivId + " ) - start");
+		const start = Date.now();
+
+		const grades = await this.db.getGradesForDeliverable(delivId);
+
+		// one read, rather than a getPerson() per grade
+		const people = await new PersonController().getAllPeople();
+		const peopleById = new Map<string, Person>();
+		for (const person of people) {
+			peopleById.set(person.id, person);
+		}
+
+		const included: Array<{ grade: Grade; person: Person }> = [];
+		for (const grade of grades) {
+			const person = peopleById.get(grade.personId);
+			if (typeof person === "undefined" || person === null) {
+				Log.warn("GradesController::getGradesForDeliverable( " + delivId + " ) - no person for grade: " + grade.personId);
+				continue;
+			}
+			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
+				included.push({ grade: grade, person: person });
+			} else {
+				Log.trace("GradesController::getGradesForDeliverable( " + delivId + " ) - skipping: " + person.id + "; kind: " + person.kind);
+			}
+		}
+
+		Log.info(
+			"GradesController::getGradesForDeliverable( " +
+				delivId +
+				" ) - done; # grades: " +
+				grades.length +
+				"; # returned: " +
+				included.length +
+				"; took: " +
+				Util.took(start)
+		);
+		return included;
 	}
 
 	public async getGrade(personId: string, delivId: string): Promise<Grade | null> {

@@ -5,14 +5,14 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { ICourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
-import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
+import { GitHubActions, GitHubError, IGitHubActions } from "@backend/controllers/GitHubActions";
+import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { GitHubStatus, Person, PersonKind, Repository, Team } from "@backend/Types";
+import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -459,6 +459,372 @@ describe("AdminController", () => {
 		expect(res.repoName).to.equal(rExpected);
 	});
 
+	it("Should leave a repo provisionable after a failed provision.", async () => {
+		// NOTE: GitHubActions::createRepo writes URL/cloneURL/PROVISIONED_UNLINKED as soon as GitHub
+		// answers, so a failure later in provisioning (a template or import that cannot be reached)
+		// used to leave a record claiming to be provisioned for a repo that had just been deleted
+		// again. It then vanished from the unprovisioned list, showed up as releasable, and could
+		// never be retried, because performProvision only touches NOT_PROVISIONED repos.
+		const dbc = DatabaseController.getInstance();
+		const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+
+		const repoId = "PROVISION_FAILURE_" + Date.now();
+		const repo: Repository = {
+			id: repoId,
+			delivId: deliv.id,
+			teamIds: ["TEAM_THAT_DOES_NOT_EXIST"],
+			URL: "https://example.com/stale",
+			cloneURL: "https://example.com/stale.git",
+			gitHubStatus: RepoStatus.CREATED, // created on GitHub, never finalized
+			custom: {},
+		};
+		await dbc.writeRepository(repo);
+
+		const ghc = new GitHubController(gha);
+		let threw = false;
+		try {
+			// the import cannot succeed, so this fails and takes the rollback path. The URL points at
+			// a closed local port on purpose: the clone is refused immediately, with no DNS lookup
+			// and nothing left outside this process.
+			await ghc.provisionRepository(repoId, [], "https://localhost:1/does-not-exist.git");
+		} catch (_err) {
+			threw = true;
+		}
+		expect(threw, "provisioning a repo whose import cannot be reached must fail").to.be.true;
+
+		const after = await dbc.getRepository(repoId);
+		expect(after.gitHubStatus, "must be provisionable again").to.equal(RepoStatus.NOT_CREATED);
+		expect(after.URL, "a repo that is not on GitHub must not carry a URL").to.be.null;
+		expect(after.cloneURL).to.be.null;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
+	describe("performUnrelease", function () {
+		/**
+		 * A controller whose unreleaseRepository can be told how to behave per repo.
+		 *
+		 * performUnrelease is the loop between the job agent and GitHubController: the failure
+		 * policy, cancellation, and the skip-if-not-released branch all live here, and none of them
+		 * are reachable from the GitHubController tests.
+		 */
+		class ScriptedUnreleaseController implements IGitHubController {
+			public seen: string[] = [];
+
+			public constructor(private readonly behaviour: (repoId: string) => boolean | Error) {}
+
+			public async provisionRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async releaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async unreleaseRepository(repo: Repository): Promise<boolean> {
+				this.seen.push(repo.id);
+				const outcome = this.behaviour(repo.id);
+				if (outcome instanceof Error) {
+					throw outcome;
+				}
+				return outcome;
+			}
+
+			public async updateBranchProtection(): Promise<boolean> {
+				return true;
+			}
+
+			public async createIssues(): Promise<boolean> {
+				return true;
+			}
+
+			public getRepositoryUrl(): string {
+				return "https://example.com";
+			}
+
+			public async getTeamUrl(): Promise<string> {
+				return "https://example.com";
+			}
+		}
+
+		function makeRepos(prefix: string, count: number, status: RepoStatus): Repository[] {
+			const stamp = Date.now();
+			const repos: Repository[] = [];
+			for (let n = 1; n <= count; n++) {
+				repos.push({
+					id: prefix + "_" + n + "_" + stamp,
+					delivId: TestHarness.DELIVIDPROJ,
+					teamIds: [],
+					URL: "https://example.com/x",
+					cloneURL: "https://example.com/x.git",
+					gitHubStatus: status,
+					custom: {},
+				} as Repository);
+			}
+			return repos;
+		}
+
+		it("Should skip a repo that is not released rather than failing it.", async () => {
+			// only a RELEASED repo has student teams to detach; anything else is a no-op, not an error
+			const repos = makeRepos("UNREL_SKIP", 3, RepoStatus.READY);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen, "GitHub must not be asked about a repo that is not released").to.deep.equal([]);
+			expect(result.length, "and nothing is reported as un-released").to.equal(0);
+		});
+
+		it("Should un-release every released repo and report them.", async () => {
+			const repos = makeRepos("UNREL_OK", 3, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen.length).to.equal(3);
+			expect(result.map((repo) => repo.id)).to.deep.equal(repos.map((repo) => repo.id));
+		});
+
+		it("Should keep going when one repo cannot be un-released.", async () => {
+			// the continue-on-failure half: one bad repo must not cost the other four
+			const repos = makeRepos("UNREL_ONEBAD", 5, RepoStatus.RELEASED);
+			const bad = repos[1].id;
+			const gh = new ScriptedUnreleaseController((id) => id !== bad);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(gh.seen.length, "every repo is still attempted").to.equal(5);
+			expect(result.length, "the failure is excluded from the result").to.equal(4);
+			expect(result.map((repo) => repo.id)).to.not.contain(bad);
+		});
+
+		it("Should record a thrown failure through the job context and continue.", async () => {
+			const repos = makeRepos("UNREL_THROW", 4, RepoStatus.RELEASED);
+			const bad = repos[0].id;
+			const gh = new ScriptedUnreleaseController((id) => (id === bad ? new Error("detach exploded") : true));
+
+			const errors: string[] = [];
+			const progress: number[] = [];
+			const ctx = {
+				isCancelled: () => false,
+				progress: async (done: number) => {
+					progress.push(done);
+				},
+				error: async (msg: string) => {
+					errors.push(msg);
+				},
+			};
+
+			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+
+			expect(errors.length, "the error is reported to the job").to.equal(1);
+			expect(errors[0]).to.contain("detach exploded");
+			expect(result.length).to.equal(3);
+			expect(progress.length, "progress is reported once per repo, failures included").to.equal(4);
+		});
+
+		it("Should stop when the job is cancelled, keeping what it already did.", async () => {
+			const repos = makeRepos("UNREL_CANCEL", 5, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => true);
+
+			// cancellation is checked before each repo, so this stops the run after the second
+			let calls = 0;
+			const ctx = {
+				isCancelled: () => {
+					calls++;
+					return calls > 2;
+				},
+				progress: async () => {
+					//
+				},
+				error: async () => {
+					//
+				},
+			};
+
+			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+
+			expect(gh.seen.length, "the run stops early").to.equal(2);
+			expect(result.length, "and keeps what it finished").to.equal(2);
+		});
+
+		it("Should abandon the run as soon as a failure is fatal.", async () => {
+			// same rule as provisioning: an expired token fails every remaining repo identically,
+			// so the run stops rather than making partial state across the whole course
+			const repos = makeRepos("UNREL_FATAL", 5, RepoStatus.RELEASED);
+			const gh = new ScriptedUnreleaseController(() => new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}'));
+
+			let aborted: any = null;
+			try {
+				await new AdminController(gh).performUnrelease(repos);
+			} catch (err) {
+				aborted = err;
+			}
+
+			expect(aborted, "a fatal failure must stop the run").to.not.be.null;
+			expect(aborted.name).to.equal("ProvisionAbortedError");
+			expect(gh.seen.length, "it must not try the other four").to.equal(1);
+		});
+	});
+
+	it("Should abandon a provisioning run as soon as a failure is fatal.", async () => {
+		// NOTE: three failures are needed before the startup rule fires, but a fatal failure -- an
+		// expired token, an exhausted rate limit -- will happen to every remaining repo too, so the
+		// run stops on the first one. This is only testable because performProvision now uses the
+		// controller it was constructed with rather than building its own.
+		class FatalController implements IGitHubController {
+			public attempts = 0;
+
+			public async provisionRepository(): Promise<boolean> {
+				this.attempts++;
+				throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
+			}
+
+			public async releaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async unreleaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async updateBranchProtection(): Promise<boolean> {
+				return true;
+			}
+
+			public async createIssues(): Promise<boolean> {
+				return true;
+			}
+
+			public getRepositoryUrl(): string {
+				return "https://example.com";
+			}
+
+			public async getTeamUrl(): Promise<string> {
+				return "https://example.com";
+			}
+		}
+
+		const repos: Repository[] = [1, 2, 3, 4, 5].map((n) => {
+			return {
+				id: "REPO_FATAL_" + n + "_" + Date.now(),
+				delivId: TestHarness.DELIVIDPROJ,
+				teamIds: [],
+				URL: null,
+				cloneURL: null,
+				gitHubStatus: RepoStatus.NOT_CREATED,
+				custom: {},
+			} as Repository;
+		});
+
+		const gh = new FatalController();
+		const controller = new AdminController(gh);
+
+		let aborted: any = null;
+		try {
+			await controller.performProvision(repos, "https://example.com/import", 1);
+		} catch (err) {
+			aborted = err;
+		}
+		Log.test("aborted: " + aborted?.message + "; attempts: " + gh.attempts);
+
+		expect(aborted, "a fatal failure must stop the run").to.not.be.null;
+		expect(aborted.name).to.equal("ProvisionAbortedError");
+		expect(aborted.message).to.contain("fatally");
+		expect(gh.attempts, "it must not try the other four").to.equal(1);
+	}).timeout(TestHarness.TIMEOUT);
+
+	it("Should give up on a provisioning run where nothing is working.", async () => {
+		// NOTE: the other half of the continue-on-failure story. Recording and continuing is right
+		// for a bad repo; it is wrong when the deliverable itself is misconfigured, because then
+		// every repo fails identically and the run just wastes twenty minutes making partial state.
+		//
+		// No GitHub: repos that are not in the datastore fail in GitHubController::checkDatabase,
+		// before anything is sent.
+		const broken: Repository[] = [1, 2, 3, 4, 5].map((n) => {
+			return {
+				id: "REPO_NOT_IN_DB_STOP_" + n + "_" + Date.now(),
+				delivId: TestHarness.DELIVIDPROJ,
+				teamIds: ["TEAM_THAT_DOES_NOT_EXIST"],
+				URL: null,
+				cloneURL: null,
+				gitHubStatus: RepoStatus.NOT_CREATED,
+				custom: {},
+			} as Repository;
+		});
+
+		const errors: string[] = [];
+		const ctx = {
+			isCancelled: () => false,
+			progress: async () => {
+				//
+			},
+			error: async (msg: string) => {
+				errors.push(msg);
+			},
+		};
+
+		let aborted: any = null;
+		try {
+			await ac.performProvision(broken, "https://example.com/import", 1, ctx);
+		} catch (err) {
+			aborted = err;
+		}
+		Log.test("aborted: " + aborted?.message + "; errors: " + errors.length);
+
+		expect(aborted, "a run where nothing works must stop").to.not.be.null;
+		expect(aborted.name).to.equal("ProvisionAbortedError");
+		expect(aborted.message).to.contain("first 3");
+
+		// and it stopped *early*: the last two were never attempted
+		expect(errors.length, "should stop after the startup threshold, not run to the end").to.equal(3);
+	}).timeout(TestHarness.TIMEOUT);
+
+	it("Should keep provisioning after a repo fails, and report progress.", async () => {
+		// NOTE: this pins the behaviour change made when provisioning moved to the job framework.
+		// performProvision used to rethrow, which stopped every remaining repo from being scheduled:
+		// survivable when the browser drove one small batch at a time, fatal for a single job, where
+		// one bad repo would abandon the rest of the class.
+		//
+		// No GitHub involved: a repo that is not in the datastore fails in
+		// GitHubController::checkDatabase, before anything is sent.
+		const broken: Repository[] = [1, 2].map((n) => {
+			return {
+				id: "REPO_NOT_IN_DB_" + n + "_" + Date.now(),
+				delivId: TestHarness.DELIVIDPROJ,
+				teamIds: ["TEAM_THAT_DOES_NOT_EXIST"],
+				URL: null,
+				cloneURL: null,
+				gitHubStatus: RepoStatus.NOT_CREATED,
+				custom: {},
+			} as Repository;
+		});
+
+		const progress: Array<{ done: number; total: number }> = [];
+		const errors: string[] = [];
+		const ctx = {
+			isCancelled: () => false,
+			progress: async (done: number, total: number) => {
+				progress.push({ done: done, total: total });
+			},
+			error: async (msg: string) => {
+				errors.push(msg);
+			},
+		};
+
+		const res = await ac.performProvision(broken, "https://example.com/import", 1, ctx);
+		Log.test("provisioned: " + JSON.stringify(res) + "; errors: " + JSON.stringify(errors));
+
+		expect(res).to.have.lengthOf(0);
+		// both were attempted: the first failure did not stop the second from being scheduled
+		expect(errors.length, "both failures must be recorded").to.equal(2);
+		expect(errors[0]).to.contain(broken[0].id);
+		expect(errors[1]).to.contain(broken[1].id);
+
+		// and every repo reports progress, whether it worked or not
+		expect(progress).to.have.lengthOf(2);
+		expect(progress[1].done).to.equal(2);
+		expect(progress[1].total).to.equal(2);
+	}).timeout(TestHarness.TIMEOUT);
+
 	describe("Slow AdminController Tests", () => {
 		// before(async function() {
 		//     await clearAndPreparePartial();
@@ -513,10 +879,10 @@ describe("AdminController", () => {
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
 			expect(allTeams[0].URL).to.be.null;
-			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED); // not provisioned yet
+			expect(allTeams[0].gitHubStatus).to.equal(TeamStatus.NOT_CREATED); // not provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
-			const plan = await ac.planProvision(deliv, false);
+			const plan = await ac.prepareProvision(deliv, false);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
@@ -532,7 +898,7 @@ describe("AdminController", () => {
 			const allNewRepos = await rc.getAllRepos();
 			expect(allNewRepos.length).to.equal(1);
 			expect(allNewRepos[0].URL).to.not.be.null;
-			expect(allNewRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
+			expect(allNewRepos[0].gitHubStatus).to.equal(RepoStatus.READY); // not attached yet
 
 			const repoExists = await gha.repoExists(allNewRepos[0].id);
 			expect(repoExists).to.be.true;
@@ -545,7 +911,7 @@ describe("AdminController", () => {
 			expect(teamNum).to.be.an("number");
 			expect(teamNum).to.be.greaterThan(0);
 			expect(allNewTeams[0].URL).to.not.be.null;
-			expect(allNewTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
+			expect(allNewTeams[0].gitHubStatus).to.equal(TeamStatus.CREATED); // exists on GitHub, not attached yet
 		}).timeout(TestHarness.TIMEOUTLONG);
 
 		it("Should release repos.", async () => {
@@ -553,12 +919,12 @@ describe("AdminController", () => {
 			const allRepos = await rc.getAllRepos();
 			expect(allRepos.length).to.equal(1);
 			expect(allRepos[0].URL).to.not.be.null;
-			expect(allRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
+			expect(allRepos[0].gitHubStatus).to.equal(RepoStatus.READY); // not attached yet
 
 			const allTeams = await tc.getAllTeams();
 			expect(allTeams.length).to.equal(1);
 			// expect(allTeams[0].URL).to.not.be.null;
-			expect(allTeams[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+			expect(allTeams[0].gitHubStatus).to.equal(TeamStatus.CREATED);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
 			const relPlan = await ac.planRelease(deliv);
@@ -572,12 +938,12 @@ describe("AdminController", () => {
 			expect(res.length).to.equal(1);
 			const provisionedRepos = await rc.getAllRepos();
 			// expect(provisionedRepos[0].URL).to.not.be.null;
-			expect(provisionedRepos[0].gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // now attached
+			expect(provisionedRepos[0].gitHubStatus).to.equal(RepoStatus.RELEASED); // now attached
 
 			const allNewTeams = await tc.getAllTeams();
 			expect(allNewTeams.length).to.equal(1);
 			const newTeam = allNewTeams[0];
-			expect(newTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED);
+			expect(newTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED);
 
 			// // try again: should not release any more repos
 			// res = await ac.release(allRepos);
@@ -599,7 +965,7 @@ describe("AdminController", () => {
 			expect(teamNum).to.be.lessThan(0); // should not be provisioned yet
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-			const plan = await ac.planProvision(deliv, true);
+			const plan = await ac.prepareProvision(deliv, true);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
@@ -632,7 +998,7 @@ describe("AdminController", () => {
 					const repoExists = await gha.repoExists(repo.id);
 					expect(repoExists).to.be.true;
 					// expect(repo.URL).to.not.be.null;
-					expect(repo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // not attached yet
+					expect(repo.gitHubStatus).to.equal(RepoStatus.READY); // not attached yet
 				}
 			}
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
@@ -646,7 +1012,7 @@ describe("AdminController", () => {
 			expect(allTeams.length).to.equal(4);
 
 			const deliv = await dc.getDeliverable(TestHarness.DELIVID0);
-			const plan = await ac.planProvision(deliv, false);
+			const plan = await ac.prepareProvision(deliv, false);
 
 			const repos: Repository[] = [];
 			for (const repo of plan) {
@@ -663,6 +1029,45 @@ describe("AdminController", () => {
 
 			expect(allNewRepos.length).to.equal(3);
 			expect(allNewTeams.length).to.equal(4); // 3x d0 & 1x project
+		}).timeout(TestHarness.TIMEOUTLONG * 5);
+
+		// NOTE: last on purpose. This clears the database (clearAndPreparePartial), and the withdraw
+		// test at the top of this suite needs the full dataset the suite's before() hook prepares.
+		// It also provisions for real on CI, which is what this whole suite is for.
+		it("Should resume finalization for a repo that was created but never finalized.", async () => {
+			// NOTE: the other half of the failed-provision story. If the repo reaches GitHub but
+			// finalization fails (no webhook, no staff teams), it is deliberately kept -- it may
+			// already hold student content -- and its status is CREATED. Provisioning it again
+			// resumes at finalization rather than refusing because the repo already exists.
+			const dbc = DatabaseController.getInstance();
+			const deliv = await dc.getDeliverable(TestHarness.DELIVIDPROJ);
+
+			await clearAndPreparePartial();
+			const plan = await ac.prepareProvision(deliv, false);
+			expect(plan.length).to.equal(1);
+			const repoId = plan[0].id;
+
+			// provision it properly first, so the repo really does exist on GitHub
+			const repos = [await rc.getRepository(repoId)];
+			const provisioned = await ac.performProvision(repos, deliv.importURL);
+			expect(provisioned.length, "setup: the repo must provision").to.equal(1);
+			expect(await gha.repoExists(repoId)).to.be.true;
+
+			// now put the record into the state a finalization failure leaves behind
+			const halfDone = await dbc.getRepository(repoId);
+			halfDone.gitHubStatus = RepoStatus.CREATED;
+			await dbc.writeRepository(halfDone);
+
+			// provisioning again must finish it rather than skip or refuse it
+			const retried = await ac.performProvision([await rc.getRepository(repoId)], deliv.importURL);
+			expect(
+				retried.map((repo) => repo.id),
+				"the repo must be picked up again"
+			).to.contain(repoId);
+
+			const after = await dbc.getRepository(repoId);
+			expect(after.gitHubStatus).to.equal(RepoStatus.READY);
+			expect(await gha.repoExists(repoId), "the existing repo must not have been deleted").to.be.true;
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
 	});
 });

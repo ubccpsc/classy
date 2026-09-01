@@ -21,9 +21,8 @@ convert the leading spaces so that the command will be correctly interpreted by 
 The following software should be installed on the host before attempting to deploy Classy.  
 (Versions shown run classy successfully. Versions do not need to be pinned.)
 
-- Docker (docker version 18.09.7, build 2d0083d)
-- Docker Compose (docker-compose version 1.23.2, build 1110ad01)
-- Git (must be version compatible with docker v18; working with git version 2.16.5)
+- Docker (docker version 26.1.3).
+- Git (working with git version 2.16.5 and later)
 - Certbot (Let's Encrypt, certbot 0.35.1)
 
 ## System Configuration
@@ -177,7 +176,7 @@ When certificates are being produced for the first time, configuration should al
 
        # The old way is overkill...
        #cd /opt/classy
-       #/usr/local/bin/docker-compose stop
+       #/usr/bin/docker compose stop
 
      } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
      ```
@@ -206,7 +205,7 @@ When certificates are being produced for the first time, configuration should al
 
        # The old way is overkill...
        #cd /opt/classy
-       #/usr/local/bin/docker-compose up --detach
+       #/usr/bin/docker compose up --detach
 
      } > /opt/classy/$(basename $BASH_SOURCE).log 2>&1
      ```
@@ -269,7 +268,7 @@ When certificates are being produced for the first time, configuration should al
    connected to the subnet.
 
     ```bash
-    # Create the same network that docker-compose will create (with a different name)
+    # Create the same network that docker compose will create (with a different name)
     docker network create --attachable --ip-range "172.28.5.0/24" --gateway "172.28.5.254" --subnet "172.28.0.0/16" test_net   
 
     # Check that the container cannot resolve hostnames (since DNS traffic is blocked).

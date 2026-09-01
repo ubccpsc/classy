@@ -10,7 +10,7 @@ import Log from "@common/Log";
  * Starts the server; does not listen to whether the start was successful.
  */
 export class AutoTestDaemon {
-	public initServer() {
+	public async initServer(): Promise<void> {
 		Log.info("AutoTestDaemon::initServer() - start");
 
 		const portNum = Number(Config.getInstance().getProp(ConfigKey.autotestPort));
@@ -18,20 +18,21 @@ export class AutoTestDaemon {
 		// start server
 		const s = new AutoTestServer();
 		s.setPort(portNum);
-		s.start()
-			.then(function (val: boolean) {
-				Log.info("AutoTestDaemon::initServer() - started: " + val);
-			})
-			.catch(function (err: Error) {
-				Log.error("AutoTestDaemon::initServer() - ERROR: " + err.message);
-			});
+		try {
+			const val = await s.start();
+			Log.info("AutoTestDaemon::initServer() - started: " + val);
+		} catch (err) {
+			Log.error("AutoTestDaemon::initServer() - ERROR: " + err.message);
+		}
 	}
 }
 
 // This starts up the AutoTest system
 Log.info("AutoTest Daemon - starting");
 const app = new AutoTestDaemon();
-app.initServer();
+// NOTE: not awaited; this is the process entry point and there is nothing here to await into.
+// initServer() handles its own errors, so this cannot reject.
+void app.initServer();
 
 Log.info("AutoTestDaemon - registering unhandled rejection");
 

@@ -8,7 +8,7 @@ import { GitHubController } from "@backend/controllers/GitHubController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { GitHubStatus, PersonKind, Repository, Team } from "@backend/Types";
+import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -131,13 +131,13 @@ describe("GitHubController", () => {
 		const repos = await rc.getAllRepos();
 		const repo = repos[0];
 		expect(repos.length).to.be.greaterThan(0);
-		expect(repo.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
+		expect(repo.gitHubStatus).to.equal(RepoStatus.NOT_CREATED);
 		Log.test("repo starting unprovisioned");
 
 		const teams = await tc.getAllTeams();
 		expect(teams.length).to.be.greaterThan(0);
 		const team = teams[0];
-		expect(team.gitHubStatus).to.equal(GitHubStatus.NOT_PROVISIONED);
+		expect(team.gitHubStatus).to.equal(TeamStatus.NOT_CREATED);
 		Log.test("team starting unprovisioned");
 
 		// do provisioning
@@ -147,12 +147,12 @@ describe("GitHubController", () => {
 
 		const provisionedRepo = await rc.getRepository(repo.id);
 		expect(provisionedRepo).to.not.be.null;
-		expect(provisionedRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(provisionedRepo.gitHubStatus).to.equal(RepoStatus.READY);
 		Log.test("repo ending provisioned, unlinked");
 
 		const provisionedTeam = await tc.getTeam(team.id);
 		expect(provisionedTeam).to.not.be.null;
-		expect(provisionedTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED);
+		expect(provisionedTeam.gitHubStatus).to.equal(TeamStatus.CREATED);
 		Log.test("team ending provisioned, unlinked");
 
 		// double check with GitHub
@@ -343,13 +343,13 @@ describe("GitHubController", () => {
 		// const repo = await rc.getRepository(TestHarness.REPONAME1);
 		const repo = allRepos[0];
 		expect(repo).to.not.be.null;
-		expect(repo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // repo unlinked
+		expect(repo.gitHubStatus).to.equal(RepoStatus.READY); // repo unlinked
 
 		const tc: TeamController = new TeamController();
 		// const team = await tc.getTeam(TestHarness.TEAMNAME1);
 		const team = await tc.getTeam(repo.teamIds[0]);
 		expect(team).to.not.be.null;
-		expect(team.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_UNLINKED); // team unlinked
+		expect(team.gitHubStatus).to.equal(TeamStatus.CREATED); // team unlinked
 
 		// do the provisioning
 		const success = await gc.releaseRepository(repo, [team], false);
@@ -357,11 +357,11 @@ describe("GitHubController", () => {
 
 		const finalRepo = await rc.getRepository(repo.id);
 		expect(finalRepo).to.not.be.null;
-		expect(finalRepo.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // repo linked
+		expect(finalRepo.gitHubStatus).to.equal(RepoStatus.RELEASED); // repo linked
 
 		const finalTeam = await tc.getTeam(team.id);
 		expect(finalTeam).to.not.be.null;
-		expect(finalTeam.gitHubStatus).to.equal(GitHubStatus.PROVISIONED_LINKED); // team linked
+		expect(finalTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED); // team linked
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should fail to release a repo if preconditions are not met.", async function () {

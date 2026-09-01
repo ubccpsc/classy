@@ -106,7 +106,9 @@ export class CSVParser {
 				}
 
 				if (typeof row.STUDENTNUMBER !== "undefined") {
-					const person = allPeople.find((p) => p.studentNumber === row.STUDENTNUMBER);
+					// Person.studentNumber is declared `number`, but ClasslistAgent assigns
+					// it straight from the classlist CSV, so in practice it holds a string
+					const person = allPeople.find((p) => String(p.studentNumber) === String(row.STUDENTNUMBER));
 					if (person && typeof person.id === "string") {
 						row.CSID = person.id;
 						Log.trace("CSVParser::processGrades(..) - STUDENTNUMBER -> CSID: " + row.STUDENTNUMBER + " -> " + row.CSID);

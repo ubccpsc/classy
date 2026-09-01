@@ -48,7 +48,12 @@ export interface ConfigTransport {
 	org: string;
 	name: string;
 	githubAPI: string;
+	// the GitHub web host students are sent to for authentication (GH_HOST). The frontend checks
+	// that it is reachable before starting the OAuth redirect: at UBC it is only reachable from
+	// the campus network, so a student off the VPN otherwise just gets a browser error page.
+	githubHost: string;
 	studentsFormTeamDelivIds: string[];
+	prairieLearnEnabled: boolean; // Whether PL is configured in .env
 }
 
 export interface CourseTransportPayload {

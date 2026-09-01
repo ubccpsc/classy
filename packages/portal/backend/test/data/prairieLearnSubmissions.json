@@ -1,0 +1,288 @@
+[
+  {
+    "submission_id": "229970299",
+    "user_id": "10001",
+    "user_uid": "student1@ubc.ca",
+    "user_uin": "TESTUIN0001",
+    "user_name": "Test Student1",
+    "user_role": "Staff",
+    "group_id": null,
+    "group_name": null,
+    "group_uids": null,
+    "assessment_id": "2693345",
+    "assessment_name": "lecture/lec01",
+    "assessment_label": "LecLab1",
+    "assessment_instance_id": "14492573",
+    "assessment_instance_number": 1,
+    "question_id": "9643205",
+    "question_name": "lectures/lec01/activity",
+    "question_topic": "Introduction",
+    "question_tags": [
+      "workspace",
+      "26w1",
+      "ll"
+    ],
+    "instance_question_id": "710264426",
+    "instance_question_number": null,
+    "assessment_question_max_points": 100,
+    "assessment_question_max_auto_points": 100,
+    "assessment_question_max_manual_points": 0,
+    "instance_question_points": 5.333333333333334,
+    "instance_question_auto_points": 5.333333333333334,
+    "instance_question_manual_points": 0,
+    "instance_question_score_perc": 5.333333333333334,
+    "variant_id": "169394588",
+    "variant_number": 1,
+    "variant_seed": "wvtowd",
+    "params": {
+      "_required_file_names": []
+    },
+    "true_answer": {},
+    "options": {},
+    "submitted_answer": {
+      "_files": [
+        {
+          "name": "src/index.ts",
+          "contents": "<elided>"
+        }
+      ]
+    },
+    "partial_scores": {},
+    "override_score": null,
+    "credit": 100,
+    "mode": "Public",
+    "score": 0.05333333333333334,
+    "correct": false,
+    "feedback": {
+      "job_id": "221456723",
+      "results": {
+        "score": 0.05333333333333334,
+        "tests": [],
+        "bucket": "beginning",
+        "custom": {},
+        "report": {
+          "overall": {
+            "bucket": "beginning",
+            "status": "complete",
+            "message": "Grading finished, but some checks did not pass."
+          },
+          "findings": [
+            {
+              "title": "gradeToLetter",
+              "detail": "Failed with: expected '' to deeply equal 'A'",
+              "category": "test-results",
+              "severity": "error"
+            },
+            {
+              "title": "gradeToLetter should produce F for grades in [0,  50)",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "gradeToLetter should produce D for grades in [50, 55)",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "gradeToLetter should produce C for grades in [55, 68)",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "gradeToLetter should produce B for grades in [68, 80)",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "gradeToLetter should produce A for grades in [80, 100]",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "The original value should be returned if it is between the min and max.",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "Are you properly checking whether the value is smaller than min?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "Are you properly checking whether the value is bigger than max?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "What happens if min and max are the same?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "What happens if min and max are both negative?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "What happens if min is negative and max is positive?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "35 out of 50 is 70 percent. Are you scaling the fraction by 100?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "When the total is already 100, the percentage is just the points earned.",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "18 out of 20 is 90 percent. Are points and total in the right order?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "What should the percentage be when no points are earned?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "What should the percentage be when every available point is earned?",
+              "category": "impl-correctness",
+              "severity": "error"
+            },
+            {
+              "title": "Check the exact boundary at 80.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Test at least one grade below 50.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check a grade in the low 50s.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check the exact boundary at 50.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Try values strictly below min and above max.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check a value greater than max and verify which bound is returned.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check a value less than min and confirm it returns min.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Test a value that is already within range; it should be unchanged.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Test values around the lower boundary and in the middle of the range.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Use a case where points and total differ, such as 35 out of 50.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check that half marks report 50 rather than 0.5.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check any case whose percentage should be well above 1.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Use a total other than 100.",
+              "category": "test-quality",
+              "severity": "error"
+            },
+            {
+              "title": "Check a case whose percentage should be a familiar value such as 70.",
+              "category": "test-quality",
+              "severity": "error"
+            }
+          ],
+          "categories": [
+            {
+              "status": "pass",
+              "category": "policy",
+              "hiddenFindings": 0
+            },
+            {
+              "status": "pass",
+              "category": "build",
+              "hiddenFindings": 0
+            },
+            {
+              "status": "pass",
+              "category": "lint",
+              "hiddenFindings": 0
+            },
+            {
+              "status": "fail",
+              "category": "test-results",
+              "progress": {
+                "total": 1,
+                "passed": 0
+              },
+              "hiddenFindings": 0
+            },
+            {
+              "status": "fail",
+              "category": "impl-correctness",
+              "hiddenFindings": 0
+            },
+            {
+              "status": "fail",
+              "category": "test-quality",
+              "progress": {
+                "total": 15,
+                "passed": 1
+              },
+              "hiddenFindings": 0
+            }
+          ],
+          "schemaVersion": 1
+        },
+        "status": 1,
+        "message": "Grading finished, but some checks did not pass.",
+        "gradable": true,
+        "description": "%%%DESCRIPTION%%%"
+      },
+      "end_time": "2026-08-21T22:26:31.209Z",
+      "succeeded": true,
+      "start_time": "2026-08-21T22:26:18.636Z",
+      "received_time": "2026-08-21T22:25:58.269Z"
+    },
+    "rubric_grading_computed_points": null,
+    "rubric_grading_adjust_points": null,
+    "rubric_grading_items": null,
+    "final_submission_per_variant": true,
+    "best_submission_per_variant": true,
+    "date": "2026-08-21T15:25:58-07:00",
+    "grading_requested_at": "2026-08-21T15:25:58-07:00",
+    "graded_at": "2026-08-21T15:26:31-07:00"
+  }
+]

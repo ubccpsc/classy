@@ -94,7 +94,7 @@ export class Factory {
 				Log.info("Factory::getCourseController() - loading CustomCourseController; full path: " + controllerPath);
 				plug = await require(controllerPath);
 			} catch (err) {
-				const msg = "Factory::getCourseController() - " + plugin + "/src/custom/CustomCourseController.ts must be defined";
+				const msg = "Factory::getCourseController() - plugins/" + plugin + "/portal/backend/CustomCourseController.ts must be defined";
 				Log.error(msg);
 				Log.error(err);
 				plug = null;
@@ -108,7 +108,7 @@ export class Factory {
 			Log.trace("Factory::getCourseController() - CustomCourseController handler instantiated");
 			return handler;
 		} catch (_err) {
-			const msg = "Factory::getCourseController() - src/custom/CustomCourseController.ts must be defined";
+			const msg = "Factory::getCourseController() - plugins/<plugin>/portal/backend/CustomCourseController.ts must be defined";
 			Log.error(msg);
 			throw new Error(msg);
 		}

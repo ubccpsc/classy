@@ -501,7 +501,7 @@ export class AdminDeliverablesTab extends AdminPage {
 			UI.showSuccessToast("Deliverable saved successfully.");
 			UI.popPage();
 		} else {
-			UI.showAlert(body.failure.message);
+			UI.showError(body); // may not be a Classy payload; see UI.showError
 		}
 	}
 

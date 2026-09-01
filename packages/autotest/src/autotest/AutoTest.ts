@@ -373,15 +373,13 @@ export abstract class AutoTest implements IAutoTest {
 			);
 
 			// let updated = false;
-			const that = this;
-
-			const tickQueue = function (queue: Queue): void {
-				if (queue.length() > 0 && that.hasCapacity() === true) {
+			const tickQueue = (queue: Queue): void => {
+				if (queue.length() > 0 && this.hasCapacity() === true) {
 					const info: ContainerInput = queue.pop(); // get the job
-					that.jobs.push(info); // put it on the execution queue
+					this.jobs.push(info); // put it on the execution queue
 
-					const totalNumQueued = that.expressQueue.length() + that.standardQueue.length() + that.lowQueue.length();
-					const totalJobsRunning = that.jobs.length;
+					const totalNumQueued = this.expressQueue.length() + this.standardQueue.length() + this.lowQueue.length();
+					const totalJobsRunning = this.jobs.length;
 					Log.info(
 						"AutoTest::tick::tickQueue(..)         [JOB] - job start: " +
 							queue.getName() +
@@ -396,11 +394,11 @@ export abstract class AutoTest implements IAutoTest {
 							"; # queued: " +
 							(totalNumQueued + "").padStart(4, " ") +
 							" ( e: " +
-							that.expressQueue.length() +
+							this.expressQueue.length() +
 							", s: " +
-							that.standardQueue.length() +
+							this.standardQueue.length() +
 							", l: " +
-							that.lowQueue.length() +
+							this.lowQueue.length() +
 							" )"
 					);
 
@@ -414,7 +412,7 @@ export abstract class AutoTest implements IAutoTest {
 					}
 					// noinspection ES6MissingAwait
 					// noinspection JSIgnoredPromiseFromCall
-					void that.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
+					void this.handleTick(gradingJob); // NOTE: not awaiting on purpose (let it finish in the background)!
 				} else {
 					// no cap to tick (should not happen)
 					Log.trace("AutoTest::tick::tickQueue(..) - no capacity to tick");
@@ -422,15 +420,15 @@ export abstract class AutoTest implements IAutoTest {
 			};
 
 			// handle the queues in order: express -> standard -> low
-			while (that.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
+			while (this.hasCapacity() && this.expressQueue.hasWaitingJobs()) {
 				tickQueue(this.expressQueue);
 			}
 
-			while (that.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
+			while (this.hasCapacity() && this.standardQueue.hasWaitingJobs()) {
 				tickQueue(this.standardQueue);
 			}
 
-			while (that.hasCapacity() && this.lowQueue.hasWaitingJobs()) {
+			while (this.hasCapacity() && this.lowQueue.hasWaitingJobs()) {
 				tickQueue(this.lowQueue);
 			}
 
@@ -446,13 +444,9 @@ export abstract class AutoTest implements IAutoTest {
 					this.lowQueue.length()
 			);
 
-			this.persistQueues()
-				.then(function (success: boolean) {
-					Log.trace("AutoTest::tick() - persist complete: " + success);
-				})
-				.catch(function (err) {
-					Log.error("AutoTest::tick() - persist queue ERROR: " + err.message);
-				});
+			// NOTE: not awaited on purpose, like the grading jobs above: tick() is synchronous
+			// (IAutoTest::tick) and none of its callers await it
+			void this.persistQueuesInBackground();
 		} catch (err) {
 			Log.error("AutoTest::tick() - ERROR: " + err.message);
 		}
@@ -532,6 +526,21 @@ export abstract class AutoTest implements IAutoTest {
 			Log.error("AutoTest::isOnQueue() - ERROR: " + err);
 		}
 		return onQueue;
+	}
+
+	/**
+	 * Persists the queues without holding up the tick that started it.
+	 *
+	 * NOTE: persistQueues() handles its own errors, so the catch here is only a backstop: a floating
+	 * promise that rejects would otherwise be an unhandled rejection.
+	 */
+	private async persistQueuesInBackground(): Promise<void> {
+		try {
+			const success = await this.persistQueues();
+			Log.trace("AutoTest::persistQueuesInBackground() - persist complete: " + success);
+		} catch (err) {
+			Log.error("AutoTest::persistQueuesInBackground() - persist queue ERROR: " + err.message);
+		}
 	}
 
 	private async persistQueues(): Promise<boolean> {

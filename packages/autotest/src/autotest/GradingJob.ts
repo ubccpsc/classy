@@ -7,6 +7,10 @@ import Util from "@common/Util";
 import { exec } from "child_process";
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
+import { promisify } from "util";
+
+// exec is callback-only; this is the await-able form of it
+const execAsync = promisify(exec);
 
 export class GradingJob {
 	public readonly record: AutoTestResult;
@@ -64,15 +68,12 @@ export class GradingJob {
 
 			// Change the permissions so that the grading container can read the files.
 			const user = Config.getInstance().getProp(ConfigKey.dockerUid);
-			await new Promise<void>((resolve, reject) => {
-				exec(`chown -R ${user} ${this.path}`, (error) => {
-					if (error) {
-						Log.error("GradingJob::prepare() - Failed to change owner. " + error);
-						reject(error);
-					}
-					resolve();
-				});
-			});
+			try {
+				await execAsync(`chown -R ${user} ${this.path}`);
+			} catch (error) {
+				Log.error("GradingJob::prepare() - Failed to change owner. " + error);
+				throw error;
+			}
 		} catch (err) {
 			const msg = "GradingJob::prepare() - ERROR: " + err.message;
 			Log.error(msg);

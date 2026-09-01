@@ -1,14 +1,23 @@
 import Config from "@common/Config";
 import Log from "@common/Log";
-import * as restify from "restify";
+import Fastify, { type FastifyInstance, type FastifyReply, type FastifyRequest } from "fastify";
+import * as http from "http";
 
 import AutoTestRouteHandler from "./AutoTestRouteHandler";
 
 /**
  * This configures the endpoints for the AutoTest REST server.
+ *
+ * NOTE: this used to be restify. Two differences are worth knowing about:
+ *
+ * - Fastify parses JSON bodies and query strings itself, so the per-route bodyParser/queryParser
+ *   plugins restify needed are gone. Anything that is not JSON has to be declared explicitly
+ *   (see the octet-stream parser below, which the Docker build endpoint relies on).
+ * - Routes are not live until `ready()` resolves. `start()` awaits it, and `getServer()` returns
+ *   the underlying Node server, so supertest sees a fully-registered instance.
  */
 export default class AutoTestServer {
-	private rest: restify.Server;
+	private rest: FastifyInstance;
 	private port: number;
 
 	public constructor() {
@@ -23,19 +32,18 @@ export default class AutoTestServer {
 	 */
 	public async stop(): Promise<boolean> {
 		Log.info("AutoTestServer::close()");
-		const that = this;
-		return new Promise<boolean>(function (fulfill) {
-			that.rest.close(function () {
-				fulfill(true);
-			});
-		});
+		if (typeof this.rest === "undefined" || this.rest === null) {
+			return true;
+		}
+		await this.rest.close();
+		return true;
 	}
 
 	/**
 	 * Sets the port on this instance of a server
 	 * @returns {void}
 	 */
-	public setPort(portNum: number) {
+	public setPort(portNum: number): void {
 		Log.info("AutoTestServer::setPort()");
 		this.port = portNum;
 	}
@@ -47,63 +55,81 @@ export default class AutoTestServer {
 	 *
 	 * @returns {Promise<boolean>}
 	 */
-	public start(): Promise<boolean> {
-		const that = this;
-		return new Promise(function (fulfill, reject) {
-			try {
-				Log.info("AutoTestServer::start() - start");
+	public async start(): Promise<boolean> {
+		try {
+			Log.info("AutoTestServer::start() - start");
 
-				that.rest = restify.createServer({
-					name: "AutoTest",
-					// key:         fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslKeyPath)),
-					// certificate: fs.readFileSync(Config.getInstance().getProp(ConfigKey.sslCertPath))
-				});
+			this.rest = Fastify({
+				// Classy logs through @common/Log; a second logger just duplicates every request
+				logger: false,
+			});
 
-				// support CORS
-				that.rest.use(function crossOrigin(req: any, res: any, next: any) {
-					res.header("Access-Control-Allow-Origin", "*");
-					res.header("Access-Control-Allow-Headers", "X-Requested-With");
-					return next();
-				});
+			// support CORS
+			this.rest.addHook("onRequest", async (_request: FastifyRequest, reply: FastifyReply): Promise<void> => {
+				reply.header("Access-Control-Allow-Origin", "*");
+				reply.header("Access-Control-Allow-Headers", "X-Requested-With");
+			});
 
-				// Return the queue stats (also makes sure the server is running)
-				that.rest.get("/status", restify.plugins.queryParser(), AutoTestRouteHandler.getAutoTestStatus);
+			// rawBody is needed for checking the HMAC signatures
+			this.rest.addContentTypeParser("application/json", { parseAs: "string" }, (request: FastifyRequest, body: string, done: any) => {
+				request.rawBody = body;
+				try {
+					done(null, body.length > 0 ? JSON.parse(body) : {});
+				} catch (err) {
+					err.statusCode = 400;
+					done(err);
+				}
+			});
 
-				// GitHub Webhook endpoint
-				that.rest.post("/githubWebhook", restify.plugins.bodyParser(), AutoTestRouteHandler.postGithubHook);
+			// NOTE: the Docker build endpoint is posted to by the portal with a JSON body, but
+			// also by clients that do not set a content type. Fastify rejects unknown content
+			// types with 415, where restify simply parsed what it was given, so accept both.
+			this.rest.addContentTypeParser(
+				"application/octet-stream",
+				{ parseAs: "string" },
+				(request: FastifyRequest, body: string, done: any) => {
+					request.rawBody = body;
+					try {
+						done(null, body.length > 0 ? JSON.parse(body) : {});
+					} catch {
+						done(null, {});
+					}
+				}
+			);
 
-				// AutoTest image creation / listing / removal endpoints
-				that.rest.get("/docker/images", restify.plugins.queryParser(), AutoTestRouteHandler.getDockerImages);
-				that.rest.del("/docker/image/:tag", restify.plugins.queryParser(), AutoTestRouteHandler.removeDockerImage);
-				that.rest.post("/docker/image", restify.plugins.bodyParser(), AutoTestRouteHandler.postDockerImage);
+			// Return the queue stats (also makes sure the server is running)
+			this.rest.get("/status", AutoTestRouteHandler.getAutoTestStatus);
 
-				// Resource endpoint
-				// that.rest.get("/resource/.*", restify.plugins.bodyParser(), AutoTestRouteHandler.getResource);
+			// GitHub Webhook endpoint
+			this.rest.post("/githubWebhook", AutoTestRouteHandler.postGithubHook);
 
-				that.rest.listen(that.port, function () {
-					Log.info("AutoTestServer::start() - restify listening: " + that.rest.url);
-					fulfill(true);
-				});
+			// AutoTest image creation / listing / removal endpoints
+			this.rest.get("/docker/images", AutoTestRouteHandler.getDockerImages);
+			this.rest.delete("/docker/image/:tag", AutoTestRouteHandler.removeDockerImage);
+			this.rest.post("/docker/image", AutoTestRouteHandler.postDockerImage);
 
-				that.rest.on("error", function (err: string) {
-					// catches errors in restify start; unusual syntax due to internal node not using normal exceptions here
-					Log.info("AutoTestServer::start() - restify ERROR: " + err);
-					reject(err);
-				});
-			} catch (err) {
-				Log.error("AutoTestServer::start() - ERROR: " + err);
-				reject(err);
-			}
-		});
+			// routes are not registered until this resolves; getServer() would otherwise 404
+			await this.rest.ready();
+
+			await this.rest.listen({ port: this.port, host: "0.0.0.0" });
+			Log.info("AutoTestServer::start() - fastify listening on port: " + this.port);
+			return true;
+		} catch (err) {
+			Log.error("AutoTestServer::start() - ERROR: " + err);
+			throw err;
+		}
 	}
 
 	/**
 	 * Used in tests.
 	 *
-	 * @returns {AutoTestServer}
+	 * NOTE: returns the raw Node server rather than the Fastify instance, because that is what
+	 * supertest attaches to. Only valid once start() has resolved.
+	 *
+	 * @returns {http.Server}
 	 */
-	public getServer(): restify.Server {
+	public getServer(): http.Server {
 		Log.trace("AutoTestServer::getServer()");
-		return this.rest;
+		return this.rest.server as http.Server;
 	}
 }
