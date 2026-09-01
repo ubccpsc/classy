@@ -194,6 +194,16 @@ export class JobRunner {
 			}
 		}
 
+		// Adopt a job this page did not start. It is running either because it was already going
+		// when the page loaded, or because another admin started it; either way nothing has set a
+		// timer for it, so without this the status block renders once and then sits there stale
+		// until someone reloads. The guard matters: refresh() is what the timer calls, so polling
+		// unconditionally would tear down and rebuild the interval on every tick.
+		if (running === true && typeof this.jobTimers[section.kind] === "undefined") {
+			Log.info("JobRunner::refresh( " + section.kind + " ) - adopting running job: " + job.id);
+			this.poll(section);
+		}
+
 		// a job that was being watched has just finished: report it, once
 		if (running === false && typeof this.jobTimers[section.kind] !== "undefined") {
 			clearInterval(this.jobTimers[section.kind]);
