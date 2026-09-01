@@ -23,6 +23,7 @@ import { Factory } from "../Factory";
 import AdminRoutes from "./common/AdminRoutes";
 import { AuthRoutes } from "./common/AuthRoutes";
 import { AutoTestRoutes } from "./common/AutoTestRoutes";
+import { ExportRoutes } from "./common/ExportRoutes";
 import GeneralRoutes from "./common/GeneralRoutes";
 
 /**
@@ -212,6 +213,9 @@ export default class BackendServer {
 
 			// admin
 			new AdminRoutes().registerRoutes(this.rest);
+
+			// grade export for external systems
+			new ExportRoutes().registerRoutes(this.rest);
 
 			Log.info("BackendServer::start() - Registering common handlers; done");
 

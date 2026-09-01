@@ -333,6 +333,7 @@ export enum AuditLabel {
 	STUDENT_WITHDRAW = "Student_Withdraw",
 	CLASSLIST_PRUNE = "Classlist_Prune",
 	IMPERSONATE = "Impersonate", // an admin started driving Classy as another user
+	GRADE_EXPORT = "Grade_Export", // an external system pulled grades; personId is the consumer name
 }
 
 export interface AuditEvent {

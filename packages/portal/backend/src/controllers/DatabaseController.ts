@@ -276,6 +276,22 @@ export class DatabaseController {
 		return grades;
 	}
 
+	/**
+	 * All grades for a single deliverable.
+	 *
+	 * getGrades() reads the whole collection; the grade export only ever wants one column, so this
+	 * pushes the filter into mongo rather than pulling every grade in the course across the wire.
+	 */
+	public async getGradesForDeliverable(delivId: string): Promise<Grade[]> {
+		const start = Date.now();
+		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - start");
+		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, { delivId: delivId })) as Grade[];
+		grades.forEach((g) => delete g?.custom?.previousGrade); // as getGrades() does; can be large
+
+		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - done; #: " + grades.length + "; took: " + Util.took(start));
+		return grades;
+	}
+
 	public async getGrade(personId: string, delivId: string): Promise<Grade | null> {
 		const grade = (await this.readSingleRecord(this.GRADECOLL, { personId: personId, delivId: delivId })) as Grade;
 		if (grade !== null) {

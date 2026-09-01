@@ -36,6 +36,9 @@ export enum ConfigKey {
 	prairieLearnCourseInstanceId = "prairieLearnCourseInstanceId",
 	prairieLearnUidDomain = "prairieLearnUidDomain",
 
+	// Grade export API; optional. Comma-separated consumer:token pairs. Unset disables the routes.
+	apiTokens = "apiTokens",
+
 	minimum_student_delay = "minimum_student_delay",
 	publichostname = "publichostname",
 
@@ -117,6 +120,8 @@ export default class Config {
 				prairieLearnToken: process.env.PRAIRIELEARN_TOKEN,
 				prairieLearnCourseInstanceId: process.env.PRAIRIELEARN_COURSE_INSTANCE_ID,
 				prairieLearnUidDomain: process.env.PRAIRIELEARN_UID_DOMAIN,
+
+				apiTokens: process.env.API_TOKENS,
 
 				minimum_student_delay: process.env.MINIMUM_STUDENT_DELAY,
 				publichostname: process.env.PUBLICHOSTNAME,
