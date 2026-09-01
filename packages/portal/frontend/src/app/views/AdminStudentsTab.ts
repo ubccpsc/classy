@@ -76,17 +76,17 @@ export class AdminStudentsTab {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
-				id: "viewAs",
-				text: "View As",
-				sortable: false,
+				id: "labId",
+				text: "Lab",
+				sortable: true,
 				defaultSort: false,
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
-				id: "labId",
-				text: "Lab",
-				sortable: true,
+				id: "viewAs",
+				text: "View As",
+				sortable: false,
 				defaultSort: false,
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em;",
@@ -111,10 +111,14 @@ export class AdminStudentsTab {
 				{ value: student.id, html: student.id }, // Should be CSID
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
+				{ value: labId, html: labId },
 				{
 					// NOTE: the entry point for driving Classy as this student. The button only asks the
 					// backend to open a session (which audits it); the backend re-checks the caller on
 					// every request afterwards, so this is convenience, not authorization.
+					//
+					// Last column on purpose: it is an action rather than data, and it is the one cell
+					// that is not part of scanning the roster.
 					value: student.id,
 					html:
 						"<button class='viewAsButton' data-id='" +
@@ -125,7 +129,6 @@ export class AdminStudentsTab {
 						student.lastName +
 						"'>View As</button>",
 				},
-				{ value: labId, html: labId },
 			];
 			if (labSectionsOptions.indexOf(student.labId) < 0 && student.labId !== "" && student.labId !== null) {
 				labSectionsOptions.push(student.labId);
