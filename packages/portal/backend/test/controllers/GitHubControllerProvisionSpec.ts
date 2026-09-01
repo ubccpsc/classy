@@ -3,6 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubController, GitTeamTuple } from "@backend/controllers/GitHubController";
+import { TeamController } from "@backend/controllers/TeamController";
 import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -482,24 +483,67 @@ describe("GitHubController provisioning paths", function () {
 			expect(gha.removed.length).to.equal(1);
 		});
 
-		it("Should never detach a team that has a staff member on it.", async function () {
-			await makePerson("unrelStudent2", PersonKind.STUDENT);
+		it("Should un-release a staff member's own repository.", async function () {
+			// Classy provisions repos for staff so they can see what students see, so the team on
+			// such a repo IS a staff member. An earlier version of this checked team membership and
+			// refused to detach these, which made every staff repo impossible to un-release.
 			await makePerson("unrelStaff1", PersonKind.STAFF);
-			const repoId = "ghcUnreleaseMixedTeam";
-			const teamId = "ghcUnreleaseMixedTeamTeam";
-			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent2", "unrelStaff1"]);
+			const repoId = "ghcUnreleaseStaffRepo";
+			const teamId = "ghcUnreleaseStaffRepoTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStaff1"]);
 
 			const gha = new TeamRemoveRecordingActions();
 			const ghc = new GitHubController(gha);
-			const team = await dbc.getTeam(teamId);
 
-			const result = await ghc.unreleaseRepository(repo, [team]);
-			expect(result, "there is no student-only team to detach").to.be.false;
-			expect(gha.removed, "a team carrying staff access must not be detached").to.deep.equal([]);
+			const result = await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId)]);
+			expect(result, "a staff member's own repo can be un-released").to.be.true;
+			expect(gha.removed).to.deep.equal([teamId + "@" + repoId]);
+			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.READY);
+		});
 
-			// and the repo keeps its status rather than claiming to be un-released
-			const afterRepo = await dbc.getRepository(repoId);
-			expect(afterRepo.gitHubStatus).to.equal(RepoStatus.RELEASED);
+		it("Should un-release a mixed student/staff team.", async function () {
+			// a team a release attached is a team un-release has to be able to detach
+			await makePerson("unrelStudent2", PersonKind.STUDENT);
+			await makePerson("unrelStaff2", PersonKind.STAFF);
+			const repoId = "ghcUnreleaseMixedTeam";
+			const teamId = "ghcUnreleaseMixedTeamTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent2", "unrelStaff2"]);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId)])).to.be.true;
+			expect(gha.removed).to.deep.equal([teamId + "@" + repoId]);
+		});
+
+		it("Should never detach the org-wide staff or admin team.", async function () {
+			// These are what actually keep staff in a repository: finalization attaches them by name
+			// with admin permission. They are not normally Team records at all, so this is the
+			// safety net for a course that made them Teams as well.
+			await makePerson("unrelStudent5", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseProtected";
+			const teamId = "ghcUnreleaseProtectedTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent5"]);
+
+			// written directly: TeamController.createTeam refuses a duplicate, and the org-wide staff
+			// team may already exist from the shared fixtures
+			const staffTeam: Team = {
+				id: TeamController.STAFF_NAME,
+				delivId: TestHarness.DELIVID0,
+				githubId: null,
+				personIds: [],
+				URL: null,
+				gitHubStatus: TeamStatus.ATTACHED,
+				custom: {},
+			};
+			await dbc.writeTeam(staffTeam);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			const result = await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId), staffTeam]);
+			expect(result, "the student team still detaches").to.be.true;
+			expect(gha.removed, "the org-wide staff team must be left attached").to.deep.equal([teamId + "@" + repoId]);
 		});
 
 		it("Should report a failed un-release rather than marking the repo un-released.", async function () {

@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "../Types";
+import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { ProvisionState } from "./ProvisionState";
@@ -567,29 +567,31 @@ export class GitHubController implements IGitHubController {
 
 		await this.checkDatabase(repo.id, null);
 
-		// Only teams made up entirely of students are detached. A team with any staff or admin
-		// member is left alone: un-releasing must never be able to lock staff out of a repository.
-		const studentTeams: Team[] = [];
+		// Detach exactly what releaseRepository attached: the repo's own teams. The org-wide staff
+		// and admin teams are excluded, but they are attached by name during finalization and are
+		// not Classy Team records, so this is belt and braces rather than the thing keeping staff
+		// out of trouble -- see isProtectedTeam.
+		const teamsToDetach: Team[] = [];
 		for (const team of teams) {
 			if (team === null) {
 				continue;
 			}
-			if ((await this.isStaffTeam(team)) === true) {
-				Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - keeping staff team: " + team.id);
+			if (GitHubController.isProtectedTeam(team) === true) {
+				Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - keeping org-wide team: " + team.id);
 			} else {
-				studentTeams.push(team);
+				teamsToDetach.push(team);
 			}
 		}
 
-		if (studentTeams.length === 0) {
-			// the repo says RELEASED but nothing student-facing is attached; do not silently
-			// rewrite the status, because that would hide the inconsistency
-			Log.warn("GitHubController::unreleaseRepository( " + repo.id + " ) - no student teams to detach");
+		if (teamsToDetach.length === 0) {
+			// the repo says RELEASED but has no team to detach; do not silently rewrite the status,
+			// because that would hide the inconsistency
+			Log.warn("GitHubController::unreleaseRepository( " + repo.id + " ) - no teams to detach");
 			return false;
 		}
 
 		let allDetached = true;
-		for (const team of studentTeams) {
+		for (const team of teamsToDetach) {
 			await this.checkDatabase(null, team.id);
 			try {
 				const removed = await this.gha.removeTeamFromRepo(team.id, repo.id);
@@ -621,37 +623,22 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
-	 * Whether a team must keep its access when a repository is un-released.
+	 * Whether a team must never be detached from a repository.
 	 *
-	 * Asked this way round on purpose. The obvious phrasing -- "is every member a student?" -- gets
-	 * the common case wrong: Person.kind is null until someone first logs in (Types.ts notes staff
-	 * and admin are taken from GitHub in that case), so a team of students who have not logged in
-	 * yet would not look like a student team, and un-releasing would silently skip it.
+	 * Only the org-wide staff and admin teams qualify. They are what actually keeps staff in a
+	 * repository: finalization adds them by name with "admin" permission, independently of whatever
+	 * teams a release attaches, so un-releasing cannot lock staff out however it treats repo.teamIds.
+	 * They are not Classy Team records either, so they should never reach this check -- it is here
+	 * so a course that did make them Teams is still safe.
 	 *
-	 * Two things make a team staff-owned:
-	 *
-	 * - it is one of the org-wide teams finalization attaches by name. Those are added straight
-	 *   through GitHubActions and are not Classy Team records, so they should never appear in
-	 *   repo.teamIds -- this is belt and braces against a course that made them Teams as well.
-	 * - it has a member who is staff or admin. A mixed team is left attached, since detaching it
-	 *   would take that person's access with it.
+	 * NOTE: membership is deliberately NOT consulted. Asking "does this team contain a staff
+	 * member?" gets two real cases wrong. Classy provisions repositories for staff so they can see
+	 * what students see, and the team on such a repo is a staff member -- refusing to detach it
+	 * makes those repos impossible to un-release. And a mixed student/staff team is still a team a
+	 * release attached, so un-release, being the inverse of release, has to be able to remove it.
 	 */
-	private async isStaffTeam(team: Team): Promise<boolean> {
-		if (team.id === TeamController.STAFF_NAME || team.id === TeamController.ADMIN_NAME) {
-			return true;
-		}
-		for (const personId of team.personIds) {
-			const person = await this.dbc.getPerson(personId);
-			if (person === null) {
-				// unknown member: leave the team alone rather than guess
-				Log.warn("GitHubController::isStaffTeam( " + team.id + " ) - unknown person: " + personId);
-				return true;
-			}
-			if (person.kind === PersonKind.STAFF || person.kind === PersonKind.ADMIN || person.kind === PersonKind.ADMINSTAFF) {
-				return true;
-			}
-		}
-		return false;
+	private static isProtectedTeam(team: Team): boolean {
+		return team.id === TeamController.STAFF_NAME || team.id === TeamController.ADMIN_NAME;
 	}
 
 	/**
