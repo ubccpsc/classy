@@ -208,10 +208,7 @@ export class AdminDashboardTab extends AdminPage {
 			const row: TableCell[] = [
 				{
 					value: "",
-					html:
-						"<a style='cursor: pointer; cursor: hand;' target='_blank' href='" +
-						stdioViewerURL +
-						"'><ons-icon icon='md-info-outline'</ons-icon></a>",
+					html: "<a style='cursor: pointer;' target='_blank' href='" + stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>",
 				},
 				{
 					value: result.repoId,

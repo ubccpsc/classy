@@ -399,6 +399,12 @@ export default class AdminRoutes implements IREST {
 		if (repo !== null) {
 			const futureTeamUpdates = repo.teamIds.map(async (teamId) => {
 				const team = await dbc.getTeam(teamId);
+				if (team === null) {
+					// The repo lists a team whose record is gone. There is nothing to unlink, and a
+					// dangling reference must not block deleting the repo (it used to throw here).
+					Log.warn("AdminRoutes::handleDeleteRepository(..) - unknown team on repo: " + teamId + "; skipping unlink");
+					return;
+				}
 				const newTeam = { ...team, gitHubStatus: TeamStatus.CREATED, custom: { ...team.custom } };
 				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);
