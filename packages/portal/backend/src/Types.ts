@@ -329,6 +329,7 @@ export enum AuditLabel {
 	GRADE_AUTOTEST = "GradeAutotest",
 	REPO_PROVISION = "RepositoryProvision",
 	REPO_RELEASE = "RepositoryRelease",
+	REPO_UNRELEASE = "RepositoryUnrelease",
 	CLASSLIST_UPLOAD = "Classlist_Upload",
 	STUDENT_WITHDRAW = "Student_Withdraw",
 	CLASSLIST_PRUNE = "Classlist_Prune",

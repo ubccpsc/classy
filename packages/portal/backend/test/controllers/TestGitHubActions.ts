@@ -48,6 +48,11 @@ export class TestGitHubActions implements IGitHubActions {
 		return { teamName: "team_" + repoName, githubTeamNumber: 1 };
 	}
 
+	public async removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean> {
+		Log.info("TestGitHubActions::removeTeamFromRepo( " + teamName + ", " + repoName + " )");
+		return true;
+	}
+
 	public async addWebhook(repoName: string, webhookEndpoint: string): Promise<boolean> {
 		Log.info("TestGitHubActions::addWebhook(..)");
 		if (typeof this.webHookState[repoName] === "undefined") {

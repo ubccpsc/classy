@@ -1345,6 +1345,7 @@
                     </div>
                 </ons-list-item>
 
+
                 <ons-list-header>Provisioned Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
@@ -1371,9 +1372,22 @@
                         <select multiple size="10"
                                 style="width: 20em; margin-left: 1em; margin-right: 1em;"
                                 id="repositoryReleasedSelect"></select>
+                        <ons-button id="adminManageUnreleaseButton" modifier="medium">Un-Release</ons-button>
+                        <ons-button id="adminManageUnreleaseCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionUnreleaseStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
                     </div>
                     <div class="expandable-content">
-                        These are the repositories that have already been released.
+                        These are the repositories that have already been released. Select any of them and press
+                        Un-Release to detach the student teams: students can no longer see or push to the repository,
+                        staff keep their access, and nothing in the repository is changed or deleted.
+                        <br/><br/>
+                        Un-released repositories move back to the un-release list above, so anything un-released by
+                        mistake can simply be released again.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 

@@ -189,6 +189,9 @@ export default class BackendServer {
 			jc.register("provision-release", async (job, ctx) => {
 				return await new ProvisionAgent().release(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
 			});
+			jc.register("provision-unrelease", async (job, ctx) => {
+				return await new ProvisionAgent().unrelease(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
+			});
 			try {
 				const swept = await jc.sweepInterrupted();
 				if (swept > 0) {

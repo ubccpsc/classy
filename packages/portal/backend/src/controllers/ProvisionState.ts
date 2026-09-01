@@ -26,7 +26,9 @@ const REPO_TRANSITIONS: { [from: string]: RepoStatus[] } = {
 	[RepoStatus.NOT_CREATED]: [RepoStatus.CREATED],
 	[RepoStatus.CREATED]: [RepoStatus.READY, RepoStatus.NOT_CREATED],
 	[RepoStatus.READY]: [RepoStatus.RELEASED, RepoStatus.NOT_CREATED],
-	[RepoStatus.RELEASED]: [RepoStatus.NOT_CREATED],
+	// RELEASED -> READY is un-releasing: the student teams are detached again, which is exactly
+	// what READY means (finalized, students cannot see it).
+	[RepoStatus.RELEASED]: [RepoStatus.READY, RepoStatus.NOT_CREATED],
 };
 
 /**
@@ -35,7 +37,9 @@ const REPO_TRANSITIONS: { [from: string]: RepoStatus[] } = {
 const TEAM_TRANSITIONS: { [from: string]: TeamStatus[] } = {
 	[TeamStatus.NOT_CREATED]: [TeamStatus.CREATED],
 	[TeamStatus.CREATED]: [TeamStatus.ATTACHED, TeamStatus.NOT_CREATED],
-	[TeamStatus.ATTACHED]: [TeamStatus.NOT_CREATED],
+	// ATTACHED -> CREATED is un-releasing: the team still exists on GitHub, it is just no longer on
+	// the repo. planRelease looks for exactly CREATED, so an un-released repo can be released again.
+	[TeamStatus.ATTACHED]: [TeamStatus.CREATED, TeamStatus.NOT_CREATED],
 };
 
 export class ProvisionState {

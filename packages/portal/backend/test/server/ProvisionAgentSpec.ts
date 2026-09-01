@@ -90,6 +90,23 @@ describe("ProvisionAgent", function () {
 		expect(msg).to.contain("not provisionable");
 	});
 
+	it("Should reject an un-release with the same validation as a release.", async function () {
+		// un-release has no planning step: the selection comes straight from the released list, so
+		// resolveRepos is the only thing standing between a bad request and the GitHub calls
+		expect(await messageFrom(agent.unrelease(TestHarness.DELIVID0, [], TestHarness.ADMIN1.id))).to.contain("No repositories");
+		expect(await messageFrom(agent.unrelease(TestHarness.DELIVID0, ["noSuchRepo"], TestHarness.ADMIN1.id))).to.contain(
+			"Unknown repository"
+		);
+		expect(await messageFrom(agent.unrelease(TestHarness.DELIVID0, [OTHER_DELIV_REPO], TestHarness.ADMIN1.id))).to.contain(
+			"does not belong to"
+		);
+	});
+
+	it("Should reject an un-release for a deliverable that is not provisionable.", async function () {
+		const msg = await messageFrom(agent.unrelease(TestHarness.DELIVID1, [OTHER_DELIV_REPO], TestHarness.ADMIN1.id));
+		expect(msg).to.contain("not provisionable");
+	});
+
 	it("Should reject a release with the same validation as a create.", async function () {
 		// release takes the same params, so it must not be laxer about them
 		expect(await messageFrom(agent.release(TestHarness.DELIVID0, [], TestHarness.ADMIN1.id))).to.contain("No repositories");

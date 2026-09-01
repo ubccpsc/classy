@@ -40,6 +40,17 @@ export interface ProvisionReleaseSummary {
 	stopReason: string | null;
 }
 
+export interface ProvisionUnreleaseSummary {
+	delivId: string;
+	requested: number;
+	unreleased: number;
+	skipped: number; // not released, so there is nothing to detach
+	failed: string[];
+	cancelled: boolean;
+	stoppedEarly: boolean;
+	stopReason: string | null;
+}
+
 /**
  * The three provisioning jobs.
  *
@@ -52,6 +63,7 @@ export interface ProvisionReleaseSummary {
  *   provision-prepare   creates the Team and Repository records
  *   provision-create    creates the repositories on GitHub
  *   provision-release   attaches the student teams to them
+ *   provision-unrelease detaches the student teams again
  *
  * Only one job per kind runs at a time, which is what we want here: two deliverables provisioning at
  * once would compete for the same GitHub secondary rate limits.
@@ -256,6 +268,71 @@ export class ProvisionAgent {
 	 * NOTE: a job's params arrive from the client, so everything is validated here rather than
 	 * trusted: the route only checks that the caller is an admin.
 	 */
+	/**
+	 * Detaches the student teams from released repositories, undoing a release.
+	 *
+	 * The mirror of release(): same validation, same audit shape, same partial-result handling when
+	 * the failure policy aborts the run.
+	 */
+	public async unrelease(
+		delivId: string,
+		repoIds: string[],
+		requesterId: string,
+		ctx: JobContext = null
+	): Promise<ProvisionUnreleaseSummary> {
+		const start = Date.now();
+		Log.info("ProvisionAgent::unrelease( " + delivId + " ) - start; # repos: " + (repoIds ?? []).length);
+
+		await ProvisionAgent.getProvisionableDeliverable(delivId); // validate before doing any work
+		const repos = await this.resolveRepos(delivId, repoIds);
+		const ac = this.getAdminController();
+
+		// only a released repo has anything to detach
+		const unreleasable = repos.filter((repo) => repo.gitHubStatus === RepoStatus.RELEASED);
+		const skipped = repos.length - unreleasable.length;
+
+		await this.dbc.writeAudit(
+			AuditLabel.REPO_UNRELEASE,
+			requesterId,
+			{},
+			{},
+			{
+				delivId: delivId,
+				repoIds: repos.map((repo) => repo.id),
+			}
+		);
+
+		const summarize = (detached: RepositoryTransport[], stopReason: string | null): ProvisionUnreleaseSummary => {
+			const detachedIds = detached.map((repo) => repo.id);
+			return {
+				delivId: delivId,
+				requested: repos.length,
+				unreleased: detached.length,
+				skipped: skipped,
+				failed: unreleasable.filter((repo) => detachedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
+				cancelled: ctx?.isCancelled() === true,
+				stoppedEarly: stopReason !== null,
+				stopReason: stopReason,
+			};
+		};
+
+		let unreleased: RepositoryTransport[] = [];
+		try {
+			unreleased = await ac.performUnrelease(repos, ctx);
+		} catch (err) {
+			if (err instanceof ProvisionAbortedError) {
+				const partial = await this.unreleasedSoFar(unreleasable);
+				throw new ProvisionAbortedError(err.message, summarize(partial, err.message));
+			}
+			throw err;
+		}
+
+		const summary = summarize(unreleased, null);
+
+		Log.info("ProvisionAgent::unrelease( " + delivId + " ) - done; " + JSON.stringify(summary) + "; took: " + Util.took(start));
+		return summary;
+	}
+
 	private async resolveRepos(delivId: string, repoIds: string[]): Promise<Repository[]> {
 		if (Array.isArray(repoIds) === false || repoIds.length === 0) {
 			throw new Error("No repositories were selected.");
@@ -288,6 +365,14 @@ export class ProvisionAgent {
 
 	private async releasedSoFar(repos: Repository[]): Promise<RepositoryTransport[]> {
 		return await this.statusIs(repos, [RepoStatus.RELEASED]);
+	}
+
+	/**
+	 * Of the repos that were released when the run began, the ones that are now READY: those the
+	 * run got to before it aborted.
+	 */
+	private async unreleasedSoFar(repos: Repository[]): Promise<RepositoryTransport[]> {
+		return await this.statusIs(repos, [RepoStatus.READY]);
 	}
 
 	private async statusIs(repos: Repository[], wanted: RepoStatus[]): Promise<RepositoryTransport[]> {

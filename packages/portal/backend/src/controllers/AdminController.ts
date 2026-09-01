@@ -1035,6 +1035,85 @@ export class AdminController {
 		return releasedRepositoryTransport;
 	}
 
+	/**
+	 * Detaches the student teams from repositories that have been released.
+	 *
+	 * The mirror of performRelease, including its failure policy: a repo that cannot be un-released
+	 * keeps RELEASED, so running this again retries only what is still outstanding.
+	 *
+	 * @param {Repository[]} repos
+	 * @param {JobContext} ctx
+	 * @returns {Promise<RepositoryTransport[]>}
+	 */
+	public async performUnrelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
+		const ghc = this.gh; // see performProvision
+
+		Log.info("AdminController::performUnrelease(..) - start; # repos: " + repos.length);
+		const start = Date.now();
+
+		const unreleasedRepos = [];
+		let done = 0;
+		const policy = new ProvisionFailurePolicy("un-releasing");
+
+		for (const repo of repos) {
+			if (ctx?.isCancelled() === true) {
+				Log.info("AdminController::performUnrelease(..) - cancelled; un-released " + unreleasedRepos.length + " of " + repos.length);
+				break;
+			}
+			try {
+				const startRepo = Date.now();
+				// only a released repo has student teams to detach
+				if (repo.gitHubStatus === RepoStatus.RELEASED) {
+					const teams: Team[] = [];
+					for (const teamId of repo.teamIds) {
+						teams.push(await this.dbc.getTeam(teamId));
+					}
+
+					const success = await ghc.unreleaseRepository(repo, teams);
+
+					if (success === true) {
+						Log.info("AdminController::performUnrelease(..) - success: " + repo.id + "; took: " + Util.took(startRepo));
+						unreleasedRepos.push(repo);
+						policy.recordSuccess();
+					} else {
+						Log.warn("AdminController::performUnrelease(..) - FAILED: " + repo.id);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
+					}
+
+					await Util.delay(200); // as with releasing, do not hammer the API
+				} else {
+					Log.info("AdminController::performUnrelease(..) - skipped; repo not released: " + repo.id);
+				}
+			} catch (err) {
+				Log.error("AdminController::performUnrelease(..) - FAILED: " + repo.id + "; ERROR: " + err.message);
+				await ctx?.error(repo.id + ": " + err.message);
+
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
+			}
+			done++;
+			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
+		}
+
+		const unreleasedRepositoryTransport: RepositoryTransport[] = [];
+		for (const repo of unreleasedRepos) {
+			unreleasedRepositoryTransport.push(RepositoryController.repositoryToTransport(repo));
+		}
+		Log.info(
+			"AdminController::performUnrelease(..) - complete; # un-released: " +
+				unreleasedRepositoryTransport.length +
+				"; took: " +
+				Util.took(start)
+		);
+
+		return unreleasedRepositoryTransport;
+	}
+
 	/* istanbul ignore next */
 	/**
 	 * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes

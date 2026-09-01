@@ -3,7 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubController, GitTeamTuple } from "@backend/controllers/GitHubController";
-import { RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -102,6 +102,27 @@ describe("GitHubController provisioning paths", function () {
 	class TeamAttachFailsActions extends RecordingActions {
 		public async addTeamToRepo(teamName: string, _repoName: string, _permission: string): Promise<GitTeamTuple> {
 			return { teamName: teamName, githubTeamNumber: -1 };
+		}
+	}
+
+	/**
+	 * Records which teams were detached, so un-release can be checked without a network.
+	 */
+	class TeamRemoveRecordingActions extends RecordingActions {
+		public removed: string[] = [];
+
+		public async removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean> {
+			this.removed.push(teamName + "@" + repoName);
+			return true;
+		}
+	}
+
+	/**
+	 * Detaching the team is the one step un-release depends on.
+	 */
+	class TeamRemoveFailsActions extends RecordingActions {
+		public async removeTeamFromRepo(_teamName: string, _repoName: string): Promise<boolean> {
+			return false;
 		}
 	}
 
@@ -392,6 +413,131 @@ describe("GitHubController provisioning paths", function () {
 
 			const after = await dbc.getRepository(repoId);
 			expect(after.gitHubStatus).to.equal(RepoStatus.READY);
+		});
+	});
+
+	describe("un-releasing", function () {
+		/**
+		 * A released repo with one student team attached, which is what un-release acts on.
+		 */
+		async function makeReleasedRepo(repoId: string, teamId: string, personIds: string[]): Promise<Repository> {
+			const team = await TestHarness.createTeam(teamId, TestHarness.DELIVID0, personIds);
+			team.gitHubStatus = TeamStatus.ATTACHED;
+			await dbc.writeTeam(team);
+
+			const repo: Repository = {
+				id: repoId,
+				delivId: TestHarness.DELIVID0,
+				teamIds: [teamId],
+				URL: "https://example.com/" + repoId,
+				cloneURL: "https://example.com/" + repoId + ".git",
+				gitHubStatus: RepoStatus.RELEASED,
+				custom: {},
+			};
+			await dbc.writeRepository(repo);
+			return repo;
+		}
+
+		async function makePerson(id: string, kind: PersonKind | null): Promise<void> {
+			const person = TestHarness.createPerson(id, id + "CSID", id + "gh", kind);
+			await dbc.writePerson(person);
+		}
+
+		it("Should detach the student team and leave the repo releasable again.", async function () {
+			await makePerson("unrelStudent1", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseWorks";
+			const teamId = "ghcUnreleaseTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent1"]);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+			const team = await dbc.getTeam(teamId);
+
+			const result = await ghc.unreleaseRepository(repo, [team]);
+			expect(result, "un-releasing a released repo succeeds").to.be.true;
+			expect(gha.removed, "the team is detached from the repo").to.deep.equal([teamId + "@" + repoId]);
+
+			// READY is exactly "finalized, students cannot see it"
+			const afterRepo = await dbc.getRepository(repoId);
+			expect(afterRepo.gitHubStatus).to.equal(RepoStatus.READY);
+
+			// CREATED is what planRelease looks for, so this repo can be released again
+			const afterTeam = await dbc.getTeam(teamId);
+			expect(afterTeam.gitHubStatus).to.equal(TeamStatus.CREATED);
+		});
+
+		it("Should un-release a team whose students have never logged in.", async function () {
+			// Person.kind is null until first login; such a team is still a student team, and this
+			// is the common case at the start of term
+			await makePerson("unrelNeverLoggedIn", null);
+			const repoId = "ghcUnreleaseNullKind";
+			const teamId = "ghcUnreleaseNullKindTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelNeverLoggedIn"]);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+			const team = await dbc.getTeam(teamId);
+
+			expect(await ghc.unreleaseRepository(repo, [team]), "a null kind must not block un-release").to.be.true;
+			expect(gha.removed.length).to.equal(1);
+		});
+
+		it("Should never detach a team that has a staff member on it.", async function () {
+			await makePerson("unrelStudent2", PersonKind.STUDENT);
+			await makePerson("unrelStaff1", PersonKind.STAFF);
+			const repoId = "ghcUnreleaseMixedTeam";
+			const teamId = "ghcUnreleaseMixedTeamTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent2", "unrelStaff1"]);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+			const team = await dbc.getTeam(teamId);
+
+			const result = await ghc.unreleaseRepository(repo, [team]);
+			expect(result, "there is no student-only team to detach").to.be.false;
+			expect(gha.removed, "a team carrying staff access must not be detached").to.deep.equal([]);
+
+			// and the repo keeps its status rather than claiming to be un-released
+			const afterRepo = await dbc.getRepository(repoId);
+			expect(afterRepo.gitHubStatus).to.equal(RepoStatus.RELEASED);
+		});
+
+		it("Should report a failed un-release rather than marking the repo un-released.", async function () {
+			// the mirror of the failed-release case above
+			await makePerson("unrelStudent3", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseFails";
+			const teamId = "ghcUnreleaseFailsTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent3"]);
+
+			const ghc = new GitHubController(new TeamRemoveFailsActions());
+			const team = await dbc.getTeam(teamId);
+
+			expect(await ghc.unreleaseRepository(repo, [team]), "a detach that failed is not an un-release").to.be.false;
+
+			// both must stay as they were, so pressing Un-Release again retries
+			const afterRepo = await dbc.getRepository(repoId);
+			expect(afterRepo.gitHubStatus).to.equal(RepoStatus.RELEASED);
+			const afterTeam = await dbc.getTeam(teamId);
+			expect(afterTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED);
+		});
+
+		it("Should survive a full release / un-release / release round trip.", async function () {
+			await makePerson("unrelStudent4", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseRoundTrip";
+			const teamId = "ghcUnreleaseRoundTripTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent4"]);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId)])).to.be.true;
+			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.READY);
+
+			// releasing again must work from that state
+			const reReleased = await ghc.releaseRepository(await dbc.getRepository(repoId), [await dbc.getTeam(teamId)], false);
+			expect(reReleased, "an un-released repo can be released again").to.be.true;
+			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.RELEASED);
+			expect((await dbc.getTeam(teamId)).gitHubStatus).to.equal(TeamStatus.ATTACHED);
 		});
 	});
 });

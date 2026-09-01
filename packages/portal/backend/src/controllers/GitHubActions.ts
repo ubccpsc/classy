@@ -192,6 +192,18 @@ export interface IGitHubActions {
 	addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple>;
 
 	/**
+	 * Removes a team from a repository, revoking the access that team conferred.
+	 *
+	 * The inverse of addTeamToRepo. Returns true when the team is no longer on the repo, which
+	 * includes the case where it was not on it to begin with (GitHub answers 204 either way).
+	 *
+	 * @param {string} teamName
+	 * @param {string} repoName
+	 * @returns {Promise<boolean>}
+	 */
+	removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean>;
+
+	/**
 	 * Gets the internal number for a team.
 	 *
 	 * Returns -1 if the team does not exist.
@@ -1349,6 +1361,55 @@ export class GitHubActions implements IGitHubActions {
 			return { githubTeamNumber: team.githubTeamNumber, teamName: "NOTSETHERE" }; // TODO: why NOTSETHERE?
 		} catch (err) {
 			Log.error("GitHubAction::addTeamToRepo(..) - ERROR: " + err);
+			throw err;
+		}
+	}
+
+	/**
+	 * Removes a team from a repository. The inverse of addTeamToRepo.
+	 *
+	 * NOTE: for a private repository this revokes the team's access outright; it does not downgrade
+	 * it to read-only. Making a repo readable-but-not-writable would mean re-adding the team with
+	 * "pull" instead, which is a different operation from un-releasing.
+	 *
+	 * @param {string} teamName
+	 * @param {string} repoName
+	 * @returns {Promise<boolean>}
+	 */
+	public async removeTeamFromRepo(teamName: string, repoName: string): Promise<boolean> {
+		Log.trace("GitHubAction::removeTeamFromRepo( " + teamName + ", " + repoName + " ) - start");
+		const start = Date.now();
+
+		try {
+			const team = await this.getTeamByName(teamName);
+			if (team === null) {
+				// nothing on GitHub to detach; the caller's records are ahead of the org
+				Log.warn("GitHubAction::removeTeamFromRepo(..) - team does not exist: " + teamName);
+				return false;
+			}
+
+			// DELETE /orgs/:org/teams/:team_slug/repos/:owner/:repo
+			const uri = this.apiPath + "/orgs/" + this.org + "/teams/" + teamName + "/repos/" + this.org + "/" + repoName;
+			Log.trace("GitHubAction::removeTeamFromRepo(..) - uri: " + uri);
+			const options: RequestInit = {
+				method: "DELETE",
+				headers: {
+					Authorization: this.gitHubAuthToken,
+					"User-Agent": this.gitHubUserName,
+					Accept: "application/vnd.github+json",
+				},
+			};
+
+			const response = await fetch(uri, options);
+			if (!response.ok) {
+				GitHubActions.throwIfFatal(response.status, await response.text(), "removeTeamFromRepo( " + teamName + ", " + repoName + " )");
+				throw new Error(response.statusText);
+			}
+
+			Log.info("GitHubAction::removeTeamFromRepo(..) - success; team: " + teamName + "; repo: " + repoName + "; took: " + Util.took(start));
+			return true;
+		} catch (err) {
+			Log.error("GitHubAction::removeTeamFromRepo(..) - ERROR: " + err);
 			throw err;
 		}
 	}

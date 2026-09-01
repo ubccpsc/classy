@@ -65,6 +65,7 @@ describe("ProvisionState", function () {
 			[RepoStatus.CREATED, RepoStatus.NOT_CREATED], // provisioning failed; the repo was deleted again
 			[RepoStatus.READY, RepoStatus.NOT_CREATED], // the repo was deleted
 			[RepoStatus.RELEASED, RepoStatus.NOT_CREATED],
+			[RepoStatus.RELEASED, RepoStatus.READY], // un-released: the student teams were detached again
 		];
 
 		for (const [from, to] of legal) {
@@ -81,7 +82,6 @@ describe("ProvisionState", function () {
 			[RepoStatus.NOT_CREATED, RepoStatus.READY], // skips creation
 			[RepoStatus.NOT_CREATED, RepoStatus.RELEASED], // skips everything
 			[RepoStatus.CREATED, RepoStatus.RELEASED], // never finalized, so it cannot be released
-			[RepoStatus.RELEASED, RepoStatus.READY], // releasing is not undone by Classy
 		];
 
 		for (const [from, to] of illegal) {
@@ -105,6 +105,14 @@ describe("ProvisionState", function () {
 	});
 
 	describe("teams", function () {
+		it("Should allow ATTACHED -> CREATED when a repo is un-released.", async function () {
+			// the team still exists on GitHub, it is just no longer on the repo; CREATED is what
+			// planRelease looks for, so the repo can be released again
+			const team = await makeTeam(TeamStatus.ATTACHED);
+			expect(await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "spec")).to.be.true;
+			expect((await dbc.getTeam(team.id)).gitHubStatus).to.equal(TeamStatus.CREATED);
+		});
+
 		it("Should allow NOT_CREATED -> CREATED -> ATTACHED.", async function () {
 			const team = await makeTeam(TeamStatus.NOT_CREATED);
 			expect(await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "spec")).to.be.true;

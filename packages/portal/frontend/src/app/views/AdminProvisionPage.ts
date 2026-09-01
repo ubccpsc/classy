@@ -127,6 +127,21 @@ export class AdminProvisionPage extends AdminPage {
 					this.refreshLists();
 				},
 			},
+			{
+				kind: "provision-unrelease",
+				buttonId: "adminManageUnreleaseButton",
+				cancelButtonId: "adminManageUnreleaseCancelButton",
+				statusId: "adminProvisionUnreleaseStatus",
+				ran: "Last un-released",
+				confirmCancel:
+					"Stop un-releasing after the current repository finishes?\n\n" +
+					"Repositories already un-released stay un-released; pressing Un-Release again does the rest.",
+				params: () => this.repoParams("repositoryReleasedSelect", "un-releasing"),
+				detail: AdminProvisionPage.describeRepoSummary("unreleased"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
 		];
 	}
 
@@ -314,6 +329,8 @@ export class AdminProvisionPage extends AdminPage {
 				}
 			}
 
+			// The released list doubles as the un-release selection: every repo in it is one whose
+			// Repository and Team records exist on both sides, so there is nothing to plan.
 			AdminProvisionPage.fillSelect(releasedSelect, released.sort(), "No released repositories");
 			AdminProvisionPage.fillSelect(toReleaseSelect, toRelease.sort(), "Nothing to release");
 		} catch (err) {

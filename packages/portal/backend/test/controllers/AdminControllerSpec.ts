@@ -515,6 +515,10 @@ describe("AdminController", () => {
 				return true;
 			}
 
+			public async unreleaseRepository(): Promise<boolean> {
+				return true;
+			}
+
 			public async updateBranchProtection(): Promise<boolean> {
 				return true;
 			}

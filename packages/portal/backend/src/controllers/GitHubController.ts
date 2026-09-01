@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
+import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { ProvisionState } from "./ProvisionState";
@@ -23,6 +23,15 @@ export interface IGitHubController {
 	 * @returns {Promise<boolean>}
 	 */
 	provisionRepository(repoName: string, teams: Team[], importUrl: string): Promise<boolean>;
+
+	/**
+	 * Detaches the student teams from a repository, undoing a release.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams the repo's teams; only those made up entirely of students are detached
+	 * @returns {Promise<boolean>} whether the repo is now un-released
+	 */
+	unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean>;
 
 	updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean>;
 
@@ -533,6 +542,116 @@ export class GitHubController implements IGitHubController {
 
 		Log.info("GitHubController::releaseRepository( " + repo.id + ", ... ) - done; took: " + Util.took(start));
 		return true;
+	}
+
+	/**
+	 * Detaches a repository's student teams, undoing a release.
+	 *
+	 * The inverse of releaseRepository: the repo and its content are untouched, the teams still
+	 * exist, and the staff/admin teams stay attached, so staff keep their access. The repo returns
+	 * to READY, which is the status that means "finalized, students cannot see it", and each
+	 * detached team returns to CREATED, which is what planRelease looks for -- so a repo un-released
+	 * by mistake can simply be released again.
+	 *
+	 * NOTE: for a private repository, detaching the team revokes the students' access entirely
+	 * rather than leaving them read-only. Leaving them able to read but not push would mean
+	 * re-adding the team with "pull" permission, which is a different state than this model has.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams
+	 * @returns {Promise<boolean>}
+	 */
+	public async unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean> {
+		Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - start");
+		const start = Date.now();
+
+		await this.checkDatabase(repo.id, null);
+
+		// Only teams made up entirely of students are detached. A team with any staff or admin
+		// member is left alone: un-releasing must never be able to lock staff out of a repository.
+		const studentTeams: Team[] = [];
+		for (const team of teams) {
+			if (team === null) {
+				continue;
+			}
+			if ((await this.isStaffTeam(team)) === true) {
+				Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - keeping staff team: " + team.id);
+			} else {
+				studentTeams.push(team);
+			}
+		}
+
+		if (studentTeams.length === 0) {
+			// the repo says RELEASED but nothing student-facing is attached; do not silently
+			// rewrite the status, because that would hide the inconsistency
+			Log.warn("GitHubController::unreleaseRepository( " + repo.id + " ) - no student teams to detach");
+			return false;
+		}
+
+		let allDetached = true;
+		for (const team of studentTeams) {
+			await this.checkDatabase(null, team.id);
+			try {
+				const removed = await this.gha.removeTeamFromRepo(team.id, repo.id);
+				if (removed === true) {
+					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "removed from " + repo.id);
+					Log.info("GitHubController::unreleaseRepository(..) - detached team ( " + team.id + " ) from repository ( " + repo.id + " )");
+				} else {
+					// the team keeps ATTACHED, so un-releasing again retries it
+					Log.error("GitHubController::unreleaseRepository(..) - ERROR removing team from repo: " + team.id);
+					allDetached = false;
+				}
+			} catch (err) {
+				Log.error("GitHubController::unreleaseRepository(..) - ERROR removing team " + team.id + ": " + err.message);
+				allDetached = false;
+			}
+		}
+
+		if (allDetached === false) {
+			// as with releaseRepository: a partial result must not be reported as done, or the admin
+			// UI would say the students are locked out when some of them are not
+			Log.error("GitHubController::unreleaseRepository( " + repo.id + " ) - not un-released; a team could not be detached");
+			return false;
+		}
+
+		await ProvisionState.setRepoStatus(repo, RepoStatus.READY, "student teams detached");
+
+		Log.info("GitHubController::unreleaseRepository( " + repo.id + " ) - done; took: " + Util.took(start));
+		return true;
+	}
+
+	/**
+	 * Whether a team must keep its access when a repository is un-released.
+	 *
+	 * Asked this way round on purpose. The obvious phrasing -- "is every member a student?" -- gets
+	 * the common case wrong: Person.kind is null until someone first logs in (Types.ts notes staff
+	 * and admin are taken from GitHub in that case), so a team of students who have not logged in
+	 * yet would not look like a student team, and un-releasing would silently skip it.
+	 *
+	 * Two things make a team staff-owned:
+	 *
+	 * - it is one of the org-wide teams finalization attaches by name. Those are added straight
+	 *   through GitHubActions and are not Classy Team records, so they should never appear in
+	 *   repo.teamIds -- this is belt and braces against a course that made them Teams as well.
+	 * - it has a member who is staff or admin. A mixed team is left attached, since detaching it
+	 *   would take that person's access with it.
+	 */
+	private async isStaffTeam(team: Team): Promise<boolean> {
+		if (team.id === TeamController.STAFF_NAME || team.id === TeamController.ADMIN_NAME) {
+			return true;
+		}
+		for (const personId of team.personIds) {
+			const person = await this.dbc.getPerson(personId);
+			if (person === null) {
+				// unknown member: leave the team alone rather than guess
+				Log.warn("GitHubController::isStaffTeam( " + team.id + " ) - unknown person: " + personId);
+				return true;
+			}
+			if (person.kind === PersonKind.STAFF || person.kind === PersonKind.ADMIN || person.kind === PersonKind.ADMINSTAFF) {
+				return true;
+			}
+		}
+		return false;
 	}
 
 	/**
