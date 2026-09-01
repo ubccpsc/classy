@@ -1530,6 +1530,32 @@ describe("Admin Routes", function () {
 		expect(team.gitHubStatus).to.equal(TeamStatus.CREATED); // team still exists but is unlinked
 	}).timeout(TestHarness.TIMEOUT);
 
+	it("Should be able to delete a repository whose team record no longer exists", async function () {
+		// A repo can outlive the teams it references (e.g., the team was deleted separately).
+		// Unlinking used to dereference the missing team and fail the whole delete with a 400.
+		const dbc = DatabaseController.getInstance();
+		const repo = await dbc.getRepository(TestHarness.REPONAME2);
+		repo.teamIds = ["team_that_does_not_exist_" + Date.now()];
+		await dbc.writeRepository(repo);
+
+		const url = "/portal/admin/repository/" + TestHarness.REPONAME2;
+		let response = null;
+		let body: Payload;
+		try {
+			response = await request(app).del(url).set({ user: userName, token: userToken });
+			body = response.body;
+		} catch (err) {
+			Log.test("ERROR: " + err);
+		}
+		Log.test(response.status + " -> " + JSON.stringify(body));
+		expect(response.status).to.equal(200);
+		expect(body.success).to.not.be.undefined;
+
+		// the repo record should be gone, despite the dangling team reference
+		const deleted = await dbc.getRepository(TestHarness.REPONAME2);
+		expect(deleted).to.be.null;
+	}).timeout(TestHarness.TIMEOUT);
+
 	it("Should fail to delete a repository if appropriate", async function () {
 		const url = "/portal/admin/repository/";
 		let response = null;
