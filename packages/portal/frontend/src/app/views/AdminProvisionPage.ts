@@ -340,8 +340,11 @@ export class AdminProvisionPage extends AdminPage {
 
 	private static fillSelect(select: HTMLSelectElement, names: string[], emptyText: string): void {
 		if (select === null) {
-			// course has customised its admin.html and removed (or not yet synced) this list; the
-			// other lists on the page must still fill, so this is not an error
+			// The other lists on the page must still fill, so a missing one is not fatal. It is
+			// logged rather than ignored: the usual cause is admin.html being older than this code
+			// (the served copy is webpack CopyPlugin output, so it goes stale until the frontend is
+			// rebuilt), and an empty list with no explanation is a genuinely hard thing to diagnose.
+			Log.warn("AdminProvisionPage::fillSelect(..) - list element missing from admin.html; rebuild the frontend");
 			return;
 		}
 		if (names.length === 0) {

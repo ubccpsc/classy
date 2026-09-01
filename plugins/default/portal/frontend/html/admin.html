@@ -476,7 +476,7 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Provision and Release Repositories</ons-list-header>
+                <ons-list-header>Manage Repositories</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-cogs"></ons-icon>
@@ -1288,7 +1288,7 @@
                 <div class="left">
                     <ons-back-button></ons-back-button>
                 </div>
-                <div class="center">Provision & Release Repositories</div>
+                <div class="center">Manage Repositories</div>
                 <div id='indexLogin' class="right">
                     <ons-toolbar-button onclick="myApp.logout();">
                         <ons-icon icon="fa-sign-out"></ons-icon>
@@ -1308,7 +1308,7 @@
             <ons-list>
                 <ons-list-header>Overview</ons-list-header>
                 <ons-list-item>
-                    This page is used for creating GitHub repositories for learners. The process has been split into two
+                    This page is used for creating GitHub repositories for learners. The process has been split into
                     parts:
                     <ul style="margin-bottom: 0;">
                         <li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being
@@ -1317,6 +1317,10 @@
                         </li>
                         <li><b>Releasing</b> enables learners to access their repository. This is a relatively quick
                             operation.
+                        </li>
+                        <li><b>Un-releasing</b> takes that access away again: the learner teams are detached, so
+                            learners can no longer see or push to the repository. Staff keep their access, and nothing
+                            in the repository is changed or deleted. Un-released repositories can be released again.
                         </li>
                     </ul>
                     Please do not start a release until a provision is complete.
