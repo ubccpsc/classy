@@ -101,6 +101,15 @@ describe("GitHubActions", () => {
 
 	it("Clear stale repos and teams.", async function () {
 		// this should not be a test, but the before times out if we do not do it here
+		//
+		// NOTE: cleanup happens here, at the START of the GitHub specs, and nowhere else. There used
+		// to be a second copy at the end of this file, which put a bulk delete of TESTrepo1..3
+		// immediately before GitHubControllerSpec -- whose own before() deletes the same repos again
+		// and then creates them. GitHub does not free a repository name the instant it is deleted, so
+		// that adjacency produced "failed to create repo" / "repo does not exist: TESTrepo1" and took
+		// five other tests down with it (build 4281). Anything this run leaves behind is cleared by
+		// the next run's copy of this test, which is the right place for it: clean at the start,
+		// where nothing is about to recreate what was just removed.
 		const del = await deleteStale();
 		expect(del).to.be.true;
 	}).timeout(TIMEOUT * 100);
@@ -1257,11 +1266,6 @@ describe("GitHubActions", () => {
 		}
 		expect(exists).to.be.true;
 	}).timeout(TIMEOUT);
-
-	it("Clear stale repos and teams.", async function () {
-		const del = await deleteStale();
-		expect(del).to.be.true;
-	}).timeout(TIMEOUT * 10);
 
 	// function getProjectPrefix(): string {
 	//     return "TEST__X__secap_";

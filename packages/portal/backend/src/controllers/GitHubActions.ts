@@ -396,7 +396,8 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		if (forceReal === true) {
-			Log.test("GitHubActions::getInstance( true ) - returning live GitHubActions");
+			// Trace, not test. Log.test survives LOG_LEVEL=WARN, and every spec that talks to
+			Log.trace("GitHubActions::getInstance( true ) - returning live GitHubActions");
 			return new GitHubActions(); // do not need to cache this since it is backed by GitHub instead of an in-memory cache
 		}
 
