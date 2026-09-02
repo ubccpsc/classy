@@ -2,7 +2,7 @@
 # yarn download cache. Pruning them in a later layer of a single-stage build does not help:
 # the files still ship inside the earlier layer that created them. Only the final state of
 # the builder is copied forward.
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 ARG PLUGIN=default
 
@@ -33,7 +33,7 @@ RUN yarn tsc --sourceMap false \
  && yarn cache clean \
  && chmod -R a+r /app
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 ARG GH_BOT_EMAIL=classy@cs.ubc.ca
 ARG GH_BOT_USERNAME=classy

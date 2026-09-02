@@ -7,7 +7,7 @@ static content. All of them run from an IDE or the command line without building
 
 | Dependency | Notes |
 | --- | --- |
-| Node 22 (`>= 22.0.0 < 24`) | `nvm install` picks the version from `.nvmrc` (`lts/jod`); CI builds on `cimg/node:22.23.2`. Node 24 does **not** work: `restify` pulls in `spdy`, which calls the `http_parser` binding that Node 24 removed. |
+| Node 24 (`>= 22.0.0 < 25`) | `nvm install` picks the version from `.nvmrc` (`24`), which is the major CI (`cimg/node:24.20.0`) and the images (`node:24-alpine`) build on. Node 22 still satisfies `engines` so an existing checkout keeps working, but match 24 when debugging a CI-only failure. Node 24 was previously blocked because `restify` pulled in `spdy`, which called the `http_parser` binding Node 24 removed; neither package is in the tree since the move to Fastify. `.nvmrc` names the major rather than `lts/*` on purpose — `lts/*` would move everyone to Node 26 the moment it becomes LTS. |
 | Yarn 1 (classic) | `.yarnrc` pins the repo's own copy, so whichever Yarn 1.x launcher you have defers to it. |
 | Docker | Runs MongoDB, and the AutoTest specs that build grading images. |
 | MongoDB 5 | `docker run --name classy-mongo -p 27017:27017 -d mongo:5.0`, then `docker start classy-mongo` on later sessions. |

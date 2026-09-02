@@ -2,7 +2,7 @@
 # neither of which should ship. Pruning them in a later layer of a single-stage build does
 # not shrink anything -- the files still live in the layer that created them -- so only the
 # builder's final state is copied into the runtime image.
-FROM node:22-alpine AS builder
+FROM node:24-alpine AS builder
 
 WORKDIR /app
 
@@ -28,7 +28,7 @@ RUN yarn tsc --sourceMap false \
  && yarn cache clean \
  && chmod -R a+rx /app
 
-FROM node:22-alpine
+FROM node:24-alpine
 
 RUN apk add --no-cache git
 
