@@ -176,7 +176,7 @@ describe("AutoTest AutoTestServer", function () {
 		// this will be slow the first time (~5 minutes), but fast thereafter (~5 seconds)
 		// once docker has cached the image
 
-		// this test cannot pass on CircleCI, and is for localhost testing only
+		// needs a real daemon: builds from a remote git context, which the daemon fetches itself
 		TestHarness.requiresDocker(this);
 
 		// valid opts
@@ -203,7 +203,7 @@ describe("AutoTest AutoTestServer", function () {
 	}).timeout(TIMEOUT * 60 * 10);
 
 	it("Should fail to create a docker image for a bad remote.", async function () {
-		// this test cannot pass on CircleCI, but works great locally
+		// needs a real daemon; asserts the daemon's error is surfaced rather than hung on
 		TestHarness.requiresDocker(this);
 
 		// invalid repo
@@ -311,7 +311,7 @@ describe("AutoTest AutoTestServer", function () {
 
 	xit("Should fail to remove a docker image for an invalid user.", async function () {
 		let res: any;
-		// this test cannot pass on CircleCI, but works great locally
+		// needs a real daemon; asserts the daemon's error is surfaced rather than hung on
 		TestHarness.requiresDocker(this);
 
 		try {

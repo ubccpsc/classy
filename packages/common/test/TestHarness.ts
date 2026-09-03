@@ -15,9 +15,11 @@ import { AutoTestConfigTransport } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
 
+import * as fs from "fs";
+
 export class TestHarness {
 	public static readonly SKIP_GITHUB = "need a live GitHub instance (run on CI, or set Factory.OVERRIDE)";
-	public static readonly SKIP_DOCKER = "need a local Docker daemon (cannot run on CI)";
+	public static readonly SKIP_DOCKER = "need a reachable Docker daemon (set DOCKER_HOST, or start Docker)";
 
 	/** reason -> how many tests that reason skipped; reported by summarizeSkips() */
 	private static skipTally: { [reason: string]: number } = {};
@@ -531,18 +533,44 @@ export class TestHarness {
 		return false;
 	}
 
+	/** The socket Docker listens on when DOCKER_HOST says nothing. */
+	private static readonly DEFAULT_DOCKER_SOCKET = "/var/run/docker.sock";
+
 	/**
-	 * True when this environment can run tests that need a local Docker daemon.
-	 * CI has no usable Docker, so these are local-only: the mirror image of hasGitHub().
-	 * That mirroring is why no single environment runs the whole suite.
+	 * True when a Docker daemon is actually reachable.
+	 *
+	 * This used to be `isCI() === false`, on the assumption that CI had no usable Docker.
+	 * That assumption is now wrong in both directions: CircleCI's setup_remote_docker
+	 * (.circleci/config.yml) exposes DOCKER_HOST=unix:///var/run/docker.sock, and a dev
+	 * machine with Docker stopped has none -- where the old predicate said "true" and the
+	 * tests failed confusingly instead of skipping.
+	 *
+	 * NOTE: deliberately mirrors AutoTestRouteHandler.getDockerRequestOptions(), which is
+	 * how the code under test resolves the daemon. That method is private and lives in
+	 * @autotest, which @common/test does not otherwise depend on, so the resolution order
+	 * is duplicated here rather than shared. Keep the two in step.
 	 */
 	public static hasDocker(): boolean {
-		if (TestHarness.isCI() === true) {
-			Log.test("Test::hasDocker() - false (CI has no usable Docker)");
-			return false;
+		const dockerHost = process.env.DOCKER_HOST;
+
+		if (typeof dockerHost === "string" && dockerHost.length > 0) {
+			if (dockerHost.indexOf("unix://") === 0) {
+				const socketPath = dockerHost.substring("unix://".length);
+				const resolved = socketPath.length > 0 ? socketPath : TestHarness.DEFAULT_DOCKER_SOCKET;
+				const exists = fs.existsSync(resolved);
+				Log.test("Test::hasDocker() - " + exists + " (DOCKER_HOST socket: " + resolved + ")");
+				return exists;
+			}
+
+			// tcp:// / npipe:// cannot be probed without opening a connection; if someone set
+			// DOCKER_HOST to one, take them at their word and let the test report the failure.
+			Log.test("Test::hasDocker() - true (non-unix DOCKER_HOST: " + dockerHost + ")");
+			return true;
 		}
-		Log.test("Test::hasDocker() - true (not CI)");
-		return true;
+
+		const exists = fs.existsSync(TestHarness.DEFAULT_DOCKER_SOCKET);
+		Log.test("Test::hasDocker() - " + exists + " (default socket: " + TestHarness.DEFAULT_DOCKER_SOCKET + ")");
+		return exists;
 	}
 
 	/**
