@@ -16,10 +16,10 @@ import { Auth, Course, Deliverable, Person, PersonKind } from "../src/Types";
  * repositories.
  *
  * This used to live in test/xRunLast/TestDatasetGeneratorSpec.ts, where it was written as
- * seven assertion-free it() blocks. The directory name was load-bearing: it had to sort
+ * seven assertion-free it() blocks. The directory name was intentional: it had to sort
  * last so that the other suites' suiteBefore() -> clearData() did not wipe the data back
  * out. That made file ordering a silent correctness dependency, and it inflated the pass
- * count with seven tests that asserted nothing.
+ * count with seven tests that didn't actually check anything.
  *
  * It is a script now because that is what it always was. Nothing in the test suite depends
  * on this data; the point is to leave a populated database behind to poke at.
