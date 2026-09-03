@@ -478,6 +478,21 @@ export class AdminController {
 		// const registeredGithubIds = await gha.getTeamMembers(teamNum);
 		const registeredGithubIds = await gha.getTeamMembers("students");
 
+		// Sanity floor. markStudentsWithdrawn() withdraws every STUDENT whose githubId is NOT in
+		// this list, so the list is trusted absolutely: if the GitHub "students" team is stale.
+		const currentStudents = (await this.pc.getAllPeople()).filter((p) => p.kind === PersonKind.STUDENT);
+		if (currentStudents.length > 0 && registeredGithubIds.length < currentStudents.length / 2) {
+			const msg =
+				"Refusing to withdraw students: the GitHub students team has " +
+				registeredGithubIds.length +
+				" members but Classy has " +
+				currentStudents.length +
+				" enrolled students. This usually means the team is stale (e.g. LDAP has not synced yet) " +
+				"rather than that the class has shrunk by half. Verify the team membership on GitHub first.";
+			Log.warn("AdminController::performStudentWithdraw() - " + msg);
+			throw new Error(msg);
+		}
+
 		if (registeredGithubIds.length > 0) {
 			await ctx?.progress(0, registeredGithubIds.length, "marking withdrawn students");
 			const pc = new PersonController();

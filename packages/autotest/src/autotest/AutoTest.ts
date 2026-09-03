@@ -750,7 +750,8 @@ export abstract class AutoTest implements IAutoTest {
 			);
 
 			let score = -1;
-			if (record?.output?.report?.scoreOverall) {
+			// 0 is falsy, so we need to carefully check this one
+			if (typeof record?.output?.report?.scoreOverall === "number") {
 				score = record.output.report.scoreOverall;
 			}
 			const githubHost = Config.getInstance().getProp(ConfigKey.githubHost);

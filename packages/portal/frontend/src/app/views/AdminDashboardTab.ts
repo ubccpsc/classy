@@ -290,11 +290,8 @@ export class AdminDashboardTab extends AdminPage {
 			} else {
 				// unknown name
 			}
-			// sanitize for student tests that have < or > in the name which break the table rendering
-			name = name.replace("<", "&lt;");
-			name = name.replace(">", "&gt;");
-			name = name.replace('"', "&quot;");
-			name = name.replace("'", "&quot;");
+			// sanitize: test names are student-authored and are rendered into a title attribute
+			name = AdminDashboardTab.escapeHtml(name);
 			annotated.push({ name: name, state: state, colour: colour });
 		}
 
@@ -305,6 +302,22 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		str += "</div>";
 		return str;
+	}
+
+	/**
+	 * Escapes a string for interpolation into HTML text or a quoted attribute value.
+	 *
+	 * The previous version called String.replace four times with STRING patterns, which replace
+	 * only the FIRST occurrence -- so "a<b<c" became "a&lt;b<c". Test names are student-authored
+	 * and land in title='...' (generateTable) and title="..." (generateClusteredTable), so a name
+	 * with two metacharacters escaped the attribute and ran script in a session that holds admin
+	 * rights over the GitHub org. It also mapped ' to &quot; (wrong character) and never escaped
+	 * &, which double-decodes anything a student writes literally.
+	 *
+	 * & must be replaced first, or it re-escapes the entity prefixes introduced below it.
+	 */
+	private static escapeHtml(value: string): string {
+		return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	}
 
 	private generateTable(annotated: DetailRow[]): string {
