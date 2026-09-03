@@ -152,6 +152,14 @@ jobs:
             name: Running autotest tests
             environment:
               MOCHA_FILE: ../../testOutput/autotest/test/test-results.xml
+              # Same 400KB truncation problem the backend step above hit: this step's log
+              # capped out exactly at 400000 chars on build 4296, cutting the middle of the
+              # run out entirely. WARN keeps warn/error/test and drops the info/trace chatter.
+              #
+              # NOTE: unlike the backend step, the "text-lcov" reporter in autotest's coverCI is
+              # NOT worth removing for this: measured on 4296 it was only ~5% of the retained
+              # output. The log volume here is Log.info/Log.trace, not coverage.
+              LOG_LEVEL: WARN
             when: on_success
 
       - run:
