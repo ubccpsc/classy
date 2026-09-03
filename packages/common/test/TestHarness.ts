@@ -15,7 +15,15 @@ import { AutoTestConfigTransport } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
 
+import * as fs from "fs";
+
 export class TestHarness {
+	public static readonly SKIP_GITHUB = "need a live GitHub instance (run on CI, or set Factory.OVERRIDE)";
+	public static readonly SKIP_DOCKER = "need a reachable Docker daemon (set DOCKER_HOST, or start Docker)";
+
+	/** reason -> how many tests that reason skipped; reported by summarizeSkips() */
+	private static skipTally: { [reason: string]: number } = {};
+
 	public static readonly TIMEOUT = 1000 * 10;
 	public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 	public static readonly TEAMNAME1 = "t1_d0_user1CSID_user2CSID";
@@ -507,13 +515,115 @@ export class TestHarness {
 	 * @returns {boolean}
 	 */
 	public static runSlowTest() {
+		// kept as an alias so downstream forks that call it keep working; new code
+		// should use hasGitHub() / requiresGitHub() instead.
+		return TestHarness.hasGitHub();
+	}
+
+	/**
+	 * True when this environment can reach the live GitHub instance configured in .env.
+	 * These tests run on CI, or locally when Factory.OVERRIDE is set.
+	 */
+	public static hasGitHub(): boolean {
 		if (Factory.OVERRIDE || TestHarness.isCI() === true) {
-			Log.test("Test::runSlowTest() - running in CI or overridden; not skipping");
+			Log.test("Test::hasGitHub() - true (CI or overridden)");
 			return true;
-		} else {
-			Log.test("Test::runSlowTest() - skipping (not CI)");
-			return false;
 		}
+		Log.test("Test::hasGitHub() - false (not CI)");
+		return false;
+	}
+
+	/** The socket Docker listens on when DOCKER_HOST says nothing. */
+	private static readonly DEFAULT_DOCKER_SOCKET = "/var/run/docker.sock";
+
+	/**
+	 * True when a Docker daemon is actually reachable.
+	 *
+	 * This used to be `isCI() === false`, on the assumption that CI had no usable Docker.
+	 * That assumption is now wrong in both directions: CircleCI's setup_remote_docker
+	 * (.circleci/config.yml) exposes DOCKER_HOST=unix:///var/run/docker.sock, and a dev
+	 * machine with Docker stopped has none -- where the old predicate said "true" and the
+	 * tests failed confusingly instead of skipping.
+	 *
+	 * NOTE: deliberately mirrors AutoTestRouteHandler.getDockerRequestOptions(), which is
+	 * how the code under test resolves the daemon. That method is private and lives in
+	 * @autotest, which @common/test does not otherwise depend on, so the resolution order
+	 * is duplicated here rather than shared. Keep the two in step.
+	 */
+	public static hasDocker(): boolean {
+		const dockerHost = process.env.DOCKER_HOST;
+
+		if (typeof dockerHost === "string" && dockerHost.length > 0) {
+			if (dockerHost.indexOf("unix://") === 0) {
+				const socketPath = dockerHost.substring("unix://".length);
+				const resolved = socketPath.length > 0 ? socketPath : TestHarness.DEFAULT_DOCKER_SOCKET;
+				const exists = fs.existsSync(resolved);
+				Log.test("Test::hasDocker() - " + exists + " (DOCKER_HOST socket: " + resolved + ")");
+				return exists;
+			}
+
+			// tcp:// / npipe:// cannot be probed without opening a connection; if someone set
+			// DOCKER_HOST to one, take them at their word and let the test report the failure.
+			Log.test("Test::hasDocker() - true (non-unix DOCKER_HOST: " + dockerHost + ")");
+			return true;
+		}
+
+		const exists = fs.existsSync(TestHarness.DEFAULT_DOCKER_SOCKET);
+		Log.test("Test::hasDocker() - " + exists + " (default socket: " + TestHarness.DEFAULT_DOCKER_SOCKET + ")");
+		return exists;
+	}
+
+	/**
+	 * Skips the current test unless a live GitHub is reachable. Call from an it() or
+	 * beforeEach() as TestHarness.requiresGitHub(this).
+	 */
+	public static requiresGitHub(context: any): void {
+		if (TestHarness.hasGitHub() === false) {
+			TestHarness.skip(context, TestHarness.SKIP_GITHUB);
+		}
+	}
+
+	/**
+	 * Skips the current test unless a local Docker daemon is available.
+	 */
+	public static requiresDocker(context: any): void {
+		if (TestHarness.hasDocker() === false) {
+			TestHarness.skip(context, TestHarness.SKIP_DOCKER);
+		}
+	}
+
+	/**
+	 * Skips the current test and records why, so summarizeSkips() can report it at the
+	 * end of the run. A silent skip is indistinguishable from a pass in mocha's epilogue,
+	 * which is how a suite quietly stops covering things.
+	 *
+	 * NOTE: context.skip() throws, so this never returns to the caller.
+	 */
+	public static skip(context: any, reason: string): void {
+		TestHarness.skipTally[reason] = (TestHarness.skipTally[reason] ?? 0) + 1;
+		Log.test("Test::skip() - skipping; reason: " + reason);
+		context.skip();
+	}
+
+	/**
+	 * One line describing what did not run, or null when nothing was skipped.
+	 */
+	public static summarizeSkips(): string {
+		const reasons = Object.keys(TestHarness.skipTally).sort();
+		if (reasons.length === 0) {
+			return null;
+		}
+
+		let total = 0;
+		const parts: string[] = [];
+		for (const reason of reasons) {
+			total += TestHarness.skipTally[reason];
+			parts.push(TestHarness.skipTally[reason] + " " + reason);
+		}
+		// "by the harness" is deliberate: statically-disabled tests (it.skip/xit) cannot
+		// report themselves, so this will read lower than mocha's pending count by exactly
+		// the number of those.
+		return total + " test(s) skipped by the harness: " + parts.join("; ");
 	}
 
 	/**

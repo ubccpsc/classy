@@ -162,6 +162,15 @@ export class RepositoryController {
 		if (repo !== null) {
 			for (const teamId of repo.teamIds) {
 				const team = await tc.getTeam(teamId);
+				if (team === null) {
+					// Repository.teamIds can outlive the team: handleTeamDelete removes the team but
+					// does not strip its id from the repos that referenced it. Without this guard the
+					// deref below throws, and because this sits on the AutoTest result-write path
+					// (ResultsController.createResult -> atPostResult), every subsequent push for the
+					// repo 400s and no grade is ever saved -- visible only as a 400 in the log.
+					Log.warn("RepositoryController::getPeopleForRepo( " + repoId + " ) - unknown team: " + teamId + "; skipping");
+					continue;
+				}
 				for (const personId of team.personIds) {
 					if (peopleIds.indexOf(personId) < 0) {
 						peopleIds.push(personId);

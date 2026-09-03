@@ -176,10 +176,8 @@ describe("AutoTest AutoTestServer", function () {
 		// this will be slow the first time (~5 minutes), but fast thereafter (~5 seconds)
 		// once docker has cached the image
 
-		// this test cannot pass on CircleCI, and is for localhost testing only
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		// needs a real daemon: builds from a remote git context, which the daemon fetches itself
+		TestHarness.requiresDocker(this);
 
 		// valid opts
 		const opts = {
@@ -205,10 +203,8 @@ describe("AutoTest AutoTestServer", function () {
 	}).timeout(TIMEOUT * 60 * 10);
 
 	it("Should fail to create a docker image for a bad remote.", async function () {
-		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		// needs a real daemon; asserts the daemon's error is surfaced rather than hung on
+		TestHarness.requiresDocker(this);
 
 		// invalid repo
 		const opts = {
@@ -279,65 +275,41 @@ describe("AutoTest AutoTestServer", function () {
 		expect(res.body?.message, "should say the tag is unknown").to.be.a("string");
 	}).timeout(TIMEOUT);
 
-	xit("Should be able to remove a docker image.", async function () {
-		let res: any;
-		try {
-			// this test cannot pass on CircleCI (also not working locally though)
-			if (TestHarness.isCI() === true) {
-				this.skip();
-			}
+	// DISABLED: this asserts that an admin with a valid secret can delete an image, and the
+	// endpoint cannot currently satisfy that for any image that has dependent children.
+	// removeDockerImage() resolves the :tag param to an image *Id* (it matches with
+	// img.Id.indexOf(tag), see AutoTestRouteHandler.ts:450) and then calls image.remove(), which
+	// Docker refuses outright:
+	//
+	//   (HTTP code 409) conflict - unable to delete 7eb80100254d (cannot be forced)
+	//                            - image has dependent child images
+	//
+	// "cannot be forced" is the important half: no flag makes remove-by-Id work here, so this is
+	// not a fixture problem the test can engineer around. Building the image under a second tag
+	// does not help either -- Docker reuses the cache, returns the same Id, and remove() then
+	// reports only Untagged entries, so the handler's success check (which requires a Deleted
+	// entry) still fails and answers 400.
+	//
+	// This matters beyond the test: an instructor who rebuilds a grading image accumulates exactly
+	// this parent/child chain, so image cleanup through the UI will hit the same 409. Reviving the
+	// test needs the handler to untag (docker.getImage(tag).remove()) when the Id has children,
+	// rather than a change here.
+	//
+	// xit("Should be able to remove a docker image.", ...) -- see git history for the original body.
 
-			Log.test("Requesting docker listing");
-			const getUrl = '/docker/images?filters={"reference":["grader"]}';
-			res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
-			const dockerListing = res.body;
-			Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
-			expect(dockerListing.length).to.be.greaterThan(0);
+	it("Should refuse to remove a docker image when no secret is provided.", async function () {
+		// NOTE: needs no Docker. removeDockerImage() checks the secret before it contacts the daemon
+		// (AutoTestRouteHandler.ts:437), so this is the missing-header counterpart to the bad-header
+		// case above: request.headers.token is undefined rather than merely wrong.
+		//
+		// This was previously an xit that first listed images and asserted length > 0, which made an
+		// authorization test depend on a live daemon and on a prior build having run. Dropping that
+		// prerequisite is what let it be revived; the assertion it actually cares about is unchanged.
+		const res = await request(app).del("/docker/image/sometag").set("user", TestHarness.USER1.github);
+		Log.test("remove with no secret -> " + res.status + "; body: " + JSON.stringify(res.body));
 
-			const imgId = dockerListing[0].Id;
-			let delUrl = "/docker/image/";
-			delUrl = delUrl + imgId;
-
-			const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
-
-			// NOTE: right now this test always fails because the image we have created has "dependent child images"
-			res = await request(app).del(delUrl).set("user", TestHarness.ADMIN1.github).set("token", atSecret);
-			Log.test("Docker image removed");
-		} catch (err) {
-			res = err;
-		} finally {
-			const body = res.body;
-			Log.test("Docker image removal body: " + JSON.stringify(body));
-			expect(res.status).to.equal(200);
-			expect(body).to.be.an("Array");
-		}
-	});
-
-	xit("Should fail to remove a docker image for an invalid user.", async function () {
-		let res: any;
-		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
-
-		try {
-			Log.test("Requesting docker listing");
-			const getUrl = '/docker/images?filters={"reference":["grader"]}';
-			res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
-			const dockerListing = res.body;
-			Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
-			expect(dockerListing.length).to.be.greaterThan(0);
-
-			const imgId = dockerListing[0].Id;
-			const delUrl = "/docker/image/" + imgId;
-			res = await request(app).del(delUrl).set("user", TestHarness.USER1.github);
-			Log.test("docker image should not removed (invalid user)");
-		} catch (err) {
-			res = err;
-		} finally {
-			const body = res.body;
-			Log.test("Docker image removal body: " + JSON.stringify(body));
-			expect(res.status).to.equal(403);
-		}
-	});
+		expect(res.status).to.equal(403);
+		expect(res.body?.success).to.equal(false);
+		expect(res.body?.message, "should name the secret mismatch").to.contain("secret mismatch");
+	}).timeout(TIMEOUT);
 });

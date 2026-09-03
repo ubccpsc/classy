@@ -77,14 +77,8 @@ describe("GitHubController", () => {
 	});
 
 	beforeEach(function () {
-		const exec = TestHarness.runSlowTest();
-		if (exec === true) {
-			Log.test("GitHubController::BeforeEach() - running in CI; not skipping");
-			gc = new GitHubController(GitHubActions.getInstance(true));
-		} else {
-			Log.test("GitHubController::BeforeEach() - skipping (not CI)");
-			this.skip();
-		}
+		TestHarness.requiresGitHub(this); // throws past the assignment below when skipping
+		gc = new GitHubController(GitHubActions.getInstance(true));
 	});
 
 	it("Should be able to clear out prior result", async function () {

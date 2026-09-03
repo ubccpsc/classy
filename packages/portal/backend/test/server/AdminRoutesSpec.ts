@@ -657,39 +657,18 @@ describe("Admin Routes", function () {
 		expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
 	});
 
-	it("Should NOT be able to update a classlist if NOT on a 143.103.*.* IP", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/classlist";
-		try {
-			response = await request(app).put(url).set("x-forwarded-for", "152.99.5.99").set("Host", "www.google.ca");
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
+	it("Should 404 on PUT /portal/classlist; the route is disabled.", async function () {
+		// Disabled in 26W1 (see GeneralRoutes.registerRoutes); the supported path for an API-driven
+		// classlist pull is the isAdmin-guarded "classlist-update" job. This test asserts the route
+		// stays gone: the old handler authorized callers with a regex over the client-supplied
+		// x-forwarded-for header, which nginx appends to rather than replaces, so re-registering it
+		// unchanged would reintroduce an unauthenticated classlist write.
+		const response = await request(app).put("/portal/classlist").set("x-forwarded-for", "142.103.5.99");
+		const body: Payload = response.body;
 
-		expect(body).to.haveOwnProperty("failure");
-	});
-
-	it("Should be able to update a classlist on restricted IP", async function () {
-		if (TestHarness.isCI() === false) {
-			// skip locally; requires credentials devs should not have (but are encrypted for CI)
-			Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
-			return;
-		}
-
-		let response = null;
-		let body: Payload;
-		const url = "/portal/classlist";
-		try {
-			response = await request(app).put(url).set("test-include-xfwd", "").set("x-forwarded-for", "142.103.5.99");
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-		expect(body).to.haveOwnProperty("success");
-		expect(body.success).to.haveOwnProperty("message");
-		expect(body.success.message).to.contain("Classlist upload successful");
+		Log.test(response.status + " -> " + JSON.stringify(body));
+		expect(response.status).to.equal(404);
+		expect(body).to.not.haveOwnProperty("success");
 	});
 
 	it("Should be able to upload a new grades with CSV", async function () {
@@ -841,14 +820,7 @@ describe("Admin Routes", function () {
 
 	describe("Slow AdminRoute Tests", () => {
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-
-			if (exec) {
-				Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminRoutesSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		/**

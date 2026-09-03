@@ -27,6 +27,8 @@ The full list is given below, but the most commonly used batch utilities are `In
 
 * `InvokeAutoTest`: Batch invoke AutoTest on a specific set of commits. This is a pretty safe operation and is commonly used.
 
+* `TestDatasetGenerator`: Seeds the *test* database (`ConfigKey.testname`) with a small course dataset: a course record, an admin, 41 students, auth tokens, five deliverables, two teams, and two repositories. Idempotent, so it is safe to re-run. Convenience script: `yarn seed:testdb` from the repo root. This used to be `test/xRunLast/TestDatasetGeneratorSpec.ts`, where seven assertion-free tests relied on the directory name sorting last so the other suites would not clear the data back out; nothing in the test suite depends on it.
+
 * `TransformGrades`: Allows for post-hoc grade updates. This does modify the database, but can be helpful for changing grading rubrics etc.
 
 * `WebhookUpdater`: Updates the GitHub webhook addresses and secrets. While uncommon, this can be handy.
