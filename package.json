@@ -64,6 +64,7 @@
         "lint": "biome check .",
         "lint:fix": "biome check --write .",
         "cover": "TS_NODE_BASEURL=. nyc --reporter text --reporter html --report-dir ./testOutput/coverage yarn run test",
+        "seed:testdb": "cd packages/portal/backend && ../../../node_modules/typescript/bin/tsc -p tsconfig.src-util.json && TS_NODE_BASEURL=. node --require dotenv/config --require tsconfig-paths/register src-util/TestDatasetGenerator.js",
         "test": "yarn build && TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test packages/autotest/test",
         "test:backend": "yarn build && TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/portal/backend/test",
         "test:autotest": "yarn build && TS_NODE_BASEURL=. mocha --require=dotenv/config --require tsconfig-paths/register --timeout 10000 --recursive --exit packages/autotest/test"

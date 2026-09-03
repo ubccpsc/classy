@@ -820,14 +820,7 @@ describe("Admin Routes", function () {
 
 	describe("Slow AdminRoute Tests", () => {
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-
-			if (exec) {
-				Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminRoutesSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		/**

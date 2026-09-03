@@ -831,13 +831,7 @@ describe("AdminController", () => {
 		// });
 
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-			if (exec) {
-				Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminControllerSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		// This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.

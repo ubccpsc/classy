@@ -177,9 +177,7 @@ describe("AutoTest AutoTestServer", function () {
 		// once docker has cached the image
 
 		// this test cannot pass on CircleCI, and is for localhost testing only
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		TestHarness.requiresDocker(this);
 
 		// valid opts
 		const opts = {
@@ -206,9 +204,7 @@ describe("AutoTest AutoTestServer", function () {
 
 	it("Should fail to create a docker image for a bad remote.", async function () {
 		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		TestHarness.requiresDocker(this);
 
 		// invalid repo
 		const opts = {
@@ -283,9 +279,9 @@ describe("AutoTest AutoTestServer", function () {
 		let res: any;
 		try {
 			// this test cannot pass on CircleCI (also not working locally though)
-			if (TestHarness.isCI() === true) {
-				this.skip();
-			}
+			// WARNING: skip() throws, and this is inside a try/catch, so the skip would be
+			// swallowed by the catch below. Move it above the try before re-enabling this xit.
+			TestHarness.requiresDocker(this);
 
 			Log.test("Requesting docker listing");
 			const getUrl = '/docker/images?filters={"reference":["grader"]}';
@@ -316,9 +312,7 @@ describe("AutoTest AutoTestServer", function () {
 	xit("Should fail to remove a docker image for an invalid user.", async function () {
 		let res: any;
 		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		TestHarness.requiresDocker(this);
 
 		try {
 			Log.test("Requesting docker listing");

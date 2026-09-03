@@ -16,6 +16,12 @@ import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
 
 export class TestHarness {
+	public static readonly SKIP_GITHUB = "need a live GitHub instance (run on CI, or set Factory.OVERRIDE)";
+	public static readonly SKIP_DOCKER = "need a local Docker daemon (cannot run on CI)";
+
+	/** reason -> how many tests that reason skipped; reported by summarizeSkips() */
+	private static skipTally: { [reason: string]: number } = {};
+
 	public static readonly TIMEOUT = 1000 * 10;
 	public static readonly TIMEOUTLONG = 1000 * 300; // 5 minutes
 	public static readonly TEAMNAME1 = "t1_d0_user1CSID_user2CSID";
@@ -507,13 +513,89 @@ export class TestHarness {
 	 * @returns {boolean}
 	 */
 	public static runSlowTest() {
+		// kept as an alias so downstream forks that call it keep working; new code
+		// should use hasGitHub() / requiresGitHub() instead.
+		return TestHarness.hasGitHub();
+	}
+
+	/**
+	 * True when this environment can reach the live GitHub instance configured in .env.
+	 * These tests run on CI, or locally when Factory.OVERRIDE is set.
+	 */
+	public static hasGitHub(): boolean {
 		if (Factory.OVERRIDE || TestHarness.isCI() === true) {
-			Log.test("Test::runSlowTest() - running in CI or overridden; not skipping");
+			Log.test("Test::hasGitHub() - true (CI or overridden)");
 			return true;
-		} else {
-			Log.test("Test::runSlowTest() - skipping (not CI)");
+		}
+		Log.test("Test::hasGitHub() - false (not CI)");
+		return false;
+	}
+
+	/**
+	 * True when this environment can run tests that need a local Docker daemon.
+	 * CI has no usable Docker, so these are local-only: the mirror image of hasGitHub().
+	 * That mirroring is why no single environment runs the whole suite.
+	 */
+	public static hasDocker(): boolean {
+		if (TestHarness.isCI() === true) {
+			Log.test("Test::hasDocker() - false (CI has no usable Docker)");
 			return false;
 		}
+		Log.test("Test::hasDocker() - true (not CI)");
+		return true;
+	}
+
+	/**
+	 * Skips the current test unless a live GitHub is reachable. Call from an it() or
+	 * beforeEach() as TestHarness.requiresGitHub(this).
+	 */
+	public static requiresGitHub(context: any): void {
+		if (TestHarness.hasGitHub() === false) {
+			TestHarness.skip(context, TestHarness.SKIP_GITHUB);
+		}
+	}
+
+	/**
+	 * Skips the current test unless a local Docker daemon is available.
+	 */
+	public static requiresDocker(context: any): void {
+		if (TestHarness.hasDocker() === false) {
+			TestHarness.skip(context, TestHarness.SKIP_DOCKER);
+		}
+	}
+
+	/**
+	 * Skips the current test and records why, so summarizeSkips() can report it at the
+	 * end of the run. A silent skip is indistinguishable from a pass in mocha's epilogue,
+	 * which is how a suite quietly stops covering things.
+	 *
+	 * NOTE: context.skip() throws, so this never returns to the caller.
+	 */
+	public static skip(context: any, reason: string): void {
+		TestHarness.skipTally[reason] = (TestHarness.skipTally[reason] ?? 0) + 1;
+		Log.test("Test::skip() - skipping; reason: " + reason);
+		context.skip();
+	}
+
+	/**
+	 * One line describing what did not run, or null when nothing was skipped.
+	 */
+	public static summarizeSkips(): string {
+		const reasons = Object.keys(TestHarness.skipTally).sort();
+		if (reasons.length === 0) {
+			return null;
+		}
+
+		let total = 0;
+		const parts: string[] = [];
+		for (const reason of reasons) {
+			total += TestHarness.skipTally[reason];
+			parts.push(TestHarness.skipTally[reason] + " " + reason);
+		}
+		// "by the harness" is deliberate: statically-disabled tests (it.skip/xit) cannot
+		// report themselves, so this will read lower than mocha's pending count by exactly
+		// the number of those.
+		return total + " test(s) skipped by the harness: " + parts.join("; ");
 	}
 
 	/**
