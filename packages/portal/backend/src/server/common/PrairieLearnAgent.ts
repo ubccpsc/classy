@@ -80,7 +80,24 @@ export interface PLSyncSummary {
 	resultsWritten: number;
 	deliverablesCreated: string[];
 	submissionsAfterClose: number; // attempts made after the deliverable closed; see syncInstance()
-	unmatchedUids: string[]; // see NOTE in resolvePeople(); a systematic mismatch shows up here
+	/**
+	 * Student attempts whose uid did not join to a Classy person.
+	 *
+	 * This is the signal that something is systematically wrong -- the wrong join field, the wrong
+	 * uid domain -- which otherwise looks exactly like "no students have submitted yet". It is kept
+	 * to students so that it stays a short list worth reading.
+	 */
+	unmatchedUids: string[];
+
+	/**
+	 * The same thing for non-student roles, kept apart so it cannot drown the list above.
+	 *
+	 * Syncing every role means PrairieLearn accounts that were never in the classlist -- an
+	 * instructor, a PL admin, a test account -- now reach the join and fail it on every run. That is
+	 * expected and permanent, not a fault to chase, so it is reported separately.
+	 */
+	unmatchedNonStudentUids: string[];
+
 	cancelled: boolean;
 }
 
@@ -200,6 +217,7 @@ export class PrairieLearnAgent {
 			deliverablesCreated: [],
 			submissionsAfterClose: 0,
 			unmatchedUids: [],
+			unmatchedNonStudentUids: [],
 			cancelled: false,
 		};
 
@@ -218,9 +236,13 @@ export class PrairieLearnAgent {
 			const instances = await this.fetchInstances(assessment.assessment_id);
 			for (const instance of instances) {
 				summary.instancesSeen++;
-				if (instance.user_role !== "Student") {
-					continue; // staff attempts are not grades
-				}
+				// NOTE: user_role is deliberately NOT filtered. This used to skip anything that was
+				// not "Student", on the grounds that staff attempts are not grades -- but staff do
+				// real PrairieLearn activities, and their grades are exactly what you want when
+				// checking a grade sheet (the same reason staff repos are provisioned and collect
+				// real AutoTest results). The join to a Classy person is the filter that matters:
+				// an attempt by someone with no Person record cannot be written anywhere and is
+				// reported in summary.unmatchedUids instead.
 				const close = deliverables.get(instance.assessment_label)?.closeTimestamp ?? Number.MAX_SAFE_INTEGER;
 				if ((await this.isUnchanged(instance, close)) === true) {
 					summary.instancesSkipped++;
@@ -287,9 +309,12 @@ export class PrairieLearnAgent {
 		const person = people.get(cwl);
 		if (typeof person === "undefined") {
 			// NOTE: reported, never silently dropped. A systematic mismatch (wrong join field, wrong
-			// uid domain) otherwise looks exactly like "no students have submitted yet".
-			if (summary.unmatchedUids.indexOf(instance.user_uid) === -1) {
-				summary.unmatchedUids.push(instance.user_uid);
+			// uid domain) otherwise looks exactly like "no students have submitted yet". Non-student
+			// roles go in their own list: those misses are expected (staff need not be in the
+			// classlist) and would otherwise bury the ones that matter.
+			const bucket = instance.user_role === "Student" ? summary.unmatchedUids : summary.unmatchedNonStudentUids;
+			if (bucket.indexOf(instance.user_uid) === -1) {
+				bucket.push(instance.user_uid);
 			}
 			return;
 		}

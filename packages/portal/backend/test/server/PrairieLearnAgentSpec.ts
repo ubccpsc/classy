@@ -17,7 +17,7 @@ import {
 	PrairieLearnAgent,
 	PrairieLearnWatermark,
 } from "@backend/server/common/PrairieLearnAgent";
-import { Person } from "@backend/Types";
+import { Person, PersonKind } from "@backend/Types";
 
 import * as fs from "fs";
 
@@ -127,6 +127,77 @@ describe("PrairieLearnAgent", function () {
 		// a blank value in .env must not look configured; the message has to name the real fix
 		expect(ex).to.not.be.null;
 		expect(ex.message).to.contain("not configured");
+	});
+
+	describe("who gets synced", function () {
+		// The sync joins PrairieLearn uids to Classy people by githubId and applies no PersonKind
+		// filter anywhere, so a staff member who did a PrairieLearn activity gets a grade like
+		// anyone else. This is pinned because it is easy to "tidy" resolvePeople into a
+		// students-only query and not notice: staff grades would simply stop appearing.
+		const STAFF_GH = "plStaffGh";
+		const STAFF_ID = "plStaffId";
+		const ADMIN_GH = "plAdminGh";
+		const ADMIN_ID = "plAdminId";
+
+		before(async function () {
+			for (const [id, gh, kind] of [
+				[STAFF_ID, STAFF_GH, PersonKind.STAFF],
+				[ADMIN_ID, ADMIN_GH, PersonKind.ADMINSTAFF],
+			] as Array<[string, string, PersonKind]>) {
+				const person = TestHarness.createPerson(id, id + "CSID", gh, kind);
+				await dc.writePerson(person);
+			}
+		});
+
+		it("Should write a grade for a staff member who did the activity.", async function () {
+			const inst = instance({ assessment_instance_id: "77001", user_uid: STAFF_GH + "@ubc.ca", user_role: "Staff" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77001" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+			Log.test("staff sync summary: " + JSON.stringify(summary));
+
+			expect(summary.unmatchedUids, "a staff uid must join like any other").to.not.contain(inst.user_uid);
+
+			const grade = await new GradesController().getGrade(STAFF_ID, DELIV_ID);
+			expect(grade, "the staff member's grade must be written").to.not.be.null;
+			expect(grade.custom.source).to.equal("prairielearn");
+		});
+
+		it("Should write a grade for an adminstaff member too.", async function () {
+			const inst = instance({ assessment_instance_id: "77002", user_uid: ADMIN_GH + "@ubc.ca", user_role: "Staff" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77002" }));
+
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const grade = await new GradesController().getGrade(ADMIN_ID, DELIV_ID);
+			expect(grade, "adminstaff are people too").to.not.be.null;
+		});
+
+		it("Should surface a student uid it cannot join, rather than dropping it silently.", async function () {
+			const inst = instance({ assessment_instance_id: "77003", user_uid: "nobodyHere@ubc.ca" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77003" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+			expect(summary.unmatchedUids).to.contain("nobodyHere@ubc.ca");
+			expect(summary.unmatchedNonStudentUids, "a student miss belongs in the student list").to.not.contain("nobodyHere@ubc.ca");
+		});
+
+		it("Should keep an unjoined non-student out of the student list.", async function () {
+			// Syncing every role means PL accounts that were never in the classlist now reach the
+			// join and fail it on every run. Those misses are expected and permanent; mixing them
+			// into unmatchedUids would bury the ones that indicate a real join problem.
+			const inst = instance({
+				assessment_instance_id: "77004",
+				user_uid: "someInstructor@ubc.ca",
+				user_role: "Staff",
+			});
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77004" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			expect(summary.unmatchedNonStudentUids).to.contain("someInstructor@ubc.ca");
+			expect(summary.unmatchedUids, "must not dilute the signal the student list carries").to.not.contain("someInstructor@ubc.ca");
+		});
 	});
 
 	it("Should take the best-ever bucket, not the most recent one.", async function () {
@@ -502,13 +573,21 @@ describe("PrairieLearnAgent", function () {
 		expect(summary.resultsWritten).to.equal(0);
 	});
 
-	it("Should skip staff attempts.", async function () {
+	it("Should sync a staff attempt, not skip it.", async function () {
+		// NOTE: this used to assert the opposite. The agent skipped any user_role other than
+		// "Student" because "staff attempts are not grades", but staff do real PrairieLearn work and
+		// those grades are wanted when checking a grade sheet. The join to a Classy person is now
+		// the only filter.
+		// the submissions must carry this instance's id, or the fetcher returns none and the sync
+		// writes nothing regardless of role -- which is why the previous version of this test passed
+		// whether or not the role filter existed
 		const staff = instance({ assessment_instance_id: "997", user_role: "Staff" });
-		const summary = await new PrairieLearnAgent(fetcherFor([staff], allBuckets)).sync(TestHarness.ADMIN1.id);
+		const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "997" }));
+		const summary = await new PrairieLearnAgent(fetcherFor([staff], subs)).sync(TestHarness.ADMIN1.id);
 
 		expect(summary.instancesSeen).to.equal(1);
-		expect(summary.instancesSynced).to.equal(0);
-		expect(summary.gradesWritten).to.equal(0);
+		expect(summary.instancesSynced).to.equal(1);
+		expect(summary.gradesWritten).to.equal(1);
 	});
 
 	it("Should report unmatched uids instead of dropping them silently.", async function () {

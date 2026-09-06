@@ -687,7 +687,12 @@ export class AdminConfigTab extends AdminPage {
 		}
 		if (summary.unmatchedUids?.length > 0) {
 			// a systematic mismatch looks like "nobody has submitted"; make it loud
-			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
+			detail += "; <b>" + summary.unmatchedUids.length + " unmatched student(s)</b>";
+		}
+		if (summary.unmatchedNonStudentUids?.length > 0) {
+			// expected and permanent (staff need not be in the classlist), so it is stated plainly
+			// rather than bolded: bolding it would train people to ignore the line above
+			detail += "; " + summary.unmatchedNonStudentUids.length + " unmatched non-student(s)";
 		}
 		return detail + ".";
 	}
