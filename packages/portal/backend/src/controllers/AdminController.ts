@@ -1163,9 +1163,13 @@ export class AdminController {
 		let repos = await this.dbc.getRepositories();
 		for (const repo of repos) {
 			Log.info("AdminController::dbSanityCheck() - start; repo: " + repo.id);
-			// confirmAbsence: a false negative here makes the sanity check "repair" a repo that is
-			// actually fine, which is the one place this is destructive
-			const repoExists = await gha.repoExists(repo.id, true);
+			// NOTE: deliberately NOT confirmAbsence. This loops over every repository in the course,
+			// and "absent on GitHub" is a common, expected answer here -- most of them are absent
+			// early in term. Confirming each one costs an extra request and half a second, which
+			// pushed this past its timeout in CI (build 4315) and would add minutes to a real run.
+			// The cost of being wrong is low and self-correcting: the record is repaired to
+			// NOT_CREATED, which the next run of this same check puts back.
+			const repoExists = await gha.repoExists(repo.id);
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;

@@ -816,6 +816,11 @@ export class GitHubActions implements IGitHubActions {
 	 * times per repository while waiting for it to appear, and deleteRepo asks before deciding there
 	 * is nothing to delete. Retrying those would add a request and a delay to every provisioned repo
 	 * for no benefit.
+	 *
+	 * The rule that matters: opt in where a 404 is an *anomaly*, never where it is a normal answer.
+	 * dbSanityCheck looked like a good candidate -- a false negative there mislabels a healthy repo --
+	 * but it walks every repository in the course and most of them are legitimately absent early in
+	 * term, so confirming each one pushed it past its timeout in CI (build 4315).
 	 */
 	public async repoExists(repoName: string, confirmAbsence: boolean = false): Promise<boolean> {
 		const start = Date.now();
