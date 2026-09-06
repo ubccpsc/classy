@@ -9,6 +9,7 @@ import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import BackendServer from "@backend/server/BackendServer";
+import { JobState } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -71,6 +72,130 @@ describe("Admin Routes", function () {
 		Log.test("AdminRoutes::after - start");
 		await server.stop();
 		await TestHarness.suiteAfter("Admin Routes");
+	});
+
+	describe("payload contracts the UI depends on", function () {
+		// Several routes had one happy-path assertion and nothing about the shape they return. The
+		// frontend reads specific fields off these payloads; if a field is renamed or dropped the
+		// UI degrades quietly (a blank column, a missing button) rather than failing.
+
+		it("Should return every field App.ts reads from /portal/config.", async function () {
+			// read on every page load; App.retrieveConfig falls back to an ERROR object whose shape
+			// is the de-facto contract, so each key here is one the frontend expects to exist
+			const response = await request(app).get("/portal/config");
+			expect(response.status).to.equal(200);
+
+			const config = response.body.success;
+			expect(config, "the config payload must be present").to.not.be.undefined;
+			for (const field of ["org", "name", "githubAPI", "githubHost", "studentsFormTeamDelivIds", "prairieLearnEnabled"]) {
+				expect(config, "App.ts reads success." + field).to.have.property(field);
+			}
+			// App.ts gates the PrairieLearn section on this being exactly true
+			expect(config.prairieLearnEnabled).to.be.a("boolean");
+			expect(config.studentsFormTeamDelivIds).to.be.an("array");
+		});
+
+		it("Should return staff in the same shape as people.", async function () {
+			// /portal/admin/staff has always returned what is now PersonTransportPayload; the admin
+			// students tab renders it with the same code that renders /portal/admin/people
+			const response = await request(app).get("/portal/admin/staff").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+
+			if (response.body.success.length > 0) {
+				const person = response.body.success[0];
+				for (const field of ["id", "firstName", "lastName", "githubId", "userUrl", "studentNum", "labId"]) {
+					expect(person, "the students tab reads " + field).to.have.property(field);
+				}
+				// getStaff sets these two; the tab uses them to badge admins
+				expect(person).to.have.property("isAdmin");
+				expect(person).to.have.property("isStaff");
+			}
+		});
+
+		it("Should return repositories in the shape both pages read.", async function () {
+			// used by AdminResultsTab and (previously) the pull-requests page
+			const response = await request(app).get("/portal/admin/repositories").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			if (response.body.success.length > 0) {
+				expect(response.body.success[0]).to.have.property("id");
+				expect(response.body.success[0]).to.have.property("URL");
+			}
+		});
+
+		it("Should answer the results routes for a deliverable that does not exist.", async function () {
+			// AdminResultsTab builds these URLs from a dropdown, but a stale page can request a
+			// deliverable that has since been deleted; neither route should 500
+			for (const url of ["/portal/admin/gradedResults/noSuchDeliv", "/portal/admin/bestResults/noSuchDeliv"]) {
+				const response = await request(app).get(url).set({ user: userName, token: userToken });
+				Log.test(url + " -> " + response.status);
+				expect(response.status, url + " should answer, not fail").to.be.oneOf([200, 400]);
+				if (response.status === 200) {
+					expect(response.body.success, url + " should return a list").to.be.an("array");
+				} else {
+					expect(response.body.failure).to.not.be.undefined;
+				}
+			}
+		});
+	});
+
+	describe("what the UI actually sends", function () {
+		// These pin request shapes the admin UI relies on but no spec reproduced. They are not UI
+		// tests: each asserts a backend behaviour that only shows up when the request is built the
+		// way the frontend builds it.
+
+		it("Should filter jobs by the ?kind= the JobRunner sends.", async function () {
+			// JobRunner polls "/portal/admin/jobs?kind=<kind>" continuously. This is the only query
+			// parameter in the whole API, and nothing exercised it: without the filter the poller
+			// would pick up another kind's job and render its progress against the wrong button.
+			const dc = DatabaseController.getInstance();
+			const stamp = Date.now();
+			for (const kind of ["uiShapeKindA", "uiShapeKindB"]) {
+				await dc.writeJob({
+					id: kind + "_" + stamp,
+					kind: kind,
+					state: JobState.SUCCEEDED,
+					requestedBy: userName,
+					createdAt: stamp,
+					startedAt: stamp,
+					heartbeatAt: stamp,
+					completedAt: stamp,
+					cancelRequested: false,
+					progress: { done: 1, total: 1, message: "" },
+					summary: {},
+					errors: [],
+					params: {},
+				});
+			}
+
+			const filtered = await request(app).get("/portal/admin/jobs?kind=uiShapeKindA").set({ user: userName, token: userToken });
+			expect(filtered.status).to.equal(200);
+
+			const kinds = filtered.body.success.map((job: any) => job.kind);
+			expect(kinds, "the filter must exclude other kinds").to.not.contain("uiShapeKindB");
+			expect(kinds).to.contain("uiShapeKindA");
+
+			// and without the parameter the listing is not filtered
+			const all = await request(app).get("/portal/admin/jobs").set({ user: userName, token: userToken });
+			const allKinds = all.body.success.map((job: any) => job.kind);
+			expect(allKinds, "an absent kind means every kind").to.contain("uiShapeKindA");
+		});
+
+		it("Should ignore the view-as header on admin routes.", async function () {
+			// RouteUtil.VIEW_AS_HEADER is honoured by the student-facing routes in GeneralRoutes;
+			// the admin API deliberately does not read it, because there is no sense in which an
+			// admin listing is "as" someone else. Pinning it means a future change to RouteUtil
+			// cannot quietly start filtering the admin views.
+			const plain = await request(app).get("/portal/admin/people/all").set({ user: userName, token: userToken });
+			const viewingAs = await request(app)
+				.get("/portal/admin/people/all")
+				.set({ user: userName, token: userToken, "x-classy-view-as": TestHarness.USER1.id });
+
+			expect(plain.status).to.equal(200);
+			expect(viewingAs.status, "the header must not change the outcome").to.equal(200);
+			expect(viewingAs.body.success).to.deep.equal(plain.body.success);
+		});
 	});
 
 	describe("authorization on the admin API", function () {
