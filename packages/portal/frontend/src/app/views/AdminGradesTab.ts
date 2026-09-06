@@ -363,18 +363,6 @@ export class AdminGradesTab extends AdminPage {
 			},
 		];
 
-		// for (const deliv of delivs) {
-		//     const col = {
-		//         id:          deliv.id,
-		//         text:        deliv.id,
-		//         sortable:    true,
-		//         defaultSort: false,
-		//         sortDown:    true,
-		//         style:       "padding-left: 1em; padding-right: 1em;"
-		//     };
-		//     headers.push(col);
-		// }
-
 		return headers;
 	}
 

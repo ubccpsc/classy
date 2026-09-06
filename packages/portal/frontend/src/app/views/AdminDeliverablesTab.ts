@@ -39,16 +39,6 @@ export class AdminDeliverablesTab extends AdminPage {
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminDeliverablesTab::init(..) - start");
 
-		// const fab = document.querySelector("#adminAddDeliverable") as OnsFabElement;
-		// if (this.isAdmin === false) {
-		//     fab.style.display = "none";
-		// } else {
-		//     fab.onclick = function(evt: any) {
-		//         Log.info("AdminDeliverablesTab::init(..)::addDeliverable::onClick");
-		//         UI.pushPage("editDeliverable.html", {delivId: null});
-		//     };
-		// }
-
 		UI.showModal("Retrieving deliverables.");
 		const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
 		this.render(delivs);

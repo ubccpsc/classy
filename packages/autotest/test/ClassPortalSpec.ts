@@ -21,6 +21,8 @@ describe("ClassPortal Service", () => {
 	let cp: IClassPortal;
 
 	let backend: BackendServer = null;
+	let realBackendUrl: string = null;
+
 	before(async function () {
 		Log.test("ClassPortalSpec::before() - start");
 
@@ -32,6 +34,16 @@ describe("ClassPortal Service", () => {
 		} else {
 			Log.test("ClassPortalSpec::before() - not running in CI; using http");
 			backend = new BackendServer(false);
+
+			// ClassPortal builds its URLs from backendUrl, which .env sets to https://localhost for
+			// the deployed server. The local server started above speaks http, so every call in this
+			// suite failed with "SSL routines ... wrong version number" -- nine tests red on every
+			// local run, all term, for a protocol mismatch rather than a broken feature. Point the
+			// config at what is actually listening, and restore it afterwards. Same approach as
+			// StubAutoTestService, which overrides autotestUrl the same way.
+			const config = Config.getInstance();
+			realBackendUrl = config.getProp(ConfigKey.backendUrl);
+			config.setProp(ConfigKey.backendUrl, "http://localhost");
 		}
 
 		await backend.start();
@@ -45,6 +57,9 @@ describe("ClassPortal Service", () => {
 	after(async function () {
 		Log.test("ClassPortalSpec::after() - start");
 		await backend.stop();
+		if (realBackendUrl !== null) {
+			Config.getInstance().setProp(ConfigKey.backendUrl, realBackendUrl);
+		}
 		Log.test("ClassPortalSpec::after() - done");
 	});
 

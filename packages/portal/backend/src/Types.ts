@@ -46,7 +46,19 @@ import { AutoTestConfig } from "../../../common/src/types/ContainerTypes";
 export interface Person {
 	readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
 	readonly csId: string;
-	readonly studentNumber: number | null;
+	/**
+	 * The UBC student number, as a string.
+	 *
+	 * NOTE: a string because that is what it has always held -- ClasslistAgent assigns the raw CSV
+	 * value -- and because it is an identifier, never a quantity: nothing does arithmetic on it, and
+	 * treating it as a number is what made CSVParser.processGrades compare a string to a number and
+	 * silently match nobody. It was declared `number` for years while holding a string.
+	 *
+	 * Documents written before this declaration was corrected still hold a number, and nothing
+	 * migrates them, so code that reads this field off a stored Person must coerce rather than
+	 * assume (see CSVParser.processGrades and ExportRoutes.exportGrades).
+	 */
+	readonly studentNumber: string | null;
 	githubId: string; // warning: this can change (e.g., if student updates their CWL)
 
 	fName: string;

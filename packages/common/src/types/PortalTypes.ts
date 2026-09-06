@@ -114,7 +114,7 @@ export interface PersonTransport {
 	lastName: string;
 	githubId: string;
 	userUrl: string;
-	studentNum: number;
+	studentNum: string | null; // an identifier, not a quantity; null if the person was not on a classlist
 	labId: string;
 
 	// these were added later and need to be optional

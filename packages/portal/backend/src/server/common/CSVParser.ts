@@ -106,8 +106,9 @@ export class CSVParser {
 				}
 
 				if (typeof row.STUDENTNUMBER !== "undefined") {
-					// Person.studentNumber is declared `number`, but ClasslistAgent assigns
-					// it straight from the classlist CSV, so in practice it holds a string
+					// String() on both sides: documents written before studentNumber was typed as a
+					// string still hold a number, and this comparison is the one that already
+					// silently matched nobody once
 					const person = allPeople.find((p) => String(p.studentNumber) === String(row.STUDENTNUMBER));
 					if (person && typeof person.id === "string") {
 						row.CSID = person.id;

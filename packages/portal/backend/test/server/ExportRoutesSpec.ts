@@ -271,6 +271,45 @@ describe("Export Routes", function () {
 			expect(response.body.grades.length).to.equal(2);
 		});
 
+		it("Should skip a graded person who has no student number.", async function () {
+			// snum is the join key on the consumer side, so a person without one cannot be
+			// matched there. People created by login rather than by classlist import have a
+			// null studentNumber; they must be dropped rather than exported as "null".
+			const dc = DatabaseController.getInstance();
+			const deliv = TestHarness.createDeliverable("exportNoSnum");
+			deliv.gradesReleased = true;
+			await dc.writeDeliverable(deliv);
+
+			const user3 = await dc.getPerson(TestHarness.USER3.id);
+			expect(user3.studentNumber).to.equal(null); // never on a classlist in this suite
+
+			// studentNumber was declared `number` for years, so stored documents still hold one;
+			// such a person must still export, with the number rendered as a string
+			const user4 = await dc.getPerson(TestHarness.USER4.id);
+			(user4 as any).studentNumber = 44444444;
+			await dc.writePerson(user4);
+
+			await makeGrade(TestHarness.USER1.id, deliv.id, 91, "graded", {});
+			await makeGrade(TestHarness.USER3.id, deliv.id, 60, "graded", {});
+			await makeGrade(TestHarness.USER4.id, deliv.id, 75, "graded", {});
+
+			const response = await request(app)
+				.get(PREFIX + "/grades/" + deliv.id)
+				.set("Authorization", "Bearer " + TOKEN_A);
+
+			expect(response.status).to.equal(200);
+
+			const snums = response.body.grades.map((g: any) => g.snum);
+			expect(snums).to.have.members([SNUM1, "44444444"]);
+			expect(snums).to.not.contain("null");
+			expect(snums).to.not.contain(null);
+
+			// every emitted snum is a string, whatever the stored document held
+			for (const snum of snums) {
+				expect(snum).to.be.a("string");
+			}
+		});
+
 		it("Should include a withdrawn student who has a grade.", async function () {
 			const response = await request(app)
 				.get(PREFIX + "/grades/" + RELEASED)

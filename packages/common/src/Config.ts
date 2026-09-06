@@ -15,8 +15,8 @@ if (envLoadResult.error) {
  */
 export enum ConfigCourses {
 	classytest = "classytest",
+	cs210 = "cs210",
 	cs310 = "cs310",
-	// cs210 = "cs210",
 }
 
 export enum ConfigKey {
@@ -75,7 +75,6 @@ export enum ConfigKey {
 	hostDir = "hostDir",
 	dockerUid = "dockerUid",
 	hostsAllow = "hostsAllow",
-	timeout = "timeout",
 	botName = "botName",
 	postback = "postback",
 
@@ -83,8 +82,6 @@ export enum ConfigKey {
 	adminTeamName = "adminTeamName",
 	// STAFF_TEAM_NAME
 	staffTeamName = "staffTeamName",
-
-	logLevel = "logLevel",
 }
 
 export default class Config {
@@ -128,7 +125,6 @@ export default class Config {
 				dockerUid: process.env.UID,
 				hostsAllow: process.env.HOSTS_ALLOW,
 
-				timeout: Number(process.env.GRADER_TIMEOUT),
 				botName: process.env.GH_BOT_USERNAME,
 
 				sslCertPath: process.env.SSL_CERT_PATH,
@@ -161,8 +157,6 @@ export default class Config {
 
 				adminTeamName: process.env.ADMIN_TEAM_NAME,
 				staffTeamName: process.env.STAFF_TEAM_NAME,
-
-				logLevel: process.env.LOG_LEVEL,
 			};
 
 			Log.info("Config - Log::<init>");

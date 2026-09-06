@@ -34,10 +34,7 @@ import { TeamController } from "./TeamController";
 export class AdminController {
 	/**
 	 * How many repos to provision at once.
-	 *
-	 * Provisioning is dominated by waiting on GitHub. 1 is serialized, but
-	 * GitHub rate limits bound how high it can be in practice.
-	 * If provisioning starts to throw 403 errros, it's too high.
+	 * GitHub rate limits; if provisioning 403's, lower this number.
 	 */
 	public static readonly PROVISION_CONCURRENCY = 4;
 
@@ -47,7 +44,6 @@ export class AdminController {
 	protected tc = new TeamController();
 	protected gc = new GradesController();
 	protected resC = new ResultsController();
-	// protected cc: ICourseController;
 	protected gh: IGitHubController = null;
 
 	public constructor(ghController: IGitHubController) {
@@ -56,7 +52,8 @@ export class AdminController {
 	}
 
 	/**
-	 * Returns the name for this instance. Not defensive: If name is null or something goes wrong there will be errors all over.
+	 * Returns the name for this instance. Not defensive: If name is null
+	 * or something goes wrong there will be errors all over the logs.
 	 *
 	 * @returns {string | null}
 	 */
@@ -77,21 +74,18 @@ export class AdminController {
 			throw new Error(msg);
 		}
 
-		// noinspection SuspiciousTypeOfGuard
 		if (typeof courseTrans.id !== "string") {
 			const msg = "Course.id not specified";
 			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
 			throw new Error(msg);
 		}
 
-		// noinspection SuspiciousTypeOfGuard
 		if (typeof courseTrans.defaultDeliverableId !== "string") {
 			const msg = "defaultDeliverableId not specified";
 			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
 			return msg;
 		}
 
-		// noinspection SuspiciousTypeOfGuard
 		if (typeof courseTrans.custom !== "object") {
 			const msg = "custom not specified";
 			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
@@ -114,14 +108,12 @@ export class AdminController {
 			throw new Error(msg);
 		}
 
-		// noinspection SuspiciousTypeOfGuard
 		if (typeof obj.delivId !== "string") {
 			const msg = "Provision.id not specified";
 			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
 			throw new Error(msg);
 		}
 
-		// noinspection SuspiciousTypeOfGuard
 		if (typeof obj.formSingle !== "boolean") {
 			const msg = "formSingle not specified";
 			Log.error("AdminController::validateProvisionTransport(..) - ERROR: " + msg);
@@ -243,11 +235,6 @@ export class AdminController {
 		return await this.dbc.writeCourseRecord(record);
 	}
 
-	/**
-	 * Gets the students associated with the course. Admins, staff, and withdrawn students are not included.
-	 *
-	 * @returns {Promise<PersonTransport[]>}
-	 */
 	/**
 	 * The people a listing should show.
 	 *
@@ -453,7 +440,6 @@ export class AdminController {
 
 		const results: Result[] = [];
 		for (const result of allResults) {
-			// const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
 			const delivId = result.delivId;
 			const repoId = result.input.target.repoId;
 
@@ -485,9 +471,6 @@ export class AdminController {
 		Log.info("AdminController::performStudentWithdraw() - start");
 		await ctx?.progress(0, 0, "reading the students team from GitHub");
 		const gha = GitHubActions.getInstance(true);
-		// const tc = new TeamController();
-		// const teamNum = await tc.getTeamNumber("students"); // await gha.getTeamNumber("students");
-		// const registeredGithubIds = await gha.getTeamMembers(teamNum);
 		const registeredGithubIds = await gha.getTeamMembers("students");
 
 		// Sanity floor. markStudentsWithdrawn() withdraws every STUDENT whose githubId is NOT in
@@ -540,8 +523,6 @@ export class AdminController {
 		const results: AutoTestResultSummaryTransport[] = [];
 		const allResults = await this.matchResults(reqDelivId, reqRepoId, kind);
 		for (const result of allResults) {
-			// const repo = await rc.getRepository(result.repoId); // this happens a lot and ends up being too slow
-			// const repoId = result.input.target.repoId;
 			if (results.length <= NUM_RESULTS) {
 				const resultTrans = await this.clipAutoTestResult(result);
 				results.push(resultTrans);
@@ -742,16 +723,6 @@ export class AdminController {
 				throw new Error("AdminController::prepareProvision(..) - repo unexpectedly null: " + names.repoName); // names.repoName);
 			}
 
-			// /* istanbul ignore if */
-			// if (typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true && repo.URL === null) {
-			//     // HACK: this is just for dealing with inconsistent databases
-			//     // This whole block should be removed in the future
-			//     Log.warn("AdminController::prepareProvision(..) - repo URL should not be null: " + repo.id);
-			//     const config = Config.getInstance();
-			//     repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
-			//     await this.dbc.writeRepository(repo);
-			// }
-
 			reposToProvision.push(repo);
 			Log.info("AdminController::prepareProvision(..) - team planning done for team: " + delivTeam.id);
 		}
@@ -823,9 +794,8 @@ export class AdminController {
 		);
 		const provisionedRepos: Repository[] = [];
 
-		// NOTE: provisioning each repo is independent, and each one is dominated by waiting on
-		// GitHub, so they are run with bounded concurrency rather than strictly one at a time.
-		// The cap matters: GitHub applies secondary rate limits to bursts of concurrent writes.
+		// Provisioning each repo is independent, and each one is dominated by waiting on
+		// GitHub, so they are run with bounded concurrency rather than strictly one at a time
 		let done = 0;
 		const policy = new ProvisionFailurePolicy("provisioning");
 
@@ -865,10 +835,8 @@ export class AdminController {
 				}
 			} catch (err) {
 				// NOTE: deliberately not rethrown. This used to stop every remaining repo from being
-				// scheduled, which was survivable when the browser drove one small batch at a time,
-				// but as a single job one bad repo would abandon the whole class. The failure is
-				// recorded and the run continues; re-running retries only what is still
-				// NOT_PROVISIONED.
+				// scheduled. The failure is recorded and the run continues; re-running retries only
+				// what is still NOT_PROVISIONED.
 				Log.error("AdminController::performProvision(..) - FAILED: " + repo.id + "; URL: " + repo.URL + "; ERROR: " + err.message);
 				await ctx?.error(repo.id + ": " + err.message);
 
@@ -919,8 +887,7 @@ export class AdminController {
 		let allTeams: Team[] = await this.tc.getAllTeams();
 		Log.trace("AdminController::planRelease( " + deliv.id + " ) - # teams: " + allTeams.length);
 
-		// remove teams that have no people as they don't need to be released
-		// just for logging, will remove with filter below
+		// remove teams that have no people as they don't need to be released (for logging)
 		for (const team of allTeams) {
 			if (team.personIds.length < 1) {
 				Log.warn("AdminController::planRelease(..) - team has no people: " + team.id);
@@ -959,11 +926,7 @@ export class AdminController {
 				const names = await cc.computeNames(deliv, people);
 				const repo = await this.dbc.getRepository(names.repoName);
 
-				/* istanbul ignore else */
-				// if (typeof team.custom.githubAttached === "undefined" || team.custom.githubAttached === false) {
 				if (team.gitHubStatus === TeamStatus.CREATED) {
-					/* istanbul ignore else */
-					// if (repo !== null && typeof repo.custom.githubCreated !== "undefined" && repo.custom.githubCreated === true) {
 					if (repo !== null && repo.gitHubStatus === RepoStatus.READY) {
 						// repo exists and has been provisioned: this is important as teams may have formed that have not been provisioned
 						// aka only release provisioned repos
@@ -976,21 +939,14 @@ export class AdminController {
 					reposAlreadyReleased.push(repo);
 				}
 			} catch (err) {
-				/* istanbul ignore next: curlies needed for ignore */
-				{
-					Log.error("AdminController::planRelease(..) - ERROR: " + err.message);
-					Log.exception(err);
-				}
+				Log.error("AdminController::planRelease(..) - ERROR: " + err.message);
+				Log.exception(err);
 			}
 			Log.trace("AdminController::planRelease( " + deliv.id + " ) - done team processing: " + team.id);
 		}
 
 		Log.info("AdminController::planRelease( " + deliv.id + " ) - # repos in release plan: " + reposToRelease.length);
 
-		// This used to overwrite gitHubStatus on the way out, to "denote that repo has not been
-		// released yet" -- a read path assigning status, so what the admin UI displayed was not always
-		// what the database held. The repos below already carry the right status (READY when they can
-		// be released, RELEASED when they already have been), so they are returned as they are.
 		return reposAlreadyReleased.concat(reposToRelease);
 	}
 
@@ -1143,7 +1099,7 @@ export class AdminController {
 
 	/* istanbul ignore next */
 	/**
-	 * Synchronizes the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
+	 * Synchronises the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
 	 * sure their properties match those in the GitHub org. This is useful if manual changes are made
 	 * to the org that you want to have updated in the repo as well.
 	 *
@@ -1163,7 +1119,7 @@ export class AdminController {
 		let repos = await this.dbc.getRepositories();
 		for (const repo of repos) {
 			Log.info("AdminController::dbSanityCheck() - start; repo: " + repo.id);
-			// NOTE: deliberately NOT confirmAbsence. This loops over every repository in the course,
+			// deliberately NOT confirmAbsence. This loops over every repository in the course,
 			// and "absent on GitHub" is a common, expected answer here -- most of them are absent
 			// early in term. Confirming each one costs an extra request and half a second, which
 			// pushed this past its timeout in CI (build 4315) and would add minutes to a real run.
@@ -1174,7 +1130,7 @@ export class AdminController {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;
 
-				// The status is derived from what GitHub has rather than corrected from what the
+				// status is derived from what GitHub has rather than corrected from what the
 				// record said. That is also what lets this repair records written by an older version
 				// of Classy: their vocabulary does not have to be understood, only replaced.
 				//
@@ -1288,7 +1244,6 @@ export class AdminController {
 
 			if (repoHasBeenChecked === false) {
 				// repos that were not found to have teams must not be released
-
 				// no team is attached on GitHub, so it cannot be released; it keeps CREATED or READY
 				if (repo.gitHubStatus === RepoStatus.RELEASED) {
 					await ProvisionState.repairRepoStatus(repo, RepoStatus.READY, "no team is attached on GitHub");
@@ -1395,61 +1350,6 @@ export class AdminController {
 			custom: {},
 		};
 	}
-
-	// NOTE: the default implementation is currently broken; do not use it.
-	/**
-	 * This is a method that subtypes can call from computeNames if they do not want to implement it themselves.
-	 *
-	 * @param {Deliverable} deliv
-	 * @param {Person[]} people
-	 * @returns {Promise<{teamName: string | null; repoName: string | null}>}
-	 */
-	// public async computeNames(deliv: Deliverable, people: Person[]): Promise<{teamName: string | null, repoName: string | null}> {
-	//     Log.info("AdminController::computeNames(..) - start; # people: " + people.length);
-	//
-	//     // TODO: this code has a fatal flaw; if the team/repo exists already for the specified people,
-	//     // it is correct to return those.
-	//
-	//     let repoPrefix = "";
-	//     if (deliv.repoPrefix.length > 0) {
-	//         repoPrefix = deliv.repoPrefix;
-	//     } else {
-	//         repoPrefix = deliv.id;
-	//     }
-	//
-	//     let teamPrefix = "";
-	//     if (deliv.teamPrefix.length > 0) {
-	//         teamPrefix = deliv.teamPrefix;
-	//     } else {
-	//         teamPrefix = deliv.id;
-	//     }
-	//     // the repo name and the team name should be the same, so just use the repo name
-	//     const repos = await this.dbc.getRepositories();
-	//     let repoCount = 0;
-	//     for (const repo of repos) {
-	//         if (repo.id.startsWith(repoPrefix)) {
-	//             repoCount++;
-	//         }
-	//     }
-	//     let repoName = "";
-	//     let teamName = "";
-	//
-	//     let ready = false;
-	//     while (!ready) {
-	//         repoName = repoPrefix + "_" + repoCount;
-	//         teamName = teamPrefix + "_" + repoCount;
-	//         const r = await this.dbc.getRepository(repoName);
-	//         const t = await this.dbc.getTeam(teamName);
-	//         if (r === null && t === null) {
-	//             ready = true;
-	//         } else {
-	//             Log.warn("AdminController::computeNames(..) - name not available; r: " + repoName + "; t: " + teamName);
-	//             repoCount++; // try the next one
-	//         }
-	//     }
-	//     Log.info("AdminController::computeNames(..) - done; r: " + repoName + "; t: " + teamName);
-	//     return {teamName: teamName, repoName: repoName};
-	// }
 
 	/**
 	 * Takes a result, and if the VM was successful picks the state of the report.

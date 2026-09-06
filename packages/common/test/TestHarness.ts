@@ -679,7 +679,7 @@ export class TestHarness {
 			id: id,
 			csId: id,
 			githubId: id,
-			studentNumber: Number((Math.random() * 100000).toFixed(0)),
+			studentNumber: (Math.random() * 100000).toFixed(0),
 
 			fName: "f" + id,
 			lName: "l" + id,

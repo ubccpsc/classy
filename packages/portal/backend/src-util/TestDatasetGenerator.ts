@@ -66,7 +66,7 @@ export class TestDatasetGenerator {
 			id: TestHarness.ADMIN1.id,
 			csId: TestHarness.ADMIN1.csId,
 			githubId: TestHarness.ADMIN1.github,
-			studentNumber: -1,
+			studentNumber: null,
 
 			fName: "adminFirst",
 			lName: "adminLast",
@@ -85,7 +85,7 @@ export class TestDatasetGenerator {
 			id: TestHarness.USER1.id,
 			csId: TestHarness.USER1.csId,
 			githubId: TestHarness.USER1.github,
-			studentNumber: -1,
+			studentNumber: null,
 
 			fName: "adminFirst",
 			lName: "adminLast",
@@ -106,7 +106,7 @@ export class TestDatasetGenerator {
 				id: pid,
 				csId: pid,
 				githubId: pid,
-				studentNumber: i,
+				studentNumber: String(i),
 
 				fName: pid + "first",
 				lName: pid + "last",

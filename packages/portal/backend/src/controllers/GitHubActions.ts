@@ -1695,48 +1695,6 @@ export class GitHubActions implements IGitHubActions {
 		return branches;
 	}
 
-	// public async listBranches(repoId: string): Promise<string[]> {
-	//     const start = Date.now();
-	//
-	//     const repoExists = await this.repoExists(repoId); // ensure the repo exists
-	//     if (repoExists === false) {
-	//         Log.error("GitHubAction::listBranches(..) - failed; repo does not exist");
-	//         return [];
-	//     }
-	//
-	//     // get branches
-	//     // GET /repos/{owner}/{repo}/branches
-	//     const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
-	//     Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
-	//     const listOptions: RequestInit = {
-	//         method: "GET",
-	//         headers: {
-	//             "Authorization": this.gitHubAuthToken,
-	//             "User-Agent": this.gitHubUserName,
-	//             "Accept": "application/vnd.github+json",
-	//             "X-GitHub-Api-Version": "2022-11-28"
-	//         }
-	//     };
-	//
-	//     const listResp = await fetch(listUri, listOptions);
-	//     Log.trace("GitHubAction::listBranches(..) - list response code: " + listResp.status); // 201 success
-	//     const listRespBody = await listResp.json();
-	//
-	//     if (listResp.status !== 200) {
-	//         Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
-	//         return [];
-	//     }
-	//     Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
-	//
-	//     const branches: string[] = [];
-	//     for (const githubBranch of listRespBody) {
-	//         branches.push(githubBranch.name);
-	//     }
-	//
-	//     Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
-	//     return branches;
-	// }
-
 	/**
 	 * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
 	 *

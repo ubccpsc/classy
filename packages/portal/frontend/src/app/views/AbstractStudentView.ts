@@ -241,15 +241,6 @@ export abstract class AbstractStudentView implements IView {
 					sortDown: false, // Whether the column should initially sort descending or ascending.
 					style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 				},
-				// could be result in the future (provisioned | detached)
-				// {
-				//     id:          "result",
-				//     text:        "State",
-				//     sortable:    false,
-				//     defaultSort: false,
-				//     sortDown:    true,
-				//     style:       "padding-left: 1em; padding-right: 1em; text-align: left;"
-				// }
 			];
 
 			const st = new SortableTable(headers, "#studentRepoTable");

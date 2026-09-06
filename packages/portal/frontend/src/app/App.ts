@@ -705,21 +705,6 @@ export class App {
 				}
 			}
 		}
-		// this was a hack that we should not use
-		// let getParameterByName = function (name: string) {
-		//     let url = window.location.href;
-		//     name = name.replace(/[\[\]]/g, "\\$&");
-		//     let regex = new RegExp("[?&]" + name + "(=([^&#]*)|&|#|$)"),
-		//         results = regex.exec(url);
-		//     if (!results) return null;
-		//     if (!results[2]) return "";
-		//     return decodeURIComponent(results[2].replace(/\+/g, " "));
-		// };
-		// let token = getParameterByName("gh");
-		// if (token !== null) {
-		//     Log.trace("App::readCookie( " + name + " ) - query param found");
-		//     return token;
-		// }
 		Log.trace("App::readCookie( " + name + " ) - no token found");
 		return null;
 	}

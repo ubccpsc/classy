@@ -209,8 +209,19 @@ export class ExportRoutes implements IREST {
 
 			const grades: ExportedGrade[] = [];
 			for (const row of rows) {
+				// String(), not a string check: documents written before studentNumber was typed as
+				// a string still hold a number
+				const snum = row.person.studentNumber === null ? "" : String(row.person.studentNumber);
+				if (snum.length === 0) {
+					// snum is the join key on the ELMS side, so a row without one cannot be matched
+					// there, and String(null) would ship the literal "null" as a student number.
+					// People created by login rather than by classlist import land here.
+					Log.warn("ExportRoutes::exportGrades( " + delivId + " ) - skipping, no studentNumber: " + row.person.id);
+					continue;
+				}
+
 				const exported: ExportedGrade = {
-					snum: String(row.person.studentNumber),
+					snum: snum,
 					cwl: row.person.githubId,
 					score: row.grade.score,
 					feedback: typeof row.grade.comment === "string" ? row.grade.comment : "",
