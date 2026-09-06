@@ -1163,7 +1163,9 @@ export class AdminController {
 		let repos = await this.dbc.getRepositories();
 		for (const repo of repos) {
 			Log.info("AdminController::dbSanityCheck() - start; repo: " + repo.id);
-			const repoExists = await gha.repoExists(repo.id);
+			// confirmAbsence: a false negative here makes the sanity check "repair" a repo that is
+			// actually fine, which is the one place this is destructive
+			const repoExists = await gha.repoExists(repo.id, true);
 			if (repoExists === true) {
 				// make sure repo is consistent
 				repo.URL = config.getProp(ConfigKey.githubHost) + "/" + config.getProp(ConfigKey.org) + "/" + repo.id;

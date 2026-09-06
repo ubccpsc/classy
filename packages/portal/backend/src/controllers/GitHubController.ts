@@ -814,7 +814,7 @@ export class GitHubController implements IGitHubController {
 		}
 
 		Log.info("GitHubController::updateBranchProtection(", repo.id, ", ...) - start");
-		if (!(await this.gha.repoExists(repo.id))) {
+		if (!(await this.gha.repoExists(repo.id, true))) {
 			throw new Error("GitHubController::updateBranchProtection() - " + repo.id + " did not exist");
 		}
 		const successes = await Promise.all(rules.map((r) => this.gha.addBranchProtectionRule(repo.id, r)));
@@ -829,7 +829,7 @@ export class GitHubController implements IGitHubController {
 		}
 
 		Log.info("GitHubController::createIssues(", repo.id, ", ...) - start");
-		if (!(await this.gha.repoExists(repo.id))) {
+		if (!(await this.gha.repoExists(repo.id, true))) {
 			throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
 		}
 		const successes = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));

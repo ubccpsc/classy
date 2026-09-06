@@ -111,7 +111,7 @@ export interface IGitHubActions {
 	 * @param repoName
 	 * @returns {Promise<boolean>}
 	 */
-	repoExists(repoName: string): Promise<boolean>;
+	repoExists(repoName: string, confirmAbsence?: boolean): Promise<boolean>;
 
 	/**
 	 * Deletes a team.
@@ -335,6 +335,14 @@ export interface IGitHubActions {
 }
 
 export class GitHubActions implements IGitHubActions {
+	/**
+	 * How long to wait before re-checking a 404 from GitHub; see repoExists( .., confirmAbsence ).
+	 *
+	 * Short on purpose: this is paid only where a false negative would throw or trigger a repair,
+	 * never in the polling loops, and GitHub Enterprise's inconsistency window is sub-second.
+	 */
+	public static readonly ABSENCE_RECHECK_DELAY = 500;
+
 	private static instance: IGitHubActions = null;
 	private readonly apiPath: string | null = null;
 	private readonly gitHubUserName: string | null = null;
@@ -795,7 +803,21 @@ export class GitHubActions implements IGitHubActions {
 		}
 	}
 
-	public async repoExists(repoName: string): Promise<boolean> {
+	/**
+	 * Whether a repository exists in the org.
+	 *
+	 * @param repoName
+	 * @param confirmAbsence re-check once before reporting false. GitHub Enterprise occasionally
+	 * answers 404 for a repository that demonstrably exists -- CI has seen a repo serve three
+	 * webhook operations and then 404 two seconds later (builds 4281, 4314) -- and a single 404 is
+	 * otherwise taken as authoritative by every caller. Pass true where a false negative is
+	 * damaging: something throws, or a repair path acts on the absence. Leave it false where 404 is
+	 * the expected answer, which is the majority of calls: createRepo's readiness poll asks up to ten
+	 * times per repository while waiting for it to appear, and deleteRepo asks before deciding there
+	 * is nothing to delete. Retrying those would add a request and a delay to every provisioned repo
+	 * for no benefit.
+	 */
+	public async repoExists(repoName: string, confirmAbsence: boolean = false): Promise<boolean> {
 		const start = Date.now();
 		const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
 		const options: RequestInit = {
@@ -807,7 +829,16 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const res = await fetch(uri, options);
+		let res = await fetch(uri, options);
+		if (res.status === 404 && confirmAbsence === true) {
+			// a real absence 404s again; a blip usually does not
+			Log.info("GitHubAction::repoExists( " + repoName + " ) - 404; confirming before reporting absent");
+			await Util.delay(GitHubActions.ABSENCE_RECHECK_DELAY);
+			res = await fetch(uri, options);
+			if (res.status !== 404) {
+				Log.warn("GitHubAction::repoExists( " + repoName + " ) - transient 404; the repo does exist");
+			}
+		}
 		if (res.status === 404) {
 			Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
 			return false;
@@ -1323,7 +1354,9 @@ export class GitHubActions implements IGitHubActions {
 				throw new Error("GitHubAction::addTeamToRepo(..) - team does not exist: " + teamName);
 			}
 
-			const repoExists = await this.repoExists(repoName);
+			// confirmAbsence: this throws on a false negative, and a transient 404 here is what
+			// broke CI builds 4281 and 4314 against a repo that demonstrably existed
+			const repoExists = await this.repoExists(repoName, true);
 			if (repoExists === false) {
 				throw new Error("GitHubAction::addTeamToRepo(..) - repo does not exist: " + repoName);
 			}
