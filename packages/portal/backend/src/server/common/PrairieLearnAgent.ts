@@ -611,19 +611,10 @@ export class PrairieLearnAgent {
 			URL: this.instanceUrl(instance.assessment_instance_id),
 			custom: {
 				bucket: bucket,
-				// NOTE: score stays numeric and displayScore carries the bucket. Both the admin grade
-				// sheet (AdminGradesTab) and the student view (AbstractStudentView) prefer
-				// custom.displayScore over score.toFixed(2), so the sheet reads "proficient" rather
-				// than "100.00" while everything numeric still works.
-				//
-				// Making score itself a string would break more than it looks: CourseController's
-				// "last highest" check (newGrade.score >= existingGrade.score) would compare
-				// lexicographically, and the buckets do not sort alphabetically in rank order --
-				// "acquiring" < "beginning" as text, but beginning(0) < acquiring(55) by rank -- so a
-				// student improving from beginning to acquiring would look like a decrease and be
-				// silently rejected.
-				// show the number when there is one, otherwise the bucket name
-				displayScore: explicit === null ? bucket : String(explicit),
+				// score stays numeric and displayScore always carries the bucket (if present),
+				// even when the grader reported an explicit number. displayScore is what
+				// the *student* sees, but score itself provides greater resolution for admins
+				displayScore: bucket,
 				source: "prairielearn",
 				assessmentInstanceId: instance.assessment_instance_id,
 				submissionId: submission.submission_id,

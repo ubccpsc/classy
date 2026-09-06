@@ -318,8 +318,10 @@ describe("PrairieLearnAgent", function () {
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			// the explicit number wins over the bucket score (developing would have been 75)
 			expect(grade.score).to.equal(87);
-			expect(grade.custom.displayScore).to.equal("87");
 			expect(grade.custom.bucket).to.equal("developing"); // bucket still recorded
+			// displayScore is what the STUDENT sees, so it stays the band even when a number exists;
+			// staff read grade.score instead (AdminGradesTab renders it, not displayScore)
+			expect(grade.custom.displayScore).to.equal("developing");
 		});
 
 		it("Should accept a score of exactly 0.", async function () {
@@ -329,7 +331,20 @@ describe("PrairieLearnAgent", function () {
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			// 0 is a real score, not "absent"; proficient would otherwise have mapped to 100
 			expect(grade.score).to.equal(0);
-			expect(grade.custom.displayScore).to.equal("0");
+			expect(grade.custom.displayScore, "the student still sees the band").to.equal("proficient");
+		});
+
+		it("Should keep displayScore as the band even when the grader reports a number.", async function () {
+			// the rule this file used to encode was "show the number when there is one, otherwise the
+			// bucket". That is now split by audience: displayScore is always the band (students see
+			// it), and the number lives in score (staff see that, via AdminGradesTab).
+			const inst = instance({ assessment_instance_id: "bandAlways", assessment_label: DELIV_ID });
+			await new PrairieLearnAgent(fetcherFor([inst], scored("acquiring", 42, "bandAlways"))).sync(TestHarness.ADMIN1.id);
+
+			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
+			expect(grade.score, "the number is preserved for staff").to.equal(42);
+			expect(grade.custom.displayScore, "students see the band, not the number").to.equal("acquiring");
+			expect(String(grade.custom.displayScore)).to.not.equal("42");
 		});
 
 		it("Should fall back to the bucket score when the field is absent.", async function () {
@@ -381,8 +396,8 @@ describe("PrairieLearnAgent", function () {
 
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			expect(grade.score).to.equal(99);
-			expect(grade.custom.displayScore).to.equal("99");
 			expect(grade.custom.bucket).to.equal("developing"); // the bucket of the winning attempt
+			expect(grade.custom.displayScore, "displayScore follows the winning attempt's band").to.equal("developing");
 		});
 
 		it("Should rank by bucket when no submission carries a score.", async function () {
