@@ -73,6 +73,83 @@ describe("Admin Routes", function () {
 		await TestHarness.suiteAfter("Admin Routes");
 	});
 
+	describe("authorization on the admin API", function () {
+		// The preHandlers are the whole access-control story for /portal/admin/*: isPrivileged lets
+		// staff and admins through, isAdmin only admins. Twelve routes had no test that a
+		// non-privileged caller is refused, so a preHandler dropped in a refactor would have been
+		// silent. These are table-driven because the point is the sweep, not any one route.
+		//
+		// NOTE: a refusal is 401 for both guards (see AdminRoutes.isPrivileged / isAdmin).
+
+		/** Routes staff may use; only a student (or nobody) is refused. */
+		const PRIVILEGED: Array<[string, string]> = [
+			["get", "/portal/admin/bestResults/" + TestHarness.DELIVID0],
+			["get", "/portal/admin/course"],
+			["get", "/portal/admin/people"],
+			["get", "/portal/admin/people/all"],
+			["get", "/portal/admin/staff"],
+		];
+
+		/** Routes only an admin may use; staff must be refused as well as students. */
+		const ADMIN_ONLY: Array<[string, string]> = [
+			["get", "/portal/admin/jobs"],
+			["get", "/portal/admin/release/" + TestHarness.DELIVID0],
+			["post", "/portal/admin/checkDatabase/true"],
+			["post", "/portal/admin/course"],
+			["post", "/portal/admin/grades/csv/" + TestHarness.DELIVID0],
+			["post", "/portal/admin/grades/prairie"],
+			["post", "/portal/admin/viewAs/" + TestHarness.USER1.id],
+		];
+
+		let staffToken: string;
+
+		before(async function () {
+			// STAFF1 has a Person (PersonKind.STAFF from preparePeople) but prepareAuth does not
+			// give it a token, and the isAdmin/isPrivileged split cannot be tested without one
+			staffToken = "staffTokenFor_" + Date.now();
+			await DatabaseController.getInstance().writeAuth({ personId: TestHarness.STAFF1.id, token: staffToken });
+		});
+
+		function send(method: string, url: string, headers: any) {
+			const req = (request(app) as any)[method](url).set(headers);
+			return method === "post" ? req.send({}) : req;
+		}
+
+		for (const [method, url] of PRIVILEGED.concat(ADMIN_ONLY)) {
+			it("Should refuse a student: " + method.toUpperCase() + " " + url, async function () {
+				const response = await send(method, url, { user: TestHarness.USER1.id, token: userToken });
+				expect(response.status, method.toUpperCase() + " " + url + " let a student through").to.equal(401);
+				expect(response.body.success, "a refused request must not carry a payload").to.be.undefined;
+			});
+		}
+
+		for (const [method, url] of ADMIN_ONLY) {
+			it("Should refuse staff: " + method.toUpperCase() + " " + url, async function () {
+				// the isAdmin/isPrivileged distinction: staff can read the admin UI, but must not
+				// reach the routes that change state or impersonate
+				const response = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+				expect(response.status, method.toUpperCase() + " " + url + " let staff through").to.equal(401);
+				expect(response.body.success).to.be.undefined;
+			});
+		}
+
+		for (const [method, url] of PRIVILEGED) {
+			it("Should admit staff: " + method.toUpperCase() + " " + url, async function () {
+				// the other half: these routes exist for staff, so refusing them would be a
+				// regression the tests above could not distinguish from correct behaviour
+				const response = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+				expect(response.status, method.toUpperCase() + " " + url + " refused a staff member").to.not.equal(401);
+			});
+		}
+
+		for (const [method, url] of PRIVILEGED.concat(ADMIN_ONLY)) {
+			it("Should refuse an unauthenticated caller: " + method.toUpperCase() + " " + url, async function () {
+				const response = await send(method, url, {});
+				expect(response.status, method.toUpperCase() + " " + url + " served an anonymous caller").to.equal(401);
+			});
+		}
+	});
+
 	it("Should serve the same people from /people and the /students alias.", async function () {
 		// /portal/admin/students predates the view parameter; it must keep working unchanged
 		const viaPeople = await request(app).get("/portal/admin/people").set({ user: userName, token: userToken });
