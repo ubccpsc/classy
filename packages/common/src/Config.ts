@@ -79,10 +79,6 @@ export enum ConfigKey {
 	botName = "botName",
 	postback = "postback",
 
-	patchId = "patchId", // Used by classy
-	patchToolUrl = "patchToolUrl",
-	patchSourceRepo = "patchSourceRepo",
-
 	// ADMIN_TEAM_NAME
 	adminTeamName = "adminTeamName",
 	// STAFF_TEAM_NAME
@@ -162,10 +158,6 @@ export default class Config {
 				autotestPort: process.env.AUTOTEST_PORT,
 				autotestSecret: process.env.AUTOTEST_SECRET,
 				autotestJobs: process.env.AUTOTEST_JOBS,
-
-				patchId: process.env.PATCH_ID,
-				patchToolUrl: process.env.PATCH_TOOL_URL,
-				patchSourceRepo: process.env.PATCH_SOURCE_REPO,
 
 				adminTeamName: process.env.ADMIN_TEAM_NAME,
 				staffTeamName: process.env.STAFF_TEAM_NAME,
