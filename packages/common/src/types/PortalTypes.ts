@@ -27,10 +27,10 @@ export interface Payload {
 // Introduced to produce Classlist Change data - helps with understanding future
 // manual/automatic repo provisioning after Classlist update
 export interface ClasslistChangesTransport {
-	updated: StudentTransport[];
-	created: StudentTransport[];
-	removed: StudentTransport[];
-	classlist: StudentTransport[];
+	updated: PersonTransport[];
+	created: PersonTransport[];
+	removed: PersonTransport[];
+	classlist: PersonTransport[];
 	message: string;
 }
 
@@ -84,12 +84,31 @@ export interface AuthTransport {
 	isStaff: boolean;
 }
 
-export interface StudentTransportPayload {
-	success?: StudentTransport[]; // only set if defined
+/**
+ * Which people a listing should include.
+ *
+ * The admin listings default to "students", which is what the pages have always shown. "staff" and
+ * "all" exist because staff grades are useful when debugging a grade sheet: staff repos are
+ * provisioned so staff can see what students see, so they accumulate real results.
+ *
+ * - students: PersonKind.STUDENT only; excludes withdrawn students
+ * - staff:    PersonKind.STAFF, ADMIN and ADMINSTAFF
+ * - all:      everyone, including withdrawn students
+ */
+export type PersonView = "all" | "students" | "staff";
+
+export const PERSON_VIEWS: PersonView[] = ["students", "staff", "all"];
+
+export interface PersonTransportPayload {
+	success?: PersonTransport[]; // only set if defined
 	failure?: FailurePayload; // only set if defined
 }
 
-export interface StudentTransport {
+/**
+ * A person in an admin listing.
+ *
+ */
+export interface PersonTransport {
 	id: string;
 	firstName: string;
 	lastName: string;
@@ -103,6 +122,12 @@ export interface StudentTransport {
 	isStaff?: boolean;
 	kind?: PersonKind;
 }
+
+/** @deprecated use PersonTransport. */
+export type StudentTransport = PersonTransport;
+
+/** @deprecated use PersonTransportPayload. */
+export type StudentTransportPayload = PersonTransportPayload;
 
 export interface DeliverableTransportPayload {
 	success?: DeliverableTransport[]; // only set if defined

@@ -26,10 +26,12 @@ import {
 	DeliverableTransportPayload,
 	GradeTransportPayload,
 	Payload,
+	PERSON_VIEWS,
+	PersonTransportPayload,
+	PersonView,
 	ProvisionTransport,
 	RepositoryPayload,
 	RepositoryTransport,
-	StudentTransportPayload,
 	TeamFormationTransport,
 	TeamTransport,
 	TeamTransportPayload,
@@ -173,30 +175,51 @@ export default class AdminRoutes implements IREST {
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
 	 * @param next
 	 */
-	private static async getStudents(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.trace("AdminRoutes::getStudents(..) - start");
+	/**
+	 * The listing view named by the :view path parameter.
+	 *
+	 * Returns "students" when the parameter is absent, so the bare /portal/admin/students and
+	 * /portal/admin/grades routes keep behaving exactly as they always have; returns null for a
+	 * value that is not a view, so the caller can answer 400 rather than silently showing the
+	 * wrong people.
+	 */
+	private static viewFor(req: ClassyRequest): PersonView | null {
+		const raw = req.params.view;
+		if (typeof raw === "undefined") {
+			return "students";
+		}
+		return PERSON_VIEWS.indexOf(raw as PersonView) >= 0 ? (raw as PersonView) : null;
+	}
+
+	private static async getPeople(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		Log.trace("AdminRoutes::getPeople(..) - start");
 		const start = Date.now();
+
+		const view = AdminRoutes.viewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
 
 		const ac = new AdminController(AdminRoutes.ghc);
 		try {
-			const students = await ac.getStudents();
-			Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
-			const payload: StudentTransportPayload = { success: students };
+			const people = await ac.getPeople(view);
+			Log.info("AdminRoutes::getPeople( " + view + " ) - #: " + people.length + "; took: " + Util.took(start));
+			const payload: PersonTransportPayload = { success: people };
 			res.send(payload);
 			return;
 		} catch (err) {
-			return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res);
+			return AdminRoutes.handleError(400, "Unable to retrieve people list. ERROR: " + err.message, res);
 		}
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
@@ -210,7 +233,7 @@ export default class AdminRoutes implements IREST {
 		try {
 			const staff = await ac.getStaff();
 			Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
-			const payload: StudentTransportPayload = { success: staff };
+			const payload: PersonTransportPayload = { success: staff };
 			res.send(payload);
 			return;
 		} catch (err) {
@@ -496,10 +519,15 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::getGrades(..) - start");
 		const start = Date.now();
 
+		const view = AdminRoutes.viewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const grades = await cc.getGrades();
+			const grades = await cc.getGrades(view);
 			Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
 			const payload: GradeTransportPayload = { success: grades };
 			res.send(payload);
@@ -510,7 +538,7 @@ export default class AdminRoutes implements IREST {
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
@@ -1189,11 +1217,16 @@ export default class AdminRoutes implements IREST {
 		// visible to all privileged users
 		server.get("/portal/admin/course", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getCourse);
 		server.get("/portal/admin/deliverables", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDeliverables);
-		server.get("/portal/admin/students", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStudents);
+		// NOTE: /people rather than /students, because the view can select staff and admins too.
+		// /portal/admin/students is kept as an alias
+		server.get("/portal/admin/people", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
+		server.get("/portal/admin/people/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
+		server.get("/portal/admin/students", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
 		server.get("/portal/admin/staff", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStaff);
 		server.get("/portal/admin/teams", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getTeams);
 		server.get("/portal/admin/repositories", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getRepositories);
 		server.get("/portal/admin/grades", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
+		server.get("/portal/admin/grades/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
 		server.get("/portal/admin/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard); // detailed results
 		server.get("/portal/admin/export/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboardAll); // no num limit
 		server.get("/portal/admin/results/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults); // result summaries

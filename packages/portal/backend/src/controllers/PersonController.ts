@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { StudentTransport } from "@common/types/PortalTypes";
+import { PersonTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Person, PersonKind, Repository } from "../Types";
 
@@ -227,7 +227,7 @@ export class PersonController {
 		return msg;
 	}
 
-	public static personToTransport(person: Person): StudentTransport {
+	public static personToTransport(person: Person): PersonTransport {
 		if (typeof person === "undefined" || person === null) {
 			throw new Error("PersonController::personToTransport( ... ) - ERROR: person not provided.");
 		}
@@ -240,7 +240,7 @@ export class PersonController {
 			userUrl: person.URL,
 			studentNum: person.studentNumber,
 			labId: person.labId,
-		} as StudentTransport;
+		} as PersonTransport;
 	}
 
 	// /**

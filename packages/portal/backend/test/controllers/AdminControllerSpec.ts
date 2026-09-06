@@ -16,7 +16,7 @@ import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@b
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-import { AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport } from "@common/types/PortalTypes";
+import { AutoTestGradeTransport, GradeTransport, PersonTransport, TeamTransport } from "@common/types/PortalTypes";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -141,11 +141,11 @@ describe("AdminController", () => {
 	});
 
 	it("Should be able to get a list of students.", async function () {
-		const res = await ac.getStudents();
+		const res = await ac.getPeople();
 		expect(res).to.be.an("array");
 		expect(res.length).to.be.greaterThan(0);
 
-		const s: StudentTransport = {
+		const s: PersonTransport = {
 			firstName: "first_" + TestHarness.USER1.id,
 			lastName: "last_" + TestHarness.USER1.id,
 			id: TestHarness.USER1.id,
@@ -153,6 +153,7 @@ describe("AdminController", () => {
 			userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + TestHarness.USER1.github,
 			studentNum: null,
 			labId: "l1a",
+			kind: PersonKind.STUDENT, // the listing reports each person's kind, for the grades page column
 		};
 
 		expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -836,7 +837,7 @@ describe("AdminController", () => {
 
 		// This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
 		it("Should be able to mark students as withdrawn.", async () => {
-			const studentsBefore = await ac.getStudents();
+			const studentsBefore = await ac.getPeople();
 			let people = await pc.getAllPeople();
 
 			let numWithrdrawnBefore = 0;
@@ -860,7 +861,7 @@ describe("AdminController", () => {
 			}
 			expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
 
-			const studentsAfter = await ac.getStudents();
+			const studentsAfter = await ac.getPeople();
 			expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
 

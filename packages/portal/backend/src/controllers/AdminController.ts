@@ -9,9 +9,10 @@ import {
 	CourseTransport,
 	DeliverableTransport,
 	GradeTransport,
+	PersonTransport,
+	PersonView,
 	ProvisionTransport,
 	RepositoryTransport,
-	StudentTransport,
 	TeamTransport,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
@@ -245,16 +246,26 @@ export class AdminController {
 	/**
 	 * Gets the students associated with the course. Admins, staff, and withdrawn students are not included.
 	 *
-	 * @returns {Promise<StudentTransport[]>}
+	 * @returns {Promise<PersonTransport[]>}
 	 */
-	public async getStudents(): Promise<StudentTransport[]> {
+	/**
+	 * The people a listing should show.
+	 *
+	 * The grades page is built from this list: one row per person, with the deliverable
+	 * columns filled in from the grades. So a person missing here cannot show a grade.
+	 *
+	 * @param view defaults to "students", which is what this method has always returned
+	 */
+	public async getPeople(view: PersonView = "students"): Promise<PersonTransport[]> {
 		const people = await this.pc.getAllPeople();
 
-		const students: StudentTransport[] = [];
+		const students: PersonTransport[] = [];
 		for (const person of people) {
-			if (person.kind === PersonKind.STUDENT || person.kind === null) {
-				// null should be set on first login
-				const studentTransport = {
+			// a person whose kind is still null has not logged in yet; they were created by the
+			// classlist import, so they belong with the students
+			const unclassified = person.kind === null && view !== "staff";
+			if (unclassified || GradesController.matchesView(person, view)) {
+				const studentTransport: PersonTransport = {
 					id: person.id,
 					firstName: person.fName,
 					lastName: person.lName,
@@ -262,6 +273,7 @@ export class AdminController {
 					userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + person.githubId,
 					studentNum: person.studentNumber,
 					labId: person.labId,
+					kind: person.kind,
 				};
 				students.push(studentTransport);
 			}
@@ -272,12 +284,12 @@ export class AdminController {
 	/**
 	 * Gets the staff associated with the course.
 	 *
-	 * @returns {Promise<StudentTransport[]>}
+	 * @returns {Promise<PersonTransport[]>}
 	 */
-	public async getStaff(): Promise<StudentTransport[]> {
+	public async getStaff(): Promise<PersonTransport[]> {
 		const people = await this.pc.getAllPeople();
 
-		const adminStaff: StudentTransport[] = [];
+		const adminStaff: PersonTransport[] = [];
 		for (const person of people) {
 			if (person.kind === PersonKind.ADMIN || person.kind === PersonKind.STAFF || person.kind === PersonKind.ADMINSTAFF) {
 				const isAdmin = person.kind === PersonKind.ADMIN || person.kind === PersonKind.ADMINSTAFF;
@@ -346,10 +358,10 @@ export class AdminController {
 	 *
 	 * @returns {Promise<GradeTransport[]>}
 	 */
-	public async getGrades(): Promise<GradeTransport[]> {
-		Log.info("AdminController::getGrades() - start");
+	public async getGrades(view: PersonView = "students"): Promise<GradeTransport[]> {
+		Log.info("AdminController::getGrades( " + view + " ) - start");
 		const start = Date.now();
-		const allGrades = await this.gc.getAllGrades();
+		const allGrades = await this.gc.getAllGrades(view);
 		Log.trace("AdminController::getGrades() - getting grades took: " + Util.took(start));
 
 		let part = Date.now();

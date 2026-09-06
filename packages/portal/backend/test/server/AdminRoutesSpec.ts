@@ -20,8 +20,8 @@ import {
 	DeliverableTransport,
 	DeliverableTransportPayload,
 	Payload,
+	PersonTransportPayload,
 	RepositoryPayload,
-	StudentTransportPayload,
 	TeamFormationTransport,
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
@@ -73,9 +73,53 @@ describe("Admin Routes", function () {
 		await TestHarness.suiteAfter("Admin Routes");
 	});
 
+	it("Should serve the same people from /people and the /students alias.", async function () {
+		// /portal/admin/students predates the view parameter; it must keep working unchanged
+		const viaPeople = await request(app).get("/portal/admin/people").set({ user: userName, token: userToken });
+		const viaAlias = await request(app).get("/portal/admin/students").set({ user: userName, token: userToken });
+
+		expect(viaPeople.status).to.equal(200);
+		expect(viaAlias.status).to.equal(200);
+		expect(viaAlias.body.success).to.deep.equal(viaPeople.body.success);
+	});
+
+	it("Should select people by view.", async function () {
+		const students = await request(app).get("/portal/admin/people/students").set({ user: userName, token: userToken });
+		const staff = await request(app).get("/portal/admin/people/staff").set({ user: userName, token: userToken });
+		const all = await request(app).get("/portal/admin/people/all").set({ user: userName, token: userToken });
+
+		expect(students.status).to.equal(200);
+		expect(staff.status).to.equal(200);
+		expect(all.status).to.equal(200);
+
+		// every listed person reports a kind, which is what the grades page column shows
+		for (const person of all.body.success) {
+			expect(person).to.have.property("kind");
+		}
+
+		// staff and students must not overlap, and all must cover both
+		const staffIds = staff.body.success.map((p: any) => p.id);
+		const studentIds = students.body.success.map((p: any) => p.id);
+		const allIds = all.body.success.map((p: any) => p.id);
+		for (const id of staffIds) {
+			expect(studentIds, "a staff member must not appear in the students view").to.not.contain(id);
+			expect(allIds, "the all view must include staff").to.contain(id);
+		}
+		for (const id of studentIds) {
+			expect(allIds, "the all view must include students").to.contain(id);
+		}
+	});
+
+	it("Should reject an unknown view rather than guessing.", async function () {
+		const response = await request(app).get("/portal/admin/people/instructors").set({ user: userName, token: userToken });
+
+		expect(response.status).to.equal(400);
+		expect(response.body.failure.message).to.contain("Unknown view");
+	});
+
 	it("Should be able to get a list of students", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -92,7 +136,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of staff", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/staff";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -109,7 +153,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of students with cookies for authentication", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app)
@@ -128,7 +172,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -144,7 +188,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students with bad cookies for auth", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app)
@@ -162,7 +206,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students without any auth data", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url);
@@ -196,7 +240,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of teams if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/teams";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -212,7 +256,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of grades", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/grades";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -230,7 +274,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of grades if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/grades";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -246,7 +290,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of graded results for a deliverable", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 
 		const url = "/portal/admin/gradedResults/d0";
 		try {
@@ -265,7 +309,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of the best graded results for a deliverable", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 
 		const url = "/portal/admin/bestResults/d0";
 		try {

@@ -1,5 +1,12 @@
 import Log from "@common/Log";
-import { DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport } from "@common/types/PortalTypes";
+import {
+	DeliverableTransport,
+	GradeTransport,
+	GradeTransportPayload,
+	PERSON_VIEWS,
+	PersonTransport,
+	PersonView,
+} from "@common/types/PortalTypes";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -24,16 +31,45 @@ export class AdminGradesTab extends AdminPage {
 		document.getElementById("gradesListTable").innerHTML = ""; // clear target
 		document.getElementById("gradesSummaryTable").innerHTML = ""; // clear target
 
+		const view = AdminGradesTab.selectedView();
+
 		UI.showModal("Retrieving grades.");
 		const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
-		const students = await AdminStudentsTab.getStudents(this.remote);
-		const grades = await AdminGradesTab.getGrades(this.remote);
+		// NOTE: both calls take the view. Rows come from the people list, so asking only the grades
+		// endpoint for staff would return grades with no row to put them in.
+		const students = await AdminStudentsTab.getPeopleForView(this.remote, view);
+		const grades = await AdminGradesTab.getGrades(this.remote, view);
 		UI.hideModal();
 
 		this.render(grades, delivs, students);
+		this.wireViewSelector();
 	}
 
-	private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
+	/**
+	 * The view the selector is set to, or "students" when the page does not have one (a course can
+	 * customise admin.html and drop it).
+	 */
+	private static selectedView(): PersonView {
+		const select = document.querySelector("#gradesViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return "students";
+		}
+		return PERSON_VIEWS.indexOf(select.value as PersonView) >= 0 ? (select.value as PersonView) : "students";
+	}
+
+	private wireViewSelector(): void {
+		const select = document.querySelector("#gradesViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.init({}).catch((err) => {
+				Log.error("AdminGradesTab::wireViewSelector(..) - ERROR: " + err.message);
+			});
+		};
+	}
+
+	private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
 		Log.trace("AdminGradesTab::render(..) - start");
 
 		const headers: TableHeader[] = [
@@ -85,6 +121,15 @@ export class AdminGradesTab extends AdminPage {
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
+			{
+				// so a row's provenance is obvious once the listing can contain more than students
+				id: "kind",
+				text: "Kind",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
 
 			// more sections dynamically added
 		];
@@ -115,6 +160,7 @@ export class AdminGradesTab extends AdminPage {
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
 				{ value: student.labId, html: student.labId },
+				{ value: AdminGradesTab.kindLabel(student), html: AdminGradesTab.kindLabel(student) },
 			];
 			for (const deliv of delivs) {
 				let tableCell: TableCell = null;
@@ -185,7 +231,7 @@ export class AdminGradesTab extends AdminPage {
 		this.renderSummary(grades, delivs, students);
 	}
 
-	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
+	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
 		Log.trace("AdminGradesTab::renderSummary(..) - start");
 
 		const st = new SortableTable(AdminGradesTab.buildSummaryHeaders(), "#gradesSummaryTable");
@@ -340,7 +386,7 @@ export class AdminGradesTab extends AdminPage {
 	 * Groups scores by deliverable, skipping grades without a numeric score and grades belonging
 	 * to withdrawn students (labId "W"), who should not affect the class summary.
 	 */
-	private static collectScoresByDeliv(grades: GradeTransport[], students: StudentTransport[]): { [delivId: string]: number[] } {
+	private static collectScoresByDeliv(grades: GradeTransport[], students: PersonTransport[]): { [delivId: string]: number[] } {
 		const gradeMap: { [delivId: string]: number[] } = {};
 
 		for (const grade of grades) {
@@ -417,11 +463,24 @@ export class AdminGradesTab extends AdminPage {
 		return total;
 	}
 
-	public static async getGrades(remote: string): Promise<GradeTransport[]> {
-		Log.info("AdminGradesTab::getGrades( .. ) - start");
+	/**
+	 * What to show in the Kind column; blank when Classy does not know.
+	 *
+	 * Unset people include staff who have never logged in, and students
+	 * who are mid oauth login flow (unfortunate, probably worth fixing).
+	 */
+	private static kindLabel(student: PersonTransport): string {
+		if (typeof student.kind !== "string" || student.kind === "") {
+			return "";
+		}
+		return student.kind;
+	}
+
+	public static async getGrades(remote: string, view: PersonView = "students"): Promise<GradeTransport[]> {
+		Log.info("AdminGradesTab::getGrades( " + view + " ) - start");
 		try {
 			const start = Date.now();
-			const url = remote + "/portal/admin/grades";
+			const url = remote + "/portal/admin/grades/" + view;
 			const options = AdminView.getOptions();
 
 			const response = await fetch(url, options);

@@ -108,6 +108,18 @@
                 <ons-list-header>Grade Summary</ons-list-header>
                 <div id="gradesSummaryTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <ons-list-header>Deliverable Grades</ons-list-header>
+                <ons-list-item>
+                    Show:
+                    <select id="gradesViewSelect" style="margin-left: 1em;">
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
+                        <option value="all">All (incl. withdrawn)</option>
+                    </select>
+                    <span style="padding-left: 1em; font-size: smaller;">
+                        Staff repositories are provisioned so staff can see what students see, so they collect real
+                        grades &mdash; useful when checking the grade sheet.
+                    </span>
+                </ons-list-item>
                 <div id="gradesListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
@@ -187,7 +199,6 @@
                 <div id="adminDockerBuildDialog-logs-text">
                 </div>
             </ons-scroller>
-            </div>
             <!--
             <div id="adminDockerBuildDialog-footer-container">
                 <ons-bottom-toolbar>
@@ -218,7 +229,6 @@
             <ons-button>
                 Close
             </ons-button>
-            </div>
         </ons-dialog>
     </template>
 
@@ -291,9 +301,9 @@
                         query. This action
                         just marks students not present in this list as withdrawn. It does not delete any teams, repos,
                         grades, or results
-                        although the grades view will not return grades for students who are withdrawn (e.g., so the
-                        course statistics are
-                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab
+                        although the grades view does not show withdrawn students by default (e.g., so the course
+                        statistics are correct); switch that page's Show selector to All to see them.
+                        NOTE: you still need to manually upload the classlist.csv if you want to update lab
                         sections, etc.
                         <br/><br/>
                         Runs in the background, so this page can be closed while it works.
@@ -1334,7 +1344,6 @@
                         <select id="provisionRepoDeliverableSelect" style="margin-left: 1em;">
                             <option value="''">-None-</option>
                         </select></div>
-                    </div>
                     <div class="expandable-content">
                         Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you
                         want to provision
@@ -1572,7 +1581,6 @@
                         <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch
                             List
                         </ons-button>
-                    </div>
                     </div>
                     <div class="expandable-content">
                         This is a list of all patches that the pull request tool currently has available.

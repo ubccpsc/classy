@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport } from "@common/types/PortalTypes";
+import { CourseTransport, Payload, PersonTransport, ProvisionTransport, TeamFormationTransport } from "@common/types/PortalTypes";
 import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
 import { OnsButtonElement } from "onsenui";
 import { Network } from "../util/Network";
@@ -579,7 +579,7 @@ export class AdminConfigTab extends AdminPage {
 
 	private showClasslistChanges(classlistChanges: any): void {
 		Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
-		const mapToTextAndSubtext = function (people: StudentTransport[]) {
+		const mapToTextAndSubtext = function (people: PersonTransport[]) {
 			return people.map(function (person) {
 				return {
 					text: person.id + "/" + person.studentNum + "/" + person.githubId + ": " + person.firstName + " " + person.lastName,

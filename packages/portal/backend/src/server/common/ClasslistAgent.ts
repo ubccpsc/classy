@@ -1,7 +1,7 @@
 import { JobContext } from "@backend/controllers/JobController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
+import { ClasslistChangesTransport, ClasslistTransport, PersonTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
 import * as https from "https";
@@ -143,7 +143,7 @@ export class ClasslistAgent {
 		const afterCSIDs = afterPeople.map(function (person) {
 			return person.csId;
 		});
-		const classlist: StudentTransport[] = afterPeople.map(function (person) {
+		const classlist: PersonTransport[] = afterPeople.map(function (person) {
 			return PersonController.personToTransport(person);
 		});
 

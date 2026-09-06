@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { StudentTransport, StudentTransportPayload } from "@common/types/PortalTypes";
+import { PersonTransport, PersonTransportPayload, PersonView } from "@common/types/PortalTypes";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -25,13 +25,13 @@ export class AdminStudentsTab {
 		}
 
 		UI.showModal("Retrieving students.");
-		const students = await AdminStudentsTab.getStudents(this.remote);
+		const students = await AdminStudentsTab.getPeopleForView(this.remote);
 		UI.hideModal();
 
 		this.render(students, opts.labSection);
 	}
 
-	private render(students: StudentTransport[], labSection: string): void {
+	private render(students: PersonTransport[], labSection: string): void {
 		Log.trace("AdminStudentsTab::render(..) - start");
 
 		const headers: TableHeader[] = [
@@ -206,7 +206,7 @@ export class AdminStudentsTab {
 		}
 	}
 
-	public static async getStaff(remote: string): Promise<StudentTransport[]> {
+	public static async getStaff(remote: string): Promise<PersonTransport[]> {
 		Log.info("AdminStudentsTab::getStaff( .. ) - start");
 		try {
 			return await AdminStudentsTab.getPeople(remote + "/portal/admin/staff");
@@ -215,16 +215,21 @@ export class AdminStudentsTab {
 		}
 	}
 
-	public static async getStudents(remote: string): Promise<StudentTransport[]> {
-		Log.info("AdminStudentsTab::getStudents( .. ) - start");
+	/**
+	 * The people a view selects. Named for people, not students: the staff and all views return
+	 * staff and admins too, which is what the grades page needs to show their grades.
+	 */
+	public static async getPeopleForView(remote: string, view: PersonView = "students"): Promise<PersonTransport[]> {
+		Log.info("AdminStudentsTab::getPeopleForView( " + view + " ) - start");
 		try {
-			return await AdminStudentsTab.getPeople(remote + "/portal/admin/students");
+			// the grades page builds its rows from this list, so it has to be able to ask for staff
+			return await AdminStudentsTab.getPeople(remote + "/portal/admin/people/" + view);
 		} catch (err) {
-			Log.error("AdminStudentsTab::getStudents( .. ) - ERROR: " + err.message);
+			Log.error("AdminStudentsTab::getPeopleForView( .. ) - ERROR: " + err.message);
 		}
 	}
 
-	public static async getPeople(url: string): Promise<StudentTransport[]> {
+	public static async getPeople(url: string): Promise<PersonTransport[]> {
 		Log.info("AdminStudentsTab::getPeople( .. ) - start; url: " + url);
 
 		try {
@@ -235,7 +240,7 @@ export class AdminStudentsTab {
 
 			if (response.status === 200) {
 				Log.trace("AdminStudentsTab::getPeople(..) - 200 received");
-				const json: StudentTransportPayload = await response.json();
+				const json: PersonTransportPayload = await response.json();
 				// Log.trace("AdminView::handleStudents(..)  - payload: " + JSON.stringify(json));
 				if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
 					Log.trace("AdminStudentsTab::getPeople(..)  - worked; # students: " + json.success.length + "; took: " + UI.took(start));

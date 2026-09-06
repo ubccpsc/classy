@@ -5,9 +5,9 @@ import {
 	GradeTransport,
 	GradeTransportPayload,
 	Payload,
+	PersonTransport,
 	RepositoryPayload,
 	RepositoryTransport,
-	StudentTransport,
 	TeamFormationTransport,
 	TeamTransport,
 	TeamTransportPayload,
@@ -386,7 +386,7 @@ export default class GeneralRoutes implements IREST {
 		RouteUtil.handleError("GeneralRoutes", code, msg, res);
 	}
 
-	private static async performGetPerson(identity: ClassyIdentity): Promise<StudentTransport> {
+	private static async performGetPerson(identity: ClassyIdentity): Promise<PersonTransport> {
 		const ac = new AuthController();
 		// NOTE: validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students
