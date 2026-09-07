@@ -272,7 +272,7 @@ export class GradesController {
 		const existingGrade = await this.db.getGrade(grade.personId, grade.delivId);
 		if (existingGrade !== null) {
 			Log.trace("GradesController::saveGrade(..) - updating existing grade");
-			(grade.custom as any).previousGrade = existingGrade; // persist previous grade
+			grade.custom.previousGrade = existingGrade; // persist previous grade
 			if (grade.URL === null && existingGrade.URL !== null) {
 				grade.URL = existingGrade.URL; // restore the URL, if it exists on the previous but not on the update (e.g., for CSV upload)
 			}

@@ -17,6 +17,21 @@ import Util from "@common/Util";
 
 import * as fs from "fs";
 
+// Hands production code the mock GitHubActions it must not name itself.
+//
+// GitHubActions.getInstance() returns a mock when it detects mocha, but it used to find that mock
+// by requiring this repo's test directory from production code. Registering it from here keeps the
+// dependency pointing test -> prod, which is the only direction that survives a strict package
+// manager. Module scope is deliberate: every spec in both packages imports TestHarness, so this
+// runs during mocha's file-loading pass, before any test body can call getInstance().
+//
+// The require is deferred into the provider rather than imported at the top of this file because
+// TestGitHubActions imports TestHarness; importing it here as well would close the cycle.
+GitHubActions.setMockProvider(() => {
+	const { TestGitHubActions } = require("../../portal/backend/test/controllers/TestGitHubActions");
+	return new TestGitHubActions();
+});
+
 export class TestHarness {
 	public static readonly SKIP_GITHUB = "need a live GitHub instance (run on CI, or set Factory.OVERRIDE)";
 	public static readonly SKIP_DOCKER = "need a reachable Docker daemon (set DOCKER_HOST, or start Docker)";

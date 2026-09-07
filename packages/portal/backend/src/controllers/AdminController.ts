@@ -20,7 +20,6 @@ import { Factory } from "../Factory";
 import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
-import { GitHubActions } from "./GitHubActions";
 import { GitHubController, IGitHubController } from "./GitHubController";
 import { GradesController } from "./GradesController";
 import { JobContext } from "./JobController";
@@ -470,7 +469,9 @@ export class AdminController {
 	public async performStudentWithdraw(requesterId: string = null, ctx: JobContext = null): Promise<string> {
 		Log.info("AdminController::performStudentWithdraw() - start");
 		await ctx?.progress(0, 0, "reading the students team from GitHub");
-		const gha = GitHubActions.getInstance(true);
+		// the injected client, not GitHubActions.getInstance(true): forcing the live client here
+		// meant this could only ever be exercised against the real org
+		const gha = this.gh.getActions();
 		const registeredGithubIds = await gha.getTeamMembers("students");
 
 		// Sanity floor. markStudentsWithdrawn() withdraws every STUDENT whose githubId is NOT in
@@ -1097,7 +1098,6 @@ export class AdminController {
 		return unreleasedRepositoryTransport;
 	}
 
-	/* istanbul ignore next */
 	/**
 	 * Synchronises the database objects with GitHub. Does _NOT_ remove any DB objects, just makes
 	 * sure their properties match those in the GitHub org. This is useful if manual changes are made
@@ -1112,7 +1112,11 @@ export class AdminController {
 		Log.info("AdminController::dbSanityCheck() - start");
 		const start = Date.now();
 
-		const gha = GitHubActions.getInstance(true);
+		// The injected client. This used to be GitHubActions.getInstance(true), which forced the
+		// live client before the method had even looked at its own dryRun flag -- so there was no
+		// way to test the most destructive admin operation Classy has: a local run talked to the
+		// real org, and a dryRun=false run modified it.
+		const gha = this.gh.getActions();
 		const tc = new TeamController();
 		const config = Config.getInstance();
 

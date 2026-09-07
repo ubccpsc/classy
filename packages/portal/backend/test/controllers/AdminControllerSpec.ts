@@ -510,6 +510,10 @@ describe("AdminController", () => {
 		class ScriptedUnreleaseController implements IGitHubController {
 			public seen: string[] = [];
 
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
+
 			public constructor(private readonly behaviour: (repoId: string) => boolean | Error) {}
 
 			public async provisionRepository(): Promise<boolean> {
@@ -673,6 +677,10 @@ describe("AdminController", () => {
 		// controller it was constructed with rather than building its own.
 		class FatalController implements IGitHubController {
 			public attempts = 0;
+
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
 
 			public async provisionRepository(): Promise<boolean> {
 				this.attempts++;

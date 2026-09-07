@@ -344,6 +344,9 @@ export class GitHubActions implements IGitHubActions {
 	public static readonly ABSENCE_RECHECK_DELAY = 500;
 
 	private static instance: IGitHubActions = null;
+
+	/** set by the test harness; see setMockProvider() */
+	private static mockProvider: (() => IGitHubActions) | null = null;
 	private readonly apiPath: string | null = null;
 	private readonly gitHubUserName: string | null = null;
 	private readonly gitHubAuthToken: string | null = null;
@@ -372,6 +375,24 @@ export class GitHubActions implements IGitHubActions {
 		this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubBotToken);
 		this.dc = DatabaseController.getInstance();
 		Log.trace("GitHubActions::<init> - url: " + this.apiPath + "/" + this.org);
+	}
+
+	/**
+	 * Supplies the mock returned by getInstance() when it is called from a test.
+	 *
+	 * getInstance() used to reach for the mock itself, with
+	 * `require("../../test/controllers/TestGitHubActions")` inline -- a test file on production
+	 * code's dependency graph, flagged in place with "TODO: having this test dependency in prod
+	 * code is poor". It is also what stopped a stricter package manager (pnpm, Yarn PnP) being
+	 * adopted, since those do not let a package reach outside its declared dependencies.
+	 *
+	 * The direction is now inverted: production names no test file, and the test harness pushes
+	 * its mock in (packages/common/test/TestHarness.ts, at module scope, so it is registered
+	 * before any spec body runs). A test that reaches getInstance() with nothing registered gets
+	 * a thrown error rather than a silent fallback to the live client.
+	 */
+	public static setMockProvider(provider: () => IGitHubActions): void {
+		GitHubActions.mockProvider = provider;
 	}
 
 	public static getInstance(forceReal?: boolean): IGitHubActions {
@@ -410,9 +431,13 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		if (GitHubActions.instance === null) {
-			// TODO: having this test dependency in prod code is poor
-			const { TestGitHubActions } = require("../../test/controllers/TestGitHubActions");
-			GitHubActions.instance = new TestGitHubActions();
+			if (GitHubActions.mockProvider === null) {
+				throw new Error(
+					"GitHubActions::getInstance() - running under mocha, but no mock has been registered. " +
+						"Importing TestHarness registers one; see GitHubActions.setMockProvider()."
+				);
+			}
+			GitHubActions.instance = GitHubActions.mockProvider();
 		}
 
 		// NOTE: warn, not test-level. A live spec that ends up here is silently running against a

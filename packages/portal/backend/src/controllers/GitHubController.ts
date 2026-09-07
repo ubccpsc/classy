@@ -42,6 +42,15 @@ export interface IGitHubController {
 	getTeamUrl(team: Team): Promise<string>;
 
 	releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
+
+	/**
+	 * The GitHub client this controller was constructed with.
+	 *
+	 * Callers that hold an IGitHubController should go through it rather than calling
+	 * GitHubActions.getInstance(true) themselves: forcing the live client makes the calling code
+	 * untestable, because a test then talks to the real org (see AdminController.dbSanityCheck).
+	 */
+	getActions(): IGitHubActions;
 }
 
 export interface GitPersonTuple {
@@ -80,6 +89,10 @@ export class GitHubController implements IGitHubController {
 
 	public constructor(gha: IGitHubActions) {
 		this.gha = gha;
+	}
+
+	public getActions(): IGitHubActions {
+		return this.gha;
 	}
 
 	public getRepositoryUrl(repo: Repository): string {
