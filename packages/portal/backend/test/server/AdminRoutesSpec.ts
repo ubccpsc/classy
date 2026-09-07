@@ -31,7 +31,7 @@ import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
+import { Person, PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
 
 describe("Admin Routes", function () {
 	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
@@ -545,6 +545,102 @@ describe("Admin Routes", function () {
 		// expect(body.success).to.have.lengthOf(101);
 
 		// should confirm body.success objects (at least one)
+	});
+
+	describe("results and dashboard filters", function () {
+		/**
+		 * The :view segment and the ?person= query, at the route.
+		 *
+		 * Every other results test uses the bare /results/:delivId/:repoId form, so nothing covered
+		 * the two filters the admin UI actually sends. A wrong path registration, a renamed param,
+		 * or a query that never reaches the controller would all present the same way: a page that
+		 * silently ignores its own dropdowns.
+		 */
+		const dbc = DatabaseController.getInstance();
+		let student: Person;
+		let staff: Person;
+		let studentSha: string;
+		let staffSha: string;
+
+		before(async function () {
+			student = TestHarness.createPerson("routeFilterStudent", "routeFilterStudent", "routeFilterStudentCwl", PersonKind.STUDENT);
+			staff = TestHarness.createPerson("routeFilterStaff", "routeFilterStaff", "routeFilterStaffCwl", PersonKind.STAFF);
+			await dbc.writePerson(student);
+			await dbc.writePerson(staff);
+
+			// updated in place (writeResult upserts) so no counts move for other tests
+			const results = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+			expect(results.length, "setup: fixture results must exist").to.be.greaterThan(1);
+
+			results[0].people = [student.id];
+			await dbc.writeResult(results[0]);
+			studentSha = results[0].commitSHA;
+
+			results[1].people = [staff.id];
+			await dbc.writeResult(results[1]);
+			staffSha = results[1].commitSHA;
+		});
+
+		async function shasFrom(url: string): Promise<string[]> {
+			const response = await request(app).get(url).set({ user: userName, token: userToken });
+			expect(response.status, url).to.equal(200);
+			expect(response.body.success, url).to.be.an("array");
+			return (response.body.success as any[]).map((r) => r.commitSHA);
+		}
+
+		it("Should filter results by the :view segment.", async function () {
+			const students = await shasFrom("/portal/admin/results/any/any/students");
+			expect(students).to.contain(studentSha);
+			expect(students, "staff results are excluded").to.not.contain(staffSha);
+
+			const staffOnly = await shasFrom("/portal/admin/results/any/any/staff");
+			expect(staffOnly).to.contain(staffSha);
+			expect(staffOnly).to.not.contain(studentSha);
+		});
+
+		it("Should return everything for the all view, and without a view at all.", async function () {
+			// the bare route is what every older client sends; it must keep meaning "everything"
+			for (const url of ["/portal/admin/results/any/any/all", "/portal/admin/results/any/any"]) {
+				const shas = await shasFrom(url);
+				expect(shas, url).to.contain(studentSha);
+				expect(shas, url).to.contain(staffSha);
+			}
+		});
+
+		it("Should reject a view that is not a view.", async function () {
+			const response = await request(app).get("/portal/admin/results/any/any/nonsense").set({ user: userName, token: userToken });
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure.message, "the message should say what was expected").to.contain("students");
+		});
+
+		it("Should filter results by ?person=, accepting a CWL.", async function () {
+			// the admin UI sends a CWL; Result.people holds Person.ids, so both must resolve
+			const byCwl = await shasFrom("/portal/admin/results/any/any/all?person=" + student.githubId);
+			expect(byCwl).to.contain(studentSha);
+			expect(byCwl, "and nobody else's").to.not.contain(staffSha);
+
+			const byId = await shasFrom("/portal/admin/results/any/any/all?person=" + student.id);
+			expect(byId).to.contain(studentSha);
+			expect(byId).to.not.contain(staffSha);
+		});
+
+		it("Should ignore a blank ?person= rather than matching nobody.", async function () {
+			const shas = await shasFrom("/portal/admin/results/any/any/all?person=");
+			expect(shas, "a blank filter means everyone").to.contain(studentSha);
+			expect(shas).to.contain(staffSha);
+		});
+
+		it("Should apply the same filters on the dashboard route.", async function () {
+			const students = await shasFrom("/portal/admin/dashboard/any/any/students");
+			expect(students, "dashboard honours :view").to.not.contain(staffSha);
+
+			const byCwl = await shasFrom("/portal/admin/dashboard/any/any/all?person=" + student.githubId);
+			expect(byCwl, "dashboard honours ?person=").to.not.contain(staffSha);
+
+			const bad = await request(app).get("/portal/admin/dashboard/any/any/nonsense").set({ user: userName, token: userToken });
+			expect(bad.status, "and rejects a bad view").to.equal(400);
+		});
 	});
 
 	it("Should not be able to get a list of results if the requester is not privileged", async function () {

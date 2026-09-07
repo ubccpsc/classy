@@ -560,6 +560,43 @@ describe("PrairieLearnAgent", function () {
 			expect((after[0].output as any).report.scoreOverall, "the damaged report is replaced").to.not.equal(-999);
 		});
 
+		it("Should not touch grades.", async function () {
+			// reinterpret rebuilds what the admin views render. The grade comes from the score the
+			// grader reported, which a mapping change does not alter -- and rewriting grades from an
+			// archive is a much bigger promise than fixing a display. This pins that boundary.
+			const inst = instance({ assessment_instance_id: "reinterpGrade", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpGrade" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const before = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
+			expect(before, "setup: a grade must exist").to.not.be.null;
+
+			await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			const after = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
+			expect(after.score, "the grade is untouched").to.equal(before.score);
+			expect(after.custom.displayScore).to.equal(before.custom.displayScore);
+			expect(after.timestamp, "not even rewritten with a new timestamp").to.equal(before.timestamp);
+		});
+
+		it("Should be safe to run twice.", async function () {
+			// an admin who presses the button twice, or a job that is retried, must not accumulate
+			// results or change the answer the second time
+			const inst = instance({ assessment_instance_id: "reinterpTwice", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpTwice" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const first = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+			const countAfterFirst = (await dc.getResults(DELIV_ID, "reinterpTwice")).length;
+			const reportAfterFirst = JSON.stringify((await dc.getResults(DELIV_ID, "reinterpTwice"))[0].output.report);
+
+			const second = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			expect(second.resultsSeen).to.equal(first.resultsSeen);
+			expect((await dc.getResults(DELIV_ID, "reinterpTwice")).length, "no duplicates").to.equal(countAfterFirst);
+			expect(JSON.stringify((await dc.getResults(DELIV_ID, "reinterpTwice"))[0].output.report), "same answer").to.equal(reportAfterFirst);
+		});
+
 		it("Should report results that have no archived payload rather than failing them.", async function () {
 			// rows written before the archive existed: the input is gone, so only a forced sync can
 			// refresh them. They must be counted, not silently skipped and not counted as errors.

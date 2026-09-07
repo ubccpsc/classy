@@ -14,6 +14,93 @@ import Util from "@common/Util";
 import "@common/GlobalSpec"; // load first
 import "./PersonControllerSpec";
 
+describe("CourseController::interpretSubmission", () => {
+	/**
+	 * The DEFAULT reading of an externally-graded submission.
+	 *
+	 * This is what any course using the PrairieLearn connector inherits unless it overrides the
+	 * hook, so it is the fallback that decides grades for a course that has not thought about it.
+	 * Exercised directly here; PrairieLearnAgentSpec only reaches it through a whole sync.
+	 *
+	 * Deliberately NO bucket-to-number table: Classy used to carry CS210's rubric and no longer
+	 * does, so a submission whose grader reports no number is not gradeable rather than being
+	 * assigned one.
+	 */
+	const cc = new CourseController(null);
+	const deliv: any = { id: "LA1" };
+
+	function submission(overall: any, succeeded: boolean = true): any {
+		return { feedback: { succeeded: succeeded, results: { report: { overall: overall } } } };
+	}
+
+	it("Should take the grader's score and band verbatim.", async () => {
+		const result = await cc.interpretSubmission(submission({ score: 85.3, bucket: "developing", message: "some checks failed" }), deliv);
+
+		expect(result).to.not.be.null;
+		expect(result.score).to.equal(85.3);
+		expect(result.displayScore).to.equal("developing");
+		expect(result.custom.bucket).to.equal("developing");
+	});
+
+	it("Should rank by the score, so the best attempt is the highest-scoring one.", async () => {
+		const low = await cc.interpretSubmission(submission({ score: 10, bucket: "beginning" }), deliv);
+		const high = await cc.interpretSubmission(submission({ score: 90, bucket: "proficient" }), deliv);
+
+		expect(high.rank).to.be.greaterThan(low.rank);
+	});
+
+	it("Should produce a report the admin views can render.", async () => {
+		// scoreOverall is what the Results and Dashboard tabs read; the grader's own shape has no
+		// such field, which is the whole reason this translation exists
+		const result = await cc.interpretSubmission(submission({ score: 72, bucket: "developing", message: "hello" }), deliv);
+
+		expect(result.report.scoreOverall).to.equal(72);
+		expect(result.report.feedback).to.equal("hello");
+		// the default cannot know a course's per-test shape, so the name lists are empty rather than wrong
+		expect(result.report.passNames).to.deep.equal([]);
+		expect(result.report.failNames).to.deep.equal([]);
+		expect(result.report.scoreTest).to.be.null;
+		expect(result.report.scoreCover).to.be.null;
+	});
+
+	it("Should accept a score of exactly zero.", async () => {
+		// 0 is a real grade; only a NEGATIVE score means "no score here"
+		const result = await cc.interpretSubmission(submission({ score: 0, bucket: "beginning" }), deliv);
+
+		expect(result).to.not.be.null;
+		expect(result.score).to.equal(0);
+	});
+
+	it("Should treat a submission with a band but no number as not gradeable.", async () => {
+		// the rubric that used to turn a band into a number lives in the course plugin now, so the
+		// default has nothing to grade on. Skipping is right; inventing a number would not be.
+		expect(await cc.interpretSubmission(submission({ bucket: "proficient" }), deliv)).to.be.null;
+	});
+
+	it("Should reject a negative score rather than grading it.", async () => {
+		expect(await cc.interpretSubmission(submission({ score: -1, bucket: "beginning" }), deliv)).to.be.null;
+	});
+
+	it("Should skip a submission whose grading job did not succeed.", async () => {
+		expect(await cc.interpretSubmission(submission({ score: 90 }, false), deliv)).to.be.null;
+	});
+
+	it("Should skip a submission with no feedback or no report.", async () => {
+		expect(await cc.interpretSubmission({}, deliv)).to.be.null;
+		expect(await cc.interpretSubmission({ feedback: null }, deliv)).to.be.null;
+		expect(await cc.interpretSubmission({ feedback: { succeeded: true, results: {} } }, deliv)).to.be.null;
+	});
+
+	it("Should cope with a band that is missing or blank.", async () => {
+		// a course may report a number and no band at all; that is gradeable, just not bandable
+		const result = await cc.interpretSubmission(submission({ score: 55 }), deliv);
+
+		expect(result).to.not.be.null;
+		expect(result.score).to.equal(55);
+		expect(result.displayScore, "no band to show").to.be.undefined;
+	});
+});
+
 describe("CourseController", () => {
 	let cc: CourseController;
 
