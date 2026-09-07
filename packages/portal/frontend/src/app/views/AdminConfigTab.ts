@@ -636,6 +636,12 @@ export class AdminConfigTab extends AdminPage {
 				ran: "Last synced",
 				neverRun: "Never synced.",
 				detail: AdminConfigTab.describePrairieLearnSummary,
+				// a Result's report is derived at sync time and then stored, so changing how the
+				// payload is read does not update rows that are already synced; this forces them
+				params: () => {
+					const force = document.querySelector("#adminPrairieLearnForce") as HTMLInputElement;
+					return { force: force !== null && force.checked === true };
+				},
 			});
 		}
 

@@ -530,6 +530,29 @@ describe("PrairieLearnAgent", function () {
 		expect(second.instancesSynced).to.equal(0);
 	});
 
+	it("Should re-sync an unchanged instance when forced.", async function () {
+		// The report stored on a Result is DERIVED at sync time by the course's interpretSubmission.
+		// Changing that interpretation does not rewrite rows that are already synced, and the
+		// watermark would skip them forever -- so a forced run is the only way to pick up the new
+		// reading. This is not hypothetical: it is what a plugin change requires.
+		const inst = instance({ assessment_instance_id: "forceSync", assessment_label: DELIV_ID });
+		const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "forceSync" })];
+
+		const first = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+		expect(first.instancesSynced).to.equal(1);
+
+		// nothing about the instance changed, so a normal run skips it
+		const second = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+		expect(second.instancesSkipped, "unchanged means skipped").to.equal(1);
+		expect(second.instancesSynced).to.equal(0);
+
+		// ...unless forced, which re-reads and rewrites it
+		const forced = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id, undefined, true);
+		expect(forced.instancesSkipped, "force ignores the watermark").to.equal(0);
+		expect(forced.instancesSynced).to.equal(1);
+		expect(forced.resultsWritten, "and rewrites the result, so a new report is stored").to.be.greaterThan(0);
+	});
+
 	it("Should resync an instance whose modified_at advanced.", async function () {
 		const calls: string[] = [];
 		await new PrairieLearnAgent(fetcherFor([instance()], allBuckets, calls)).sync(TestHarness.ADMIN1.id);

@@ -226,7 +226,16 @@ export class PrairieLearnAgent {
 	 * @param ctx job context; progress and cancellation
 	 * @returns {Promise<PLSyncSummary>}
 	 */
-	public async sync(requesterId: string, ctx?: JobContext): Promise<PLSyncSummary> {
+	/**
+	 * @param force re-sync every instance, ignoring the watermark.
+	 *
+	 * The watermark exists so a routine sync does not refetch work that has not changed. But a
+	 * Result's report is *derived at sync time* by the course's interpretSubmission and then stored:
+	 * changing that interpretation does not rewrite what is already in the database, and an
+	 * unchanged instance will be skipped forever. This is the escape hatch for that -- run it once
+	 * after changing how a payload is read.
+	 */
+	public async sync(requesterId: string, ctx?: JobContext, force: boolean = false): Promise<PLSyncSummary> {
 		const start = Date.now();
 		Log.info("PrairieLearnAgent::sync( " + requesterId + " ) - start");
 
@@ -271,7 +280,7 @@ export class PrairieLearnAgent {
 				// an attempt by someone with no Person record cannot be written anywhere and is
 				// reported in summary.unmatchedUids instead.
 				const close = deliverables.get(instance.assessment_label)?.closeTimestamp ?? Number.MAX_SAFE_INTEGER;
-				if ((await this.isUnchanged(instance, close)) === true) {
+				if (force === false && (await this.isUnchanged(instance, close)) === true) {
 					summary.instancesSkipped++;
 					continue;
 				}

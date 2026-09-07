@@ -167,7 +167,7 @@ export default class BackendServer {
 			// leaves its record claiming to be RUNNING forever.
 			const jc = JobController.getInstance();
 			jc.register("prairielearn-sync", async (job, ctx) => {
-				return await new PrairieLearnAgent().sync(job.requestedBy, ctx);
+				return await new PrairieLearnAgent().sync(job.requestedBy, ctx, job.params?.force === true);
 			});
 			jc.register("classlist-update", async (job, ctx) => {
 				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);

@@ -374,6 +374,11 @@
                             Sync grades from PrairieLearn.&nbsp;&nbsp;
                             <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
                             <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                            <label style="padding-left: 1em; font-size: smaller;">
+                                <input type="checkbox" id="adminPrairieLearnForce" />
+                                Re-sync everything (ignore the watermark; needed after the grader or its
+                                interpretation changes, since reports are derived when a result is synced)
+                            </label>
                         </div>
                         <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never synced.
