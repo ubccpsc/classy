@@ -348,6 +348,15 @@ export interface AutoTestResultSummaryTransport {
 	scoreOverall: number | null; // null if result !== "SUCCESS"
 	scoreCover: number | null; // null if result !== "SUCCESS"
 	scoreTests: number | null; // null if result !== "SUCCESS"
+
+	// Person.ids this result belongs to. The admin views could not name the owner of a result
+	// without this; for PrairieLearn rows, where repoId is an assessment instance id rather than
+	// anything human-readable, it is the only identifying field.
+	people: string[];
+
+	// GradeReport.custom, verbatim -- the container's own channel to the UI layer. NOT
+	// Result.output.custom, which is the archive (210 keeps submitted files there) and is
+	// deliberately not transported.
 	custom: any;
 }
 

@@ -183,6 +183,42 @@ As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default
 
 It is up to you to expand and build upon the default templates, while naming new files, to allow for easily mergeable upstream updates from the `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes before the new term starts for security and new features.**
 
+### Testing a plugin
+
+Plugin code is testable, and should be tested when it does anything a mistake would be expensive in
+-- CS210's `interpretSubmission`, for instance, decides every student's grade from its grader's
+payload, and Classy deliberately cannot check that reading for it.
+
+Put specs under `portal/<backend|frontend>/test/` in your plugin repo, named `*Spec.ts`, then from
+the Classy checkout:
+
+```
+yarn run test:plugin
+```
+
+That builds everything and runs `plugins/*/portal/*/test/*Spec.js`. Your plugin has to be present at
+`plugins/<name>/` for this, which is where a deployment puts it anyway; locally a symlink is enough:
+
+```
+ln -s /path/to/your-plugin plugins/<name>
+```
+
+Three things about the setup are not obvious:
+
+- **The root `tsc` compiles your specs already.** `tsconfig.json` has no `include` and excludes only
+  `node_modules`, so anything under `plugins/` is built with everything else. There is no separate
+  build step and no `package.json` needed in the plugin.
+- **`--preserve-symlinks` is why the script invokes node directly** rather than the `mocha` bin. Node
+  otherwise resolves a symlinked plugin to its real path outside the Classy tree, and `require("chai")`
+  then looks for `node_modules` in your plugin repo and does not find it.
+- **Import `@common/TestHarness` if you construct a controller.** `CourseController`'s constructor
+  builds a `TeamController`, which calls `GitHubActions.getInstance()`; under mocha that needs a
+  registered mock, and importing TestHarness registers one. A spec that only calls pure functions
+  does not need it.
+
+Plugin specs are deliberately *not* part of `yarn run test`: that runs against `plugins/default`,
+which has no specs, and CI builds with `PLUGIN=default`.
+
 ## Docker Containers / Supporting Services
 
 See Classy's default docker-compose.yml configuration: [Classy Default docker-compose.yml](https://github.com/ubccpsc/classy/blob/main/docker-compose.yml).

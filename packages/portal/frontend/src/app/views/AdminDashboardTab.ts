@@ -88,31 +88,15 @@ export class AdminDashboardTab extends AdminPage {
 		return results;
 	}
 
-	private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
-		Log.trace("AdminDashboardTab::render(..) - start");
-		const that = this;
-
-		let delivNames: string[] = [];
-		for (const deliv of delivs) {
-			if (deliv.shouldAutoTest === true) {
-				// dash results are only available for deliverables that
-				// use autotest, so skipp adding to dropdown otherwise
-				delivNames.push(deliv.id);
-			}
-		}
-		delivNames = delivNames.sort();
-		delivNames.unshift("-Any-");
-		UI.setDropdownOptions("dashboardDelivSelect", delivNames, this.delivValue);
-
-		let repoNames: string[] = [];
-		for (const repo of repos) {
-			repoNames.push(repo.id);
-		}
-		repoNames = repoNames.sort();
-		repoNames.unshift("-Any-");
-		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
-
-		const headers: TableHeader[] = [
+	/**
+	 * The columns of the dashboard table.
+	 *
+	 * protected for the same reason as AdminResultsTab::buildHeaders: a course plugin can relabel a
+	 * column, or add one, without re-implementing the table. A subclass that adds a header must
+	 * append the matching cell in decorateRow().
+	 */
+	protected buildHeaders(): TableHeader[] {
+		return [
 			{
 				id: "?",
 				text: "?",
@@ -178,7 +162,41 @@ export class AdminDashboardTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 		];
+	}
 
+	/**
+	 * Last chance to change a row before it is added; the default returns it untouched.
+	 */
+	protected decorateRow(row: TableCell[], result: AutoTestDashboardTransport): TableCell[] {
+		void result;
+		return row;
+	}
+
+	private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
+		Log.trace("AdminDashboardTab::render(..) - start");
+		const that = this;
+
+		let delivNames: string[] = [];
+		for (const deliv of delivs) {
+			if (deliv.shouldAutoTest === true) {
+				// dash results are only available for deliverables that
+				// use autotest, so skipp adding to dropdown otherwise
+				delivNames.push(deliv.id);
+			}
+		}
+		delivNames = delivNames.sort();
+		delivNames.unshift("-Any-");
+		UI.setDropdownOptions("dashboardDelivSelect", delivNames, this.delivValue);
+
+		let repoNames: string[] = [];
+		for (const repo of repos) {
+			repoNames.push(repo.id);
+		}
+		repoNames = repoNames.sort();
+		repoNames.unshift("-Any-");
+		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
+
+		const headers: TableHeader[] = this.buildHeaders();
 		const st = new DashboardTable(headers, "#dashboardListTable");
 
 		// this loop could not possibly be less efficient
@@ -222,7 +240,7 @@ export class AdminDashboardTab extends AdminPage {
 				{ value: "", html: dashRow },
 			];
 
-			st.addRow(row);
+			st.addRow(this.decorateRow(row, result));
 		}
 
 		st.generate();

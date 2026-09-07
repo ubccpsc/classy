@@ -199,6 +199,42 @@ describe("AdminController", () => {
 		expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
 	});
 
+	it("Should carry the people and the report's custom out to the admin views.", async () => {
+		// Both were dropped on the way to the transport: `people` did not exist on it, and `custom`
+		// was hard-coded to {} at two sites. That left the Results and Dashboard views unable to say
+		// who a result belonged to, and discarded anything a course attached for them to render --
+		// which is how PrairieLearn rows would arrive with no owner and no student-test count.
+		//
+		// NOTE: this updates an EXISTING fixture result rather than writing a new one. writeResult
+		// upserts on (delivId, repoId, commitSHA, ref), so this changes no counts -- the sibling
+		// tests below assert exact result totals, and an inserted row breaks them.
+		const dbc = DatabaseController.getInstance();
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: expected fixture results to exist").to.be.greaterThan(0);
+
+		const target = all[0];
+		expect(target.people.length, "setup: fixture results carry people").to.be.greaterThan(0);
+		(target.output.report as any).custom = { studentTestsPassing: 28, bucket: "developing" };
+		await dbc.writeResult(target);
+
+		const results = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const row = results.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(row, "the updated result must come back").to.not.be.undefined;
+		expect(row.people, "the transport must name the owner").to.deep.equal(target.people);
+		expect(row.custom.studentTestsPassing, "the report's custom must survive the clip").to.equal(28);
+		expect(row.custom.bucket).to.equal("developing");
+
+		// and the same on the dashboard, which used to re-empty custom after the spread
+		const dash = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const dashRow = dash.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(dashRow, "the updated result must reach the dashboard too").to.not.be.undefined;
+		expect(dashRow.people).to.deep.equal(target.people);
+		expect(dashRow.custom.studentTestsPassing).to.equal(28);
+	});
+
 	it("Should be able to get a list of results with wildcards.", async () => {
 		const res = await ac.getResults("any", "any");
 		expect(res).to.be.an("array");

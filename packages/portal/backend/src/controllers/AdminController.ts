@@ -1310,7 +1310,8 @@ export class AdminController {
 			testFail: testFail,
 			testError: testError,
 			testSkip: testSkip,
-			custom: {},
+			// NOTE: no `custom: {}` here -- it would undo what clipAutoTestResult just put in the
+			// spread above, which is how the dashboard lost it too.
 		};
 	}
 
@@ -1351,7 +1352,11 @@ export class AdminController {
 			scoreOverall: scoreOverall,
 			scoreCover: scoreCover,
 			scoreTests: scoreTest,
-			custom: {},
+			people: Array.isArray(result.people) ? result.people : [],
+			// the report's own custom, which is what GradeReport documents as "custom values to be
+			// returned to the UI layer". This was hard-coded to {}, so anything a course attached
+			// for the admin views was silently dropped.
+			custom: result.output?.report?.custom ?? {},
 		};
 	}
 

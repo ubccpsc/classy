@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { CommitTarget } from "@common/types/ContainerTypes";
+import { CommitTarget, ContainerState, GradeReport } from "@common/types/ContainerTypes";
 
 import { Deliverable, Grade, Person, Repository, Team } from "../Types";
 import { DatabaseController } from "./DatabaseController";
@@ -19,6 +19,34 @@ import { TeamController } from "./TeamController";
  * (e.g., see CustomCourseController), or can have minimal implementations (e.g.,
  * see CS310Controller).
  */
+/**
+ * What one externally-graded submission is worth, according to a course's grader contract.
+ *
+ * Returned by ICourseController::interpretSubmission. See that method for the null-vs-throw rule.
+ */
+export interface SubmissionInterpretation {
+	/** How good this attempt is; higher wins. Used only to pick the best attempt, never persisted. */
+	rank: number;
+
+	/** Grade.score. null means "graded, but the grader reported no number". */
+	score: number | null;
+
+	/** Grade.custom.displayScore: what the student sees in place of the number, if the course bands grades. */
+	displayScore?: string;
+
+	/** Merged into Grade.custom -- provenance the course wants kept with the grade. */
+	custom?: { [key: string]: any };
+
+	/**
+	 * Result.output.report, in Classy's GradeReport shape.
+	 *
+	 * This is the whole point of the hook: the grading payload is the course grader's shape, and
+	 * only the course knows how to read it, but the admin views understand exactly one shape. The
+	 * course translates; Classy renders.
+	 */
+	report: GradeReport;
+}
+
 export interface ICourseController {
 	/**
 	 * Given a GitHub username that is not already in the system, how should it be
@@ -92,6 +120,28 @@ export interface ICourseController {
 	 * if it is set.
 	 */
 	convertGrade(grade: Grade): Promise<Grade>;
+
+	/**
+	 * What one PrairieLearn submission is worth, according to this course's grader contract.
+	 *
+	 * PrairieLearn passes the external grader's output through untouched, so everything under
+	 * `feedback.results` is the *course's* shape, not PrairieLearn's. Classy therefore cannot read
+	 * it; this hook is where a course does.
+	 *
+	 * Return null when the submission is not gradeable -- the job did not succeed, or there is no
+	 * report yet. THROW when the payload is recognisably wrong: an unknown shape, a malformed
+	 * report. The difference matters. null means "not yet" and the sync moves on to the next
+	 * submission; a throw fails that one assessment instance and is reported in the sync summary,
+	 * because silently scoring an unrecognised submission 0 is the failure this connector exists to
+	 * avoid.
+	 *
+	 * @param submission the raw PrairieLearn submission, envelope and all
+	 * @param deliv the deliverable it belongs to. Provided so interpretation can vary per
+	 * assessment; note that the close-date gate is applied by the caller AFTER this returns, so a
+	 * course cannot grade late work by answering differently here.
+	 * @returns {Promise<SubmissionInterpretation | null>}
+	 */
+	interpretSubmission(submission: any, deliv: Deliverable): Promise<SubmissionInterpretation | null>;
 }
 
 /**
@@ -245,6 +295,63 @@ export class CourseController implements ICourseController {
 	 *
 	 * @param grade
 	 */
+	/**
+	 * The generic reading: take the grader's own overall score and band.
+	 *
+	 * A course whose grader reports `report.overall.{score,bucket}` needs nothing more than this.
+	 * Anything richer -- per-test outcomes, sub-scores, the name lists the dashboard histogram
+	 * renders -- depends on the course's own report shape and belongs in an override.
+	 *
+	 * NOTE: deliberately no bucket-to-number table here. Classy used to carry one (CS210's
+	 * beginning/acquiring/developing/proficient at 0/55/75/100) so a submission with a band but no
+	 * number could still be graded. That is one course's rubric, it does not generalise, and the
+	 * graders that reach this connector report a number -- so the score is read, never invented.
+	 */
+	public async interpretSubmission(submission: any, deliv: Deliverable): Promise<SubmissionInterpretation | null> {
+		const feedback = submission?.feedback;
+		if (typeof feedback === "undefined" || feedback === null || feedback.succeeded !== true) {
+			// the grading job did not finish; not an error, just nothing to grade yet
+			return null;
+		}
+
+		const overall = feedback?.results?.report?.overall;
+		if (typeof overall === "undefined" || overall === null) {
+			return null;
+		}
+
+		// negative is how graders signal "no score here" (AutoTest uses -1 the same way)
+		const raw = overall.score;
+		const score = typeof raw === "number" && Number.isFinite(raw) === true && raw >= 0 ? raw : null;
+		if (score === null) {
+			Log.trace("CourseController::interpretSubmission( " + deliv?.id + " ) - no usable score; skipping submission");
+			return null;
+		}
+
+		const bucket = typeof overall.bucket === "string" && overall.bucket.length > 0 ? overall.bucket : undefined;
+
+		const report: GradeReport = {
+			scoreOverall: score,
+			scoreTest: null,
+			scoreCover: null,
+			feedback: typeof overall.message === "string" ? overall.message : "",
+			result: ContainerState.SUCCESS,
+			passNames: [],
+			failNames: [],
+			skipNames: [],
+			errorNames: [],
+			attachments: [],
+			custom: {},
+		};
+
+		return {
+			rank: score,
+			score: score,
+			displayScore: bucket,
+			custom: typeof bucket === "string" ? { bucket: bucket } : {},
+			report: report,
+		};
+	}
+
 	public async convertGrade(grade: Grade): Promise<Grade> {
 		Log.info(`CourseController::convertGrade(${grade}) - default impl; returning original grade`);
 		return grade;

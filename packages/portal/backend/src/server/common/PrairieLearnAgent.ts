@@ -1,27 +1,14 @@
+import { ICourseController, SubmissionInterpretation } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
 import { JobContext } from "@backend/controllers/JobController";
+import { Factory } from "@backend/Factory";
 import { AuditLabel, Deliverable, Grade, JobWatermark, Person, Result } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 import fetch, { RequestInit } from "node-fetch";
-
-/**
- * The grading buckets, in ascending order. Index is rank; BUCKET_SCORE is the Classy grade.
- *
- * NOTE: the external grader deliberately returns ~0 to every student for every submission, so
- * PrairieLearn's own score / points / score_perc carry no information. The bucket is the grade.
- */
-export const BUCKETS: string[] = ["beginning", "acquiring", "developing", "proficient"];
-
-export const BUCKET_SCORE: { [bucket: string]: number } = {
-	beginning: 0,
-	acquiring: 55,
-	developing: 75,
-	proficient: 100,
-};
 
 /**
  * Just the parts of the PrairieLearn payloads this connector reads. These are not exhaustive; the
@@ -98,6 +85,19 @@ export interface PLSyncSummary {
 	 */
 	unmatchedNonStudentUids: string[];
 
+	/**
+	 * Assessment instances whose grading payload the course could not interpret.
+	 *
+	 * interpretSubmission throws when a payload is recognisably wrong, which is deliberate: it must
+	 * not be confused with "not graded yet". One such instance fails on its own and is listed here;
+	 * the run continues, because a single malformed submission must not cost a whole class its sync.
+	 *
+	 * NOTE: a failed instance is NOT watermarked, so the next run retries it. That is the point --
+	 * fix the grader (or the interpretation) and re-sync, rather than having to force a re-fetch
+	 * past a watermark that recorded a failure as if it were success.
+	 */
+	instancesFailed: string[];
+
 	cancelled: boolean;
 }
 
@@ -109,6 +109,12 @@ export interface PLSyncSummary {
  * end against captured fixtures instead.
  */
 export type PLFetcher = (path: string) => Promise<any>;
+
+/** A submission and what the course made of it; they are always handled as a pair. */
+interface InterpretedSubmission {
+	submission: PLSubmission;
+	interpretation: SubmissionInterpretation;
+}
 
 export class PrairieLearnAgent {
 	/**
@@ -151,10 +157,30 @@ export class PrairieLearnAgent {
 
 	private readonly fetcher: PLFetcher;
 
+	/**
+	 * The course controller that interprets grading payloads.
+	 *
+	 * Injected, and resolved lazily when it is not: the agent must not build a live GitHub client
+	 * just to obtain a controller it never uses for GitHub (which is what GradesController does).
+	 * Injection is also what lets a spec supply its own interpretation.
+	 */
+	private readonly controller: ICourseController | null;
+
 	private db: DatabaseController = DatabaseController.getInstance();
 
-	public constructor(fetcher?: PLFetcher) {
+	public constructor(fetcher?: PLFetcher, controller?: ICourseController) {
 		this.fetcher = typeof fetcher === "undefined" ? this.defaultFetcher.bind(this) : fetcher;
+		this.controller = typeof controller === "undefined" ? null : controller;
+	}
+
+	/**
+	 * The course controller, resolved once per sync run rather than per submission.
+	 */
+	private async getController(): Promise<ICourseController> {
+		if (this.controller !== null) {
+			return this.controller;
+		}
+		return await Factory.getCourseController();
 	}
 
 	/**
@@ -218,6 +244,7 @@ export class PrairieLearnAgent {
 			submissionsAfterClose: 0,
 			unmatchedUids: [],
 			unmatchedNonStudentUids: [],
+			instancesFailed: [],
 			cancelled: false,
 		};
 
@@ -264,7 +291,17 @@ export class PrairieLearnAgent {
 				return false;
 			}
 
-			await this.syncInstance(instance, people, deliverables, summary, ctx);
+			try {
+				await this.syncInstance(instance, people, deliverables, summary, ctx);
+			} catch (err) {
+				// One instance's payload could not be interpreted. Record it and keep going: the
+				// alternative is that a single bad submission stops every remaining student from
+				// being graded. Deliberately not watermarked, so the next run retries it.
+				Log.error("PrairieLearnAgent::sync(..) - instance failed; id: " + instance.assessment_instance_id + "; ERROR: " + err.message);
+				if (summary.instancesFailed.indexOf(instance.assessment_instance_id) === -1) {
+					summary.instancesFailed.push(instance.assessment_instance_id);
+				}
+			}
 
 			done++;
 			if (typeof ctx !== "undefined" && done % 25 === 0) {
@@ -323,19 +360,25 @@ export class PrairieLearnAgent {
 		const closeTimestamp = deliv?.closeTimestamp ?? Number.MAX_SAFE_INTEGER;
 
 		const submissions = await this.fetchSubmissions(instance.assessment_instance_id);
-		const graded = this.gradedSubmissions(submissions, ctx);
+
+		// The course reads the grading payload; Classy does not. See ICourseController.
+		const cc = await this.getController();
+		const graded = await this.interpretAll(submissions, deliv, cc, ctx);
 
 		// NOTE: every graded submission is stored as a Result, including late ones. The Results are
 		// the analysis archive and should record what actually happened; only the *grade* is gated.
-		for (const submission of graded) {
-			await this.writeResultFor(instance, submission, person);
+		for (const candidate of graded) {
+			await this.writeResultFor(instance, candidate.submission, candidate.interpretation, person);
 			summary.resultsWritten++;
 		}
 
 		// NOTE: gated on when the attempt was made, NOT on when the sync ran. Syncing late must not
 		// change anyone's grade, and re-syncing must be idempotent -- both of which would break if
 		// this compared against Date.now().
-		const onTime = graded.filter((sub) => this.attemptedAt(sub) <= closeTimestamp);
+		//
+		// The gate is applied HERE, after interpretation: the course says what an attempt is worth,
+		// Classy says whether it counts. A course cannot grade late work by answering differently.
+		const onTime = graded.filter((c) => this.attemptedAt(c.submission) <= closeTimestamp);
 		summary.submissionsAfterClose += graded.length - onTime.length;
 
 		if (onTime.length === 0) {
@@ -352,7 +395,7 @@ export class PrairieLearnAgent {
 		}
 
 		const best = this.bestSubmission(onTime);
-		await this.writeGradeFor(instance, best.submission, best.bucket, person);
+		await this.writeGradeFor(instance, best.submission, best.interpretation, person);
 		summary.gradesWritten++;
 
 		await this.markSynced(instance, closeTimestamp, graded.length);
@@ -372,99 +415,29 @@ export class PrairieLearnAgent {
 	}
 
 	/**
-	 * Submissions that actually carry a grading result.
+	 * Submissions that actually carry a grading result, paired with what the course made of them.
 	 *
-	 * Skips submissions whose grading job did not succeed or that carry no report: those are pending
-	 * or broken runs, NOT a score of "beginning".
+	 * A null interpretation means the grading job did not succeed or carries no report: pending or
+	 * broken runs, NOT a score of "beginning". A THROW means the payload was recognisably wrong, and
+	 * is deliberately not caught here -- syncInstance fails that instance and records it, rather
+	 * than grading a class from a payload nobody understood.
 	 */
-	private gradedSubmissions(submissions: PLSubmission[], ctx?: JobContext): PLSubmission[] {
-		const out: PLSubmission[] = [];
+	private async interpretAll(
+		submissions: PLSubmission[],
+		deliv: Deliverable,
+		cc: ICourseController,
+		ctx?: JobContext
+	): Promise<InterpretedSubmission[]> {
+		const out: InterpretedSubmission[] = [];
 		for (const s of submissions) {
-			const bucket = this.bucketOf(s);
-			if (bucket === null) {
+			const interpretation = await cc.interpretSubmission(s, deliv);
+			if (interpretation === null || typeof interpretation === "undefined") {
 				continue;
 			}
-			out.push(s);
+			out.push({ submission: s, interpretation: interpretation });
 			void ctx; // reserved: per-submission reporting if this ever needs it
 		}
 		return out;
-	}
-
-	/**
-	 * The bucket for a submission, or null if it has no usable result.
-	 *
-	 * NOTE: prefers report.overall.bucket over the duplicate at results.bucket. If they disagree the
-	 * report and its envelope came from different grader versions, which is worth knowing about.
-	 */
-	public bucketOf(submission: PLSubmission): string | null {
-		const feedback = submission?.feedback;
-		if (typeof feedback === "undefined" || feedback === null || feedback.succeeded !== true) {
-			return null;
-		}
-		const results = feedback.results;
-		const bucket = results?.report?.overall?.bucket;
-		if (typeof bucket !== "string" || bucket === "") {
-			return null;
-		}
-		if (typeof results.bucket === "string" && results.bucket !== bucket) {
-			Log.warn(
-				"PrairieLearnAgent::bucketOf(..) - report/envelope bucket mismatch; submission: " +
-					submission.submission_id +
-					"; report: " +
-					bucket +
-					"; envelope: " +
-					results.bucket
-			);
-		}
-		return bucket;
-	}
-
-	/**
-	 * The explicit numeric grade a submission reports, if it has one.
-	 *
-	 * NOTE: this is report.overall.score, NOT results.score. results.score is the value PrairieLearn
-	 * shows the student and is deliberately pinned near zero (see the plan's bucket-encoding
-	 * section), so it carries no grade information and must never be read as one.
-	 *
-	 * A grader that can state a real number does so here; graders that only bucket omit it, and the
-	 * bucket score is used instead.
-	 *
-	 * @param submission
-	 * @returns {number | null} null when absent, negative, or not a finite number
-	 */
-	public scoreOf(submission: PLSubmission): number | null {
-		const raw = submission?.feedback?.results?.report?.overall?.score;
-		if (typeof raw !== "number" || Number.isFinite(raw) === false) {
-			return null;
-		}
-		// negative is how graders signal "no score here" (AutoTest uses -1 the same way)
-		if (raw < 0) {
-			return null;
-		}
-		return raw;
-	}
-
-	/**
-	 * The score a submission counts as when ranking attempts against each other.
-	 *
-	 * Explicit report.overall.score when the grader reported one, otherwise the bucket's score.
-	 * Because BUCKET_SCORE is strictly increasing across BUCKETS (0 / 55 / 75 / 100), ranking by
-	 * this value is IDENTICAL to ranking by bucket when no submission carries an explicit score --
-	 * so one rule covers both a bucket-only deliverable and one where the grader reports numbers.
-	 *
-	 * @param submission
-	 * @returns {number} null only if the submission carries no usable bucket
-	 */
-	private effectiveScore(submission: PLSubmission): number | null {
-		const bucket = this.bucketOf(submission);
-		if (bucket === null) {
-			return null;
-		}
-		if (BUCKETS.indexOf(bucket) === -1) {
-			throw new Error("Unknown PrairieLearn bucket: " + bucket + "; submission: " + submission.submission_id);
-		}
-		const explicit = this.scoreOf(submission);
-		return explicit === null ? BUCKET_SCORE[bucket] : explicit;
 	}
 
 	/**
@@ -487,19 +460,28 @@ export class PrairieLearnAgent {
 	 * would silently zero the strongest students, and since PrairieLearn shows 0 to everyone anyway
 	 * nothing would look wrong.
 	 */
-	public bestSubmission(submissions: PLSubmission[]): { bucket: string; submission: PLSubmission } {
-		let best: { bucket: string; submission: PLSubmission } = null;
-		let bestScore = -1;
+	public bestSubmission(candidates: InterpretedSubmission[]): InterpretedSubmission {
+		let best: InterpretedSubmission = null;
 
-		for (const s of submissions) {
-			const score = this.effectiveScore(s); // throws on an unknown bucket
-			if (score === null) {
+		for (const candidate of candidates) {
+			if (best === null) {
+				best = candidate;
 				continue;
 			}
-			// strictly greater, so the earliest attempt wins an exact tie and the result is stable
-			if (best === null || score > bestScore) {
-				best = { bucket: this.bucketOf(s), submission: s };
-				bestScore = score;
+
+			const rank = candidate.interpretation.rank;
+			const bestRank = best.interpretation.rank;
+
+			// Highest rank wins; an exact tie goes to the most recent attempt.
+			//
+			// NOTE: this used to be a strict `>`, so the EARLIEST attempt won a tie. Latest is what
+			// a student expects when they resubmit and score the same, and it is equally stable and
+			// idempotent: the same submissions always pick the same winner, because attemptedAt is
+			// read from the submission rather than from the clock.
+			if (rank > bestRank) {
+				best = candidate;
+			} else if (rank === bestRank && this.attemptedAt(candidate.submission) >= this.attemptedAt(best.submission)) {
+				best = candidate;
 			}
 		}
 		return best;
@@ -596,10 +578,13 @@ export class PrairieLearnAgent {
 		return (idx > 0 ? uid.substring(0, idx) : uid).toLowerCase();
 	}
 
-	private async writeGradeFor(instance: PLAssessmentInstance, submission: PLSubmission, bucket: string, person: Person): Promise<void> {
-		// prefer an explicit numeric grade when the grader reports one; otherwise map the bucket
-		const explicit = this.scoreOf(submission);
-		const score = explicit === null ? BUCKET_SCORE[bucket] : explicit;
+	private async writeGradeFor(
+		instance: PLAssessmentInstance,
+		submission: PLSubmission,
+		interpretation: SubmissionInterpretation,
+		person: Person
+	): Promise<void> {
+		const score = interpretation.score;
 
 		const grade: Grade = {
 			personId: person.id, // the stable csId, not the join field
@@ -610,11 +595,12 @@ export class PrairieLearnAgent {
 			urlName: instance.assessment_label,
 			URL: this.instanceUrl(instance.assessment_instance_id),
 			custom: {
-				bucket: bucket,
-				// score stays numeric and displayScore always carries the bucket (if present),
-				// even when the grader reported an explicit number. displayScore is what
-				// the *student* sees, but score itself provides greater resolution for admins
-				displayScore: bucket,
+				// whatever provenance the course attached (for 210: the grader's bucket)
+				...(interpretation.custom ?? {}),
+				// score stays numeric and displayScore carries the course's band (if it has one),
+				// even when the grader reported an explicit number. displayScore is what the
+				// *student* sees; score itself provides greater resolution for admins
+				displayScore: interpretation.displayScore,
 				source: "prairielearn",
 				assessmentInstanceId: instance.assessment_instance_id,
 				submissionId: submission.submission_id,
@@ -623,13 +609,27 @@ export class PrairieLearnAgent {
 		await new GradesController().saveGrade(grade);
 	}
 
-	private async writeResultFor(instance: PLAssessmentInstance, submission: PLSubmission, person: Person): Promise<void> {
+	private async writeResultFor(
+		instance: PLAssessmentInstance,
+		submission: PLSubmission,
+		interpretation: SubmissionInterpretation,
+		person: Person
+	): Promise<void> {
 		const feedback = JSON.parse(JSON.stringify(submission.feedback));
 
 		const custom: any = {};
 		if (PrairieLearnAgent.PERSIST_SUBMITTED_FILES === true) {
 			custom.submittedFiles = (submission as any)?.submitted_answer?._files ?? [];
 		}
+
+		// The grader's own report, kept beside the derived one.
+		//
+		// output.report is the DERIVED GradeReport -- the shape the admin views render. This is the
+		// raw document it came from, archived so a later change to the course's mapping can be
+		// re-derived from storage instead of re-fetched from PrairieLearn (which the watermark would
+		// skip anyway). It lives in output.custom because that is the archive: never transported to
+		// the browser, unlike output.report.
+		custom.rawReport = feedback?.results?.report ?? null;
 
 		// NOTE: the Result fields are deliberately repurposed; PrairieLearn has no repos or commits.
 		// repoId is the assessment instance, commitSHA the submission id, and ref a fixed string --
@@ -660,7 +660,8 @@ export class PrairieLearnAgent {
 			} as any,
 			output: {
 				timestamp: Date.parse(submission.date),
-				report: feedback?.results?.report ?? null,
+				// the course's translation, not the grader's shape; the raw one is in custom.rawReport
+				report: interpretation.report,
 				postbackOnComplete: false,
 				state: "SUCCESS",
 				custom: custom,

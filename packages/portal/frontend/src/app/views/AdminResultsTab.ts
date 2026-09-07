@@ -86,9 +86,19 @@ export class AdminResultsTab extends AdminPage {
 		return values;
 	}
 
-	private renderResults(results: AutoTestResultSummaryTransport[]): void {
-		Log.trace("AdminResultsTab::renderResults: " + results.length);
-		const headers: TableHeader[] = [
+	/**
+	 * The columns of the results table.
+	 *
+	 * protected so a course plugin can subclass this tab and relabel or add a column without
+	 * re-implementing the whole table. CS210, for example, reports a mutation score rather than
+	 * coverage, and shows a count of the student's own passing tests -- neither of which means
+	 * anything to a course whose container reports real coverage.
+	 *
+	 * A subclass that adds a column must append the matching cell in decorateRow(), in the same
+	 * order, or the row and its headers will disagree.
+	 */
+	protected buildHeaders(): TableHeader[] {
+		return [
 			{
 				id: "?",
 				text: "?",
@@ -122,6 +132,25 @@ export class AdminResultsTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 			},
 			{
+				id: "scoreTest",
+				text: "Test %",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "scoreCover",
+				// the field's meaning belongs to the container, so this label is the generic one. A
+				// course whose container reports something else -- CS210 reports a mutation score --
+				// relabels it by overriding buildHeaders rather than renaming it for everyone.
+				text: "Cover %",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
 				id: "state",
 				text: "State",
 				sortable: true,
@@ -138,6 +167,40 @@ export class AdminResultsTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 			},
 		];
+	}
+
+	/**
+	 * A sub-score cell: two decimals, or N/A when the container reported none.
+	 *
+	 * null and 0 are different answers -- "the container said nothing" versus "the student scored
+	 * nothing" -- and rendering the first as 0.00 would quietly invent a result. Matches how the
+	 * dashboard has always shown a missing value.
+	 */
+	protected static percentCell(value: number | null): string {
+		const SPACER = "&#8199;";
+		if (typeof value !== "number") {
+			return SPACER + SPACER + "N/A";
+		}
+		if (value === 100) {
+			return "100.00";
+		}
+		return (value < 10 ? SPACER + SPACER : SPACER) + value.toFixed(2);
+	}
+
+	/**
+	 * Last chance to change a row before it is added.
+	 *
+	 * The default returns it untouched. A subclass that added a column in buildHeaders() appends the
+	 * matching cell here, so the two stay in step without re-implementing the render loop.
+	 */
+	protected decorateRow(row: TableCell[], result: AutoTestResultSummaryTransport): TableCell[] {
+		void result;
+		return row;
+	}
+
+	private renderResults(results: AutoTestResultSummaryTransport[]): void {
+		Log.trace("AdminResultsTab::renderResults: " + results.length);
+		const headers: TableHeader[] = this.buildHeaders();
 
 		const st = new SortableTable(headers, "#resultsListTable");
 
@@ -163,23 +226,11 @@ export class AdminResultsTab extends AdminPage {
 
 			const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
-			let score: number | string = "";
-			let scorePrepend = "";
-			score = result.scoreOverall;
-			if (score === 100) {
-				score = "100.00";
-			} else {
-				// two decimal places
-				if (typeof score === "number") {
-					score = score.toFixed(2);
-				}
-				// prepend space (not 100)
-				scorePrepend = "&#8199;" + scorePrepend;
-				if (result.scoreOverall < 10) {
-					// prepend with extra space if < 10
-					scorePrepend = "&#8199;" + scorePrepend;
-				}
-			}
+			// scoreOverall is null whenever the container reported no overall score -- every
+			// PrairieLearn row, and any container that leaves it unset. This used to assign the null
+			// and then concatenate it, so the cell rendered the literal text "null". The dashboard
+			// has always shown "N/A" for the same case (AdminDashboardTab::alignValue); match it.
+			const score = AdminResultsTab.percentCell(result.scoreOverall);
 
 			// ion-ios-help-outline
 			const row: TableCell[] = [
@@ -196,12 +247,14 @@ export class AdminResultsTab extends AdminPage {
 				},
 				// {value: result.repoId, html: result.repoId},
 				{ value: result.delivId, html: result.delivId },
-				{ value: result.scoreOverall, html: scorePrepend + score },
+				{ value: result.scoreOverall, html: score },
+				{ value: result.scoreTests, html: AdminResultsTab.percentCell(result.scoreTests) },
+				{ value: result.scoreCover, html: AdminResultsTab.percentCell(result.scoreCover) },
 				{ value: result.state, html: result.state },
 				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 			];
 
-			st.addRow(row);
+			st.addRow(this.decorateRow(row, result));
 		}
 
 		st.generate();
