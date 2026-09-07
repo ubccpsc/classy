@@ -3,6 +3,8 @@ import {
 	AutoTestResultSummaryPayload,
 	AutoTestResultSummaryTransport,
 	DeliverableTransport,
+	PERSON_VIEWS,
+	PersonView,
 	RepositoryPayload,
 	RepositoryTransport,
 } from "@common/types/PortalTypes";
@@ -29,6 +31,31 @@ export class AdminResultsTab extends AdminPage {
 	}
 
 	// called by reflection in renderPage
+	/**
+	 * The view the selector is set to, or "all" when the page does not have one (a course can
+	 * customise admin.html and drop it). "all" rather than "students" because these views have
+	 * always shown every result, staff runs included.
+	 */
+	private static selectedView(): PersonView {
+		const select = document.querySelector("#resultsViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return "all";
+		}
+		return PERSON_VIEWS.indexOf(select.value as PersonView) >= 0 ? (select.value as PersonView) : "all";
+	}
+
+	private wireViewSelector(): void {
+		const select = document.querySelector("#resultsViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.init({}).catch((err) => {
+				Log.error("AdminResultsTab::wireViewSelector(..) - ERROR: " + err.message);
+			});
+		};
+	}
+
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminResultsTab::init(..) - start");
 		const that = this;
@@ -47,6 +74,8 @@ export class AdminResultsTab extends AdminPage {
 		const repos = await AdminResultsTab.getRepositories(this.remote); // for select
 		const results = await this.performQueries();
 		UI.hideModal();
+
+		this.wireViewSelector();
 
 		const fab = document.querySelector("#resultsUpdateButton") as OnsButtonElement;
 		fab.onclick = function (_evt: any) {
@@ -81,7 +110,7 @@ export class AdminResultsTab extends AdminPage {
 
 		this.delivValue = deliv;
 		this.repoValue = repo;
-		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue);
+		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue, AdminResultsTab.selectedView());
 		Log.info("AdminResultsTab::performQueries(..) - done; # values: " + values.length + "; took: " + UI.took(start));
 		return values;
 	}
@@ -321,11 +350,16 @@ export class AdminResultsTab extends AdminPage {
 		}
 	}
 
-	public static async getResults(remote: string, delivId: string, repoId: string): Promise<AutoTestResultSummaryTransport[]> {
+	public static async getResults(
+		remote: string,
+		delivId: string,
+		repoId: string,
+		view: PersonView = "all"
+	): Promise<AutoTestResultSummaryTransport[]> {
 		Log.info("AdminResultsTab::getResults( .. ) - start");
 
 		const start = Date.now();
-		const url = remote + "/portal/admin/results/" + delivId + "/" + repoId;
+		const url = remote + "/portal/admin/results/" + delivId + "/" + repoId + "/" + view;
 		const options = AdminView.getOptions();
 		const response = await fetch(url, options);
 

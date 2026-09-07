@@ -235,6 +235,52 @@ describe("AdminController", () => {
 		expect(dashRow.custom.studentTestsPassing).to.equal(28);
 	});
 
+	it("Should filter results by person view.", async () => {
+		// Results are keyed by repo, not by person, so this has to resolve each result's people to
+		// their kind -- which is only possible because the transport now carries `people`.
+		const dbc = DatabaseController.getInstance();
+
+		const student = TestHarness.createPerson("viewStudent", "viewStudent", "viewStudentGh", PersonKind.STUDENT);
+		const staff = TestHarness.createPerson("viewStaff", "viewStaff", "viewStaffGh", PersonKind.STAFF);
+		await dbc.writePerson(student);
+		await dbc.writePerson(staff);
+
+		// updates in place (writeResult upserts), so no counts move for the sibling tests
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: fixture results must exist").to.be.greaterThan(1);
+
+		const studentResult = all[0];
+		studentResult.people = [student.id];
+		await dbc.writeResult(studentResult);
+
+		const staffResult = all[1];
+		staffResult.people = [staff.id];
+		await dbc.writeResult(staffResult);
+
+		const students = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "students");
+		const studentShas = students.map((r) => r.commitSHA);
+		expect(studentShas, "the student's result is in the students view").to.contain(studentResult.commitSHA);
+		expect(studentShas, "the staff result is not").to.not.contain(staffResult.commitSHA);
+
+		const staffOnly = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "staff");
+		const staffShas = staffOnly.map((r) => r.commitSHA);
+		expect(staffShas).to.contain(staffResult.commitSHA);
+		expect(staffShas).to.not.contain(studentResult.commitSHA);
+
+		// "all" is the default, and must not filter anything out
+		const everything = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const allShas = everything.map((r) => r.commitSHA);
+		expect(allShas).to.contain(studentResult.commitSHA);
+		expect(allShas).to.contain(staffResult.commitSHA);
+
+		// the dashboard shares the same filter
+		const dashStudents = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, undefined, "students");
+		expect(
+			dashStudents.map((r) => r.commitSHA),
+			"dashboard filters too"
+		).to.not.contain(staffResult.commitSHA);
+	});
+
 	it("Should be able to get a list of results with wildcards.", async () => {
 		const res = await ac.getResults("any", "any");
 		expect(res).to.be.an("array");

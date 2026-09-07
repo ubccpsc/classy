@@ -213,6 +213,22 @@ export default class AdminRoutes implements IREST {
 		return PERSON_VIEWS.indexOf(raw as PersonView) >= 0 ? (raw as PersonView) : null;
 	}
 
+	/**
+	 * The listing view for the results and dashboard routes.
+	 *
+	 * Defaults to "all" rather than "students" -- unlike the people and grades routes, which are
+	 * about the class list and default to students. These two have always shown every result, staff
+	 * runs included, and those runs are frequently the ones an instructor is looking for. Adding a
+	 * filter should not hide rows that were visible yesterday.
+	 */
+	private static resultsViewFor(req: ClassyRequest): PersonView | null {
+		const raw = req.params.view;
+		if (typeof raw === "undefined") {
+			return "all";
+		}
+		return PERSON_VIEWS.indexOf(raw as PersonView) >= 0 ? (raw as PersonView) : null;
+	}
+
 	private static async getPeople(req: ClassyRequest, res: FastifyReply): Promise<void> {
 		Log.trace("AdminRoutes::getPeople(..) - start");
 		const start = Date.now();
@@ -313,10 +329,15 @@ export default class AdminRoutes implements IREST {
 		const delivId = req.params.delivId;
 		const repoId = req.params.repoId;
 
+		const view = AdminRoutes.resultsViewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getResults(delivId, repoId);
+			const results = await cc.getResults(delivId, repoId, undefined, view);
 			Log.info("AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start));
 			const payload: AutoTestResultSummaryPayload = { success: results };
 			res.send(payload);
@@ -482,10 +503,16 @@ export default class AdminRoutes implements IREST {
 		const repoId = req.params?.repoId;
 
 		Log.info("AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - start");
+
+		const view = AdminRoutes.resultsViewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getDashboard(delivId, repoId);
+			const results = await cc.getDashboard(delivId, repoId, undefined, undefined, view);
 			Log.info(
 				"AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - done; # results: " + results.length + "; took: " + Util.took(start)
 			);
@@ -1244,8 +1271,11 @@ export default class AdminRoutes implements IREST {
 		server.get("/portal/admin/grades", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
 		server.get("/portal/admin/grades/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
 		server.get("/portal/admin/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard); // detailed results
+		// :view is students | staff | all; without it these keep returning everything (see resultsViewFor)
+		server.get("/portal/admin/dashboard/:delivId/:repoId/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard);
 		server.get("/portal/admin/export/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboardAll); // no num limit
 		server.get("/portal/admin/results/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults); // result summaries
+		server.get("/portal/admin/results/:delivId/:repoId/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults);
 		server.get("/portal/admin/gradedResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGradedResults); // graded results
 		server.get("/portal/admin/bestResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getBestResults); // results with best score
 

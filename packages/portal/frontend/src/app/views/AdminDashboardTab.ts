@@ -1,6 +1,13 @@
 import Log from "@common/Log";
 import { ClusteredResult } from "@common/types/ContainerTypes";
-import { AutoTestDashboardPayload, AutoTestDashboardTransport, DeliverableTransport, RepositoryTransport } from "@common/types/PortalTypes";
+import {
+	AutoTestDashboardPayload,
+	AutoTestDashboardTransport,
+	DeliverableTransport,
+	PERSON_VIEWS,
+	PersonView,
+	RepositoryTransport,
+} from "@common/types/PortalTypes";
 import moment from "moment";
 import { OnsButtonElement } from "onsenui";
 
@@ -32,6 +39,31 @@ export class AdminDashboardTab extends AdminPage {
 	}
 
 	// called by reflection in renderPage
+	/**
+	 * The view the selector is set to, or "all" when the page does not have one (a course can
+	 * customise admin.html and drop it). "all" rather than "students" because these views have
+	 * always shown every result, staff runs included.
+	 */
+	private static selectedView(): PersonView {
+		const select = document.querySelector("#dashboardViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return "all";
+		}
+		return PERSON_VIEWS.indexOf(select.value as PersonView) >= 0 ? (select.value as PersonView) : "all";
+	}
+
+	private wireViewSelector(): void {
+		const select = document.querySelector("#dashboardViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.init({}).catch((err) => {
+				Log.error("AdminDashboardTab::wireViewSelector(..) - ERROR: " + err.message);
+			});
+		};
+	}
+
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminDashboardTab::init(..) - start");
 		const that = this;
@@ -49,6 +81,8 @@ export class AdminDashboardTab extends AdminPage {
 		const repos = await AdminResultsTab.getRepositories(this.remote); // for select
 		const results = await this.performQueries();
 		UI.hideModal();
+
+		this.wireViewSelector();
 
 		const fab = document.querySelector("#dashboardUpdateButton") as OnsButtonElement;
 		fab.onclick = function (_evt: any) {
@@ -83,7 +117,7 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		this.delivValue = deliv;
 		this.repoValue = repo;
-		const results = await AdminDashboardTab.getDashboard(this.remote, deliv, repo);
+		const results = await AdminDashboardTab.getDashboard(this.remote, deliv, repo, AdminDashboardTab.selectedView());
 		Log.info("AdminDashboardTab::performQueries(..) - done; # results: " + results.length + "; took: " + UI.took(start));
 		return results;
 	}
@@ -371,11 +405,16 @@ export class AdminDashboardTab extends AdminPage {
 		return str;
 	}
 
-	public static async getDashboard(remote: string, delivId: string, repoId: string): Promise<AutoTestDashboardTransport[]> {
+	public static async getDashboard(
+		remote: string,
+		delivId: string,
+		repoId: string,
+		view: PersonView = "all"
+	): Promise<AutoTestDashboardTransport[]> {
 		Log.info("AdminDashboardTab::getDashboard( .. ) - start");
 
 		const start = Date.now();
-		const url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId;
+		const url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId + "/" + view;
 		const options = AdminView.getOptions();
 		const response = await fetch(url, options);
 

@@ -1,10 +1,12 @@
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
 import { GradeReport } from "@common/types/ContainerTypes";
+import { PersonView } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { Result } from "../Types";
+import { Person, Result } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
+import { GradesController } from "./GradesController";
 import { RepositoryController } from "./RepositoryController";
 
 /**
@@ -12,6 +14,31 @@ import { RepositoryController } from "./RepositoryController";
  * retrieving, and updating result records.
  */
 export class ResultsController {
+	/**
+	 * Whether a result belongs to anyone the given view selects.
+	 *
+	 * A result is keyed by repo rather than by person, so unlike the grades page this has to look
+	 * through `Result.people`. ANY member matching is enough: a staff member on an otherwise-student
+	 * team keeps that team's work visible under "students", which is the less surprising of the two
+	 * failure modes. A result with no people cannot be attributed, so it appears only under "all".
+	 *
+	 * Takes a prepared map rather than reading the database, because callers apply this per result
+	 * inside a loop.
+	 */
+	public static matchesView(result: Result, peopleById: Map<string, Person>, view: PersonView): boolean {
+		if (view === "all") {
+			return true;
+		}
+		const ids = Array.isArray(result.people) ? result.people : [];
+		for (const id of ids) {
+			const person = peopleById.get(id);
+			if (typeof person !== "undefined" && GradesController.matchesView(person, view) === true) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private db: DatabaseController = DatabaseController.getInstance();
 
 	/**
