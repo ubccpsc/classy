@@ -64,6 +64,34 @@ export class AdminDashboardTab extends AdminPage {
 		};
 	}
 
+	/**
+	 * What the second dropdown offers. Repository ids by default.
+	 *
+	 * protected because "which repository" is not a question every course can answer: a course whose
+	 * results do not come from repositories at all (PrairieLearn keys them by assessment instance)
+	 * needs to offer something else -- a CWL, say -- and filter on that instead. A subclass that
+	 * changes this must also override personFilter(), or the value it offers will be sent as a
+	 * repository id and match nothing.
+	 */
+	protected buildRepoOptions(repos: RepositoryTransport[]): string[] {
+		const names: string[] = [];
+		for (const repo of repos) {
+			names.push(repo.id);
+		}
+		return names;
+	}
+
+	/**
+	 * The person to filter by, when the second dropdown selects people rather than repositories.
+	 *
+	 * null (the default) means the selection is a repository id and is sent as one. Returning a
+	 * value here sends it as ?person= instead, and the repository filter is left open -- the two are
+	 * alternative ways of narrowing the same list, not filters that combine.
+	 */
+	protected personFilter(): string | null {
+		return null;
+	}
+
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminDashboardTab::init(..) - start");
 		const that = this;
@@ -117,7 +145,15 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		this.delivValue = deliv;
 		this.repoValue = repo;
-		const results = await AdminDashboardTab.getDashboard(this.remote, deliv, repo, AdminDashboardTab.selectedView());
+		// see AdminResultsTab: a person filter and a repo filter are alternatives, not a conjunction
+		const person = this.personFilter();
+		const results = await AdminDashboardTab.getDashboard(
+			this.remote,
+			deliv,
+			person === null ? repo : "any",
+			AdminDashboardTab.selectedView(),
+			person
+		);
 		Log.info("AdminDashboardTab::performQueries(..) - done; # results: " + results.length + "; took: " + UI.took(start));
 		return results;
 	}
@@ -210,22 +246,17 @@ export class AdminDashboardTab extends AdminPage {
 		Log.trace("AdminDashboardTab::render(..) - start");
 		const that = this;
 
+		// Every deliverable; see the same change in AdminResultsTab. Results no longer come only from
+		// AutoTest containers, so shouldAutoTest is not a proxy for "could have results" any more.
 		let delivNames: string[] = [];
 		for (const deliv of delivs) {
-			if (deliv.shouldAutoTest === true) {
-				// dash results are only available for deliverables that
-				// use autotest, so skipp adding to dropdown otherwise
-				delivNames.push(deliv.id);
-			}
+			delivNames.push(deliv.id);
 		}
 		delivNames = delivNames.sort();
 		delivNames.unshift("-Any-");
 		UI.setDropdownOptions("dashboardDelivSelect", delivNames, this.delivValue);
 
-		let repoNames: string[] = [];
-		for (const repo of repos) {
-			repoNames.push(repo.id);
-		}
+		let repoNames: string[] = this.buildRepoOptions(repos);
 		repoNames = repoNames.sort();
 		repoNames.unshift("-Any-");
 		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
@@ -409,12 +440,16 @@ export class AdminDashboardTab extends AdminPage {
 		remote: string,
 		delivId: string,
 		repoId: string,
-		view: PersonView = "all"
+		view: PersonView = "all",
+		person: string | null = null
 	): Promise<AutoTestDashboardTransport[]> {
 		Log.info("AdminDashboardTab::getDashboard( .. ) - start");
 
 		const start = Date.now();
-		const url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId + "/" + view;
+		let url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId + "/" + view;
+		if (person !== null && person.length > 0) {
+			url += "?person=" + encodeURIComponent(person);
+		}
 		const options = AdminView.getOptions();
 		const response = await fetch(url, options);
 

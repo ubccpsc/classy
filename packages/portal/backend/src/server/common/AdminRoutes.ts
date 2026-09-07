@@ -221,6 +221,20 @@ export default class AdminRoutes implements IREST {
 	 * runs included, and those runs are frequently the ones an instructor is looking for. Adding a
 	 * filter should not hide rows that were visible yesterday.
 	 */
+	/**
+	 * The optional ?person= filter on the results and dashboard routes.
+	 *
+	 * Accepts a Person.id or a CWL; see ResultsController::matchesPerson. Returns null when absent
+	 * or blank, which means "everyone".
+	 */
+	private static personFilterFor(req: ClassyRequest): string | null {
+		const raw = (req.query as any)?.person;
+		if (typeof raw !== "string" || raw.trim().length === 0) {
+			return null;
+		}
+		return raw.trim();
+	}
+
 	private static resultsViewFor(req: ClassyRequest): PersonView | null {
 		const raw = req.params.view;
 		if (typeof raw === "undefined") {
@@ -337,7 +351,10 @@ export default class AdminRoutes implements IREST {
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getResults(delivId, repoId, undefined, view);
+			// optional ?person=<Person.id | CWL>; a query param rather than a fourth path segment
+			// because it is optional and orthogonal to the ones already there
+			const person = AdminRoutes.personFilterFor(req);
+			const results = await cc.getResults(delivId, repoId, undefined, view, person);
 			Log.info("AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start));
 			const payload: AutoTestResultSummaryPayload = { success: results };
 			res.send(payload);
@@ -512,7 +529,8 @@ export default class AdminRoutes implements IREST {
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getDashboard(delivId, repoId, undefined, undefined, view);
+			const person = AdminRoutes.personFilterFor(req);
+			const results = await cc.getDashboard(delivId, repoId, undefined, undefined, view, person);
 			Log.info(
 				"AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - done; # results: " + results.length + "; took: " + Util.took(start)
 			);

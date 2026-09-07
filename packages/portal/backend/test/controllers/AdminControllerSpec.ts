@@ -281,6 +281,37 @@ describe("AdminController", () => {
 		).to.not.contain(staffResult.commitSHA);
 	});
 
+	it("Should filter results by person, matching either the id or the CWL.", async () => {
+		// A course whose results are keyed by something opaque -- PrairieLearn puts the assessment
+		// instance in repoId -- has no other way to ask for one student's work. The CWL is what an
+		// admin picks, but Result.people stores Person.id, so both have to resolve.
+		const dbc = DatabaseController.getInstance();
+
+		const person = TestHarness.createPerson("personFilterId", "personFilterId", "personFilterCwl", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup").to.be.greaterThan(1);
+
+		const mine = all[0];
+		mine.people = [person.id];
+		await dbc.writeResult(mine); // upserts; no counts move
+
+		const others = all[1];
+		expect(others.people, "setup: the other result belongs to someone else").to.not.contain(person.id);
+
+		for (const query of [person.id, person.githubId, person.githubId.toUpperCase()]) {
+			const found = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "all", query);
+			const shas = found.map((r) => r.commitSHA);
+			expect(shas, "matched by " + query).to.contain(mine.commitSHA);
+			expect(shas, "and nobody else's").to.not.contain(others.commitSHA);
+		}
+
+		// no filter means everyone
+		const unfiltered = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(unfiltered.map((r) => r.commitSHA)).to.contain(others.commitSHA);
+	});
+
 	it("Should be able to get a list of results with wildcards.", async () => {
 		const res = await ac.getResults("any", "any");
 		expect(res).to.be.an("array");

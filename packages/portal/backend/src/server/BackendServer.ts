@@ -169,6 +169,9 @@ export default class BackendServer {
 			jc.register("prairielearn-sync", async (job, ctx) => {
 				return await new PrairieLearnAgent().sync(job.requestedBy, ctx, job.params?.force === true);
 			});
+			jc.register("prairielearn-reinterpret", async (job, ctx) => {
+				return await new PrairieLearnAgent().reinterpret(job.requestedBy, ctx);
+			});
 			jc.register("classlist-update", async (job, ctx) => {
 				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);
 			});

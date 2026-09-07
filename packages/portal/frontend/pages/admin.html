@@ -137,7 +137,7 @@
                     <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="resultsRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="resultsRepoSelect" style="display: flex; width: 8em;">
                         <option value="any">-All-</option>
                     </select>
@@ -167,7 +167,7 @@
                     <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="dashboardRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="dashboardRepoSelect" style="width: 8em;">
                         <option value="any">-All-</option>
                     </select>
@@ -365,6 +365,25 @@
                 </ons-list-item>
 
                 <!-- Hidden unless PRAIRIELEARN_* is configured in .env; see AdminConfigTab::initJobSections -->
+                <ons-list-item expandable id="adminPrairieLearnReinterpretItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-wand-magic-sparkles"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Re-derive PrairieLearn reports.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnReinterpretButton" modifier="medium">Re-derive</ons-button>
+                            <ons-button id="adminPrairieLearnReinterpretCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div class="list-item__subtitle" id="adminPrairieLearnReinterpretStatus"></div>
+                        <div class="list-item__subtitle" style="font-size: smaller;">
+                            Rebuilds what the Results and Dashboard tabs show from the grading payloads already
+                            stored, without contacting PrairieLearn. Run this after the grader or its
+                            interpretation changes. Grades are not affected.
+                        </div>
+                    </div>
+                </ons-list-item>
+
                 <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
                     <div class="left settingIcon">
                         <ons-icon icon="fa-rotate"></ons-icon>
@@ -376,8 +395,7 @@
                             <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
                             <label style="padding-left: 1em; font-size: smaller;">
                                 <input type="checkbox" id="adminPrairieLearnForce" />
-                                Re-sync everything (ignore the watermark; needed after the grader or its
-                                interpretation changes, since reports are derived when a result is synced)
+                                Re-sync everything
                             </label>
                         </div>
                         <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">

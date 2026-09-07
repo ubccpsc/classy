@@ -59,6 +59,24 @@ export interface PrairieLearnWatermark extends JobWatermark {
 /**
  * What a sync run did; stored as Job.summary and rendered in the admin UI.
  */
+/**
+ * What a reinterpret run did. See PrairieLearnAgent::reinterpret.
+ */
+export interface PLReinterpretSummary {
+	resultsSeen: number;
+	resultsRewritten: number;
+	/** archived payload present but the course could not read it; these keep their old report */
+	resultsFailed: string[];
+	/**
+	 * Results with no archived payload, which cannot be re-derived at all.
+	 *
+	 * These predate the archive (or predate it covering the whole feedback). A forced sync is the
+	 * only way to refresh them, because the input no longer exists locally.
+	 */
+	resultsWithoutArchive: number;
+	cancelled: boolean;
+}
+
 export interface PLSyncSummary {
 	instancesSeen: number;
 	instancesSynced: number;
@@ -618,6 +636,98 @@ export class PrairieLearnAgent {
 		await new GradesController().saveGrade(grade);
 	}
 
+	/**
+	 * Re-derives every stored Result's report from its archived grader payload.
+	 *
+	 * The report on a Result is produced by the course's interpretSubmission when the result is
+	 * synced, and then stored. Change how the payload is read -- a new category, a corrected
+	 * mapping -- and rows already in the database keep the old reading; the watermark means a
+	 * routine sync will not revisit them either.
+	 *
+	 * This is the cheap way to fix that: the whole grader payload is archived in
+	 * output.custom.rawFeedback, so the new reading can be applied to what is already stored. No
+	 * PrairieLearn traffic, no watermark to defeat, and it works when PrairieLearn is unreachable.
+	 *
+	 * NOTE: Results only. Grades are not touched: the grade comes from the score the grader
+	 * reported, which a mapping change does not alter, and rewriting grades from an archive is a
+	 * much bigger promise than fixing what the admin views render. Use a forced sync if grades
+	 * themselves need to move.
+	 */
+	public async reinterpret(requesterId: string, ctx?: JobContext): Promise<PLReinterpretSummary> {
+		Log.info("PrairieLearnAgent::reinterpret( " + requesterId + " ) - start");
+		const start = Date.now();
+
+		const summary: PLReinterpretSummary = {
+			resultsSeen: 0,
+			resultsRewritten: 0,
+			resultsFailed: [],
+			resultsWithoutArchive: 0,
+			cancelled: false,
+		};
+
+		const cc = await this.getController();
+		const deliverables = new Map<string, Deliverable>();
+		for (const deliv of await new DeliverablesController().getAllDeliverables()) {
+			deliverables.set(deliv.id, deliv);
+		}
+
+		// only this connector's results; an AutoTest result has no archived PrairieLearn payload
+		const all = (await this.db.getAllResults()).filter((r) => r?.input?.target?.ref === PrairieLearnAgent.RESULT_REF);
+		summary.resultsSeen = all.length;
+		Log.info("PrairieLearnAgent::reinterpret(..) - PrairieLearn results: " + all.length);
+
+		let done = 0;
+		for (const result of all) {
+			if (typeof ctx !== "undefined" && ctx.isCancelled() === true) {
+				summary.cancelled = true;
+				break;
+			}
+
+			const feedback = (result.output as any)?.custom?.rawFeedback;
+			if (typeof feedback === "undefined" || feedback === null) {
+				// predates the archive; the input is gone, so only a forced sync can refresh it
+				summary.resultsWithoutArchive++;
+				continue;
+			}
+
+			try {
+				// rebuilt to the shape interpretSubmission expects; the fields it reads are the
+				// feedback and, for logging, the ids -- all of which survived on the Result
+				const submission = {
+					submission_id: result.commitSHA,
+					assessment_instance_id: result.repoId,
+					date: new Date(result.output.timestamp).toISOString(),
+					feedback: feedback,
+				};
+
+				const interpretation = await cc.interpretSubmission(submission, deliverables.get(result.delivId));
+				if (interpretation === null || typeof interpretation === "undefined") {
+					// the course now considers this ungradeable; leave the stored report alone rather
+					// than replacing it with nothing
+					summary.resultsFailed.push(result.commitSHA);
+					continue;
+				}
+
+				result.output.report = interpretation.report;
+				await this.db.writeResult(result);
+				summary.resultsRewritten++;
+			} catch (err) {
+				Log.error("PrairieLearnAgent::reinterpret(..) - result failed; sha: " + result.commitSHA + "; ERROR: " + err.message);
+				summary.resultsFailed.push(result.commitSHA);
+			}
+
+			done++;
+			if (typeof ctx !== "undefined" && done % 100 === 0) {
+				await ctx.progress(done, all.length, "re-deriving PrairieLearn reports");
+			}
+		}
+
+		await this.db.writeAudit(AuditLabel.GRADE_ADMIN, requesterId, {}, {}, { kind: "prairielearn-reinterpret", summary: summary });
+
+		Log.info("PrairieLearnAgent::reinterpret(..) - done; " + JSON.stringify(summary) + "; took: " + Util.took(start));
+		return summary;
+	}
+
 	private async writeResultFor(
 		instance: PLAssessmentInstance,
 		submission: PLSubmission,
@@ -634,11 +744,16 @@ export class PrairieLearnAgent {
 		// The grader's own report, kept beside the derived one.
 		//
 		// output.report is the DERIVED GradeReport -- the shape the admin views render. This is the
-		// raw document it came from, archived so a later change to the course's mapping can be
-		// re-derived from storage instead of re-fetched from PrairieLearn (which the watermark would
-		// skip anyway). It lives in output.custom because that is the archive: never transported to
-		// the browser, unlike output.report.
-		custom.rawReport = feedback?.results?.report ?? null;
+		// whole grader payload it came from, archived so a later change to the course's mapping can
+		// be re-derived from storage (reinterpret()) instead of re-fetched from PrairieLearn, which
+		// the watermark would skip anyway. It lives in output.custom because that is the archive:
+		// never transported to the browser, unlike output.report.
+		//
+		// NOTE: the *whole* feedback, not just results.report. The report alone is not enough to
+		// re-derive from: `results.custom.items` carries the per-test and per-mutant outcomes, and
+		// it sits outside the report. Archiving only the report is what made the first version of
+		// this un-re-derivable.
+		custom.rawFeedback = feedback ?? null;
 
 		// NOTE: the Result fields are deliberately repurposed; PrairieLearn has no repos or commits.
 		// repoId is the assessment instance, commitSHA the submission id, and ref a fixed string --
@@ -669,7 +784,7 @@ export class PrairieLearnAgent {
 			} as any,
 			output: {
 				timestamp: Date.parse(submission.date),
-				// the course's translation, not the grader's shape; the raw one is in custom.rawReport
+				// the course's translation, not the grader's shape; the raw one is in custom.rawFeedback
 				report: interpretation.report,
 				postbackOnComplete: false,
 				state: "SUCCESS",

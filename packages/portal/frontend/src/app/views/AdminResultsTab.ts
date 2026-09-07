@@ -56,6 +56,34 @@ export class AdminResultsTab extends AdminPage {
 		};
 	}
 
+	/**
+	 * What the second dropdown offers. Repository ids by default.
+	 *
+	 * protected because "which repository" is not a question every course can answer: a course whose
+	 * results do not come from repositories at all (PrairieLearn keys them by assessment instance)
+	 * needs to offer something else -- a CWL, say -- and filter on that instead. A subclass that
+	 * changes this must also override personFilter(), or the value it offers will be sent as a
+	 * repository id and match nothing.
+	 */
+	protected buildRepoOptions(repos: RepositoryTransport[]): string[] {
+		const names: string[] = [];
+		for (const repo of repos) {
+			names.push(repo.id);
+		}
+		return names;
+	}
+
+	/**
+	 * The person to filter by, when the second dropdown selects people rather than repositories.
+	 *
+	 * null (the default) means the selection is a repository id and is sent as one. Returning a
+	 * value here sends it as ?person= instead, and the repository filter is left open -- the two are
+	 * alternative ways of narrowing the same list, not filters that combine.
+	 */
+	protected personFilter(): string | null {
+		return null;
+	}
+
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminResultsTab::init(..) - start");
 		const that = this;
@@ -110,7 +138,11 @@ export class AdminResultsTab extends AdminPage {
 
 		this.delivValue = deliv;
 		this.repoValue = repo;
-		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, this.repoValue, AdminResultsTab.selectedView());
+		// when the subclass filters by person, the repo filter is left open: the dropdown holds a
+		// person, not a repository id, and sending it as one would match nothing
+		const person = this.personFilter();
+		const repoFilter = person === null ? this.repoValue : "any";
+		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, repoFilter, AdminResultsTab.selectedView(), person);
 		Log.info("AdminResultsTab::performQueries(..) - done; # values: " + values.length + "; took: " + UI.took(start));
 		return values;
 	}
@@ -302,22 +334,23 @@ export class AdminResultsTab extends AdminPage {
 
 		const that = this;
 
+		// Every deliverable, not just the AutoTest ones.
+		//
+		// This used to filter on shouldAutoTest, on the reasoning that a deliverable without it
+		// "will never have results to render". That stopped being true when results started arriving
+		// from somewhere other than a container: the PrairieLearn connector writes a Result per
+		// submission for deliverables that have shouldAutoTest false, and filtering them out made
+		// them impossible to select here. A deliverable with no results simply renders an empty
+		// table, which is a fine answer to a question someone asked.
 		let delivNames: string[] = [];
 		for (const deliv of delivs) {
-			// only add a deliv if it uses AutoTest
-			// or it will never have results to render
-			if (deliv.shouldAutoTest === true) {
-				delivNames.push(deliv.id);
-			}
+			delivNames.push(deliv.id);
 		}
 		delivNames = delivNames.sort();
 		delivNames.unshift("-Any-");
 		UI.setDropdownOptions("resultsDelivSelect", delivNames, this.delivValue);
 
-		let repoNames: string[] = [];
-		for (const repo of repos) {
-			repoNames.push(repo.id);
-		}
+		let repoNames: string[] = this.buildRepoOptions(repos);
 		repoNames = repoNames.sort();
 		repoNames.unshift("-Any-");
 		UI.setDropdownOptions("resultsRepoSelect", repoNames, this.repoValue);
@@ -354,12 +387,16 @@ export class AdminResultsTab extends AdminPage {
 		remote: string,
 		delivId: string,
 		repoId: string,
-		view: PersonView = "all"
+		view: PersonView = "all",
+		person: string | null = null
 	): Promise<AutoTestResultSummaryTransport[]> {
 		Log.info("AdminResultsTab::getResults( .. ) - start");
 
 		const start = Date.now();
-		const url = remote + "/portal/admin/results/" + delivId + "/" + repoId + "/" + view;
+		let url = remote + "/portal/admin/results/" + delivId + "/" + repoId + "/" + view;
+		if (person !== null && person.length > 0) {
+			url += "?person=" + encodeURIComponent(person);
+		}
 		const options = AdminView.getOptions();
 		const response = await fetch(url, options);
 

@@ -487,12 +487,17 @@ describe("PrairieLearnAgent", function () {
 		expect(report.scoreOverall, "the views read scoreOverall; the grader's shape has no such field").to.be.a("number");
 		expect(report.passNames).to.be.an("array");
 
-		// ...and the grader's own document is archived beside it, so a later change to the mapping
-		// can be re-derived from storage rather than re-fetched from PrairieLearn
-		const raw = (results[0].output as any).custom.rawReport;
-		expect(raw, "the raw grader report must be kept").to.not.be.null;
-		expect(raw.overall.bucket).to.be.a("string");
-		expect(raw.findings).to.be.an("array"); // the whole document, not just the value
+		// ...and the grader's own payload is archived beside it, so a later change to the mapping can
+		// be re-derived from storage rather than re-fetched from PrairieLearn
+		const raw = (results[0].output as any).custom.rawFeedback;
+		expect(raw, "the raw grader payload must be kept").to.not.be.null;
+		expect(raw.results.report.overall.bucket).to.be.a("string");
+		expect(raw.results.report.findings).to.be.an("array"); // the whole document, not just the value
+
+		// the WHOLE feedback, not just results.report: custom.items sits outside the report and is
+		// what the name lists and sub-scores are built from, so a report-only archive could not be
+		// re-derived
+		expect(raw.results, "results.custom must survive too, or reinterpret cannot rebuild").to.haveOwnProperty("custom");
 	});
 
 	it("Should be idempotent: syncing twice does not duplicate Results or Grades.", async function () {
@@ -528,6 +533,49 @@ describe("PrairieLearnAgent", function () {
 		expect(totalCalls).to.equal(firstCalls);
 		expect(second.instancesSkipped).to.equal(1);
 		expect(second.instancesSynced).to.equal(0);
+	});
+
+	describe("reinterpret", function () {
+		it("Should rebuild stored reports from the archived payload, without touching PrairieLearn.", async function () {
+			const inst = instance({ assessment_instance_id: "reinterp", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterp" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			// stand in for a mapping change: damage the stored report, then re-derive it
+			const before = await dc.getResults(DELIV_ID, "reinterp");
+			expect(before.length).to.equal(1);
+			(before[0].output as any).report = { scoreOverall: -999, passNames: [] };
+			await dc.writeResult(before[0]);
+
+			// a fetcher that throws: reinterpret must not contact PrairieLearn at all
+			const offline = new PrairieLearnAgent(async () => {
+				throw new Error("reinterpret must not fetch");
+			});
+			const summary = await offline.reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsRewritten, "the stored result is rebuilt").to.be.greaterThan(0);
+			expect(summary.resultsFailed).to.deep.equal([]);
+
+			const after = await dc.getResults(DELIV_ID, "reinterp");
+			expect((after[0].output as any).report.scoreOverall, "the damaged report is replaced").to.not.equal(-999);
+		});
+
+		it("Should report results that have no archived payload rather than failing them.", async function () {
+			// rows written before the archive existed: the input is gone, so only a forced sync can
+			// refresh them. They must be counted, not silently skipped and not counted as errors.
+			const inst = instance({ assessment_instance_id: "noArchive", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "noArchive" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const stored = await dc.getResults(DELIV_ID, "noArchive");
+			delete (stored[0].output as any).custom.rawFeedback;
+			await dc.writeResult(stored[0]);
+
+			const summary = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsWithoutArchive, "counted as un-derivable").to.be.greaterThan(0);
+			expect(summary.resultsFailed, "and not reported as a failure").to.deep.equal([]);
+		});
 	});
 
 	it("Should re-sync an unchanged instance when forced.", async function () {

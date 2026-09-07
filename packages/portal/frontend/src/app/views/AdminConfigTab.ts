@@ -628,6 +628,20 @@ export class AdminConfigTab extends AdminPage {
 
 		if ((await this.isPrairieLearnEnabled()) === true) {
 			(document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement).style.display = "";
+
+			const reinterpretItem = document.querySelector("#adminPrairieLearnReinterpretItem") as HTMLElement;
+			if (reinterpretItem !== null) {
+				reinterpretItem.style.display = "";
+				sections.push({
+					kind: "prairielearn-reinterpret",
+					buttonId: "adminPrairieLearnReinterpretButton",
+					cancelButtonId: "adminPrairieLearnReinterpretCancelButton",
+					statusId: "adminPrairieLearnReinterpretStatus",
+					ran: "Last re-derived",
+					neverRun: "Never re-derived.",
+					detail: AdminConfigTab.describePrairieLearnReinterpret,
+				});
+			}
 			sections.push({
 				kind: "prairielearn-sync",
 				buttonId: "adminPrairieLearnSyncButton",
@@ -663,6 +677,27 @@ export class AdminConfigTab extends AdminPage {
 			Log.warn("AdminConfigTab::isPrairieLearnEnabled() - could not read config; ERROR: " + err.message);
 			return false;
 		}
+	}
+
+	/**
+	 * The one-line summary shown under the Re-derive button.
+	 */
+	private static describePrairieLearnReinterpret(summary: any): string {
+		if (typeof summary === "undefined" || summary === null) {
+			return "";
+		}
+		const parts: string[] = [summary.resultsRewritten + " of " + summary.resultsSeen + " results re-derived"];
+		if (summary.resultsWithoutArchive > 0) {
+			// these predate the archive, so only a forced sync can refresh them
+			parts.push(summary.resultsWithoutArchive + " have no stored payload (force a sync for those)");
+		}
+		if (Array.isArray(summary.resultsFailed) && summary.resultsFailed.length > 0) {
+			parts.push(summary.resultsFailed.length + " could not be read");
+		}
+		if (summary.cancelled === true) {
+			parts.push("cancelled");
+		}
+		return parts.join("; ");
 	}
 
 	private static describePrairieLearnSummary(summary: any): string {

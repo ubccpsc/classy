@@ -392,7 +392,8 @@ export class AdminController {
 		reqRepoId: string,
 		maxNumResults?: number,
 		kind: ResultsKind = ResultsKind.ALL,
-		view: PersonView = "all"
+		view: PersonView = "all",
+		person: string | null = null
 	): Promise<AutoTestDashboardTransport[]> {
 		Log.info("AdminController::getDashboard( " + reqDelivId + ", " + reqRepoId + ", " + maxNumResults + " ) - start");
 		const start = Date.now();
@@ -400,7 +401,7 @@ export class AdminController {
 
 		const repoIds: string[] = [];
 		const results: AutoTestDashboardTransport[] = [];
-		const allResults = await this.matchResults(reqDelivId, reqRepoId, kind, view);
+		const allResults = await this.matchResults(reqDelivId, reqRepoId, kind, view, person);
 		for (const result of allResults) {
 			const repoId = result.input.target.repoId;
 			if (results.length < NUM_RESULTS) {
@@ -418,7 +419,13 @@ export class AdminController {
 		return results;
 	}
 
-	public async matchResults(reqDelivId: string, reqRepoId: string, kind: ResultsKind, view: PersonView = "all"): Promise<Result[]> {
+	public async matchResults(
+		reqDelivId: string,
+		reqRepoId: string,
+		kind: ResultsKind,
+		view: PersonView = "all",
+		person: string | null = null
+	): Promise<Result[]> {
 		Log.trace("AdminController::matchResults(..) - start");
 		const start = Date.now();
 		const WILDCARD = "any";
@@ -438,11 +445,11 @@ export class AdminController {
 
 		const NUM_RESULTS = 1000;
 
-		// resolved once, not per result; skipped for "all", which needs no lookup
+		// resolved once, not per result; skipped when neither filter needs a lookup
 		const peopleById = new Map<string, Person>();
-		if (view !== "all") {
-			for (const person of await this.pc.getAllPeople()) {
-				peopleById.set(person.id, person);
+		if (view !== "all" || person !== null) {
+			for (const each of await this.pc.getAllPeople()) {
+				peopleById.set(each.id, each);
 			}
 		}
 
@@ -458,6 +465,7 @@ export class AdminController {
 				(reqDelivId === WILDCARD || delivId === reqDelivId) &&
 				(reqRepoId === WILDCARD || repoId === reqRepoId) &&
 				ResultsController.matchesView(result, peopleById, view) &&
+				(person === null || ResultsController.matchesPerson(result, peopleById, person)) &&
 				results.length <= NUM_RESULTS
 			) {
 				results.push(result);
@@ -529,14 +537,15 @@ export class AdminController {
 		reqDelivId: string,
 		reqRepoId: string,
 		kind: ResultsKind = ResultsKind.ALL,
-		view: PersonView = "all"
+		view: PersonView = "all",
+		person: string | null = null
 	): Promise<AutoTestResultSummaryTransport[]> {
 		Log.info("AdminController::getResults( " + reqDelivId + ", " + reqRepoId + ", " + kind + " ) - start");
 		const start = Date.now();
 		const NUM_RESULTS = 1000; // max # of records
 
 		const results: AutoTestResultSummaryTransport[] = [];
-		const allResults = await this.matchResults(reqDelivId, reqRepoId, kind, view);
+		const allResults = await this.matchResults(reqDelivId, reqRepoId, kind, view, person);
 		for (const result of allResults) {
 			if (results.length <= NUM_RESULTS) {
 				const resultTrans = await this.clipAutoTestResult(result);

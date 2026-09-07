@@ -25,6 +25,29 @@ export class ResultsController {
 	 * Takes a prepared map rather than reading the database, because callers apply this per result
 	 * inside a loop.
 	 */
+	/**
+	 * Whether a result belongs to a particular person.
+	 *
+	 * Matches on Person.id or githubId, because callers come from both sides: the id is what
+	 * `Result.people` stores, and the CWL (githubId) is what an admin actually types or picks. A
+	 * course whose results are keyed by something opaque -- PrairieLearn stores the assessment
+	 * instance in repoId -- has no other way to ask "show me this student's work".
+	 */
+	public static matchesPerson(result: Result, peopleById: Map<string, Person>, person: string): boolean {
+		const wanted = person.toLowerCase();
+		const ids = Array.isArray(result.people) ? result.people : [];
+		for (const id of ids) {
+			if (id.toLowerCase() === wanted) {
+				return true;
+			}
+			const p = peopleById.get(id);
+			if (typeof p !== "undefined" && typeof p.githubId === "string" && p.githubId.toLowerCase() === wanted) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	public static matchesView(result: Result, peopleById: Map<string, Person>, view: PersonView): boolean {
 		if (view === "all") {
 			return true;
