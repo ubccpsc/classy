@@ -1954,6 +1954,73 @@ describe("Admin Routes", function () {
 		expect(entry.URL).to.equal(repo.URL);
 	}).timeout(TestHarness.TIMEOUTLONG);
 
+	it("Should list every repo for a deliverable, whatever its provisioning status", async function () {
+		// This is what the Manage Repositories page reads to build its three lists (unreleased,
+		// provisioned, released): the route returns every repo for the deliverable and the page
+		// partitions them on gitHubStatus. So a repo missing here, or a status that does not survive
+		// the transport, is a list that renders empty -- which on that page is indistinguishable from
+		// "there is nothing to do", and is how this last went wrong.
+		//
+		// The release listing above has a shape test; this one had none, despite being the route the
+		// page depends on for all three lists rather than one.
+		const dbc = DatabaseController.getInstance();
+
+		const delivId = "provisionListSpecDeliv";
+		const deliv = TestHarness.createDeliverable(delivId);
+		deliv.shouldProvision = true;
+		await dbc.writeDeliverable(deliv);
+
+		// one repo in each state the page cares about
+		const states: Array<[string, RepoStatus]> = [
+			["provisionListNotCreated", RepoStatus.NOT_CREATED],
+			["provisionListReady", RepoStatus.READY],
+			["provisionListReleased", RepoStatus.RELEASED],
+		];
+		for (const [repoId, status] of states) {
+			await dbc.writeRepository({
+				id: repoId,
+				delivId: delivId,
+				teamIds: [],
+				URL: status === RepoStatus.NOT_CREATED ? null : "https://example.com/" + repoId,
+				cloneURL: null,
+				gitHubStatus: status,
+				custom: {},
+			});
+		}
+
+		// and one belonging to a different deliverable, which must not appear
+		await dbc.writeRepository({
+			id: "provisionListOtherDeliv",
+			delivId: TestHarness.DELIVIDPROJ,
+			teamIds: [],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: RepoStatus.READY,
+			custom: {},
+		});
+
+		const response = await request(app)
+			.get("/portal/admin/provision/" + delivId)
+			.set({ user: userName, token: userToken });
+		Log.test("provision listing: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(200);
+		expect(response.body.success).to.be.an("array");
+
+		const returned = response.body.success as any[];
+		for (const [repoId, status] of states) {
+			const entry = returned.find((r) => r.id === repoId);
+			expect(entry, repoId + " must be listed; the page cannot show what it is not sent").to.not.be.undefined;
+			expect(entry.gitHubStatus, "the status the page partitions on must survive the transport").to.equal(status);
+			expect(entry.delivId).to.equal(delivId);
+		}
+
+		expect(
+			returned.find((r) => r.id === "provisionListOtherDeliv"),
+			"a repo from another deliverable must not be listed"
+		).to.be.undefined;
+	}).timeout(TestHarness.TIMEOUTLONG);
+
 	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
 		// NOTE: updating from the Classlist API used to be PUT /portal/admin/classlist. It is now
 		// the "classlist-update" job, because for a large class the API call plus the per-student

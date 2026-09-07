@@ -5,7 +5,7 @@ import { AuthController } from "@backend/controllers/AuthController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
+import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -46,7 +46,23 @@ import { CSVParser } from "./CSVParser";
 import { RouteUtil } from "./RouteUtil";
 
 export default class AdminRoutes implements IREST {
-	private static ghc = new GitHubController(GitHubActions.getInstance());
+	private static ghcInstance: IGitHubController = null;
+
+	/**
+	 * The GitHub controller these routes act through.
+	 *
+	 * Built on first use rather than in a static field initializer. As a field it was constructed
+	 * as a side effect of *importing* this module, which is both too early to be useful and load-
+	 * order dependent: under mocha, GitHubActions.getInstance() needs the test harness to have
+	 * registered its mock first, and whether it had depended on which spec file mocha happened to
+	 * load first. Running this spec on its own therefore failed while the whole suite passed.
+	 */
+	private static get ghc(): IGitHubController {
+		if (AdminRoutes.ghcInstance === null) {
+			AdminRoutes.ghcInstance = new GitHubController(GitHubActions.getInstance());
+		}
+		return AdminRoutes.ghcInstance;
+	}
 
 	/**
 	 * Who may be viewed as; must agree with RouteUtil::resolveIdentity, which is what actually
