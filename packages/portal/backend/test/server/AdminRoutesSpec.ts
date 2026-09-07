@@ -1988,10 +1988,22 @@ describe("Admin Routes", function () {
 			});
 		}
 
-		// and one belonging to a different deliverable, which must not appear
+		// and one belonging to a different deliverable, which must not appear.
+		//
+		// NOTE: a second deliverable of this spec's own, deliberately NOT a shared fixture. Using
+		// DELIVIDPROJ here left a repo behind on it, which broke "Should be able to list the
+		// provisioning state for a deliverable" -- a test in the Slow block that asserts that
+		// deliverable lists nothing. That block is requiresGitHub-gated, so it is skipped locally
+		// and only ran in CI; and mocha runs an outer suite's own tests before its nested suites,
+		// so this one polluted it before it ran.
+		const otherDelivId = "provisionListSpecOtherDeliv";
+		const otherDeliv = TestHarness.createDeliverable(otherDelivId);
+		otherDeliv.shouldProvision = true;
+		await dbc.writeDeliverable(otherDeliv);
+
 		await dbc.writeRepository({
 			id: "provisionListOtherDeliv",
-			delivId: TestHarness.DELIVIDPROJ,
+			delivId: otherDelivId,
 			teamIds: [],
 			URL: null,
 			cloneURL: null,
@@ -2019,6 +2031,15 @@ describe("Admin Routes", function () {
 			returned.find((r) => r.id === "provisionListOtherDeliv"),
 			"a repo from another deliverable must not be listed"
 		).to.be.undefined;
+
+		// Leave nothing behind. Other tests in this file assert on whole-collection state, and the
+		// ones that do are mostly skipped locally, so debris here is invisible until CI.
+		for (const [repoId] of states) {
+			await dbc.deleteRepository(await dbc.getRepository(repoId));
+		}
+		await dbc.deleteRepository(await dbc.getRepository("provisionListOtherDeliv"));
+		await dbc.deleteDeliverable(await dbc.getDeliverable(delivId));
+		await dbc.deleteDeliverable(await dbc.getDeliverable(otherDelivId));
 	}).timeout(TestHarness.TIMEOUTLONG);
 
 	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
