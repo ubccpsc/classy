@@ -94,7 +94,13 @@ export class AdminResultsTab extends AdminPage {
 		UI.showModal("Retrieving results.");
 		const course = await AdminView.getCourse(this.remote);
 		if (this.delivValue === null) {
-			this.delivValue = course.defaultDeliverableId;
+			// The course's default deliverable, when it has one. A course that grades outside
+			// AutoTest has none -- the Config tab only offers AutoTest deliverables as the default --
+			// and the old code then seeded the dropdown with a single `null` option. The first query
+			// went out filtering for a deliverable named "null", so the page rendered empty until
+			// Update was pressed, by which point render() had populated the real options. "any" is
+			// the honest default for "no particular deliverable".
+			this.delivValue = course.defaultDeliverableId ?? "any";
 			// ugly way to set the default the first time the page is rendered
 			UI.setDropdownOptions("resultsDelivSelect", [this.delivValue], this.delivValue);
 		}
