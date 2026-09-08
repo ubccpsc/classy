@@ -9,6 +9,13 @@
 
     <title>Classy</title>
 
+    <!-- The SVG is what modern browsers use; the .ico carries 16/32/48 for the rest, and is
+         also what a browser fetches by convention when no link tag is present at all. Absolute
+         hrefs: pages served from html/{NAME}/ would otherwise look for these beside themselves. -->
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+    <link rel="alternate icon" href="/favicon.ico" sizes="16x16 32x32 48x48">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+
     <!-- Onsen !-->
     <link rel="stylesheet" href="https://unpkg.com/onsenui@2.12.2/css/onsenui.css">
     <link rel="stylesheet" href="https://unpkg.com/onsenui@2.12.2/css/onsen-css-components.min.css">
