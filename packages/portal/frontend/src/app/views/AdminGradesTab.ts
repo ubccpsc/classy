@@ -233,10 +233,15 @@ export class AdminGradesTab extends AdminPage {
 		const st = new SortableTable(AdminGradesTab.buildSummaryHeaders(), "#gradesSummaryTable");
 		const gradeMap = AdminGradesTab.collectScoresByDeliv(grades, students);
 
+		// The denominator behind N/D, computed once rather than per row. Withdrawn students are
+		// left out for the same reason collectScoresByDeliv drops their grades: they are not
+		// working on the deliverable, so counting them as "not started" would inflate every row.
+		const eligible = AdminGradesTab.countEligible(students);
+
 		for (const delivId of Object.keys(gradeMap)) {
 			const delivGrades: number[] = gradeMap[delivId];
 			if (delivGrades.length > 0) {
-				st.addRow(AdminGradesTab.buildSummaryRow(delivId, delivGrades));
+				st.addRow(AdminGradesTab.buildSummaryRow(delivId, delivGrades, eligible));
 			}
 		}
 
@@ -244,8 +249,12 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/**
-	 * Column definitions for the summary table: deliverable, average, median, then one column
-	 * per decile bin and a final column for perfect scores.
+	 * Column definitions for the summary table: deliverable, average, median, the count of people
+	 * with no grade at all, then one column per decile bin and a final column for perfect scores.
+	 *
+	 * N/D sits to the left of 0-9 rather than at the end because it is not a bin: a student who
+	 * has not started is not the same as one who scored badly, and putting it beside 0-9 makes
+	 * that boundary easy to read.
 	 */
 	private static buildSummaryHeaders(): TableHeader[] {
 		const headers: TableHeader[] = [
@@ -268,6 +277,14 @@ export class AdminGradesTab extends AdminPage {
 			{
 				id: "median",
 				text: "Median",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "nd",
+				text: "N/D",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -395,12 +412,16 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/**
-	 * Builds one summary row: average, median, and the distribution across decile bins.
+	 * Builds one summary row: average, median, how many people have no grade, and the
+	 * distribution across decile bins.
+	 *
+	 * `eligible` is the number of people the deliverable is expected from; N/D is whatever is
+	 * left of it once the graded are removed.
 	 *
 	 * Pure given its arguments (aside from sorting the array it is handed), so it can be
 	 * exercised without a DOM.
 	 */
-	private static buildSummaryRow(delivId: string, delivGrades: number[]): TableCell[] {
+	private static buildSummaryRow(delivId: string, delivGrades: number[], eligible: number): TableCell[] {
 		const num = delivGrades.length;
 		const total = delivGrades.reduce(function (accumulator, currentValue) {
 			return accumulator + currentValue;
@@ -413,10 +434,16 @@ export class AdminGradesTab extends AdminPage {
 		let median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
 		median = Number(median.toFixed(2));
 
+		// Not a bin: everyone expected to submit who has no grade for this deliverable at all.
+		// Clamped at zero because a person carrying two grades for one deliverable would
+		// otherwise drive it negative, which would read as a data error rather than a count.
+		const numNoData = Math.max(0, eligible - num);
+
 		const row: TableCell[] = [
 			{ value: delivId, html: delivId },
 			{ value: avg + "", html: avg + "" },
 			{ value: median + "", html: median + "" },
+			{ value: numNoData + "", html: numNoData + "" },
 		];
 
 		for (let i = 0; i < 10; i++) {
@@ -431,6 +458,24 @@ export class AdminGradesTab extends AdminPage {
 		row.push({ value: numPerfect + "", html: numPerfect + "" });
 
 		return row;
+	}
+
+	/**
+	 * How many people the summary treats as owing work on each deliverable, which is the
+	 * denominator behind the N/D column.
+	 *
+	 * Mirrors the labId "W" filter in collectScoresByDeliv deliberately: the two numbers are
+	 * subtracted from each other, so they have to be drawn from the same population or N/D
+	 * would count withdrawn students who never had a grade to begin with.
+	 */
+	private static countEligible(students: PersonTransport[]): number {
+		let count = 0;
+		for (const student of students) {
+			if (student.labId !== "W") {
+				count++;
+			}
+		}
+		return count;
 	}
 
 	/**
