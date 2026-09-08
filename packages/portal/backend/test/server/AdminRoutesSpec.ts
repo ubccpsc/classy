@@ -273,6 +273,48 @@ describe("Admin Routes", function () {
 				expect(response.status, method.toUpperCase() + " " + url + " served an anonymous caller").to.equal(401);
 			});
 		}
+
+		it("Should refuse students and anonymous callers on EVERY registered admin route, and staff on every isAdmin route.", async function () {
+			// The lists above are hand-maintained (12 of ~36 routes). This sweep is derived from the
+			// server's own route table instead -- BackendServer records every registration and the
+			// name of its preHandler -- so an admin route added with no guard, or with the wrong one,
+			// fails here rather than going silently untested. One it() rather than one per route
+			// because the table only exists after before() has started the server.
+			//
+			// HEAD routes are skipped: fastify generates them from GET with the same config.
+			const admin = server.getRegisteredRoutes().filter((r) => r.url.startsWith("/portal/admin/") && r.method !== "HEAD");
+			expect(admin.length, "sanity: the admin API registered").to.be.greaterThan(20);
+
+			const problems: string[] = [];
+			for (const r of admin) {
+				const key = r.method + " " + r.url;
+				if (r.guards.length === 0) {
+					problems.push(key + ": no preHandler guard at all");
+					continue;
+				}
+				// a refusal happens in the preHandler, before any param is read, so the values do not matter
+				const url = r.url.replace(/:([A-Za-z_]+)/g, "$1").replace(/\*/g, "x");
+				const method = r.method.toLowerCase();
+
+				const student = await send(method, url, { user: TestHarness.USER1.id, token: userToken });
+				if (student.status !== 401) {
+					problems.push(key + ": a student got " + student.status);
+				}
+				const anon = await send(method, url, {});
+				if (anon.status !== 401) {
+					problems.push(key + ": an anonymous caller got " + anon.status);
+				}
+				if (r.guards.indexOf("isAdmin") >= 0) {
+					const staff = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+					if (staff.status !== 401) {
+						problems.push(key + ": staff got " + staff.status + " on an isAdmin route");
+					}
+				}
+			}
+
+			Log.test("admin routes swept: " + admin.length);
+			expect(problems, "\n" + problems.join("\n")).to.deep.equal([]);
+		}).timeout(60000);
 	});
 
 	it("Should serve the same people from /people and the /students alias.", async function () {
@@ -1588,6 +1630,60 @@ describe("Admin Routes", function () {
 	/**
 	 * Team membership tests
 	 */
+
+	it("Should refuse adding a student to a second team for the same deliverable, and allow a different deliverable.", async function () {
+		// The duplicate-membership guard, end to end, with people whose Person.id differs from their
+		// githubId -- every TestHarness user does ("user2ID" vs "user2gh"), as does every real student
+		// (ACCT vs CWL). Team.personIds holds Person.id: handleTeamAddMember pushes person.id,
+		// handleTeamRemoveMember filters by person.id, and GitHubController.provisionTeam resolves each
+		// entry with getPerson(id).githubId. The guard alone looked up by githubId, so it matched
+		// nothing and never fired; a TA could put a student on two teams for one deliverable.
+		const dbc = DatabaseController.getInstance();
+		const guardTeamId = "TESTguardTeam_" + Date.now();
+
+		// preconditions from prepareTeams: USER2 is on TEAMNAME1 (d0), USER3 is on TEAMNAME2 (d1)
+		expect((await dbc.getTeam(TestHarness.TEAMNAME1)).personIds).to.include(TestHarness.USER2.id);
+		expect((await dbc.getTeam(TestHarness.TEAMNAME2)).personIds).to.include(TestHarness.USER3.id);
+
+		await TestHarness.createTeam(guardTeamId, TestHarness.DELIVID0, [TestHarness.USER4.id]);
+		try {
+			// same deliverable: USER2 already has a d0 team, so the guard must fire
+			let response = await request(app)
+				.post("/portal/admin/team/" + guardTeamId + "/members/" + TestHarness.USER2.github)
+				.send()
+				.set({ user: userName, token: userToken });
+			Log.test("same-deliv add: " + response.status + " -> " + JSON.stringify(response.body));
+			expect(response.status, "USER2 is already on a d0 team").to.equal(400);
+			expect(response.body.failure.message).to.contain("already on team");
+			expect((await dbc.getTeam(guardTeamId)).personIds, "nothing is written on refusal").to.not.include(TestHarness.USER2.id);
+
+			// different deliverable: USER3's d1 membership must not block a d0 team
+			response = await request(app)
+				.post("/portal/admin/team/" + guardTeamId + "/members/" + TestHarness.USER3.github)
+				.send()
+				.set({ user: userName, token: userToken });
+			Log.test("cross-deliv add: " + response.status + " -> " + JSON.stringify(response.body));
+			expect(response.status, "a d1 membership must not block a d0 team").to.equal(200);
+
+			// what was written is Person.id, and every entry resolves to a Person and a GitHub handle
+			// exactly the way provisionTeam resolves it before calling addMembersToTeam
+			const stored = await dbc.getTeam(guardTeamId);
+			expect(stored.personIds).to.include(TestHarness.USER3.id);
+			expect(stored.personIds).to.not.include(TestHarness.USER3.github);
+			const resolved = await Promise.all(stored.personIds.map((id) => dbc.getPerson(id)));
+			expect(
+				resolved.every((p) => p !== null),
+				"every personId resolves to a Person"
+			).to.be.true;
+			expect(resolved.map((p) => p.githubId)).to.include(TestHarness.USER3.github);
+		} finally {
+			// leave the fixtures as we found them
+			const t = await dbc.getTeam(guardTeamId);
+			if (t !== null) {
+				await dbc.deleteTeam(t);
+			}
+		}
+	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should be able to add a member to a team.", async function () {
 		let response = null;

@@ -58,6 +58,13 @@ export default class BackendServer {
 	 *
 	 * @returns {http.Server}
 	 */
+	/** method, url, and the names of the preHandler guards, for every registered route. See the onRoute hook in start(). */
+	private readonly registeredRoutes: Array<{ method: string; url: string; guards: string[] }> = [];
+
+	public getRegisteredRoutes(): Array<{ method: string; url: string; guards: string[] }> {
+		return this.registeredRoutes.slice();
+	}
+
 	public getServer(): http.Server {
 		Log.trace("BackendServer::getServer()");
 		return this.rest.server as http.Server;
@@ -209,6 +216,19 @@ export default class BackendServer {
 			Log.info("BackendServer::start() - Registering common handlers");
 
 			// authentication
+			// Record every route as it is registered, with the name of its preHandler guard. The
+			// authorization sweep in AdminRoutesSpec derives its route list from this rather than from
+			// a hand-maintained table, so an admin route added without a guard fails a test instead
+			// of going silently untested. Must be attached before any registerRoutes() call.
+			this.rest.addHook("onRoute", (routeOptions) => {
+				const methods = Array.isArray(routeOptions.method) ? routeOptions.method : [routeOptions.method];
+				const pre: any = routeOptions.preHandler;
+				const guards: string[] = (Array.isArray(pre) ? pre : pre ? [pre] : []).map((fn: any) => fn?.name ?? "anonymous");
+				for (const method of methods) {
+					this.registeredRoutes.push({ method: String(method).toUpperCase(), url: routeOptions.url, guards });
+				}
+			});
+
 			new AuthRoutes().registerRoutes(this.rest);
 
 			// autotest

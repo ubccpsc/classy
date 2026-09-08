@@ -39,6 +39,21 @@ class ContainerMock extends Docker.Container {
 describe("GradingJob", function () {
 	const containerMaxExecTime = 0.1; // seconds
 
+	describe("#clampMaxExecTime", function () {
+		// Regression: runContainer used to arm its kill timer only `if (maxExecTime > 0)`, so a 0,
+		// negative, or NaN from the deliverable form meant a hung container held its slot forever.
+		it("Should pass a positive timeout through unchanged.", function () {
+			expect(GradingJob.clampMaxExecTime(60)).to.equal(60);
+			expect(GradingJob.clampMaxExecTime(0.1)).to.equal(0.1); // the value the runContainer tests use
+		});
+
+		it("Should fall back to the default for anything that cannot arm a timer.", function () {
+			for (const bad of [0, -5, Number.NaN, Number.POSITIVE_INFINITY, undefined, null, "300"]) {
+				expect(GradingJob.clampMaxExecTime(bad), "input: " + String(bad)).to.equal(GradingJob.DEFAULT_MAX_EXEC_TIME);
+			}
+		});
+	});
+
 	describe("#runDirectory", function () {
 		function jobFor(ref: string | undefined): GradingJob {
 			const input = JSON.parse(JSON.stringify(TestData.inputRecordA)) as ContainerInput;

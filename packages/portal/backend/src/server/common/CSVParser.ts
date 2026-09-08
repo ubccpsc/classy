@@ -172,7 +172,16 @@ export class CSVParser {
 						gradeScore = parseFloat(gradeScore);
 						Log.trace("CSVParser::processGrades(..) - grade is a number: " + gradeScore);
 					} else {
-						gradeScore = Number(gradeScore); // might as well try
+						// This used to be `Number(gradeScore) // might as well try`. A blank cell is
+						// Number("") === 0, which overwrote a grade the student had already earned; "N/A"
+						// became NaN, which then blocked AutoTest from ever updating that student. Skip
+						// the row and name it in the summary instead.
+						Log.warn("CSVParser::processGrades(..) - unusable GRADE for " + row.CSID + ": " + JSON.stringify(row.GRADE) + "; row skipped");
+						if (errorMessage === "") {
+							errorMessage = "Unusable grades: ";
+						}
+						errorMessage += row.CSID + "=" + JSON.stringify(row.GRADE) + ", ";
+						continue;
 					}
 
 					if (typeof row.DISPLAY === "string") {
@@ -219,7 +228,9 @@ export class CSVParser {
 			}
 
 			if (errorMessage.length > 0) {
-				const msg = "CSVParser::processGrades(..) - ERROR: " + errorMessage;
+				// The good rows are already written (Promise.all above) and audited. Say so: told only
+				// "unsuccessful", the natural reaction is to re-upload from a different spreadsheet.
+				const msg = "CSVParser::processGrades(..) - " + grades.length + " grade(s) written; skipped rows: " + errorMessage;
 				Log.error(msg);
 				throw new Error(msg);
 			}

@@ -738,6 +738,19 @@ export class GitHubController implements IGitHubController {
 		const res = await this.gha.deleteRepo(repoName);
 		Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
 
+		// deleteRepo() answers false both for "there was nothing to delete" and, now that it checks the
+		// HTTP status, for "GitHub refused the DELETE". Only roll the record back if the repo is really
+		// gone: a record saying NOT_CREATED for a repo that still exists made every later run refuse it
+		// with a bare entry in the job's failed list. Left as-is, checkDatabase repairs this state.
+		if (res === false && (await this.gha.repoExists(repoName, true)) === true) {
+			Log.error(
+				"GitHubController::provisionRepository( " +
+					repoName +
+					" ) - repo still exists on GitHub after a failed delete; record left for checkDatabase"
+			);
+			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo could not be removed for retry");
+		}
+
 		// and put the Repository record back the way it was. GitHubActions::createRepo writes URL and
 		// cloneURL as soon as GitHub answers, so a failure after that point (an import that cannot
 		// reach the source repo, say) would otherwise leave a record pointing at a repo that no
@@ -793,7 +806,11 @@ export class GitHubController implements IGitHubController {
 					team.URL = await this.getTeamUrl(team); // informational
 					team.githubId = teamValue.githubTeamNumber;
 					await this.dbc.writeTeam(team);
-					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub");
+					// NOTE: CREATED is set below, AFTER the members are added. It used to be set here, and
+					// the early return at the top of this method treats CREATED as "nothing to do" -- so a
+					// run that created the team and then failed on addMembersToTeam (one mistyped CWL)
+					// left a member-less team that every later run reported as fully provisioned.
+					// Students could not see their repo and nothing said why.
 				} else {
 					// never observed in practice, but logged just in case
 					Log.error("GitHubController::provisionTeam( " + team.id + " ) - team NOT created: " + JSON.stringify(teamValue));
@@ -811,6 +828,10 @@ export class GitHubController implements IGitHubController {
 				const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, memberGithubIds);
 				// should probably check for success here
 				Log.info("GitHubController::provisionTeam( " + team.id + " ) - addMembers: " + addMembers.teamName);
+
+				// only now is the team really provisioned; a throw above leaves it un-CREATED so the next
+				// run comes back through createTeam (idempotent) and addMembersToTeam
+				await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub with members");
 			}
 		} catch (err) {
 			// NOTE: this used to swallow the error and return true, which made every team

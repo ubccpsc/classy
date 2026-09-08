@@ -381,35 +381,44 @@ export default class AutoTestRouteHandler {
 
 			const handler = (stream: http.IncomingMessage) => {
 				let heartbeat: NodeJS.Timeout = null;
+				// NOTE: chunks are written by hand rather than stream.pipe()d so each can go through
+				// Config.sanitize() first. The build remote carries githubDockerToken in its URL, and
+				// when the fetch fails Docker echoes that URL back in its error message -- which this
+				// stream then delivered, token included, to the admin's browser and to the log. Docker
+				// emits line-delimited JSON, one message per chunk, so a token does not normally
+				// straddle a chunk boundary.
 				stream.on("data", (chunk: any) => {
-					Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+					const safe = Config.sanitize(chunk.toString());
+					Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + safe);
+					reply.raw.write(safe);
 
 					clearInterval(heartbeat); // if a timer exists, cancel it
 					// start a new timer after every chunk to keep stream open
 					heartbeat = setInterval(function () {
 						Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
 						const dur = ((Date.now() - start) / 1000).toFixed(0);
-						stream.push('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
+						reply.raw.write('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
 					}, 5000); // time between heartbeats
 				});
 				stream.on("end", () => {
 					Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
 					clearInterval(heartbeat);
-					finish("end"); // pipe() ends the response for us
+					reply.raw.end(); // there is no pipe() to end the response for us any more
+					finish("end");
 				});
 				stream.on("error", (err: any) => {
-					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + err);
+					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + Config.sanitize(String(err)));
 					clearInterval(heartbeat);
 					reply.raw.end();
 					finish("stream error");
 				});
-				stream.pipe(reply.raw);
 			};
 
 			const dockerReq = http.request(reqOptions, handler);
 			dockerReq.on("error", (err: any) => {
 				// e.g. the daemon socket does not exist; without this the request would hang
-				Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR contacting Docker: " + err.message);
+				// reqOptions.path carries the remote (and so the token) in its query string
+				Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR contacting Docker: " + Config.sanitize(String(err.message)));
 				reply.raw.end();
 				finish("request error");
 			});

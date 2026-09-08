@@ -408,6 +408,19 @@ export default class GeneralRoutes implements IREST {
 
 	private static async performPostTeam(identity: ClassyIdentity, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
+
+		// Shape check before anything reads the body. requestedTeam is req.body cast to the transport
+		// type, and each githubId flows into readSingleRecord({ githubId }); an object such as
+		// {"$ne": null} in place of a string is a Mongo operator, and matched an arbitrary classmate.
+		if (
+			typeof requestedTeam !== "object" ||
+			requestedTeam === null ||
+			typeof requestedTeam.delivId !== "string" ||
+			Array.isArray(requestedTeam.githubIds) === false ||
+			requestedTeam.githubIds.some((id) => typeof id !== "string")
+		) {
+			throw new Error("Team not created; malformed request.");
+		}
 		const ac = new AuthController();
 		// Validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students

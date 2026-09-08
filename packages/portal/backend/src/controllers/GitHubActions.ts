@@ -795,7 +795,12 @@ export class GitHubActions implements IGitHubActions {
 					},
 				};
 
-				await fetch(uri, options);
+				const response = await fetch(uri, options);
+				if (response.ok === false) {
+					// this used to be logged as "successfully deleted" whatever GitHub answered
+					Log.error("GitHubAction::deleteRepo( " + repoName + " ) - DELETE answered HTTP " + response.status + "; repo NOT deleted");
+					return false;
+				}
 				Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted; took: " + Util.took(start));
 				return true;
 			} else {
