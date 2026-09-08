@@ -14,4 +14,31 @@ describe("DatabaseValidator (src-util)", function () {
 		const dv = new mod.DatabaseValidator();
 		expect((dv as any).DRY_RUN, "dry-run is the default").to.equal(true);
 	});
+
+	it("Should perform zero writes in dry-run mode.", async function () {
+		// validate() reads the real (test) database and, in dry-run, is supposed to only report. It
+		// is the mode people run first against production, so "reports only" has to be true.
+		const mod = await import("../src-util/DatabaseValidator");
+		const dv = new mod.DatabaseValidator();
+		const dc: any = (dv as any).dc; // the DatabaseController singleton; stubs MUST be restored
+		const WRITES = ["writeGrade", "writeRepository", "writeTeam", "writeDeliverable", "writePerson", "writeResult"];
+		const originals: { [k: string]: any } = {};
+		let writes = 0;
+		for (const name of WRITES) {
+			originals[name] = dc[name];
+			dc[name] = async () => {
+				writes++;
+				return true;
+			};
+		}
+		try {
+			await dv.validate();
+		} finally {
+			for (const name of WRITES) {
+				dc[name] = originals[name];
+			}
+		}
+
+		expect(writes, "dry-run must not write").to.equal(0);
+	}).timeout(30000);
 });

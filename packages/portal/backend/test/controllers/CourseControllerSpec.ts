@@ -178,6 +178,29 @@ describe("CourseController", () => {
 		expect(acceptGrade).to.be.true;
 	});
 
+	it("Should not accept an autotest grade once grades are released.", async () => {
+		// Policy decided 2026-09-08: a later AutoTest result must not silently replace a grade the
+		// student has already seen. The common way to get here is moving closeTimestamp to grant one
+		// extension, which reopens grading for the whole class. Un-release first to regrade.
+		const deliv = JSON.parse(JSON.stringify(await new DeliverablesController().getDeliverable(TestHarness.DELIVID1)));
+		deliv.gradesReleased = true;
+		const g: Grade = {
+			personId: TestHarness.USER1.id,
+			delivId: TestHarness.DELIVID1,
+			score: 99, // higher than anything existing, and inside the open window: only release blocks it
+			timestamp: deliv.closeTimestamp - 100,
+			urlName: null,
+			URL: null,
+			comment: "",
+			custom: {},
+		};
+
+		expect(await cc.handleNewAutoTestGrade(deliv, g, null), "released: refuse even with no existing grade").to.be.false;
+
+		deliv.gradesReleased = false;
+		expect(await cc.handleNewAutoTestGrade(deliv, g, null), "un-released: accepted again").to.be.true;
+	});
+
 	it("Should not accept a smaller autotest grade.", async () => {
 		const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID1);
 		const g: Grade = {

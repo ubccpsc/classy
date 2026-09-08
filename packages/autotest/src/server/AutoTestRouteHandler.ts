@@ -463,13 +463,35 @@ export default class AutoTestRouteHandler {
 			}
 
 			if (imageDescription !== null) {
-				const image = docker.getImage(imageDescription.Id);
-				// Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
-				const removeRes = await image.remove();
+				let removeRes: any[];
+				try {
+					// remove by Id: frees the layers when nothing else references them
+					removeRes = await docker.getImage(imageDescription.Id).remove();
+				} catch (err) {
+					// Docker refuses to delete an Id that has dependent child images -- "(HTTP 409)
+					// conflict ... cannot be forced" -- and an instructor who has rebuilt a grading image
+					// has exactly that parent/child chain. What the UI needs is for the tag to go away,
+					// and untagging is always allowed: remove by each RepoTag instead.
+					const tags: string[] = imageDescription.RepoTags ?? [];
+					if (String(err?.message).indexOf("child images") < 0 || tags.length === 0) {
+						throw err;
+					}
+					Log.warn("AutoTestRouteHandler::removeDockerImage(..) - Id has dependent children; untagging instead: " + JSON.stringify(tags));
+					removeRes = [];
+					for (const repoTag of tags) {
+						removeRes.push(...(await docker.getImage(repoTag).remove()));
+					}
+				}
 				// Log.trace("AutoTestRouteHandler::removeDockerImage(..) - image removal result: " + JSON.stringify(removeRes));
 				for (const imgRes of removeRes) {
 					if (typeof imgRes.Deleted === "string" && imgRes.Deleted.indexOf(imageDescription.Id) >= 0) {
 						Log.info("AutoTestRouteHandler::removeDockerImage(..) - image removed successfully: " + imageDescription.Id);
+						success = true;
+					}
+					// an Untagged entry is success too: the tag is gone, which is what the admin asked for.
+					// (An Id with more than one tag answers only Untagged entries even when it has no children.)
+					if (typeof imgRes.Untagged === "string") {
+						Log.info("AutoTestRouteHandler::removeDockerImage(..) - image untagged: " + imgRes.Untagged);
 						success = true;
 					}
 				}
