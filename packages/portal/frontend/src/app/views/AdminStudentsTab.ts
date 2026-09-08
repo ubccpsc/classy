@@ -52,6 +52,16 @@ export class AdminStudentsTab {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
+				// Same id and label as the SNUM column on the Grades tab: it is the same field,
+				// and a roster read side by side with that view should not name it two ways.
+				id: "snum",
+				text: "SNUM",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
+			{
 				id: "id",
 				text: "CSID",
 				sortable: true,
@@ -102,12 +112,14 @@ export class AdminStudentsTab {
 			if (student.labId !== null && student.labId.length > 0) {
 				labId = student.labId;
 			}
+			const snum = AdminStudentsTab.snumLabel(student);
 			const row: TableCell[] = [
 				{ value: count, html: count++ + "" },
 				{
 					value: student.githubId,
 					html: "<a class='selectable' href='" + student.userUrl + "'>" + student.githubId + "</a>", // Should be CWL
 				},
+				{ value: snum, html: snum },
 				{ value: student.id, html: student.id }, // Should be CSID
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
@@ -167,6 +179,28 @@ export class AdminStudentsTab {
 			UI.showSection("studentListTable");
 			UI.hideSection("studentListTableNone");
 		}
+	}
+
+	/**
+	 * The student number to sort and render by, or null when the person has none.
+	 *
+	 * Null rather than a placeholder on purpose: SortableTable::addRow turns a null cell value
+	 * into "N/A" for both the value and the html, so every table in the portal spells the missing
+	 * case the same way. Returning "" here would opt this column out of that and render blank.
+	 *
+	 * Having none is normal rather than exceptional: it is the usual state for staff and for
+	 * anyone added outside a classlist upload.
+	 *
+	 * String() rather than a string check, for the same reason ExportRoutes and CSVParser coerce:
+	 * Person.studentNumber was declared `number` for years while holding a string, and documents
+	 * written before that was corrected still hold a number. Nothing migrates them.
+	 */
+	private static snumLabel(student: PersonTransport): string | null {
+		if (student.studentNum === null || typeof student.studentNum === "undefined") {
+			return null;
+		}
+		const snum = String(student.studentNum);
+		return snum.length > 0 ? snum : null;
 	}
 
 	/**
