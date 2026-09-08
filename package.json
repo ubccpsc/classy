@@ -51,6 +51,7 @@
     },
     "nyc": {
         "exclude": [
+            "**/src-util/**",
             "**/*Spec.ts",
             "**/TestHarness.ts",
             "**/TestData.ts",
