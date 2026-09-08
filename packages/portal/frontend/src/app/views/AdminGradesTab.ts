@@ -82,19 +82,21 @@ export class AdminGradesTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
-				id: "id",
-				text: "CSID",
-				sortable: true,
-				defaultSort: true,
-				sortDown: false,
-				style: "padding-left: 1em; padding-right: 1em;",
-			},
-			{
 				id: "snum",
 				text: "SNUM",
 				sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
 				defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
 				sortDown: false, // Whether the column should initially sort descending or ascending.
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
+			{
+				id: "id",
+				text: "CSID",
+				sortable: true,
+				// false: GitHub Id above is this table's default sort. Both columns used to claim
+				// it, and SortableTable takes the first it encounters, so this one never applied.
+				defaultSort: false,
+				sortDown: false,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
@@ -135,13 +137,23 @@ export class AdminGradesTab extends AdminPage {
 		];
 
 		for (const deliv of delivs) {
-			const col = {
+			// Underlined when a student can actually see the grade, which needs both flags: a
+			// released deliverable that is not visible does not appear for them at all, and a
+			// visible one whose grades are not released shows no score.
+			//
+			// One signal cannot separate the three "no" cases, which is what the tooltip is for:
+			// released-but-not-visible and neither-of-the-two look identical in the heading.
+			const released = deliv.gradesReleased === true;
+			const visible = deliv.visibleToStudents === true;
+
+			const col: TableHeader = {
 				id: deliv.id,
 				text: deliv.id,
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em; text-align: right;",
+				style: "padding-left: 1em; padding-right: 1em; text-align: right;" + (released && visible ? " text-decoration: underline;" : ""),
+				tooltip: "Grades released: " + released + "; Grades visible: " + visible,
 			};
 			headers.push(col);
 		}
@@ -155,8 +167,8 @@ export class AdminGradesTab extends AdminPage {
 					value: student.githubId,
 					html: "<a class='selectable' href='" + student.userUrl + "'>" + student.githubId + "</a>",
 				},
-				{ value: student.id, html: student.id + "" },
 				{ value: student.studentNum, html: student.studentNum + "" },
+				{ value: student.id, html: student.id + "" },
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
 				{ value: student.labId, html: student.labId },

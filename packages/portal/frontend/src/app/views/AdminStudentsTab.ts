@@ -58,7 +58,10 @@ export class AdminStudentsTab {
 				text: "SNUM",
 				sortable: true,
 				defaultSort: false,
-				sortDown: true,
+				// false, as on the Grades tab and on GitHub Id beside it: the three identity
+				// columns name the same person, so clicking them should not sort in opposite
+				// directions from each other, or differently on the two pages.
+				sortDown: false,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
@@ -66,7 +69,7 @@ export class AdminStudentsTab {
 				text: "CSID",
 				sortable: true,
 				defaultSort: false,
-				sortDown: true,
+				sortDown: false, // see SNUM above
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{

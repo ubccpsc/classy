@@ -174,6 +174,14 @@ export class AdminDashboardTab extends AdminPage {
 	protected buildHeaders(): TableHeader[] {
 		return [
 			{
+				id: "timestamp",
+				text: "Timestamp",
+				sortable: true,
+				defaultSort: true,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
 				id: "?",
 				text: "?",
 				sortable: false,
@@ -199,7 +207,7 @@ export class AdminDashboardTab extends AdminPage {
 			},
 			{
 				id: "score",
-				text: "Score",
+				text: "Score %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -207,7 +215,7 @@ export class AdminDashboardTab extends AdminPage {
 			},
 			{
 				id: "testScore",
-				text: "Test %",
+				text: "Correctness %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -218,14 +226,6 @@ export class AdminDashboardTab extends AdminPage {
 				text: "Cover %",
 				sortable: true,
 				defaultSort: false,
-				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
-			},
-			{
-				id: "timestamp",
-				text: "Timestamp",
-				sortable: true,
-				defaultSort: true,
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 			},
@@ -295,6 +295,7 @@ export class AdminDashboardTab extends AdminPage {
 
 			// ion-ios-help-outline
 			const row: TableCell[] = [
+				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 				{
 					value: "",
 					html: "<a style='cursor: pointer;' target='_blank' href='" + stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>",
@@ -307,7 +308,6 @@ export class AdminDashboardTab extends AdminPage {
 				{ value: result.scoreOverall, html: this.alignValue(result.scoreOverall) },
 				{ value: result.scoreTests, html: this.alignValue(result.scoreTests) },
 				{ value: result.scoreCover, html: this.alignValue(result.scoreCover) },
-				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 				{ value: "", html: dashRow },
 			];
 

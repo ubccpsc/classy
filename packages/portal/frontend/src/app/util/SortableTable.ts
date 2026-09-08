@@ -9,8 +9,23 @@ export interface TableHeader {
 	text: string; // The displayed text for the column.
 	sortable: boolean; // Whether the column is sortable (sometimes sorting does not make sense).
 	defaultSort: boolean; // Whether the column is the default sort for the table. should only be true for one column.
-	sortDown: boolean; // Whether the column should initially sort descending or ascending.
+	/**
+	 * The direction this column sorts in when it is first sorted: true is descending, false is
+	 * ascending. Read literally -- the value you declare is the one that renders.
+	 *
+	 * Mutated when the user clicks a column that is already sorted, which is how re-clicking
+	 * reverses it.
+	 */
+	sortDown: boolean;
 	style?: string; // optional style hints for column
+	/**
+	 * Optional hover text for the column heading, rendered as the th's title attribute.
+	 *
+	 * Plain text, not markup: it is escaped on the way in. Keep `text` as the visible label
+	 * rather than smuggling a <span title=".."> through it, because the CSV export reads the
+	 * heading's innerText and the sorted column wraps `text` in <b>.
+	 */
+	tooltip?: string;
 }
 
 export interface TableCell {
@@ -89,6 +104,12 @@ export class SortableTable {
 		for (const c of this.headers) {
 			if (c.id === colId) {
 				if (c.sortable === true) {
+					// Clicking the column that already carries the arrow reverses it; clicking a
+					// different one sorts it the way it declares. performSort() used to do this by
+					// flipping on every render, which meant the first render inverted the default.
+					if (this.sortHeader !== null && this.sortHeader.id === c.id) {
+						c.sortDown = !c.sortDown;
+					}
 					this.sortHeader = c;
 				} else {
 					this.sortHeader = null;
@@ -156,29 +177,47 @@ export class SortableTable {
 				header.style = "";
 			}
 
+			// hover text, when the column asked for one
+			const title =
+				typeof header.tooltip === "string" && header.tooltip.length > 0 ? ' title="' + SortableTable.escapeHTML(header.tooltip) + '"' : "";
+
+			// Both are course data rather than literals -- a column is often named after a
+			// deliverable, and a deliverable id is only checked for length when it is created --
+			// so a quote in either would end an attribute early and let the rest parse as markup.
+			//
+			// The id round-trips: getAttribute() decodes entities, so sort() still receives the
+			// value that matches header.id.
+			const id = SortableTable.escapeHTML(header.id);
+			const text = SortableTable.escapeHTML(header.text);
+
 			// decorate this.sorCol appropriately
 			if (this.sortHeader !== null && header.id === this.sortHeader.id) {
-				if (this.sortHeader.sortDown) {
+				// down is ▼: the arrow points the way the column is sorted
+				if (this.sortHeader.sortDown === false) {
 					tablePrefix +=
 						'<th class="sortableHeader" style="' +
 						header.style +
 						'" col="' +
-						header.id +
-						'"><b class="sortableHeader">' +
-						header.text +
+						id +
+						'"' +
+						title +
+						'><b class="sortableHeader">' +
+						text +
 						" ▲</b></th>";
 				} else {
 					tablePrefix +=
 						'<th class="sortableHeader"  style="' +
 						header.style +
 						'" col="' +
-						header.id +
-						'"><b class="sortableHeader">' +
-						header.text +
+						id +
+						'"' +
+						title +
+						'><b class="sortableHeader">' +
+						text +
 						" ▼</b></th>";
 				}
 			} else {
-				tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '">' + header.text + "</th>";
+				tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + id + '"' + title + ">" + text + "</th>";
 			}
 		}
 		tablePrefix += "</tr>";
@@ -231,10 +270,12 @@ export class SortableTable {
 			}
 		}
 
-		sortHead.sortDown = !sortHead.sortDown;
-		let mult = -1;
+		// Read, never flipped. This used to invert sortDown on every call, which had two
+		// consequences: a declared sortDown meant the opposite of what it rendered, and calling
+		// generate() twice silently reversed the table. Reversing on click belongs to sort().
+		let mult = 1;
 		if (sortHead.sortDown) {
-			mult = 1;
+			mult = -1;
 		}
 		Log.trace("SortableTable::sort() - col: " + sortHead.id + "; down: " + sortHead.sortDown + "; mult: " + mult + "; index: " + sortIndex);
 
@@ -316,6 +357,17 @@ export class SortableTable {
 
 		Log.info("SortableTable::findColsWithMetadata() - cols: " + JSON.stringify(colsWithMetadata));
 		return colsWithMetadata;
+	}
+
+	/**
+	 * Escapes text on its way into the header markup, for both attribute values and element text.
+	 *
+	 * One escaper for both because over-escaping quotes in element text is harmless: the browser
+	 * decodes them again, so the heading reads the same and the CSV export -- which takes
+	 * innerText -- still sees the original characters.
+	 */
+	private static escapeHTML(value: string): string {
+		return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	}
 
 	private escapeCSVValue(value: string): string {

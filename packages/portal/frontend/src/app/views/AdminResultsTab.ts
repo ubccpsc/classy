@@ -167,6 +167,14 @@ export class AdminResultsTab extends AdminPage {
 	protected buildHeaders(): TableHeader[] {
 		return [
 			{
+				id: "timstamp",
+				text: "Timestamp",
+				sortable: true,
+				defaultSort: true,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
 				id: "?",
 				text: "?",
 				sortable: false,
@@ -192,7 +200,7 @@ export class AdminResultsTab extends AdminPage {
 			},
 			{
 				id: "score",
-				text: "Score",
+				text: "Score %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -200,7 +208,7 @@ export class AdminResultsTab extends AdminPage {
 			},
 			{
 				id: "scoreTest",
-				text: "Test %",
+				text: "Correctness %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -222,14 +230,6 @@ export class AdminResultsTab extends AdminPage {
 				text: "State",
 				sortable: true,
 				defaultSort: false,
-				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
-			},
-			{
-				id: "timstamp",
-				text: "Timestamp",
-				sortable: true,
-				defaultSort: true,
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 			},
@@ -301,6 +301,7 @@ export class AdminResultsTab extends AdminPage {
 
 			// ion-ios-help-outline
 			const row: TableCell[] = [
+				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 				{
 					value: "",
 					html:
@@ -318,7 +319,6 @@ export class AdminResultsTab extends AdminPage {
 				{ value: result.scoreTests, html: AdminResultsTab.percentCell(result.scoreTests) },
 				{ value: result.scoreCover, html: AdminResultsTab.percentCell(result.scoreCover) },
 				{ value: result.state, html: result.state },
-				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 			];
 
 			st.addRow(this.decorateRow(row, result));
