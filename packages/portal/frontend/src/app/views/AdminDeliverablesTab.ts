@@ -165,7 +165,10 @@ export class AdminDeliverablesTab extends AdminPage {
 						// worked
 					})
 					.catch(function (err) {
-						Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
+						// shown, not just logged: a save that fails silently looks like a dead button,
+						// which is exactly how the unguarded date pickers presented
+						Log.error("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
+						UI.showError("Could not save the deliverable: " + err.message);
 					});
 			};
 		}
@@ -198,12 +201,34 @@ export class AdminDeliverablesTab extends AdminPage {
 			that.updateHiddenBlocks();
 		};
 
-		const flatpickrOptions = {
-			enableTime: true,
-			time_24hr: true,
-			utc: true,
-			dateFormat: "Y/m/d @ H:i",
-			defaultDate: new Date(),
+		/**
+		 * Options for one date picker, with a default date only when the stored value is usable.
+		 *
+		 * `new Date(x)` yields an Invalid Date for a timestamp that is missing, not a number, or
+		 * outside the range a Date can represent (Number.MAX_SAFE_INTEGER is, for instance). flatpickr
+		 * then selects nothing and leaves latestSelectedDateObj undefined, which used to surface as
+		 * save() throwing a TypeError that only reached the console -- the button appeared dead.
+		 *
+		 * A bad value leaves the field EMPTY rather than defaulting to now. Quietly substituting the
+		 * current time for a close date would be worse than refusing: it would silently make
+		 * everything submitted afterwards late.
+		 */
+		const pickerOptions = function (timestamp?: number): any {
+			const options: any = {
+				enableTime: true,
+				time_24hr: true,
+				utc: true,
+				dateFormat: "Y/m/d @ H:i",
+			};
+			if (typeof timestamp === "number" && Number.isFinite(timestamp) === true) {
+				const date = new Date(timestamp);
+				if (isNaN(date.getTime()) === false) {
+					options.defaultDate = date;
+				} else {
+					Log.warn("AdminDeliverablesTab::pickerOptions(..) - unusable timestamp: " + timestamp);
+				}
+			}
+			return options;
 		};
 
 		let selectedDockerImage: string = "";
@@ -211,10 +236,8 @@ export class AdminDeliverablesTab extends AdminPage {
 		if (deliv === null) {
 			// new deliverable, set defaults
 
-			flatpickrOptions.defaultDate = new Date();
-			this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
-			flatpickrOptions.defaultDate = new Date();
-			this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+			this.openPicker = flatpickr("#adminEditDeliverablePage-open", pickerOptions(Date.now()));
+			this.closePicker = flatpickr("#adminEditDeliverablePage-close", pickerOptions(Date.now()));
 
 			UI.setDropdownSelected("adminEditDeliverablePage-minTeamSize", 1, this.isAdmin);
 			UI.setDropdownSelected("adminEditDeliverablePage-maxTeamSize", 1, this.isAdmin);
@@ -245,10 +268,8 @@ export class AdminDeliverablesTab extends AdminPage {
 			this.setTextField("adminEditDeliverablePage-repoPrefix", deliv.repoPrefix, this.isAdmin);
 			this.setTextField("adminEditDeliverablePage-teamPrefix", deliv.teamPrefix, this.isAdmin);
 
-			flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
-			this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
-			flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
-			this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+			this.openPicker = flatpickr("#adminEditDeliverablePage-open", pickerOptions(deliv.openTimestamp));
+			this.closePicker = flatpickr("#adminEditDeliverablePage-close", pickerOptions(deliv.closeTimestamp));
 			this.setToggle("adminEditDeliverablePage-lateAutoTest", deliv.lateAutoTest, this.isAdmin);
 
 			this.setToggle("adminEditDeliverablePage-shouldProvision", deliv.shouldProvision, this.isAdmin);
@@ -366,14 +387,36 @@ export class AdminDeliverablesTab extends AdminPage {
 		}
 	}
 
+	/**
+	 * The time a picker has selected, or null when it has none.
+	 *
+	 * latestSelectedDateObj is undefined until flatpickr successfully parses a date, so it cannot be
+	 * dereferenced blind; selectedDates is checked too because a picker the user has just edited
+	 * populates that first.
+	 */
+	private static selectedTimestamp(picker: any): number | null {
+		const selected = picker?.latestSelectedDateObj ?? picker?.selectedDates?.[0];
+		if (typeof selected === "undefined" || selected === null || isNaN(selected.getTime()) === true) {
+			return null;
+		}
+		return selected.getTime();
+	}
+
 	private async save(): Promise<void> {
 		Log.info("AdminDeliverablesTab::save() - start");
 
 		const id = UI.getTextFieldValue("adminEditDeliverablePage-name");
 		const URL = UI.getTextFieldValue("adminEditDeliverablePage-url");
 
-		const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
-		const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
+		const openTimestamp = AdminDeliverablesTab.selectedTimestamp(this.openPicker);
+		const closeTimestamp = AdminDeliverablesTab.selectedTimestamp(this.closePicker);
+		if (openTimestamp === null || closeTimestamp === null) {
+			// this used to be an unguarded `.latestSelectedDateObj.getTime()`, so a picker with no
+			// selection threw a TypeError that the save button's handler only logged
+			const which = openTimestamp === null ? "Open" : "Close";
+			UI.showError(which + " date is not set. Pick a date and time, then save again.");
+			return;
+		}
 
 		const shouldProvision = UI.getToggleValue("adminEditDeliverablePage-shouldProvision");
 		const importURL = UI.getTextFieldValue("adminEditDeliverablePage-importURL");
