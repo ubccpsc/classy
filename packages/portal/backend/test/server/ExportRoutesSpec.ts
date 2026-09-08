@@ -254,7 +254,7 @@ describe("Export Routes", function () {
 			expect(response.body.generated_at).to.match(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
 		});
 
-		it("Should return one row per graded student, and exclude staff.", async function () {
+		it("Should return one row per graded person, staff included.", async function () {
 			const response = await request(app)
 				.get(PREFIX + "/grades/" + RELEASED)
 				.set("Authorization", "Bearer " + TOKEN_A);
@@ -262,16 +262,18 @@ describe("Export Routes", function () {
 			expect(response.status).to.equal(200);
 
 			const snums = response.body.grades.map((g: any) => g.snum);
-			expect(snums).to.have.members([SNUM1, SNUM2]);
 
-			// staff grades come from testing and must never leave Classy
-			expect(snums).to.not.contain(SNUM_STAFF);
+			// Everyone with a grade, whatever their kind. Classy used to send students only, which
+			// decided for the consumer -- and, because a person's kind is null until they first log
+			// in, silently dropped students who had not signed in yet. ELMS keys on the identifiers
+			// in each row and ignores what it does not recognise.
+			expect(snums).to.have.members([SNUM1, SNUM2, SNUM_STAFF]);
 
-			// USER3 has no grade for this deliverable, so has no row
-			expect(response.body.grades.length).to.equal(2);
+			// USER3 has no grade for this deliverable, so still has no row
+			expect(response.body.grades.length).to.equal(3);
 		});
 
-		it("Should skip a graded person who has no student number.", async function () {
+		it("Should send a graded person who has no student number, keyed by cwl.", async function () {
 			// snum is the join key on the consumer side, so a person without one cannot be
 			// matched there. People created by login rather than by classlist import have a
 			// null studentNumber; they must be dropped rather than exported as "null".
@@ -300,7 +302,12 @@ describe("Export Routes", function () {
 			expect(response.status).to.equal(200);
 
 			const snums = response.body.grades.map((g: any) => g.snum);
-			expect(snums).to.have.members([SNUM1, "44444444"]);
+
+			// USER3 has no student number: the row is still sent, with a blank snum. It carries a
+			// cwl, so the person is identifiable; dropping it would decide for the consumer.
+			expect(snums).to.have.members([SNUM1, "44444444", ""]);
+
+			// what must never happen is the literal string "null" arriving as a student number
 			expect(snums).to.not.contain("null");
 			expect(snums).to.not.contain(null);
 
@@ -308,6 +315,44 @@ describe("Export Routes", function () {
 			for (const snum of snums) {
 				expect(snum).to.be.a("string");
 			}
+
+			// the row without a snum is still identifiable
+			const noSnum = response.body.grades.find((g: any) => g.snum === "");
+			expect(noSnum.cwl, "cwl is what identifies a row with no student number").to.be.a("string");
+			expect(noSnum.cwl.length).to.be.greaterThan(0);
+		});
+
+		it("Should include a student who has never logged in.", async function () {
+			// REGRESSION: a person's kind is null until their first login -- AuthRoutes clears it on
+			// every login and AuthController re-derives it afterwards -- so a classlist-imported
+			// student who has not signed in yet has no kind. The export used to require STUDENT or
+			// WITHDRAWN, which dropped exactly those people: their grades never reached ELMS and
+			// nothing anywhere said so. AdminController::getPeople already treats a null kind as a
+			// student, so the two disagreed.
+			// NOTE: its own deliverable, not RELEASED. A sibling test asserts the exact number of
+			// rows RELEASED exports, and an extra grade there would break it.
+			const dc = DatabaseController.getInstance();
+			const SNUM_NEW = "99999999";
+			const delivId = "exportNeverLoggedIn";
+
+			const deliv = TestHarness.createDeliverable(delivId);
+			deliv.gradesReleased = true;
+			await dc.writeDeliverable(deliv);
+
+			const person = await dc.getPerson(TestHarness.USER5.id);
+			(person as any).studentNumber = SNUM_NEW;
+			person.kind = null; // never logged in
+			await dc.writePerson(person);
+
+			await makeGrade(TestHarness.USER5.id, delivId, 64, "graded before first login", {});
+
+			const response = await request(app)
+				.get(PREFIX + "/grades/" + delivId)
+				.set("Authorization", "Bearer " + TOKEN_A);
+
+			expect(response.status).to.equal(200);
+			const snums = response.body.grades.map((g: any) => g.snum);
+			expect(snums, "a student who has not logged in must still be exported").to.contain(SNUM_NEW);
 		});
 
 		it("Should include a withdrawn student who has a grade.", async function () {
@@ -395,7 +440,7 @@ describe("Export Routes", function () {
 			expect(record.personId).to.equal(CONSUMER_B);
 			expect(record.personId).to.not.equal(CONSUMER_A);
 			expect((record.custom as any).delivId).to.equal(RELEASED);
-			expect((record.custom as any).count).to.equal(2);
+			expect((record.custom as any).count, "counts every row sent, staff included").to.equal(3);
 		});
 
 		it("Should not audit a refused pull.", async function () {

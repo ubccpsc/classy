@@ -108,11 +108,16 @@ export class GradesController {
 				Log.warn("GradesController::getGradesForDeliverable( " + delivId + " ) - no person for grade: " + grade.personId);
 				continue;
 			}
-			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
-				included.push({ grade: grade, person: person });
-			} else {
-				Log.trace("GradesController::getGradesForDeliverable( " + delivId + " ) - skipping: " + person.id + "; kind: " + person.kind);
-			}
+			// Every grade, whoever it belongs to.
+			//
+			// This used to include only STUDENT and WITHDRAWN. Two things were wrong with that. The
+			// consumer -- ELMS -- keys on the identifiers in each row and can ignore what it does not
+			// recognise, so filtering here decided on its behalf. And a person's kind is null until
+			// they first log in (AuthRoutes clears it on every login and it is re-derived after), so
+			// the filter silently dropped real students who simply had not signed in yet: their
+			// grades never reached ELMS and nothing said so. AdminController::getPeople already
+			// treats a null kind as a student for exactly this reason.
+			included.push({ grade: grade, person: person });
 		}
 
 		Log.info(
