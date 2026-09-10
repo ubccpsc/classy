@@ -202,6 +202,15 @@ export class CourseController implements ICourseController {
 			return Promise.resolve(false);
 		}
 
+		if (deliv.gradesReleased === true) {
+			// Once grades are released, a later AutoTest result must not silently replace what
+			// students have already seen. The common way to get here is moving closeTimestamp to
+			// grant one extension, which reopens grading for the whole class. If the intent really is
+			// to regrade, un-release first; that makes the change deliberate and visible.
+			Log.info(LOGPRE + "not recorded; grades already released");
+			return Promise.resolve(false);
+		}
+
 		// >= on purpose so "last highest" is used
 		const gradeIsLarger = existingGrade === null || newGrade.score >= existingGrade.score;
 

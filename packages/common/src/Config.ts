@@ -224,15 +224,29 @@ export default class Config {
 	 * @param input a string that you MAY want to remove sensitive information from
 	 */
 	public static sanitize(input: string): string {
-		const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
+		if (typeof input !== "string" || input.length === 0) {
+			return input;
+		}
+		// Every secret that can end up in a URL, a log line, or a streamed error. The Docker token is
+		// spliced into the image-build remote (AutoTestRouteHandler.postDockerImage) and the classlist
+		// password used to ride in the registrar URI; error paths echoed both verbatim.
+		const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken, ConfigKey.githubDockerToken, ConfigKey.classlist_password];
 		const config = Config.getInstance();
-		sensitiveKeys.forEach((sk) => {
+		for (const sk of sensitiveKeys) {
+			if (config.hasProp(sk) === false) {
+				continue;
+			}
 			// HACK: replace() - edge case regarding token prefix in the config.
-			const value: string = config.getProp(sk).replace("token ", "");
-
+			const value = String(config.getProp(sk) ?? "").replace("token ", "");
+			// an empty or very short value would match everywhere and shred the input
+			if (value.length < 8) {
+				continue;
+			}
 			const hint = value.substring(0, 4);
-			input = input.replace(new RegExp(value, "g"), hint + "-xxxxxx");
-		});
+			// tokens can contain regex metacharacters; the old code handed them to RegExp raw
+			const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			input = input.replace(new RegExp(escaped, "g"), hint + "-xxxxxx");
+		}
 		return input;
 	}
 }

@@ -235,6 +235,21 @@ export class GradingJob {
 		return this.record;
 	}
 
+	/** Seconds a grading container may run when the deliverable does not say, or says something unusable. */
+	public static readonly DEFAULT_MAX_EXEC_TIME = 300;
+
+	/**
+	 * The timeout runContainer will actually use for a configured maxExecTime.
+	 * Positive finite numbers pass through; anything else falls back to DEFAULT_MAX_EXEC_TIME.
+	 */
+	public static clampMaxExecTime(maxExecTime: unknown): number {
+		if (typeof maxExecTime === "number" && Number.isFinite(maxExecTime) === true && maxExecTime > 0) {
+			return maxExecTime;
+		}
+		Log.warn("GradingJob::clampMaxExecTime( " + String(maxExecTime) + " ) - unusable; using " + GradingJob.DEFAULT_MAX_EXEC_TIME + "s");
+		return GradingJob.DEFAULT_MAX_EXEC_TIME;
+	}
+
 	public static async runContainer(container: Docker.Container, maxExecTime: number): Promise<number> {
 		let result: any;
 		let timer: any;
@@ -242,13 +257,16 @@ export class GradingJob {
 
 		await container.start();
 
-		if (maxExecTime > 0) {
-			// Set a timer to kill the container if it does not finish in the allotted time
-			timer = setTimeout(async () => {
-				timedOut = true;
-				await container.stop();
-			}, maxExecTime * 1000);
-		}
+		// NOTE: this timer is the only thing that stops a hung container, and maxExecTime arrives from
+		// the deliverable form. A 0, a negative, or a NaN used to skip the timer entirely; a job whose
+		// container never exited then held its slot until the process restarted -- and was re-queued
+		// on restart. Clamp rather than trust (DeliverablesController also rejects these on save).
+		const effectiveMaxExecTime = GradingJob.clampMaxExecTime(maxExecTime);
+		// Set a timer to kill the container if it does not finish in the allotted time
+		timer = setTimeout(async () => {
+			timedOut = true;
+			await container.stop();
+		}, effectiveMaxExecTime * 1000);
 
 		try {
 			result = await container.wait();

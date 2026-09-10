@@ -115,6 +115,15 @@ export abstract class AutoTest implements IAutoTest {
 	 * causes the user to exceed this limit, the oldest job will be moved to the
 	 * low queue and the newer job will be scheduled on the standard queue.
 	 */
+	/**
+	 * Per-person cap on the express queue. tick() drains express to exhaustion before touching the
+	 * standard or low queues, and the student feedback charge is written only after a job executes,
+	 * so with no cap one person mentioning the bot on thirty commits filled every job slot ahead of
+	 * the whole class's pushes. Same value as MAX_STANDARD_JOBS: these are explicit requests, and a
+	 * student with two already waiting has nothing to gain from a third.
+	 */
+	private readonly MAX_EXPRESS_JOBS: number = 2;
+
 	private readonly MAX_STANDARD_JOBS: number = 2;
 
 	/**
@@ -162,9 +171,9 @@ export abstract class AutoTest implements IAutoTest {
 	}
 
 	/**
-	 * Adds a job to the express queue. There is not a limit to these requests, so
-	 * deliverables need to be configured to ensure that results cannot be requested
-	 * too often.
+	 * Adds a job to the express queue. A person may have at most MAX_EXPRESS_JOBS waiting
+	 * here; beyond that the request is dropped (the earlier ones are still queued, so the
+	 * student loses nothing they had not already asked for).
 	 *
 	 * If the job is already executing on any other queue, it will not be added. But
 	 * if it is just sitting on another queue, it will be added to express and removed
@@ -185,6 +194,19 @@ export abstract class AutoTest implements IAutoTest {
 		try {
 			if (this.isCommitExecuting(input)) {
 				Log.info("AutoTest::addToExpressQueue(..) - not added; commit already executing");
+				return;
+			}
+
+			const expressJobCount = this.expressQueue.numberJobsForPerson(input);
+			if (expressJobCount >= this.MAX_EXPRESS_JOBS) {
+				Log.warn(
+					"AutoTest::addToExpressQueue(..) - not added; person already has " +
+						expressJobCount +
+						" express job(s) queued (max " +
+						this.MAX_EXPRESS_JOBS +
+						"); SHA: " +
+						Util.shaHuman(input.target.commitSHA)
+				);
 				return;
 			}
 

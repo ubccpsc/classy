@@ -656,8 +656,12 @@ export class DatabaseController {
 
 			return db.collection(collectionName);
 		} catch (err) {
-			Log.error("DatabaseController::getCollection( " + collectionName + " ) - Mongo is probably not running; ERROR: " + err.message);
-			process.exit(-1); // this is a fatal failure
+			// This used to process.exit(-1). A connect that missed the (then 500ms) server-selection
+			// window on a lazily-opened pool took the whole portal down, dropping every in-flight
+			// request -- including AutoTest result POSTs -- and the log blamed Mongo when Mongo was
+			// fine. Throwing lets the one request answer 500 and the process live to serve the next.
+			Log.error("DatabaseController::getCollection( " + collectionName + " ) - Mongo unreachable; ERROR: " + err.message);
+			throw new Error("Database unavailable: " + err.message);
 		}
 	}
 
@@ -1022,7 +1026,9 @@ export class DatabaseController {
 				const dbHost = Config.getInstance().getProp(ConfigKey.mongoUrl).trim(); // make sure there are no extra spaces in config
 
 				Log.trace("DatabaseController::open() - db null; making new connection to: _" + dbName + "_");
-				const client = await MongoClient.connect(dbHost, { serverSelectionTimeoutMS: 500 });
+				// 500ms was tight enough that a busy Mongo tripped it; the driver default is 30s. 5s
+				// still fails fast when Mongo is actually down, without failing on a slow second.
+				const client = await MongoClient.connect(dbHost, { serverSelectionTimeoutMS: 5000 });
 				if (kind === "slow") {
 					Log.trace("DatabaseController::open() - creating slowDb");
 					this.slowDb = await client.db(dbName);
@@ -1171,8 +1177,47 @@ export class DatabaseController {
 				};
 				await this.writeTeam(newTeam);
 			}
+
+			// last, and after the team bootstrap above, so a duplicate-laden collection cannot stop
+			// the admin/staff/students teams from being created
+			await this.ensureUniqueIdIndexes();
 		} catch (err) {
 			Log.error("DatabaseController::initDatabase() - ERROR: " + err.message);
+		}
+	}
+
+	/**
+	 * A unique index on `id` for each collection that is keyed by one.
+	 *
+	 * Every write path is check-then-write, so two concurrent writers (two classlist jobs, say)
+	 * could both see "absent" and both insert; readSingleRecord then returns whichever document
+	 * Mongo hands back first and edits land on the shadow copy. The index makes the second insert
+	 * fail loudly instead.
+	 *
+	 * NOTE: createIndex() with unique:true refuses if duplicates already exist. That is checked
+	 * first, per collection, so a database that already has duplicates logs exactly which ids are
+	 * doubled and carries on without the index, rather than failing startup or hiding it.
+	 */
+	private async ensureUniqueIdIndexes(): Promise<void> {
+		for (const collName of [this.PERSONCOLL, this.REPOCOLL, this.TEAMCOLL, this.DELIVCOLL]) {
+			try {
+				const coll = await this.getCollection(collName);
+				const dupes = await coll
+					.aggregate([{ $group: { _id: "$id", n: { $sum: 1 } } }, { $match: { n: { $gt: 1 } } }, { $limit: 20 }])
+					.toArray();
+				if (dupes.length > 0) {
+					Log.error(
+						"DatabaseController::ensureUniqueIdIndexes() - " +
+							collName +
+							" has duplicate ids; unique index NOT created. Duplicated: " +
+							JSON.stringify(dupes.map((d: any) => d._id))
+					);
+					continue;
+				}
+				await coll.createIndex({ id: 1 }, { name: "uniqueId", unique: true });
+			} catch (err) {
+				Log.error("DatabaseController::ensureUniqueIdIndexes() - " + collName + " - ERROR: " + err.message);
+			}
 		}
 	}
 }

@@ -15,6 +15,14 @@ TS_NODE_BASEURL=. node --require dotenv/config --require tsconfig-paths/register
 
 Running `node src-util/<Script>.js` directly fails with `Cannot find module "@common/Config"`.
 
+These scripts are also excluded from coverage (`nyc.exclude` in `packages/portal/backend/package.json`, which is
+the config CI reads -- nyc resolves the nearest `package.json` to its working directory, so the root one does
+not apply there). They are one-off maintenance tools, not the service, and measuring them alongside it moves the
+project's coverage number for reasons that have nothing to do with the service's tests: when `DatabaseValidator`
+first became importable (2026-09-08) it entered the report at 13/264 lines and dropped backend line coverage from
+92.1% to 88.2% overnight, without a single service line losing coverage. `DatabaseValidatorSpec` still runs; it
+asserts behaviour (importable without side effects; dry-run writes nothing), which is what matters for a script.
+
 The full list is given below, but the most commonly used batch utilities are `InvokeAutoTest` and `TransformGrades`.
 
 * `ConcurrencyBenchmark`: Measures how much request concurrency actually helps against the configured GitHub instance. Read-only (only issues `GET /repos/{org}/{repo}`), so it is safe to run repeatedly. Use it to choose `AdminController.PROVISION_CONCURRENCY`: look for the level where speedup stops climbing, or where non-200 responses start appearing (GitHub secondary rate limits).

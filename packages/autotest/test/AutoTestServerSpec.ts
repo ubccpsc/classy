@@ -275,27 +275,34 @@ describe("AutoTest AutoTestServer", function () {
 		expect(res.body?.message, "should say the tag is unknown").to.be.a("string");
 	}).timeout(TIMEOUT);
 
-	// DISABLED: this asserts that an admin with a valid secret can delete an image, and the
-	// endpoint cannot currently satisfy that for any image that has dependent children.
-	// removeDockerImage() resolves the :tag param to an image *Id* (it matches with
-	// img.Id.indexOf(tag), see AutoTestRouteHandler.ts:450) and then calls image.remove(), which
-	// Docker refuses outright:
-	//
-	//   (HTTP code 409) conflict - unable to delete 7eb80100254d (cannot be forced)
-	//                            - image has dependent child images
-	//
-	// "cannot be forced" is the important half: no flag makes remove-by-Id work here, so this is
-	// not a fixture problem the test can engineer around. Building the image under a second tag
-	// does not help either -- Docker reuses the cache, returns the same Id, and remove() then
-	// reports only Untagged entries, so the handler's success check (which requires a Deleted
-	// entry) still fails and answers 400.
-	//
-	// This matters beyond the test: an instructor who rebuilds a grading image accumulates exactly
-	// this parent/child chain, so image cleanup through the UI will hit the same 409. Reviving the
-	// test needs the handler to untag (docker.getImage(tag).remove()) when the Id has children,
-	// rather than a change here.
-	//
-	// xit("Should be able to remove a docker image.", ...) -- see git history for the original body.
+	it("Should be able to remove a docker image, even one that has dependent child images.", async function () {
+		// Re-enabled 2026-09-08. This used to fail whenever the grader image had a child layer:
+		// removeDockerImage() resolved the tag to an Id and remove()d by Id, which Docker refuses
+		// outright ("(HTTP 409) conflict ... cannot be forced ... dependent child images"). The handler
+		// now falls back to untagging by RepoTag, which is what the admin actually wants and is
+		// always permitted. The build test above guarantees a `grader` image exists.
+		TestHarness.requiresDocker(this);
+		const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+
+		const before = await request(app).get('/docker/images?filters={"reference":["grader"]}').set("user", TestHarness.ADMIN1.github);
+		expect(before.status).to.equal(200);
+		expect(before.body, "the build test should have left a grader image").to.have.length.greaterThan(0);
+		const imgId: string = before.body[0].Id;
+
+		const res = await request(app)
+			.del("/docker/image/" + imgId)
+			.set("user", TestHarness.ADMIN1.github)
+			.set("token", atSecret);
+		Log.test("remove -> " + res.status + "; body: " + JSON.stringify(res.body));
+		expect(res.status).to.equal(200);
+		expect(res.body?.success).to.equal(true);
+
+		const after = await request(app).get('/docker/images?filters={"reference":["grader"]}').set("user", TestHarness.ADMIN1.github);
+		expect(
+			after.body.map((i: any) => i.Id),
+			"the grader tag must be gone"
+		).to.not.include(imgId);
+	}).timeout(TIMEOUT * 6);
 
 	it("Should refuse to remove a docker image when no secret is provided.", async function () {
 		// NOTE: needs no Docker. removeDockerImage() checks the secret before it contacts the daemon

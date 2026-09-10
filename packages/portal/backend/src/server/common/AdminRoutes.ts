@@ -1172,7 +1172,11 @@ export default class AdminRoutes implements IREST {
 
 		// make sure user is not already on a team for this deliverable
 		const delivId = team.delivId;
-		const personTeams = await dbc.getTeamsForPerson(githubId);
+		// person.id, not githubId: Team.personIds holds Person.id, and the classlist gives id and
+		// githubId different values (ACCT/CSID vs CWL). Passing githubId meant this guard matched
+		// nothing and never fired, so a TA could put a student on two teams for one deliverable --
+		// and so onto another team's repo.
+		const personTeams = await dbc.getTeamsForPerson(person.id);
 		for (const t of personTeams) {
 			if (t.delivId === delivId) {
 				throw new Error("User " + githubId + " is already on team " + t.id + " for deliverable " + delivId);
