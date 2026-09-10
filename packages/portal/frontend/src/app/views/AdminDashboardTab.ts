@@ -243,6 +243,21 @@ export class AdminDashboardTab extends AdminPage {
 	/**
 	 * Last chance to change a row before it is added; the default returns it untouched.
 	 */
+	/**
+	 * The href an admin table shows for a record URL; the default is the URL as stored.
+	 *
+	 * A seam for course plugins, like buildRepoOptions() and decorateRow(). The motivating case is
+	 * PrairieLearn: PrairieLearnAgent stores the STUDENT link for an assessment instance (the one a
+	 * student can open from their grades page), and an instructor opening it lands on the
+	 * student-facing page. A course that uses PL overrides this with
+	 *   return Util.toInstructorPrairieLearnUrl(url);
+	 * (@common/Util; GitHub and other URLs pass through it untouched). Core stays neutral so a course
+	 * without PL sees exactly what it always did, and the stored record is never changed.
+	 */
+	protected adminLink(url: string): string {
+		return url;
+	}
+
 	protected decorateRow(row: TableCell[], result: AutoTestDashboardTransport): TableCell[] {
 		void result;
 		return row;
@@ -293,16 +308,20 @@ export class AdminDashboardTab extends AdminPage {
 
 			const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
+			// what to link to is a course decision; see adminLink()
+			const commitURL = this.adminLink(result.commitURL);
+			const repoURL = this.adminLink(result.repoURL);
+
 			// ion-ios-help-outline
 			const row: TableCell[] = [
-				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
+				{ value: ts, html: "<a class='selectable' href='" + commitURL + "'>" + tsString + "</a>" },
 				{
 					value: "",
 					html: "<a style='cursor: pointer;' target='_blank' href='" + stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>",
 				},
 				{
 					value: result.repoId,
-					html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>",
+					html: "<a class='selectable' href='" + repoURL + "'>" + result.repoId + "</a>",
 				},
 				{ value: result.delivId, html: result.delivId },
 				{ value: result.scoreOverall, html: this.alignValue(result.scoreOverall) },

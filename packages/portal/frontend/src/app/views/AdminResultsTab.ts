@@ -260,6 +260,21 @@ export class AdminResultsTab extends AdminPage {
 	 * The default returns it untouched. A subclass that added a column in buildHeaders() appends the
 	 * matching cell here, so the two stay in step without re-implementing the render loop.
 	 */
+	/**
+	 * The href an admin table shows for a record URL; the default is the URL as stored.
+	 *
+	 * A seam for course plugins, like buildRepoOptions() and decorateRow(). The motivating case is
+	 * PrairieLearn: PrairieLearnAgent stores the STUDENT link for an assessment instance (the one a
+	 * student can open from their grades page), and an instructor opening it lands on the
+	 * student-facing page. A course that uses PL overrides this with
+	 *   return Util.toInstructorPrairieLearnUrl(url);
+	 * (@common/Util; GitHub and other URLs pass through it untouched). Core stays neutral so a course
+	 * without PL sees exactly what it always did, and the stored record is never changed.
+	 */
+	protected adminLink(url: string): string {
+		return url;
+	}
+
 	protected decorateRow(row: TableCell[], result: AutoTestResultSummaryTransport): TableCell[] {
 		void result;
 		return row;
@@ -293,6 +308,10 @@ export class AdminResultsTab extends AdminPage {
 
 			const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
+			// what to link to is a course decision; see adminLink()
+			const commitURL = this.adminLink(result.commitURL);
+			const repoURL = this.adminLink(result.repoURL);
+
 			// scoreOverall is null whenever the container reported no overall score -- every
 			// PrairieLearn row, and any container that leaves it unset. This used to assign the null
 			// and then concatenate it, so the cell rendered the literal text "null". The dashboard
@@ -301,7 +320,7 @@ export class AdminResultsTab extends AdminPage {
 
 			// ion-ios-help-outline
 			const row: TableCell[] = [
-				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
+				{ value: ts, html: "<a class='selectable' href='" + commitURL + "'>" + tsString + "</a>" },
 				{
 					value: "",
 					html:
@@ -311,7 +330,7 @@ export class AdminResultsTab extends AdminPage {
 				},
 				{
 					value: result.repoId,
-					html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>",
+					html: "<a class='selectable' href='" + repoURL + "'>" + result.repoId + "</a>",
 				},
 				// {value: result.repoId, html: result.repoId},
 				{ value: result.delivId, html: result.delivId },
