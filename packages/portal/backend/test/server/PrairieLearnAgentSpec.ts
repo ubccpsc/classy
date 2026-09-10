@@ -6,18 +6,18 @@ import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import "@common/GlobalSpec";
 
+import { CourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
 import {
-	BUCKET_SCORE,
 	PLAssessment,
 	PLAssessmentInstance,
 	PLSubmission,
 	PrairieLearnAgent,
 	PrairieLearnWatermark,
 } from "@backend/server/common/PrairieLearnAgent";
-import { Person } from "@backend/Types";
+import { Person, PersonKind } from "@backend/Types";
 
 import * as fs from "fs";
 
@@ -27,6 +27,12 @@ import * as fs from "fs";
  * NOTE: no network. The agent takes an injectable fetcher, so the whole sync runs against responses
  * captured from the live course instance (test/data/prairieLearn*.json, scrubbed of identities and
  * submitted code). The repo declares no mocking library, and this avoids needing one.
+ *
+ * NOTE: `report.overall.score` in those fixtures was ADDED, not captured. The captures predate the
+ * grader emitting a score -- they carry only a bucket -- and Classy no longer maps a bucket to a
+ * number (that rubric was CS210's and moved to its plugin). Without a score the fixtures would be
+ * ungradeable, which is a fact about the old grader rather than about the code under test. The added
+ * values keep bucket rank order; "developing" uses the 85.3 seen in a real 2026-09 payload.
  */
 describe("PrairieLearnAgent", function () {
 	const dc = DatabaseController.getInstance();
@@ -129,6 +135,77 @@ describe("PrairieLearnAgent", function () {
 		expect(ex.message).to.contain("not configured");
 	});
 
+	describe("who gets synced", function () {
+		// The sync joins PrairieLearn uids to Classy people by githubId and applies no PersonKind
+		// filter anywhere, so a staff member who did a PrairieLearn activity gets a grade like
+		// anyone else. This is pinned because it is easy to "tidy" resolvePeople into a
+		// students-only query and not notice: staff grades would simply stop appearing.
+		const STAFF_GH = "plStaffGh";
+		const STAFF_ID = "plStaffId";
+		const ADMIN_GH = "plAdminGh";
+		const ADMIN_ID = "plAdminId";
+
+		before(async function () {
+			for (const [id, gh, kind] of [
+				[STAFF_ID, STAFF_GH, PersonKind.STAFF],
+				[ADMIN_ID, ADMIN_GH, PersonKind.ADMINSTAFF],
+			] as Array<[string, string, PersonKind]>) {
+				const person = TestHarness.createPerson(id, id + "CSID", gh, kind);
+				await dc.writePerson(person);
+			}
+		});
+
+		it("Should write a grade for a staff member who did the activity.", async function () {
+			const inst = instance({ assessment_instance_id: "77001", user_uid: STAFF_GH + "@ubc.ca", user_role: "Staff" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77001" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+			Log.test("staff sync summary: " + JSON.stringify(summary));
+
+			expect(summary.unmatchedUids, "a staff uid must join like any other").to.not.contain(inst.user_uid);
+
+			const grade = await new GradesController().getGrade(STAFF_ID, DELIV_ID);
+			expect(grade, "the staff member's grade must be written").to.not.be.null;
+			expect(grade.custom.source).to.equal("prairielearn");
+		});
+
+		it("Should write a grade for an adminstaff member too.", async function () {
+			const inst = instance({ assessment_instance_id: "77002", user_uid: ADMIN_GH + "@ubc.ca", user_role: "Staff" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77002" }));
+
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const grade = await new GradesController().getGrade(ADMIN_ID, DELIV_ID);
+			expect(grade, "adminstaff are people too").to.not.be.null;
+		});
+
+		it("Should surface a student uid it cannot join, rather than dropping it silently.", async function () {
+			const inst = instance({ assessment_instance_id: "77003", user_uid: "nobodyHere@ubc.ca" });
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77003" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+			expect(summary.unmatchedUids).to.contain("nobodyHere@ubc.ca");
+			expect(summary.unmatchedNonStudentUids, "a student miss belongs in the student list").to.not.contain("nobodyHere@ubc.ca");
+		});
+
+		it("Should keep an unjoined non-student out of the student list.", async function () {
+			// Syncing every role means PL accounts that were never in the classlist now reach the
+			// join and fail it on every run. Those misses are expected and permanent; mixing them
+			// into unmatchedUids would bury the ones that indicate a real join problem.
+			const inst = instance({
+				assessment_instance_id: "77004",
+				user_uid: "someInstructor@ubc.ca",
+				user_role: "Staff",
+			});
+			const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "77004" }));
+
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			expect(summary.unmatchedNonStudentUids).to.contain("someInstructor@ubc.ca");
+			expect(summary.unmatchedUids, "must not dilute the signal the student list carries").to.not.contain("someInstructor@ubc.ca");
+		});
+	});
+
 	it("Should take the best-ever bucket, not the most recent one.", async function () {
 		const agent = new PrairieLearnAgent(fetcherFor([instance()], allBuckets));
 		const summary = await agent.sync(TestHarness.ADMIN1.id);
@@ -140,7 +217,7 @@ describe("PrairieLearnAgent", function () {
 		// peaked then regressed. Taking the latest submission would score 55, not 100.
 		const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 		expect(grade).to.not.be.null;
-		expect(grade.score).to.equal(100);
+		expect(grade.score).to.equal(97.5); // the grader's score for the proficient attempt
 		expect(grade.custom.bucket).to.equal("proficient");
 		expect(grade.custom.source).to.equal("prairielearn");
 	});
@@ -159,68 +236,91 @@ describe("PrairieLearnAgent", function () {
 		// not sort alphabetically in rank order (acquiring < beginning as text, but beginning ranks
 		// lower), so a string here would silently reject a real improvement.
 		expect(grade.score).to.be.a("number");
-		expect(grade.score).to.equal(100);
-
-		// the two are consistent by construction
-		expect(BUCKET_SCORE[grade.custom.displayScore]).to.equal(grade.score);
+		expect(grade.score).to.equal(97.5); // the grader's score for the proficient attempt
 	});
 
-	describe("Submissions that carry no usable bucket", function () {
+	describe("Submissions that are not gradeable", function () {
 		// NOTE: PrairieLearn returns every submission, including ones the grader never finished and
 		// ones from a grader version that reported nothing useful. Those must be skipped rather than
 		// scored, and skipping them must not hide the attempts that *are* gradeable.
+		//
+		// Reading the payload is the course's job now (ICourseController::interpretSubmission), so
+		// these drive the default implementation directly and then feed its answers to the agent's
+		// ranking, which is the same path sync() takes.
+		const cc = new CourseController(null);
+
 		function submission(): any {
 			return JSON.parse(JSON.stringify(allBuckets[0]));
 		}
 
-		it("Should ignore a submission whose grader did not succeed.", function () {
-			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+		async function interpret(sub: any): Promise<any> {
+			return await cc.interpretSubmission(sub, TestHarness.createDeliverable(DELIV_ID));
+		}
+
+		async function pair(sub: any): Promise<any> {
+			return { submission: sub, interpretation: await interpret(sub) };
+		}
+
+		it("Should ignore a submission whose grader did not succeed.", async function () {
 			const sub = submission();
 			sub.feedback.succeeded = false;
 
-			expect(agent.bucketOf(sub), "a failed grading run has no bucket to report").to.be.null;
-			expect(agent.bestSubmission([sub]), "and cannot be anyone's best attempt").to.be.null;
+			expect(await interpret(sub), "a failed grading run is not gradeable").to.be.null;
 		});
 
-		it("Should ignore a submission with no feedback at all.", function () {
-			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+		it("Should ignore a submission with no feedback at all.", async function () {
 			const sub = submission();
 			sub.feedback = null;
 
-			expect(agent.bucketOf(sub)).to.be.null;
+			expect(await interpret(sub)).to.be.null;
 		});
 
-		it("Should ignore a submission whose report carries no bucket.", function () {
-			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+		it("Should ignore a submission whose report carries no score.", async function () {
+			// the grader always reports overall.score; one that does not is a broken or ancient
+			// run, and must be skipped rather than treated as a zero
 			const sub = submission();
-			delete sub.feedback.results.report.overall.bucket;
+			delete sub.feedback.results.report.overall.score;
 
-			expect(agent.bucketOf(sub)).to.be.null;
+			expect(await interpret(sub)).to.be.null;
 		});
 
-		it("Should still find the best attempt among a mix of graded and ungraded ones.", function () {
+		it("Should still find the best attempt among a mix of graded and ungraded ones.", async function () {
 			// the case that matters: one bad submission must not cost a student their real grade
 			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
+
 			const ungraded = submission();
 			ungraded.feedback.succeeded = false;
 
 			const graded = submission();
-			graded.feedback.results.report.overall.bucket = "proficient";
+			graded.feedback.results.report.overall.score = 91;
 
-			const best = agent.bestSubmission([ungraded, graded, ungraded]);
+			// only interpretable submissions reach bestSubmission, exactly as sync() arranges
+			const candidates = [await pair(graded)];
+			expect(await interpret(ungraded), "setup: the bad one is not gradeable").to.be.null;
+
+			const best = agent.bestSubmission(candidates);
 			expect(best, "the graded attempt must still win").to.not.be.null;
-			expect(best.bucket).to.equal("proficient");
+			expect(best.interpretation.score).to.equal(91);
 		});
 
-		it("Should prefer the report bucket when the envelope disagrees.", function () {
-			// the two come from different parts of the grader output; if they disagree the report is
-			// the one the student was actually graded on, and the mismatch is logged
+		it("Should break a tie on the most recent attempt.", async function () {
+			// two attempts with identical scores: the later one wins. This reverses the previous
+			// behaviour (earliest won), and is what a student expects after resubmitting.
 			const agent = new PrairieLearnAgent(fetcherFor([instance()], []));
-			const sub = submission();
-			sub.feedback.results.report.overall.bucket = "developing";
-			sub.feedback.results.bucket = "beginning";
 
-			expect(agent.bucketOf(sub)).to.equal("developing");
+			const earlier = submission();
+			earlier.submission_id = "tieEarly";
+			earlier.date = "2026-09-01T10:00:00Z";
+			earlier.feedback.results.report.overall.score = 80;
+
+			const later = submission();
+			later.submission_id = "tieLate";
+			later.date = "2026-09-02T10:00:00Z";
+			later.feedback.results.report.overall.score = 80;
+
+			// order in the list must not matter; the date decides
+			expect(agent.bestSubmission([await pair(earlier), await pair(later)]).submission.submission_id).to.equal("tieLate");
+			expect(agent.bestSubmission([await pair(later), await pair(earlier)]).submission.submission_id).to.equal("tieLate");
 		});
 	});
 
@@ -247,8 +347,10 @@ describe("PrairieLearnAgent", function () {
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			// the explicit number wins over the bucket score (developing would have been 75)
 			expect(grade.score).to.equal(87);
-			expect(grade.custom.displayScore).to.equal("87");
 			expect(grade.custom.bucket).to.equal("developing"); // bucket still recorded
+			// displayScore is what the STUDENT sees, so it stays the band even when a number exists;
+			// staff read grade.score instead (AdminGradesTab renders it, not displayScore)
+			expect(grade.custom.displayScore).to.equal("developing");
 		});
 
 		it("Should accept a score of exactly 0.", async function () {
@@ -258,37 +360,20 @@ describe("PrairieLearnAgent", function () {
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			// 0 is a real score, not "absent"; proficient would otherwise have mapped to 100
 			expect(grade.score).to.equal(0);
-			expect(grade.custom.displayScore).to.equal("0");
+			expect(grade.custom.displayScore, "the student still sees the band").to.equal("proficient");
 		});
 
-		it("Should fall back to the bucket score when the field is absent.", async function () {
-			const inst = instance({ assessment_instance_id: "numNone", assessment_label: DELIV_ID });
-			await new PrairieLearnAgent(fetcherFor([inst], scored("developing", null, "numNone"))).sync(TestHarness.ADMIN1.id);
+		it("Should keep displayScore as the band even when the grader reports a number.", async function () {
+			// the rule this file used to encode was "show the number when there is one, otherwise the
+			// bucket". That is now split by audience: displayScore is always the band (students see
+			// it), and the number lives in score (staff see that, via AdminGradesTab).
+			const inst = instance({ assessment_instance_id: "bandAlways", assessment_label: DELIV_ID });
+			await new PrairieLearnAgent(fetcherFor([inst], scored("acquiring", 42, "bandAlways"))).sync(TestHarness.ADMIN1.id);
 
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
-			expect(grade.score).to.equal(75); // BUCKET_SCORE.developing
-			expect(grade.custom.displayScore).to.equal("developing");
-		});
-
-		it("Should ignore a negative score and fall back to the bucket.", async function () {
-			const inst = instance({ assessment_instance_id: "numNeg", assessment_label: DELIV_ID });
-			await new PrairieLearnAgent(fetcherFor([inst], scored("acquiring", -1, "numNeg"))).sync(TestHarness.ADMIN1.id);
-
-			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
-			// negative is how graders signal "no score"; it must not become the grade
-			expect(grade.score).to.equal(55); // BUCKET_SCORE.acquiring
-			expect(grade.custom.displayScore).to.equal("acquiring");
-		});
-
-		it("Should never read results.score, which is the always-zero display value.", async function () {
-			const subs = scored("proficient", null, "numIgnore");
-			subs[0].feedback.results.score = 0.0533; // the value PrairieLearn shows the student
-
-			const inst = instance({ assessment_instance_id: "numIgnore", assessment_label: DELIV_ID });
-			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
-
-			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
-			expect(grade.score).to.equal(100); // the bucket, not 0.0533
+			expect(grade.score, "the number is preserved for staff").to.equal(42);
+			expect(grade.custom.displayScore, "students see the band, not the number").to.equal("acquiring");
+			expect(String(grade.custom.displayScore)).to.not.equal("42");
 		});
 
 		it("Should rank by the numeric score once any submission carries one.", async function () {
@@ -310,56 +395,8 @@ describe("PrairieLearnAgent", function () {
 
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			expect(grade.score).to.equal(99);
-			expect(grade.custom.displayScore).to.equal("99");
 			expect(grade.custom.bucket).to.equal("developing"); // the bucket of the winning attempt
-		});
-
-		it("Should rank by bucket when no submission carries a score.", async function () {
-			const inst = instance({ assessment_instance_id: "numNoneRank", assessment_label: DELIV_ID });
-			const mk = (bucket: string, id: string) => {
-				const sub = JSON.parse(JSON.stringify(allBuckets[0]));
-				sub.assessment_instance_id = "numNoneRank";
-				sub.submission_id = id;
-				sub.feedback.results.report.overall.bucket = bucket;
-				sub.feedback.results.bucket = bucket;
-				delete sub.feedback.results.report.overall.score;
-				return sub;
-			};
-			const subs = [mk("beginning", "a"), mk("proficient", "b"), mk("acquiring", "c")];
-
-			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
-
-			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
-			// unchanged behaviour for a bucket-only deliverable
-			expect(grade.custom.bucket).to.equal("proficient");
-			expect(grade.score).to.equal(100);
-			expect(grade.custom.displayScore).to.equal("proficient");
-		});
-
-		it("Should compare a scored attempt against an unscored one by bucket score.", async function () {
-			const inst = instance({ assessment_instance_id: "numMixed", assessment_label: DELIV_ID });
-			const mk = (bucket: string, score: number | null, id: string) => {
-				const sub = JSON.parse(JSON.stringify(allBuckets[0]));
-				sub.assessment_instance_id = "numMixed";
-				sub.submission_id = id;
-				sub.feedback.results.report.overall.bucket = bucket;
-				sub.feedback.results.bucket = bucket;
-				if (score === null) {
-					delete sub.feedback.results.report.overall.score;
-				} else {
-					sub.feedback.results.report.overall.score = score;
-				}
-				return sub;
-			};
-			// a grader that starts reporting numbers mid-term leaves mixed history; the unscored
-			// attempt still competes, using its bucket score (proficient = 100) as its value
-			const subs = [mk("proficient", null, "a"), mk("developing", 80, "b")];
-
-			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
-
-			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
-			expect(grade.score).to.equal(100);
-			expect(grade.custom.displayScore).to.equal("proficient"); // the winner had no number
+			expect(grade.custom.displayScore, "displayScore follows the winning attempt's band").to.equal("developing");
 		});
 	});
 
@@ -374,10 +411,67 @@ describe("PrairieLearnAgent", function () {
 
 		const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 		expect(grade.custom.displayScore).to.equal("acquiring");
-		expect(grade.score).to.equal(55);
+		expect(grade.score).to.equal(48); // acquiring, per the grader's own score
 	});
 
-	it("Should store one Result per submission, with the full feedback report.", async function () {
+	describe("when a course cannot interpret a payload", function () {
+		/**
+		 * A controller that throws for one nominated instance and behaves normally otherwise.
+		 *
+		 * interpretSubmission throwing is how a course says "this payload is recognisably wrong",
+		 * as opposed to returning null for "not graded yet". The difference has to survive all the
+		 * way out to the sync summary.
+		 */
+		function throwingFor(badInstanceId: string): any {
+			const real = new CourseController(null);
+			return {
+				interpretSubmission: async (submission: any, deliv: any) => {
+					if (submission?.assessment_instance_id === badInstanceId) {
+						throw new Error("unrecognised grader payload");
+					}
+					return await real.interpretSubmission(submission, deliv);
+				},
+			};
+		}
+
+		it("Should fail only that instance, and keep syncing the rest.", async function () {
+			const good = instance({ assessment_instance_id: "containGood", assessment_label: DELIV_ID });
+			const bad = instance({ assessment_instance_id: "containBad", assessment_label: DELIV_ID });
+
+			const subs = [
+				Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "containGood" }),
+				Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "containBad" }),
+			];
+
+			const agent = new PrairieLearnAgent(fetcherFor([good, bad], subs), throwingFor("containBad"));
+			const summary = await agent.sync(TestHarness.ADMIN1.id);
+
+			// the bad one is named, not silently swallowed
+			expect(summary.instancesFailed).to.deep.equal(["containBad"]);
+
+			// ...and the good one still got graded: one bad payload must not cost the class its sync
+			expect(summary.instancesSynced, "the healthy instance still syncs").to.equal(1);
+			expect(summary.gradesWritten).to.equal(1);
+		});
+
+		it("Should not watermark a failed instance, so the next run retries it.", async function () {
+			// the point of failing loudly: fix the grader, re-sync, and it is picked up again. A
+			// watermark would record the failure as if it had succeeded.
+			const bad = instance({ assessment_instance_id: "containRetry", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "containRetry" })];
+
+			const first = await new PrairieLearnAgent(fetcherFor([bad], subs), throwingFor("containRetry")).sync(TestHarness.ADMIN1.id);
+			expect(first.instancesFailed).to.deep.equal(["containRetry"]);
+
+			// now the course can read it; nothing about the instance itself changed
+			const second = await new PrairieLearnAgent(fetcherFor([bad], subs)).sync(TestHarness.ADMIN1.id);
+
+			expect(second.instancesSkipped, "a failed instance must not have been watermarked").to.equal(0);
+			expect(second.gradesWritten, "so the retry grades it").to.equal(1);
+		});
+	});
+
+	it("Should store one Result per submission, with the derived report and the raw one beside it.", async function () {
 		const agent = new PrairieLearnAgent(fetcherFor([instance()], allBuckets));
 		const summary = await agent.sync(TestHarness.ADMIN1.id);
 
@@ -386,10 +480,24 @@ describe("PrairieLearnAgent", function () {
 		const results = await dc.getResults(DELIV_ID, "14492573");
 		expect(results).to.have.length(allBuckets.length);
 
+		// output.report is the DERIVED GradeReport -- the shape the admin views render. It is what
+		// the course's interpretSubmission returned, not the grader's document.
 		const report = (results[0].output as any).report;
 		expect(report).to.not.be.null;
-		expect(report.overall.bucket).to.be.a("string");
-		expect(report.findings).to.be.an("array"); // the whole document, not just the value
+		expect(report.scoreOverall, "the views read scoreOverall; the grader's shape has no such field").to.be.a("number");
+		expect(report.passNames).to.be.an("array");
+
+		// ...and the grader's own payload is archived beside it, so a later change to the mapping can
+		// be re-derived from storage rather than re-fetched from PrairieLearn
+		const raw = (results[0].output as any).custom.rawFeedback;
+		expect(raw, "the raw grader payload must be kept").to.not.be.null;
+		expect(raw.results.report.overall.bucket).to.be.a("string");
+		expect(raw.results.report.findings).to.be.an("array"); // the whole document, not just the value
+
+		// the WHOLE feedback, not just results.report: custom.items sits outside the report and is
+		// what the name lists and sub-scores are built from, so a report-only archive could not be
+		// re-derived
+		expect(raw.results, "results.custom must survive too, or reinterpret cannot rebuild").to.haveOwnProperty("custom");
 	});
 
 	it("Should be idempotent: syncing twice does not duplicate Results or Grades.", async function () {
@@ -427,6 +535,109 @@ describe("PrairieLearnAgent", function () {
 		expect(second.instancesSynced).to.equal(0);
 	});
 
+	describe("reinterpret", function () {
+		it("Should rebuild stored reports from the archived payload, without touching PrairieLearn.", async function () {
+			const inst = instance({ assessment_instance_id: "reinterp", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterp" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			// stand in for a mapping change: damage the stored report, then re-derive it
+			const before = await dc.getResults(DELIV_ID, "reinterp");
+			expect(before.length).to.equal(1);
+			(before[0].output as any).report = { scoreOverall: -999, passNames: [] };
+			await dc.writeResult(before[0]);
+
+			// a fetcher that throws: reinterpret must not contact PrairieLearn at all
+			const offline = new PrairieLearnAgent(async () => {
+				throw new Error("reinterpret must not fetch");
+			});
+			const summary = await offline.reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsRewritten, "the stored result is rebuilt").to.be.greaterThan(0);
+			expect(summary.resultsFailed).to.deep.equal([]);
+
+			const after = await dc.getResults(DELIV_ID, "reinterp");
+			expect((after[0].output as any).report.scoreOverall, "the damaged report is replaced").to.not.equal(-999);
+		});
+
+		it("Should not touch grades.", async function () {
+			// reinterpret rebuilds what the admin views render. The grade comes from the score the
+			// grader reported, which a mapping change does not alter -- and rewriting grades from an
+			// archive is a much bigger promise than fixing a display. This pins that boundary.
+			const inst = instance({ assessment_instance_id: "reinterpGrade", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpGrade" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const before = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
+			expect(before, "setup: a grade must exist").to.not.be.null;
+
+			await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			const after = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
+			expect(after.score, "the grade is untouched").to.equal(before.score);
+			expect(after.custom.displayScore).to.equal(before.custom.displayScore);
+			expect(after.timestamp, "not even rewritten with a new timestamp").to.equal(before.timestamp);
+		});
+
+		it("Should be safe to run twice.", async function () {
+			// an admin who presses the button twice, or a job that is retried, must not accumulate
+			// results or change the answer the second time
+			const inst = instance({ assessment_instance_id: "reinterpTwice", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpTwice" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const first = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+			const countAfterFirst = (await dc.getResults(DELIV_ID, "reinterpTwice")).length;
+			const reportAfterFirst = JSON.stringify((await dc.getResults(DELIV_ID, "reinterpTwice"))[0].output.report);
+
+			const second = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			expect(second.resultsSeen).to.equal(first.resultsSeen);
+			expect((await dc.getResults(DELIV_ID, "reinterpTwice")).length, "no duplicates").to.equal(countAfterFirst);
+			expect(JSON.stringify((await dc.getResults(DELIV_ID, "reinterpTwice"))[0].output.report), "same answer").to.equal(reportAfterFirst);
+		});
+
+		it("Should report results that have no archived payload rather than failing them.", async function () {
+			// rows written before the archive existed: the input is gone, so only a forced sync can
+			// refresh them. They must be counted, not silently skipped and not counted as errors.
+			const inst = instance({ assessment_instance_id: "noArchive", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "noArchive" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const stored = await dc.getResults(DELIV_ID, "noArchive");
+			delete (stored[0].output as any).custom.rawFeedback;
+			await dc.writeResult(stored[0]);
+
+			const summary = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsWithoutArchive, "counted as un-derivable").to.be.greaterThan(0);
+			expect(summary.resultsFailed, "and not reported as a failure").to.deep.equal([]);
+		});
+	});
+
+	it("Should re-sync an unchanged instance when forced.", async function () {
+		// The report stored on a Result is DERIVED at sync time by the course's interpretSubmission.
+		// Changing that interpretation does not rewrite rows that are already synced, and the
+		// watermark would skip them forever -- so a forced run is the only way to pick up the new
+		// reading. This is not hypothetical: it is what a plugin change requires.
+		const inst = instance({ assessment_instance_id: "forceSync", assessment_label: DELIV_ID });
+		const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "forceSync" })];
+
+		const first = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+		expect(first.instancesSynced).to.equal(1);
+
+		// nothing about the instance changed, so a normal run skips it
+		const second = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+		expect(second.instancesSkipped, "unchanged means skipped").to.equal(1);
+		expect(second.instancesSynced).to.equal(0);
+
+		// ...unless forced, which re-reads and rewrites it
+		const forced = await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id, undefined, true);
+		expect(forced.instancesSkipped, "force ignores the watermark").to.equal(0);
+		expect(forced.instancesSynced).to.equal(1);
+		expect(forced.resultsWritten, "and rewrites the result, so a new report is stored").to.be.greaterThan(0);
+	});
+
 	it("Should resync an instance whose modified_at advanced.", async function () {
 		const calls: string[] = [];
 		await new PrairieLearnAgent(fetcherFor([instance()], allBuckets, calls)).sync(TestHarness.ADMIN1.id);
@@ -447,24 +658,6 @@ describe("PrairieLearnAgent", function () {
 		// storing anything else opens a window where a concurrent submission is silently skipped
 		expect(mark.modifiedAt).to.equal(modified);
 		expect(mark.submissionCount).to.equal(allBuckets.length);
-	});
-
-	it("Should throw on an unknown bucket rather than scoring it 0.", async function () {
-		const bad = JSON.parse(JSON.stringify(allBuckets.slice(0, 1)));
-		bad[0].feedback.results.report.overall.bucket = "mastery"; // a bucket we do not know
-		bad[0].feedback.results.bucket = "mastery";
-
-		let ex = null;
-		try {
-			await new PrairieLearnAgent(fetcherFor([instance()], bad)).sync(TestHarness.ADMIN1.id);
-		} catch (err) {
-			ex = err;
-		}
-
-		// defaulting to 0 would silently zero the strongest students, and because PrairieLearn shows
-		// 0 to everyone anyway, nothing would look wrong
-		expect(ex).to.not.be.null;
-		expect(ex.message).to.contain("Unknown PrairieLearn bucket");
 	});
 
 	it("Should write no grade when there are no usable submissions.", async function () {
@@ -502,13 +695,21 @@ describe("PrairieLearnAgent", function () {
 		expect(summary.resultsWritten).to.equal(0);
 	});
 
-	it("Should skip staff attempts.", async function () {
+	it("Should sync a staff attempt, not skip it.", async function () {
+		// NOTE: this used to assert the opposite. The agent skipped any user_role other than
+		// "Student" because "staff attempts are not grades", but staff do real PrairieLearn work and
+		// those grades are wanted when checking a grade sheet. The join to a Classy person is now
+		// the only filter.
+		// the submissions must carry this instance's id, or the fetcher returns none and the sync
+		// writes nothing regardless of role -- which is why the previous version of this test passed
+		// whether or not the role filter existed
 		const staff = instance({ assessment_instance_id: "997", user_role: "Staff" });
-		const summary = await new PrairieLearnAgent(fetcherFor([staff], allBuckets)).sync(TestHarness.ADMIN1.id);
+		const subs = allBuckets.map((sub: any) => Object.assign({}, sub, { assessment_instance_id: "997" }));
+		const summary = await new PrairieLearnAgent(fetcherFor([staff], subs)).sync(TestHarness.ADMIN1.id);
 
 		expect(summary.instancesSeen).to.equal(1);
-		expect(summary.instancesSynced).to.equal(0);
-		expect(summary.gradesWritten).to.equal(0);
+		expect(summary.instancesSynced).to.equal(1);
+		expect(summary.gradesWritten).to.equal(1);
 	});
 
 	it("Should report unmatched uids instead of dropping them silently.", async function () {
@@ -589,7 +790,7 @@ describe("PrairieLearnAgent", function () {
 
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			expect(grade.custom.bucket).to.equal("proficient"); // best ON-TIME attempt
-			expect(grade.score).to.equal(100);
+			expect(grade.score).to.equal(97.5); // the best ON-TIME attempt's own score
 		});
 
 		it("Should grade the best on-time attempt even when a later one scored higher.", async function () {
@@ -602,7 +803,7 @@ describe("PrairieLearnAgent", function () {
 			const grade = await new GradesController().getGrade(TestHarness.REALUSER1.id, DELIV_ID);
 			// the student did reach proficient, but not before the deadline
 			expect(grade.custom.bucket).to.equal("beginning");
-			expect(grade.score).to.equal(0);
+			expect(grade.score).to.equal(12.5); // beginning: the grader's score, not a rubric's zero
 		});
 
 		it("Should write no grade when every attempt was after the close date.", async function () {

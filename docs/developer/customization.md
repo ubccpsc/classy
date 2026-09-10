@@ -101,6 +101,7 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                          -  Default  -   <---- plugins/default/portal/frontend/CustomAdminView.ts
 --------------------                  - Front-End -         plugins/default/portal/frontend/CustomStudentView.ts
 -                  -       **----------   Files   -         plugins/default/portal/frontend/html/*
+-                  -                  -------------         (packages/portal/frontend/pages/* underneath)
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
@@ -131,6 +132,7 @@ The front-end and back-end both require valid TypeScript before they can be comp
            |                          -  Custom   -   <---- plugins/yourPlugin/portal/frontend/CustomAdminView.ts
 --------------------                  - Front-End -         plugins/yourPlugin/portal/frontend/CustomStudentView.ts
 -                  -       **----------   Files   -         plugins/yourPlugin/portal/frontend/html/*
+-                  -                  -------------         (packages/portal/frontend/pages/* underneath)
 -                  -                  -------------
 -      Classy      -                  
 -                  -                  
@@ -149,11 +151,73 @@ The front-end and back-end both require valid TypeScript before they can be comp
 
 ### HTML Files
 
-The `html/` folder should contain HTML files that are used by the Custom front-end `CustomAdminView.ts` and `CustomStudentView.ts` files.
+The pages a deployment serves are assembled from two directories, in this order:
+
+1. `packages/portal/frontend/pages/` -- Classy's own pages, from the Classy repo.
+2. `plugins/<yourPlugin>/portal/frontend/html/` -- your plugin's pages, copied on top.
+
+A file in your plugin **overrides** the Classy page of the same name. A page you do not provide
+falls through to the Classy default, and a plugin with no `html/` directory at all is valid.
+
+This means you only carry the pages you actually change:
+
+| Page | Provided by | Notes |
+|---|---|---|
+| `admin.html` | Classy | The admin UI is Classy's; override it only if you really need to. |
+| `student.html` | your plugin | The student-facing page; this is the one courses customise. |
+| `landing.html` | your plugin | Course landing page. |
+| `login.html` | your plugin | Login page, usually branded. |
+| `custom.html` | your plugin | Optional; only if your `CustomStudentView` uses it. |
+
+`admin.html` is worth calling out. It used to be copied into every plugin, so a change to the
+admin interface had to be made identically in four repositories -- and the copies drifted. It now
+lives in Classy alone. **If you have an `admin.html` in your plugin, delete it** and you will
+inherit Classy's, including future admin features, with no work at your end. Keep it only if you
+have deliberately customised the page; in that case you also take on merging Classy's changes into
+your copy, which is the cost the single copy was introduced to avoid.
+
+If you do override a page, keep the element ids that the views in `packages/portal/frontend/src/app/views/`
+look up, or the corresponding feature will quietly do nothing.
 
 As the `CustomAdminView.ts` and `CustomStudentView.ts` files inherit the default `AdminView` and `AbstractStudentView` classes, default MVC logic will be available at runtime. Overriding default functionality is based on the instructor's discretion and experience.
 
 It is up to you to expand and build upon the default templates, while naming new files, to allow for easily mergeable upstream updates from the `ubccpsc/Classy` project. **It is necessary to pull-in upstream changes before the new term starts for security and new features.**
+
+### Testing a plugin
+
+Plugin code is testable, and should be tested when it does anything a mistake would be expensive in
+-- CS210's `interpretSubmission`, for instance, decides every student's grade from its grader's
+payload, and Classy deliberately cannot check that reading for it.
+
+Put specs under `portal/<backend|frontend>/test/` in your plugin repo, named `*Spec.ts`, then from
+the Classy checkout:
+
+```
+yarn run test:plugin
+```
+
+That builds everything and runs `plugins/*/portal/*/test/*Spec.js`. Your plugin has to be present at
+`plugins/<name>/` for this, which is where a deployment puts it anyway; locally a symlink is enough:
+
+```
+ln -s /path/to/your-plugin plugins/<name>
+```
+
+Three things about the setup are not obvious:
+
+- **The root `tsc` compiles your specs already.** `tsconfig.json` has no `include` and excludes only
+  `node_modules`, so anything under `plugins/` is built with everything else. There is no separate
+  build step and no `package.json` needed in the plugin.
+- **`--preserve-symlinks` is why the script invokes node directly** rather than the `mocha` bin. Node
+  otherwise resolves a symlinked plugin to its real path outside the Classy tree, and `require("chai")`
+  then looks for `node_modules` in your plugin repo and does not find it.
+- **Import `@common/TestHarness` if you construct a controller.** `CourseController`'s constructor
+  builds a `TeamController`, which calls `GitHubActions.getInstance()`; under mocha that needs a
+  registered mock, and importing TestHarness registers one. A spec that only calls pure functions
+  does not need it.
+
+Plugin specs are deliberately *not* part of `yarn run test`: that runs against `plugins/default`,
+which has no specs, and CI builds with `PLUGIN=default`.
 
 ## Docker Containers / Supporting Services
 

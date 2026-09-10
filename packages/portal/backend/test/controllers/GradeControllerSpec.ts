@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import "mocha";
 
+import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
+import { PersonKind } from "@backend/Types";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestGradeTransport } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
@@ -187,5 +189,67 @@ describe("GradeController", () => {
 		} as AutoTestGradeTransport;
 		deliv = await gc.validateAutoTestGrade(data);
 		expect(deliv).to.be.null;
+	});
+
+	describe("listing views", function () {
+		// The grades page shows students only, which hides staff grades -- and staff repos are
+		// provisioned so staff can see what students see, so those grades are real and are exactly
+		// what you want when checking a grade sheet.
+		const VIEW_DELIV = TestHarness.DELIVID1;
+
+		async function personWithKind(id: string, kind: PersonKind): Promise<void> {
+			const dbc = DatabaseController.getInstance();
+			const p = TestHarness.createPerson(id, id + "CSID", id + "gh", kind);
+			await dbc.writePerson(p);
+			await dbc.writeGrade({
+				personId: id,
+				delivId: VIEW_DELIV,
+				score: 50,
+				comment: "",
+				timestamp: Date.now(),
+				urlName: null,
+				URL: null,
+				custom: {},
+			});
+		}
+
+		before(async function () {
+			await personWithKind("viewStudent", PersonKind.STUDENT);
+			await personWithKind("viewWithdrawn", PersonKind.WITHDRAWN);
+			await personWithKind("viewStaff", PersonKind.STAFF);
+			await personWithKind("viewAdmin", PersonKind.ADMIN);
+			await personWithKind("viewAdminStaff", PersonKind.ADMINSTAFF);
+		});
+
+		// other suites put grades on this deliverable too, so only this describe's own fixtures are
+		// asserted on; what matters is which of THEM each view returns
+		async function idsFor(view: any): Promise<string[]> {
+			const grades = await gc.getAllGrades(view);
+			return grades.filter((g) => g.delivId === VIEW_DELIV && g.personId.startsWith("view")).map((g) => g.personId);
+		}
+
+		it("Should default to students, as it always has.", async function () {
+			const ids = await idsFor(undefined);
+			expect(ids).to.contain("viewStudent");
+			expect(ids, "withdrawn students stay hidden by default").to.not.contain("viewWithdrawn");
+			expect(ids).to.not.contain("viewStaff");
+		});
+
+		it("Should return only students for the students view.", async function () {
+			const ids = await idsFor("students");
+			expect(ids).to.deep.equal(["viewStudent"]);
+			expect(ids, "withdrawn students are not students here").to.not.contain("viewWithdrawn");
+		});
+
+		it("Should return staff, admins and adminstaff for the staff view.", async function () {
+			const ids = await idsFor("staff");
+			expect(ids).to.have.members(["viewStaff", "viewAdmin", "viewAdminStaff"]);
+			expect(ids, "students are not staff").to.not.contain("viewStudent");
+		});
+
+		it("Should return everyone, withdrawn included, for the all view.", async function () {
+			const ids = await idsFor("all");
+			expect(ids).to.have.members(["viewStudent", "viewWithdrawn", "viewStaff", "viewAdmin", "viewAdminStaff"]);
+		});
 	});
 });

@@ -3,7 +3,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 import * as crypto from "crypto";
-import fetch, { RequestInit } from "node-fetch";
+import fetch, { RequestInit, Response } from "node-fetch";
 import parseLinkHeader from "parse-link-header";
 import { Factory } from "../Factory";
 import { DatabaseController } from "./DatabaseController";
@@ -111,7 +111,7 @@ export interface IGitHubActions {
 	 * @param repoName
 	 * @returns {Promise<boolean>}
 	 */
-	repoExists(repoName: string): Promise<boolean>;
+	repoExists(repoName: string, confirmAbsence?: boolean): Promise<boolean>;
 
 	/**
 	 * Deletes a team.
@@ -335,7 +335,90 @@ export interface IGitHubActions {
 }
 
 export class GitHubActions implements IGitHubActions {
+	/**
+	 * fetch() with a bounded retry for the failures that are safe to repeat.
+	 *
+	 * Retries a 429, or a 403 whose body names the rate limit / abuse detection: GitHub rejected the
+	 * request before acting on it, so repeating it is safe for any method. Waits Retry-After when
+	 * given (capped at 60s), else x-ratelimit-reset when it is near, else 2s then 4s. Also retries a
+	 * 5xx, but only for GET/HEAD: a POST that got a 502 may or may not have happened, and a second
+	 * createRepo would double-create. Everything else -- 404, 422, 401 -- is returned untouched, so
+	 * repoExists(confirmAbsence) and GitHubError.isFatal keep their meaning. If the retries run out
+	 * the last response is returned and the caller's existing handling (including .fatal) applies.
+	 *
+	 * NOTE: inspecting a 403 body consumes it, so the response is clone()d for that read.
+	 */
+	private async fetchWithRetry(uri: string, options: RequestInit = {}, attempt: number = 1): Promise<Response> {
+		const MAX_ATTEMPTS = 3;
+		const response = await fetch(uri, options);
+		if (attempt >= MAX_ATTEMPTS) {
+			return response;
+		}
+
+		const method = String(options.method ?? "GET").toUpperCase();
+		let waitMs = -1;
+		if (response.status === 429) {
+			waitMs = GitHubActions.retryDelayMs(response, attempt);
+		} else if (response.status === 403) {
+			const text = (await response.clone().text()).toLowerCase();
+			if (text.indexOf("rate limit") >= 0 || text.indexOf("abuse") >= 0) {
+				waitMs = GitHubActions.retryDelayMs(response, attempt);
+			}
+		} else if (response.status >= 500 && (method === "GET" || method === "HEAD")) {
+			waitMs = GitHubActions.retryDelayMs(response, attempt);
+		}
+
+		if (waitMs < 0) {
+			return response;
+		}
+		Log.warn(
+			"GitHubAction::fetchWithRetry( " +
+				method +
+				" " +
+				uri +
+				" ) - HTTP " +
+				response.status +
+				"; retrying in " +
+				waitMs +
+				"ms (attempt " +
+				attempt +
+				" of " +
+				MAX_ATTEMPTS +
+				")"
+		);
+		await Util.delay(waitMs);
+		return await this.fetchWithRetry(uri, options, attempt + 1);
+	}
+
+	/** How long to wait before retrying `response`; Retry-After, then a near x-ratelimit-reset, then backoff. */
+	private static retryDelayMs(response: Response, attempt: number): number {
+		const MAX_WAIT_MS = 60 * 1000;
+		const retryAfter = Number(response.headers.get("retry-after"));
+		if (Number.isFinite(retryAfter) === true && retryAfter > 0) {
+			return Math.min(retryAfter * 1000, MAX_WAIT_MS);
+		}
+		const reset = Number(response.headers.get("x-ratelimit-reset")); // epoch seconds
+		if (Number.isFinite(reset) === true && reset > 0) {
+			const wait = reset * 1000 - Date.now();
+			if (wait > 0 && wait <= MAX_WAIT_MS) {
+				return wait;
+			}
+		}
+		return Math.min(2000 * 2 ** (attempt - 1), MAX_WAIT_MS); // 2s, 4s
+	}
+
+	/**
+	 * How long to wait before re-checking a 404 from GitHub; see repoExists( .., confirmAbsence ).
+	 *
+	 * Short on purpose: this is paid only where a false negative would throw or trigger a repair,
+	 * never in the polling loops, and GitHub Enterprise's inconsistency window is sub-second.
+	 */
+	public static readonly ABSENCE_RECHECK_DELAY = 500;
+
 	private static instance: IGitHubActions = null;
+
+	/** set by the test harness; see setMockProvider() */
+	private static mockProvider: (() => IGitHubActions) | null = null;
 	private readonly apiPath: string | null = null;
 	private readonly gitHubUserName: string | null = null;
 	private readonly gitHubAuthToken: string | null = null;
@@ -364,6 +447,24 @@ export class GitHubActions implements IGitHubActions {
 		this.gitHubAuthToken = Config.getInstance().getProp(ConfigKey.githubBotToken);
 		this.dc = DatabaseController.getInstance();
 		Log.trace("GitHubActions::<init> - url: " + this.apiPath + "/" + this.org);
+	}
+
+	/**
+	 * Supplies the mock returned by getInstance() when it is called from a test.
+	 *
+	 * getInstance() used to reach for the mock itself, with
+	 * `require("../../test/controllers/TestGitHubActions")` inline -- a test file on production
+	 * code's dependency graph, flagged in place with "TODO: having this test dependency in prod
+	 * code is poor". It is also what stopped a stricter package manager (pnpm, Yarn PnP) being
+	 * adopted, since those do not let a package reach outside its declared dependencies.
+	 *
+	 * The direction is now inverted: production names no test file, and the test harness pushes
+	 * its mock in (packages/common/test/TestHarness.ts, at module scope, so it is registered
+	 * before any spec body runs). A test that reaches getInstance() with nothing registered gets
+	 * a thrown error rather than a silent fallback to the live client.
+	 */
+	public static setMockProvider(provider: () => IGitHubActions): void {
+		GitHubActions.mockProvider = provider;
 	}
 
 	public static getInstance(forceReal?: boolean): IGitHubActions {
@@ -402,9 +503,13 @@ export class GitHubActions implements IGitHubActions {
 		}
 
 		if (GitHubActions.instance === null) {
-			// TODO: having this test dependency in prod code is poor
-			const { TestGitHubActions } = require("../../test/controllers/TestGitHubActions");
-			GitHubActions.instance = new TestGitHubActions();
+			if (GitHubActions.mockProvider === null) {
+				throw new Error(
+					"GitHubActions::getInstance() - running under mocha, but no mock has been registered. " +
+						"Importing TestHarness registers one; see GitHubActions.setMockProvider()."
+				);
+			}
+			GitHubActions.instance = GitHubActions.mockProvider();
 		}
 
 		// NOTE: warn, not test-level. A live spec that ends up here is silently running against a
@@ -510,7 +615,7 @@ export class GitHubActions implements IGitHubActions {
 			};
 
 			Log.info("GitHubAction::createRepo( " + repoName + " ) - making request");
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			const body = await response.json();
 			Log.info("GitHubAction::createRepo( " + repoName + " ) - request complete");
 
@@ -573,6 +678,9 @@ export class GitHubActions implements IGitHubActions {
 			return url;
 		} catch (err) {
 			Log.error("GitHubAction::createRepo(..) - ERROR: " + err);
+			if (err instanceof GitHubError) {
+				throw err; // keep .status and .fatal, so a run that cannot succeed can stop instead of grinding on
+			}
 			throw new Error("Repository not created; " + err.message);
 		}
 	}
@@ -617,7 +725,7 @@ export class GitHubActions implements IGitHubActions {
 			// NOTE: options carries the Authorization header (the bot token); do not log it.
 			// Uncomment only for local debugging.
 			// Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - URL: " + uri + "; options: " + JSON.stringify(options));
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			const body = await response.json();
 			Log.info("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete");
 			Log.trace("GitHubAction::createRepoFromTemplate( " + repoName + " ) - request complete; body: " + JSON.stringify(body));
@@ -664,6 +772,9 @@ export class GitHubActions implements IGitHubActions {
 			return url;
 		} catch (err) {
 			Log.error("GitHubAction::createRepoFromTemplate(..) - ERROR: " + err);
+			if (err instanceof GitHubError) {
+				throw err; // keep .status and .fatal, so a run that cannot succeed can stop instead of grinding on
+			}
 			throw new Error("Repository not created; " + err.message);
 		}
 	}
@@ -717,7 +828,7 @@ export class GitHubActions implements IGitHubActions {
 			};
 
 			Log.trace("GitHubAction::updateRepo( " + repoName + " ) - making request");
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			const body = await response.json();
 			Log.trace("GitHubAction::updateRepo( " + repoName + " ) - request complete");
 
@@ -732,6 +843,9 @@ export class GitHubActions implements IGitHubActions {
 			return wasSuccess;
 		} catch (err) {
 			Log.error("GitHubAction::updateRepo(..) - ERROR: " + err);
+			if (err instanceof GitHubError) {
+				throw err; // keep .status and .fatal, so a run that cannot succeed can stop instead of grinding on
+			}
 			throw new Error("Repository not created; " + err.message);
 		}
 	}
@@ -762,7 +876,12 @@ export class GitHubActions implements IGitHubActions {
 					},
 				};
 
-				await fetch(uri, options);
+				const response = await this.fetchWithRetry(uri, options);
+				if (response.ok === false) {
+					// this used to be logged as "successfully deleted" whatever GitHub answered
+					Log.error("GitHubAction::deleteRepo( " + repoName + " ) - DELETE answered HTTP " + response.status + "; repo NOT deleted");
+					return false;
+				}
 				Log.info("GitHubAction::deleteRepo( " + repoName + " ) - successfully deleted; took: " + Util.took(start));
 				return true;
 			} else {
@@ -795,7 +914,26 @@ export class GitHubActions implements IGitHubActions {
 		}
 	}
 
-	public async repoExists(repoName: string): Promise<boolean> {
+	/**
+	 * Whether a repository exists in the org.
+	 *
+	 * @param repoName
+	 * @param confirmAbsence re-check once before reporting false. GitHub Enterprise occasionally
+	 * answers 404 for a repository that demonstrably exists -- CI has seen a repo serve three
+	 * webhook operations and then 404 two seconds later (builds 4281, 4314) -- and a single 404 is
+	 * otherwise taken as authoritative by every caller. Pass true where a false negative is
+	 * damaging: something throws, or a repair path acts on the absence. Leave it false where 404 is
+	 * the expected answer, which is the majority of calls: createRepo's readiness poll asks up to ten
+	 * times per repository while waiting for it to appear, and deleteRepo asks before deciding there
+	 * is nothing to delete. Retrying those would add a request and a delay to every provisioned repo
+	 * for no benefit.
+	 *
+	 * The rule that matters: opt in where a 404 is an *anomaly*, never where it is a normal answer.
+	 * dbSanityCheck looked like a good candidate -- a false negative there mislabels a healthy repo --
+	 * but it walks every repository in the course and most of them are legitimately absent early in
+	 * term, so confirming each one pushed it past its timeout in CI (build 4315).
+	 */
+	public async repoExists(repoName: string, confirmAbsence: boolean = false): Promise<boolean> {
 		const start = Date.now();
 		const uri = this.apiPath + "/repos/" + this.org + "/" + repoName;
 		const options: RequestInit = {
@@ -807,7 +945,16 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const res = await fetch(uri, options);
+		let res = await this.fetchWithRetry(uri, options);
+		if (res.status === 404 && confirmAbsence === true) {
+			// a real absence 404s again; a blip usually does not
+			Log.info("GitHubAction::repoExists( " + repoName + " ) - 404; confirming before reporting absent");
+			await Util.delay(GitHubActions.ABSENCE_RECHECK_DELAY);
+			res = await this.fetchWithRetry(uri, options);
+			if (res.status !== 404) {
+				Log.warn("GitHubAction::repoExists( " + repoName + " ) - transient 404; the repo does exist");
+			}
+		}
 		if (res.status === 404) {
 			Log.trace("GitHubAction::repoExists( " + repoName + " ) - false; took: " + Util.took(start));
 			return false;
@@ -851,7 +998,7 @@ export class GitHubActions implements IGitHubActions {
 				},
 			};
 
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			// Log.info("GitHubAction::deleteTeam(..) - response: " + response);
 
 			if (response.status === 204) {
@@ -989,7 +1136,7 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const response = await fetch(uri, opts);
+		const response = await this.fetchWithRetry(uri, opts);
 		Log.trace("GitHubAction::listWebhooks(..) - success; took: " + Util.took(start));
 		return response.json();
 	}
@@ -1026,7 +1173,7 @@ export class GitHubActions implements IGitHubActions {
 			}),
 		};
 
-		const response = await fetch(uri, opts);
+		const response = await this.fetchWithRetry(uri, opts);
 		if (response.ok === false) {
 			// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 			const respBody = await response.text();
@@ -1075,7 +1222,7 @@ export class GitHubActions implements IGitHubActions {
 				}),
 			};
 
-			await fetch(uri, opts);
+			await this.fetchWithRetry(uri, opts);
 			Log.info("GitHubAction::updateWebhook(..) - success; took: " + Util.took(start));
 			return true;
 		} else {
@@ -1129,7 +1276,7 @@ export class GitHubActions implements IGitHubActions {
 						permission: permission,
 					}),
 				};
-				const response = await fetch(uri, options);
+				const response = await this.fetchWithRetry(uri, options);
 				const body = await response.json();
 				Log.info("GitHubAction::teamCreate(..) - success; new: " + body.id + "; took: " + Util.took(start));
 
@@ -1323,7 +1470,9 @@ export class GitHubActions implements IGitHubActions {
 				throw new Error("GitHubAction::addTeamToRepo(..) - team does not exist: " + teamName);
 			}
 
-			const repoExists = await this.repoExists(repoName);
+			// confirmAbsence: this throws on a false negative, and a transient 404 here is what
+			// broke CI builds 4281 and 4314 against a repo that demonstrably existed
+			const repoExists = await this.repoExists(repoName, true);
 			if (repoExists === false) {
 				throw new Error("GitHubAction::addTeamToRepo(..) - repo does not exist: " + repoName);
 			}
@@ -1350,7 +1499,7 @@ export class GitHubActions implements IGitHubActions {
 				}),
 			};
 
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			if (!response.ok) {
 				GitHubActions.throwIfFatal(response.status, await response.text(), "addTeamToRepo( " + teamName + ", " + repoName + " )");
 				throw new Error(response.statusText);
@@ -1401,7 +1550,7 @@ export class GitHubActions implements IGitHubActions {
 				},
 			};
 
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			if (!response.ok) {
 				GitHubActions.throwIfFatal(response.status, await response.text(), "removeTeamFromRepo( " + teamName + ", " + repoName + " )");
 				throw new Error(response.statusText);
@@ -1518,7 +1667,7 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const response = await fetch(uri, options);
+		const response = await this.fetchWithRetry(uri, options);
 
 		if (response.status === 404) {
 			Log.warn("GitHubAction::getTeam( " + teamName + " ) - team does not exist; status: " + response.status);
@@ -1557,7 +1706,7 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const response = await fetch(uri, options);
+		const response = await this.fetchWithRetry(uri, options);
 
 		if (response.status === 404) {
 			Log.warn("GitHubAction::getTeam( " + teamNumber + " ) - ERROR: Github Team " + response.status);
@@ -1638,7 +1787,7 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const listResp = await fetch(listUri, listOptions);
+		const listResp = await this.fetchWithRetry(listUri, listOptions);
 		Log.trace("GitHubAction::listRepoBranches(..) - list response code: " + listResp.status); // 201 success
 		const listRespBody = await listResp.json();
 
@@ -1656,48 +1805,6 @@ export class GitHubActions implements IGitHubActions {
 		Log.trace("GitHubAction::listRepoBranches(..) - branches: " + JSON.stringify(branches) + "; took: " + Util.took(start));
 		return branches;
 	}
-
-	// public async listBranches(repoId: string): Promise<string[]> {
-	//     const start = Date.now();
-	//
-	//     const repoExists = await this.repoExists(repoId); // ensure the repo exists
-	//     if (repoExists === false) {
-	//         Log.error("GitHubAction::listBranches(..) - failed; repo does not exist");
-	//         return [];
-	//     }
-	//
-	//     // get branches
-	//     // GET /repos/{owner}/{repo}/branches
-	//     const listUri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/branches";
-	//     Log.info("GitHubAction::listBranches(..) - starting; branch uri: " + listUri);
-	//     const listOptions: RequestInit = {
-	//         method: "GET",
-	//         headers: {
-	//             "Authorization": this.gitHubAuthToken,
-	//             "User-Agent": this.gitHubUserName,
-	//             "Accept": "application/vnd.github+json",
-	//             "X-GitHub-Api-Version": "2022-11-28"
-	//         }
-	//     };
-	//
-	//     const listResp = await fetch(listUri, listOptions);
-	//     Log.trace("GitHubAction::listBranches(..) - list response code: " + listResp.status); // 201 success
-	//     const listRespBody = await listResp.json();
-	//
-	//     if (listResp.status !== 200) {
-	//         Log.warn("GitHubAction::deleteBranches(..) - failed to list branches for repo; response: " + JSON.stringify(listRespBody));
-	//         return [];
-	//     }
-	//     Log.trace("GitHubAction::listBranches(..) - branch list: " + JSON.stringify(listRespBody));
-	//
-	//     const branches: string[] = [];
-	//     for (const githubBranch of listRespBody) {
-	//         branches.push(githubBranch.name);
-	//     }
-	//
-	//     Log.info("GitHubAction::listBranches(..) - done; branches found: " + JSON.stringify(branches));
-	//     return branches;
-	// }
 
 	/**
 	 * NOTE: This method will delete all branches EXCEPT those in the branchesToKeep list.
@@ -1836,7 +1943,7 @@ export class GitHubActions implements IGitHubActions {
 			},
 		};
 
-		const deleteResp = await fetch(delUri, delOptions);
+		const deleteResp = await this.fetchWithRetry(delUri, delOptions);
 		Log.trace("GitHubAction::deleteBranch(..) - delete response code: " + deleteResp.status);
 
 		if (deleteResp.status !== 204) {
@@ -1893,7 +2000,7 @@ export class GitHubActions implements IGitHubActions {
 			}),
 		};
 
-		const response = await fetch(uri, options);
+		const response = await this.fetchWithRetry(uri, options);
 		Log.trace("GitHubAction::renameBranch(..) - response code: " + response.status); // 201 success
 
 		if (response.status === 201) {
@@ -2068,7 +2175,7 @@ export class GitHubActions implements IGitHubActions {
 				};
 
 				// Change each team"s permission
-				const response = await fetch(teamsUri, teamOptions); // .then(function(responseData: any) {
+				const response = await this.fetchWithRetry(teamsUri, teamOptions); // .then(function(responseData: any) {
 				const body = await response.json();
 				Log.info("GitHubAction::setRepoPermission(..) - setting permission for teams on repo");
 				for (const team of body) {
@@ -2089,7 +2196,7 @@ export class GitHubActions implements IGitHubActions {
 							}),
 						};
 
-						await fetch(permissionUri, permissionOptions); // TODO: evaluate statusCode from this call
+						await this.fetchWithRetry(permissionUri, permissionOptions); // TODO: evaluate statusCode from this call
 						Log.info("GitHubAction::setRepoPermission(..) - changed team: " + team.id + " permissions");
 					}
 				}
@@ -2138,7 +2245,7 @@ export class GitHubActions implements IGitHubActions {
 				},
 				body,
 			};
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			if (response.ok === false) {
 				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 				const respBody = await response.text();
@@ -2185,7 +2292,7 @@ export class GitHubActions implements IGitHubActions {
 				},
 				body,
 			};
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			if (response.ok === false) {
 				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 				const respBody = await response.text();
@@ -2273,7 +2380,7 @@ export class GitHubActions implements IGitHubActions {
 
 			if (Config.getInstance().getProp(ConfigKey.postback) === true) {
 				try {
-					await fetch(urlToSend, options); // NOTE: should we check return?
+					await this.fetchWithRetry(urlToSend, options); // NOTE: should we check return?
 					Log.trace("GitHubService::simulateWebhookComment(..) - success"); // : " + res);
 					return Promise.resolve(true);
 				} catch (err) {
@@ -2328,7 +2435,7 @@ export class GitHubActions implements IGitHubActions {
 
 			if (Config.getInstance().getProp(ConfigKey.postback) === true) {
 				try {
-					const res = await fetch(url, options);
+					const res = await this.fetchWithRetry(url, options);
 					if (res.status === 201) {
 						Log.trace("GitHubService::makeComment(..) - success");
 						return Promise.resolve(true);
@@ -2365,7 +2472,7 @@ export class GitHubActions implements IGitHubActions {
 		};
 
 		try {
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			const results = await response.json();
 			Log.trace("GitHubAction::getTeamsOnRepo( " + repoId + " ) - response received");
 
@@ -2404,7 +2511,7 @@ export class GitHubActions implements IGitHubActions {
 		};
 
 		try {
-			const response = await fetch(uri, options);
+			const response = await this.fetchWithRetry(uri, options);
 			if (response.status !== 200) {
 				Log.warn("GitHubAction::getDefaultBranch( " + repoId + " ) - could not read repo; status: " + response.status);
 				return null;
@@ -2428,7 +2535,7 @@ export class GitHubActions implements IGitHubActions {
 
 		try {
 			Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
-			let response = await fetch(uri, options);
+			let response = await this.fetchWithRetry(uri, options);
 			let body = await response.json();
 			let results: any[] = body; // save the first page of values
 
@@ -2453,7 +2560,7 @@ export class GitHubActions implements IGitHubActions {
 					// (issuing 10+ concurrent dns requests can be problematic)
 					await Util.delay(100);
 
-					response = await fetch(uri, options);
+					response = await this.fetchWithRetry(uri, options);
 					body = await response.json();
 					results = results.concat(body); // append subsequent pages of values to the first page
 

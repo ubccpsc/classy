@@ -5,7 +5,7 @@ import { AuthController } from "@backend/controllers/AuthController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
-import { GitHubController } from "@backend/controllers/GitHubController";
+import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -26,10 +26,12 @@ import {
 	DeliverableTransportPayload,
 	GradeTransportPayload,
 	Payload,
+	PERSON_VIEWS,
+	PersonTransportPayload,
+	PersonView,
 	ProvisionTransport,
 	RepositoryPayload,
 	RepositoryTransport,
-	StudentTransportPayload,
 	TeamFormationTransport,
 	TeamTransport,
 	TeamTransportPayload,
@@ -44,7 +46,23 @@ import { CSVParser } from "./CSVParser";
 import { RouteUtil } from "./RouteUtil";
 
 export default class AdminRoutes implements IREST {
-	private static ghc = new GitHubController(GitHubActions.getInstance());
+	private static ghcInstance: IGitHubController = null;
+
+	/**
+	 * The GitHub controller these routes act through.
+	 *
+	 * Built on first use rather than in a static field initializer. As a field it was constructed
+	 * as a side effect of *importing* this module, which is both too early to be useful and load-
+	 * order dependent: under mocha, GitHubActions.getInstance() needs the test harness to have
+	 * registered its mock first, and whether it had depended on which spec file mocha happened to
+	 * load first. Running this spec on its own therefore failed while the whole suite passed.
+	 */
+	private static get ghc(): IGitHubController {
+		if (AdminRoutes.ghcInstance === null) {
+			AdminRoutes.ghcInstance = new GitHubController(GitHubActions.getInstance());
+		}
+		return AdminRoutes.ghcInstance;
+	}
 
 	/**
 	 * Who may be viewed as; must agree with RouteUtil::resolveIdentity, which is what actually
@@ -173,30 +191,81 @@ export default class AdminRoutes implements IREST {
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
 	 * @param next
 	 */
-	private static async getStudents(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.trace("AdminRoutes::getStudents(..) - start");
+	/**
+	 * The listing view named by the :view path parameter.
+	 *
+	 * Returns "students" when the parameter is absent, so the bare /portal/admin/students and
+	 * /portal/admin/grades routes keep behaving exactly as they always have; returns null for a
+	 * value that is not a view, so the caller can answer 400 rather than silently showing the
+	 * wrong people.
+	 */
+	private static viewFor(req: ClassyRequest): PersonView | null {
+		const raw = req.params.view;
+		if (typeof raw === "undefined") {
+			return "students";
+		}
+		return PERSON_VIEWS.indexOf(raw as PersonView) >= 0 ? (raw as PersonView) : null;
+	}
+
+	/**
+	 * The listing view for the results and dashboard routes.
+	 *
+	 * Defaults to "all" rather than "students" -- unlike the people and grades routes, which are
+	 * about the class list and default to students. These two have always shown every result, staff
+	 * runs included, and those runs are frequently the ones an instructor is looking for. Adding a
+	 * filter should not hide rows that were visible yesterday.
+	 */
+	/**
+	 * The optional ?person= filter on the results and dashboard routes.
+	 *
+	 * Accepts a Person.id or a CWL; see ResultsController::matchesPerson. Returns null when absent
+	 * or blank, which means "everyone".
+	 */
+	private static personFilterFor(req: ClassyRequest): string | null {
+		const raw = (req.query as any)?.person;
+		if (typeof raw !== "string" || raw.trim().length === 0) {
+			return null;
+		}
+		return raw.trim();
+	}
+
+	private static resultsViewFor(req: ClassyRequest): PersonView | null {
+		const raw = req.params.view;
+		if (typeof raw === "undefined") {
+			return "all";
+		}
+		return PERSON_VIEWS.indexOf(raw as PersonView) >= 0 ? (raw as PersonView) : null;
+	}
+
+	private static async getPeople(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		Log.trace("AdminRoutes::getPeople(..) - start");
 		const start = Date.now();
+
+		const view = AdminRoutes.viewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
 
 		const ac = new AdminController(AdminRoutes.ghc);
 		try {
-			const students = await ac.getStudents();
-			Log.info("AdminRoutes::getStudents() - # students: " + students.length + "; took: " + Util.took(start));
-			const payload: StudentTransportPayload = { success: students };
+			const people = await ac.getPeople(view);
+			Log.info("AdminRoutes::getPeople( " + view + " ) - #: " + people.length + "; took: " + Util.took(start));
+			const payload: PersonTransportPayload = { success: people };
 			res.send(payload);
 			return;
 		} catch (err) {
-			return AdminRoutes.handleError(400, "Unable to retrieve student list. ERROR: " + err.message, res);
+			return AdminRoutes.handleError(400, "Unable to retrieve people list. ERROR: " + err.message, res);
 		}
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
@@ -210,7 +279,7 @@ export default class AdminRoutes implements IREST {
 		try {
 			const staff = await ac.getStaff();
 			Log.info("AdminRoutes::getStaff() - # staff: " + staff.length + "; took: " + Util.took(start));
-			const payload: StudentTransportPayload = { success: staff };
+			const payload: PersonTransportPayload = { success: staff };
 			res.send(payload);
 			return;
 		} catch (err) {
@@ -274,10 +343,18 @@ export default class AdminRoutes implements IREST {
 		const delivId = req.params.delivId;
 		const repoId = req.params.repoId;
 
+		const view = AdminRoutes.resultsViewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getResults(delivId, repoId);
+			// optional ?person=<Person.id | CWL>; a query param rather than a fourth path segment
+			// because it is optional and orthogonal to the ones already there
+			const person = AdminRoutes.personFilterFor(req);
+			const results = await cc.getResults(delivId, repoId, undefined, view, person);
 			Log.info("AdminRoutes::getResults( " + delivId + ", " + repoId + " ) - # results: " + results.length + "; took: " + Util.took(start));
 			const payload: AutoTestResultSummaryPayload = { success: results };
 			res.send(payload);
@@ -443,10 +520,17 @@ export default class AdminRoutes implements IREST {
 		const repoId = req.params?.repoId;
 
 		Log.info("AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - start");
+
+		const view = AdminRoutes.resultsViewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const results = await cc.getDashboard(delivId, repoId);
+			const person = AdminRoutes.personFilterFor(req);
+			const results = await cc.getDashboard(delivId, repoId, undefined, undefined, view, person);
 			Log.info(
 				"AdminRoutes::getDashboard( " + delivId + ", " + repoId + " ) - done; # results: " + results.length + "; took: " + Util.took(start)
 			);
@@ -496,10 +580,15 @@ export default class AdminRoutes implements IREST {
 		Log.info("AdminRoutes::getGrades(..) - start");
 		const start = Date.now();
 
+		const view = AdminRoutes.viewFor(req);
+		if (view === null) {
+			return AdminRoutes.handleError(400, "Unknown view: " + req.params.view + "; expected one of " + PERSON_VIEWS.join(", "), res);
+		}
+
 		// handled by preceding action in chain above (see registerRoutes)
 		const cc = new AdminController(AdminRoutes.ghc);
 		try {
-			const grades = await cc.getGrades();
+			const grades = await cc.getGrades(view);
 			Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
 			const payload: GradeTransportPayload = { success: grades };
 			res.send(payload);
@@ -510,7 +599,7 @@ export default class AdminRoutes implements IREST {
 	}
 
 	/**
-	 * Returns a StudentTransportPayload.
+	 * Returns a PersonTransportPayload.
 	 *
 	 * @param req
 	 * @param res
@@ -1083,7 +1172,11 @@ export default class AdminRoutes implements IREST {
 
 		// make sure user is not already on a team for this deliverable
 		const delivId = team.delivId;
-		const personTeams = await dbc.getTeamsForPerson(githubId);
+		// person.id, not githubId: Team.personIds holds Person.id, and the classlist gives id and
+		// githubId different values (ACCT/CSID vs CWL). Passing githubId meant this guard matched
+		// nothing and never fired, so a TA could put a student on two teams for one deliverable --
+		// and so onto another team's repo.
+		const personTeams = await dbc.getTeamsForPerson(person.id);
 		for (const t of personTeams) {
 			if (t.delivId === delivId) {
 				throw new Error("User " + githubId + " is already on team " + t.id + " for deliverable " + delivId);
@@ -1189,14 +1282,22 @@ export default class AdminRoutes implements IREST {
 		// visible to all privileged users
 		server.get("/portal/admin/course", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getCourse);
 		server.get("/portal/admin/deliverables", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDeliverables);
-		server.get("/portal/admin/students", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStudents);
+		// NOTE: /people rather than /students, because the view can select staff and admins too.
+		// /portal/admin/students is kept as an alias
+		server.get("/portal/admin/people", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
+		server.get("/portal/admin/people/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
+		server.get("/portal/admin/students", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getPeople);
 		server.get("/portal/admin/staff", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getStaff);
 		server.get("/portal/admin/teams", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getTeams);
 		server.get("/portal/admin/repositories", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getRepositories);
 		server.get("/portal/admin/grades", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
+		server.get("/portal/admin/grades/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGrades);
 		server.get("/portal/admin/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard); // detailed results
+		// :view is students | staff | all; without it these keep returning everything (see resultsViewFor)
+		server.get("/portal/admin/dashboard/:delivId/:repoId/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboard);
 		server.get("/portal/admin/export/dashboard/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getDashboardAll); // no num limit
 		server.get("/portal/admin/results/:delivId/:repoId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults); // result summaries
+		server.get("/portal/admin/results/:delivId/:repoId/:view", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getResults);
 		server.get("/portal/admin/gradedResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getGradedResults); // graded results
 		server.get("/portal/admin/bestResults/:delivId", { preHandler: AdminRoutes.isPrivileged }, AdminRoutes.getBestResults); // results with best score
 

@@ -15,8 +15,8 @@ if (envLoadResult.error) {
  */
 export enum ConfigCourses {
 	classytest = "classytest",
+	cs210 = "cs210",
 	cs310 = "cs310",
-	// cs210 = "cs210",
 }
 
 export enum ConfigKey {
@@ -75,20 +75,13 @@ export enum ConfigKey {
 	hostDir = "hostDir",
 	dockerUid = "dockerUid",
 	hostsAllow = "hostsAllow",
-	timeout = "timeout",
 	botName = "botName",
 	postback = "postback",
-
-	patchId = "patchId", // Used by classy
-	patchToolUrl = "patchToolUrl",
-	patchSourceRepo = "patchSourceRepo",
 
 	// ADMIN_TEAM_NAME
 	adminTeamName = "adminTeamName",
 	// STAFF_TEAM_NAME
 	staffTeamName = "staffTeamName",
-
-	logLevel = "logLevel",
 }
 
 export default class Config {
@@ -132,7 +125,6 @@ export default class Config {
 				dockerUid: process.env.UID,
 				hostsAllow: process.env.HOSTS_ALLOW,
 
-				timeout: Number(process.env.GRADER_TIMEOUT),
 				botName: process.env.GH_BOT_USERNAME,
 
 				sslCertPath: process.env.SSL_CERT_PATH,
@@ -163,14 +155,8 @@ export default class Config {
 				autotestSecret: process.env.AUTOTEST_SECRET,
 				autotestJobs: process.env.AUTOTEST_JOBS,
 
-				patchId: process.env.PATCH_ID,
-				patchToolUrl: process.env.PATCH_TOOL_URL,
-				patchSourceRepo: process.env.PATCH_SOURCE_REPO,
-
 				adminTeamName: process.env.ADMIN_TEAM_NAME,
 				staffTeamName: process.env.STAFF_TEAM_NAME,
-
-				logLevel: process.env.LOG_LEVEL,
 			};
 
 			Log.info("Config - Log::<init>");
@@ -238,15 +224,29 @@ export default class Config {
 	 * @param input a string that you MAY want to remove sensitive information from
 	 */
 	public static sanitize(input: string): string {
-		const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken]; // Can add any sensitive keys here
+		if (typeof input !== "string" || input.length === 0) {
+			return input;
+		}
+		// Every secret that can end up in a URL, a log line, or a streamed error. The Docker token is
+		// spliced into the image-build remote (AutoTestRouteHandler.postDockerImage) and the classlist
+		// password used to ride in the registrar URI; error paths echoed both verbatim.
+		const sensitiveKeys: ConfigKey[] = [ConfigKey.githubBotToken, ConfigKey.githubDockerToken, ConfigKey.classlist_password];
 		const config = Config.getInstance();
-		sensitiveKeys.forEach((sk) => {
+		for (const sk of sensitiveKeys) {
+			if (config.hasProp(sk) === false) {
+				continue;
+			}
 			// HACK: replace() - edge case regarding token prefix in the config.
-			const value: string = config.getProp(sk).replace("token ", "");
-
+			const value = String(config.getProp(sk) ?? "").replace("token ", "");
+			// an empty or very short value would match everywhere and shred the input
+			if (value.length < 8) {
+				continue;
+			}
 			const hint = value.substring(0, 4);
-			input = input.replace(new RegExp(value, "g"), hint + "-xxxxxx");
-		});
+			// tokens can contain regex metacharacters; the old code handed them to RegExp raw
+			const escaped = value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+			input = input.replace(new RegExp(escaped, "g"), hint + "-xxxxxx");
+		}
 		return input;
 	}
 }

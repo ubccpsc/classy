@@ -68,9 +68,20 @@ jobs:
             mkdir -p $SSL_PATH && openssl req -new -newkey rsa:2048 -days 365 -nodes -x509 -keyout $SSL_PATH/privkey.pem -out $SSL_PATH/fullchain.pem -subj "/C=GB/ST=Vancouver/L=Vancouver/O=Global Security/OU=IT Department/CN=test.com"
           when: always
 
+      # Emits the .js that webpack bundles, for every package AND for plugins/*. The root
+      # tsconfig.json has no "include", so the root tsc covers the whole tree; the per-package
+      # tsc steps below re-check each package against its own tsconfig, which is not the same
+      # thing and is why they are still here.
+      #
+      # This step read `cd plugins/default && yarn run build` until 26W1. There is no
+      # package.json in plugins/default, so yarn walked up to the root one and ran exactly the
+      # command below -- the right thing, by accident. The accident mattered: the frontend
+      # tsconfig includes only src, test and ../common, so the "Building frontend" step does not
+      # emit the plugin's CustomAdminView/CustomStudentView, and webpack needs them. Giving
+      # plugins/default a package.json of its own would have silently stopped emitting them.
       - run:
-            command: cd plugins/default && yarn run build
-            name: Building plugin
+            command: yarn run build
+            name: Building all packages and plugins (root tsc)
             when: always
 
       - run:
@@ -152,6 +163,14 @@ jobs:
             name: Running autotest tests
             environment:
               MOCHA_FILE: ../../testOutput/autotest/test/test-results.xml
+              # Same 400KB truncation problem the backend step above hit: this step's log
+              # capped out exactly at 400000 chars on build 4296, cutting the middle of the
+              # run out entirely. WARN keeps warn/error/test and drops the info/trace chatter.
+              #
+              # NOTE: unlike the backend step, the "text-lcov" reporter in autotest's coverCI is
+              # NOT worth removing for this: measured on 4296 it was only ~5% of the retained
+              # output. The log volume here is Log.info/Log.trace, not coverage.
+              LOG_LEVEL: WARN
             when: on_success
 
       - run:

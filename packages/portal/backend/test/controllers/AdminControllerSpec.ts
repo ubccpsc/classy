@@ -16,7 +16,7 @@ import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@b
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-import { AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport } from "@common/types/PortalTypes";
+import { AutoTestGradeTransport, GradeTransport, PersonTransport, TeamTransport } from "@common/types/PortalTypes";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -141,11 +141,11 @@ describe("AdminController", () => {
 	});
 
 	it("Should be able to get a list of students.", async function () {
-		const res = await ac.getStudents();
+		const res = await ac.getPeople();
 		expect(res).to.be.an("array");
 		expect(res.length).to.be.greaterThan(0);
 
-		const s: StudentTransport = {
+		const s: PersonTransport = {
 			firstName: "first_" + TestHarness.USER1.id,
 			lastName: "last_" + TestHarness.USER1.id,
 			id: TestHarness.USER1.id,
@@ -153,6 +153,7 @@ describe("AdminController", () => {
 			userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + TestHarness.USER1.github,
 			studentNum: null,
 			labId: "l1a",
+			kind: PersonKind.STUDENT, // the listing reports each person's kind, for the grades page column
 		};
 
 		expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -196,6 +197,119 @@ describe("AdminController", () => {
 			custom: {},
 		};
 		expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+	});
+
+	it("Should carry the people and the report's custom out to the admin views.", async () => {
+		// Both were dropped on the way to the transport: `people` did not exist on it, and `custom`
+		// was hard-coded to {} at two sites. That left the Results and Dashboard views unable to say
+		// who a result belonged to, and discarded anything a course attached for them to render --
+		// which is how PrairieLearn rows would arrive with no owner and no student-test count.
+		//
+		// NOTE: this updates an EXISTING fixture result rather than writing a new one. writeResult
+		// upserts on (delivId, repoId, commitSHA, ref), so this changes no counts -- the sibling
+		// tests below assert exact result totals, and an inserted row breaks them.
+		const dbc = DatabaseController.getInstance();
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: expected fixture results to exist").to.be.greaterThan(0);
+
+		const target = all[0];
+		expect(target.people.length, "setup: fixture results carry people").to.be.greaterThan(0);
+		(target.output.report as any).custom = { studentTestsPassing: 28, bucket: "developing" };
+		await dbc.writeResult(target);
+
+		const results = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const row = results.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(row, "the updated result must come back").to.not.be.undefined;
+		expect(row.people, "the transport must name the owner").to.deep.equal(target.people);
+		expect(row.custom.studentTestsPassing, "the report's custom must survive the clip").to.equal(28);
+		expect(row.custom.bucket).to.equal("developing");
+
+		// and the same on the dashboard, which used to re-empty custom after the spread
+		const dash = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const dashRow = dash.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(dashRow, "the updated result must reach the dashboard too").to.not.be.undefined;
+		expect(dashRow.people).to.deep.equal(target.people);
+		expect(dashRow.custom.studentTestsPassing).to.equal(28);
+	});
+
+	it("Should filter results by person view.", async () => {
+		// Results are keyed by repo, not by person, so this has to resolve each result's people to
+		// their kind -- which is only possible because the transport now carries `people`.
+		const dbc = DatabaseController.getInstance();
+
+		const student = TestHarness.createPerson("viewStudent", "viewStudent", "viewStudentGh", PersonKind.STUDENT);
+		const staff = TestHarness.createPerson("viewStaff", "viewStaff", "viewStaffGh", PersonKind.STAFF);
+		await dbc.writePerson(student);
+		await dbc.writePerson(staff);
+
+		// updates in place (writeResult upserts), so no counts move for the sibling tests
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: fixture results must exist").to.be.greaterThan(1);
+
+		const studentResult = all[0];
+		studentResult.people = [student.id];
+		await dbc.writeResult(studentResult);
+
+		const staffResult = all[1];
+		staffResult.people = [staff.id];
+		await dbc.writeResult(staffResult);
+
+		const students = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "students");
+		const studentShas = students.map((r) => r.commitSHA);
+		expect(studentShas, "the student's result is in the students view").to.contain(studentResult.commitSHA);
+		expect(studentShas, "the staff result is not").to.not.contain(staffResult.commitSHA);
+
+		const staffOnly = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "staff");
+		const staffShas = staffOnly.map((r) => r.commitSHA);
+		expect(staffShas).to.contain(staffResult.commitSHA);
+		expect(staffShas).to.not.contain(studentResult.commitSHA);
+
+		// "all" is the default, and must not filter anything out
+		const everything = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const allShas = everything.map((r) => r.commitSHA);
+		expect(allShas).to.contain(studentResult.commitSHA);
+		expect(allShas).to.contain(staffResult.commitSHA);
+
+		// the dashboard shares the same filter
+		const dashStudents = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, undefined, "students");
+		expect(
+			dashStudents.map((r) => r.commitSHA),
+			"dashboard filters too"
+		).to.not.contain(staffResult.commitSHA);
+	});
+
+	it("Should filter results by person, matching either the id or the CWL.", async () => {
+		// A course whose results are keyed by something opaque -- PrairieLearn puts the assessment
+		// instance in repoId -- has no other way to ask for one student's work. The CWL is what an
+		// admin picks, but Result.people stores Person.id, so both have to resolve.
+		const dbc = DatabaseController.getInstance();
+
+		const person = TestHarness.createPerson("personFilterId", "personFilterId", "personFilterCwl", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup").to.be.greaterThan(1);
+
+		const mine = all[0];
+		mine.people = [person.id];
+		await dbc.writeResult(mine); // upserts; no counts move
+
+		const others = all[1];
+		expect(others.people, "setup: the other result belongs to someone else").to.not.contain(person.id);
+
+		for (const query of [person.id, person.githubId, person.githubId.toUpperCase()]) {
+			const found = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "all", query);
+			const shas = found.map((r) => r.commitSHA);
+			expect(shas, "matched by " + query).to.contain(mine.commitSHA);
+			expect(shas, "and nobody else's").to.not.contain(others.commitSHA);
+		}
+
+		// no filter means everyone
+		const unfiltered = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(unfiltered.map((r) => r.commitSHA)).to.contain(others.commitSHA);
 	});
 
 	it("Should be able to get a list of results with wildcards.", async () => {
@@ -509,6 +623,10 @@ describe("AdminController", () => {
 		class ScriptedUnreleaseController implements IGitHubController {
 			public seen: string[] = [];
 
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
+
 			public constructor(private readonly behaviour: (repoId: string) => boolean | Error) {}
 
 			public async provisionRepository(): Promise<boolean> {
@@ -673,6 +791,10 @@ describe("AdminController", () => {
 		class FatalController implements IGitHubController {
 			public attempts = 0;
 
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
+
 			public async provisionRepository(): Promise<boolean> {
 				this.attempts++;
 				throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
@@ -831,18 +953,12 @@ describe("AdminController", () => {
 		// });
 
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-			if (exec) {
-				Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminControllerSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		// This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
 		it("Should be able to mark students as withdrawn.", async () => {
-			const studentsBefore = await ac.getStudents();
+			const studentsBefore = await ac.getPeople();
 			let people = await pc.getAllPeople();
 
 			let numWithrdrawnBefore = 0;
@@ -866,7 +982,7 @@ describe("AdminController", () => {
 			}
 			expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
 
-			const studentsAfter = await ac.getStudents();
+			const studentsAfter = await ac.getPeople();
 			expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
 

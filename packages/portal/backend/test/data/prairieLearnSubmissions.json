@@ -64,7 +64,8 @@
           "overall": {
             "bucket": "beginning",
             "status": "complete",
-            "message": "Grading finished, but some checks did not pass."
+            "message": "Grading finished, but some checks did not pass.",
+            "score": 12.5
           },
           "findings": [
             {

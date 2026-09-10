@@ -108,6 +108,14 @@
                 <ons-list-header>Grade Summary</ons-list-header>
                 <div id="gradesSummaryTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <ons-list-header>Deliverable Grades</ons-list-header>
+                <ons-list-item>
+                    Show:
+                    <select id="gradesViewSelect" style="margin-left: 1em;">
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
+                        <option value="all">All (incl. withdrawn)</option>
+                    </select>
+                </ons-list-item>
                 <div id="gradesListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
@@ -119,14 +127,21 @@
     <template id="results.html">
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em;">Deliv:</span>
                     <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="resultsRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="resultsRepoSelect" style="display: flex; width: 8em;">
                         <option value="any">-All-</option>
+                    </select>
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Show:</span>
+                    <select id="resultsViewSelect" style="display: flex; height: 2.5em;">
+                        <option value="all">All</option>
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
                     </select>
                     <button style="margin-left: 1em;" id="resultsUpdateButton">Update</button>
                 </div>
@@ -142,14 +157,21 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em">Deliv:</span>
                     <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="dashboardRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="dashboardRepoSelect" style="width: 8em;">
                         <option value="any">-All-</option>
+                    </select>
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Show:</span>
+                    <select id="dashboardViewSelect" style="display: flex; height: 2.5em;">
+                        <option value="all">All</option>
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
                     </select>
                     <button style="margin-left: 1em;" id="dashboardUpdateButton">Update</button>
                 </div>
@@ -166,24 +188,25 @@
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
                 <ons-list-header style="text-align: center; font-weight: 700">
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Close
-                        </ons-button>
-                    </a>
-                    Build Logs
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Save
-                        </ons-button>
-                    </a>
+                    <div style="display:flex; flex-direction: row; align-items: center; justify-content: center;">
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-close">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Close
+                            </ons-button>
+                        </a>
+                        <div style="display:flex; font-size: 125%;">Grader Build Logs</div>
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-save">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Save
+                            </ons-button>
+                        </a>
+                    </div>
                 </ons-list-header>
             </div>
             <ons-scroller id="adminDockerBuildDialog-logs-container" style="max-height: 70vh; overflow-y: auto">
                 <div id="adminDockerBuildDialog-logs-text">
                 </div>
             </ons-scroller>
-            </div>
             <!--
             <div id="adminDockerBuildDialog-footer-container">
                 <ons-bottom-toolbar>
@@ -200,6 +223,20 @@
                 </ons-bottom-toolbar>
             </div>
             -->
+        </ons-dialog>
+    </template>
+
+    <template id="classlistDialog.html">
+        <ons-dialog id="adminClasslistConfirmHeader">
+            <ons-list-header style="text-align: center; font-weight: 700">
+            </ons-list-header>
+            <ons-scroller>
+                <ons-list>
+                </ons-list>
+            </ons-scroller>
+            <ons-button>
+                Close
+            </ons-button>
         </ons-dialog>
     </template>
 
@@ -272,9 +309,9 @@
                         query. This action
                         just marks students not present in this list as withdrawn. It does not delete any teams, repos,
                         grades, or results
-                        although the grades view will not return grades for students who are withdrawn (e.g., so the
-                        course statistics are
-                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab
+                        although the grades view does not show withdrawn students by default (e.g., so the course
+                        statistics are correct); switch that page's Show selector to All to see them.
+                        NOTE: you still need to manually upload the classlist.csv if you want to update lab
                         sections, etc.
                         <br/><br/>
                         Runs in the background, so this page can be closed while it works.
@@ -295,11 +332,12 @@
                     <div class="expandable-content">
                         The CSV must have a header row that contains the following columns:
 
-                        <pre>CSID,GRADE,COMMENT</pre>
+                        <pre>[CSID|CWL|GITHUB|STUDENTNUMBER],GRADE</pre>
 
-                        If the CSID column is not present but a CWL or GITHUB column is present, Classy tries to map from the CWL/GITHUB
-                        column back to a CSID. This will overwrite any grade that exist for that the students listed in the CSV. This cannot
-                        be undone.
+                        If the CSID column is not present but a CWL, GITHUB, or STUDENTNUMBER column is present,
+                        Classy tries to map from the CWL/GITHUB/STUDENTNUMBER column back to a CSID. This will
+                        overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
+                        A COMMENT column is optionally used to provide feedback to the student, if present.
                     </div>
                 </ons-list-item>
 
@@ -319,6 +357,58 @@
                         The UID columns should be in CWL@ubc.ca format. Any empty grade cell will be ignored,
                         but any present grade cell will overwrite whatever is already available online.
                         This cannot be undone.
+                    </div>
+                </ons-list-item>
+
+                <!-- Hidden unless PRAIRIELEARN_* is configured in .env; see AdminConfigTab::initJobSections -->
+                <ons-list-item expandable id="adminPrairieLearnReinterpretItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-wand-magic-sparkles"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Re-derive PrairieLearn reports.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnReinterpretButton" modifier="medium">Re-derive</ons-button>
+                            <ons-button id="adminPrairieLearnReinterpretCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div class="list-item__subtitle" id="adminPrairieLearnReinterpretStatus"></div>
+                        <div class="list-item__subtitle" style="font-size: smaller;">
+                            Rebuilds what the Results and Dashboard tabs show from the grading payloads already
+                            stored, without contacting PrairieLearn. Run this after the grader or its
+                            interpretation changes. Grades are not affected.
+                        </div>
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-rotate"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Sync grades from PrairieLearn.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
+                            <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                            <label style="padding-left: 1em; font-size: smaller;">
+                                <input type="checkbox" id="adminPrairieLearnForce" />
+                                Re-sync everything
+                            </label>
+                        </div>
+                        <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never synced.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Pulls grading records for each PrairieLearn assessment and records the best
+                        <em>on-time</em> bucket as the Classy grade. Runs in the background, so this page can be
+                        closed while it works; press Sync Now again to resume an interrupted run.
+                        <br/><br/>
+                        Only attempts made before a deliverable&apos;s close date are graded, so tightening a
+                        close date and re-syncing will lower a grade &mdash; but grades already recorded are
+                        never removed automatically.
+                        <br/><br/>
+                        Deliverables are created automatically for assessments that do not have one, with grades
+                        unreleased and hidden from students. They are never renamed or deleted.
                     </div>
                 </ons-list-item>
 
@@ -433,21 +523,22 @@
                         <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories
+                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories Page
                         </ons-button>
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Manage and Apply Pull Requests</ons-list-header>
+                <ons-list-header>Remove Stale Grader Images</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-band-aid"></ons-icon>
+                        <ons-icon icon="fa-cogs"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests
+                        <ons-button id="adminRemoveGraderImagesPageButton" modifier="medium">Grader Image Management Page
                         </ons-button>
                     </div>
                 </ons-list-item>
+
 
                 
                 <ons-list-header>Delete Inconsistent Repositories and Teams</ons-list-header>
@@ -647,7 +738,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                            <span
+                                    title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
@@ -666,7 +758,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                            <span
+                                    title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
@@ -967,7 +1060,8 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600 (6 hours), 43200 (12 hours), 86400 (24 hours).
+                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600
+                                (6 hours), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 
@@ -996,12 +1090,12 @@
                                 Custom AutoTest parameters
                             </div>
                             <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"
+                                           spellcheck="false"></ons-input>
                             </div>
                             <div class="expandable-content">
                                 This field is a convenient way to pass custom parameters into a grading container for a
-                                specific
-                                deliverable. It must be a valid JSON object (or {}).
+                                specific deliverable. It must be a valid JSON object (or {}).
                             </div>
                         </ons-list-item>
                     </ons-list>
@@ -1045,7 +1139,9 @@
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-context-input" type="url"
+                            <ons-input class="settingTextInput" style="width: 40em;" id="docker-image-context-input"
+                                       type="url"
+                                       value="https://github.students.cs.ubc.ca/CPSC310/project-resources.git#main"
                                        required></ons-input>
                         </div>
                         <div class="expandable-content">
@@ -1066,7 +1162,8 @@
                             Version
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput"  style="width: 20em;" id="docker-image-tag-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-tag-input"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. You can include the Git revision (commit or tag) for traceability.
@@ -1081,7 +1178,9 @@
                             Dockerfile name
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-file-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-file-input"
+                                       value="grade.dockerfile"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
@@ -1264,7 +1363,6 @@
                         <select id="provisionRepoDeliverableSelect" style="margin-left: 1em;">
                             <option value="''">-None-</option>
                         </select></div>
-                    </div>
                     <div class="expandable-content">
                         Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you
                         want to provision
@@ -1399,13 +1497,13 @@
         </ons-page>
     </template>
 
-    <template id="adminPullRequests.html">
-        <ons-page id="adminPullRequests">
+    <template id="adminGraderImages.html">
+        <ons-page id="adminGraderImages">
             <ons-toolbar>
                 <div class="left">
                     <ons-back-button></ons-back-button>
                 </div>
-                <div class="center">Select & Create Pull Requests</div>
+                <div class="center">Manage Grader Images</div>
                 <div id='indexLogin' class="right">
                     <ons-toolbar-button onclick="myApp.logout();">
                         <ons-icon icon="fa-sign-out"></ons-icon>
@@ -1414,7 +1512,7 @@
                 </div>
             </ons-toolbar>
 
-            <ons-modal id="adminProgress">
+            <ons-modal id="adminGraderProgress">
                 <div style="display:flex; flex-direction:column; align-items: center;">
                     <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
                     <ons-progress-circular indeterminate></ons-progress-circular>
@@ -1425,74 +1523,29 @@
             <ons-list>
                 <ons-list-header>Overview</ons-list-header>
                 <ons-list-item>
-                    This page is used for creating GitHub Pull Requests for learners' repositories.
-                    <!--<ul style="margin-bottom: 0;">-->
-                    <!--<li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a-->
-                    <!--slow operation and can take a up to a minute or more to create a repository.-->
-                    <!--</li>-->
-                    <!--<li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>-->
-                    <!--</ul>-->
-                </ons-list-item>
-                <ons-list-header>Select Patch</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-file-alt"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Select Patch:
-                        <select id="adminPatchSelect" style="margin-left: 1em; margin-right: 1em;">
-                            <option value="''">-None-</option>
-                        </select>
-                        Create branch from first commit
-                        <ons-switch id="headOrRoot" modifier="medium" onclick="" style="margin-left: 1em;"></ons-switch>
-                        <ons-button id="adminViewPatch" style="margin-left: 1em;" modifier="medium">View Selected
-                            Patch
-                        </ons-button>
-                        <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch
-                            List
-                        </ons-button>
-                    </div>
-                    </div>
-                    <div class="expandable-content">
-                        This is a list of all patches that the pull request tool currently has available.
-                        Click Refresh to pull any new patches from cpsc310/project-patches down to the tool.
-                    </div>
+                    This page is used for removing grader images that are no longer needed. Only images that are _not_ attached to an existing deliverable are shown.
                 </ons-list-item>
 
-                <ons-list-header>Patch individual repositories</ons-list-header>
+                <ons-list-header>Select Grader Images</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-pen-square"></ons-icon>
+                        <ons-icon icon="fa-plus-square"></ons-icon>
                     </div>
                     <div class="center">
-                        Repositories:
+                        Images Available for Removal:
                         <select multiple size="10"
-                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
-                                id="repositoryPatchSelect"></select>
-                        <ons-button id="adminPatchSubsetOfReposButton" modifier="medium">Begin Patch</ons-button>
+                                style="width: 30em; margin-left: 1em; margin-right: 1em;"
+                                id="graderImagesSelect"></select>
+                        <ons-button id="adminRemoveGraderImagesButton" modifier="medium">Remove Grader Images
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Select the repositories you wish to patch.
+                        Select the grader images you wish to remove.
                     </div>
                 </ons-list-item>
-
-                <ons-list-header>Patch all repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-pen-square"></ons-icon>
-                    </div>
-                    <div class="center">
-                        <ons-button id="adminPatchAllReposButton" modifier="medium">Begin Patch</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        This will create a pull request for every repository in the database.
-                    </div>
-                </ons-list-item>
-
             </ons-list>
 
         </ons-page>
     </template>
-
 </ons-page>
 

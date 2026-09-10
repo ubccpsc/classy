@@ -1,5 +1,12 @@
 import Log from "@common/Log";
-import { DeliverableTransport, GradeTransport, GradeTransportPayload, StudentTransport } from "@common/types/PortalTypes";
+import {
+	DeliverableTransport,
+	GradeTransport,
+	GradeTransportPayload,
+	PERSON_VIEWS,
+	PersonTransport,
+	PersonView,
+} from "@common/types/PortalTypes";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -24,16 +31,45 @@ export class AdminGradesTab extends AdminPage {
 		document.getElementById("gradesListTable").innerHTML = ""; // clear target
 		document.getElementById("gradesSummaryTable").innerHTML = ""; // clear target
 
+		const view = AdminGradesTab.selectedView();
+
 		UI.showModal("Retrieving grades.");
 		const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
-		const students = await AdminStudentsTab.getStudents(this.remote);
-		const grades = await AdminGradesTab.getGrades(this.remote);
+		// NOTE: both calls take the view. Rows come from the people list, so asking only the grades
+		// endpoint for staff would return grades with no row to put them in.
+		const students = await AdminStudentsTab.getPeopleForView(this.remote, view);
+		const grades = await AdminGradesTab.getGrades(this.remote, view);
 		UI.hideModal();
 
 		this.render(grades, delivs, students);
+		this.wireViewSelector();
 	}
 
-	private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
+	/**
+	 * The view the selector is set to, or "students" when the page does not have one (a course can
+	 * customise admin.html and drop it).
+	 */
+	private static selectedView(): PersonView {
+		const select = document.querySelector("#gradesViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return "students";
+		}
+		return PERSON_VIEWS.indexOf(select.value as PersonView) >= 0 ? (select.value as PersonView) : "students";
+	}
+
+	private wireViewSelector(): void {
+		const select = document.querySelector("#gradesViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.init({}).catch((err) => {
+				Log.error("AdminGradesTab::wireViewSelector(..) - ERROR: " + err.message);
+			});
+		};
+	}
+
+	private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
 		Log.trace("AdminGradesTab::render(..) - start");
 
 		const headers: TableHeader[] = [
@@ -46,19 +82,21 @@ export class AdminGradesTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
-				id: "id",
-				text: "CSID",
-				sortable: true,
-				defaultSort: true,
-				sortDown: false,
-				style: "padding-left: 1em; padding-right: 1em;",
-			},
-			{
 				id: "snum",
 				text: "SNUM",
 				sortable: true, // Whether the column is sortable (sometimes sorting does not make sense).
 				defaultSort: false, // Whether the column is the default sort for the table. should only be true for one column.
 				sortDown: false, // Whether the column should initially sort descending or ascending.
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
+			{
+				id: "id",
+				text: "CSID",
+				sortable: true,
+				// false: GitHub Id above is this table's default sort. Both columns used to claim
+				// it, and SortableTable takes the first it encounters, so this one never applied.
+				defaultSort: false,
+				sortDown: false,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
@@ -85,18 +123,37 @@ export class AdminGradesTab extends AdminPage {
 				sortDown: true,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
+			{
+				// so a row's provenance is obvious once the listing can contain more than students
+				id: "kind",
+				text: "Kind",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
 
 			// more sections dynamically added
 		];
 
 		for (const deliv of delivs) {
-			const col = {
+			// Underlined when a student can actually see the grade, which needs both flags: a
+			// released deliverable that is not visible does not appear for them at all, and a
+			// visible one whose grades are not released shows no score.
+			//
+			// One signal cannot separate the three "no" cases, which is what the tooltip is for:
+			// released-but-not-visible and neither-of-the-two look identical in the heading.
+			const released = deliv.gradesReleased === true;
+			const visible = deliv.visibleToStudents === true;
+
+			const col: TableHeader = {
 				id: deliv.id,
 				text: deliv.id,
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em; text-align: right;",
+				style: "padding-left: 1em; padding-right: 1em; text-align: right;" + (released && visible ? " text-decoration: underline;" : ""),
+				tooltip: "Grades released: " + released + "; Grades visible: " + visible,
 			};
 			headers.push(col);
 		}
@@ -110,11 +167,12 @@ export class AdminGradesTab extends AdminPage {
 					value: student.githubId,
 					html: "<a class='selectable' href='" + student.userUrl + "'>" + student.githubId + "</a>",
 				},
-				{ value: student.id, html: student.id + "" },
 				{ value: student.studentNum, html: student.studentNum + "" },
+				{ value: student.id, html: student.id + "" },
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
 				{ value: student.labId, html: student.labId },
+				{ value: AdminGradesTab.kindLabel(student), html: AdminGradesTab.kindLabel(student) },
 			];
 			for (const deliv of delivs) {
 				let tableCell: TableCell = null;
@@ -125,12 +183,8 @@ export class AdminGradesTab extends AdminPage {
 							let scoreText: string = "";
 							let scorePrepend = "";
 
-							if (grade?.custom?.displayScore) {
-								// check this first so we prefer the custom display score
-								// if there is a custom grade to display, use that instead
-								// Log.trace("AdminGradesTab::render() - using custom display score: " + grade.custom.displayScore);
-								scoreText = grade.custom.displayScore;
-							} else if (grade.score !== null && grade.score >= 0) {
+							// show the raw score in the admin grades panel
+							if (grade.score !== null && grade.score >= 0) {
 								scoreText = grade.score.toFixed(2);
 								if (grade.score < 100) {
 									// two decimal places
@@ -185,16 +239,21 @@ export class AdminGradesTab extends AdminPage {
 		this.renderSummary(grades, delivs, students);
 	}
 
-	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: StudentTransport[]): void {
+	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
 		Log.trace("AdminGradesTab::renderSummary(..) - start");
 
 		const st = new SortableTable(AdminGradesTab.buildSummaryHeaders(), "#gradesSummaryTable");
 		const gradeMap = AdminGradesTab.collectScoresByDeliv(grades, students);
 
+		// The denominator behind N/D, computed once rather than per row. Withdrawn students are
+		// left out for the same reason collectScoresByDeliv drops their grades: they are not
+		// working on the deliverable, so counting them as "not started" would inflate every row.
+		const eligible = AdminGradesTab.countEligible(students);
+
 		for (const delivId of Object.keys(gradeMap)) {
 			const delivGrades: number[] = gradeMap[delivId];
 			if (delivGrades.length > 0) {
-				st.addRow(AdminGradesTab.buildSummaryRow(delivId, delivGrades));
+				st.addRow(AdminGradesTab.buildSummaryRow(delivId, delivGrades, eligible));
 			}
 		}
 
@@ -202,8 +261,12 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/**
-	 * Column definitions for the summary table: deliverable, average, median, then one column
-	 * per decile bin and a final column for perfect scores.
+	 * Column definitions for the summary table: deliverable, average, median, the count of people
+	 * with no grade at all, then one column per decile bin and a final column for perfect scores.
+	 *
+	 * N/D sits to the left of 0-9 rather than at the end because it is not a bin: a student who
+	 * has not started is not the same as one who scored badly, and putting it beside 0-9 makes
+	 * that boundary easy to read.
 	 */
 	private static buildSummaryHeaders(): TableHeader[] {
 		const headers: TableHeader[] = [
@@ -226,6 +289,14 @@ export class AdminGradesTab extends AdminPage {
 			{
 				id: "median",
 				text: "Median",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "nd",
+				text: "N/D",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -321,18 +392,6 @@ export class AdminGradesTab extends AdminPage {
 			},
 		];
 
-		// for (const deliv of delivs) {
-		//     const col = {
-		//         id:          deliv.id,
-		//         text:        deliv.id,
-		//         sortable:    true,
-		//         defaultSort: false,
-		//         sortDown:    true,
-		//         style:       "padding-left: 1em; padding-right: 1em;"
-		//     };
-		//     headers.push(col);
-		// }
-
 		return headers;
 	}
 
@@ -340,7 +399,7 @@ export class AdminGradesTab extends AdminPage {
 	 * Groups scores by deliverable, skipping grades without a numeric score and grades belonging
 	 * to withdrawn students (labId "W"), who should not affect the class summary.
 	 */
-	private static collectScoresByDeliv(grades: GradeTransport[], students: StudentTransport[]): { [delivId: string]: number[] } {
+	private static collectScoresByDeliv(grades: GradeTransport[], students: PersonTransport[]): { [delivId: string]: number[] } {
 		const gradeMap: { [delivId: string]: number[] } = {};
 
 		for (const grade of grades) {
@@ -365,12 +424,16 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/**
-	 * Builds one summary row: average, median, and the distribution across decile bins.
+	 * Builds one summary row: average, median, how many people have no grade, and the
+	 * distribution across decile bins.
+	 *
+	 * `eligible` is the number of people the deliverable is expected from; N/D is whatever is
+	 * left of it once the graded are removed.
 	 *
 	 * Pure given its arguments (aside from sorting the array it is handed), so it can be
 	 * exercised without a DOM.
 	 */
-	private static buildSummaryRow(delivId: string, delivGrades: number[]): TableCell[] {
+	private static buildSummaryRow(delivId: string, delivGrades: number[], eligible: number): TableCell[] {
 		const num = delivGrades.length;
 		const total = delivGrades.reduce(function (accumulator, currentValue) {
 			return accumulator + currentValue;
@@ -383,10 +446,16 @@ export class AdminGradesTab extends AdminPage {
 		let median = (delivGrades[lowMiddle] + delivGrades[highMiddle]) / 2;
 		median = Number(median.toFixed(2));
 
+		// Not a bin: everyone expected to submit who has no grade for this deliverable at all.
+		// Clamped at zero because a person carrying two grades for one deliverable would
+		// otherwise drive it negative, which would read as a data error rather than a count.
+		const numNoData = Math.max(0, eligible - num);
+
 		const row: TableCell[] = [
 			{ value: delivId, html: delivId },
 			{ value: avg + "", html: avg + "" },
 			{ value: median + "", html: median + "" },
+			{ value: numNoData + "", html: numNoData + "" },
 		];
 
 		for (let i = 0; i < 10; i++) {
@@ -404,6 +473,24 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/**
+	 * How many people the summary treats as owing work on each deliverable, which is the
+	 * denominator behind the N/D column.
+	 *
+	 * Mirrors the labId "W" filter in collectScoresByDeliv deliberately: the two numbers are
+	 * subtracted from each other, so they have to be drawn from the same population or N/D
+	 * would count withdrawn students who never had a grade to begin with.
+	 */
+	private static countEligible(students: PersonTransport[]): number {
+		let count = 0;
+		for (const student of students) {
+			if (student.labId !== "W") {
+				count++;
+			}
+		}
+		return count;
+	}
+
+	/**
 	 * Counts how many scores fall within [lower, upper], rounding each score first.
 	 */
 	private static countInBin(list: number[], lower: number, upper: number): number {
@@ -417,11 +504,24 @@ export class AdminGradesTab extends AdminPage {
 		return total;
 	}
 
-	public static async getGrades(remote: string): Promise<GradeTransport[]> {
-		Log.info("AdminGradesTab::getGrades( .. ) - start");
+	/**
+	 * What to show in the Kind column; blank when Classy does not know.
+	 *
+	 * Unset people include staff who have never logged in, and students
+	 * who are mid oauth login flow (unfortunate, probably worth fixing).
+	 */
+	private static kindLabel(student: PersonTransport): string {
+		if (typeof student.kind !== "string" || student.kind === "") {
+			return "";
+		}
+		return student.kind;
+	}
+
+	public static async getGrades(remote: string, view: PersonView = "students"): Promise<GradeTransport[]> {
+		Log.info("AdminGradesTab::getGrades( " + view + " ) - start");
 		try {
 			const start = Date.now();
-			const url = remote + "/portal/admin/grades";
+			const url = remote + "/portal/admin/grades/" + view;
 			const options = AdminView.getOptions();
 
 			const response = await fetch(url, options);

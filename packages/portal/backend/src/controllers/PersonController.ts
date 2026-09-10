@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { StudentTransport } from "@common/types/PortalTypes";
+import { PersonTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Person, PersonKind, Repository } from "../Types";
 
@@ -227,7 +227,7 @@ export class PersonController {
 		return msg;
 	}
 
-	public static personToTransport(person: Person): StudentTransport {
+	public static personToTransport(person: Person): PersonTransport {
 		if (typeof person === "undefined" || person === null) {
 			throw new Error("PersonController::personToTransport( ... ) - ERROR: person not provided.");
 		}
@@ -240,89 +240,6 @@ export class PersonController {
 			userUrl: person.URL,
 			studentNum: person.studentNumber,
 			labId: person.labId,
-		} as StudentTransport;
+		} as PersonTransport;
 	}
-
-	// /**
-	//  * Updates people records from a CSV.
-	//  *
-	//  * If the CSV has someone new, they are added.
-	//  * If the CSV has an existing person, they are updated using their id with the details from the CSV.
-	//  * If a person exists who is not in the CSV, nothing happens (e.g., no deletions).
-	//  *
-	//  * @returns {Promise<Person[]>}
-	//  */
-	//
-	// public async populatePeople(): Promise<{ newPeople: Person[], updatedPeople: Person[] }> {
-	//     Log.info("PersonController::populatePeople() - start");
-	//
-	//     let errorMessage = this.validateCSV();
-	//     if (errorMessage.length > 0) {
-	//         Log.info("PersonController::populatePeople() - ERROR: " + errorMessage);
-	//         return;
-	//     }
-	//
-	//     let newPeople: Person[] = [];
-	//     let updatedPeople: Person[] = [];
-	//
-	//     let csv: {}[] = [];
-	//     let people = await this.db.getPeople();
-	//     for (const row of csv as any) {
-	//         let csvPerson: Person = {
-	//             id:            row.csId, // IDs are CSIDs
-	//             csId:          row.csId,
-	//             githubId:      row.cwl,
-	//             studentNumber: row.sNum,
-	//             fName:         row.fName,
-	//             lName:         row.lName,
-	//             labId:         row.labId,
-	//
-	//             kind:   "student", // only students are added via CSV
-	//             URL:    null,
-	//             custom: {}
-	//         };
-	//
-	//         let found = false;
-	//         for (const p of people) {
-	//
-	//             if (p.id === csvPerson.id) {
-	//                 found = true;
-	//
-	//                 // do not overwrite fields that cannot change
-	//                 csvPerson.custom = p.custom;
-	//                 csvPerson.URL = p.URL;
-	//                 await this.db.writePerson(csvPerson);
-	//
-	//                 updatedPeople.push(csvPerson);
-	//             }
-	//         }
-	//
-	//         if (found === false) {
-	//             await this.db.writePerson(csvPerson);
-	//             newPeople.push(csvPerson);
-	//         }
-	//     }
-	//
-	//     // NOT HANDLED (intentionally): removing people who are in the database but not the CSV
-	//
-	//     return {newPeople: newPeople, updatedPeople: updatedPeople};
-	// }
-	//
-	// /**
-	//  * Returns an empty string if the csv is valid; a string error message otherwise.
-	//  *
-	//  * @returns {string }
-	//  */
-	// private validateCSV(): string {
-	//     // TODO: check that reqiured rows exist
-	//
-	//     // CSID
-	//     // CWL
-	//     // SNUM
-	//     // FNAME
-	//     // LNAME
-	//     // LABID
-	//
-	//     return "";
-	// }
 }

@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { StudentTransport, StudentTransportPayload } from "@common/types/PortalTypes";
+import { PersonTransport, PersonTransportPayload, PersonView } from "@common/types/PortalTypes";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -25,13 +25,13 @@ export class AdminStudentsTab {
 		}
 
 		UI.showModal("Retrieving students.");
-		const students = await AdminStudentsTab.getStudents(this.remote);
+		const students = await AdminStudentsTab.getPeopleForView(this.remote);
 		UI.hideModal();
 
 		this.render(students, opts.labSection);
 	}
 
-	private render(students: StudentTransport[], labSection: string): void {
+	private render(students: PersonTransport[], labSection: string): void {
 		Log.trace("AdminStudentsTab::render(..) - start");
 
 		const headers: TableHeader[] = [
@@ -52,11 +52,24 @@ export class AdminStudentsTab {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
+				// Same id and label as the SNUM column on the Grades tab: it is the same field,
+				// and a roster read side by side with that view should not name it two ways.
+				id: "snum",
+				text: "SNUM",
+				sortable: true,
+				defaultSort: false,
+				// false, as on the Grades tab and on GitHub Id beside it: the three identity
+				// columns name the same person, so clicking them should not sort in opposite
+				// directions from each other, or differently on the two pages.
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em;",
+			},
+			{
 				id: "id",
 				text: "CSID",
 				sortable: true,
 				defaultSort: false,
-				sortDown: true,
+				sortDown: false, // see SNUM above
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 			{
@@ -102,12 +115,14 @@ export class AdminStudentsTab {
 			if (student.labId !== null && student.labId.length > 0) {
 				labId = student.labId;
 			}
+			const snum = AdminStudentsTab.snumLabel(student);
 			const row: TableCell[] = [
 				{ value: count, html: count++ + "" },
 				{
 					value: student.githubId,
 					html: "<a class='selectable' href='" + student.userUrl + "'>" + student.githubId + "</a>", // Should be CWL
 				},
+				{ value: snum, html: snum },
 				{ value: student.id, html: student.id }, // Should be CSID
 				{ value: student.firstName, html: student.firstName },
 				{ value: student.lastName, html: student.lastName },
@@ -170,6 +185,28 @@ export class AdminStudentsTab {
 	}
 
 	/**
+	 * The student number to sort and render by, or null when the person has none.
+	 *
+	 * Null rather than a placeholder on purpose: SortableTable::addRow turns a null cell value
+	 * into "N/A" for both the value and the html, so every table in the portal spells the missing
+	 * case the same way. Returning "" here would opt this column out of that and render blank.
+	 *
+	 * Having none is normal rather than exceptional: it is the usual state for staff and for
+	 * anyone added outside a classlist upload.
+	 *
+	 * String() rather than a string check, for the same reason ExportRoutes and CSVParser coerce:
+	 * Person.studentNumber was declared `number` for years while holding a string, and documents
+	 * written before that was corrected still hold a number. Nothing migrates them.
+	 */
+	private static snumLabel(student: PersonTransport): string | null {
+		if (student.studentNum === null || typeof student.studentNum === "undefined") {
+			return null;
+		}
+		const snum = String(student.studentNum);
+		return snum.length > 0 ? snum : null;
+	}
+
+	/**
 	 * Wires the per-student "View As" buttons.
 	 *
 	 * Pressing one opens a session (which the backend audits) and then reloads into the student view.
@@ -206,7 +243,7 @@ export class AdminStudentsTab {
 		}
 	}
 
-	public static async getStaff(remote: string): Promise<StudentTransport[]> {
+	public static async getStaff(remote: string): Promise<PersonTransport[]> {
 		Log.info("AdminStudentsTab::getStaff( .. ) - start");
 		try {
 			return await AdminStudentsTab.getPeople(remote + "/portal/admin/staff");
@@ -215,16 +252,21 @@ export class AdminStudentsTab {
 		}
 	}
 
-	public static async getStudents(remote: string): Promise<StudentTransport[]> {
-		Log.info("AdminStudentsTab::getStudents( .. ) - start");
+	/**
+	 * The people a view selects. Named for people, not students: the staff and all views return
+	 * staff and admins too, which is what the grades page needs to show their grades.
+	 */
+	public static async getPeopleForView(remote: string, view: PersonView = "students"): Promise<PersonTransport[]> {
+		Log.info("AdminStudentsTab::getPeopleForView( " + view + " ) - start");
 		try {
-			return await AdminStudentsTab.getPeople(remote + "/portal/admin/students");
+			// the grades page builds its rows from this list, so it has to be able to ask for staff
+			return await AdminStudentsTab.getPeople(remote + "/portal/admin/people/" + view);
 		} catch (err) {
-			Log.error("AdminStudentsTab::getStudents( .. ) - ERROR: " + err.message);
+			Log.error("AdminStudentsTab::getPeopleForView( .. ) - ERROR: " + err.message);
 		}
 	}
 
-	public static async getPeople(url: string): Promise<StudentTransport[]> {
+	public static async getPeople(url: string): Promise<PersonTransport[]> {
 		Log.info("AdminStudentsTab::getPeople( .. ) - start; url: " + url);
 
 		try {
@@ -235,7 +277,7 @@ export class AdminStudentsTab {
 
 			if (response.status === 200) {
 				Log.trace("AdminStudentsTab::getPeople(..) - 200 received");
-				const json: StudentTransportPayload = await response.json();
+				const json: PersonTransportPayload = await response.json();
 				// Log.trace("AdminView::handleStudents(..)  - payload: " + JSON.stringify(json));
 				if (typeof json.success !== "undefined" && Array.isArray(json.success)) {
 					Log.trace("AdminStudentsTab::getPeople(..)  - worked; # students: " + json.success.length + "; took: " + UI.took(start));

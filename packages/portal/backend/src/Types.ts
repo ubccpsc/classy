@@ -46,7 +46,19 @@ import { AutoTestConfig } from "../../../common/src/types/ContainerTypes";
 export interface Person {
 	readonly id: string; // primary key (this will duplicate csId or githubId (in CS it will always be csId))
 	readonly csId: string;
-	readonly studentNumber: number | null;
+	/**
+	 * The UBC student number, as a string.
+	 *
+	 * NOTE: a string because that is what it has always held -- ClasslistAgent assigns the raw CSV
+	 * value -- and because it is an identifier, never a quantity: nothing does arithmetic on it, and
+	 * treating it as a number is what made CSVParser.processGrades compare a string to a number and
+	 * silently match nobody. It was declared `number` for years while holding a string.
+	 *
+	 * Documents written before this declaration was corrected still hold a number, and nothing
+	 * migrates them, so code that reads this field off a stored Person must coerce rather than
+	 * assume (see CSVParser.processGrades and ExportRoutes.exportGrades).
+	 */
+	readonly studentNumber: string | null;
 	githubId: string; // warning: this can change (e.g., if student updates their CWL)
 
 	fName: string;
@@ -56,9 +68,8 @@ export interface Person {
 
 	labId: string | null; // null for non-students
 
-	custom: {
-		myProp?: any; // PersonControllerSpec
-	};
+	// Classy stores nothing here; it exists for forks (and one spec) to hang values off a Person
+	custom: { [key: string]: any };
 }
 
 /**
@@ -358,8 +369,52 @@ export interface Grade {
 	urlName: string | null; // name associated with URL (e.g., project name)
 	URL: string | null; // link to commit, if appropriate or repoUrl if not
 
-	// bucket grading can use this to store the bucket name
-	custom: any; // {}; not used by the default implementation, but useful for extension (e.g., custom grade values)
+	custom: GradeCustom;
+}
+
+/**
+ * The keys Classy itself stores in Grade.custom.
+ *
+ * This was `any`, and the keys below were a convention held together by matching string literals
+ * in about a dozen places -- four writers and four readers for displayScore alone, with nothing
+ * connecting them. A misspelling on the write side produced no error anywhere; it just meant the
+ * student saw a raw number where a bucket label was intended.
+ *
+ * The index signature keeps this open, because forks store their own values here and the whole
+ * point of the field is extension. So this does not make a *new* key a compile error -- what it
+ * does is give the known keys one documented home, make them greppable as a type rather than as a
+ * string, and check their values: `displayScore = 42` is now an error, and it was not before.
+ */
+export interface GradeCustom {
+	/**
+	 * What the student sees in place of the numeric score, when the grade is bucketed.
+	 *
+	 * Always the bucket label when there is one. Staff still see `score` (the admin grades table
+	 * and the ELMS export both read the number), so this is a student-facing presentation choice,
+	 * not a second grade.
+	 */
+	displayScore?: string;
+
+	/** the bucket the score fell into (PrairieLearn: beginning | developing | proficient | extending) */
+	bucket?: string;
+
+	/** what produced this grade, e.g. "prairielearn"; absent for AutoTest and manual grades */
+	source?: string;
+
+	/**
+	 * The grade this one replaced.
+	 *
+	 * Deliberately stripped on bulk reads (DatabaseController.getGrades) -- it nests, so a term of
+	 * regrades makes the record large.
+	 */
+	previousGrade?: Grade;
+
+	/** PrairieLearn provenance, for tracing a synced grade back to its submission. Strings: they are ids, and that is what PL sends. */
+	assessmentInstanceId?: string;
+	submissionId?: string;
+
+	// forks store their own values here; the keys above are the ones Classy writes
+	[key: string]: any;
 }
 
 export interface Result extends AutoTestResult {

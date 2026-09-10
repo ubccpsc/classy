@@ -1,6 +1,13 @@
 import Log from "@common/Log";
 import { ClusteredResult } from "@common/types/ContainerTypes";
-import { AutoTestDashboardPayload, AutoTestDashboardTransport, DeliverableTransport, RepositoryTransport } from "@common/types/PortalTypes";
+import {
+	AutoTestDashboardPayload,
+	AutoTestDashboardTransport,
+	DeliverableTransport,
+	PERSON_VIEWS,
+	PersonView,
+	RepositoryTransport,
+} from "@common/types/PortalTypes";
 import moment from "moment";
 import { OnsButtonElement } from "onsenui";
 
@@ -32,6 +39,59 @@ export class AdminDashboardTab extends AdminPage {
 	}
 
 	// called by reflection in renderPage
+	/**
+	 * The view the selector is set to, or "all" when the page does not have one (a course can
+	 * customise admin.html and drop it). "all" rather than "students" because these views have
+	 * always shown every result, staff runs included.
+	 */
+	private static selectedView(): PersonView {
+		const select = document.querySelector("#dashboardViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return "all";
+		}
+		return PERSON_VIEWS.indexOf(select.value as PersonView) >= 0 ? (select.value as PersonView) : "all";
+	}
+
+	private wireViewSelector(): void {
+		const select = document.querySelector("#dashboardViewSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.init({}).catch((err) => {
+				Log.error("AdminDashboardTab::wireViewSelector(..) - ERROR: " + err.message);
+			});
+		};
+	}
+
+	/**
+	 * What the second dropdown offers. Repository ids by default.
+	 *
+	 * protected because "which repository" is not a question every course can answer: a course whose
+	 * results do not come from repositories at all (PrairieLearn keys them by assessment instance)
+	 * needs to offer something else -- a CWL, say -- and filter on that instead. A subclass that
+	 * changes this must also override personFilter(), or the value it offers will be sent as a
+	 * repository id and match nothing.
+	 */
+	protected buildRepoOptions(repos: RepositoryTransport[]): string[] {
+		const names: string[] = [];
+		for (const repo of repos) {
+			names.push(repo.id);
+		}
+		return names;
+	}
+
+	/**
+	 * The person to filter by, when the second dropdown selects people rather than repositories.
+	 *
+	 * null (the default) means the selection is a repository id and is sent as one. Returning a
+	 * value here sends it as ?person= instead, and the repository filter is left open -- the two are
+	 * alternative ways of narrowing the same list, not filters that combine.
+	 */
+	protected personFilter(): string | null {
+		return null;
+	}
+
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminDashboardTab::init(..) - start");
 		const that = this;
@@ -41,7 +101,13 @@ export class AdminDashboardTab extends AdminPage {
 		UI.showModal("Retrieving results.");
 		const course = await AdminView.getCourse(this.remote);
 		if (this.delivValue === null) {
-			this.delivValue = course.defaultDeliverableId;
+			// The course's default deliverable, when it has one. A course that grades outside
+			// AutoTest has none -- the Config tab only offers AutoTest deliverables as the default --
+			// and the old code then seeded the dropdown with a single `null` option. The first query
+			// went out filtering for a deliverable named "null", so the page rendered empty until
+			// Update was pressed, by which point render() had populated the real options. "any" is
+			// the honest default for "no particular deliverable".
+			this.delivValue = course.defaultDeliverableId ?? "any";
 			// ugly way to set the default the first time the page is rendered
 			UI.setDropdownOptions("dashboardDelivSelect", [this.delivValue], this.delivValue);
 		}
@@ -49,6 +115,8 @@ export class AdminDashboardTab extends AdminPage {
 		const repos = await AdminResultsTab.getRepositories(this.remote); // for select
 		const results = await this.performQueries();
 		UI.hideModal();
+
+		this.wireViewSelector();
 
 		const fab = document.querySelector("#dashboardUpdateButton") as OnsButtonElement;
 		fab.onclick = function (_evt: any) {
@@ -83,36 +151,36 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		this.delivValue = deliv;
 		this.repoValue = repo;
-		const results = await AdminDashboardTab.getDashboard(this.remote, deliv, repo);
+		// see AdminResultsTab: a person filter and a repo filter are alternatives, not a conjunction
+		const person = this.personFilter();
+		const results = await AdminDashboardTab.getDashboard(
+			this.remote,
+			deliv,
+			person === null ? repo : "any",
+			AdminDashboardTab.selectedView(),
+			person
+		);
 		Log.info("AdminDashboardTab::performQueries(..) - done; # results: " + results.length + "; took: " + UI.took(start));
 		return results;
 	}
 
-	private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
-		Log.trace("AdminDashboardTab::render(..) - start");
-		const that = this;
-
-		let delivNames: string[] = [];
-		for (const deliv of delivs) {
-			if (deliv.shouldAutoTest === true) {
-				// dash results are only available for deliverables that
-				// use autotest, so skipp adding to dropdown otherwise
-				delivNames.push(deliv.id);
-			}
-		}
-		delivNames = delivNames.sort();
-		delivNames.unshift("-Any-");
-		UI.setDropdownOptions("dashboardDelivSelect", delivNames, this.delivValue);
-
-		let repoNames: string[] = [];
-		for (const repo of repos) {
-			repoNames.push(repo.id);
-		}
-		repoNames = repoNames.sort();
-		repoNames.unshift("-Any-");
-		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
-
-		const headers: TableHeader[] = [
+	/**
+	 * The columns of the dashboard table.
+	 *
+	 * protected for the same reason as AdminResultsTab::buildHeaders: a course plugin can relabel a
+	 * column, or add one, without re-implementing the table. A subclass that adds a header must
+	 * append the matching cell in decorateRow().
+	 */
+	protected buildHeaders(): TableHeader[] {
+		return [
+			{
+				id: "timestamp",
+				text: "Timestamp",
+				sortable: true,
+				defaultSort: true,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
 			{
 				id: "?",
 				text: "?",
@@ -139,7 +207,7 @@ export class AdminDashboardTab extends AdminPage {
 			},
 			{
 				id: "score",
-				text: "Score",
+				text: "Score %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -147,7 +215,7 @@ export class AdminDashboardTab extends AdminPage {
 			},
 			{
 				id: "testScore",
-				text: "Test %",
+				text: "Correctness %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -162,14 +230,6 @@ export class AdminDashboardTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 			},
 			{
-				id: "timestamp",
-				text: "Timestamp",
-				sortable: true,
-				defaultSort: true,
-				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
-			},
-			{
 				id: "results",
 				text: "Results",
 				sortable: false,
@@ -178,7 +238,49 @@ export class AdminDashboardTab extends AdminPage {
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 		];
+	}
 
+	/**
+	 * Last chance to change a row before it is added; the default returns it untouched.
+	 */
+	/**
+	 * The href an admin table shows for a record URL; the default is the URL as stored.
+	 *
+	 * A seam for course plugins, like buildRepoOptions() and decorateRow(). A course whose stored
+	 * URLs are right for students but not for instructors -- an external grader that has separate
+	 * student and instructor views of the same submission, say -- overrides this to rewrite the link
+	 * at render time. Core stays neutral so every other course sees exactly what it always did, and
+	 * the stored record is never changed; only the href in this table is.
+	 */
+	protected adminLink(url: string): string {
+		return url;
+	}
+
+	protected decorateRow(row: TableCell[], result: AutoTestDashboardTransport): TableCell[] {
+		void result;
+		return row;
+	}
+
+	private render(delivs: DeliverableTransport[], repos: RepositoryTransport[], results: AutoTestDashboardTransport[]): void {
+		Log.trace("AdminDashboardTab::render(..) - start");
+		const that = this;
+
+		// Every deliverable; see the same change in AdminResultsTab. Results no longer come only from
+		// AutoTest containers, so shouldAutoTest is not a proxy for "could have results" any more.
+		let delivNames: string[] = [];
+		for (const deliv of delivs) {
+			delivNames.push(deliv.id);
+		}
+		delivNames = delivNames.sort();
+		delivNames.unshift("-Any-");
+		UI.setDropdownOptions("dashboardDelivSelect", delivNames, this.delivValue);
+
+		let repoNames: string[] = this.buildRepoOptions(repos);
+		repoNames = repoNames.sort();
+		repoNames.unshift("-Any-");
+		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
+
+		const headers: TableHeader[] = this.buildHeaders();
 		const st = new DashboardTable(headers, "#dashboardListTable");
 
 		// this loop could not possibly be less efficient
@@ -204,25 +306,29 @@ export class AdminDashboardTab extends AdminPage {
 
 			const stdioViewerURL = "/stdio.html?delivId=" + result.delivId + "&repoId=" + result.repoId + "&sha=" + result.commitSHA;
 
+			// what to link to is a course decision; see adminLink()
+			const commitURL = this.adminLink(result.commitURL);
+			const repoURL = this.adminLink(result.repoURL);
+
 			// ion-ios-help-outline
 			const row: TableCell[] = [
+				{ value: ts, html: "<a class='selectable' href='" + commitURL + "'>" + tsString + "</a>" },
 				{
 					value: "",
 					html: "<a style='cursor: pointer;' target='_blank' href='" + stdioViewerURL + "'><ons-icon icon='md-info-outline'</ons-icon></a>",
 				},
 				{
 					value: result.repoId,
-					html: "<a class='selectable' href='" + result.repoURL + "'>" + result.repoId + "</a>",
+					html: "<a class='selectable' href='" + repoURL + "'>" + result.repoId + "</a>",
 				},
 				{ value: result.delivId, html: result.delivId },
 				{ value: result.scoreOverall, html: this.alignValue(result.scoreOverall) },
 				{ value: result.scoreTests, html: this.alignValue(result.scoreTests) },
 				{ value: result.scoreCover, html: this.alignValue(result.scoreCover) },
-				{ value: ts, html: "<a class='selectable' href='" + result.commitURL + "'>" + tsString + "</a>" },
 				{ value: "", html: dashRow },
 			];
 
-			st.addRow(row);
+			st.addRow(this.decorateRow(row, result));
 		}
 
 		st.generate();
@@ -290,11 +396,8 @@ export class AdminDashboardTab extends AdminPage {
 			} else {
 				// unknown name
 			}
-			// sanitize for student tests that have < or > in the name which break the table rendering
-			name = name.replace("<", "&lt;");
-			name = name.replace(">", "&gt;");
-			name = name.replace('"', "&quot;");
-			name = name.replace("'", "&quot;");
+			// sanitize: test names are student-authored and are rendered into a title attribute
+			name = AdminDashboardTab.escapeHtml(name);
 			annotated.push({ name: name, state: state, colour: colour });
 		}
 
@@ -305,6 +408,22 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		str += "</div>";
 		return str;
+	}
+
+	/**
+	 * Escapes a string for interpolation into HTML text or a quoted attribute value.
+	 *
+	 * The previous version called String.replace four times with STRING patterns, which replace
+	 * only the FIRST occurrence -- so "a<b<c" became "a&lt;b<c". Test names are student-authored
+	 * and land in title='...' (generateTable) and title="..." (generateClusteredTable), so a name
+	 * with two metacharacters escaped the attribute and ran script in a session that holds admin
+	 * rights over the GitHub org. It also mapped ' to &quot; (wrong character) and never escaped
+	 * &, which double-decodes anything a student writes literally.
+	 *
+	 * & must be replaced first, or it re-escapes the entity prefixes introduced below it.
+	 */
+	private static escapeHtml(value: string): string {
+		return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	}
 
 	private generateTable(annotated: DetailRow[]): string {
@@ -340,11 +459,20 @@ export class AdminDashboardTab extends AdminPage {
 		return str;
 	}
 
-	public static async getDashboard(remote: string, delivId: string, repoId: string): Promise<AutoTestDashboardTransport[]> {
+	public static async getDashboard(
+		remote: string,
+		delivId: string,
+		repoId: string,
+		view: PersonView = "all",
+		person: string | null = null
+	): Promise<AutoTestDashboardTransport[]> {
 		Log.info("AdminDashboardTab::getDashboard( .. ) - start");
 
 		const start = Date.now();
-		const url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId;
+		let url = remote + "/portal/admin/dashboard/" + delivId + "/" + repoId + "/" + view;
+		if (person !== null && person.length > 0) {
+			url += "?person=" + encodeURIComponent(person);
+		}
 		const options = AdminView.getOptions();
 		const response = await fetch(url, options);
 

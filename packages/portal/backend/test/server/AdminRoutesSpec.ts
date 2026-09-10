@@ -9,6 +9,7 @@ import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
 import BackendServer from "@backend/server/BackendServer";
+import { JobState } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -20,8 +21,8 @@ import {
 	DeliverableTransport,
 	DeliverableTransportPayload,
 	Payload,
+	PersonTransportPayload,
 	RepositoryPayload,
-	StudentTransportPayload,
 	TeamFormationTransport,
 	TeamTransportPayload,
 } from "@common/types/PortalTypes";
@@ -30,7 +31,7 @@ import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
+import { Person, PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
 
 describe("Admin Routes", function () {
 	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
@@ -73,9 +74,296 @@ describe("Admin Routes", function () {
 		await TestHarness.suiteAfter("Admin Routes");
 	});
 
+	describe("payload contracts the UI depends on", function () {
+		// Several routes had one happy-path assertion and nothing about the shape they return. The
+		// frontend reads specific fields off these payloads; if a field is renamed or dropped the
+		// UI degrades quietly (a blank column, a missing button) rather than failing.
+
+		it("Should return every field App.ts reads from /portal/config.", async function () {
+			// read on every page load; App.retrieveConfig falls back to an ERROR object whose shape
+			// is the de-facto contract, so each key here is one the frontend expects to exist
+			const response = await request(app).get("/portal/config");
+			expect(response.status).to.equal(200);
+
+			const config = response.body.success;
+			expect(config, "the config payload must be present").to.not.be.undefined;
+			for (const field of ["org", "name", "githubAPI", "githubHost", "studentsFormTeamDelivIds", "prairieLearnEnabled"]) {
+				expect(config, "App.ts reads success." + field).to.have.property(field);
+			}
+			// App.ts gates the PrairieLearn section on this being exactly true
+			expect(config.prairieLearnEnabled).to.be.a("boolean");
+			expect(config.studentsFormTeamDelivIds).to.be.an("array");
+		});
+
+		it("Should return staff in the same shape as people.", async function () {
+			// /portal/admin/staff has always returned what is now PersonTransportPayload; the admin
+			// students tab renders it with the same code that renders /portal/admin/people
+			const response = await request(app).get("/portal/admin/staff").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+
+			if (response.body.success.length > 0) {
+				const person = response.body.success[0];
+				for (const field of ["id", "firstName", "lastName", "githubId", "userUrl", "studentNum", "labId"]) {
+					expect(person, "the students tab reads " + field).to.have.property(field);
+				}
+				// getStaff sets these two; the tab uses them to badge admins
+				expect(person).to.have.property("isAdmin");
+				expect(person).to.have.property("isStaff");
+			}
+		});
+
+		it("Should return repositories in the shape both pages read.", async function () {
+			// used by AdminResultsTab and (previously) the pull-requests page
+			const response = await request(app).get("/portal/admin/repositories").set({ user: userName, token: userToken });
+			expect(response.status).to.equal(200);
+			expect(response.body.success).to.be.an("array");
+			if (response.body.success.length > 0) {
+				expect(response.body.success[0]).to.have.property("id");
+				expect(response.body.success[0]).to.have.property("URL");
+			}
+		});
+
+		it("Should answer the results routes for a deliverable that does not exist.", async function () {
+			// AdminResultsTab builds these URLs from a dropdown, but a stale page can request a
+			// deliverable that has since been deleted; neither route should 500
+			for (const url of ["/portal/admin/gradedResults/noSuchDeliv", "/portal/admin/bestResults/noSuchDeliv"]) {
+				const response = await request(app).get(url).set({ user: userName, token: userToken });
+				Log.test(url + " -> " + response.status);
+				expect(response.status, url + " should answer, not fail").to.be.oneOf([200, 400]);
+				if (response.status === 200) {
+					expect(response.body.success, url + " should return a list").to.be.an("array");
+				} else {
+					expect(response.body.failure).to.not.be.undefined;
+				}
+			}
+		});
+	});
+
+	describe("what the UI actually sends", function () {
+		// These pin request shapes the admin UI relies on but no spec reproduced. They are not UI
+		// tests: each asserts a backend behaviour that only shows up when the request is built the
+		// way the frontend builds it.
+
+		it("Should filter jobs by the ?kind= the JobRunner sends.", async function () {
+			// JobRunner polls "/portal/admin/jobs?kind=<kind>" continuously. This is the only query
+			// parameter in the whole API, and nothing exercised it: without the filter the poller
+			// would pick up another kind's job and render its progress against the wrong button.
+			const dc = DatabaseController.getInstance();
+			const stamp = Date.now();
+			for (const kind of ["uiShapeKindA", "uiShapeKindB"]) {
+				await dc.writeJob({
+					id: kind + "_" + stamp,
+					kind: kind,
+					state: JobState.SUCCEEDED,
+					requestedBy: userName,
+					createdAt: stamp,
+					startedAt: stamp,
+					heartbeatAt: stamp,
+					completedAt: stamp,
+					cancelRequested: false,
+					progress: { done: 1, total: 1, message: "" },
+					summary: {},
+					errors: [],
+					params: {},
+				});
+			}
+
+			const filtered = await request(app).get("/portal/admin/jobs?kind=uiShapeKindA").set({ user: userName, token: userToken });
+			expect(filtered.status).to.equal(200);
+
+			const kinds = filtered.body.success.map((job: any) => job.kind);
+			expect(kinds, "the filter must exclude other kinds").to.not.contain("uiShapeKindB");
+			expect(kinds).to.contain("uiShapeKindA");
+
+			// and without the parameter the listing is not filtered
+			const all = await request(app).get("/portal/admin/jobs").set({ user: userName, token: userToken });
+			const allKinds = all.body.success.map((job: any) => job.kind);
+			expect(allKinds, "an absent kind means every kind").to.contain("uiShapeKindA");
+		});
+
+		it("Should ignore the view-as header on admin routes.", async function () {
+			// RouteUtil.VIEW_AS_HEADER is honoured by the student-facing routes in GeneralRoutes;
+			// the admin API deliberately does not read it, because there is no sense in which an
+			// admin listing is "as" someone else. Pinning it means a future change to RouteUtil
+			// cannot quietly start filtering the admin views.
+			const plain = await request(app).get("/portal/admin/people/all").set({ user: userName, token: userToken });
+			const viewingAs = await request(app)
+				.get("/portal/admin/people/all")
+				.set({ user: userName, token: userToken, "x-classy-view-as": TestHarness.USER1.id });
+
+			expect(plain.status).to.equal(200);
+			expect(viewingAs.status, "the header must not change the outcome").to.equal(200);
+			expect(viewingAs.body.success).to.deep.equal(plain.body.success);
+		});
+	});
+
+	describe("authorization on the admin API", function () {
+		// The preHandlers are the whole access-control story for /portal/admin/*: isPrivileged lets
+		// staff and admins through, isAdmin only admins. Twelve routes had no test that a
+		// non-privileged caller is refused, so a preHandler dropped in a refactor would have been
+		// silent. These are table-driven because the point is the sweep, not any one route.
+		//
+		// NOTE: a refusal is 401 for both guards (see AdminRoutes.isPrivileged / isAdmin).
+
+		/** Routes staff may use; only a student (or nobody) is refused. */
+		const PRIVILEGED: Array<[string, string]> = [
+			["get", "/portal/admin/bestResults/" + TestHarness.DELIVID0],
+			["get", "/portal/admin/course"],
+			["get", "/portal/admin/people"],
+			["get", "/portal/admin/people/all"],
+			["get", "/portal/admin/staff"],
+		];
+
+		/** Routes only an admin may use; staff must be refused as well as students. */
+		const ADMIN_ONLY: Array<[string, string]> = [
+			["get", "/portal/admin/jobs"],
+			["get", "/portal/admin/release/" + TestHarness.DELIVID0],
+			["post", "/portal/admin/checkDatabase/true"],
+			["post", "/portal/admin/course"],
+			["post", "/portal/admin/grades/csv/" + TestHarness.DELIVID0],
+			["post", "/portal/admin/grades/prairie"],
+			["post", "/portal/admin/viewAs/" + TestHarness.USER1.id],
+		];
+
+		let staffToken: string;
+
+		before(async function () {
+			// STAFF1 has a Person (PersonKind.STAFF from preparePeople) but prepareAuth does not
+			// give it a token, and the isAdmin/isPrivileged split cannot be tested without one
+			staffToken = "staffTokenFor_" + Date.now();
+			await DatabaseController.getInstance().writeAuth({ personId: TestHarness.STAFF1.id, token: staffToken });
+		});
+
+		function send(method: string, url: string, headers: any) {
+			const req = (request(app) as any)[method](url).set(headers);
+			return method === "post" ? req.send({}) : req;
+		}
+
+		for (const [method, url] of PRIVILEGED.concat(ADMIN_ONLY)) {
+			it("Should refuse a student: " + method.toUpperCase() + " " + url, async function () {
+				const response = await send(method, url, { user: TestHarness.USER1.id, token: userToken });
+				expect(response.status, method.toUpperCase() + " " + url + " let a student through").to.equal(401);
+				expect(response.body.success, "a refused request must not carry a payload").to.be.undefined;
+			});
+		}
+
+		for (const [method, url] of ADMIN_ONLY) {
+			it("Should refuse staff: " + method.toUpperCase() + " " + url, async function () {
+				// the isAdmin/isPrivileged distinction: staff can read the admin UI, but must not
+				// reach the routes that change state or impersonate
+				const response = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+				expect(response.status, method.toUpperCase() + " " + url + " let staff through").to.equal(401);
+				expect(response.body.success).to.be.undefined;
+			});
+		}
+
+		for (const [method, url] of PRIVILEGED) {
+			it("Should admit staff: " + method.toUpperCase() + " " + url, async function () {
+				// the other half: these routes exist for staff, so refusing them would be a
+				// regression the tests above could not distinguish from correct behaviour
+				const response = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+				expect(response.status, method.toUpperCase() + " " + url + " refused a staff member").to.not.equal(401);
+			});
+		}
+
+		for (const [method, url] of PRIVILEGED.concat(ADMIN_ONLY)) {
+			it("Should refuse an unauthenticated caller: " + method.toUpperCase() + " " + url, async function () {
+				const response = await send(method, url, {});
+				expect(response.status, method.toUpperCase() + " " + url + " served an anonymous caller").to.equal(401);
+			});
+		}
+
+		it("Should refuse students and anonymous callers on EVERY registered admin route, and staff on every isAdmin route.", async function () {
+			// The lists above are hand-maintained (12 of ~36 routes). This sweep is derived from the
+			// server's own route table instead -- BackendServer records every registration and the
+			// name of its preHandler -- so an admin route added with no guard, or with the wrong one,
+			// fails here rather than going silently untested. One it() rather than one per route
+			// because the table only exists after before() has started the server.
+			//
+			// HEAD routes are skipped: fastify generates them from GET with the same config.
+			const admin = server.getRegisteredRoutes().filter((r) => r.url.startsWith("/portal/admin/") && r.method !== "HEAD");
+			expect(admin.length, "sanity: the admin API registered").to.be.greaterThan(20);
+
+			const problems: string[] = [];
+			for (const r of admin) {
+				const key = r.method + " " + r.url;
+				if (r.guards.length === 0) {
+					problems.push(key + ": no preHandler guard at all");
+					continue;
+				}
+				// a refusal happens in the preHandler, before any param is read, so the values do not matter
+				const url = r.url.replace(/:([A-Za-z_]+)/g, "$1").replace(/\*/g, "x");
+				const method = r.method.toLowerCase();
+
+				const student = await send(method, url, { user: TestHarness.USER1.id, token: userToken });
+				if (student.status !== 401) {
+					problems.push(key + ": a student got " + student.status);
+				}
+				const anon = await send(method, url, {});
+				if (anon.status !== 401) {
+					problems.push(key + ": an anonymous caller got " + anon.status);
+				}
+				if (r.guards.indexOf("isAdmin") >= 0) {
+					const staff = await send(method, url, { user: TestHarness.STAFF1.id, token: staffToken });
+					if (staff.status !== 401) {
+						problems.push(key + ": staff got " + staff.status + " on an isAdmin route");
+					}
+				}
+			}
+
+			Log.test("admin routes swept: " + admin.length);
+			expect(problems, "\n" + problems.join("\n")).to.deep.equal([]);
+		}).timeout(60000);
+	});
+
+	it("Should serve the same people from /people and the /students alias.", async function () {
+		// /portal/admin/students predates the view parameter; it must keep working unchanged
+		const viaPeople = await request(app).get("/portal/admin/people").set({ user: userName, token: userToken });
+		const viaAlias = await request(app).get("/portal/admin/students").set({ user: userName, token: userToken });
+
+		expect(viaPeople.status).to.equal(200);
+		expect(viaAlias.status).to.equal(200);
+		expect(viaAlias.body.success).to.deep.equal(viaPeople.body.success);
+	});
+
+	it("Should select people by view.", async function () {
+		const students = await request(app).get("/portal/admin/people/students").set({ user: userName, token: userToken });
+		const staff = await request(app).get("/portal/admin/people/staff").set({ user: userName, token: userToken });
+		const all = await request(app).get("/portal/admin/people/all").set({ user: userName, token: userToken });
+
+		expect(students.status).to.equal(200);
+		expect(staff.status).to.equal(200);
+		expect(all.status).to.equal(200);
+
+		// every listed person reports a kind, which is what the grades page column shows
+		for (const person of all.body.success) {
+			expect(person).to.have.property("kind");
+		}
+
+		// staff and students must not overlap, and all must cover both
+		const staffIds = staff.body.success.map((p: any) => p.id);
+		const studentIds = students.body.success.map((p: any) => p.id);
+		const allIds = all.body.success.map((p: any) => p.id);
+		for (const id of staffIds) {
+			expect(studentIds, "a staff member must not appear in the students view").to.not.contain(id);
+			expect(allIds, "the all view must include staff").to.contain(id);
+		}
+		for (const id of studentIds) {
+			expect(allIds, "the all view must include students").to.contain(id);
+		}
+	});
+
+	it("Should reject an unknown view rather than guessing.", async function () {
+		const response = await request(app).get("/portal/admin/people/instructors").set({ user: userName, token: userToken });
+
+		expect(response.status).to.equal(400);
+		expect(response.body.failure.message).to.contain("Unknown view");
+	});
+
 	it("Should be able to get a list of students", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -92,7 +380,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of staff", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/staff";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -109,7 +397,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of students with cookies for authentication", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app)
@@ -128,7 +416,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -144,7 +432,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students with bad cookies for auth", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app)
@@ -162,7 +450,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of students without any auth data", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/students";
 		try {
 			response = await request(app).get(url);
@@ -196,7 +484,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of teams if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/teams";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -212,7 +500,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of grades", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/grades";
 		try {
 			response = await request(app).get(url).set({ user: userName, token: userToken });
@@ -230,7 +518,7 @@ describe("Admin Routes", function () {
 
 	it("Should not be able to get a list of grades if the requester is not privileged", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 		const url = "/portal/admin/grades";
 		try {
 			response = await request(app).get(url).set({ user: TestHarness.USER1.id, token: userToken });
@@ -246,7 +534,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of graded results for a deliverable", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 
 		const url = "/portal/admin/gradedResults/d0";
 		try {
@@ -265,7 +553,7 @@ describe("Admin Routes", function () {
 
 	it("Should be able to get a list of the best graded results for a deliverable", async function () {
 		let response = null;
-		let body: StudentTransportPayload;
+		let body: PersonTransportPayload;
 
 		const url = "/portal/admin/bestResults/d0";
 		try {
@@ -299,6 +587,102 @@ describe("Admin Routes", function () {
 		// expect(body.success).to.have.lengthOf(101);
 
 		// should confirm body.success objects (at least one)
+	});
+
+	describe("results and dashboard filters", function () {
+		/**
+		 * The :view segment and the ?person= query, at the route.
+		 *
+		 * Every other results test uses the bare /results/:delivId/:repoId form, so nothing covered
+		 * the two filters the admin UI actually sends. A wrong path registration, a renamed param,
+		 * or a query that never reaches the controller would all present the same way: a page that
+		 * silently ignores its own dropdowns.
+		 */
+		const dbc = DatabaseController.getInstance();
+		let student: Person;
+		let staff: Person;
+		let studentSha: string;
+		let staffSha: string;
+
+		before(async function () {
+			student = TestHarness.createPerson("routeFilterStudent", "routeFilterStudent", "routeFilterStudentCwl", PersonKind.STUDENT);
+			staff = TestHarness.createPerson("routeFilterStaff", "routeFilterStaff", "routeFilterStaffCwl", PersonKind.STAFF);
+			await dbc.writePerson(student);
+			await dbc.writePerson(staff);
+
+			// updated in place (writeResult upserts) so no counts move for other tests
+			const results = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+			expect(results.length, "setup: fixture results must exist").to.be.greaterThan(1);
+
+			results[0].people = [student.id];
+			await dbc.writeResult(results[0]);
+			studentSha = results[0].commitSHA;
+
+			results[1].people = [staff.id];
+			await dbc.writeResult(results[1]);
+			staffSha = results[1].commitSHA;
+		});
+
+		async function shasFrom(url: string): Promise<string[]> {
+			const response = await request(app).get(url).set({ user: userName, token: userToken });
+			expect(response.status, url).to.equal(200);
+			expect(response.body.success, url).to.be.an("array");
+			return (response.body.success as any[]).map((r) => r.commitSHA);
+		}
+
+		it("Should filter results by the :view segment.", async function () {
+			const students = await shasFrom("/portal/admin/results/any/any/students");
+			expect(students).to.contain(studentSha);
+			expect(students, "staff results are excluded").to.not.contain(staffSha);
+
+			const staffOnly = await shasFrom("/portal/admin/results/any/any/staff");
+			expect(staffOnly).to.contain(staffSha);
+			expect(staffOnly).to.not.contain(studentSha);
+		});
+
+		it("Should return everything for the all view, and without a view at all.", async function () {
+			// the bare route is what every older client sends; it must keep meaning "everything"
+			for (const url of ["/portal/admin/results/any/any/all", "/portal/admin/results/any/any"]) {
+				const shas = await shasFrom(url);
+				expect(shas, url).to.contain(studentSha);
+				expect(shas, url).to.contain(staffSha);
+			}
+		});
+
+		it("Should reject a view that is not a view.", async function () {
+			const response = await request(app).get("/portal/admin/results/any/any/nonsense").set({ user: userName, token: userToken });
+
+			expect(response.status).to.equal(400);
+			expect(response.body.failure.message, "the message should say what was expected").to.contain("students");
+		});
+
+		it("Should filter results by ?person=, accepting a CWL.", async function () {
+			// the admin UI sends a CWL; Result.people holds Person.ids, so both must resolve
+			const byCwl = await shasFrom("/portal/admin/results/any/any/all?person=" + student.githubId);
+			expect(byCwl).to.contain(studentSha);
+			expect(byCwl, "and nobody else's").to.not.contain(staffSha);
+
+			const byId = await shasFrom("/portal/admin/results/any/any/all?person=" + student.id);
+			expect(byId).to.contain(studentSha);
+			expect(byId).to.not.contain(staffSha);
+		});
+
+		it("Should ignore a blank ?person= rather than matching nobody.", async function () {
+			const shas = await shasFrom("/portal/admin/results/any/any/all?person=");
+			expect(shas, "a blank filter means everyone").to.contain(studentSha);
+			expect(shas).to.contain(staffSha);
+		});
+
+		it("Should apply the same filters on the dashboard route.", async function () {
+			const students = await shasFrom("/portal/admin/dashboard/any/any/students");
+			expect(students, "dashboard honours :view").to.not.contain(staffSha);
+
+			const byCwl = await shasFrom("/portal/admin/dashboard/any/any/all?person=" + student.githubId);
+			expect(byCwl, "dashboard honours ?person=").to.not.contain(staffSha);
+
+			const bad = await request(app).get("/portal/admin/dashboard/any/any/nonsense").set({ user: userName, token: userToken });
+			expect(bad.status, "and rejects a bad view").to.equal(400);
+		});
 	});
 
 	it("Should not be able to get a list of results if the requester is not privileged", async function () {
@@ -657,39 +1041,18 @@ describe("Admin Routes", function () {
 		expect(person.studentNumber).to.equal(newPerson.studentNumber); // should be the same
 	});
 
-	it("Should NOT be able to update a classlist if NOT on a 143.103.*.* IP", async function () {
-		let response = null;
-		let body: Payload;
-		const url = "/portal/classlist";
-		try {
-			response = await request(app).put(url).set("x-forwarded-for", "152.99.5.99").set("Host", "www.google.ca");
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
+	it("Should 404 on PUT /portal/classlist; the route is disabled.", async function () {
+		// Disabled in 26W1 (see GeneralRoutes.registerRoutes); the supported path for an API-driven
+		// classlist pull is the isAdmin-guarded "classlist-update" job. This test asserts the route
+		// stays gone: the old handler authorized callers with a regex over the client-supplied
+		// x-forwarded-for header, which nginx appends to rather than replaces, so re-registering it
+		// unchanged would reintroduce an unauthenticated classlist write.
+		const response = await request(app).put("/portal/classlist").set("x-forwarded-for", "142.103.5.99");
+		const body: Payload = response.body;
 
-		expect(body).to.haveOwnProperty("failure");
-	});
-
-	it("Should be able to update a classlist on restricted IP", async function () {
-		if (TestHarness.isCI() === false) {
-			// skip locally; requires credentials devs should not have (but are encrypted for CI)
-			Log.warn("Skipping AdminRouteSpec classlist IP test on dev machine");
-			return;
-		}
-
-		let response = null;
-		let body: Payload;
-		const url = "/portal/classlist";
-		try {
-			response = await request(app).put(url).set("test-include-xfwd", "").set("x-forwarded-for", "142.103.5.99");
-			body = response.body;
-		} catch (err) {
-			Log.test("ERROR: " + err);
-		}
-		expect(body).to.haveOwnProperty("success");
-		expect(body.success).to.haveOwnProperty("message");
-		expect(body.success.message).to.contain("Classlist upload successful");
+		Log.test(response.status + " -> " + JSON.stringify(body));
+		expect(response.status).to.equal(404);
+		expect(body).to.not.haveOwnProperty("success");
 	});
 
 	it("Should be able to upload a new grades with CSV", async function () {
@@ -841,14 +1204,7 @@ describe("Admin Routes", function () {
 
 	describe("Slow AdminRoute Tests", () => {
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-
-			if (exec) {
-				Log.test("AdminRoutesSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminRoutesSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		/**
@@ -1274,6 +1630,60 @@ describe("Admin Routes", function () {
 	/**
 	 * Team membership tests
 	 */
+
+	it("Should refuse adding a student to a second team for the same deliverable, and allow a different deliverable.", async function () {
+		// The duplicate-membership guard, end to end, with people whose Person.id differs from their
+		// githubId -- every TestHarness user does ("user2ID" vs "user2gh"), as does every real student
+		// (ACCT vs CWL). Team.personIds holds Person.id: handleTeamAddMember pushes person.id,
+		// handleTeamRemoveMember filters by person.id, and GitHubController.provisionTeam resolves each
+		// entry with getPerson(id).githubId. The guard alone looked up by githubId, so it matched
+		// nothing and never fired; a TA could put a student on two teams for one deliverable.
+		const dbc = DatabaseController.getInstance();
+		const guardTeamId = "TESTguardTeam_" + Date.now();
+
+		// preconditions from prepareTeams: USER2 is on TEAMNAME1 (d0), USER3 is on TEAMNAME2 (d1)
+		expect((await dbc.getTeam(TestHarness.TEAMNAME1)).personIds).to.include(TestHarness.USER2.id);
+		expect((await dbc.getTeam(TestHarness.TEAMNAME2)).personIds).to.include(TestHarness.USER3.id);
+
+		await TestHarness.createTeam(guardTeamId, TestHarness.DELIVID0, [TestHarness.USER4.id]);
+		try {
+			// same deliverable: USER2 already has a d0 team, so the guard must fire
+			let response = await request(app)
+				.post("/portal/admin/team/" + guardTeamId + "/members/" + TestHarness.USER2.github)
+				.send()
+				.set({ user: userName, token: userToken });
+			Log.test("same-deliv add: " + response.status + " -> " + JSON.stringify(response.body));
+			expect(response.status, "USER2 is already on a d0 team").to.equal(400);
+			expect(response.body.failure.message).to.contain("already on team");
+			expect((await dbc.getTeam(guardTeamId)).personIds, "nothing is written on refusal").to.not.include(TestHarness.USER2.id);
+
+			// different deliverable: USER3's d1 membership must not block a d0 team
+			response = await request(app)
+				.post("/portal/admin/team/" + guardTeamId + "/members/" + TestHarness.USER3.github)
+				.send()
+				.set({ user: userName, token: userToken });
+			Log.test("cross-deliv add: " + response.status + " -> " + JSON.stringify(response.body));
+			expect(response.status, "a d1 membership must not block a d0 team").to.equal(200);
+
+			// what was written is Person.id, and every entry resolves to a Person and a GitHub handle
+			// exactly the way provisionTeam resolves it before calling addMembersToTeam
+			const stored = await dbc.getTeam(guardTeamId);
+			expect(stored.personIds).to.include(TestHarness.USER3.id);
+			expect(stored.personIds).to.not.include(TestHarness.USER3.github);
+			const resolved = await Promise.all(stored.personIds.map((id) => dbc.getPerson(id)));
+			expect(
+				resolved.every((p) => p !== null),
+				"every personId resolves to a Person"
+			).to.be.true;
+			expect(resolved.map((p) => p.githubId)).to.include(TestHarness.USER3.github);
+		} finally {
+			// leave the fixtures as we found them
+			const t = await dbc.getTeam(guardTeamId);
+			if (t !== null) {
+				await dbc.deleteTeam(t);
+			}
+		}
+	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should be able to add a member to a team.", async function () {
 		let response = null;
@@ -1736,6 +2146,94 @@ describe("Admin Routes", function () {
 		expect(entry.URL).to.equal(repo.URL);
 	}).timeout(TestHarness.TIMEOUTLONG);
 
+	it("Should list every repo for a deliverable, whatever its provisioning status", async function () {
+		// This is what the Manage Repositories page reads to build its three lists (unreleased,
+		// provisioned, released): the route returns every repo for the deliverable and the page
+		// partitions them on gitHubStatus. So a repo missing here, or a status that does not survive
+		// the transport, is a list that renders empty -- which on that page is indistinguishable from
+		// "there is nothing to do", and is how this last went wrong.
+		//
+		// The release listing above has a shape test; this one had none, despite being the route the
+		// page depends on for all three lists rather than one.
+		const dbc = DatabaseController.getInstance();
+
+		const delivId = "provisionListSpecDeliv";
+		const deliv = TestHarness.createDeliverable(delivId);
+		deliv.shouldProvision = true;
+		await dbc.writeDeliverable(deliv);
+
+		// one repo in each state the page cares about
+		const states: Array<[string, RepoStatus]> = [
+			["provisionListNotCreated", RepoStatus.NOT_CREATED],
+			["provisionListReady", RepoStatus.READY],
+			["provisionListReleased", RepoStatus.RELEASED],
+		];
+		for (const [repoId, status] of states) {
+			await dbc.writeRepository({
+				id: repoId,
+				delivId: delivId,
+				teamIds: [],
+				URL: status === RepoStatus.NOT_CREATED ? null : "https://example.com/" + repoId,
+				cloneURL: null,
+				gitHubStatus: status,
+				custom: {},
+			});
+		}
+
+		// and one belonging to a different deliverable, which must not appear.
+		//
+		// NOTE: a second deliverable of this spec's own, deliberately NOT a shared fixture. Using
+		// DELIVIDPROJ here left a repo behind on it, which broke "Should be able to list the
+		// provisioning state for a deliverable" -- a test in the Slow block that asserts that
+		// deliverable lists nothing. That block is requiresGitHub-gated, so it is skipped locally
+		// and only ran in CI; and mocha runs an outer suite's own tests before its nested suites,
+		// so this one polluted it before it ran.
+		const otherDelivId = "provisionListSpecOtherDeliv";
+		const otherDeliv = TestHarness.createDeliverable(otherDelivId);
+		otherDeliv.shouldProvision = true;
+		await dbc.writeDeliverable(otherDeliv);
+
+		await dbc.writeRepository({
+			id: "provisionListOtherDeliv",
+			delivId: otherDelivId,
+			teamIds: [],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: RepoStatus.READY,
+			custom: {},
+		});
+
+		const response = await request(app)
+			.get("/portal/admin/provision/" + delivId)
+			.set({ user: userName, token: userToken });
+		Log.test("provision listing: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(200);
+		expect(response.body.success).to.be.an("array");
+
+		const returned = response.body.success as any[];
+		for (const [repoId, status] of states) {
+			const entry = returned.find((r) => r.id === repoId);
+			expect(entry, repoId + " must be listed; the page cannot show what it is not sent").to.not.be.undefined;
+			expect(entry.gitHubStatus, "the status the page partitions on must survive the transport").to.equal(status);
+			expect(entry.delivId).to.equal(delivId);
+		}
+
+		expect(
+			returned.find((r) => r.id === "provisionListOtherDeliv"),
+			"a repo from another deliverable must not be listed"
+		).to.be.undefined;
+
+		// Leave nothing behind. Other tests in this file assert on whole-collection state, and the
+		// ones that do are mostly skipped locally, so debris here is invisible until CI.
+		for (const [repoId] of states) {
+			await dbc.deleteRepository(await dbc.getRepository(repoId));
+		}
+		await dbc.deleteRepository(await dbc.getRepository("provisionListOtherDeliv"));
+		await dbc.deleteDeliverable(await dbc.getDeliverable(delivId));
+		await dbc.deleteDeliverable(await dbc.getDeliverable(otherDelivId));
+	}).timeout(TestHarness.TIMEOUTLONG);
+
 	it("Should NOT be able to start a classlist update if not authorized as admin", async function () {
 		// NOTE: updating from the Classlist API used to be PUT /portal/admin/classlist. It is now
 		// the "classlist-update" job, because for a large class the API call plus the per-student
@@ -1747,28 +2245,6 @@ describe("Admin Routes", function () {
 		expect(response.body).to.haveOwnProperty("failure");
 	});
 
-	// /**
-	//  * PATCH TESTS
-	//  */
-	//
-	// it.only("Should be able to list patches", async function () {
-	//
-	//     let response = null;
-	//     let body: Payload;
-	//
-	//     const url = "/portal/admin/listPatches";
-	//     try {
-	//         response = await request(app).get(url).send().set({user: userName, token: userToken});
-	//         body = response.body;
-	//     } catch (err) {
-	//         Log.test("ERROR: " + err);
-	//     }
-	//     Log.test(response.status + " -> " + JSON.stringify(body));
-	//     expect(response.status).to.equal(200);
-	//     expect(body.success).to.not.be.undefined;
-	//     expect(body.success.message).to.be.an("string");
-	// });
-	//
 	it("Should return a Classy failure payload when a body-less request is sent.", async function () {
 		// NOTE: the admin UI sends requests with AdminView.getOptions(), which sets
 		// Content-Type: application/json but often attaches NO body. Fastify's default JSON parser
@@ -1893,9 +2369,4 @@ describe("Admin Routes", function () {
 			expect(response.status).to.equal(404);
 		});
 	});
-
-	// server.get("/portal/admin/listPatches", AdminRoutes.isAdmin, AdminRoutes.listPatches);
-	// server.post("/portal/admin/patchRepo/:repo/:patch/:root", AdminRoutes.isAdmin, AdminRoutes.patchRepo);
-	// server.get("/portal/admin/patchSource", AdminRoutes.isAdmin, AdminRoutes.patchSource);
-	// server.post("/portal/admin/updatePatches", AdminRoutes.isAdmin, AdminRoutes.updatePatches);
 });

@@ -64,7 +64,8 @@
           "overall": {
             "bucket": "beginning",
             "status": "complete",
-            "message": "Grading finished, but some checks did not pass."
+            "message": "Grading finished, but some checks did not pass.",
+            "score": 12.5
           },
           "findings": [
             {
@@ -350,7 +351,8 @@
           "overall": {
             "bucket": "proficient",
             "status": "complete",
-            "message": "Grading finished, but some checks did not pass."
+            "message": "Grading finished, but some checks did not pass.",
+            "score": 97.5
           },
           "findings": [
             {
@@ -636,7 +638,8 @@
           "overall": {
             "bucket": "developing",
             "status": "complete",
-            "message": "Grading finished, but some checks did not pass."
+            "message": "Grading finished, but some checks did not pass.",
+            "score": 85.3
           },
           "findings": [
             {
@@ -922,7 +925,8 @@
           "overall": {
             "bucket": "acquiring",
             "status": "complete",
-            "message": "Grading finished, but some checks did not pass."
+            "message": "Grading finished, but some checks did not pass.",
+            "score": 48.0
           },
           "findings": [
             {

@@ -5,9 +5,9 @@ import {
 	GradeTransport,
 	GradeTransportPayload,
 	Payload,
+	PersonTransport,
 	RepositoryPayload,
 	RepositoryTransport,
-	StudentTransport,
 	TeamFormationTransport,
 	TeamTransport,
 	TeamTransportPayload,
@@ -28,7 +28,7 @@ import { Factory } from "../../Factory";
 import { AuditLabel, Person, RepoStatus } from "../../Types";
 import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
-import { ClasslistAgent } from "./ClasslistAgent";
+// import { ClasslistAgent } from "./ClasslistAgent"; // see disabled updateClasslist below
 import { PrairieLearnAgent } from "./PrairieLearnAgent";
 import { type ClassyIdentity, RouteUtil, ViewAsError } from "./RouteUtil";
 
@@ -322,43 +322,47 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("GeneralRoutes::updateClasslist(..) - start");
-		const ca = new ClasslistAgent();
-		// NOTE: req.ip replaces restify's req.connection.remoteAddress, which Fastify does not
-		// expose. Fastify resolves it from the socket (and honours x-forwarded-for when trustProxy
-		// is on), but the explicit header check is kept because trustProxy is not enabled here.
-		const ipAddr = req.headers["x-forwarded-for"] || req.ip;
-		const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
-		let auditInfo: string;
-
-		if (ipReg.test(ipAddr) === false) {
-			return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res);
-		}
-
-		auditInfo = req.headers.user || ipAddr;
-
-		try {
-			const data = await ca.fetchClasslist();
-			const classlistChanges = await ca.processClasslist(auditInfo, null, data);
-
-			if (classlistChanges.classlist.length) {
-				const payload: Payload = {
-					success: {
-						message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
-					},
-				};
-				res.code(200).send(payload);
-				Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
-			} else {
-				const msg = "Classlist upload not successful; no students were processed from CSV.";
-				return GeneralRoutes.handleError(400, msg, res);
-			}
-		} catch (_err) {
-			const msg = "Classlist upload not successful; no students were processed from CSV.";
-			return GeneralRoutes.handleError(400, msg, res);
-		}
-	}
+	// DISABLED 2026-09 (26W1) together with its route registration; see registerRoutes() for why.
+	// TODO: delete this handler (and the ClasslistAgent import) if it has not been missed by the
+	// end of 26W2. The supported path for an API-driven classlist pull is the "classlist-update"
+	// job: POST /portal/admin/job/classlist-update, guarded by AdminRoutes.isAdmin.
+	// public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
+	// 	Log.info("GeneralRoutes::updateClasslist(..) - start");
+	// 	const ca = new ClasslistAgent();
+	// 	// NOTE: req.ip replaces restify's req.connection.remoteAddress, which Fastify does not
+	// 	// expose. Fastify resolves it from the socket (and honours x-forwarded-for when trustProxy
+	// 	// is on), but the explicit header check is kept because trustProxy is not enabled here.
+	// 	const ipAddr = req.headers["x-forwarded-for"] || req.ip;
+	// 	const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
+	// 	let auditInfo: string;
+	//
+	// 	if (ipReg.test(ipAddr) === false) {
+	// 		return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res);
+	// 	}
+	//
+	// 	auditInfo = req.headers.user || ipAddr;
+	//
+	// 	try {
+	// 		const data = await ca.fetchClasslist();
+	// 		const classlistChanges = await ca.processClasslist(auditInfo, null, data);
+	//
+	// 		if (classlistChanges.classlist.length) {
+	// 			const payload: Payload = {
+	// 				success: {
+	// 					message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
+	// 				},
+	// 			};
+	// 			res.code(200).send(payload);
+	// 			Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
+	// 		} else {
+	// 			const msg = "Classlist upload not successful; no students were processed from CSV.";
+	// 			return GeneralRoutes.handleError(400, msg, res);
+	// 		}
+	// 	} catch (_err) {
+	// 		const msg = "Classlist upload not successful; no students were processed from CSV.";
+	// 		return GeneralRoutes.handleError(400, msg, res);
+	// 	}
+	// }
 
 	/**
 	 * The identity for a student-facing request: who is calling, and whose data they are asking for.
@@ -382,7 +386,7 @@ export default class GeneralRoutes implements IREST {
 		RouteUtil.handleError("GeneralRoutes", code, msg, res);
 	}
 
-	private static async performGetPerson(identity: ClassyIdentity): Promise<StudentTransport> {
+	private static async performGetPerson(identity: ClassyIdentity): Promise<PersonTransport> {
 		const ac = new AuthController();
 		// NOTE: validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students
@@ -404,6 +408,19 @@ export default class GeneralRoutes implements IREST {
 
 	private static async performPostTeam(identity: ClassyIdentity, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
+
+		// Shape check before anything reads the body. requestedTeam is req.body cast to the transport
+		// type, and each githubId flows into readSingleRecord({ githubId }); an object such as
+		// {"$ne": null} in place of a string is a Mongo operator, and matched an arbitrary classmate.
+		if (
+			typeof requestedTeam !== "object" ||
+			requestedTeam === null ||
+			typeof requestedTeam.delivId !== "string" ||
+			Array.isArray(requestedTeam.githubIds) === false ||
+			requestedTeam.githubIds.some((id) => typeof id !== "string")
+		) {
+			throw new Error("Team not created; malformed request.");
+		}
 		const ac = new AuthController();
 		// Validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students
@@ -581,7 +598,20 @@ export default class GeneralRoutes implements IREST {
 		// server.get("/portal/resource/:path", GeneralRoutes.getResource);
 		server.get("/portal/resource/*", GeneralRoutes.getResource);
 
-		// IP restricted
-		server.put("/portal/classlist", GeneralRoutes.updateClasslist);
+		// DISABLED 2026-09 (26W1): this endpoint duplicated the "classlist-update" job
+		// (POST /portal/admin/job/classlist-update, isAdmin-guarded) but authorized its callers
+		// with a regex against x-forwarded-for. That header is client-supplied, and nginx forwards
+		// it with $proxy_add_x_forwarded_for (packages/proxy/proxy.conf:4), which APPENDS the real
+		// client address rather than replacing it -- so a caller who simply claimed to be
+		// 142.103.5.99 passed the check. The regex was wrong in the other direction too: [1-9]+
+		// rejects any octet containing a 0, so real UBC addresses (142.103.10.5) were refused.
+		//
+		// Nothing appears to call it: the Update Classlist button uses the job route
+		// (AdminConfigTab.ts:620) and no inbound caller is documented. Commented out rather than
+		// deleted in case a campus cron turns up during the soak.
+		//
+		// TODO: if this has not been missed by the end of 26W2, delete this registration, the
+		// updateClasslist handler below, and the ClasslistAgent import.
+		// server.put("/portal/classlist", GeneralRoutes.updateClasslist);
 	}
 }

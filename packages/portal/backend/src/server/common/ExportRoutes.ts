@@ -209,8 +209,20 @@ export class ExportRoutes implements IREST {
 
 			const grades: ExportedGrade[] = [];
 			for (const row of rows) {
+				// String(), not a string check: documents written before studentNumber was typed as
+				// a string still hold a number. null becomes "" rather than the literal "null".
+				const snum = row.person.studentNumber === null ? "" : String(row.person.studentNumber);
+				if (snum.length === 0) {
+					// Sent anyway, with a blank snum. This used to skip the row, on the reasoning
+					// that snum is the join key and an unmatched row is useless -- but that decided
+					// for the consumer. Every row also carries `cwl`, so the person is still
+					// identifiable, and ELMS ignores what it does not recognise. Someone created by
+					// login rather than by classlist import lands here, which is most staff.
+					Log.trace("ExportRoutes::exportGrades( " + delivId + " ) - no studentNumber, sending with cwl only: " + row.person.id);
+				}
+
 				const exported: ExportedGrade = {
-					snum: String(row.person.studentNumber),
+					snum: snum,
 					cwl: row.person.githubId,
 					score: row.grade.score,
 					feedback: typeof row.grade.comment === "string" ? row.grade.comment : "",

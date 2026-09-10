@@ -1,7 +1,7 @@
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 
-import { AutoTestGradeTransport, GradeTransport } from "@common/types/PortalTypes";
+import { AutoTestGradeTransport, GradeTransport, PersonView } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
@@ -16,11 +16,13 @@ import { PersonController } from "./PersonController";
 export class GradesController {
 	private db: DatabaseController = DatabaseController.getInstance();
 
-	public async getAllGrades(studentsOnly?: boolean): Promise<Grade[]> {
-		if (typeof studentsOnly === "undefined") {
-			studentsOnly = true;
-		}
-		Log.info("GradesController::getAllGrades( " + studentsOnly + " ) - start");
+	/**
+	 * Every grade for the people the view selects.
+	 *
+	 * @param view defaults to "students", which is the long-standing behaviour of this method
+	 */
+	public async getAllGrades(view: PersonView = "students"): Promise<Grade[]> {
+		Log.info("GradesController::getAllGrades( " + view + " ) - start");
 		const start = Date.now();
 
 		const grades = await this.db.getGrades();
@@ -29,8 +31,7 @@ export class GradesController {
 		const returnGrades = [];
 		for (const grade of grades) {
 			const person = await pc.getPerson(grade.personId);
-			if (person !== null && (studentsOnly === false || (studentsOnly === true && person.kind === PersonKind.STUDENT))) {
-				// only return student grades
+			if (person !== null && GradesController.matchesView(person, view)) {
 				returnGrades.push(grade);
 			} else {
 				if (grade !== null && person !== null) {
@@ -51,6 +52,23 @@ export class GradesController {
 				Util.took(start)
 		);
 		return returnGrades;
+	}
+
+	/**
+	 * Whether a person belongs in a listing for the given view.
+	 *
+	 * Kept here rather than inline so the grades and students listings cannot drift apart: both
+	 * answer "who counts as staff" the same way.
+	 */
+	public static matchesView(person: Person, view: PersonView): boolean {
+		if (view === "all") {
+			return true;
+		}
+		if (view === "staff") {
+			return person.kind === PersonKind.STAFF || person.kind === PersonKind.ADMIN || person.kind === PersonKind.ADMINSTAFF;
+		}
+		// "students": deliberately not WITHDRAWN, which is what the grades page has always shown
+		return person.kind === PersonKind.STUDENT;
 	}
 
 	/**
@@ -90,11 +108,16 @@ export class GradesController {
 				Log.warn("GradesController::getGradesForDeliverable( " + delivId + " ) - no person for grade: " + grade.personId);
 				continue;
 			}
-			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
-				included.push({ grade: grade, person: person });
-			} else {
-				Log.trace("GradesController::getGradesForDeliverable( " + delivId + " ) - skipping: " + person.id + "; kind: " + person.kind);
-			}
+			// Every grade, whoever it belongs to.
+			//
+			// This used to include only STUDENT and WITHDRAWN. Two things were wrong with that. The
+			// consumer -- ELMS -- keys on the identifiers in each row and can ignore what it does not
+			// recognise, so filtering here decided on its behalf. And a person's kind is null until
+			// they first log in (AuthRoutes clears it on every login and it is re-derived after), so
+			// the filter silently dropped real students who simply had not signed in yet: their
+			// grades never reached ELMS and nothing said so. AdminController::getPeople already
+			// treats a null kind as a student for exactly this reason.
+			included.push({ grade: grade, person: person });
 		}
 
 		Log.info(
@@ -254,7 +277,7 @@ export class GradesController {
 		const existingGrade = await this.db.getGrade(grade.personId, grade.delivId);
 		if (existingGrade !== null) {
 			Log.trace("GradesController::saveGrade(..) - updating existing grade");
-			(grade.custom as any).previousGrade = existingGrade; // persist previous grade
+			grade.custom.previousGrade = existingGrade; // persist previous grade
 			if (grade.URL === null && existingGrade.URL !== null) {
 				grade.URL = existingGrade.URL; // restore the URL, if it exists on the previous but not on the update (e.g., for CSV upload)
 			}
