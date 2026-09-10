@@ -246,13 +246,11 @@ export class AdminDashboardTab extends AdminPage {
 	/**
 	 * The href an admin table shows for a record URL; the default is the URL as stored.
 	 *
-	 * A seam for course plugins, like buildRepoOptions() and decorateRow(). The motivating case is
-	 * PrairieLearn: PrairieLearnAgent stores the STUDENT link for an assessment instance (the one a
-	 * student can open from their grades page), and an instructor opening it lands on the
-	 * student-facing page. A course that uses PL overrides this with
-	 *   return Util.toInstructorPrairieLearnUrl(url);
-	 * (@common/Util; GitHub and other URLs pass through it untouched). Core stays neutral so a course
-	 * without PL sees exactly what it always did, and the stored record is never changed.
+	 * A seam for course plugins, like buildRepoOptions() and decorateRow(). A course whose stored
+	 * URLs are right for students but not for instructors -- an external grader that has separate
+	 * student and instructor views of the same submission, say -- overrides this to rewrite the link
+	 * at render time. Core stays neutral so every other course sees exactly what it always did, and
+	 * the stored record is never changed; only the href in this table is.
 	 */
 	protected adminLink(url: string): string {
 		return url;

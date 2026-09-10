@@ -1,29 +1,6 @@
 import Log from "./Log";
 
 export default class Util {
-	/**
-	 * The instructor view of a PrairieLearn assessment-instance link.
-	 *
-	 * PrairieLearnAgent stores the STUDENT link for an instance,
-	 *   https://<host>/pl/course_instance/<ci>/assessment_instance/<ai>
-	 * (see PrairieLearnAgent.instanceUrl), because that is the one a student can open from their
-	 * grades page. Opened by an instructor it shows the student-facing page, not the instructor
-	 * view. The instructor view is the same link with "instructor/" between the course instance and
-	 * the assessment instance:
-	 *   https://<host>/pl/course_instance/<ci>/instructor/assessment_instance/<ai>
-	 *
-	 * This is a RENDER-time transform for admin views; the stored record is deliberately unchanged
-	 * (students still need the student link). Anything that is not a student instance link -- a
-	 * GitHub commit URL, an already-instructor link, the /instructor/assessment/ deliverable link,
-	 * null -- is returned as given, so it is safe to apply to every URL an admin table renders.
-	 */
-	public static toInstructorPrairieLearnUrl(url: string): string {
-		if (typeof url !== "string") {
-			return url;
-		}
-		return url.replace(/(\/pl\/course_instance\/\d+\/)assessment_instance\//, "$1instructor/assessment_instance/");
-	}
-
 	public static timeout(ms: number): Promise<void> {
 		return new Promise<void>((resolve) => setTimeout(resolve, ms));
 	}
