@@ -348,6 +348,33 @@ export class PrairieLearnAgent {
 			}
 		);
 
+		// The counts alone cannot be acted on: "26 unmatched students" reads exactly the same
+		// whether the join field is wrong for the whole class or 26 people are simply absent from
+		// the classlist. The uids and the domain being stripped are what separate those two, and
+		// until now nothing printed them -- the summary carried the list, the admin UI rendered
+		// only its length, and this log line did not mention it at all.
+		if (summary.unmatchedUids.length > 0) {
+			Log.warn(
+				"PrairieLearnAgent::sync(..) - " +
+					summary.unmatchedUids.length +
+					" student uid(s) did not join to a Classy person; joined on Person.githubId (CWL); uid domain: " +
+					this.uidDomain() +
+					"; uids: " +
+					summary.unmatchedUids.join(", ")
+			);
+		}
+		if (summary.unmatchedNonStudentUids.length > 0) {
+			// Expected and permanent: staff and PL admins need not be on the classlist. Logged at
+			// info so it never reads as a fault to chase, but still logged -- an account that
+			// SHOULD have matched is easier to spot here than in a bare count.
+			Log.info(
+				"PrairieLearnAgent::sync(..) - " +
+					summary.unmatchedNonStudentUids.length +
+					" non-student uid(s) did not join (expected); uids: " +
+					summary.unmatchedNonStudentUids.join(", ")
+			);
+		}
+
 		Log.info(
 			"PrairieLearnAgent::sync(..) - done; synced: " +
 				summary.instancesSynced +
@@ -598,11 +625,22 @@ export class PrairieLearnAgent {
 		if (typeof uid !== "string") {
 			return "";
 		}
-		const domain = Config.getInstance().hasProp(ConfigKey.prairieLearnUidDomain)
-			? Config.getInstance().getProp(ConfigKey.prairieLearnUidDomain)
-			: "@ubc.ca";
+		const domain = this.uidDomain();
 		const idx = uid.indexOf(domain);
 		return (idx > 0 ? uid.substring(0, idx) : uid).toLowerCase();
+	}
+
+	/**
+	 * The uid suffix stripped to get a CWL.
+	 *
+	 * Its own method because the failure log names it: a uid carrying a different domain than this
+	 * one is left whole by uidToCwl, and then joins to nothing -- which is indistinguishable from
+	 * "not on the classlist" unless you can see both the uid and what was expected of it.
+	 */
+	private uidDomain(): string {
+		return Config.getInstance().hasProp(ConfigKey.prairieLearnUidDomain)
+			? Config.getInstance().getProp(ConfigKey.prairieLearnUidDomain)
+			: "@ubc.ca";
 	}
 
 	private async writeGradeFor(
