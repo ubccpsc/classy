@@ -54,6 +54,18 @@ export interface PrairieLearnWatermark extends JobWatermark {
 	modifiedAt: string;
 	closeTimestamp: number;
 	submissionCount: number;
+	/**
+	 * Whether this sync wrote a grade for the instance. Absent on rows written before 2026-09-15.
+	 *
+	 * This is what makes a stuck instance visible. An instance first synced before PrairieLearn's
+	 * external grader finished has no gradeable submission, so no grade is written -- and if the
+	 * grader finishing does not change the instance's modified_at, change detection then skips it
+	 * on every later run, forever, with nothing but instancesSkipped++ to show for it. With this
+	 * flag the skip can say "skipped, and it never had a grade", which is a fault to chase.
+	 */
+	gradeWritten?: boolean;
+	/** the PrairieLearn uid the instance belongs to, so a student's watermarks can be found without going via grades. Absent before 2026-09-15. */
+	userUid?: string;
 }
 
 /**
@@ -102,6 +114,28 @@ export interface PLSyncSummary {
 	 * expected and permanent, not a fault to chase, so it is reported separately.
 	 */
 	unmatchedNonStudentUids: string[];
+
+	/**
+	 * Why an examined instance produced no grade, by student uid. These are the exits from
+	 * syncInstance() that used to be silent; each list is deduplicated and student-only, like
+	 * unmatchedUids, so it stays a short list worth reading. An instance appears in at most one.
+	 */
+	/** joined, submissions fetched, but every one was un-gradeable (grader pending/failed, or no usable score) */
+	noGradeableSubmission: string[];
+	/** joined, gradeable submissions exist, but every one was attempted after the deliverable closed */
+	allAfterClose: string[];
+	/** joined, but PrairieLearn returned no submissions at all (opened, never submitted) -- a count; not a fault */
+	noSubmissions: number;
+	/**
+	 * Skipped as unchanged by a watermark that records NO grade was written last time. If a student
+	 * has feedback on PrairieLearn but is blank in Classy and appears here, the grader finished after
+	 * the last sync without moving modified_at: run a forced sync.
+	 */
+	skippedWithoutGrade: string[];
+	/** skipped as unchanged by a watermark that predates gradeWritten (unknown either way); a forced sync refreshes them */
+	skippedUnknownGrade: number;
+	/** why individual submissions were not gradeable, across all examined instances */
+	submissionsNotGradeable: { noFeedback: number; graderFailed: number; noUsableScore: number };
 
 	/**
 	 * Assessment instances whose grading payload the course could not interpret.
@@ -253,7 +287,16 @@ export class PrairieLearnAgent {
 	 * unchanged instance will be skipped forever. This is the escape hatch for that -- run it once
 	 * after changing how a payload is read.
 	 */
-	public async sync(requesterId: string, ctx?: JobContext, force: boolean = false): Promise<PLSyncSummary> {
+	/**
+	 * @param traceUids uids (or bare CWLs) to log every decision for, at INFO. For "this student has
+	 * feedback on PrairieLearn but is blank in Classy": pass their uid, run a sync, read the log. Also
+	 * honours PRAIRIELEARN_TRACE_UIDS from .env (comma-separated). See traceUidsFrom().
+	 */
+	public async sync(requesterId: string, ctx?: JobContext, force: boolean = false, traceUids: string[] = []): Promise<PLSyncSummary> {
+		const trace = this.traceSet(traceUids);
+		if (trace.size > 0) {
+			Log.info("PrairieLearnAgent::sync(..) - TRACE enabled for: " + Array.from(trace).join(", "));
+		}
 		const start = Date.now();
 		Log.info("PrairieLearnAgent::sync( " + requesterId + " ) - start");
 
@@ -271,6 +314,12 @@ export class PrairieLearnAgent {
 			submissionsAfterClose: 0,
 			unmatchedUids: [],
 			unmatchedNonStudentUids: [],
+			noGradeableSubmission: [],
+			allAfterClose: [],
+			noSubmissions: 0,
+			skippedWithoutGrade: [],
+			skippedUnknownGrade: 0,
+			submissionsNotGradeable: { noFeedback: 0, graderFailed: 0, noUsableScore: 0 },
 			instancesFailed: [],
 			cancelled: false,
 		};
@@ -298,8 +347,54 @@ export class PrairieLearnAgent {
 				// an attempt by someone with no Person record cannot be written anywhere and is
 				// reported in summary.unmatchedUids instead.
 				const close = deliverables.get(instance.assessment_label)?.closeTimestamp ?? Number.MAX_SAFE_INTEGER;
-				if (force === false && (await this.isUnchanged(instance, close)) === true) {
+				const traced = this.isTraced(trace, instance.user_uid);
+				const existing = await this.readWatermark(instance);
+				if (traced === true) {
+					Log.info(
+						"PrairieLearnAgent::TRACE( " +
+							instance.user_uid +
+							" ) - enumerated; deliv: " +
+							instance.assessment_label +
+							"; instance: " +
+							instance.assessment_instance_id +
+							"; role: " +
+							instance.user_role +
+							"; PL modified_at: " +
+							instance.modified_at +
+							"; close: " +
+							new Date(close).toISOString() +
+							"; watermark: " +
+							(existing === null
+								? "none"
+								: JSON.stringify({
+										modifiedAt: existing.modifiedAt,
+										closeTimestamp: existing.closeTimestamp,
+										gradeWritten: existing.gradeWritten,
+										syncedAt: existing.syncedAt,
+									})) +
+							"; force: " +
+							force
+					);
+				}
+				if (force === false && existing !== null && this.isUnchanged(existing, instance, close) === true) {
 					summary.instancesSkipped++;
+					// the skip that used to be invisible: say whether the skipped instance ever produced a grade
+					if (existing.gradeWritten === false && instance.user_role === "Student") {
+						if (summary.skippedWithoutGrade.indexOf(instance.user_uid) === -1) {
+							summary.skippedWithoutGrade.push(instance.user_uid);
+						}
+					} else if (typeof existing.gradeWritten === "undefined") {
+						summary.skippedUnknownGrade++;
+					}
+					if (traced === true) {
+						Log.info(
+							"PrairieLearnAgent::TRACE( " +
+								instance.user_uid +
+								" ) - SKIPPED as unchanged; gradeWritten last time: " +
+								existing.gradeWritten +
+								" (force=true to re-examine)"
+						);
+					}
 					continue;
 				}
 				pending.push(instance);
@@ -319,7 +414,7 @@ export class PrairieLearnAgent {
 			}
 
 			try {
-				await this.syncInstance(instance, people, deliverables, summary, ctx);
+				await this.syncInstance(instance, people, deliverables, summary, ctx, this.isTraced(trace, instance.user_uid));
 			} catch (err) {
 				// One instance's payload could not be interpreted. Record it and keep going: the
 				// alternative is that a single bad submission stops every remaining student from
@@ -375,11 +470,49 @@ export class PrairieLearnAgent {
 			);
 		}
 
+		// The exits that used to be silent. Each is a student who has an attempt on PrairieLearn and
+		// no grade in Classy, with the reason; the first list is the one to act on (forced sync).
+		if (summary.skippedWithoutGrade.length > 0) {
+			Log.warn(
+				"PrairieLearnAgent::sync(..) - " +
+					summary.skippedWithoutGrade.length +
+					" student instance(s) SKIPPED as unchanged although no grade was ever written for them; if they now have feedback on PrairieLearn, run a FORCED sync. uids: " +
+					summary.skippedWithoutGrade.join(", ")
+			);
+		}
+		if (summary.noGradeableSubmission.length > 0) {
+			Log.warn(
+				"PrairieLearnAgent::sync(..) - " +
+					summary.noGradeableSubmission.length +
+					" student instance(s) examined but NO submission was gradeable (grader pending/failed, or no usable score); uids: " +
+					summary.noGradeableSubmission.join(", ")
+			);
+		}
+		if (summary.allAfterClose.length > 0) {
+			Log.warn(
+				"PrairieLearnAgent::sync(..) - " +
+					summary.allAfterClose.length +
+					" student instance(s) had gradeable work only AFTER the deliverable closed (check Deliverable.closeTimestamp); uids: " +
+					summary.allAfterClose.join(", ")
+			);
+		}
+
 		Log.info(
 			"PrairieLearnAgent::sync(..) - done; synced: " +
 				summary.instancesSynced +
 				"; grades: " +
 				summary.gradesWritten +
+				"; skipped unchanged: " +
+				summary.instancesSkipped +
+				" (" +
+				summary.skippedWithoutGrade.length +
+				" without a grade, " +
+				summary.skippedUnknownGrade +
+				" unknown)" +
+				"; no submissions: " +
+				summary.noSubmissions +
+				"; un-gradeable submissions: " +
+				JSON.stringify(summary.submissionsNotGradeable) +
 				"; took: " +
 				Util.took(start)
 		);
@@ -394,10 +527,21 @@ export class PrairieLearnAgent {
 		people: Map<string, Person>,
 		deliverables: Map<string, Deliverable>,
 		summary: PLSyncSummary,
-		ctx?: JobContext
+		ctx?: JobContext,
+		traced: boolean = false
 	): Promise<void> {
 		const cwl = this.uidToCwl(instance.user_uid);
 		const person = people.get(cwl);
+		if (traced === true) {
+			Log.info(
+				"PrairieLearnAgent::TRACE( " +
+					instance.user_uid +
+					" ) - join: uid -> cwl '" +
+					cwl +
+					"' -> person " +
+					(typeof person === "undefined" ? "NOT FOUND (no Person.githubId === cwl)" : person.id + " (kind: " + person.kind + ")")
+			);
+		}
 		if (typeof person === "undefined") {
 			// NOTE: reported, never silently dropped. A systematic mismatch (wrong join field, wrong
 			// uid domain) otherwise looks exactly like "no students have submitted yet". Non-student
@@ -414,10 +558,22 @@ export class PrairieLearnAgent {
 		const closeTimestamp = deliv?.closeTimestamp ?? Number.MAX_SAFE_INTEGER;
 
 		const submissions = await this.fetchSubmissions(instance.assessment_instance_id);
+		if (traced === true) {
+			Log.info(
+				"PrairieLearnAgent::TRACE( " +
+					instance.user_uid +
+					" ) - deliverable: " +
+					(deliv
+						? deliv.id + " (close " + new Date(closeTimestamp).toISOString() + ")"
+						: "NONE for label '" + instance.assessment_label + "'") +
+					"; submissions fetched: " +
+					submissions.length
+			);
+		}
 
 		// The course reads the grading payload; Classy does not. See ICourseController.
 		const cc = await this.getController();
-		const graded = await this.interpretAll(submissions, deliv, cc, ctx);
+		const graded = await this.interpretAll(submissions, deliv, cc, summary, traced ? instance.user_uid : null, ctx);
 
 		// NOTE: every graded submission is stored as a Result, including late ones. The Results are
 		// the analysis archive and should record what actually happened; only the *grade* is gated.
@@ -435,7 +591,41 @@ export class PrairieLearnAgent {
 		const onTime = graded.filter((c) => this.attemptedAt(c.submission) <= closeTimestamp);
 		summary.submissionsAfterClose += graded.length - onTime.length;
 
+		if (traced === true) {
+			Log.info(
+				"PrairieLearnAgent::TRACE( " +
+					instance.user_uid +
+					" ) - gradeable: " +
+					graded.length +
+					" of " +
+					submissions.length +
+					"; on time (attempted <= close): " +
+					onTime.length
+			);
+		}
+
 		if (onTime.length === 0) {
+			// say WHY, per student, instead of only bumping a counter
+			if (instance.user_role === "Student") {
+				if (submissions.length === 0) {
+					summary.noSubmissions++;
+				} else if (graded.length === 0) {
+					if (summary.noGradeableSubmission.indexOf(instance.user_uid) === -1) {
+						summary.noGradeableSubmission.push(instance.user_uid);
+					}
+				} else if (summary.allAfterClose.indexOf(instance.user_uid) === -1) {
+					summary.allAfterClose.push(instance.user_uid);
+				}
+			}
+			if (traced === true) {
+				Log.info(
+					"PrairieLearnAgent::TRACE( " +
+						instance.user_uid +
+						" ) - NO GRADE WRITTEN; reason: " +
+						(submissions.length === 0 ? "no submissions" : graded.length === 0 ? "no gradeable submission" : "all attempts after close") +
+						"; watermark recorded with gradeWritten=false"
+				);
+			}
 			// nothing gradeable: either no usable submission at all, or everything arrived after the
 			// deliverable closed. Record the watermark so we do not refetch, but write NO grade --
 			// a missing grade is not a zero, and late work is not a zero either.
@@ -443,7 +633,7 @@ export class PrairieLearnAgent {
 			// NOTE: this does not *remove* a grade written by an earlier sync. If a close date is
 			// tightened after grades exist, previously-synced grades stay; deleting them
 			// automatically would be a destructive side effect of a routine sync.
-			await this.markSynced(instance, closeTimestamp, graded.length);
+			await this.markSynced(instance, closeTimestamp, graded.length, false);
 			summary.instancesSynced++;
 			return;
 		}
@@ -451,8 +641,26 @@ export class PrairieLearnAgent {
 		const best = this.bestSubmission(onTime);
 		await this.writeGradeFor(instance, best.submission, best.interpretation, person);
 		summary.gradesWritten++;
+		if (traced === true) {
+			Log.info(
+				"PrairieLearnAgent::TRACE( " +
+					instance.user_uid +
+					" ) - GRADE WRITTEN for person " +
+					person.id +
+					" / " +
+					instance.assessment_label +
+					"; score: " +
+					best.interpretation.score +
+					"; displayScore: " +
+					best.interpretation.displayScore +
+					"; from submission " +
+					best.submission.submission_id +
+					" at " +
+					best.submission.date
+			);
+		}
 
-		await this.markSynced(instance, closeTimestamp, graded.length);
+		await this.markSynced(instance, closeTimestamp, graded.length, true);
 		summary.instancesSynced++;
 	}
 
@@ -480,16 +688,104 @@ export class PrairieLearnAgent {
 		submissions: PLSubmission[],
 		deliv: Deliverable,
 		cc: ICourseController,
+		summary: PLSyncSummary,
+		traceUid: string | null = null,
 		ctx?: JobContext
 	): Promise<InterpretedSubmission[]> {
 		const out: InterpretedSubmission[] = [];
 		for (const s of submissions) {
 			const interpretation = await cc.interpretSubmission(s, deliv);
 			if (interpretation === null || typeof interpretation === "undefined") {
+				// The course's answer is a black box, but the two states PrairieLearn itself exposes are
+				// not: the grader never finished, or it finished and the course found nothing usable.
+				// Those need different fixes (wait / look at the grader), so they are counted apart.
+				const reason = this.notGradeableReason(s);
+				summary.submissionsNotGradeable[reason]++;
+				if (traceUid !== null) {
+					Log.info(
+						"PrairieLearnAgent::TRACE( " +
+							traceUid +
+							" ) - submission " +
+							s.submission_id +
+							" at " +
+							s.date +
+							": NOT gradeable (" +
+							reason +
+							"); feedback.succeeded=" +
+							s?.feedback?.succeeded +
+							"; overall=" +
+							JSON.stringify(s?.feedback?.results?.report?.overall ?? null)
+					);
+				}
 				continue;
+			}
+			if (traceUid !== null) {
+				Log.info(
+					"PrairieLearnAgent::TRACE( " +
+						traceUid +
+						" ) - submission " +
+						s.submission_id +
+						" at " +
+						s.date +
+						": gradeable; score " +
+						interpretation.score +
+						"; rank " +
+						interpretation.rank +
+						"; displayScore " +
+						interpretation.displayScore
+				);
 			}
 			out.push({ submission: s, interpretation: interpretation });
 			void ctx; // reserved: per-submission reporting if this ever needs it
+		}
+		return out;
+	}
+
+	/** Which of the two PrairieLearn-visible states explains an un-gradeable submission; see interpretAll(). */
+	private notGradeableReason(s: PLSubmission): "noFeedback" | "graderFailed" | "noUsableScore" {
+		if (typeof s?.feedback === "undefined" || s.feedback === null) {
+			return "noFeedback";
+		}
+		if (s.feedback.succeeded !== true) {
+			return "graderFailed";
+		}
+		return "noUsableScore";
+	}
+
+	/**
+	 * The set of uids to trace: the caller's list plus PRAIRIELEARN_TRACE_UIDS from .env, each accepted
+	 * as a full uid ("tfu11@ubc.ca") or a bare CWL ("tfu11"); compared case-insensitively on the CWL.
+	 */
+	private traceSet(traceUids: string[]): Set<string> {
+		const out = new Set<string>();
+		const fromEnv = Config.getInstance().hasProp(ConfigKey.prairieLearnTraceUids)
+			? String(Config.getInstance().getProp(ConfigKey.prairieLearnTraceUids) ?? "")
+			: "";
+		for (const raw of traceUids.concat(fromEnv.split(","))) {
+			const t = String(raw ?? "").trim();
+			if (t.length > 0) {
+				out.add(this.uidToCwl(t).toLowerCase());
+			}
+		}
+		return out;
+	}
+
+	private isTraced(trace: Set<string>, uid: string): boolean {
+		return trace.size > 0 && trace.has(this.uidToCwl(uid).toLowerCase());
+	}
+
+	/** Job params -> trace list: accepts `traceUid: "x"` or `traceUids: "x,y"` / ["x","y"]. */
+	public static traceUidsFrom(params: any): string[] {
+		const out: string[] = [];
+		const one = params?.traceUid;
+		const many = params?.traceUids;
+		if (typeof one === "string") {
+			out.push(one);
+		}
+		if (typeof many === "string") {
+			out.push(...many.split(","));
+		} else if (Array.isArray(many)) {
+			out.push(...many.map((m) => String(m)));
 		}
 		return out;
 	}
@@ -837,14 +1133,11 @@ export class PrairieLearnAgent {
 	/**
 	 * Whether this instance has already been synced at its current modified_at.
 	 */
-	private async isUnchanged(instance: PLAssessmentInstance, closeTimestamp: number): Promise<boolean> {
-		const existing = await this.db.getJobWatermark<PrairieLearnWatermark>(
-			PrairieLearnAgent.WATERMARK_KIND,
-			instance.assessment_instance_id
-		);
-		if (existing === null) {
-			return false;
-		}
+	private async readWatermark(instance: PLAssessmentInstance): Promise<PrairieLearnWatermark | null> {
+		return await this.db.getJobWatermark<PrairieLearnWatermark>(PrairieLearnAgent.WATERMARK_KIND, instance.assessment_instance_id);
+	}
+
+	private isUnchanged(existing: PrairieLearnWatermark, instance: PLAssessmentInstance, closeTimestamp: number): boolean {
 		// NOTE: both must match. A deadline change alters which submissions count while leaving
 		// PrairieLearn's modified_at untouched, so comparing modified_at alone would skip the
 		// instance forever and the corrected grade would never appear.
@@ -857,8 +1150,15 @@ export class PrairieLearnAgent {
 	 * older watermark, so the next run re-syncs the instance: wasteful, but it never misses a change.
 	 * Recording a fetch-time value would open a window where a concurrent submission is skipped.
 	 */
-	private async markSynced(instance: PLAssessmentInstance, closeTimestamp: number, submissionCount: number): Promise<void> {
+	private async markSynced(
+		instance: PLAssessmentInstance,
+		closeTimestamp: number,
+		submissionCount: number,
+		gradeWritten: boolean
+	): Promise<void> {
 		const mark: PrairieLearnWatermark = {
+			gradeWritten: gradeWritten,
+			userUid: instance.user_uid,
 			kind: PrairieLearnAgent.WATERMARK_KIND,
 			key: instance.assessment_instance_id,
 			delivId: instance.assessment_label,

@@ -174,7 +174,12 @@ export default class BackendServer {
 			// leaves its record claiming to be RUNNING forever.
 			const jc = JobController.getInstance();
 			jc.register("prairielearn-sync", async (job, ctx) => {
-				return await new PrairieLearnAgent().sync(job.requestedBy, ctx, job.params?.force === true);
+				return await new PrairieLearnAgent().sync(
+					job.requestedBy,
+					ctx,
+					job.params?.force === true,
+					PrairieLearnAgent.traceUidsFrom(job.params)
+				);
 			});
 			jc.register("prairielearn-reinterpret", async (job, ctx) => {
 				return await new PrairieLearnAgent().reinterpret(job.requestedBy, ctx);

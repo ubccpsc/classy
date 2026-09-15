@@ -35,6 +35,7 @@ export enum ConfigKey {
 	prairieLearnToken = "prairieLearnToken",
 	prairieLearnCourseInstanceId = "prairieLearnCourseInstanceId",
 	prairieLearnUidDomain = "prairieLearnUidDomain",
+	prairieLearnTraceUids = "prairieLearnTraceUids",
 
 	// Grade export API; optional. Comma-separated consumer:token pairs. Unset disables the routes.
 	apiTokens = "apiTokens",
@@ -113,6 +114,7 @@ export default class Config {
 				prairieLearnToken: process.env.PRAIRIELEARN_TOKEN,
 				prairieLearnCourseInstanceId: process.env.PRAIRIELEARN_COURSE_INSTANCE_ID,
 				prairieLearnUidDomain: process.env.PRAIRIELEARN_UID_DOMAIN,
+				prairieLearnTraceUids: process.env.PRAIRIELEARN_TRACE_UIDS,
 
 				apiTokens: process.env.API_TOKENS,
 

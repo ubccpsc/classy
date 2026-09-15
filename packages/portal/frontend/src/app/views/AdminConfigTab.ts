@@ -717,6 +717,32 @@ export class AdminConfigTab extends AdminPage {
 			// rather than bolded: bolding it would train people to ignore the line above
 			detail += "; " + summary.unmatchedNonStudentUids.length + " unmatched non-student(s)";
 		}
+		// why examined instances produced no grade (added 2026-09-15; older summaries lack these)
+		if (summary.skippedWithoutGrade?.length > 0) {
+			// the one to act on: a student with PrairieLearn feedback and no Classy grade lands here
+			// when the grader finished after the last sync; a forced sync fixes it
+			detail += "; <b>" + summary.skippedWithoutGrade.length + " skipped without a grade (force a sync)</b>";
+		}
+		if (summary.noGradeableSubmission?.length > 0) {
+			detail += "; " + summary.noGradeableSubmission.length + " with no gradeable submission";
+		}
+		if (summary.allAfterClose?.length > 0) {
+			detail += "; " + summary.allAfterClose.length + " graded only after close";
+		}
+		if (summary.noSubmissions > 0) {
+			detail += "; " + summary.noSubmissions + " never submitted";
+		}
+		if (summary.submissionsNotGradeable) {
+			const n = summary.submissionsNotGradeable;
+			detail +=
+				"; un-gradeable submissions: " +
+				n.graderFailed +
+				" grader failed, " +
+				n.noFeedback +
+				" no feedback, " +
+				n.noUsableScore +
+				" no usable score";
+		}
 		return detail + ".";
 	}
 

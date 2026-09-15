@@ -239,6 +239,106 @@ describe("PrairieLearnAgent", function () {
 		expect(grade.score).to.equal(97.5); // the grader's score for the proficient attempt
 	});
 
+	describe("why an instance produced no grade", function () {
+		// These are the exits from syncInstance() that used to be silent -- an instance could be
+		// examined or skipped and leave nothing behind but a counter. Each case here is a student who
+		// has an attempt on PrairieLearn and no grade in Classy, and asserts that the summary says so
+		// and says why. The first one is the shape of the 2026-09-15 incident.
+		const STUCK_GH = "plStuckGh";
+		const STUCK_ID = "plStuckId";
+		const STUCK_UID = STUCK_GH + "@ubc.ca";
+
+		before(async function () {
+			await dc.writePerson(TestHarness.createPerson(STUCK_ID, STUCK_ID + "CSID", STUCK_GH, PersonKind.STUDENT));
+		});
+
+		function subsFor(instanceId: string, mutate: (sub: any, i: number) => void = () => undefined): PLSubmission[] {
+			return allBuckets.map((sub: any, i: number) => {
+				const copy = JSON.parse(JSON.stringify(sub));
+				copy.assessment_instance_id = instanceId;
+				copy.submission_id = instanceId + "-" + i;
+				mutate(copy, i);
+				return copy;
+			});
+		}
+
+		it("Should flag an instance that is skipped as unchanged although it never got a grade, and grade it on a forced sync.", async function () {
+			// 1. the grader has not finished: every submission says succeeded=false
+			const inst = instance({ assessment_instance_id: "88001", user_uid: STUCK_UID, modified_at: "2026-09-14T10:00:00-07:00" });
+			const pending = subsFor("88001", (sub) => {
+				sub.feedback.succeeded = false;
+			});
+			let summary = await new PrairieLearnAgent(fetcherFor([inst], pending)).sync(TestHarness.ADMIN1.id);
+			expect(summary.noGradeableSubmission, "run 1: examined, nothing gradeable, and it says so").to.contain(STUCK_UID);
+			expect(summary.submissionsNotGradeable.graderFailed).to.be.greaterThan(0);
+			expect(await new GradesController().getGrade(STUCK_ID, DELIV_ID), "no grade yet").to.be.null;
+			const mark: any = await dc.getJobWatermark("prairielearn-sync", "88001");
+			expect(mark, "a watermark was still recorded").to.not.be.null;
+			expect(mark.gradeWritten, "and it records that no grade was written").to.equal(false);
+
+			// 2. the grader finishes -- but PrairieLearn's modified_at on the instance does not move
+			const graded = subsFor("88001");
+			summary = await new PrairieLearnAgent(fetcherFor([inst], graded)).sync(TestHarness.ADMIN1.id);
+			expect(summary.instancesSkipped, "run 2: change detection skips it").to.equal(1);
+			expect(await new GradesController().getGrade(STUCK_ID, DELIV_ID), "so the grade is STILL missing").to.be.null;
+			expect(summary.skippedWithoutGrade, "but the summary now names the student instead of staying silent").to.contain(STUCK_UID);
+
+			// 3. the remedy the message recommends
+			summary = await new PrairieLearnAgent(fetcherFor([inst], graded)).sync(TestHarness.ADMIN1.id, undefined, true);
+			expect(summary.skippedWithoutGrade).to.not.contain(STUCK_UID);
+			const grade = await new GradesController().getGrade(STUCK_ID, DELIV_ID);
+			expect(grade, "forced sync writes the grade").to.not.be.null;
+			expect(((await dc.getJobWatermark("prairielearn-sync", "88001")) as any).gradeWritten).to.equal(true);
+		});
+
+		it("Should count why submissions were not gradeable, and still grade from the one that was.", async function () {
+			const inst = instance({ assessment_instance_id: "88002", user_uid: STUCK_UID, modified_at: "2026-09-14T11:00:00-07:00" });
+			const mixed = subsFor("88002", (sub, i) => {
+				if (i === 0) {
+					sub.feedback = null;
+				} else if (i === 1) {
+					sub.feedback.succeeded = false;
+				}
+			});
+			const before = { ...(await new PrairieLearnAgent(fetcherFor([], [])).sync(TestHarness.ADMIN1.id)).submissionsNotGradeable };
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], mixed)).sync(TestHarness.ADMIN1.id, undefined, true);
+			Log.test("reasons: " + JSON.stringify(summary.submissionsNotGradeable) + " (baseline " + JSON.stringify(before) + ")");
+
+			expect(summary.submissionsNotGradeable.noFeedback).to.equal(1);
+			expect(summary.submissionsNotGradeable.graderFailed).to.equal(1);
+			expect(summary.noGradeableSubmission, "at least one submission was gradeable").to.not.contain(STUCK_UID);
+			expect(summary.gradesWritten).to.be.greaterThan(0);
+		});
+
+		it("Should list a student whose only gradeable work came after the deliverable closed.", async function () {
+			// the auto-created deliverable closes in 2035; an attempt dated 2040 is late by definition
+			const inst = instance({ assessment_instance_id: "88003", user_uid: STUCK_UID, modified_at: "2026-09-14T12:00:00-07:00" });
+			const late = subsFor("88003", (sub) => {
+				sub.date = "2040-01-01T00:00:00-08:00";
+			});
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], late)).sync(TestHarness.ADMIN1.id, undefined, true);
+
+			expect(summary.allAfterClose).to.contain(STUCK_UID);
+			expect(summary.noGradeableSubmission, "late is not the same as un-gradeable").to.not.contain(STUCK_UID);
+		});
+
+		it("Should accept trace uids from job params in either shape, as a uid or a bare CWL.", function () {
+			expect(PrairieLearnAgent.traceUidsFrom({ traceUid: "tfu11@ubc.ca" })).to.deep.equal(["tfu11@ubc.ca"]);
+			expect(PrairieLearnAgent.traceUidsFrom({ traceUids: "a@ubc.ca,b" })).to.deep.equal(["a@ubc.ca", "b"]);
+			expect(PrairieLearnAgent.traceUidsFrom({ traceUids: ["a", "b"] })).to.deep.equal(["a", "b"]);
+			expect(PrairieLearnAgent.traceUidsFrom({ force: true })).to.deep.equal([]);
+			expect(PrairieLearnAgent.traceUidsFrom(undefined)).to.deep.equal([]);
+		});
+
+		it("Should not throw when tracing a uid through a sync.", async function () {
+			const inst = instance({ assessment_instance_id: "88004", user_uid: STUCK_UID, modified_at: "2026-09-14T13:00:00-07:00" });
+			const summary = await new PrairieLearnAgent(fetcherFor([inst], subsFor("88004"))).sync(TestHarness.ADMIN1.id, undefined, true, [
+				STUCK_GH,
+			]);
+			expect(summary.gradesWritten).to.be.greaterThan(0);
+		});
+	});
+
 	describe("Submissions that are not gradeable", function () {
 		// NOTE: PrairieLearn returns every submission, including ones the grader never finished and
 		// ones from a grader version that reported nothing useful. Those must be skipped rather than
