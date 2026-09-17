@@ -292,6 +292,8 @@ export class PrairieLearnAgent {
 	 * feedback on PrairieLearn but is blank in Classy": pass their uid, run a sync, read the log. Also
 	 * honours PRAIRIELEARN_TRACE_UIDS from .env (comma-separated). See traceUidsFrom().
 	 */
+
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: let sync be itself... for now
 	public async sync(requesterId: string, ctx?: JobContext, force: boolean = false, traceUids: string[] = []): Promise<PLSyncSummary> {
 		const trace = this.traceSet(traceUids);
 		if (trace.size > 0) {

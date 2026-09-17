@@ -137,6 +137,19 @@ describe("ProvisionAgent", function () {
 			await dbc.writeDeliverable(deliv);
 		}
 
+		it("Should carry who was not placed, and why, in the summary the page renders.", async function () {
+			// the report is what the Manage Repositories page shows; a plan that quietly omits people is
+			// the failure this exists to prevent, so the fields must always be present even when empty
+			await seedDeliverable();
+			const summary = await agent.prepare(PREPARE_DELIV, false, TestHarness.ADMIN1.id);
+
+			expect(summary.notPlaced, "notPlaced is always an array").to.be.an("array");
+			expect(summary.peopleNotOnTeam, "peopleNotOnTeam is always a number").to.be.a("number");
+			for (const n of summary.notPlaced) {
+				expect(n).to.have.all.keys("personId", "kind", "reason");
+			}
+		});
+
 		it("Should create a team and a repo for each student, and count them.", async function () {
 			await seedDeliverable();
 			const person = TestHarness.createPerson("prepareSpecPerson", "prepareSpecPerson", "prepareSpecGithub", PersonKind.STUDENT);

@@ -1,3 +1,4 @@
+// biome-ignore lint/style/noExcessiveLinesPerFile: will refactor in future
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 
@@ -29,6 +30,17 @@ import { ProvisionState } from "./ProvisionState";
 import { RepositoryController } from "./RepositoryController";
 import { ResultsController, ResultsKind } from "./ResultsController";
 import { TeamController } from "./TeamController";
+
+/**
+ * Who a provisioning plan could NOT place, and why. Filled in by prepareProvision() when the caller
+ * passes one; the job summary carries it to the admin page.
+ */
+export interface ProvisionPlanReport {
+	/** people with no team for this deliverable who did not get a singleton team, with the reason */
+	notPlaced: Array<{ personId: string; kind: string; reason: string }>;
+	/** how many people had no team for this deliverable before singleton formation was considered */
+	peopleNotOnTeam: number;
+}
 
 export class AdminController {
 	/**
@@ -608,7 +620,12 @@ export class AdminController {
 	 *
 	 * @returns {Promise<RepositoryTransport[]>}
 	 */
-	public async prepareProvision(deliv: Deliverable, formSingleTeams: boolean, ctx: JobContext = null): Promise<RepositoryTransport[]> {
+	public async prepareProvision(
+		deliv: Deliverable,
+		formSingleTeams: boolean,
+		ctx: JobContext = null,
+		report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 }
+	): Promise<RepositoryTransport[]> {
 		Log.info("AdminController::prepareProvision( " + deliv.id + ", " + formSingleTeams + " ) - start");
 		await ctx?.progress(0, 0, deliv.id + ": reading people and teams");
 		const cc = await Factory.getCourseController(this.gh);
@@ -682,6 +699,26 @@ export class AdminController {
 			}
 		}
 		Log.trace("AdminController::prepareProvision(..) - # people not on teams: " + allPeople.length);
+		report.peopleNotOnTeam = allPeople.length;
+
+		if (formSingleTeams === false && allPeople.length > 0) {
+			// NOT an error, but it must be visible: on a team deliverable, staff and admins never form
+			// teams, so unless the admin ticks "include people not in a team" they are silently absent
+			// from the plan. The page used to show only the repos that made it.
+			for (const person of allPeople) {
+				report.notPlaced.push({
+					personId: person.id,
+					kind: String(person.kind),
+					reason: "not on a team for " + deliv.id + ", and 'include people not in a team' was not selected",
+				});
+			}
+			Log.warn(
+				"AdminController::prepareProvision(..) - " +
+					allPeople.length +
+					" person(s) not on a team and not placed (formSingle=false): " +
+					allPeople.map((p) => p.id + " (" + p.kind + ")").join(", ")
+			);
+		}
 
 		if (formSingleTeams === true) {
 			// now create teams for individuals
@@ -689,10 +726,22 @@ export class AdminController {
 			for (const individual of allPeople) {
 				try {
 					const name = await cc.computeNames(deliv, [individual]);
-					const team = await this.tc.formTeam(name.teamName, deliv, [individual], false);
+					// adminOverride=true: this is the ADMIN forming the team, by running the plan with "include
+					// people not in a team" selected. It used to be false, so the student-facing rules applied
+					// to the admin's own action.
+					const team = await this.tc.formTeam(name.teamName, deliv, [individual], true);
 					delivTeams.push(team);
 				} catch (err) {
-					Log.error("AdminController::prepareProvision(..) - single team creation ERROR: " + err.message);
+					// the plan continues without this person; say so where the admin will see it
+					Log.error(
+						"AdminController::prepareProvision(..) - single team creation ERROR for " +
+							individual.id +
+							" (" +
+							individual.kind +
+							"): " +
+							err.message
+					);
+					report.notPlaced.push({ personId: individual.id, kind: String(individual.kind), reason: err.message });
 				}
 			}
 			Log.info("AdminController::prepareProvision(..) - single teams done");

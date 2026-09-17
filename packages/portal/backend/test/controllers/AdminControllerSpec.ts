@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 
-import { AdminController } from "@backend/controllers/AdminController";
+import { AdminController, ProvisionPlanReport } from "@backend/controllers/AdminController";
 import { ICourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
@@ -12,7 +12,7 @@ import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import { Deliverable, Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -611,6 +611,111 @@ describe("AdminController", () => {
 		expect(after.URL, "a repo that is not on GitHub must not carry a URL").to.be.null;
 		expect(after.cloneURL).to.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
+
+	describe("prepareProvision reporting", function () {
+		// Who a plan leaves out, and why, used to be visible only as a Log.error mid-run
+		const STAFF = TestHarness.createPerson("provRepStaff", "provRepStaffCSID", "provRepStaffGh", PersonKind.STAFF);
+		const ADMIN = TestHarness.createPerson("provRepAdmin", "provRepAdminCSID", "provRepAdminGh", PersonKind.ADMIN);
+
+		function teamDeliverable(id: string, studentsForm: boolean): Deliverable {
+			const d = TestHarness.createDeliverable(id);
+			d.teamMinSize = 1;
+			d.teamMaxSize = 2; // a TEAM deliverable: singles are formed only when asked (DELIVID0 forces it)
+			d.teamStudentsForm = studentsForm;
+			d.shouldProvision = true;
+			return d;
+		}
+
+		before(async function () {
+			// NOTE: the shared controllers (dc, ac, ...) are assigned in the outer beforeEach, which has
+			// not run yet when a nested before() executes; build what this hook needs directly
+			const dbc = DatabaseController.getInstance();
+			await dbc.writePerson(STAFF);
+			await dbc.writePerson(ADMIN);
+			const delivs = new DeliverablesController();
+			await delivs.saveDeliverable(teamDeliverable("provRepTeam", true));
+			await delivs.saveDeliverable(teamDeliverable("provRepNoForm", false));
+		});
+
+		it("Should report un-teamed people -- staff and admins included -- when singles are not formed.", async function () {
+			const deliv = await dc.getDeliverable("provRepTeam");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(deliv, false, null, report);
+			Log.test("not placed: " + JSON.stringify(report.notPlaced.map((n) => n.personId + "/" + n.kind)));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids, "the staff member is named").to.include(STAFF.id);
+			expect(ids, "the admin is named").to.include(ADMIN.id);
+			expect(report.peopleNotOnTeam).to.be.at.least(2);
+			for (const n of report.notPlaced) {
+				expect(n.reason, n.personId).to.contain("not selected");
+			}
+		});
+
+		it("Should place staff and admins in singleton teams when singles are formed, and report nobody for them.", async function () {
+			const deliv = await dc.getDeliverable("provRepTeam");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			const plan = await ac.prepareProvision(deliv, true, null, report);
+			Log.test("planned " + plan.length + " repos; not placed: " + JSON.stringify(report.notPlaced));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids).to.not.include(STAFF.id);
+			expect(ids).to.not.include(ADMIN.id);
+			for (const person of [STAFF, ADMIN]) {
+				const teams = (await tc.getTeamsForPerson(person)).filter((t) => t.delivId === deliv.id);
+				expect(teams, person.id + " has a singleton team").to.have.lengthOf(1);
+				const repos = (await rc.getAllRepos()).filter((r) => r.delivId === deliv.id && r.teamIds.indexOf(teams[0].id) >= 0);
+				expect(repos, person.id + " has a repo in the plan").to.have.lengthOf(1);
+			}
+		});
+
+		it("Should place staff and admins even where students may not form their own teams.", async function () {
+			// teamStudentsForm=false is a rule about STUDENTS forming teams. The plan is the admin forming
+			// them, so it runs formTeam with adminOverride=true (2026-09-17); before that, every singleton
+			// on such a deliverable -- staff and admins included -- was refused with "students cannot form
+			// their own teams" and silently left out of the plan.
+			const deliv = await dc.getDeliverable("provRepNoForm");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(deliv, true, null, report);
+			Log.test("not placed: " + JSON.stringify(report.notPlaced));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids, "the override lets the admin place them").to.not.include(STAFF.id);
+			expect(ids).to.not.include(ADMIN.id);
+			for (const person of [STAFF, ADMIN]) {
+				const teams = (await tc.getTeamsForPerson(person)).filter((t) => t.delivId === deliv.id);
+				expect(teams, person.id + " has a singleton team on the students-cannot-form deliverable").to.have.lengthOf(1);
+			}
+		});
+
+		it("Should still report, rather than silently drop, a person the override cannot place.", async function () {
+			// The one failure adminOverride does not waive: computeNames() builds the team name from csId,
+			// so two people with the same csId get the same name and the second createTeam() fails. This
+			// is what a staff Person with an empty or copied csId looks like in production. The plan must
+			// say so instead of continuing as if that person did not exist.
+			const dbc = DatabaseController.getInstance();
+			const twinA = TestHarness.createPerson("provRepTwinA", "provRepSharedCSID", "provRepTwinAGh", PersonKind.STAFF);
+			const twinB = TestHarness.createPerson("provRepTwinB", "provRepSharedCSID", "provRepTwinBGh", PersonKind.STAFF);
+			await dbc.writePerson(twinA);
+			await dbc.writePerson(twinB);
+			const d = TestHarness.createDeliverable("provRepTwins");
+			d.teamMinSize = 1;
+			d.teamMaxSize = 2;
+			d.shouldProvision = true;
+			await dc.saveDeliverable(d);
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(await dc.getDeliverable("provRepTwins"), true, null, report);
+			Log.test("twins not placed: " + JSON.stringify(report.notPlaced));
+
+			const twins = report.notPlaced.filter((n) => n.personId === twinA.id || n.personId === twinB.id);
+			expect(twins, "exactly one twin is refused; the other took the shared name").to.have.lengthOf(1);
+			expect(twins[0].reason.toLowerCase(), "and the reason is the duplicate").to.match(/duplicate|already/);
+		});
+	});
 
 	describe("performUnrelease", function () {
 		/**

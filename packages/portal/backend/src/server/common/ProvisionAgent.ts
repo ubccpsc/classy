@@ -1,4 +1,4 @@
-import { AdminController } from "@backend/controllers/AdminController";
+import { AdminController, ProvisionPlanReport } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
@@ -16,6 +16,8 @@ export interface ProvisionPrepareSummary {
 	teamsCreated: number; // teams that did not exist before this run
 	reposCreated: number; // Repository records; nothing exists on GitHub yet
 	repos: number; // repos now planned for the deliverable, created or not
+	notPlaced: Array<{ personId: string; kind: string; reason: string }>; // people with no team who did not get a repo in this plan
+	peopleNotOnTeam: number;
 }
 
 export interface ProvisionCreateSummary {
@@ -107,14 +109,37 @@ export class ProvisionAgent {
 		const teamsBefore = ProvisionAgent.countFor(await this.dbc.getTeams(), delivId);
 		const reposBefore = ProvisionAgent.countFor(await this.dbc.getRepositories(), delivId);
 
-		const planned = await ac.prepareProvision(deliv, formSingle, ctx);
+		const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+		const planned = await ac.prepareProvision(deliv, formSingle, ctx, report);
 
 		const summary: ProvisionPrepareSummary = {
 			delivId: delivId,
 			teamsCreated: ProvisionAgent.countFor(await this.dbc.getTeams(), delivId) - teamsBefore,
 			reposCreated: ProvisionAgent.countFor(await this.dbc.getRepositories(), delivId) - reposBefore,
 			repos: planned.length,
+			notPlaced: report.notPlaced,
+			peopleNotOnTeam: report.peopleNotOnTeam,
 		};
+
+		if (report.notPlaced.length > 0) {
+			// grouped by reason so a page of "not selected" reads as one line, and a real failure stands out
+			const byReason: { [reason: string]: string[] } = {};
+			for (const n of report.notPlaced) {
+				(byReason[n.reason] = byReason[n.reason] ?? []).push(n.personId + " (" + n.kind + ")");
+			}
+			for (const reason of Object.keys(byReason)) {
+				Log.warn(
+					"ProvisionAgent::prepare( " +
+						delivId +
+						" ) - " +
+						byReason[reason].length +
+						" not placed: " +
+						reason +
+						"; people: " +
+						byReason[reason].join(", ")
+				);
+			}
+		}
 
 		await this.dbc.writeAudit(
 			AuditLabel.REPO_PROVISION,
