@@ -482,6 +482,13 @@ export default class AdminRoutes implements IREST {
 					Log.warn("AdminRoutes::handleDeleteRepository(..) - unknown team on repo: " + teamId + "; skipping unlink");
 					return;
 				}
+				if (team.gitHubStatus !== TeamStatus.ATTACHED) {
+					// Only an ATTACHED team has anything to unlink. This used to write CREATED
+					// unconditionally, so deleting a planned-but-never-provisioned repo told Classy its
+					// NOT_CREATED team now existed on GitHub; the next provision then skipped creating it.
+					Log.info("AdminRoutes::handleDeleteRepository(..) - team not attached; status kept: " + team.id + " (" + team.gitHubStatus + ")");
+					return;
+				}
 				const newTeam = { ...team, gitHubStatus: TeamStatus.CREATED, custom: { ...team.custom } };
 				Log.info("AdminRoutes::handleDeleteRepository(..) - unlinking team from deleted repo: " + JSON.stringify(newTeam));
 				await dbc.writeTeam(newTeam);

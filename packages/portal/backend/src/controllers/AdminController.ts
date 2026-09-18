@@ -1007,9 +1007,25 @@ export class AdminController {
 					} else {
 						Log.info("AdminController::planRelease( " + deliv.id + " ) - repo not provisioned yet: " + JSON.stringify(team.personIds));
 					}
+				} else if (team.gitHubStatus === TeamStatus.ATTACHED) {
+					if (repo !== null) {
+						Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
+						reposAlreadyReleased.push(repo);
+					} else {
+						// the repo record was deleted while the team still claims to be on it; pushing
+						// null here used to fail the whole release plan in repositoryToTransport
+						Log.warn(
+							"AdminController::planRelease( " +
+								deliv.id +
+								" ) - team " +
+								team.id +
+								" is ATTACHED but has no repo record; run the database check"
+						);
+					}
 				} else {
-					Log.info("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; already attached");
-					reposAlreadyReleased.push(repo);
+					// NOT_CREATED: planned but not yet on GitHub. This used to fall into the branch above
+					// and be logged as "already attached" for every team the moment Prepare had run.
+					Log.trace("AdminController::planRelease( " + deliv.id + " ) - skipping team: " + team.id + "; not created on GitHub yet");
 				}
 			} catch (err) {
 				Log.error("AdminController::planRelease(..) - ERROR: " + err.message);

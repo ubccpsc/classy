@@ -595,16 +595,22 @@ describe("AdminController", () => {
 		await dbc.writeRepository(repo);
 
 		const ghc = new GitHubController(gha);
-		let threw = false;
+		let thrown: Error = null;
 		try {
 			// the import cannot succeed, so this fails and takes the rollback path. The URL points at
 			// a closed local port on purpose: the clone is refused immediately, with no DNS lookup
 			// and nothing left outside this process.
 			await ghc.provisionRepository(repoId, [], "https://localhost:1/does-not-exist.git");
-		} catch (_err) {
-			threw = true;
+		} catch (err) {
+			thrown = err;
 		}
-		expect(threw, "provisioning a repo whose import cannot be reached must fail").to.be.true;
+		expect(thrown, "provisioning a repo whose import cannot be reached must fail").to.not.be.null;
+
+		// the failed clone command carries the bot token in its remote URL; the error that reaches
+		// the caller (and its logs) must not
+		const token = Config.getInstance().getProp(ConfigKey.githubBotToken);
+		const bare = token.substring(token.indexOf("token ") + 6);
+		expect(thrown.message).to.not.contain(bare);
 
 		const after = await dbc.getRepository(repoId);
 		expect(after.gitHubStatus, "must be provisionable again").to.equal(RepoStatus.NOT_CREATED);
@@ -715,6 +721,74 @@ describe("AdminController", () => {
 			expect(twins, "exactly one twin is refused; the other took the shared name").to.have.lengthOf(1);
 			expect(twins[0].reason.toLowerCase(), "and the reason is the duplicate").to.match(/duplicate|already/);
 		});
+	});
+
+	describe("planRelease", function () {
+		// Three teams on the same deliverable, one per status the plan has to tell apart. Until
+		// this existed, every non-CREATED team was logged as "already attached" and its repo (or a
+		// null, when the record was gone) was pushed into the plan.
+		const dbc = DatabaseController.getInstance();
+		let deliv: Deliverable;
+		const teamIds: string[] = [];
+		const repoIds: string[] = [];
+
+		async function seed(personId: string, teamStatus: TeamStatus, repoStatus: RepoStatus | null): Promise<string> {
+			const person = await dbc.getPerson(personId);
+			const names = await cc.computeNames(deliv, [person]);
+			const team: Team = {
+				id: names.teamName,
+				delivId: deliv.id,
+				personIds: [personId],
+				URL: null,
+				gitHubStatus: teamStatus,
+				githubId: null,
+				custom: {},
+			};
+			await dbc.writeTeam(team);
+			teamIds.push(team.id);
+			if (repoStatus !== null) {
+				const repo: Repository = {
+					id: names.repoName,
+					delivId: deliv.id,
+					teamIds: [team.id],
+					URL: null,
+					cloneURL: null,
+					gitHubStatus: repoStatus,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				repoIds.push(repo.id);
+			}
+			return names.repoName;
+		}
+
+		before(async function () {
+			deliv = await dbc.getDeliverable(TestHarness.DELIVID0);
+		});
+
+		after(async function () {
+			for (const id of teamIds) {
+				await dbc.deleteTeam(await dbc.getTeam(id));
+			}
+			for (const id of repoIds) {
+				await dbc.deleteRepository(await dbc.getRepository(id));
+			}
+		});
+
+		it("Should only report ATTACHED teams as already released, and never a missing repo", async function () {
+			await seed(TestHarness.USER1.id, TeamStatus.NOT_CREATED, RepoStatus.NOT_CREATED); // planned, not on GitHub
+			const releasedRepo = await seed(TestHarness.USER2.id, TeamStatus.ATTACHED, RepoStatus.RELEASED); // done
+			await seed(TestHarness.USER3.id, TeamStatus.ATTACHED, null); // team says attached, repo record gone
+
+			const plan = await ac.planRelease(deliv);
+			Log.test("Release plan: " + JSON.stringify(plan));
+
+			const ids = plan.map((repo) => repo?.id ?? null);
+			expect(ids).to.not.include(null);
+			expect(ids).to.include(releasedRepo);
+			// the NOT_CREATED team's repo has nothing to release and is not "already attached"
+			expect(ids.filter((id) => id !== releasedRepo)).to.have.lengthOf(0);
+		}).timeout(TestHarness.TIMEOUT);
 	});
 
 	describe("performUnrelease", function () {

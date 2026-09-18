@@ -180,7 +180,7 @@ export class AdminDeletePage extends AdminPage {
 				});
 			} catch (err) {
 				Log.error("AdminDeletePage::deleteTeamPressed(..) - delete pressed ERROR: " + err.message);
-				UI.showErrorToast("Team deleted: " + sel);
+				UI.showErrorToast("Team NOT deleted: " + sel);
 			}
 		}
 
@@ -203,19 +203,22 @@ export class AdminDeletePage extends AdminPage {
 			const options: any = AdminView.getOptions();
 			options.method = "post";
 
-			const _response = await fetch(url, options);
-
-			UI.showSuccessToast("Sanitization complete.", { buttonLabel: "Ok" });
-			// const body = await response.json();
-			// if (typeof body.success !== "undefined") {
-			//     // UI.notificationToast(body.success.message);
-			// } else {
-			//     Log.error("Delete ERROR: " + body.failure.message);
-			//     UI.showError(body.failure.message);
-			// }
+			const response = await fetch(url, options);
+			const body = await response.json();
+			if (typeof body.success === "undefined") {
+				// this used to report "complete" whatever the server said, including a 400
+				throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+			}
 
 			Log.info("AdminDeletePage::sanitizeDBPressed(..) - done");
-			UI.showSuccessToast("Sanitiztion complete", { buttonLabel: "Ok" });
+			if (dryRun.checked === true) {
+				UI.showSuccessToast("Dry run complete: nothing was written. Repairs are in the portal log; turn Dry Run off to apply them.", {
+					buttonLabel: "Ok",
+					timeout: 8000,
+				});
+			} else {
+				UI.showSuccessToast("GitHub synchronization complete; the database now matches GitHub.", { buttonLabel: "Ok", timeout: 5000 });
+			}
 		} catch (err) {
 			Log.error("AdminDeletePage::sanitizeDBPressed(..) - ERROR: " + err.message);
 			UI.showErrorToast("Error sanitizing DB: " + err.message);
@@ -252,12 +255,12 @@ export class AdminDeletePage extends AdminPage {
 		const response = await fetch(url, options);
 		const body = await response.json();
 		if (typeof body.success !== "undefined") {
-			// UI.notificationToast(body.success.message);
 			return true;
-		} else {
-			Log.error("Delete ERROR: " + body.failure.message);
-			UI.showError(body.failure.message);
-			return false;
 		}
+		// Thrown rather than returned: the callers only look for a rejection, so a false here used
+		// to be toasted as "deleted" while the record was still in the database.
+		const message = body?.failure?.message ?? "HTTP " + response.status;
+		Log.error("AdminDeletePage::performDelete( " + url + " ) - ERROR: " + message);
+		throw new Error(message);
 	}
 }

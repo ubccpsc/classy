@@ -31,7 +31,7 @@ import type * as http from "http";
 import request from "supertest";
 
 import "./AuthRoutesSpec";
-import { Person, PersonKind, RepoStatus, TeamStatus } from "@backend/Types";
+import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
 
 describe("Admin Routes", function () {
 	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
@@ -1917,6 +1917,12 @@ describe("Admin Routes", function () {
 	});
 
 	it("Should be able to delete a repository", async function () {
+		// the fixture team was never provisioned; make it look attached to the repo so that there
+		// is something to unlink
+		const attached = await DatabaseController.getInstance().getTeam(TestHarness.TEAMNAME1);
+		attached.gitHubStatus = TeamStatus.ATTACHED;
+		await DatabaseController.getInstance().writeTeam(attached);
+
 		const url = "/portal/admin/repository/" + TestHarness.REPONAME1;
 		let response = null;
 		let body: Payload;
@@ -1938,6 +1944,45 @@ describe("Admin Routes", function () {
 		Log.test("Team: " + JSON.stringify(team));
 		// expect(team.custom.githubAttached).to.be.false; // not attached
 		expect(team.gitHubStatus).to.equal(TeamStatus.CREATED); // team still exists but is unlinked
+	}).timeout(TestHarness.TIMEOUT);
+
+	it("Should leave a never-provisioned team NOT_CREATED when its repo is deleted", async function () {
+		// Deleting a planned repo used to write CREATED to every linked team, so Classy believed a
+		// team existed on GitHub that had never been created there, and provisioning skipped it.
+		const dbc = DatabaseController.getInstance();
+		const teamId = "TESTdelete_notcreated_team";
+		const repoId = "TESTdelete_notcreated_repo";
+		const team: Team = {
+			id: teamId,
+			delivId: TestHarness.DELIVID0,
+			personIds: [TestHarness.USER1.id],
+			URL: null,
+			gitHubStatus: TeamStatus.NOT_CREATED,
+			githubId: null,
+			custom: {},
+		};
+		const repo: Repository = {
+			id: repoId,
+			delivId: TestHarness.DELIVID0,
+			teamIds: [teamId],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: RepoStatus.NOT_CREATED,
+			custom: {},
+		};
+		await dbc.writeTeam(team);
+		await dbc.writeRepository(repo);
+
+		const response = await request(app)
+			.del("/portal/admin/repository/" + repoId)
+			.set({ user: userName, token: userToken });
+		Log.test(response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(200);
+		expect(await dbc.getRepository(repoId)).to.be.null;
+
+		const kept = await dbc.getTeam(teamId);
+		expect(kept.gitHubStatus).to.equal(TeamStatus.NOT_CREATED);
+		await dbc.deleteTeam(kept);
 	}).timeout(TestHarness.TIMEOUT);
 
 	it("Should be able to delete a repository whose team record no longer exists", async function () {

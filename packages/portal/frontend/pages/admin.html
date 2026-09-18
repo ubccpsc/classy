@@ -409,6 +409,37 @@
                         <br/><br/>
                         Deliverables are created automatically for assessments that do not have one, with grades
                         unreleased and hidden from students. They are never renamed or deleted.
+                        <br/><br/>
+                        The status line above reports what the last run did. Its terms:
+                        <ul style="margin-bottom: 0;">
+                            <li><b>grades</b> &mdash; Classy grades written: one per student per assessment, from their best
+                                <em>on-time</em> attempt. This is the number that matters.</li>
+                            <li><b>results</b> &mdash; grading records stored for the Results and Dashboard tabs. Every
+                                gradeable attempt is kept here, late ones included; only the <em>grade</em> is gated by the
+                                close date.</li>
+                            <li><b>unchanged</b> &mdash; assessment instances skipped because PrairieLearn has not changed
+                                them since the last sync and the deliverable&apos;s close date is the same. Normal; most
+                                instances are unchanged on most runs.</li>
+                            <li><b>created</b> &mdash; deliverables created for assessments that had none (see above).</li>
+                            <li><b>attempt(s) after close (not graded)</b> &mdash; gradeable attempts made after the
+                                deliverable closed. Stored as results, not counted toward a grade.</li>
+                            <li><b>unmatched student(s)</b> &mdash; PrairieLearn accounts that did not join to a Classy
+                                person. The join is on the CWL (Person.githubId); a long list means the classlist is
+                                stale or the uid domain is wrong, not that nobody has submitted. Check this one.</li>
+                            <li><b>unmatched non-student(s)</b> &mdash; the same for instructor, TA, and test accounts
+                                that are not on the classlist. Expected and permanent.</li>
+                            <li><b>skipped without a grade (force a sync)</b> &mdash; unchanged instances that have never
+                                produced a grade. This is what a student who has feedback on PrairieLearn but is blank in
+                                Classy looks like: the grader finished after the last sync without changing the
+                                instance. Tick <em>Re-sync everything</em> and sync again.</li>
+                            <li><b>with no gradeable submission</b> &mdash; instances examined, but every attempt was
+                                still being graded, failed to grade, or reported no usable score.</li>
+                            <li><b>graded only after close</b> &mdash; students whose gradeable work all came after the
+                                close date. If that is a surprise, check the deliverable&apos;s close date.</li>
+                            <li><b>never submitted</b> &mdash; opened the assessment, submitted nothing.</li>
+                            <li><b>un-gradeable submissions</b> &mdash; a per-attempt breakdown of the above:
+                                <em>grader failed</em>, <em>no feedback</em> (not graded yet), <em>no usable score</em>.</li>
+                        </ul>
                     </div>
                 </ons-list-item>
 
@@ -1303,6 +1334,8 @@
                         This will synchronize the database with GitHub. There is no UI or progress. You almost certainly
                         do not want to do
                         this. It will run for 60 minutes or more for any large course.
+                        With Dry Run on (the default) nothing is written: each repair that would be made is only
+                        logged by the portal. Turn Dry Run off to apply them.
                     </div>
                 </ons-list-item>
 
