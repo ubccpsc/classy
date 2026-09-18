@@ -473,12 +473,14 @@ export class PrairieLearnAgent {
 		}
 
 		// The exits that used to be silent. Each is a student who has an attempt on PrairieLearn and
-		// no grade in Classy, with the reason; the first list is the one to act on (forced sync).
+		// no grade in Classy, with the reason. The first list is informational: after a forced sync
+		// it is exactly the students from the other three, and it only matters for a student who
+		// now has feedback on PrairieLearn (a forced sync picks that up).
 		if (summary.skippedWithoutGrade.length > 0) {
-			Log.warn(
+			Log.info(
 				"PrairieLearnAgent::sync(..) - " +
 					summary.skippedWithoutGrade.length +
-					" student instance(s) SKIPPED as unchanged although no grade was ever written for them; if they now have feedback on PrairieLearn, run a FORCED sync. uids: " +
+					" student(s) unchanged since the last sync and still without a grade (never submitted, nothing gradeable, or only after close). Normal; a forced sync re-examines them if any now have feedback on PrairieLearn. uids: " +
 					summary.skippedWithoutGrade.join(", ")
 			);
 		}

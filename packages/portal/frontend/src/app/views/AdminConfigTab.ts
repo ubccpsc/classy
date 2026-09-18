@@ -719,9 +719,11 @@ export class AdminConfigTab extends AdminPage {
 		}
 		// why examined instances produced no grade (added 2026-09-15; older summaries lack these)
 		if (summary.skippedWithoutGrade?.length > 0) {
-			// the one to act on: a student with PrairieLearn feedback and no Classy grade lands here
-			// when the grader finished after the last sync; a forced sync fixes it
-			detail += "; <b>" + summary.skippedWithoutGrade.length + " skipped without a grade (force a sync)</b>";
+			// informational, not an alarm: after a forced sync this is simply every student whose
+			// last examination wrote no grade (never submitted, nothing gradeable, or only after
+			// close). It only matters for a student who now has feedback on PrairieLearn, and a
+			// forced sync is what picks that up.
+			detail += "; " + summary.skippedWithoutGrade.length + " unchanged, still without a grade";
 		}
 		if (summary.noGradeableSubmission?.length > 0) {
 			detail += "; " + summary.noGradeableSubmission.length + " with no gradeable submission";

@@ -426,10 +426,9 @@
                                 person. The join is on the CWL (Person.githubId). After add/drop there should be few of these.</li>
                             <li><b>Unmatched non-student(s)</b> the same for instructor, TA, and test accounts
                                 that are not on the classlist. Expected and permanent.</li>
-                            <li><b>Skipped without a grade (force a sync)</b> unchanged instances that have never
-                                produced a grade. This is what a student who has feedback on PrairieLearn but is blank in
-                                Classy looks like: the grader finished after the last sync without changing the
-                                instance. Tick <em>Re-sync everything</em> and sync again.</li>
+                            <li><b>Unchanged, still without a grade</b> students whose instance has not changed since
+                                the last sync, and whose last examination wrote no grade (never submitted, no gradeable
+                                submission, or graded only after close).</li>
                             <li><b>With no gradeable submission</b> instances examined, but every attempt was
                                 still being graded, failed to grade, or reported no usable score.</li>
                             <li><b>Graded only after close</b> students whose gradeable work all came after the
