@@ -593,6 +593,24 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
+	 * The classlist-update summary as one line, in the same "# label: n; ..." shape as the
+	 * student-withdraw message so the two buttons read alike. `# registered` is the size of the
+	 * classlist that was processed, not the size of Classy's database.
+	 */
+	private static classlistSummaryMessage(summary: any): string {
+		return (
+			"# registered: " +
+			summary.classlist.length +
+			"; # added: " +
+			summary.created.length +
+			"; # updated: " +
+			summary.updated.length +
+			"; # removed: " +
+			summary.removed.length
+		);
+	}
+
+	/**
 	 * Describes every button on this page whose work runs as a background job; JobRunner does the
 	 * starting and watching.
 	 */
@@ -604,11 +622,11 @@ export class AdminConfigTab extends AdminPage {
 				statusId: "adminUpdateClasslistStatus",
 				ran: "Last updated",
 				detail: function (summary: any): string {
-					return summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed.";
+					return AdminConfigTab.classlistSummaryMessage(summary);
 				},
 				// only for the run this page started; arriving at a finished job should not reopen it
 				onFinished: (summary: any) => {
-					UI.notificationToast("Classlist updated: " + summary.classlist.length + " students processed.");
+					UI.notificationToast("Classlist updated: " + AdminConfigTab.classlistSummaryMessage(summary));
 					this.showClasslistChanges(summary);
 				},
 			},
