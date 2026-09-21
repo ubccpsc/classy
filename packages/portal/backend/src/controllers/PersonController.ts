@@ -199,11 +199,13 @@ export class PersonController {
 		Log.info(
 			"PersonController::markStudentsWithdrawn( .. ) - # people: " + people.length + "; # registered: " + registeredGithubIds.length
 		);
-		let numStudents = 0;
+		// Counted after each person's kind has been settled, so a re-enrolled student lands in
+		// active and a student dropped on this run lands in both withdrawn totals.
+		let numActive = 0;
 		let numWithdrawn = 0;
+		let numWithdrawnThisRun = 0;
 		for (const person of people) {
 			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
-				numStudents++;
 				if (registeredGithubIds.indexOf(person.githubId) >= 0) {
 					// student is registered
 					if (person.kind === PersonKind.WITHDRAWN) {
@@ -211,18 +213,20 @@ export class PersonController {
 						person.kind = PersonKind.STUDENT;
 						await this.writePerson(person);
 					}
+					numActive++;
 				} else {
 					// student is not registered; mark as withdrawn
 					if (person.kind !== PersonKind.WITHDRAWN) {
-						numWithdrawn++;
+						numWithdrawnThisRun++;
 						person.kind = PersonKind.WITHDRAWN;
 						Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
 						await this.writePerson(person);
 					}
+					numWithdrawn++;
 				}
 			}
 		}
-		const msg = "# students: " + numStudents + "; # withdrawn: " + numWithdrawn;
+		const msg = "# active: " + numActive + "; # withdrawn: " + numWithdrawn + "; # withdrawn (this run): " + numWithdrawnThisRun;
 		Log.info("PersonController::markStudentsWithdrawn( .. ) - done; " + msg);
 		return msg;
 	}
