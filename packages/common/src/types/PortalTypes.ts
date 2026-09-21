@@ -30,6 +30,8 @@ export interface ClasslistChangesTransport {
 	updated: PersonTransport[];
 	created: PersonTransport[];
 	removed: PersonTransport[];
+	/** on the classlist, yet still WITHDRAWN in Classy: the GitHub students team has not (re)admitted them */
+	withdrawn: PersonTransport[];
 	classlist: PersonTransport[];
 	message: string;
 }

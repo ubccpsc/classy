@@ -204,9 +204,12 @@ export class PersonController {
 		let numActive = 0;
 		let numWithdrawn = 0;
 		let numWithdrawnThisRun = 0;
+		// GitHub logins are case-insensitive, and Classy lowercases the CWL it stores as githubId;
+		// an exact compare withdrew anyone whose login GitHub reports with a capital letter, every run.
+		const registered = new Set(registeredGithubIds.map((id) => id.toLowerCase()));
 		for (const person of people) {
 			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
-				if (registeredGithubIds.indexOf(person.githubId) >= 0) {
+				if (typeof person.githubId === "string" && registered.has(person.githubId.toLowerCase())) {
 					// student is registered
 					if (person.kind === PersonKind.WITHDRAWN) {
 						// this will happen if they have withdrawn and then re-enrolled

@@ -606,7 +606,9 @@ export class AdminConfigTab extends AdminPage {
 			"; # updated: " +
 			summary.updated.length +
 			"; # removed: " +
-			summary.removed.length
+			summary.removed.length +
+			"; # withdrawn (on classlist): " +
+			summary.withdrawn.length
 		);
 	}
 

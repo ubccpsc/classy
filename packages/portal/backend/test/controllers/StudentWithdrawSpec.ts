@@ -70,6 +70,19 @@ describe("AdminController::performStudentWithdraw", function () {
 		expect(msg).to.be.a("string");
 	});
 
+	it("Should match GitHub logins case-insensitively.", async function () {
+		// Classy stores the lowercased CWL; GitHub may report the login with capitals. An exact
+		// compare withdrew such a student on every run.
+		await makeStudent("withdrawCase1", "ghcase1");
+		await makeStudent("withdrawCase2", "ghcase2");
+
+		const msg = await controllerFor(["GhCase1", "GHCASE2"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+
+		expect(await kindOf("withdrawCase1"), "a capitalised login is still the same account").to.equal(PersonKind.STUDENT);
+		expect(await kindOf("withdrawCase2")).to.equal(PersonKind.STUDENT);
+		expect(msg).to.contain("# active: 2; # withdrawn: 0; # withdrawn (this run): 0");
+	});
+
 	it("Should refuse to run when the GitHub team looks stale.", async function () {
 		// four students, one team member: below half, so this is far more likely to be a team that
 		// has not synced than a class that shrank by 75%

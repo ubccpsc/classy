@@ -176,6 +176,7 @@ export class ClasslistAgent {
 			created: [], // new registrations
 			updated: [], // only students whose CWL or lab has changed
 			removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
+			withdrawn: [], // diagnostic: registered but still WITHDRAWN; only the withdraw job can reinstate them
 			classlist, // created from list of people in the classlist upload returned from data layer
 		};
 
@@ -195,6 +196,21 @@ export class ClasslistAgent {
 				}
 			}
 		});
+
+		// The classlist update never changes kind, so someone withdrawn earlier stays withdrawn even
+		// while the registrar lists them. Surfaced here so the gap between "# registered" and the
+		// withdraw job's "# active" has names attached.
+		afterPeople.forEach(function (afterPerson) {
+			if (afterPerson.kind === PersonKind.WITHDRAWN) {
+				changeReport.withdrawn.push(PersonController.personToTransport(afterPerson));
+			}
+		});
+		if (changeReport.withdrawn.length > 0) {
+			Log.warn(
+				"ClasslistAgent::getClasslistChanges(..) - on classlist but WITHDRAWN (not on the GitHub students team?): " +
+					changeReport.withdrawn.map((p) => p.id).join(", ")
+			);
+		}
 
 		beforePeople.forEach(function (person) {
 			if (afterCSIDs.indexOf(person.csId) === -1 && person.kind === PersonKind.STUDENT) {
