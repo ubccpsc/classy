@@ -208,7 +208,13 @@ export class PersonController {
 		// an exact compare withdrew anyone whose login GitHub reports with a capital letter, every run.
 		const registered = new Set(registeredGithubIds.map((id) => id.toLowerCase()));
 		for (const person of people) {
-			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
+			// A null kind is a student whose role is being re-derived: the login callback nulls it
+			// and the next privileged request fills it back in. Skipping them here made a student
+			// who logged in but never loaded a page invisible to both counts (AdminController::getPeople
+			// already treats null as a student for the same reason). On the team they count as
+			// active and kind is left null, so the pending re-derivation still runs; off the team
+			// they are withdrawn like any other student.
+			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN || person.kind === null) {
 				if (typeof person.githubId === "string" && registered.has(person.githubId.toLowerCase())) {
 					// student is registered
 					if (person.kind === PersonKind.WITHDRAWN) {

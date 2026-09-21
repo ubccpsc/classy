@@ -83,6 +83,25 @@ describe("AdminController::performStudentWithdraw", function () {
 		expect(msg).to.contain("# active: 2; # withdrawn: 0; # withdrawn (this run): 0");
 	});
 
+	it("Should treat a null kind as a student.", async function () {
+		// The login callback nulls kind until the next privileged request re-derives it; a student
+		// who logs in and leaves stays null. They must still be counted, and withdrawn if gone.
+		await makeStudent("withdrawNullStays", "ghNullStays");
+		await makeStudent("withdrawNullGone", "ghNullGone");
+		await makeStudent("withdrawNullOther", "ghNullOther");
+		for (const id of ["withdrawNullStays", "withdrawNullGone"]) {
+			const p = await dbc.getPerson(id);
+			p.kind = null;
+			await dbc.writePerson(p);
+		}
+
+		const msg = await controllerFor(["ghNullStays", "ghNullOther"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+
+		expect(await kindOf("withdrawNullStays"), "on the team: kind left for login to re-derive").to.equal(null);
+		expect(await kindOf("withdrawNullGone"), "off the team: withdrawn like any student").to.equal(PersonKind.WITHDRAWN);
+		expect(msg).to.contain("# active: 2; # withdrawn: 1; # withdrawn (this run): 1");
+	});
+
 	it("Should refuse to run when the GitHub team looks stale.", async function () {
 		// four students, one team member: below half, so this is far more likely to be a team that
 		// has not synced than a class that shrank by 75%
