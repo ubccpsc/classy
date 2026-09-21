@@ -607,9 +607,18 @@ export class AdminConfigTab extends AdminPage {
 			summary.updated.length +
 			"; # removed: " +
 			summary.removed.length +
-			"; # withdrawn (on classlist): " +
-			summary.withdrawn.length
+			"; # not active (on classlist): " +
+			summary.notActive.length +
+			AdminConfigTab.kindBreakdown(summary.notActiveByKind)
 		);
+	}
+
+	/** " (WITHDRAWN: 3, STAFF: 1, null: 1)", or "" when there is nothing to break down. */
+	private static kindBreakdown(byKind: { [kind: string]: number } | undefined): string {
+		const parts = Object.keys(byKind ?? {})
+			.sort()
+			.map((kind) => kind + ": " + byKind[kind]);
+		return parts.length > 0 ? " (" + parts.join(", ") + ")" : "";
 	}
 
 	/**

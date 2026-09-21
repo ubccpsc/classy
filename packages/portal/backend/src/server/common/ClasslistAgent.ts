@@ -176,7 +176,8 @@ export class ClasslistAgent {
 			created: [], // new registrations
 			updated: [], // only students whose CWL or lab has changed
 			removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
-			withdrawn: [], // diagnostic: registered but still WITHDRAWN; only the withdraw job can reinstate them
+			notActive: [], // diagnostic: registered but not an active student; see below
+			notActiveByKind: {},
 			classlist, // created from list of people in the classlist upload returned from data layer
 		};
 
@@ -197,18 +198,25 @@ export class ClasslistAgent {
 			}
 		});
 
-		// The classlist update never changes kind, so someone withdrawn earlier stays withdrawn even
-		// while the registrar lists them. Surfaced here so the gap between "# registered" and the
-		// withdraw job's "# active" has names attached.
+		// The classlist update never changes kind, so a registered person can be anything but
+		// STUDENT: withdrawn earlier (only the withdraw job reinstates, and only if the GitHub
+		// students team has them), staff or admin who are also registered, or null while a login
+		// is re-deriving it. The withdraw job counts only STUDENT and WITHDRAWN, so this is the
+		// only place the whole gap between "# registered" and "# active" gets names attached.
 		afterPeople.forEach(function (afterPerson) {
-			if (afterPerson.kind === PersonKind.WITHDRAWN) {
-				changeReport.withdrawn.push(PersonController.personToTransport(afterPerson));
+			if (afterPerson.kind !== PersonKind.STUDENT) {
+				const kind = afterPerson.kind === null || typeof afterPerson.kind === "undefined" ? "null" : String(afterPerson.kind);
+				changeReport.notActive.push(PersonController.personToTransport(afterPerson));
+				changeReport.notActiveByKind[kind] = (changeReport.notActiveByKind[kind] ?? 0) + 1;
 			}
 		});
-		if (changeReport.withdrawn.length > 0) {
+		if (changeReport.notActive.length > 0) {
 			Log.warn(
-				"ClasslistAgent::getClasslistChanges(..) - on classlist but WITHDRAWN (not on the GitHub students team?): " +
-					changeReport.withdrawn.map((p) => p.id).join(", ")
+				"ClasslistAgent::getClasslistChanges(..) - on classlist but not an active student: " +
+					afterPeople
+						.filter((p) => p.kind !== PersonKind.STUDENT)
+						.map((p) => p.id + " (" + p.kind + ")")
+						.join(", ")
 			);
 		}
 

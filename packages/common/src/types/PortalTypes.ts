@@ -30,8 +30,10 @@ export interface ClasslistChangesTransport {
 	updated: PersonTransport[];
 	created: PersonTransport[];
 	removed: PersonTransport[];
-	/** on the classlist, yet still WITHDRAWN in Classy: the GitHub students team has not (re)admitted them */
-	withdrawn: PersonTransport[];
+	/** on the classlist, yet not an active STUDENT in Classy (withdrawn, staff, admin, or kind not yet derived) */
+	notActive: PersonTransport[];
+	/** notActive tallied by kind; a null kind is reported under "null" */
+	notActiveByKind: { [kind: string]: number };
 	classlist: PersonTransport[];
 	message: string;
 }
