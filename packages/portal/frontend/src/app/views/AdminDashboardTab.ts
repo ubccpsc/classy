@@ -65,6 +65,44 @@ export class AdminDashboardTab extends AdminPage {
 	}
 
 	/**
+	 * Re-queries as soon as the deliverable filter changes, matching the view selector above.
+	 *
+	 * Unlike that one this does not re-init: the deliverable and repository lists do not depend on
+	 * which deliverable is selected, so re-fetching them would only add latency. The <select>
+	 * survives UI.setDropdownOptions (it swaps the options, not the element), so this handler does
+	 * not need re-wiring after every render.
+	 */
+	private wireDelivSelector(delivs: DeliverableTransport[], repos: RepositoryTransport[]): void {
+		const select = document.querySelector("#dashboardDelivSelect") as HTMLSelectElement;
+		if (select === null) {
+			return;
+		}
+		select.onchange = () => {
+			this.refreshResults(delivs, repos);
+		};
+	}
+
+	/**
+	 * Runs the current filters and re-renders; shared by the Update button and the deliverable
+	 * filter so the two cannot drift.
+	 *
+	 * NOTE: the modal is hidden on the error path too. UI.showError does not do it, so a failed
+	 * query used to leave "Retrieving results." covering the page with no way to dismiss it.
+	 */
+	private refreshResults(delivs: DeliverableTransport[], repos: RepositoryTransport[]): void {
+		UI.showModal("Retrieving results.");
+		this.performQueries()
+			.then((newResults) => {
+				this.render(delivs, repos, newResults);
+				UI.hideModal();
+			})
+			.catch((err) => {
+				UI.hideModal();
+				UI.showError(err);
+			});
+	}
+
+	/**
 	 * What the second dropdown offers. Repository ids by default.
 	 *
 	 * protected because "which repository" is not a question every course can answer: a course whose
@@ -117,21 +155,12 @@ export class AdminDashboardTab extends AdminPage {
 		UI.hideModal();
 
 		this.wireViewSelector();
+		this.wireDelivSelector(delivs, repos);
 
 		const fab = document.querySelector("#dashboardUpdateButton") as OnsButtonElement;
 		fab.onclick = function (_evt: any) {
 			Log.info("AdminDashboardTab::init(..)::updateButton::onClick");
-			UI.showModal("Retrieving results.");
-			that
-				.performQueries()
-				.then(function (newResults) {
-					// TODO: need to track and update the current value of deliv and repo
-					that.render(delivs, repos, newResults);
-					UI.hideModal();
-				})
-				.catch(function (err) {
-					UI.showError(err);
-				});
+			that.refreshResults(delivs, repos);
 		};
 
 		this.render(delivs, repos, results);
@@ -426,11 +455,29 @@ export class AdminDashboardTab extends AdminPage {
 		return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	}
 
+	/**
+	 * Width of the label cell that precedes the bars in both histograms.
+	 *
+	 * min-width, not width: a td's width is only a hint, so `_100_` simply outgrew the old 2em and
+	 * pushed its bars further right than a `_5_` row's. A floor wide enough for four digits keeps
+	 * every row's bars starting at the same offset, and anything wider still grows rather than
+	 * being clipped. Shared with the clustered table so the bars do not shift when the two views
+	 * are toggled.
+	 */
+	private static readonly LABEL_WIDTH = "3.5em";
+
 	private generateTable(annotated: DetailRow[]): string {
 		let str = "<span class='normalhistogram'><table style='height: 20px;'>";
 		str += "<tr class='selectable'>";
 		// underscores for easier searching
-		str += "<td class='selectable' style='width: 2em; text-align: center;'>_" + annotated.length + "_</td>";
+		str +=
+			"<td class='selectable' style='width: " +
+			AdminDashboardTab.LABEL_WIDTH +
+			"; min-width: " +
+			AdminDashboardTab.LABEL_WIDTH +
+			"; text-align: center;'>_" +
+			annotated.length +
+			"_</td>";
 		for (const a of annotated) {
 			str += "<td class='dashResultCell' style='width: 5px; height: 20px; background: " + a.colour + "' title='" + a.name + "'></td>";
 		}
@@ -449,7 +496,14 @@ export class AdminDashboardTab extends AdminPage {
 		let str = "<span class='clusteredhistogram hidden'><table style='height: 20px;'>";
 		for (const cluster of Object.keys(clusteredResult)) {
 			str += "<tr>";
-			str += "<td style='width: 2em; text-align: center;'> " + cluster + " < /td>";
+			str +=
+				"<td style='width: " +
+				AdminDashboardTab.LABEL_WIDTH +
+				"; min-width: " +
+				AdminDashboardTab.LABEL_WIDTH +
+				"; text-align: center;'> " +
+				cluster +
+				" < /td>";
 			for (const test of clusteredResult[cluster].allNames) {
 				str += cellMap[test];
 			}
