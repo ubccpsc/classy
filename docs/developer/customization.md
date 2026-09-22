@@ -12,6 +12,10 @@ myPlugin/
 │   └── docker-compose.override.yml
 ├── nginx/
 │   └── nginx.rconf
+├── scripts/
+│   └── hooks/
+│       ├── pre-build
+│       └── pre-deploy
 └── portal/
     ├── backend/
     │   ├── CustomCourseController.ts
@@ -56,10 +60,11 @@ Do NOT remove the default `portal` folder project scaffolding from your project,
 
 #### Optional Steps
 
-You may choose to remove the `nginx` and `docker` folder from the plugin project. These are only read when `./helper-scripts/bootstrap-plugin.sh` is run in [Step 3](#Run-Classy-with-Plugin-in-Production). The `bootstrap-plugin.sh` file copies plugin files into the proper locations in the Classy project to be built by Docker.
+You may choose to remove the `nginx`, `docker`, and `scripts` folders from the plugin project. The first two are only read when `./helper-scripts/bootstrap-plugin.sh` is run in [Step 3](#Run-Classy-with-Plugin-in-Production); the `bootstrap-plugin.sh` file copies plugin files into the proper locations in the Classy project to be built by Docker. The `scripts/hooks` folder is only read by `./classy.sh`.
 
 1. [Override/Add Docker services](#Docker-Containers--Supporting-Services)
 2. [Modify Nginx Configuration](#Nginx--Services-Routing) file to support Docker changes.
+3. [Add build/deploy hooks](#Build-and-Deploy-Hooks) if a custom service needs an image Docker Compose cannot build itself.
 
 ### Run Classy with Plugin in Production
 
@@ -237,6 +242,38 @@ Never commit the .env to source control. Do not override .env file in the custom
 - [ ] Ensure that Docker-compose can build and run the Classy project locally.
 - [ ] Ensure that your new services are secure (in the context of the new service and who is allowed to have access)
 - [ ] If new services are introduced, where HTTP proxy/routing changes are needed, update the Nginx.conf file as needed.
+
+### Build and Deploy Hooks
+
+A service added in `docker-compose.override.yml` normally carries a `build:` section, and `docker compose build` builds it along with Classy's own services. A service declared with only an `image:`, however, is one Compose expects to *pull*. If that tag is built locally and pushed to no registry, `docker compose up` fails on it:
+
+```text
+pull access denied for myCourseImage, repository does not exist or may require 'docker login'
+```
+
+This is easy to miss because `docker compose build` still succeeds: it only builds services that have a `build:` section, so nothing reports the missing image until deploy. Anything that clears the local image store (`docker system prune -a`, a storage-driver reset, a host rebuild) reintroduces the failure.
+
+`./classy.sh` looks for two optional executables in the plugin and runs them if they are present:
+
+| Hook | Runs |
+| --- | --- |
+| `scripts/hooks/pre-build` | during `./classy.sh build`, after `bootstrap-plugin.sh`, before `docker compose build` |
+| `scripts/hooks/pre-deploy` | during `./classy.sh deploy`, before `docker compose up -d` |
+
+A plugin that needs neither simply does not ship the files. Each hook runs with the plugin directory as its working directory, and with `CLASSY_ROOT` set to the absolute path of the Classy checkout (use it to reach `.env` or the compose files). A hook that exits non-zero stops the build or deploy.
+
+Make hooks **idempotent**, so a normal deploy does no work:
+
+```bash
+#!/usr/bin/env bash
+set -euo pipefail
+cd "$(dirname "$0")/../.."
+
+docker image inspect myCourseImage >/dev/null 2>&1 \
+	|| ./scripts/build-my-image.sh
+```
+
+Remember to `chmod +x` the hook; `classy.sh` warns and skips a hook that exists but is not executable.
 
 ### Defaults
 

@@ -41,12 +41,46 @@ plugin_dir() {
 	echo "plugins/${plugin}"
 }
 
+# Optional plugin hooks: plugins/<name>/scripts/hooks/<phase>. A plugin that does not need
+# one simply does not ship the file, so this is a no-op for every existing plugin. Same
+# opt-in convention as the plugin's docker/ and nginx/ directories, which
+# helper-scripts/bootstrap-plugin.sh copies only when they exist.
+#
+# A hook is for work `docker compose` cannot do itself -- most usefully, building an image
+# the plugin's override declares with an `image:` and no `build:`, which Compose would
+# otherwise try (and fail) to pull.
+run_hook() {
+	local phase="$1"
+	# Assigned separately from `local`: `local x=$(cmd)` swallows the exit status, so a
+	# failing plugin_dir would not trip `set -e`.
+	local dir root hook
+	dir=$(plugin_dir)
+	root=$(pwd)
+	hook="${dir}/scripts/hooks/${phase}"
+
+	if [ ! -f "${hook}" ]; then
+		return 0
+	fi
+	if [ ! -x "${hook}" ]; then
+		# Worth saying out loud rather than skipping silently: a hook that exists but is
+		# not executable is a lost chmod far more often than a deliberate disable.
+		echo "WARNING: ${hook} exists but is not executable; skipping" >&2
+		return 0
+	fi
+
+	echo "running plugin hook: ${phase}"
+	# The hook runs with the plugin as its working directory so its own paths are
+	# plugin-relative; CLASSY_ROOT is absolute so it can still reach .env and the compose
+	# files. Subshell so this function does not move the caller's working directory.
+	(cd "${dir}" && CLASSY_ROOT="${root}" "./scripts/hooks/${phase}")
+}
+
 usage() {
 	echo "Usage: $(basename "$0") {pull|build|deploy|all|logs}"
 	echo
 	echo "  pull     git pull classy, then git pull the plugin named by PLUGIN in .env"
-	echo "  build    docker compose build"
-	echo "  deploy   docker compose up -d"
+	echo "  build    bootstrap the plugin, run its pre-build hook, then docker compose build"
+	echo "  deploy   run the plugin's pre-deploy hook, then docker compose up -d"
 	echo "  all      pull, then build, then deploy; stops at the first failure"
 	echo "  logs     docker compose logs --tail 10000 -f autotest portal"
 	exit 1
@@ -75,11 +109,19 @@ do_pull() {
 
 do_build() {
 	step "build"
+	# Refresh the plugin's docker-compose.override.yml and nginx.rconf first. Both are
+	# gitignored copies, so a plugin change never reaches them on its own: without this the
+	# root override silently drifts behind the plugin checkout.
+	./helper-scripts/bootstrap-plugin.sh
+	run_hook pre-build
 	docker compose build
 }
 
 do_deploy() {
 	step "deploy"
+	# Gives the plugin a chance to build anything its override declares but Compose cannot
+	# build itself; see plugins/cs310/scripts/hooks/pre-deploy for the worked example.
+	run_hook pre-deploy
 	docker compose up -d
 }
 

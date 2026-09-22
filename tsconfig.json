@@ -36,7 +36,22 @@
             "./node_modules/@types"
         ]
     },
+    // Without an explicit "include", tsc globs every .ts under the repo root -- which means
+    // any course plugin checked out into plugins/ (a gitignored, separately-owned repo) can
+    // break Classy's build. Course plugins are free to keep their own self-contained
+    // TypeScript projects outside portal/: plugins/cs310/scripts, for one, has its own
+    // tsconfig.json, package.json, and typescript, and is built from inside that directory.
+    //
+    // plugins/*/portal is the plugin contract surface and MUST stay here: packages/portal's
+    // Dockerfile relies on this compile to emit the plugin's .js for webpack and the backend.
+    // The glob also keeps the shipped default and example plugins type-checked.
+    "include": [
+        "packages/**/*.ts",
+        "plugins/*/portal/**/*.ts"
+    ],
     "exclude": [
-        "node_modules"
+        // "node_modules" alone is anchored here and would miss packages/*/node_modules;
+        // those are empty under yarn workspaces today, but not by guarantee.
+        "**/node_modules"
 ]
 }
