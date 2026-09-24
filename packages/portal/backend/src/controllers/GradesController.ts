@@ -26,6 +26,7 @@ export class GradesController {
 		const start = Date.now();
 
 		const grades = await this.db.getGrades();
+		const readMs = Date.now() - start;
 		const pc = new PersonController();
 
 		const returnGrades = [];
@@ -49,7 +50,14 @@ export class GradesController {
 				"; # returned: " +
 				returnGrades.length +
 				"; took: " +
-				Util.took(start)
+				Util.took(start) +
+				// the split the grades page's performance work is deciding on: the bulk read versus
+				// the person lookup this loop makes for every grade, one at a time
+				" (reading grades: " +
+				readMs +
+				" ms; a person lookup per grade: " +
+				(Date.now() - start - readMs) +
+				" ms)"
 		);
 		return returnGrades;
 	}

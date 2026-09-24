@@ -6,6 +6,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
+import { GradeDiagnostics } from "@backend/controllers/GradeDiagnostics";
 import { JobController } from "@backend/controllers/JobController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -599,6 +600,8 @@ export default class AdminRoutes implements IREST {
 			Log.info("AdminRoutes::getGrades(..) - done; # grades: " + grades.length + "; took: " + Util.took(start));
 			const payload: GradeTransportPayload = { success: grades };
 			res.send(payload);
+			// TEMPORARY: once per process, after the response, not awaited; see GradeDiagnostics
+			GradeDiagnostics.runOnce();
 			return;
 		} catch (err) {
 			return AdminRoutes.handleError(400, "Unable to retrieve team list. ERROR: " + err.message, res);
