@@ -19,7 +19,7 @@ import {
 import Util from "@common/Util";
 import { Factory } from "../Factory";
 import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "../Types";
-import { DatabaseController } from "./DatabaseController";
+import { DatabaseController, ReadOptions } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubController, IGitHubController } from "./GitHubController";
 import { GradesController } from "./GradesController";
@@ -441,21 +441,36 @@ export class AdminController {
 		Log.trace("AdminController::matchResults(..) - start");
 		const start = Date.now();
 		const WILDCARD = "any";
+		const NUM_RESULTS = 1000;
+
+		// The cap below can move into the query only when the query already applies every filter the
+		// loop does; then the loop keeps every row it is given, so the newest NUM_RESULTS are
+		// exactly the rows it would have kept. The people filters run here, against peopleById,
+		// and the by-repo query does not filter on the deliverable -- so with either in play,
+		// truncating first would drop rows the loop wanted (the failure the NOTE in the loop warns
+		// about), and the read stays uncapped as it always was. The by-deliverable read gets no
+		// limit either way: it already returns one row per repo.
+		const peopleFiltered = view !== "all" || person !== null;
+		const readOpts: ReadOptions = { projection: AdminController.SUMMARY_PROJECTION };
 
 		let allResults: Result[];
 		if (reqRepoId !== WILDCARD) {
 			// if both are not "any" just use this one too
 			// ResultsKind not supported for getAllResults(..)
-			allResults = await this.resC.getResultsForRepo(reqRepoId);
+			if (reqDelivId === WILDCARD && peopleFiltered === false) {
+				readOpts.limit = NUM_RESULTS;
+			}
+			allResults = await this.resC.getResultsForRepo(reqRepoId, readOpts);
 		} else if (reqDelivId !== WILDCARD) {
-			allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind);
+			allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind, readOpts.projection);
 		} else {
 			// ResultsKind not supported for getAllResults(..)
-			allResults = await this.resC.getAllResults();
+			if (peopleFiltered === false) {
+				readOpts.limit = NUM_RESULTS;
+			}
+			allResults = await this.resC.getAllResults(readOpts);
 		}
 		Log.trace("AdminController::matchResults(..) - search done; # results: " + allResults.length + "; took: " + Util.took(start));
-
-		const NUM_RESULTS = 1000;
 
 		// resolved once, not per result; skipped when neither filter needs a lookup
 		const peopleById = new Map<string, Person>();
@@ -478,7 +493,7 @@ export class AdminController {
 				(reqRepoId === WILDCARD || repoId === reqRepoId) &&
 				ResultsController.matchesView(result, peopleById, view) &&
 				(person === null || ResultsController.matchesPerson(result, peopleById, person)) &&
-				results.length <= NUM_RESULTS
+				results.length < NUM_RESULTS
 			) {
 				results.push(result);
 			} else {
@@ -1367,6 +1382,44 @@ export class AdminController {
 
 		Log.info("AdminController::dbSanityCheck() - done; took: " + Util.took(start));
 	}
+
+	/**
+	 * Every field of a Result that matchResults, clipAutoTestResult, selectState and
+	 * createDashboardTransport read -- and nothing else. The Results and Dashboard pages read through
+	 * this, so a document's feedback, attachments, container config and the rest of its input never
+	 * leave the database.
+	 *
+	 * NOTE: a function above that starts reading another field must add it here. A field left out
+	 * does not fail; it reads as undefined, and the page quietly shows a blank. The
+	 * AdminControllerSpec test that builds each transport from a projected and a full read of the
+	 * same record, and requires them to be equal, is what catches that.
+	 */
+	public static readonly SUMMARY_PROJECTION: ReadOptions["projection"] = {
+		// the deliverable filter in matchResults, and the transport
+		delivId: 1,
+		// the view and person filters
+		people: 1,
+		"input.target.repoId": 1,
+		"input.target.commitSHA": 1,
+		"input.target.commitURL": 1,
+		"input.target.timestamp": 1,
+		// pre-2019 documents; DatabaseController copies pushInfo into target when target is absent
+		"input.pushInfo.repoId": 1,
+		"input.pushInfo.commitSHA": 1,
+		"input.pushInfo.commitURL": 1,
+		"input.pushInfo.timestamp": 1,
+		"output.timestamp": 1,
+		"output.state": 1,
+		"output.report.result": 1,
+		"output.report.scoreOverall": 1,
+		"output.report.scoreTest": 1,
+		"output.report.scoreCover": 1,
+		"output.report.custom": 1,
+		"output.report.passNames": 1,
+		"output.report.failNames": 1,
+		"output.report.skipNames": 1,
+		"output.report.errorNames": 1,
+	};
 
 	private async createDashboardTransport(result: Result): Promise<AutoTestDashboardTransport> {
 		const resultSummary = await this.clipAutoTestResult(result);

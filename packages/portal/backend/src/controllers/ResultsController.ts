@@ -5,7 +5,7 @@ import { PersonView } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Person, Result } from "../Types";
 
-import { DatabaseController } from "./DatabaseController";
+import { DatabaseController, ReadOptions } from "./DatabaseController";
 import { GradesController } from "./GradesController";
 import { RepositoryController } from "./RepositoryController";
 
@@ -68,11 +68,17 @@ export class ResultsController {
 	 * This returns absolutely _all_ results stored in the database. This can be slow as there can be a large
 	 * number of total results.
 	 */
-	public async getAllResults(): Promise<Result[]> {
+	/**
+	 * @param opts narrows the read (see ReadOptions); omitted, full documents with no limit
+	 */
+	public async getAllResults(opts: ReadOptions = {}): Promise<Result[]> {
 		Log.trace("ResultsController::getAllResults() - start");
 		const start = Date.now();
 
-		const results = await this.db.getAllResults();
+		// NOTE: with opts.limit the database picks the newest N by input.target.timestamp, which a
+		// pre-2019 document carrying only input.pushInfo does not have; it sorts last and would be
+		// the first thing a limit drops. The re-sort below still orders whatever comes back.
+		const results = await this.db.getAllResults(opts);
 
 		// NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
 		results.sort(function (a: Result, b: Result) {
@@ -420,14 +426,18 @@ export class ResultsController {
 	 * @param delivId
 	 * @param kind
 	 */
-	public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
+	/**
+	 * @param projection narrows the ALL read to these fields; BEST and GRADED always return full
+	 * documents, since their pipelines $lookup the record and do not take one
+	 */
+	public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL, projection?: ReadOptions["projection"]) {
 		Log.trace("ResultsController::getResultsForDeliverable( " + delivId + ", " + kind + " ) - start");
 		const start = Date.now();
 
 		let outcome: Result[] = [];
 		const dbc = DatabaseController.getInstance();
 		if (kind === ResultsKind.ALL) {
-			outcome = await dbc.getResultsForDeliverable(delivId);
+			outcome = await dbc.getResultsForDeliverable(delivId, projection);
 		} else if (kind === ResultsKind.BEST) {
 			outcome = await dbc.getBestResults(delivId);
 		} else if (kind === ResultsKind.GRADED) {
@@ -448,11 +458,11 @@ export class ResultsController {
 	 *
 	 * @param repoId
 	 */
-	public async getResultsForRepo(repoId: string) {
+	public async getResultsForRepo(repoId: string, opts: ReadOptions = {}) {
 		Log.trace("ResultsController::getResultsForRepo( " + repoId + " ) - start");
 		const start = Date.now();
 
-		const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
+		const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId, opts);
 		Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " + outcome.length + "; took: " + Util.took(start));
 
 		return outcome;

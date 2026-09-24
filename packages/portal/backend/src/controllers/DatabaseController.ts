@@ -112,13 +112,18 @@ export class DatabaseController {
 		return teams;
 	}
 
-	public async getAllResults(): Promise<Result[]> {
+	/**
+	 * Every result in the course, latest first.
+	 *
+	 * @param opts narrows the read (see ReadOptions); omitted, full documents with no limit
+	 */
+	public async getAllResults(opts: ReadOptions = {}): Promise<Result[]> {
 		const query = {};
 		const start = Date.now();
 		Log.trace("DatabaseController::getAllResults() - start");
 		// const latestFirst = {"input.pushInfo.timestamp": -1}; // most recent first
 		const latestFirst = { "input.target.timestamp": -1 }; // most recent first
-		const results = (await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, query, latestFirst)) as Result[];
+		const results = (await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, query, latestFirst, opts)) as Result[];
 
 		for (const result of results) {
 			if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
@@ -717,7 +722,14 @@ export class DatabaseController {
 	 * @param {{}} sort send only if a specific ordering is required
 	 * @returns {Promise<any[]>} An array of objects
 	 */
-	public async readRecords(column: string, kind: QueryKind, limitResults: boolean, query: {}, sort?: {}): Promise<any[]> {
+	public async readRecords(
+		column: string,
+		kind: QueryKind,
+		limitResults: boolean,
+		query: {},
+		sort?: {},
+		opts: ReadOptions = {}
+	): Promise<any[]> {
 		try {
 			if (typeof sort === "undefined") {
 				Log.trace("DatabaseController::readRecords( " + column + ", " + JSON.stringify(query) + " ) - start");
@@ -730,17 +742,24 @@ export class DatabaseController {
 				LIMITS = 400;
 				Log.trace("DatabaseController::readRecords( " + column + ", ... ) - limited results query");
 			}
+			if (typeof opts.limit === "number") {
+				LIMITS = opts.limit;
+			}
 
 			const start = Date.now();
 			const col = await this.getCollection(column, kind);
 
 			// mongo query to find the most recent document for each team
-			let records: any[];
-			if (typeof sort === "undefined") {
-				records = await (col as any).find(query).limit(LIMITS).toArray();
-			} else {
-				records = await (col as any).find(query).limit(LIMITS).sort(sort).toArray();
+			// the driver applies sort before limit whatever order they are chained in, so a limit
+			// here always means "the first N in this sort order"
+			let cursor = (col as any).find(query);
+			if (typeof sort !== "undefined") {
+				cursor = cursor.sort(sort);
 			}
+			if (typeof opts.projection !== "undefined") {
+				cursor = cursor.project(opts.projection);
+			}
+			const records: any[] = await cursor.limit(LIMITS).toArray();
 
 			if (records === null || records.length === 0) {
 				Log.trace(
@@ -825,12 +844,12 @@ export class DatabaseController {
 	 *
 	 * @param repoId
 	 */
-	public async getResultsForRepo(repoId: string): Promise<Result[]> {
+	public async getResultsForRepo(repoId: string, opts: ReadOptions = {}): Promise<Result[]> {
 		const start = Date.now();
 		Log.trace("DatabaseController::getResultsForRepo( " + repoId + " ) - start");
 
 		const latestFirst = { "input.target.timestamp": -1 }; // most recent first
-		const results = (await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, { repoId: repoId }, latestFirst)) as Result[];
+		const results = (await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, { repoId: repoId }, latestFirst, opts)) as Result[];
 		for (const result of results) {
 			if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
 				// this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
@@ -854,24 +873,34 @@ export class DatabaseController {
 	 *
 	 * @param delivId
 	 */
-	public async getResultsForDeliverable(delivId: string): Promise<Result[]> {
+	public async getResultsForDeliverable(delivId: string, projection?: ReadOptions["projection"]): Promise<Result[]> {
 		const start = Date.now();
 		Log.trace("DatabaseController::getResultsForDeliverable( " + delivId + " ) - start");
 
-		const col = await this.getCollection(this.RESULTCOLL, QueryKind.FAST);
-		const records: any[] = await (col as any)
-			.aggregate([
-				{ $match: { delivId: delivId } },
-				{ $sort: { "input.target.timestamp": -1 } },
-				{
-					$group: {
-						_id: { delivId: "$delivId", repoId: "$repoId" },
-						doc: { $first: "$$ROOT" },
-					},
+		// $match then $sort, at the head of the pipeline, is what the delivIdTs index serves: the
+		// winning plan is an IXSCAN on it with no SORT stage, where the delivId index alone needed
+		// an in-memory sort of every result for the deliverable.
+		//
+		// The optional $project goes LAST, after $group has kept one record per repo. Placed before
+		// $group it reshapes every result for the deliverable, most of which $group then discards;
+		// that measured slower than no projection at all.
+		const pipeline: object[] = [
+			{ $match: { delivId: delivId } },
+			{ $sort: { "input.target.timestamp": -1 } },
+			{
+				$group: {
+					_id: { delivId: "$delivId", repoId: "$repoId" },
+					doc: { $first: "$$ROOT" },
 				},
-				{ $replaceRoot: { newRoot: "$doc" } },
-			])
-			.toArray();
+			},
+			{ $replaceRoot: { newRoot: "$doc" } },
+		];
+		if (typeof projection !== "undefined") {
+			pipeline.push({ $project: projection });
+		}
+
+		const col = await this.getCollection(this.RESULTCOLL, QueryKind.FAST);
+		const records: any[] = await (col as any).aggregate(pipeline).toArray();
 
 		if (records === null || records.length === 0) {
 			Log.trace("DatabaseController::readRecords(..) - done; no records found");
@@ -1103,6 +1132,17 @@ export class DatabaseController {
 				},
 				{ name: "delivAndRepoIds" }
 			);
+			// The Results and Dashboard pages read one deliverable latest-first. The delivId index
+			// above serves the match but not the order, so every result for the deliverable was
+			// sorted in memory before the per-repo grouping; this one returns them already in order.
+			// NOTE: on an existing course the first start after this ships builds it, once.
+			await coll.createIndex(
+				{
+					delivId: 1,
+					"input.target.timestamp": -1,
+				},
+				{ name: "delivIdTs" }
+			);
 
 			// grades needs indexes because we group on <personId, delivId> tuples
 			coll = await this.getCollection(this.GRADECOLL);
@@ -1220,6 +1260,20 @@ export class DatabaseController {
 			}
 		}
 	}
+}
+
+/**
+ * Narrows a bulk read, for callers that render a summary rather than whole records.
+ *
+ * Every field is optional and omitting the argument changes nothing: reads still return full
+ * documents with no limit. PrairieLearnAgent, the database validator, and course scripts such as
+ * cs310's AllResults extractor all read results that way and depend on it.
+ */
+export interface ReadOptions {
+	/** Mongo inclusion projection: only these fields come back (plus _id, which is stripped). */
+	projection?: { [field: string]: 1 };
+	/** Stop after this many documents, in the read's own sort order. */
+	limit?: number;
 }
 
 export enum QueryKind {
