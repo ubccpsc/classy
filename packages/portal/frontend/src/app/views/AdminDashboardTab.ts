@@ -1,5 +1,4 @@
 import Log from "@common/Log";
-import { ClusteredResult } from "@common/types/ContainerTypes";
 import {
 	AutoTestDashboardPayload,
 	AutoTestDashboardTransport,
@@ -11,8 +10,7 @@ import {
 import moment from "moment";
 import { OnsButtonElement } from "onsenui";
 
-import { DashboardTable } from "../util/DashboardTable";
-import { TableCell, TableHeader } from "../util/SortableTable";
+import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 
 import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
@@ -32,6 +30,10 @@ export class AdminDashboardTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private delivValue: string | null = null;
 	private repoValue: string | null = null;
+
+	/** The tests behind each rendered histogram, indexed by its data-hist attribute; read by the tooltip. */
+	private histograms: DetailRow[][] = [];
+	private histogramTip: HTMLElement | null = null;
 
 	public constructor(remote: string) {
 		// this.remote = remote;
@@ -310,7 +312,8 @@ export class AdminDashboardTab extends AdminPage {
 		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
 
 		const headers: TableHeader[] = this.buildHeaders();
-		const st = new DashboardTable(headers, "#dashboardListTable");
+		this.histograms = [];
+		const st = new SortableTable(headers, "#dashboardListTable");
 
 		// this loop could not possibly be less efficient
 		for (const result of results) {
@@ -361,6 +364,7 @@ export class AdminDashboardTab extends AdminPage {
 		}
 
 		st.generate();
+		this.wireHistogramHover();
 
 		try {
 			new TomSelect("#dashboardRepoSelect", {
@@ -396,121 +400,194 @@ export class AdminDashboardTab extends AdminPage {
 		}
 	}
 
-	private generateHistogram(row: AutoTestDashboardTransport): string {
-		const passNames = row.testPass as string[];
-		const failNames = row.testFail as string[];
-		const skipNames = row.testSkip as string[];
-		const errorNames = row.testError as string[];
-
-		let all: string[] = [];
-		all = all.concat(passNames, failNames, skipNames, errorNames);
-		all = all.sort();
-
-		const annotated: DetailRow[] = [];
-		for (let name of all) {
-			let state = "unknown";
-			let colour = "black";
-			if (failNames.indexOf(name) >= 0) {
-				state = "fail";
-				colour = "red";
-			} else if (passNames.indexOf(name) >= 0) {
-				state = "pass";
-				colour = "green";
-			} else if (skipNames.indexOf(name) >= 0) {
-				state = "skip";
-				colour = "grey";
-			} else if (errorNames.indexOf(name) >= 0) {
-				state = "error";
-				colour = "orange";
-			} else {
-				// unknown name
-			}
-			// sanitize: test names are student-authored and are rendered into a title attribute
-			name = AdminDashboardTab.escapeHtml(name);
-			annotated.push({ name: name, state: state, colour: colour });
-		}
-
-		let str: string = "<div class='histogramcontainer'>";
-		str += this.generateTable(annotated);
-		if (row.hasOwnProperty("cluster")) {
-			str += this.generateClusteredTable(annotated, row.delivId, row.custom.cluster);
-		}
-		str += "</div>";
-		return str;
-	}
-
 	/**
-	 * Escapes a string for interpolation into HTML text or a quoted attribute value.
+	 * Geometry of one test's bar, in CSS px.
 	 *
-	 * The previous version called String.replace four times with STRING patterns, which replace
-	 * only the FIRST occurrence -- so "a<b<c" became "a&lt;b<c". Test names are student-authored
-	 * and land in title='...' (generateTable) and title="..." (generateClusteredTable), so a name
-	 * with two metacharacters escaped the attribute and ran script in a session that holds admin
-	 * rights over the GitHub org. It also mapped ' to &quot; (wrong character) and never escaped
-	 * &, which double-decodes anything a student writes literally.
-	 *
-	 * & must be replaced first, or it re-escapes the entity prefixes introduced below it.
+	 * These reproduce what the per-test table cells this replaced measured under the app's
+	 * stylesheets: a 5px cell plus 1px of padding each side, 20px tall plus the same padding, and
+	 * 2px of border-spacing between cells. The tooltip finds the test under the pointer from the
+	 * same pitch, so change them together.
 	 */
-	private static escapeHtml(value: string): string {
-		return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
-	}
+	private static readonly BAR_WIDTH = 7;
+	private static readonly BAR_GAP = 2;
+	private static readonly BAR_HEIGHT = 22;
+	private static readonly BAR_PITCH = AdminDashboardTab.BAR_WIDTH + AdminDashboardTab.BAR_GAP;
 
 	/**
-	 * Width of the label cell that precedes the bars in both histograms.
-	 *
-	 * min-width, not width: a td's width is only a hint, so `_100_` simply outgrew the old 2em and
-	 * pushed its bars further right than a `_5_` row's. A floor wide enough for four digits keeps
-	 * every row's bars starting at the same offset, and anything wider still grows rather than
-	 * being clipped. Shared with the clustered table so the bars do not shift when the two views
-	 * are toggled.
+	 * Width of the count that precedes the bars; a floor wide enough for four digits keeps every
+	 * row's bars starting at the same offset. Rendered as an inline-block, where width is honoured
+	 * (a table cell's width was only a hint, which is how `_100_` used to push its bars right).
 	 */
 	private static readonly LABEL_WIDTH = "3.5em";
 
-	private generateTable(annotated: DetailRow[]): string {
-		let str = "<span class='normalhistogram'><table style='height: 20px;'>";
-		str += "<tr class='selectable'>";
-		// underscores for easier searching
-		str +=
-			"<td class='selectable' style='width: " +
-			AdminDashboardTab.LABEL_WIDTH +
-			"; min-width: " +
-			AdminDashboardTab.LABEL_WIDTH +
-			"; text-align: center;'>_" +
-			annotated.length +
-			"_</td>";
-		for (const a of annotated) {
-			str += "<td class='dashResultCell' style='width: 5px; height: 20px; background: " + a.colour + "' title='" + a.name + "'></td>";
-		}
-		str += "</tr>";
-		str += "</table></span>";
-		return str;
+	private generateHistogram(row: AutoTestDashboardTransport): string {
+		const tests = AdminDashboardTab.annotateTests(row);
+		const id = this.histograms.push(tests) - 1;
+		return AdminDashboardTab.histogramHTML(tests, id);
 	}
 
-	private generateClusteredTable(annotated: DetailRow[], _delivId: string, clusteredResult: ClusteredResult): string {
-		const cellMap: { [key: string]: string } = {};
-		for (const cell of annotated) {
-			const c = cell.colour;
-			const n = cell.name;
-			cellMap[cell.name] = `<td class="dashResultCell" style="width: 5px; height: 20px; background: ${c}" title="${n}"></td>`;
-		}
-		let str = "<span class='clusteredhistogram hidden'><table style='height: 20px;'>";
-		for (const cluster of Object.keys(clusteredResult)) {
-			str += "<tr>";
-			str +=
-				"<td style='width: " +
-				AdminDashboardTab.LABEL_WIDTH +
-				"; min-width: " +
-				AdminDashboardTab.LABEL_WIDTH +
-				"; text-align: center;'> " +
-				cluster +
-				" < /td>";
-			for (const test of clusteredResult[cluster].allNames) {
-				str += cellMap[test];
+	/**
+	 * One entry per test name in the row, sorted by name, with its state and colour.
+	 *
+	 * A name listed under more than one state keeps one entry per listing, each taking the first
+	 * state that lists it in the order fail, pass, skip, error; that is what the per-name indexOf
+	 * chain this replaced produced. That chain searched every list for every name, quadratic per
+	 * row and paid on every render; Sets make each lookup constant.
+	 *
+	 * Names stay raw. They are student-authored, and they never enter an HTML string any more:
+	 * the only place they are shown is the tooltip, which sets textContent.
+	 */
+	private static annotateTests(row: AutoTestDashboardTransport): DetailRow[] {
+		const passNames = (row.testPass ?? []) as string[];
+		const failNames = (row.testFail ?? []) as string[];
+		const skipNames = (row.testSkip ?? []) as string[];
+		const errorNames = (row.testError ?? []) as string[];
+
+		const fail = new Set(failNames);
+		const pass = new Set(passNames);
+		const skip = new Set(skipNames);
+		const error = new Set(errorNames);
+
+		const all = ([] as string[]).concat(passNames, failNames, skipNames, errorNames).sort();
+		const annotated: DetailRow[] = [];
+		for (const name of all) {
+			if (fail.has(name)) {
+				annotated.push({ name: name, state: "fail", colour: "red" });
+			} else if (pass.has(name)) {
+				annotated.push({ name: name, state: "pass", colour: "green" });
+			} else if (skip.has(name)) {
+				annotated.push({ name: name, state: "skip", colour: "grey" });
+			} else if (error.has(name)) {
+				annotated.push({ name: name, state: "error", colour: "orange" });
+			} else {
+				annotated.push({ name: name, state: "unknown", colour: "black" });
 			}
-			str += "</tr>";
 		}
-		str += "</table></span>";
-		return str;
+		return annotated;
+	}
+
+	/**
+	 * A row's histogram as two inline elements, whatever its number of tests.
+	 *
+	 * This used to be a nested table with a cell per test, so a dashboard of a few hundred rows
+	 * and a hundred-odd tests built tens of thousands of cells, each laid out by the table
+	 * algorithm, and did it again on every column sort. Now the bars are one element: a gradient
+	 * with a stop for each run of same-coloured tests, and a repeating mask that cuts the gap
+	 * between tests so each still reads as its own bar. The gaps are transparent, so the row's
+	 * background shows through them exactly as it did between the cells.
+	 */
+	private static histogramHTML(tests: DetailRow[], id: number): string {
+		const W = AdminDashboardTab.BAR_WIDTH;
+		const P = AdminDashboardTab.BAR_PITCH;
+
+		// The padding stands in for the border-spacing the nested table put above and below its row,
+		// so dashboard rows keep their height. Underscores around the count for easier searching.
+		let html = "<div class='histogramcontainer' style='padding: " + AdminDashboardTab.BAR_GAP + "px 0;'>";
+		html +=
+			"<span class='selectable' style='display: inline-block; box-sizing: content-box; width: " +
+			AdminDashboardTab.LABEL_WIDTH +
+			"; padding: 0 1px; text-align: center; vertical-align: middle;'>_" +
+			tests.length +
+			"_</span>";
+
+		if (tests.length > 0) {
+			// one stop per run of a colour; the colours are the fixed set above, never row data
+			const stops: string[] = [];
+			let runStart = 0;
+			for (let i = 1; i <= tests.length; i++) {
+				if (i === tests.length || tests[i].colour !== tests[runStart].colour) {
+					stops.push(tests[runStart].colour + " " + runStart * P + "px " + i * P + "px");
+					runStart = i;
+				}
+			}
+			const mask = "repeating-linear-gradient(to right, #000 0 " + W + "px, transparent " + W + "px " + P + "px)";
+			html +=
+				"<span class='dashHistogram' data-hist='" +
+				id +
+				"' style='display: inline-block; vertical-align: middle; margin-left: " +
+				AdminDashboardTab.BAR_GAP +
+				"px; width: " +
+				(tests.length * P - AdminDashboardTab.BAR_GAP) +
+				"px; height: " +
+				AdminDashboardTab.BAR_HEIGHT +
+				"px; background-image: linear-gradient(to right, " +
+				stops.join(", ") +
+				"); -webkit-mask-image: " +
+				mask +
+				"; mask-image: " +
+				mask +
+				";'></span>";
+		}
+		return html + "</div>";
+	}
+
+	/**
+	 * One tooltip for every histogram, fed by a single listener on the table's container.
+	 *
+	 * The per-test title attribute went with the per-test cells, so this finds the test under the
+	 * pointer from its x offset instead. It measures against the bar element rather than the event
+	 * target, so the pointer can cross a masked gap without the tooltip flickering off.
+	 *
+	 * NOTE: assigned with onmousemove, not addEventListener. render() runs on every refresh and
+	 * must not stack another listener each time; the container element itself persists.
+	 */
+	private wireHistogramHover(): void {
+		const container = document.querySelector("#dashboardListTable") as HTMLElement | null;
+		if (container === null) {
+			return;
+		}
+		container.onmousemove = (evt: MouseEvent) => {
+			const test = this.testUnderPointer(evt);
+			if (test === null) {
+				this.hideHistogramTip();
+			} else {
+				this.showHistogramTip(test, evt);
+			}
+		};
+		container.onmouseleave = () => {
+			this.hideHistogramTip();
+		};
+	}
+
+	private testUnderPointer(evt: MouseEvent): DetailRow | null {
+		const host = (evt.target as Element | null)?.closest(".histogramcontainer");
+		const bar = host?.querySelector(".dashHistogram") as HTMLElement | null | undefined;
+		if (bar === null || typeof bar === "undefined") {
+			return null;
+		}
+		const tests = this.histograms[Number(bar.dataset.hist)];
+		const rect = bar.getBoundingClientRect();
+		const x = evt.clientX - rect.left;
+		if (typeof tests === "undefined" || x < 0 || x >= rect.width || evt.clientY < rect.top || evt.clientY >= rect.bottom) {
+			return null;
+		}
+		return tests[Math.floor(x / AdminDashboardTab.BAR_PITCH)] ?? null;
+	}
+
+	private showHistogramTip(test: DetailRow, evt: MouseEvent): void {
+		if (this.histogramTip === null) {
+			const tip = document.createElement("div");
+			tip.style.cssText =
+				"position: fixed; z-index: 10000; pointer-events: none; padding: 2px 6px; border-radius: 3px; " +
+				"background: rgba(0, 0, 0, 0.8); color: white; font-size: 12px; white-space: nowrap; display: none;";
+			document.body.appendChild(tip);
+			this.histogramTip = tip;
+		}
+		const tip = this.histogramTip;
+		// textContent, never innerHTML: test names are student-authored
+		tip.textContent = test.name + " (" + test.state + ")";
+		tip.style.display = "block";
+		// flip to the left of the pointer near the right edge; histograms can run wider than the window
+		const offset = 12;
+		const left = evt.clientX + offset + tip.offsetWidth > window.innerWidth ? evt.clientX - offset - tip.offsetWidth : evt.clientX + offset;
+		tip.style.left = Math.max(0, left) + "px";
+		tip.style.top = evt.clientY + offset + "px";
+	}
+
+	private hideHistogramTip(): void {
+		if (this.histogramTip !== null) {
+			this.histogramTip.style.display = "none";
+		}
 	}
 
 	public static async getDashboard(
