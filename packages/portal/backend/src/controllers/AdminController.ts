@@ -365,12 +365,19 @@ export class AdminController {
 		let part = Date.now();
 		const grades: GradeTransport[] = [];
 		const pc = new PersonController();
-		const allPeople = await pc.getAllPeople(); // just make this query once
+		// first occurrence wins, as the Array.find this replaced did; a find per grade scanned
+		// everyone for every grade
+		const peopleById = new Map<string, Person>();
+		for (const each of await pc.getAllPeople()) {
+			if (peopleById.has(each.id) === false) {
+				peopleById.set(each.id, each);
+			}
+		}
 		Log.trace("AdminController::getGrades() - getting people took: " + Util.took(part));
 
 		part = Date.now();
 		for (const grade of allGrades) {
-			const p = allPeople.find((person) => person.id === grade.personId);
+			const p = peopleById.get(grade.personId);
 			const gradeTrans: GradeTransport = {
 				personId: grade.personId,
 				personURL: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + p.githubId,

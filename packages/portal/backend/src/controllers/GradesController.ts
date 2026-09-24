@@ -27,11 +27,23 @@ export class GradesController {
 
 		const grades = await this.db.getGrades();
 		const readMs = Date.now() - start;
-		const pc = new PersonController();
+
+		// Everyone in one read, then a Map. This used to await a separate lookup for every grade, one
+		// after another: on a live course of about 2,900 grades that was 2.0 of the page's 2.3
+		// seconds, and it grew with every grade. The first occurrence of an id wins, which is what
+		// that lookup returned if an id were ever duplicated; the unique index on Person.id rules
+		// duplicates out wherever ensureUniqueIdIndexes could create it.
+		const peopleById = new Map<string, Person>();
+		for (const each of await new PersonController().getAllPeople()) {
+			if (peopleById.has(each.id) === false) {
+				peopleById.set(each.id, each);
+			}
+		}
+		const peopleMs = Date.now() - start - readMs;
 
 		const returnGrades = [];
 		for (const grade of grades) {
-			const person = await pc.getPerson(grade.personId);
+			const person = peopleById.get(grade.personId) ?? null;
 			if (person !== null && GradesController.matchesView(person, view)) {
 				returnGrades.push(grade);
 			} else {
@@ -51,12 +63,10 @@ export class GradesController {
 				returnGrades.length +
 				"; took: " +
 				Util.took(start) +
-				// the split the grades page's performance work is deciding on: the bulk read versus
-				// the person lookup this loop makes for every grade, one at a time
 				" (reading grades: " +
 				readMs +
-				" ms; a person lookup per grade: " +
-				(Date.now() - start - readMs) +
+				" ms; reading people: " +
+				peopleMs +
 				" ms)"
 		);
 		return returnGrades;

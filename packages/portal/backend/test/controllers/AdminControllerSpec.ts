@@ -178,6 +178,20 @@ describe("AdminController", () => {
 		expect(actual).to.deep.include(t); // make sure at least one student with the right format is in there
 	});
 
+	it("Should link every grade to its own person.", async () => {
+		// getGrades used to find each grade's person with a linear search of everyone; it is a Map now.
+		// Checked for every grade in every view, not just the one fixture row the test below looks for.
+		const host = Config.getInstance().getProp(ConfigKey.githubHost);
+		const people = new PersonController();
+		for (const view of ["students", "staff", "all"] as const) {
+			const res = await ac.getGrades(view);
+			for (const grade of res) {
+				const person = await people.getPerson(grade.personId);
+				expect(grade.personURL, view + ": " + grade.personId).to.equal(host + "/" + person.githubId);
+			}
+		}
+	});
+
 	it("Should be able to get a list of grades.", async () => {
 		const res = await ac.getGrades();
 		expect(res).to.be.an("array");

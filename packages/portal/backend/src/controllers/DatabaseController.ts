@@ -30,6 +30,9 @@ export class DatabaseController {
 	private readonly PERSONCOLL = "people";
 	private readonly GRADECOLL = "grades";
 	private readonly RESULTCOLL = "results";
+
+	/** Everything in a grade but its regrade history; see getGrades. */
+	private static readonly WITHOUT_GRADE_HISTORY: ReadOptions["projection"] = { "custom.previousGrade": 0 };
 	private readonly TEAMCOLL = "teams";
 	private readonly DELIVCOLL = "deliverables";
 	private readonly REPOCOLL = "repositories";
@@ -260,11 +263,16 @@ export class DatabaseController {
 	public async getGrades(): Promise<Grade[]> {
 		const start = Date.now();
 		Log.trace("DatabaseController::getGrades() - start");
-		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {})) as Grade[];
-		grades.forEach((g) => delete g?.custom?.previousGrade); // remove the custom field
+		// custom.previousGrade is excluded in the query rather than deleted after it. No caller of a
+		// bulk read ever saw it -- it used to be deleted here, once it had crossed the wire -- and it
+		// nests a level with every save (see GradesController::saveGrade), so it is most of the bytes.
+		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, {}, undefined, {
+			projection: DatabaseController.WITHOUT_GRADE_HISTORY,
+		})) as Grade[];
 
-		// this query works, but is not any faster than the simple one above
-		// although it does remove the custom field, which is recursive and can be large
+		// An aggregate that dropped all of custom (it went as far as {$project: {custom: 0}}) was tried
+		// here and measured no faster, but it lost custom's other fields too; the projection above
+		// removes only the history.
 		// const col = await this.getCollection(this.GRADECOLL, QueryKind.FAST);
 		// const grades = await col.aggregate([
 		//     {$project: {_id: 0, custom: 0}}, // exclude _id and custom (custom.previousGrade is large)
@@ -290,8 +298,9 @@ export class DatabaseController {
 	public async getGradesForDeliverable(delivId: string): Promise<Grade[]> {
 		const start = Date.now();
 		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - start");
-		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, { delivId: delivId })) as Grade[];
-		grades.forEach((g) => delete g?.custom?.previousGrade); // as getGrades() does; can be large
+		const grades = (await this.readRecords(this.GRADECOLL, QueryKind.SLOW, false, { delivId: delivId }, undefined, {
+			projection: DatabaseController.WITHOUT_GRADE_HISTORY,
+		})) as Grade[]; // as getGrades() does
 
 		Log.trace("DatabaseController::getGradesForDeliverable( " + delivId + " ) - done; #: " + grades.length + "; took: " + Util.took(start));
 		return grades;
@@ -1270,8 +1279,11 @@ export class DatabaseController {
  * cs310's AllResults extractor all read results that way and depend on it.
  */
 export interface ReadOptions {
-	/** Mongo inclusion projection: only these fields come back (plus _id, which is stripped). */
-	projection?: { [field: string]: 1 };
+	/**
+	 * Mongo projection. All 1 includes only those fields (plus _id, which is stripped); all 0 returns
+	 * everything but them. MongoDB refuses a mix.
+	 */
+	projection?: { [field: string]: 0 | 1 };
 	/** Stop after this many documents, in the read's own sort order. */
 	limit?: number;
 }

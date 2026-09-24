@@ -160,7 +160,11 @@ export class AdminGradesTab extends AdminPage {
 
 		const st = new SortableTable(headers, "#gradesListTable");
 
-		// this loop could not possibly be less efficient
+		// Every grade indexed once by person and deliverable. Each cell used to scan every grade in the
+		// course, so building the table cost students x deliverables x grades -- and a new
+		// deliverable adds both columns and grades, so it grew fastest exactly as the term went on.
+		const gradeFor = AdminGradesTab.indexGrades(grades);
+
 		for (const student of students) {
 			const row: TableCell[] = [
 				{
@@ -175,55 +179,12 @@ export class AdminGradesTab extends AdminPage {
 				{ value: AdminGradesTab.kindLabel(student), html: AdminGradesTab.kindLabel(student) },
 			];
 			for (const deliv of delivs) {
-				let tableCell: TableCell = null;
-				for (const grade of grades) {
-					if (grade.personId === student.id) {
-						if (grade.delivId === deliv.id) {
-							const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
-							let scoreText: string = "";
-							let scorePrepend = "";
-
-							// show the raw score in the admin grades panel
-							if (grade.score !== null && grade.score >= 0) {
-								scoreText = grade.score.toFixed(2);
-								if (grade.score < 100) {
-									// two decimal places
-									// prepend space (not 100)
-									scorePrepend = "&#8199;" + scorePrepend;
-									if (grade.score < 10) {
-										// prepend with extra space if < 10
-										scorePrepend = "&#8199;" + scorePrepend;
-									}
-								}
-							}
-							let html;
-							if (scoreText !== "" && grade.URL !== null) {
-								html = scorePrepend + `<a class="selectable" href="${grade.URL}">${scoreText}</a>`;
-							} else if (scoreText !== "" && grade.URL === null) {
-								html = `${scoreText}`;
-							} else {
-								html = scoreText;
-							}
-
-							// make comment-containing fields bold
-							// better cross-browser compatability using
-							// strong here than adding a div (specifically for CSV download)
-							if (hoverComment !== null && hoverComment.length > 1) {
-								html = `<strong title="${hoverComment}">${html}</strong>`;
-							}
-							tableCell = { value: scoreText, html };
-						}
-					}
-				}
-				if (tableCell === null) {
-					// tableCell = {value: "N/A", html: "N/A"}; // N/A for missing cells
-					tableCell = { value: "", html: "" }; // blanks for missing cells
-				}
-				row.push(tableCell);
+				const grade = gradeFor(student.id, deliv.id);
+				// blanks for missing cells
+				row.push(typeof grade === "undefined" ? { value: "", html: "" } : AdminGradesTab.gradeCell(grade));
 			}
 			st.addRow(row);
 		}
-
 		st.generate();
 
 		if (st.numRows() > 0) {
@@ -237,6 +198,62 @@ export class AdminGradesTab extends AdminPage {
 		}
 
 		this.renderSummary(grades, delivs, students);
+	}
+
+	/**
+	 * Every grade keyed by person, then deliverable, for a constant-time lookup per table cell.
+	 *
+	 * When someone has more than one grade for a deliverable the LAST one wins. That is what the
+	 * full scan this replaced produced: it had no break, so each later match overwrote the cell.
+	 */
+	private static indexGrades(grades: GradeTransport[]): (personId: string, delivId: string) => GradeTransport | undefined {
+		const byPerson = new Map<string, Map<string, GradeTransport>>();
+		for (const grade of grades) {
+			let byDeliv = byPerson.get(grade.personId);
+			if (typeof byDeliv === "undefined") {
+				byDeliv = new Map<string, GradeTransport>();
+				byPerson.set(grade.personId, byDeliv);
+			}
+			byDeliv.set(grade.delivId, grade);
+		}
+		return (personId: string, delivId: string) => byPerson.get(personId)?.get(delivId);
+	}
+
+	/** One grade's cell in the grades table; unchanged from when it was built inline in render(). */
+	private static gradeCell(grade: GradeTransport): TableCell {
+		const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
+		let scoreText: string = "";
+		let scorePrepend = "";
+
+		// show the raw score in the admin grades panel
+		if (grade.score !== null && grade.score >= 0) {
+			scoreText = grade.score.toFixed(2);
+			if (grade.score < 100) {
+				// two decimal places
+				// prepend space (not 100)
+				scorePrepend = "&#8199;" + scorePrepend;
+				if (grade.score < 10) {
+					// prepend with extra space if < 10
+					scorePrepend = "&#8199;" + scorePrepend;
+				}
+			}
+		}
+		let html;
+		if (scoreText !== "" && grade.URL !== null) {
+			html = scorePrepend + `<a class="selectable" href="${grade.URL}">${scoreText}</a>`;
+		} else if (scoreText !== "" && grade.URL === null) {
+			html = `${scoreText}`;
+		} else {
+			html = scoreText;
+		}
+
+		// make comment-containing fields bold
+		// better cross-browser compatability using
+		// strong here than adding a div (specifically for CSV download)
+		if (hoverComment !== null && hoverComment.length > 1) {
+			html = `<strong title="${hoverComment}">${html}</strong>`;
+		}
+		return { value: scoreText, html };
 	}
 
 	private renderSummary(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
@@ -402,19 +419,22 @@ export class AdminGradesTab extends AdminPage {
 	private static collectScoresByDeliv(grades: GradeTransport[], students: PersonTransport[]): { [delivId: string]: number[] } {
 		const gradeMap: { [delivId: string]: number[] } = {};
 
+		// who the summary counts: any listed student whose labId is not "W". This used to scan every
+		// student for every grade; the set gives the same answer, including for a repeated id.
+		const counted = new Set<string>();
+		for (const student of students) {
+			if (student.labId !== "W") {
+				counted.add(student.id);
+			}
+		}
+
 		for (const grade of grades) {
 			if (grade !== null && typeof grade.score !== "undefined" && typeof grade.score === "number") {
 				if (typeof gradeMap[grade.delivId] === "undefined") {
 					gradeMap[grade.delivId] = [];
 				}
 				// ignore grades for withdrawn students in the summary table
-				let inc = false;
-				for (const student of students) {
-					if (student.id === grade.personId && student.labId !== "W") {
-						inc = true;
-					}
-				}
-				if (inc === true) {
+				if (counted.has(grade.personId)) {
 					gradeMap[grade.delivId].push(grade.score);
 				}
 			}
