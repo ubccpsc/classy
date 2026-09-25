@@ -46,14 +46,7 @@ describe("GitHubActions", () => {
 	beforeEach(function () {
 		gh.setPageSize(2); // force a small page size for testing
 
-		const exec = TestHarness.runSlowTest();
-		// exec = true;
-		if (exec === true) {
-			Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
-		} else {
-			Log.test("GitHubActionSpec::beforeEach() - skipping (not CI)");
-			this.skip();
-		}
+		TestHarness.requiresGitHub(this);
 	});
 
 	afterEach(function () {

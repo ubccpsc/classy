@@ -6,6 +6,10 @@ docs
 **/node_modules/
 packages/**/src/**/*.js*
 packages/**/test
+# Same rule for plugin specs (see "Testing a plugin" in docs/developer/customization.md). Without
+# this the root tsc in the builder compiles them, and they import @common/TestHarness -- which the
+# line above has already excluded -- so the image build fails on a file it should never have had.
+plugins/**/test
 packages/common/**/*.js*
 packages/portal/backend/src-util
 

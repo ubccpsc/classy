@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { GradeTransport, RepositoryTransport, StudentTransport } from "@common/types/PortalTypes";
+import { GradeTransport, PersonTransport, RepositoryTransport } from "@common/types/PortalTypes";
 import { Factory } from "../Factory";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -8,7 +8,7 @@ import { IView } from "./IView";
 
 export abstract class AbstractStudentView implements IView {
 	protected remote: string = null;
-	protected person: StudentTransport = null;
+	protected person: PersonTransport = null;
 	protected grades: GradeTransport[] = [];
 	protected repos: RepositoryTransport[] = [];
 
@@ -37,7 +37,7 @@ export abstract class AbstractStudentView implements IView {
 		this.renderRepositories();
 	}
 
-	protected getStudent(): StudentTransport {
+	protected getStudent(): PersonTransport {
 		return this.person;
 	}
 
@@ -87,7 +87,7 @@ export abstract class AbstractStudentView implements IView {
 		this.person = null;
 
 		try {
-			this.person = (await this.fetchData("/portal/person")) as StudentTransport;
+			this.person = (await this.fetchData("/portal/person")) as PersonTransport;
 		} catch (err) {
 			Log.error("AbstractStudentView::prepareData() - fetching person; ERROR: " + err.message);
 			UI.showError(err.message);
@@ -241,15 +241,6 @@ export abstract class AbstractStudentView implements IView {
 					sortDown: false, // Whether the column should initially sort descending or ascending.
 					style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 				},
-				// could be result in the future (provisioned | detached)
-				// {
-				//     id:          "result",
-				//     text:        "State",
-				//     sortable:    false,
-				//     defaultSort: false,
-				//     sortDown:    true,
-				//     style:       "padding-left: 1em; padding-right: 1em; text-align: left;"
-				// }
 			];
 
 			const st = new SortableTable(headers, "#studentRepoTable");

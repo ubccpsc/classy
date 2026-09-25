@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport } from "@common/types/PortalTypes";
+import { CourseTransport, Payload, PersonTransport, ProvisionTransport, TeamFormationTransport } from "@common/types/PortalTypes";
 import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
 import { OnsButtonElement } from "onsenui";
 import { Network } from "../util/Network";
@@ -245,24 +245,6 @@ export class AdminConfigTab extends AdminPage {
 					Log.error("AdminConfigTab imageDelete ERROR: " + err.message);
 				});
 		};
-
-		// (document.querySelector("#adminManagePullRequestsButton") as OnsButtonElement).onclick = function(evt) {
-		//     Log.info("AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed");
-		//     evt.preventDefault();
-
-		//     that.pushPage("./adminPullRequests.html", {}).then(function() {
-		//         const pullRequestsPage = new AdminPullRequestsPage(that.remote);
-		//         pullRequestsPage.init({}).then(function() {
-		//             // success
-		//             Log.info("AdminConfigTab::handleAdminConfig(..) - PRs page init");
-		//         }).catch(function(err) {
-		//             // error
-		//             Log.error("AdminConfigTab::handleAdminConfig(..) - PRs page ERROR: " + err);
-		//         });
-		//     }).catch(function(err) {
-		//         Log.error("AdminConfigTab - adminPullRequests ERROR: " + err.message);
-		//     });
-		// };
 
 		UI.showModal("Retriving config / deliverable details.");
 
@@ -579,7 +561,7 @@ export class AdminConfigTab extends AdminPage {
 
 	private showClasslistChanges(classlistChanges: any): void {
 		Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
-		const mapToTextAndSubtext = function (people: StudentTransport[]) {
+		const mapToTextAndSubtext = function (people: PersonTransport[]) {
 			return people.map(function (person) {
 				return {
 					text: person.id + "/" + person.studentNum + "/" + person.githubId + ": " + person.firstName + " " + person.lastName,
@@ -611,6 +593,35 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
+	 * The classlist-update summary as one line, in the same "# label: n; ..." shape as the
+	 * student-withdraw message so the two buttons read alike. `# registered` is the size of the
+	 * classlist that was processed, not the size of Classy's database.
+	 */
+	private static classlistSummaryMessage(summary: any): string {
+		return (
+			"# registered: " +
+			summary.classlist.length +
+			"; # added: " +
+			summary.created.length +
+			"; # updated: " +
+			summary.updated.length +
+			"; # removed: " +
+			summary.removed.length +
+			"; # not active (on classlist): " +
+			summary.notActive.length +
+			AdminConfigTab.kindBreakdown(summary.notActiveByKind)
+		);
+	}
+
+	/** " (WITHDRAWN: 3, STAFF: 1, null: 1)", or "" when there is nothing to break down. */
+	private static kindBreakdown(byKind: { [kind: string]: number } | undefined): string {
+		const parts = Object.keys(byKind ?? {})
+			.sort()
+			.map((kind) => kind + ": " + byKind[kind]);
+		return parts.length > 0 ? " (" + parts.join(", ") + ")" : "";
+	}
+
+	/**
 	 * Describes every button on this page whose work runs as a background job; JobRunner does the
 	 * starting and watching.
 	 */
@@ -622,11 +633,11 @@ export class AdminConfigTab extends AdminPage {
 				statusId: "adminUpdateClasslistStatus",
 				ran: "Last updated",
 				detail: function (summary: any): string {
-					return summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed.";
+					return AdminConfigTab.classlistSummaryMessage(summary);
 				},
 				// only for the run this page started; arriving at a finished job should not reopen it
 				onFinished: (summary: any) => {
-					UI.notificationToast("Classlist updated: " + summary.classlist.length + " students processed.");
+					UI.notificationToast("Classlist updated: " + AdminConfigTab.classlistSummaryMessage(summary));
 					this.showClasslistChanges(summary);
 				},
 			},
@@ -646,6 +657,20 @@ export class AdminConfigTab extends AdminPage {
 
 		if ((await this.isPrairieLearnEnabled()) === true) {
 			(document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement).style.display = "";
+
+			const reinterpretItem = document.querySelector("#adminPrairieLearnReinterpretItem") as HTMLElement;
+			if (reinterpretItem !== null) {
+				reinterpretItem.style.display = "";
+				sections.push({
+					kind: "prairielearn-reinterpret",
+					buttonId: "adminPrairieLearnReinterpretButton",
+					cancelButtonId: "adminPrairieLearnReinterpretCancelButton",
+					statusId: "adminPrairieLearnReinterpretStatus",
+					ran: "Last re-derived",
+					neverRun: "Never re-derived.",
+					detail: AdminConfigTab.describePrairieLearnReinterpret,
+				});
+			}
 			sections.push({
 				kind: "prairielearn-sync",
 				buttonId: "adminPrairieLearnSyncButton",
@@ -654,6 +679,12 @@ export class AdminConfigTab extends AdminPage {
 				ran: "Last synced",
 				neverRun: "Never synced.",
 				detail: AdminConfigTab.describePrairieLearnSummary,
+				// a Result's report is derived at sync time and then stored, so changing how the
+				// payload is read does not update rows that are already synced; this forces them
+				params: () => {
+					const force = document.querySelector("#adminPrairieLearnForce") as HTMLInputElement;
+					return { force: force !== null && force.checked === true };
+				},
 			});
 		}
 
@@ -677,6 +708,27 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
+	/**
+	 * The one-line summary shown under the Re-derive button.
+	 */
+	private static describePrairieLearnReinterpret(summary: any): string {
+		if (typeof summary === "undefined" || summary === null) {
+			return "";
+		}
+		const parts: string[] = [summary.resultsRewritten + " of " + summary.resultsSeen + " results re-derived"];
+		if (summary.resultsWithoutArchive > 0) {
+			// these predate the archive, so only a forced sync can refresh them
+			parts.push(summary.resultsWithoutArchive + " have no stored payload (force a sync for those)");
+		}
+		if (Array.isArray(summary.resultsFailed) && summary.resultsFailed.length > 0) {
+			parts.push(summary.resultsFailed.length + " could not be read");
+		}
+		if (summary.cancelled === true) {
+			parts.push("cancelled");
+		}
+		return parts.join("; ");
+	}
+
 	private static describePrairieLearnSummary(summary: any): string {
 		let detail = summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
 		if (summary.deliverablesCreated?.length > 0) {
@@ -687,7 +739,40 @@ export class AdminConfigTab extends AdminPage {
 		}
 		if (summary.unmatchedUids?.length > 0) {
 			// a systematic mismatch looks like "nobody has submitted"; make it loud
-			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
+			detail += "; <b>" + summary.unmatchedUids.length + " unmatched student(s)</b>";
+		}
+		if (summary.unmatchedNonStudentUids?.length > 0) {
+			// expected and permanent (staff need not be in the classlist), so it is stated plainly
+			// rather than bolded: bolding it would train people to ignore the line above
+			detail += "; " + summary.unmatchedNonStudentUids.length + " unmatched non-student(s)";
+		}
+		// why examined instances produced no grade (added 2026-09-15; older summaries lack these)
+		if (summary.skippedWithoutGrade?.length > 0) {
+			// informational, not an alarm: after a forced sync this is simply every student whose
+			// last examination wrote no grade (never submitted, nothing gradeable, or only after
+			// close). It only matters for a student who now has feedback on PrairieLearn, and a
+			// forced sync is what picks that up.
+			detail += "; " + summary.skippedWithoutGrade.length + " unchanged, still without a grade";
+		}
+		if (summary.noGradeableSubmission?.length > 0) {
+			detail += "; " + summary.noGradeableSubmission.length + " with no gradeable submission";
+		}
+		if (summary.allAfterClose?.length > 0) {
+			detail += "; " + summary.allAfterClose.length + " graded only after close";
+		}
+		if (summary.noSubmissions > 0) {
+			detail += "; " + summary.noSubmissions + " never submitted";
+		}
+		if (summary.submissionsNotGradeable) {
+			const n = summary.submissionsNotGradeable;
+			detail +=
+				"; un-gradeable submissions: " +
+				n.graderFailed +
+				" grader failed, " +
+				n.noFeedback +
+				" no feedback, " +
+				n.noUsableScore +
+				" no usable score";
 		}
 		return detail + ".";
 	}

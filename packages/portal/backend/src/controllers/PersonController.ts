@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { StudentTransport } from "@common/types/PortalTypes";
+import { PersonTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Person, PersonKind, Repository } from "../Types";
 
@@ -199,35 +199,48 @@ export class PersonController {
 		Log.info(
 			"PersonController::markStudentsWithdrawn( .. ) - # people: " + people.length + "; # registered: " + registeredGithubIds.length
 		);
-		let numStudents = 0;
+		// Counted after each person's kind has been settled, so a re-enrolled student lands in
+		// active and a student dropped on this run lands in both withdrawn totals.
+		let numActive = 0;
 		let numWithdrawn = 0;
+		let numWithdrawnThisRun = 0;
+		// GitHub logins are case-insensitive, and Classy lowercases the CWL it stores as githubId;
+		// an exact compare withdrew anyone whose login GitHub reports with a capital letter, every run.
+		const registered = new Set(registeredGithubIds.map((id) => id.toLowerCase()));
 		for (const person of people) {
-			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN) {
-				numStudents++;
-				if (registeredGithubIds.indexOf(person.githubId) >= 0) {
+			// A null kind is a student whose role is being re-derived: the login callback nulls it
+			// and the next privileged request fills it back in. Skipping them here made a student
+			// who logged in but never loaded a page invisible to both counts (AdminController::getPeople
+			// already treats null as a student for the same reason). On the team they count as
+			// active and kind is left null, so the pending re-derivation still runs; off the team
+			// they are withdrawn like any other student.
+			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN || person.kind === null) {
+				if (typeof person.githubId === "string" && registered.has(person.githubId.toLowerCase())) {
 					// student is registered
 					if (person.kind === PersonKind.WITHDRAWN) {
 						// this will happen if they have withdrawn and then re-enrolled
 						person.kind = PersonKind.STUDENT;
 						await this.writePerson(person);
 					}
+					numActive++;
 				} else {
 					// student is not registered; mark as withdrawn
 					if (person.kind !== PersonKind.WITHDRAWN) {
-						numWithdrawn++;
+						numWithdrawnThisRun++;
 						person.kind = PersonKind.WITHDRAWN;
 						Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
 						await this.writePerson(person);
 					}
+					numWithdrawn++;
 				}
 			}
 		}
-		const msg = "# students: " + numStudents + "; # withdrawn: " + numWithdrawn;
+		const msg = "# active: " + numActive + "; # withdrawn: " + numWithdrawn + "; # withdrawn (this run): " + numWithdrawnThisRun;
 		Log.info("PersonController::markStudentsWithdrawn( .. ) - done; " + msg);
 		return msg;
 	}
 
-	public static personToTransport(person: Person): StudentTransport {
+	public static personToTransport(person: Person): PersonTransport {
 		if (typeof person === "undefined" || person === null) {
 			throw new Error("PersonController::personToTransport( ... ) - ERROR: person not provided.");
 		}
@@ -240,89 +253,6 @@ export class PersonController {
 			userUrl: person.URL,
 			studentNum: person.studentNumber,
 			labId: person.labId,
-		} as StudentTransport;
+		} as PersonTransport;
 	}
-
-	// /**
-	//  * Updates people records from a CSV.
-	//  *
-	//  * If the CSV has someone new, they are added.
-	//  * If the CSV has an existing person, they are updated using their id with the details from the CSV.
-	//  * If a person exists who is not in the CSV, nothing happens (e.g., no deletions).
-	//  *
-	//  * @returns {Promise<Person[]>}
-	//  */
-	//
-	// public async populatePeople(): Promise<{ newPeople: Person[], updatedPeople: Person[] }> {
-	//     Log.info("PersonController::populatePeople() - start");
-	//
-	//     let errorMessage = this.validateCSV();
-	//     if (errorMessage.length > 0) {
-	//         Log.info("PersonController::populatePeople() - ERROR: " + errorMessage);
-	//         return;
-	//     }
-	//
-	//     let newPeople: Person[] = [];
-	//     let updatedPeople: Person[] = [];
-	//
-	//     let csv: {}[] = [];
-	//     let people = await this.db.getPeople();
-	//     for (const row of csv as any) {
-	//         let csvPerson: Person = {
-	//             id:            row.csId, // IDs are CSIDs
-	//             csId:          row.csId,
-	//             githubId:      row.cwl,
-	//             studentNumber: row.sNum,
-	//             fName:         row.fName,
-	//             lName:         row.lName,
-	//             labId:         row.labId,
-	//
-	//             kind:   "student", // only students are added via CSV
-	//             URL:    null,
-	//             custom: {}
-	//         };
-	//
-	//         let found = false;
-	//         for (const p of people) {
-	//
-	//             if (p.id === csvPerson.id) {
-	//                 found = true;
-	//
-	//                 // do not overwrite fields that cannot change
-	//                 csvPerson.custom = p.custom;
-	//                 csvPerson.URL = p.URL;
-	//                 await this.db.writePerson(csvPerson);
-	//
-	//                 updatedPeople.push(csvPerson);
-	//             }
-	//         }
-	//
-	//         if (found === false) {
-	//             await this.db.writePerson(csvPerson);
-	//             newPeople.push(csvPerson);
-	//         }
-	//     }
-	//
-	//     // NOT HANDLED (intentionally): removing people who are in the database but not the CSV
-	//
-	//     return {newPeople: newPeople, updatedPeople: updatedPeople};
-	// }
-	//
-	// /**
-	//  * Returns an empty string if the csv is valid; a string error message otherwise.
-	//  *
-	//  * @returns {string }
-	//  */
-	// private validateCSV(): string {
-	//     // TODO: check that reqiured rows exist
-	//
-	//     // CSID
-	//     // CWL
-	//     // SNUM
-	//     // FNAME
-	//     // LNAME
-	//     // LABID
-	//
-	//     return "";
-	// }
 }

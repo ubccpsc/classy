@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 
-import { AdminController } from "@backend/controllers/AdminController";
+import { AdminController, ProvisionPlanReport } from "@backend/controllers/AdminController";
 import { ICourseController } from "@backend/controllers/CourseController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
@@ -10,13 +10,15 @@ import { GitHubController, IGitHubController } from "@backend/controllers/GitHub
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
+import { ResultsController } from "@backend/controllers/ResultsController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import { Deliverable, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
-import { AutoTestGradeTransport, GradeTransport, StudentTransport, TeamTransport } from "@common/types/PortalTypes";
+import { AutoTestGradeTransport, GradeTransport, PersonTransport, TeamTransport } from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -141,11 +143,11 @@ describe("AdminController", () => {
 	});
 
 	it("Should be able to get a list of students.", async function () {
-		const res = await ac.getStudents();
+		const res = await ac.getPeople();
 		expect(res).to.be.an("array");
 		expect(res.length).to.be.greaterThan(0);
 
-		const s: StudentTransport = {
+		const s: PersonTransport = {
 			firstName: "first_" + TestHarness.USER1.id,
 			lastName: "last_" + TestHarness.USER1.id,
 			id: TestHarness.USER1.id,
@@ -153,6 +155,7 @@ describe("AdminController", () => {
 			userUrl: Config.getInstance().getProp(ConfigKey.githubHost) + "/" + TestHarness.USER1.github,
 			studentNum: null,
 			labId: "l1a",
+			kind: PersonKind.STUDENT, // the listing reports each person's kind, for the grades page column
 		};
 
 		expect(res).to.deep.include(s); // make sure at least one student with the right format is in there
@@ -176,6 +179,20 @@ describe("AdminController", () => {
 		expect(actual).to.deep.include(t); // make sure at least one student with the right format is in there
 	});
 
+	it("Should link every grade to its own person.", async () => {
+		// getGrades used to find each grade's person with a linear search of everyone; it is a Map now.
+		// Checked for every grade in every view, not just the one fixture row the test below looks for.
+		const host = Config.getInstance().getProp(ConfigKey.githubHost);
+		const people = new PersonController();
+		for (const view of ["students", "staff", "all"] as const) {
+			const res = await ac.getGrades(view);
+			for (const grade of res) {
+				const person = await people.getPerson(grade.personId);
+				expect(grade.personURL, view + ": " + grade.personId).to.equal(host + "/" + person.githubId);
+			}
+		}
+	});
+
 	it("Should be able to get a list of grades.", async () => {
 		const res = await ac.getGrades();
 		expect(res).to.be.an("array");
@@ -196,6 +213,119 @@ describe("AdminController", () => {
 			custom: {},
 		};
 		expect(res).to.deep.include(t); // make sure at least one student with the right format is in there
+	});
+
+	it("Should carry the people and the report's custom out to the admin views.", async () => {
+		// Both were dropped on the way to the transport: `people` did not exist on it, and `custom`
+		// was hard-coded to {} at two sites. That left the Results and Dashboard views unable to say
+		// who a result belonged to, and discarded anything a course attached for them to render --
+		// which is how PrairieLearn rows would arrive with no owner and no student-test count.
+		//
+		// NOTE: this updates an EXISTING fixture result rather than writing a new one. writeResult
+		// upserts on (delivId, repoId, commitSHA, ref), so this changes no counts -- the sibling
+		// tests below assert exact result totals, and an inserted row breaks them.
+		const dbc = DatabaseController.getInstance();
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: expected fixture results to exist").to.be.greaterThan(0);
+
+		const target = all[0];
+		expect(target.people.length, "setup: fixture results carry people").to.be.greaterThan(0);
+		(target.output.report as any).custom = { studentTestsPassing: 28, bucket: "developing" };
+		await dbc.writeResult(target);
+
+		const results = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const row = results.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(row, "the updated result must come back").to.not.be.undefined;
+		expect(row.people, "the transport must name the owner").to.deep.equal(target.people);
+		expect(row.custom.studentTestsPassing, "the report's custom must survive the clip").to.equal(28);
+		expect(row.custom.bucket).to.equal("developing");
+
+		// and the same on the dashboard, which used to re-empty custom after the spread
+		const dash = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const dashRow = dash.find((r) => r.commitSHA === target.commitSHA);
+
+		expect(dashRow, "the updated result must reach the dashboard too").to.not.be.undefined;
+		expect(dashRow.people).to.deep.equal(target.people);
+		expect(dashRow.custom.studentTestsPassing).to.equal(28);
+	});
+
+	it("Should filter results by person view.", async () => {
+		// Results are keyed by repo, not by person, so this has to resolve each result's people to
+		// their kind -- which is only possible because the transport now carries `people`.
+		const dbc = DatabaseController.getInstance();
+
+		const student = TestHarness.createPerson("viewStudent", "viewStudent", "viewStudentGh", PersonKind.STUDENT);
+		const staff = TestHarness.createPerson("viewStaff", "viewStaff", "viewStaffGh", PersonKind.STAFF);
+		await dbc.writePerson(student);
+		await dbc.writePerson(staff);
+
+		// updates in place (writeResult upserts), so no counts move for the sibling tests
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup: fixture results must exist").to.be.greaterThan(1);
+
+		const studentResult = all[0];
+		studentResult.people = [student.id];
+		await dbc.writeResult(studentResult);
+
+		const staffResult = all[1];
+		staffResult.people = [staff.id];
+		await dbc.writeResult(staffResult);
+
+		const students = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "students");
+		const studentShas = students.map((r) => r.commitSHA);
+		expect(studentShas, "the student's result is in the students view").to.contain(studentResult.commitSHA);
+		expect(studentShas, "the staff result is not").to.not.contain(staffResult.commitSHA);
+
+		const staffOnly = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "staff");
+		const staffShas = staffOnly.map((r) => r.commitSHA);
+		expect(staffShas).to.contain(staffResult.commitSHA);
+		expect(staffShas).to.not.contain(studentResult.commitSHA);
+
+		// "all" is the default, and must not filter anything out
+		const everything = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		const allShas = everything.map((r) => r.commitSHA);
+		expect(allShas).to.contain(studentResult.commitSHA);
+		expect(allShas).to.contain(staffResult.commitSHA);
+
+		// the dashboard shares the same filter
+		const dashStudents = await ac.getDashboard(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, undefined, "students");
+		expect(
+			dashStudents.map((r) => r.commitSHA),
+			"dashboard filters too"
+		).to.not.contain(staffResult.commitSHA);
+	});
+
+	it("Should filter results by person, matching either the id or the CWL.", async () => {
+		// A course whose results are keyed by something opaque -- PrairieLearn puts the assessment
+		// instance in repoId -- has no other way to ask for one student's work. The CWL is what an
+		// admin picks, but Result.people stores Person.id, so both have to resolve.
+		const dbc = DatabaseController.getInstance();
+
+		const person = TestHarness.createPerson("personFilterId", "personFilterId", "personFilterCwl", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup").to.be.greaterThan(1);
+
+		const mine = all[0];
+		mine.people = [person.id];
+		await dbc.writeResult(mine); // upserts; no counts move
+
+		const others = all[1];
+		expect(others.people, "setup: the other result belongs to someone else").to.not.contain(person.id);
+
+		for (const query of [person.id, person.githubId, person.githubId.toUpperCase()]) {
+			const found = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1, undefined, "all", query);
+			const shas = found.map((r) => r.commitSHA);
+			expect(shas, "matched by " + query).to.contain(mine.commitSHA);
+			expect(shas, "and nobody else's").to.not.contain(others.commitSHA);
+		}
+
+		// no filter means everyone
+		const unfiltered = await ac.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(unfiltered.map((r) => r.commitSHA)).to.contain(others.commitSHA);
 	});
 
 	it("Should be able to get a list of results with wildcards.", async () => {
@@ -240,6 +370,158 @@ describe("AdminController", () => {
 		const res = await ac.getResults("any", TestHarness.REPONAME1);
 		expect(res).to.be.an("array");
 		expect(res.length).to.equal(10);
+	});
+
+	describe("summary reads for the Results and Dashboard pages", function () {
+		// These pages read results through AdminController.SUMMARY_PROJECTION and, where it is safe,
+		// with their cap pushed into the query. Nothing here inserts a result: the sibling tests
+		// assert exact totals over the shared fixture, so the one record that needs a populated
+		// custom is upserted in place (writeResult upserts on delivId, repoId, commitSHA and ref).
+
+		const byRepo = (a: Result, b: Result) => a.input.target.repoId.localeCompare(b.input.target.repoId);
+		const byIdentity = (a: any, b: any) =>
+			(a.delivId + a.repoId + a.commitSHA + a.timestamp).localeCompare(b.delivId + b.repoId + b.commitSHA + b.timestamp);
+
+		it("Should build identical transports from a projected read and a full read.", async function () {
+			// The guard SUMMARY_PROJECTION's NOTE points at. A field the projection leaves out does not
+			// fail anything: it reads as undefined, and the transport quietly differs from what a full
+			// record produces. So build every transport both ways from the same records and compare.
+			const dbc = DatabaseController.getInstance();
+
+			// a non-empty custom, so this proves the projection carries it -- {} would match {} regardless
+			const latest = (await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1))[0];
+			expect(latest, "setup: expected fixture results").to.not.be.undefined;
+			(latest.output.report as any).custom = { studentTestsPassing: 7, bucket: "proficient" };
+			await dbc.writeResult(latest);
+
+			const full = (await dbc.getResultsForDeliverable(TestHarness.DELIVID0)).sort(byRepo);
+			const projected = (await dbc.getResultsForDeliverable(TestHarness.DELIVID0, AdminController.SUMMARY_PROJECTION)).sort(byRepo);
+			expect(full.length, "setup: expected fixture results").to.be.greaterThan(0);
+			expect(projected.length, "a projection must not change which records come back").to.equal(full.length);
+
+			// and it must really have projected, or everything below compares a record with itself
+			expect(full[0].output.report.feedback, "setup: fixture results carry feedback").to.equal("feedback");
+			expect(projected[0].output.report.feedback, "neither page shows feedback, so it must not be read").to.be.undefined;
+
+			const acAny = ac as any;
+			for (let i = 0; i < full.length; i++) {
+				const repoId = full[i].input.target.repoId;
+				expect(await acAny.clipAutoTestResult(projected[i]), "results row for " + repoId).to.deep.equal(
+					await acAny.clipAutoTestResult(full[i])
+				);
+				expect(await acAny.createDashboardTransport(projected[i]), "dashboard row for " + repoId).to.deep.equal(
+					await acAny.createDashboardTransport(full[i])
+				);
+			}
+
+			// and the populated custom reaches the page through the public path
+			const dashRow = (await ac.getDashboard(TestHarness.DELIVID0, "any")).find((r) => r.commitSHA === latest.commitSHA);
+			expect(dashRow, "the updated result must reach the dashboard").to.not.be.undefined;
+			expect(dashRow.custom.studentTestsPassing).to.equal(7);
+		});
+
+		it("Should serve every query shape the pages use with the same rows as a full read.", async function () {
+			// End to end through the public method, one case per read matchResults can choose. The
+			// expected rows are built from full reads of the same data, so any difference is the
+			// projection or the limit changing what a page shows.
+			const dbc = DatabaseController.getInstance();
+			const resC = new ResultsController();
+			const acAny = ac as any;
+			const clip = async (rows: Result[]) => Promise.all(rows.map((r) => acAny.clipAutoTestResult(r)));
+
+			const byDeliv = (await clip(await dbc.getResultsForDeliverable(TestHarness.DELIVID0))).sort(byIdentity);
+			expect((await ac.getResults(TestHarness.DELIVID0, "any")).sort(byIdentity), "by deliverable").to.deep.equal(byDeliv);
+
+			const byRepoRows = (await clip(await resC.getResultsForRepo(TestHarness.REPONAME1))).sort(byIdentity);
+			expect((await ac.getResults("any", TestHarness.REPONAME1)).sort(byIdentity), "by repo").to.deep.equal(byRepoRows);
+
+			// the one shape where the default view pushes the limit down
+			const everything = (await clip(await resC.getAllResults())).sort(byIdentity);
+			expect((await ac.getResults("any", "any")).sort(byIdentity), "everything").to.deep.equal(everything);
+		});
+
+		it("Should push the cap into the query only when nothing filters after it.", async function () {
+			// Truncating before a filter that runs in JS drops rows that filter would have kept, so the
+			// cap may move into the query only when the query itself applies every filter.
+			const calls: Array<{ read: string; opts: any }> = [];
+			(ac as any).resC = {
+				getAllResults: async (opts: any): Promise<Result[]> => {
+					calls.push({ read: "all", opts: opts });
+					return [];
+				},
+				getResultsForRepo: async (_repoId: string, opts: any): Promise<Result[]> => {
+					calls.push({ read: "repo", opts: opts });
+					return [];
+				},
+				getResultsForDeliverable: async (_delivId: string, _kind: any, projection: any): Promise<Result[]> => {
+					calls.push({ read: "deliv", opts: { projection: projection } });
+					return [];
+				},
+			};
+
+			const D = TestHarness.DELIVID0;
+			const R = TestHarness.REPONAME1;
+			const cases: Array<{ deliv: string; repo: string; view: any; person: string | null; read: string; limit: number; why: string }> = [
+				{ deliv: "any", repo: "any", view: "all", person: null, read: "all", limit: 1000, why: "nothing filters after the query" },
+				{ deliv: "any", repo: "any", view: "students", person: null, read: "all", limit: undefined, why: "the view filter runs in JS" },
+				{ deliv: "any", repo: "any", view: "all", person: "someone", read: "all", limit: undefined, why: "the person filter runs in JS" },
+				{ deliv: "any", repo: R, view: "all", person: null, read: "repo", limit: 1000, why: "the by-repo query applies the only filter" },
+				{
+					deliv: D,
+					repo: R,
+					view: "all",
+					person: null,
+					read: "repo",
+					limit: undefined,
+					why: "the by-repo query does not filter on deliverable",
+				},
+				{ deliv: D, repo: "any", view: "all", person: null, read: "deliv", limit: undefined, why: "that read is already one row per repo" },
+			];
+
+			for (const c of cases) {
+				calls.length = 0;
+				await ac.getResults(c.deliv, c.repo, undefined, c.view, c.person);
+				expect(calls.length, c.why).to.equal(1);
+				expect(calls[0].read, c.why).to.equal(c.read);
+				expect(calls[0].opts.limit, c.why).to.equal(c.limit);
+				expect(calls[0].opts.projection, "every page read is projected: " + c.why).to.equal(AdminController.SUMMARY_PROJECTION);
+			}
+		});
+
+		it("Should return the newest records when a read is limited.", async function () {
+			const dbc = DatabaseController.getInstance();
+			const sha = (r: Result) => r.commitSHA;
+
+			const all = await dbc.getAllResults();
+			expect(all.length, "setup: expected several fixture results").to.be.greaterThan(2);
+			expect((await dbc.getAllResults({ limit: 2 })).map(sha)).to.deep.equal(all.slice(0, 2).map(sha));
+
+			const repoAll = await dbc.getResultsForRepo(TestHarness.REPONAME1);
+			expect((await dbc.getResultsForRepo(TestHarness.REPONAME1, { limit: 1 })).map(sha)).to.deep.equal(repoAll.slice(0, 1).map(sha));
+		});
+
+		it("Should still read whole records when no options are given.", async function () {
+			// PrairieLearnAgent, the database validator and cs310's AllResults extractor read results
+			// this way and use fields neither page needs.
+			const dbc = DatabaseController.getInstance();
+			const reads = [
+				await dbc.getResultsForDeliverable(TestHarness.DELIVID0),
+				await dbc.getResultsForRepo(TestHarness.REPONAME1),
+				await dbc.getAllResults(),
+			];
+			for (const rows of reads) {
+				expect(rows.length, "setup: expected fixture results").to.be.greaterThan(0);
+				expect(rows[0].output.report.feedback).to.equal("feedback");
+				expect(rows[0].input.target.cloneURL).to.equal("cloneURL");
+			}
+		});
+
+		it("Should index results by deliverable, latest first.", async function () {
+			const coll = await (DatabaseController.getInstance() as any).getCollection("results");
+			const index = (await coll.indexes()).find((i: any) => i.name === "delivIdTs");
+			expect(index, "the delivIdTs index must exist").to.not.be.undefined;
+			expect(index.key).to.deep.equal({ delivId: 1, "input.target.timestamp": -1 });
+		});
 	});
 
 	it("Should be able to get a list of repositories.", async () => {
@@ -481,22 +763,201 @@ describe("AdminController", () => {
 		await dbc.writeRepository(repo);
 
 		const ghc = new GitHubController(gha);
-		let threw = false;
+		let thrown: Error = null;
 		try {
 			// the import cannot succeed, so this fails and takes the rollback path. The URL points at
 			// a closed local port on purpose: the clone is refused immediately, with no DNS lookup
 			// and nothing left outside this process.
 			await ghc.provisionRepository(repoId, [], "https://localhost:1/does-not-exist.git");
-		} catch (_err) {
-			threw = true;
+		} catch (err) {
+			thrown = err;
 		}
-		expect(threw, "provisioning a repo whose import cannot be reached must fail").to.be.true;
+		expect(thrown, "provisioning a repo whose import cannot be reached must fail").to.not.be.null;
+
+		// the failed clone command carries the bot token in its remote URL; the error that reaches
+		// the caller (and its logs) must not
+		const token = Config.getInstance().getProp(ConfigKey.githubBotToken);
+		const bare = token.substring(token.indexOf("token ") + 6);
+		expect(thrown.message).to.not.contain(bare);
 
 		const after = await dbc.getRepository(repoId);
 		expect(after.gitHubStatus, "must be provisionable again").to.equal(RepoStatus.NOT_CREATED);
 		expect(after.URL, "a repo that is not on GitHub must not carry a URL").to.be.null;
 		expect(after.cloneURL).to.be.null;
 	}).timeout(TestHarness.TIMEOUTLONG);
+
+	describe("prepareProvision reporting", function () {
+		// Who a plan leaves out, and why, used to be visible only as a Log.error mid-run
+		const STAFF = TestHarness.createPerson("provRepStaff", "provRepStaffCSID", "provRepStaffGh", PersonKind.STAFF);
+		const ADMIN = TestHarness.createPerson("provRepAdmin", "provRepAdminCSID", "provRepAdminGh", PersonKind.ADMIN);
+
+		function teamDeliverable(id: string, studentsForm: boolean): Deliverable {
+			const d = TestHarness.createDeliverable(id);
+			d.teamMinSize = 1;
+			d.teamMaxSize = 2; // a TEAM deliverable: singles are formed only when asked (DELIVID0 forces it)
+			d.teamStudentsForm = studentsForm;
+			d.shouldProvision = true;
+			return d;
+		}
+
+		before(async function () {
+			// NOTE: the shared controllers (dc, ac, ...) are assigned in the outer beforeEach, which has
+			// not run yet when a nested before() executes; build what this hook needs directly
+			const dbc = DatabaseController.getInstance();
+			await dbc.writePerson(STAFF);
+			await dbc.writePerson(ADMIN);
+			const delivs = new DeliverablesController();
+			await delivs.saveDeliverable(teamDeliverable("provRepTeam", true));
+			await delivs.saveDeliverable(teamDeliverable("provRepNoForm", false));
+		});
+
+		it("Should report un-teamed people -- staff and admins included -- when singles are not formed.", async function () {
+			const deliv = await dc.getDeliverable("provRepTeam");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(deliv, false, null, report);
+			Log.test("not placed: " + JSON.stringify(report.notPlaced.map((n) => n.personId + "/" + n.kind)));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids, "the staff member is named").to.include(STAFF.id);
+			expect(ids, "the admin is named").to.include(ADMIN.id);
+			expect(report.peopleNotOnTeam).to.be.at.least(2);
+			for (const n of report.notPlaced) {
+				expect(n.reason, n.personId).to.contain("not selected");
+			}
+		});
+
+		it("Should place staff and admins in singleton teams when singles are formed, and report nobody for them.", async function () {
+			const deliv = await dc.getDeliverable("provRepTeam");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			const plan = await ac.prepareProvision(deliv, true, null, report);
+			Log.test("planned " + plan.length + " repos; not placed: " + JSON.stringify(report.notPlaced));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids).to.not.include(STAFF.id);
+			expect(ids).to.not.include(ADMIN.id);
+			for (const person of [STAFF, ADMIN]) {
+				const teams = (await tc.getTeamsForPerson(person)).filter((t) => t.delivId === deliv.id);
+				expect(teams, person.id + " has a singleton team").to.have.lengthOf(1);
+				const repos = (await rc.getAllRepos()).filter((r) => r.delivId === deliv.id && r.teamIds.indexOf(teams[0].id) >= 0);
+				expect(repos, person.id + " has a repo in the plan").to.have.lengthOf(1);
+			}
+		});
+
+		it("Should place staff and admins even where students may not form their own teams.", async function () {
+			// teamStudentsForm=false is a rule about STUDENTS forming teams. The plan is the admin forming
+			// them, so it runs formTeam with adminOverride=true (2026-09-17); before that, every singleton
+			// on such a deliverable -- staff and admins included -- was refused with "students cannot form
+			// their own teams" and silently left out of the plan.
+			const deliv = await dc.getDeliverable("provRepNoForm");
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(deliv, true, null, report);
+			Log.test("not placed: " + JSON.stringify(report.notPlaced));
+
+			const ids = report.notPlaced.map((n) => n.personId);
+			expect(ids, "the override lets the admin place them").to.not.include(STAFF.id);
+			expect(ids).to.not.include(ADMIN.id);
+			for (const person of [STAFF, ADMIN]) {
+				const teams = (await tc.getTeamsForPerson(person)).filter((t) => t.delivId === deliv.id);
+				expect(teams, person.id + " has a singleton team on the students-cannot-form deliverable").to.have.lengthOf(1);
+			}
+		});
+
+		it("Should still report, rather than silently drop, a person the override cannot place.", async function () {
+			// The one failure adminOverride does not waive: computeNames() builds the team name from csId,
+			// so two people with the same csId get the same name and the second createTeam() fails. This
+			// is what a staff Person with an empty or copied csId looks like in production. The plan must
+			// say so instead of continuing as if that person did not exist.
+			const dbc = DatabaseController.getInstance();
+			const twinA = TestHarness.createPerson("provRepTwinA", "provRepSharedCSID", "provRepTwinAGh", PersonKind.STAFF);
+			const twinB = TestHarness.createPerson("provRepTwinB", "provRepSharedCSID", "provRepTwinBGh", PersonKind.STAFF);
+			await dbc.writePerson(twinA);
+			await dbc.writePerson(twinB);
+			const d = TestHarness.createDeliverable("provRepTwins");
+			d.teamMinSize = 1;
+			d.teamMaxSize = 2;
+			d.shouldProvision = true;
+			await dc.saveDeliverable(d);
+			const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+
+			await ac.prepareProvision(await dc.getDeliverable("provRepTwins"), true, null, report);
+			Log.test("twins not placed: " + JSON.stringify(report.notPlaced));
+
+			const twins = report.notPlaced.filter((n) => n.personId === twinA.id || n.personId === twinB.id);
+			expect(twins, "exactly one twin is refused; the other took the shared name").to.have.lengthOf(1);
+			expect(twins[0].reason.toLowerCase(), "and the reason is the duplicate").to.match(/duplicate|already/);
+		});
+	});
+
+	describe("planRelease", function () {
+		// Three teams on the same deliverable, one per status the plan has to tell apart. Until
+		// this existed, every non-CREATED team was logged as "already attached" and its repo (or a
+		// null, when the record was gone) was pushed into the plan.
+		const dbc = DatabaseController.getInstance();
+		let deliv: Deliverable;
+		const teamIds: string[] = [];
+		const repoIds: string[] = [];
+
+		async function seed(personId: string, teamStatus: TeamStatus, repoStatus: RepoStatus | null): Promise<string> {
+			const person = await dbc.getPerson(personId);
+			const names = await cc.computeNames(deliv, [person]);
+			const team: Team = {
+				id: names.teamName,
+				delivId: deliv.id,
+				personIds: [personId],
+				URL: null,
+				gitHubStatus: teamStatus,
+				githubId: null,
+				custom: {},
+			};
+			await dbc.writeTeam(team);
+			teamIds.push(team.id);
+			if (repoStatus !== null) {
+				const repo: Repository = {
+					id: names.repoName,
+					delivId: deliv.id,
+					teamIds: [team.id],
+					URL: null,
+					cloneURL: null,
+					gitHubStatus: repoStatus,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				repoIds.push(repo.id);
+			}
+			return names.repoName;
+		}
+
+		before(async function () {
+			deliv = await dbc.getDeliverable(TestHarness.DELIVID0);
+		});
+
+		after(async function () {
+			for (const id of teamIds) {
+				await dbc.deleteTeam(await dbc.getTeam(id));
+			}
+			for (const id of repoIds) {
+				await dbc.deleteRepository(await dbc.getRepository(id));
+			}
+		});
+
+		it("Should only report ATTACHED teams as already released, and never a missing repo", async function () {
+			await seed(TestHarness.USER1.id, TeamStatus.NOT_CREATED, RepoStatus.NOT_CREATED); // planned, not on GitHub
+			const releasedRepo = await seed(TestHarness.USER2.id, TeamStatus.ATTACHED, RepoStatus.RELEASED); // done
+			await seed(TestHarness.USER3.id, TeamStatus.ATTACHED, null); // team says attached, repo record gone
+
+			const plan = await ac.planRelease(deliv);
+			Log.test("Release plan: " + JSON.stringify(plan));
+
+			const ids = plan.map((repo) => repo?.id ?? null);
+			expect(ids).to.not.include(null);
+			expect(ids).to.include(releasedRepo);
+			// the NOT_CREATED team's repo has nothing to release and is not "already attached"
+			expect(ids.filter((id) => id !== releasedRepo)).to.have.lengthOf(0);
+		}).timeout(TestHarness.TIMEOUT);
+	});
 
 	describe("performUnrelease", function () {
 		/**
@@ -508,6 +969,10 @@ describe("AdminController", () => {
 		 */
 		class ScriptedUnreleaseController implements IGitHubController {
 			public seen: string[] = [];
+
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
 
 			public constructor(private readonly behaviour: (repoId: string) => boolean | Error) {}
 
@@ -580,7 +1045,31 @@ describe("AdminController", () => {
 			const result = await new AdminController(gh).performUnrelease(repos);
 
 			expect(gh.seen.length).to.equal(3);
-			expect(result.map((repo) => repo.id)).to.deep.equal(repos.map((repo) => repo.id));
+			// completion order is not guaranteed once repos run concurrently
+			expect(result.map((repo) => repo.id).sort()).to.deep.equal(repos.map((repo) => repo.id).sort());
+		});
+
+		it("Should un-release repos concurrently rather than one at a time.", async () => {
+			const repos = makeRepos("UNREL_CONC", 8, RepoStatus.RELEASED);
+
+			let inFlight = 0;
+			let maxInFlight = 0;
+			class SlowUnreleaseController extends ScriptedUnreleaseController {
+				public async unreleaseRepository(repo: Repository): Promise<boolean> {
+					inFlight++;
+					maxInFlight = Math.max(maxInFlight, inFlight);
+					await Util.delay(20);
+					inFlight--;
+					return super.unreleaseRepository(repo);
+				}
+			}
+			const gh = new SlowUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(result.length).to.equal(8);
+			expect(maxInFlight, "repos should overlap").to.be.greaterThan(1);
+			expect(maxInFlight, "but stay within the bound").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
 		});
 
 		it("Should keep going when one repo cannot be un-released.", async () => {
@@ -626,6 +1115,7 @@ describe("AdminController", () => {
 			const gh = new ScriptedUnreleaseController(() => true);
 
 			// cancellation is checked before each repo, so this stops the run after the second
+			// (concurrency 1 so "the second" is well defined)
 			let calls = 0;
 			const ctx = {
 				isCancelled: () => {
@@ -640,7 +1130,7 @@ describe("AdminController", () => {
 				},
 			};
 
-			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+			const result = await new AdminController(gh).performUnrelease(repos, ctx, 1);
 
 			expect(gh.seen.length, "the run stops early").to.equal(2);
 			expect(result.length, "and keeps what it finished").to.equal(2);
@@ -654,7 +1144,7 @@ describe("AdminController", () => {
 
 			let aborted: any = null;
 			try {
-				await new AdminController(gh).performUnrelease(repos);
+				await new AdminController(gh).performUnrelease(repos, null, 1);
 			} catch (err) {
 				aborted = err;
 			}
@@ -672,6 +1162,10 @@ describe("AdminController", () => {
 		// controller it was constructed with rather than building its own.
 		class FatalController implements IGitHubController {
 			public attempts = 0;
+
+			public getActions(): IGitHubActions {
+				return GitHubActions.getInstance();
+			}
 
 			public async provisionRepository(): Promise<boolean> {
 				this.attempts++;
@@ -831,18 +1325,12 @@ describe("AdminController", () => {
 		// });
 
 		beforeEach(function () {
-			const exec = TestHarness.runSlowTest();
-			if (exec) {
-				Log.test("AdminControllerSpec::slowTests - running: " + this.currentTest.title);
-			} else {
-				Log.test("AdminControllerSpec::slowTests - skipping; will run on CI");
-				this.skip();
-			}
+			TestHarness.requiresGitHub(this);
 		});
 
 		// This test must be run first -- before later tests modify the database to a state where students cannot be withdrawn.
 		it("Should be able to mark students as withdrawn.", async () => {
-			const studentsBefore = await ac.getStudents();
+			const studentsBefore = await ac.getPeople();
 			let people = await pc.getAllPeople();
 
 			let numWithrdrawnBefore = 0;
@@ -866,7 +1354,7 @@ describe("AdminController", () => {
 			}
 			expect(numWithrdrawnAfter).to.be.greaterThan(numWithrdrawnBefore);
 
-			const studentsAfter = await ac.getStudents();
+			const studentsAfter = await ac.getPeople();
 			expect(studentsBefore.length).to.be.greaterThan(studentsAfter.length); // students should not include withdrawn students
 		}).timeout(TestHarness.TIMEOUTLONG * 5);
 

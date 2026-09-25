@@ -98,6 +98,22 @@ describe("GitHubController provisioning paths", function () {
 	}
 
 	/**
+	 * Team creation works but adding the members fails once -- the shape of a single mistyped CWL.
+	 */
+	class TeamMembersFailOnceActions extends RecordingActions {
+		public addMembersCalls = 0;
+
+		public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
+			this.addMembersCalls++;
+			if (this.addMembersCalls === 1) {
+				Log.test("TeamMembersFailOnceActions::addMembersToTeam( " + teamName + " ) - failing on purpose, once");
+				throw new Error("addMembersToTeam failed on purpose");
+			}
+			return await super.addMembersToTeam(teamName, members);
+		}
+	}
+
+	/**
 	 * Adding the team to the repo is the one step release depends on.
 	 */
 	class TeamAttachFailsActions extends RecordingActions {
@@ -190,6 +206,47 @@ describe("GitHubController provisioning paths", function () {
 		const after = await dbc.getRepository(REPO_FINALIZE_FAILS);
 		expect(after.gitHubStatus, "must stay retryable").to.equal(RepoStatus.CREATED);
 		expect(after.URL, "informational, but it should still be recorded").to.not.be.null;
+	});
+
+	it("Should not mark a team CREATED until its members are added, so a re-run adds them.", async function () {
+		// Regression: provisionTeam used to set TeamStatus.CREATED right after createTeam, before
+		// addMembersToTeam. The early return at the top of provisionTeam treats CREATED as "nothing to
+		// do", so a first run that created the team and then failed adding members (one mistyped CWL)
+		// left a member-less team that every later run reported as fully provisioned. Students could
+		// not see their repo and nothing said why.
+		const repoId = "ghcProvisionSpecMembersFailOnce";
+		const teamId = "ghcProvisionSpecMembersTeam";
+		const team: Team = await TestHarness.createTeam(teamId, TestHarness.DELIVID0, [TestHarness.USER1.id]);
+		await dbc.writeTeam(team);
+		await dbc.writeRepository({
+			id: repoId,
+			delivId: TestHarness.DELIVID0,
+			teamIds: [teamId],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: RepoStatus.NOT_CREATED,
+			custom: {},
+		});
+
+		const gha = new TeamMembersFailOnceActions();
+		const ghc = new GitHubController(gha);
+
+		// run 1: members fail -> finalization fails -> the team must NOT be marked CREATED
+		let message: string = null;
+		try {
+			await ghc.provisionRepository(repoId, [await dbc.getTeam(teamId)], IMPORT_URL);
+		} catch (err) {
+			message = err.message;
+		}
+		expect(message, "run 1 must report the failure").to.contain("finalization failed");
+		expect(gha.addMembersCalls).to.equal(1);
+		expect((await dbc.getTeam(teamId)).gitHubStatus, "a team with no members is not CREATED").to.not.equal(TeamStatus.CREATED);
+
+		// run 2 (resume): the team is retried, the members are added this time, and only then is it CREATED
+		const provisioned = await ghc.provisionRepository(repoId, [await dbc.getTeam(teamId)], IMPORT_URL);
+		expect(provisioned, "the resume must succeed").to.be.true;
+		expect(gha.addMembersCalls, "the members must be added on the re-run").to.equal(2);
+		expect((await dbc.getTeam(teamId)).gitHubStatus).to.equal(TeamStatus.CREATED);
 	});
 
 	it("Should prune a template import to the requested branch and rename it to main.", async function () {

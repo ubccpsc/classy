@@ -14,7 +14,7 @@ import { IGitHubMessage } from "@autotest/github/GitHubUtil";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { IFeedbackGiven } from "@common/types/AutoTestTypes";
-import { CommitTarget } from "@common/types/ContainerTypes";
+import { CommitTarget, ContainerInput } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 import { TestData } from "./TestData";
 
@@ -205,6 +205,23 @@ describe("GitHubAutoTest", () => {
 		expect(lq.data).to.have.length(2); // two should be queued on low
 		Log.test("values checked");
 	}).timeout(WAIT * 10);
+
+	it("Should cap express-queue jobs per person.", async () => {
+		// Regression: express had no per-person limit, and tick() drains it before the standard and
+		// low queues, so one student mentioning the bot on many commits starved the whole class.
+		const eq = at["expressQueue"] as any;
+		const before = eq.data.length;
+
+		for (let i = 0; i < 4; i++) {
+			const input = JSON.parse(JSON.stringify(TestData.inputRecordA)) as ContainerInput;
+			input.target.commitSHA = "expresscap" + i + "000000000000000000000000000000";
+			input.target.commitURL = input.target.commitURL + "-expresscap" + i;
+			at.addToExpressQueue(input);
+		}
+
+		expect(eq.data.length - before, "MAX_EXPRESS_JOBS is 2").to.equal(2);
+		eq.data.splice(before); // leave the queue as we found it
+	});
 
 	it("Should fail gracefully with bad comments.", async () => {
 		let res = await at.handleCommentEvent(null);

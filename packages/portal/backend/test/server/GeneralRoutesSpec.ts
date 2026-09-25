@@ -580,6 +580,24 @@ describe("General Routes", function () {
 		expect(body.failure.message).to.contain("duplicate");
 	});
 
+	it("Should reject a team request whose githubIds are not strings.", async function () {
+		// Regression: req.body is cast to TeamFormationTransport and each githubId flowed into
+		// readSingleRecord({ githubId }) unvalidated, so an object here is a Mongo operator that
+		// matched an arbitrary classmate and put them on the caller's team.
+		const dc: DatabaseController = DatabaseController.getInstance();
+		const auth = await dc.getAuth(TestHarness.USER1.id);
+		expect(auth).to.not.be.null;
+
+		const teamReq: any = { delivId: TestHarness.DELIVID0, githubIds: [{ $ne: null }] };
+		const response = await request(app).post("/portal/team").send(teamReq).set({ user: auth.personId, token: auth.token });
+		const body: Payload = response.body;
+		Log.test("operator in githubIds: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.success).to.be.undefined;
+		expect(body.failure.message).to.contain("malformed");
+	});
+
 	it("Should not be able to form a team with invalid credentials.", async function () {
 		const teamReq: TeamFormationTransport = {
 			delivId: TestHarness.DELIVID0,

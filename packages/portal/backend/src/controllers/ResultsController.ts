@@ -1,10 +1,12 @@
 import Log from "@common/Log";
 import { AutoTestResult } from "@common/types/AutoTestTypes";
 import { GradeReport } from "@common/types/ContainerTypes";
+import { PersonView } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { Result } from "../Types";
+import { Person, Result } from "../Types";
 
-import { DatabaseController } from "./DatabaseController";
+import { DatabaseController, ReadOptions } from "./DatabaseController";
+import { GradesController } from "./GradesController";
 import { RepositoryController } from "./RepositoryController";
 
 /**
@@ -12,17 +14,71 @@ import { RepositoryController } from "./RepositoryController";
  * retrieving, and updating result records.
  */
 export class ResultsController {
+	/**
+	 * Whether a result belongs to anyone the given view selects.
+	 *
+	 * A result is keyed by repo rather than by person, so unlike the grades page this has to look
+	 * through `Result.people`. ANY member matching is enough: a staff member on an otherwise-student
+	 * team keeps that team's work visible under "students", which is the less surprising of the two
+	 * failure modes. A result with no people cannot be attributed, so it appears only under "all".
+	 *
+	 * Takes a prepared map rather than reading the database, because callers apply this per result
+	 * inside a loop.
+	 */
+	/**
+	 * Whether a result belongs to a particular person.
+	 *
+	 * Matches on Person.id or githubId, because callers come from both sides: the id is what
+	 * `Result.people` stores, and the CWL (githubId) is what an admin actually types or picks. A
+	 * course whose results are keyed by something opaque -- PrairieLearn stores the assessment
+	 * instance in repoId -- has no other way to ask "show me this student's work".
+	 */
+	public static matchesPerson(result: Result, peopleById: Map<string, Person>, person: string): boolean {
+		const wanted = person.toLowerCase();
+		const ids = Array.isArray(result.people) ? result.people : [];
+		for (const id of ids) {
+			if (id.toLowerCase() === wanted) {
+				return true;
+			}
+			const p = peopleById.get(id);
+			if (typeof p !== "undefined" && typeof p.githubId === "string" && p.githubId.toLowerCase() === wanted) {
+				return true;
+			}
+		}
+		return false;
+	}
+
+	public static matchesView(result: Result, peopleById: Map<string, Person>, view: PersonView): boolean {
+		if (view === "all") {
+			return true;
+		}
+		const ids = Array.isArray(result.people) ? result.people : [];
+		for (const id of ids) {
+			const person = peopleById.get(id);
+			if (typeof person !== "undefined" && GradesController.matchesView(person, view) === true) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private db: DatabaseController = DatabaseController.getInstance();
 
 	/**
 	 * This returns absolutely _all_ results stored in the database. This can be slow as there can be a large
 	 * number of total results.
 	 */
-	public async getAllResults(): Promise<Result[]> {
+	/**
+	 * @param opts narrows the read (see ReadOptions); omitted, full documents with no limit
+	 */
+	public async getAllResults(opts: ReadOptions = {}): Promise<Result[]> {
 		Log.trace("ResultsController::getAllResults() - start");
 		const start = Date.now();
 
-		const results = await this.db.getAllResults();
+		// NOTE: with opts.limit the database picks the newest N by input.target.timestamp, which a
+		// pre-2019 document carrying only input.pushInfo does not have; it sorts last and would be
+		// the first thing a limit drops. The re-sort below still orders whatever comes back.
+		const results = await this.db.getAllResults(opts);
 
 		// NOTE: this block can go away once all results have been migrated to use target instead of pushInfo
 		results.sort(function (a: Result, b: Result) {
@@ -370,14 +426,18 @@ export class ResultsController {
 	 * @param delivId
 	 * @param kind
 	 */
-	public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL) {
+	/**
+	 * @param projection narrows the ALL read to these fields; BEST and GRADED always return full
+	 * documents, since their pipelines $lookup the record and do not take one
+	 */
+	public async getResultsForDeliverable(delivId: string, kind: ResultsKind = ResultsKind.ALL, projection?: ReadOptions["projection"]) {
 		Log.trace("ResultsController::getResultsForDeliverable( " + delivId + ", " + kind + " ) - start");
 		const start = Date.now();
 
 		let outcome: Result[] = [];
 		const dbc = DatabaseController.getInstance();
 		if (kind === ResultsKind.ALL) {
-			outcome = await dbc.getResultsForDeliverable(delivId);
+			outcome = await dbc.getResultsForDeliverable(delivId, projection);
 		} else if (kind === ResultsKind.BEST) {
 			outcome = await dbc.getBestResults(delivId);
 		} else if (kind === ResultsKind.GRADED) {
@@ -398,11 +458,11 @@ export class ResultsController {
 	 *
 	 * @param repoId
 	 */
-	public async getResultsForRepo(repoId: string) {
+	public async getResultsForRepo(repoId: string, opts: ReadOptions = {}) {
 		Log.trace("ResultsController::getResultsForRepo( " + repoId + " ) - start");
 		const start = Date.now();
 
-		const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId);
+		const outcome = await DatabaseController.getInstance().getResultsForRepo(repoId, opts);
 		Log.info("ResultsController::getResultsForRepo( " + repoId + " ) - done; # results: " + outcome.length + "; took: " + Util.took(start));
 
 		return outcome;

@@ -7,7 +7,7 @@ import { DeliverablesController } from "@backend/controllers/DeliverablesControl
 import { GitHubError } from "@backend/controllers/GitHubActions";
 import { ProvisionState } from "@backend/controllers/ProvisionState";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
-import { AuditLabel, RepoStatus, Repository } from "@backend/Types";
+import { AuditLabel, PersonKind, RepoStatus, Repository } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -116,7 +116,114 @@ describe("ProvisionAgent", function () {
 		);
 	});
 
+	/**
+	 * prepare() is the planning step: it creates the Team and Repository records an admin then
+	 * selects from. Nothing here reaches GitHub -- the repos it "creates" are database records with
+	 * gitHubStatus NOT_CREATED.
+	 *
+	 * It was completely uncovered. The counts it returns are what the UI reports back to the admin
+	 * ("N repos created"), and they are computed as a before/after difference rather than from what
+	 * was planned, so they are easy to get subtly wrong in a way no other test would notice.
+	 */
+	describe("prepare", function () {
+		const PREPARE_DELIV = "provisionAgentPrepareDeliv";
+
+		async function seedDeliverable(): Promise<void> {
+			const deliv = TestHarness.createDeliverable(PREPARE_DELIV);
+			deliv.shouldProvision = true;
+			deliv.teamMinSize = 1;
+			deliv.teamMaxSize = 1; // singleton teams, so one student gives one repo
+			deliv.teamStudentsForm = false;
+			await dbc.writeDeliverable(deliv);
+		}
+
+		it("Should carry who was not placed, and why, in the summary the page renders.", async function () {
+			// the report is what the Manage Repositories page shows; a plan that quietly omits people is
+			// the failure this exists to prevent, so the fields must always be present even when empty
+			await seedDeliverable();
+			const summary = await agent.prepare(PREPARE_DELIV, false, TestHarness.ADMIN1.id);
+
+			expect(summary.notPlaced, "notPlaced is always an array").to.be.an("array");
+			expect(summary.peopleNotOnTeam, "peopleNotOnTeam is always a number").to.be.a("number");
+			for (const n of summary.notPlaced) {
+				expect(n).to.have.all.keys("personId", "kind", "reason");
+			}
+		});
+
+		it("Should create a team and a repo for each student, and count them.", async function () {
+			await seedDeliverable();
+			const person = TestHarness.createPerson("prepareSpecPerson", "prepareSpecPerson", "prepareSpecGithub", PersonKind.STUDENT);
+			await dbc.writePerson(person);
+
+			const summary = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+
+			expect(summary.delivId).to.equal(PREPARE_DELIV);
+			expect(summary.reposCreated, "a singleton deliverable gives each student a repo").to.be.greaterThan(0);
+			expect(summary.teamsCreated, "and the team that owns it").to.be.greaterThan(0);
+			expect(summary.repos, "repos planned must be at least the repos created").to.be.greaterThan(0);
+
+			// the records exist, and nothing has been created on GitHub
+			const repos = (await dbc.getRepositories()).filter((r) => r.delivId === PREPARE_DELIV);
+			expect(repos.length).to.equal(summary.repos);
+			for (const repo of repos) {
+				expect(repo.gitHubStatus, "prepare must not claim anything exists on GitHub").to.equal(RepoStatus.NOT_CREATED);
+			}
+		});
+
+		it("Should count nothing as created when it is run twice.", async function () {
+			// the idempotence that makes the count meaningful: the admin who runs prepare a second
+			// time must be told 0, not the total. Both counts are before/after differences, so a
+			// regression here reads as "everything was just created" on a re-run.
+			await seedDeliverable();
+			const person = TestHarness.createPerson("prepareTwicePerson", "prepareTwicePerson", "prepareTwiceGithub", PersonKind.STUDENT);
+			await dbc.writePerson(person);
+
+			const first = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+			expect(first.reposCreated).to.be.greaterThan(0);
+
+			const second = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+			expect(second.reposCreated, "nothing new to create").to.equal(0);
+			expect(second.teamsCreated, "nothing new to create").to.equal(0);
+			expect(second.repos, "but the planned repos are still reported").to.equal(first.repos);
+		});
+
+		it("Should write one audit record naming the requester.", async function () {
+			await seedDeliverable();
+			const before = await dbc.getAudits(AuditLabel.REPO_PROVISION, 1000);
+
+			await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+
+			const after = await dbc.getAudits(AuditLabel.REPO_PROVISION, 1000);
+			expect(after.length, "exactly one audit record per prepare").to.equal(before.length + 1);
+
+			expect(after[0].personId).to.equal(TestHarness.ADMIN1.id);
+			expect((after[0].custom as any).action).to.equal("prepare");
+			expect((after[0].custom as any).delivId).to.equal(PREPARE_DELIV);
+		});
+
+		it("Should reject a deliverable that is not provisionable, before creating anything.", async function () {
+			// DELIVID1 has shouldProvision false. The guard has to come first: the whole point of
+			// prepare is that it writes records, so a late rejection would leave them behind.
+			const teamsBefore = (await dbc.getTeams()).length;
+			const reposBefore = (await dbc.getRepositories()).length;
+
+			const msg = await messageFrom(agent.prepare(TestHarness.DELIVID1, true, TestHarness.ADMIN1.id));
+			expect(msg).to.contain("not provisionable");
+
+			expect((await dbc.getTeams()).length, "nothing may be written").to.equal(teamsBefore);
+			expect((await dbc.getRepositories()).length, "nothing may be written").to.equal(reposBefore);
+		});
+
+		it("Should reject an unknown deliverable.", async function () {
+			const msg = await messageFrom(agent.prepare("provisionAgentNoSuchDeliv", true, TestHarness.ADMIN1.id));
+			expect(msg).to.contain("Unknown deliverable");
+		});
+	});
+
 	describe("when a run gives up", function () {
+		// release and un-release run PROVISION_CONCURRENCY repos at a time
+		const REPO_COUNT = AdminController.PROVISION_CONCURRENCY * 3;
+
 		// NOTE: the create side of this is covered in AdminControllerSpec; release had nothing, and it
 		// is the half that reads back what it managed to do (performRelease throws out of its loop, so
 		// its return value is lost -- the statuses in the database are the record).
@@ -125,9 +232,10 @@ describe("ProvisionAgent", function () {
 			deliv.shouldProvision = true;
 			await dbc.writeDeliverable(deliv);
 
-			// three repos ready to release; the second one kills the run
+			// more repos than run at once, so there is something left to not schedule; the second
+			// one to reach GitHub kills the run
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecRelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -178,7 +286,9 @@ describe("ProvisionAgent", function () {
 			expect(partial.released, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
 		});
 
 		it("Should report what it un-released before a fatal failure stopped it.", async function () {
@@ -188,7 +298,7 @@ describe("ProvisionAgent", function () {
 			await dbc.writeDeliverable(deliv);
 
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecUnrelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -239,7 +349,9 @@ describe("ProvisionAgent", function () {
 			expect(partial.unreleased, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
 		});
 	});
 

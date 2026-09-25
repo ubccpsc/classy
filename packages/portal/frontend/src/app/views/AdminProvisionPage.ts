@@ -82,7 +82,7 @@ export class AdminProvisionPage extends AdminPage {
 					return { delivId: delivId, formSingle: checkbox !== null && checkbox.checked === true };
 				},
 				detail: function (summary: any): string {
-					return (
+					let detail =
 						summary.delivId +
 						": " +
 						summary.teamsCreated +
@@ -90,8 +90,17 @@ export class AdminProvisionPage extends AdminPage {
 						summary.reposCreated +
 						" repository record(s) created; " +
 						summary.repos +
-						" repo(s) planned."
-					);
+						" repo(s) planned";
+					// who the plan left out, and why
+					if (Array.isArray(summary.notPlaced) && summary.notPlaced.length > 0) {
+						const shown = summary.notPlaced
+							.slice(0, 8)
+							.map((n: any) => n.personId + " (" + n.kind + ")")
+							.join(", ");
+						const more = summary.notPlaced.length > 8 ? ", +" + (summary.notPlaced.length - 8) + " more" : "";
+						detail += "; <b>" + summary.notPlaced.length + " not placed</b>: " + shown + more + " -- " + summary.notPlaced[0].reason;
+					}
+					return detail + ".";
 				},
 				onTerminal: () => {
 					this.refreshLists();

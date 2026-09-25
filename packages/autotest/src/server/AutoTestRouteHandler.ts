@@ -381,35 +381,44 @@ export default class AutoTestRouteHandler {
 
 			const handler = (stream: http.IncomingMessage) => {
 				let heartbeat: NodeJS.Timeout = null;
+				// NOTE: chunks are written by hand rather than stream.pipe()d so each can go through
+				// Config.sanitize() first. The build remote carries githubDockerToken in its URL, and
+				// when the fetch fails Docker echoes that URL back in its error message -- which this
+				// stream then delivered, token included, to the admin's browser and to the log. Docker
+				// emits line-delimited JSON, one message per chunk, so a token does not normally
+				// straddle a chunk boundary.
 				stream.on("data", (chunk: any) => {
-					Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + chunk.toString());
+					const safe = Config.sanitize(chunk.toString());
+					Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; chunk:" + safe);
+					reply.raw.write(safe);
 
 					clearInterval(heartbeat); // if a timer exists, cancel it
 					// start a new timer after every chunk to keep stream open
 					heartbeat = setInterval(function () {
 						Log.trace("AutoTestRouteHandler::postDockerImage(..)::stream; - sending heartbeat");
 						const dur = ((Date.now() - start) / 1000).toFixed(0);
-						stream.push('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
+						reply.raw.write('{"stream":"Working... (' + dur + ' seconds elapsed)\\n"}\n'); // send a heartbeat packet
 					}, 5000); // time between heartbeats
 				});
 				stream.on("end", () => {
 					Log.info("AutoTestRouteHandler::postDockerImage(..)::stream; end: Stream closed after building: " + tag);
 					clearInterval(heartbeat);
-					finish("end"); // pipe() ends the response for us
+					reply.raw.end(); // there is no pipe() to end the response for us any more
+					finish("end");
 				});
 				stream.on("error", (err: any) => {
-					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + err);
+					Log.error("AutoTestRouteHandler::postDockerImage(..)::stream; Docker Stream ERROR: " + Config.sanitize(String(err)));
 					clearInterval(heartbeat);
 					reply.raw.end();
 					finish("stream error");
 				});
-				stream.pipe(reply.raw);
 			};
 
 			const dockerReq = http.request(reqOptions, handler);
 			dockerReq.on("error", (err: any) => {
 				// e.g. the daemon socket does not exist; without this the request would hang
-				Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR contacting Docker: " + err.message);
+				// reqOptions.path carries the remote (and so the token) in its query string
+				Log.error("AutoTestRouteHandler::postDockerImage(..) - ERROR contacting Docker: " + Config.sanitize(String(err.message)));
 				reply.raw.end();
 				finish("request error");
 			});
@@ -454,13 +463,35 @@ export default class AutoTestRouteHandler {
 			}
 
 			if (imageDescription !== null) {
-				const image = docker.getImage(imageDescription.Id);
-				// Log.warn("AutoTestRouteHandler::removeDockerImage(..) - not removed; not implemented"); // for safety, remove when ready
-				const removeRes = await image.remove();
+				let removeRes: any[];
+				try {
+					// remove by Id: frees the layers when nothing else references them
+					removeRes = await docker.getImage(imageDescription.Id).remove();
+				} catch (err) {
+					// Docker refuses to delete an Id that has dependent child images -- "(HTTP 409)
+					// conflict ... cannot be forced" -- and an instructor who has rebuilt a grading image
+					// has exactly that parent/child chain. What the UI needs is for the tag to go away,
+					// and untagging is always allowed: remove by each RepoTag instead.
+					const tags: string[] = imageDescription.RepoTags ?? [];
+					if (String(err?.message).indexOf("child images") < 0 || tags.length === 0) {
+						throw err;
+					}
+					Log.warn("AutoTestRouteHandler::removeDockerImage(..) - Id has dependent children; untagging instead: " + JSON.stringify(tags));
+					removeRes = [];
+					for (const repoTag of tags) {
+						removeRes.push(...(await docker.getImage(repoTag).remove()));
+					}
+				}
 				// Log.trace("AutoTestRouteHandler::removeDockerImage(..) - image removal result: " + JSON.stringify(removeRes));
 				for (const imgRes of removeRes) {
 					if (typeof imgRes.Deleted === "string" && imgRes.Deleted.indexOf(imageDescription.Id) >= 0) {
 						Log.info("AutoTestRouteHandler::removeDockerImage(..) - image removed successfully: " + imageDescription.Id);
+						success = true;
+					}
+					// an Untagged entry is success too: the tag is gone, which is what the admin asked for.
+					// (An Id with more than one tag answers only Untagged entries even when it has no children.)
+					if (typeof imgRes.Untagged === "string") {
+						Log.info("AutoTestRouteHandler::removeDockerImage(..) - image untagged: " + imgRes.Untagged);
 						success = true;
 					}
 				}
