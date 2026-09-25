@@ -221,6 +221,9 @@ describe("ProvisionAgent", function () {
 	});
 
 	describe("when a run gives up", function () {
+		// release and un-release run PROVISION_CONCURRENCY repos at a time
+		const REPO_COUNT = AdminController.PROVISION_CONCURRENCY * 3;
+
 		// NOTE: the create side of this is covered in AdminControllerSpec; release had nothing, and it
 		// is the half that reads back what it managed to do (performRelease throws out of its loop, so
 		// its return value is lost -- the statuses in the database are the record).
@@ -229,9 +232,10 @@ describe("ProvisionAgent", function () {
 			deliv.shouldProvision = true;
 			await dbc.writeDeliverable(deliv);
 
-			// three repos ready to release; the second one kills the run
+			// more repos than run at once, so there is something left to not schedule; the second
+			// one to reach GitHub kills the run
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecRelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -282,7 +286,9 @@ describe("ProvisionAgent", function () {
 			expect(partial.released, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
 		});
 
 		it("Should report what it un-released before a fatal failure stopped it.", async function () {
@@ -292,7 +298,7 @@ describe("ProvisionAgent", function () {
 			await dbc.writeDeliverable(deliv);
 
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecUnrelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -343,7 +349,9 @@ describe("ProvisionAgent", function () {
 			expect(partial.unreleased, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
 		});
 	});
 

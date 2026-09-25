@@ -1039,21 +1039,26 @@ export class AdminController {
 		return reposAlreadyReleased.concat(reposToRelease);
 	}
 
-	public async performRelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
+	public async performRelease(
+		repos: Repository[],
+		ctx: JobContext = null,
+		concurrency: number = AdminController.PROVISION_CONCURRENCY
+	): Promise<RepositoryTransport[]> {
 		const ghc = this.gh; // see performProvision
 
-		Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length);
+		Log.info("AdminController::performRelease(..) - start; # repos: " + repos.length + "; concurrency: " + concurrency);
 		const start = Date.now();
 
-		const releasedRepos = [];
+		const releasedRepos: Repository[] = [];
 		let done = 0;
 		const policy = new ProvisionFailurePolicy("releasing");
 
-		for (const repo of repos) {
+		// each repo is independent and dominated by waiting on GitHub; see performProvision
+		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
 			// one repository is the unit of work; see performProvision
 			if (ctx?.isCancelled() === true) {
-				Log.info("AdminController::performRelease(..) - cancelled; released " + releasedRepos.length + " of " + repos.length);
-				break;
+				Log.info("AdminController::performRelease(..) - cancelled; skipping: " + repo.id);
+				return;
 			}
 			try {
 				const startRepo = Date.now();
@@ -1078,8 +1083,6 @@ export class AdminController {
 							policy.abort(stop);
 						}
 					}
-
-					await Util.delay(200); // after any releasing wait a short bit
 				} else {
 					Log.info("AdminController::performRelease(..) - skipped; repo not yet provisioned: " + repo.id); // + "; URL: " + repo.URL);
 				}
@@ -1094,7 +1097,7 @@ export class AdminController {
 			}
 			done++;
 			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
-		}
+		});
 
 		const releasedRepositoryTransport: RepositoryTransport[] = [];
 		for (const repo of releasedRepos) {
@@ -1117,20 +1120,25 @@ export class AdminController {
 	 * @param {JobContext} ctx
 	 * @returns {Promise<RepositoryTransport[]>}
 	 */
-	public async performUnrelease(repos: Repository[], ctx: JobContext = null): Promise<RepositoryTransport[]> {
+	public async performUnrelease(
+		repos: Repository[],
+		ctx: JobContext = null,
+		concurrency: number = AdminController.PROVISION_CONCURRENCY
+	): Promise<RepositoryTransport[]> {
 		const ghc = this.gh; // see performProvision
 
-		Log.info("AdminController::performUnrelease(..) - start; # repos: " + repos.length);
+		Log.info("AdminController::performUnrelease(..) - start; # repos: " + repos.length + "; concurrency: " + concurrency);
 		const start = Date.now();
 
-		const unreleasedRepos = [];
+		const unreleasedRepos: Repository[] = [];
 		let done = 0;
 		const policy = new ProvisionFailurePolicy("un-releasing");
 
-		for (const repo of repos) {
+		// as with performRelease, each repo is independent, so they run with bounded concurrency
+		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
 			if (ctx?.isCancelled() === true) {
-				Log.info("AdminController::performUnrelease(..) - cancelled; un-released " + unreleasedRepos.length + " of " + repos.length);
-				break;
+				Log.info("AdminController::performUnrelease(..) - cancelled; skipping: " + repo.id);
+				return;
 			}
 			try {
 				const startRepo = Date.now();
@@ -1154,8 +1162,6 @@ export class AdminController {
 							policy.abort(stop);
 						}
 					}
-
-					await Util.delay(200); // as with releasing, do not hammer the API
 				} else {
 					Log.info("AdminController::performUnrelease(..) - skipped; repo not released: " + repo.id);
 				}
@@ -1170,7 +1176,7 @@ export class AdminController {
 			}
 			done++;
 			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
-		}
+		});
 
 		const unreleasedRepositoryTransport: RepositoryTransport[] = [];
 		for (const repo of unreleasedRepos) {

@@ -17,6 +17,7 @@ import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestGradeTransport, GradeTransport, PersonTransport, TeamTransport } from "@common/types/PortalTypes";
+import Util from "@common/Util";
 
 import "@common/GlobalSpec"; // load first
 import "./GradeControllerSpec"; // load first
@@ -877,7 +878,31 @@ describe("AdminController", () => {
 			const result = await new AdminController(gh).performUnrelease(repos);
 
 			expect(gh.seen.length).to.equal(3);
-			expect(result.map((repo) => repo.id)).to.deep.equal(repos.map((repo) => repo.id));
+			// completion order is not guaranteed once repos run concurrently
+			expect(result.map((repo) => repo.id).sort()).to.deep.equal(repos.map((repo) => repo.id).sort());
+		});
+
+		it("Should un-release repos concurrently rather than one at a time.", async () => {
+			const repos = makeRepos("UNREL_CONC", 8, RepoStatus.RELEASED);
+
+			let inFlight = 0;
+			let maxInFlight = 0;
+			class SlowUnreleaseController extends ScriptedUnreleaseController {
+				public async unreleaseRepository(repo: Repository): Promise<boolean> {
+					inFlight++;
+					maxInFlight = Math.max(maxInFlight, inFlight);
+					await Util.delay(20);
+					inFlight--;
+					return super.unreleaseRepository(repo);
+				}
+			}
+			const gh = new SlowUnreleaseController(() => true);
+
+			const result = await new AdminController(gh).performUnrelease(repos);
+
+			expect(result.length).to.equal(8);
+			expect(maxInFlight, "repos should overlap").to.be.greaterThan(1);
+			expect(maxInFlight, "but stay within the bound").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
 		});
 
 		it("Should keep going when one repo cannot be un-released.", async () => {
@@ -923,6 +948,7 @@ describe("AdminController", () => {
 			const gh = new ScriptedUnreleaseController(() => true);
 
 			// cancellation is checked before each repo, so this stops the run after the second
+			// (concurrency 1 so "the second" is well defined)
 			let calls = 0;
 			const ctx = {
 				isCancelled: () => {
@@ -937,7 +963,7 @@ describe("AdminController", () => {
 				},
 			};
 
-			const result = await new AdminController(gh).performUnrelease(repos, ctx);
+			const result = await new AdminController(gh).performUnrelease(repos, ctx, 1);
 
 			expect(gh.seen.length, "the run stops early").to.equal(2);
 			expect(result.length, "and keeps what it finished").to.equal(2);
@@ -951,7 +977,7 @@ describe("AdminController", () => {
 
 			let aborted: any = null;
 			try {
-				await new AdminController(gh).performUnrelease(repos);
+				await new AdminController(gh).performUnrelease(repos, null, 1);
 			} catch (err) {
 				aborted = err;
 			}
