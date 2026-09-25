@@ -39,6 +39,11 @@ export class GitHubError extends Error {
 	 * @param status HTTP status; 0 for a transport failure
 	 * @param body the response body, for the cases GitHub distinguishes only in text
 	 */
+	public static looksLikeHtml(body: string): boolean {
+		const head = (body ?? "").trimStart().substring(0, 15).toLowerCase();
+		return head.startsWith("<!doctype") || head.startsWith("<html");
+	}
+
 	public static isFatal(status: number, body: string = ""): boolean {
 		const text = (body ?? "").toLowerCase();
 
@@ -52,6 +57,13 @@ export class GitHubError extends Error {
 
 		if (status === 0) {
 			return true; // the host is unreachable (DNS, connection refused, a VPN-only host)
+		}
+
+		if (status >= 200 && status < 300 && GitHubError.looksLikeHtml(text)) {
+			// a successful answer that is a web page is not the API answering at all: a login portal
+			// or VPN gate returns 200 text/html for every URL, so every call will get the same page.
+			// Only for 2xx: GitHub's own 5xx error pages are HTML too, and those are a bad minute.
+			return true;
 		}
 
 		// everything else -- 404 on one repo, 422, a bad importURL, a missing team -- is about this
@@ -962,7 +974,30 @@ export class GitHubActions implements IGitHubActions {
 
 		// Without this, a 401 would look exactly like "the repo is there", and provisioning
 		// would go on to fail one repo at a time for a reason that has nothing to do with the repos
-		GitHubActions.throwIfFatal(res.status, await res.clone().text(), "repoExists( " + repoName + " )");
+		const body = await res.clone().text();
+
+		// Only the status was checked here, so a 200 that is not JSON also looked like "the repo is
+		// there". Off the VPN the GitHub host answers 200 text/html (a login page) for every URL,
+		// and provisioning then believed every planned repo already existed. Checked before
+		// throwIfFatal so the error says what was answered rather than just "returned 200".
+		const contentType = res.headers.get("content-type") ?? "";
+		if (contentType.toLowerCase().indexOf("json") < 0) {
+			Log.error(
+				"GitHubAction::repoExists( " + repoName + " ) - not an API answer; status: " + res.status + "; content-type: " + contentType
+			);
+			throw new GitHubError(
+				"repoExists( " +
+					repoName +
+					" ) failed; GitHub answered " +
+					res.status +
+					" with " +
+					(contentType || "no content-type") +
+					" instead of JSON",
+				res.status,
+				body
+			);
+		}
+		GitHubActions.throwIfFatal(res.status, body, "repoExists( " + repoName + " )");
 
 		Log.trace("GitHubAction::repoExists( " + repoName + " ) - true; took: " + Util.took(start));
 		return true;
