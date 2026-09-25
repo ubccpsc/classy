@@ -154,7 +154,7 @@ export class AdminView implements IView {
 		button.style.display = this.isAdmin === true || ClassMode.isOn() === true ? "" : "none";
 		const label = document.getElementById("adminClassModeLabel");
 		if (label !== null) {
-			label.textContent = ClassMode.isOn() === true ? "Leave Class Mode" : "Class Mode";
+			label.textContent = ClassMode.isOn() === true ? "Leave Class Mode" : "Enter Class Mode";
 		}
 		// assigned rather than added: this runs on every render
 		button.onclick = () => {
