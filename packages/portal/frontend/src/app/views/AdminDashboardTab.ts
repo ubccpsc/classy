@@ -26,6 +26,24 @@ export interface DetailRow {
 	colour: string;
 }
 
+/**
+ * A SortableTable that refits the histograms whenever it rebuilds. A column sort regenerates every
+ * row's markup, which puts each histogram back at its widest pitch.
+ */
+class DashboardTable extends SortableTable {
+	private readonly afterGenerate: () => void;
+
+	public constructor(headers: TableHeader[], divName: string, afterGenerate: () => void) {
+		super(headers, divName);
+		this.afterGenerate = afterGenerate;
+	}
+
+	public generate(): void {
+		super.generate();
+		this.afterGenerate();
+	}
+}
+
 export class AdminDashboardTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private delivValue: string | null = null;
@@ -34,6 +52,7 @@ export class AdminDashboardTab extends AdminPage {
 	/** The tests behind each rendered histogram, indexed by its data-hist attribute; read by the tooltip. */
 	private histograms: DetailRow[][] = [];
 	private histogramTip: HTMLElement | null = null;
+	private resizeWired = false;
 
 	public constructor(remote: string) {
 		// this.remote = remote;
@@ -313,7 +332,7 @@ export class AdminDashboardTab extends AdminPage {
 
 		const headers: TableHeader[] = this.buildHeaders();
 		this.histograms = [];
-		const st = new SortableTable(headers, "#dashboardListTable");
+		const st = new DashboardTable(headers, "#dashboardListTable", () => this.fitHistograms());
 
 		// this loop could not possibly be less efficient
 		for (const result of results) {
@@ -365,6 +384,7 @@ export class AdminDashboardTab extends AdminPage {
 
 		st.generate();
 		this.wireHistogramHover();
+		this.wireResize();
 
 		try {
 			new TomSelect("#dashboardRepoSelect", {
@@ -401,17 +421,20 @@ export class AdminDashboardTab extends AdminPage {
 	}
 
 	/**
-	 * Geometry of one test's bar, in CSS px.
+	 * Geometry of one test's bar, in CSS px, reproducing the per-test table cells this replaced as
+	 * they measured under the app's stylesheets.
 	 *
-	 * These reproduce what the per-test table cells this replaced measured under the app's
-	 * stylesheets: a 5px cell plus 1px of padding each side, 20px tall plus the same padding, and
-	 * 2px of border-spacing between cells. The tooltip finds the test under the pointer from the
-	 * same pitch, so change them together.
+	 * A bar was a 5px cell plus 1px of padding each side, so 7px wide at most; 2px of border-spacing
+	 * separated cells, and that gap never changed. When the page was too narrow, the table shrank
+	 * only the cells, down to their padding, 2px, and overflowed past that. fitHistograms() does the
+	 * same, so these bound the pitch (bar plus gap) it chooses: 9px at most, 4px at least.
 	 */
 	private static readonly BAR_WIDTH = 7;
+	private static readonly MIN_BAR_WIDTH = 2;
 	private static readonly BAR_GAP = 2;
 	private static readonly BAR_HEIGHT = 22;
 	private static readonly BAR_PITCH = AdminDashboardTab.BAR_WIDTH + AdminDashboardTab.BAR_GAP;
+	private static readonly MIN_BAR_PITCH = AdminDashboardTab.MIN_BAR_WIDTH + AdminDashboardTab.BAR_GAP;
 
 	/**
 	 * Width of the count that precedes the bars; a floor wide enough for four digits keeps every
@@ -475,14 +498,24 @@ export class AdminDashboardTab extends AdminPage {
 	 * with a stop for each run of same-coloured tests, and a repeating mask that cuts the gap
 	 * between tests so each still reads as its own bar. The gaps are transparent, so the row's
 	 * background shows through them exactly as it did between the cells.
+	 *
+	 * Everything scales with one custom property, --p, the pitch of a test: the width is N pitches
+	 * and the mask repeats every pitch, and the colour stops are percentages of the width, so they
+	 * follow along. It starts at the widest pitch; fitHistograms() narrows it to fit the page.
 	 */
 	private static histogramHTML(tests: DetailRow[], id: number): string {
-		const W = AdminDashboardTab.BAR_WIDTH;
-		const P = AdminDashboardTab.BAR_PITCH;
+		const G = AdminDashboardTab.BAR_GAP;
+		const n = tests.length;
+		// a test's boundary as a percentage of the width; four places is well under a pixel even at
+		// thousands of tests
+		const at = (k: number): string => Number(((k * 100) / n).toFixed(4)) + "%";
 
 		// The padding stands in for the border-spacing the nested table put above and below its row,
-		// so dashboard rows keep their height. Underscores around the count for easier searching.
-		let html = "<div class='histogramcontainer' style='padding: " + AdminDashboardTab.BAR_GAP + "px 0;'>";
+		// so dashboard rows keep their height. nowrap keeps the count and the bars on one line: a
+		// table row could not break between its cells, so when the page was too narrow the table
+		// overflowed, where two inline-blocks would otherwise wrap and double the row's height.
+		// Underscores around the count for easier searching.
+		let html = "<div class='histogramcontainer' style='padding: " + AdminDashboardTab.BAR_GAP + "px 0; white-space: nowrap;'>";
 		html +=
 			"<span class='selectable' style='display: inline-block; box-sizing: content-box; width: " +
 			AdminDashboardTab.LABEL_WIDTH +
@@ -494,21 +527,26 @@ export class AdminDashboardTab extends AdminPage {
 			// one stop per run of a colour; the colours are the fixed set above, never row data
 			const stops: string[] = [];
 			let runStart = 0;
-			for (let i = 1; i <= tests.length; i++) {
-				if (i === tests.length || tests[i].colour !== tests[runStart].colour) {
-					stops.push(tests[runStart].colour + " " + runStart * P + "px " + i * P + "px");
+			for (let i = 1; i <= n; i++) {
+				if (i === n || tests[i].colour !== tests[runStart].colour) {
+					stops.push(tests[runStart].colour + " " + at(runStart) + " " + at(i));
 					runStart = i;
 				}
 			}
-			const mask = "repeating-linear-gradient(to right, #000 0 " + W + "px, transparent " + W + "px " + P + "px)";
+			// the gap stays G whatever the pitch; only the bar narrows, as the table cells did
+			const mask =
+				"repeating-linear-gradient(to right, #000 0 calc(var(--p) - " + G + "px), transparent calc(var(--p) - " + G + "px) var(--p))";
 			html +=
 				"<span class='dashHistogram' data-hist='" +
 				id +
-				"' style='display: inline-block; vertical-align: middle; margin-left: " +
-				AdminDashboardTab.BAR_GAP +
-				"px; width: " +
-				(tests.length * P - AdminDashboardTab.BAR_GAP) +
-				"px; height: " +
+				"' style='--p: " +
+				AdminDashboardTab.BAR_PITCH +
+				"px; display: inline-block; vertical-align: middle; margin-left: " +
+				G +
+				// N whole pitches: the last test's gap is inside the box, and masked like every other
+				"px; width: calc(var(--p) * " +
+				n +
+				"); height: " +
 				AdminDashboardTab.BAR_HEIGHT +
 				"px; background-image: linear-gradient(to right, " +
 				stops.join(", ") +
@@ -549,6 +587,75 @@ export class AdminDashboardTab extends AdminPage {
 		};
 	}
 
+	/**
+	 * Narrows each histogram's pitch to fit the room the Results column has, as the table cells it
+	 * replaced did on their own.
+	 *
+	 * The column gets whatever the page has left after the other columns. A row whose tests fit at
+	 * the widest pitch keeps it; a row with more tests than that shrinks to fill the column, down to
+	 * MIN_BAR_PITCH, and past that the table overflows, as it always did. The pitch is fractional,
+	 * like the cells' widths were, so a shrunk row fills the column rather than stopping short.
+	 *
+	 * Runs after every generate(), since a column sort rebuilds every row at the widest pitch, and
+	 * on resize. Skipped while the dashboard is not on screen; the next render fits it.
+	 */
+	private fitHistograms(): void {
+		const container = document.querySelector("#dashboardListTable") as HTMLElement | null;
+		if (container === null || container.clientWidth === 0) {
+			return;
+		}
+		const table = container.querySelector("table") as HTMLElement | null;
+		const bars = Array.from(container.querySelectorAll(".dashHistogram")) as HTMLElement[];
+		if (table === null || bars.length === 0) {
+			return;
+		}
+		const testsIn = (bar: HTMLElement): number => this.histograms[Number(bar.dataset.hist)]?.length ?? 0;
+		// A row that cannot fit even at the narrowest pitch makes the column that wide regardless,
+		// and the table overflows. The cells let every other row use that width, so fitting does too.
+		const widestMinimum = Math.max(...bars.map((bar) => testsIn(bar) * AdminDashboardTab.MIN_BAR_PITCH));
+
+		// Twice: narrowing the Results column can let another column relax (a header that had
+		// wrapped, say), so the second pass measures the table as the first one left it.
+		for (let pass = 0; pass < 2; pass++) {
+			const cell = bars[0].closest("td") as HTMLElement;
+			const cellRect = cell.getBoundingClientRect();
+			// every row lays out the same way up to the bars: cell padding, the count, its margin
+			const beforeBars = bars[0].getBoundingClientRect().left - cellRect.left;
+			const afterBars = Number.parseFloat(getComputedStyle(cell).paddingRight) || 0;
+			const column = container.clientWidth - (table.getBoundingClientRect().width - cellRect.width);
+			const room = Math.max(column - beforeBars - afterBars, widestMinimum);
+			for (const bar of bars) {
+				const n = testsIn(bar);
+				if (n > 0) {
+					const pitch = Math.min(AdminDashboardTab.BAR_PITCH, Math.max(AdminDashboardTab.MIN_BAR_PITCH, room / n));
+					bar.style.setProperty("--p", pitch + "px");
+				}
+			}
+		}
+	}
+
+	/**
+	 * Refits on resize, at most once a frame. Wired once per tab, not per render: this is the one
+	 * listener on window, and render() runs on every refresh.
+	 */
+	private wireResize(): void {
+		if (this.resizeWired === true) {
+			return;
+		}
+		this.resizeWired = true;
+		let queued = false;
+		window.addEventListener("resize", () => {
+			if (queued === true) {
+				return;
+			}
+			queued = true;
+			window.requestAnimationFrame(() => {
+				queued = false;
+				this.fitHistograms();
+			});
+		});
+	}
+
 	private testUnderPointer(evt: MouseEvent): DetailRow | null {
 		const host = (evt.target as Element | null)?.closest(".histogramcontainer");
 		const bar = host?.querySelector(".dashHistogram") as HTMLElement | null | undefined;
@@ -561,7 +668,9 @@ export class AdminDashboardTab extends AdminPage {
 		if (typeof tests === "undefined" || x < 0 || x >= rect.width || evt.clientY < rect.top || evt.clientY >= rect.bottom) {
 			return null;
 		}
-		return tests[Math.floor(x / AdminDashboardTab.BAR_PITCH)] ?? null;
+		// the row's own pitch, which fitHistograms() may have narrowed
+		const pitch = Number.parseFloat(bar.style.getPropertyValue("--p")) || AdminDashboardTab.BAR_PITCH;
+		return tests[Math.floor(x / pitch)] ?? null;
 	}
 
 	private showHistogramTip(test: DetailRow, evt: MouseEvent): void {
