@@ -288,6 +288,8 @@ export class AdminDashboardTab extends AdminPage {
 				sortable: false,
 				defaultSort: false,
 				sortDown: true,
+				// the histogram is a graphic; as text it is only the "_N_" count
+				downloadable: false,
 				style: "padding-left: 0.5em; padding-right: 0.5em;",
 			},
 		];

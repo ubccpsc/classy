@@ -159,6 +159,8 @@ export class AdminGradesTab extends AdminPage {
 		}
 
 		const st = new SortableTable(headers, "#gradesListTable");
+		// the page scrolls, not the table: see fitToViewport, and the containers in admin.html
+		st.fitToViewport = false;
 
 		// Every grade indexed once by person and deliverable. Each cell used to scan every grade in the
 		// course, so building the table cost students x deliverables x grades -- and a new
@@ -260,6 +262,7 @@ export class AdminGradesTab extends AdminPage {
 		Log.trace("AdminGradesTab::renderSummary(..) - start");
 
 		const st = new SortableTable(AdminGradesTab.buildSummaryHeaders(), "#gradesSummaryTable");
+		st.fitToViewport = false;
 		const gradeMap = AdminGradesTab.collectScoresByDeliv(grades, students);
 
 		// The denominator behind N/D, computed once rather than per row. Withdrawn students are

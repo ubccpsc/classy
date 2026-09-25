@@ -102,6 +102,8 @@ export class AdminStudentsTab {
 				sortable: false,
 				defaultSort: false,
 				sortDown: true,
+				// a button, so every row exported the same "View As" text
+				downloadable: false,
 				style: "padding-left: 1em; padding-right: 1em;",
 			},
 		];

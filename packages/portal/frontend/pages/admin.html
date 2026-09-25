@@ -104,9 +104,14 @@
 
     <template id="grades.html">
         <ons-page id="AdminGrades">
-            <ons-list id="AdminGradesList">
+            <!-- overflow: visible undoes Onsen's .list { overflow: hidden }, which would otherwise cut off
+                 a table wider than the window and stop its header from pinning; see the tables below. -->
+            <ons-list id="AdminGradesList" style="overflow: visible;">
                 <ons-list-header>Grade Summary</ons-list-header>
-                <div id="gradesSummaryTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
+                <!-- Not scroll boxes, unlike the other tabs' tables: this page stacks two long tables, so
+                     the page itself scrolls (both ways; wide tables scroll it sideways). With nothing
+                     scrolling or clipping between a header and the page, each table's header stays pinned. -->
+                <div id="gradesSummaryTable" style="width:100%; white-space: nowrap;"></div>
                 <ons-list-header>Deliverable Grades</ons-list-header>
                 <ons-list-item>
                     Show:
@@ -116,7 +121,7 @@
                         <option value="all">All (incl. withdrawn)</option>
                     </select>
                 </ons-list-item>
-                <div id="gradesListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
+                <div id="gradesListTable" style="width:100%; white-space: nowrap;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
                 </div>

@@ -26,6 +26,13 @@ export interface TableHeader {
 	 * heading's innerText and the sorted column wraps `text` in <b>.
 	 */
 	tooltip?: string;
+	/**
+	 * Whether the column is included in the "Download Values as CSV" export. Optional; omitted
+	 * means true. Set false for a column whose value only makes sense on screen, such as a button
+	 * or a graphic: its cells export as empty text, or as a "_metadata" column of link targets.
+	 * A column left out takes its "_metadata" column with it.
+	 */
+	downloadable?: boolean;
 }
 
 export interface TableCell {
@@ -49,6 +56,16 @@ export class SortableTable {
 	 * @type {TableHeader | null}
 	 */
 	private sortHeader: TableHeader | null = null;
+
+	/**
+	 * Whether generate() sizes the table's container to the rest of the window (see
+	 * updateTableHeight), so a long table scrolls inside its own box with its header pinned there.
+	 *
+	 * A page that stacks tables should turn this off. Each one claims the height below it, so once
+	 * the upper table is tall enough the lower one is left almost no room; the page should scroll
+	 * instead. Off, the container is also not given a resize listener.
+	 */
+	public fitToViewport = true;
 
 	public constructor(headers: TableHeader[], divName: string) {
 		this.headers = headers;
@@ -151,6 +168,14 @@ export class SortableTable {
 		}
 
 		this.attachDownload();
+
+		if (this.fitToViewport === false) {
+			// the container grows with the table; clear any height an earlier render set
+			if (div !== null) {
+				(div as HTMLElement).style.height = "";
+			}
+			return;
+		}
 
 		setTimeout(() => {
 			Log.info("SortableTable::generate() - updating table height; div: " + this.divName);
@@ -401,6 +426,10 @@ export class SortableTable {
 			const cols = rows[i].querySelectorAll("td, th");
 
 			for (let j = 0; j < cols.length; j++) {
+				// cells are rendered in header order, so column j is headers[j]
+				if (this.headers[j]?.downloadable === false) {
+					continue;
+				}
 				if (i === 0) {
 					let text = (cols[j] as HTMLTableCellElement).innerText;
 					text = text.replace(" ▼", "");
@@ -415,10 +444,10 @@ export class SortableTable {
 
 				if (colsWithMetadata.indexOf(j) >= 0) {
 					if (i === 0) {
-						// header row
-						// add metadata prior column name
-						// strange math because we may have added columns to the left
-						row.push(row[j + colsWithMetadata.indexOf(j)] + "_metadata");
+						// header row: named after the heading pushed just above. (This used to be
+						// computed from j and the metadata columns to its left, which a column left
+						// out of the export would throw off.)
+						row.push(row[row.length - 1] + "_metadata");
 					} else {
 						// regular row
 						row.push(this.extractMetadata(cols[j] as HTMLElement));
