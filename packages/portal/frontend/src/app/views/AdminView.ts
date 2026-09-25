@@ -13,6 +13,7 @@ import Log from "@common/Log";
 import { CourseTransport, CourseTransportPayload } from "@common/types/PortalTypes";
 
 import { Factory } from "../Factory";
+import { ClassMode } from "../util/ClassMode";
 import { UI } from "../util/UI";
 import { ViewAs } from "../util/ViewAs";
 
@@ -49,6 +50,9 @@ export class AdminView implements IView {
 	protected resultsTab: AdminResultsTab;
 	protected dashTab: AdminDashboardTab;
 	protected configTab: AdminConfigTab;
+
+	/** The tab page last rendered, so toggling class mode can redraw it. */
+	private currentPage: string | null = null;
 
 	public constructor(remoteUrl: string, tabs: AdminTabs) {
 		Log.info("AdminView::<init>");
@@ -95,6 +99,34 @@ export class AdminView implements IView {
 			this.setTabVisibility("AdminConfigTab", false);
 		}
 
+		// Here, with the rest of the tab visibility, because this runs on every tab switch: applied
+		// anywhere else, the next switch would put the Students tab back. See ClassMode.
+		this.renderClassModeButton();
+		// Not gated on isAdmin. After a reload the default tab renders before the page that carries
+		// the admin flag does, so here isAdmin is still false the first time; checking it let the
+		// Students tab draw once on every reload. Only admins are offered the toggle and logout
+		// clears it, so a set flag means an admin set it.
+		const classMode = ClassMode.isOn() === true;
+		if (classMode === true) {
+			this.setTabVisibility("AdminStudentTab", false);
+			this.setTabVisibility("AdminTeamTab", false);
+		} else if (this.tabs === null) {
+			// with no tab list nothing above sets these two, so put back what class mode hid
+			this.setTabVisibility("AdminStudentTab", true);
+			this.setTabVisibility("AdminTeamTab", true);
+		}
+		if (classMode === true && (name === "AdminStudents" || name === "AdminTeams")) {
+			// A tab class mode hides is being shown: after a reload the default tab is Students, and
+			// turning class mode on from either tab lands here too. Hiding its button is not enough --
+			// its content would still be drawn underneath -- so move to the first tab still showing,
+			// which renders that one instead. This one's content is never fetched or drawn.
+			this.showFirstVisibleTab();
+			return;
+		}
+		if (name !== "AdminRoot") {
+			this.currentPage = name;
+		}
+
 		// NOTE: This is a kind of reflection to find the function to call without hard-coding it
 		// this calls `handle<PageName>`, so to make it work your IView subtype must have a method
 		// with that name (which you set in your ons-page id attribute in your html file)
@@ -105,6 +137,52 @@ export class AdminView implements IView {
 			(this as any)[functionName](opts);
 		} else {
 			Log.warn("AdminView::renderPage(..) - unknown page: " + name + " (function: " + functionName + " not defined on view).");
+		}
+	}
+
+	/**
+	 * The toolbar's Class Mode button, beside Logout: offered to admins only, and labelled for what a
+	 * click would do. Absent from a course's own admin.html, it is simply not offered.
+	 */
+	private renderClassModeButton(): void {
+		const button = document.getElementById("adminClassModeButton");
+		if (button === null) {
+			return;
+		}
+		// shown while class mode is on as well: on the first render after a reload isAdmin is not yet
+		// known, and whoever is in class mode must always be able to leave it
+		button.style.display = this.isAdmin === true || ClassMode.isOn() === true ? "" : "none";
+		const label = document.getElementById("adminClassModeLabel");
+		if (label !== null) {
+			label.textContent = ClassMode.isOn() === true ? "Leave Class Mode" : "Class Mode";
+		}
+		// assigned rather than added: this runs on every render
+		button.onclick = () => {
+			this.toggleClassMode();
+		};
+	}
+
+	/**
+	 * Turns class mode on or off and redraws the current tab through the normal render path, so tab
+	 * visibility, the button and the tab's content all agree -- including whatever a course's own
+	 * renderPage adds on top. Turning it on from a tab it hides is handled there too.
+	 */
+	private toggleClassMode(): void {
+		const on = ClassMode.isOn() === false;
+		ClassMode.set(on);
+		Log.info("AdminView::toggleClassMode() - class mode: " + on + "; page: " + this.currentPage);
+		this.renderPage(this.currentPage ?? "AdminRoot", {});
+	}
+
+	/** Moves to the first tab not hidden; the switch itself renders that tab. */
+	private showFirstVisibleTab(): void {
+		const tabbar = document.getElementById("adminTabbar") as any;
+		const tabs = Array.from(document.querySelectorAll("#adminTabbar ons-tab")) as HTMLElement[];
+		const first = tabs.findIndex((tab) => tab.style.display !== "none");
+		if (tabbar !== null && typeof tabbar.setActiveTab === "function" && first >= 0) {
+			void tabbar.setActiveTab(first);
+		} else {
+			Log.warn("AdminView::showFirstVisibleTab() - no tab to move to");
 		}
 	}
 

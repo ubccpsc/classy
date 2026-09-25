@@ -9,7 +9,7 @@ import {
 } from "@common/types/PortalTypes";
 import moment from "moment";
 import { OnsButtonElement } from "onsenui";
-
+import { ClassMode } from "../util/ClassMode";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 
@@ -201,12 +201,16 @@ export class AdminDashboardTab extends AdminPage {
 		}
 		this.delivValue = deliv;
 		this.repoValue = repo;
+		// Class mode hides the filter, so one chosen before it was turned on must not keep narrowing
+		// a table that no longer says whose rows these are. The dropdown keeps its value; leaving
+		// class mode brings the filter back as it was.
+		const classMode = ClassMode.isOn();
 		// see AdminResultsTab: a person filter and a repo filter are alternatives, not a conjunction
-		const person = this.personFilter();
+		const person = classMode === true ? null : this.personFilter();
 		const results = await AdminDashboardTab.getDashboard(
 			this.remote,
 			deliv,
-			person === null ? repo : "any",
+			classMode === true || person !== null ? "any" : repo,
 			AdminDashboardTab.selectedView(),
 			person
 		);
@@ -338,6 +342,7 @@ export class AdminDashboardTab extends AdminPage {
 		const headers: TableHeader[] = AdminDashboardTab.compactColumns(this.buildHeaders());
 		this.histograms = [];
 		const st = new DashboardTable(headers, "#dashboardListTable", () => this.fitHistograms());
+		st.hiddenColumns = ClassMode.isOn() === true ? [ClassMode.SUBJECT_COLUMN] : [];
 
 		// this loop could not possibly be less efficient
 		for (const result of results) {
@@ -415,6 +420,8 @@ export class AdminDashboardTab extends AdminPage {
 		} catch (err) {
 			Log.trace("AdminDashboardTab::render(..) - updating select; MSG: " + err.message);
 		}
+		// after the widget exists, so hiding reaches it too
+		ClassMode.showFilter("dashboardRepoLabel", "dashboardRepoSelect", ClassMode.isOn() === false);
 
 		if (st.numRows() > 0) {
 			UI.showSection("dashboardListTable");

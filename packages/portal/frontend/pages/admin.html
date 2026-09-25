@@ -2,6 +2,11 @@
     <ons-toolbar>
         <div class="center">Classy Admin Portal</div>
         <div id='indexLogin' class="right">
+            <!-- Class Mode: admins only, shown by AdminView when it knows who is signed in; see ClassMode -->
+            <ons-toolbar-button id="adminClassModeButton" style="display: none;">
+                <ons-icon icon="fa-chalkboard-teacher"></ons-icon>
+                <span id="adminClassModeLabel" style="vertical-align: top; font-size: 80%;">Class Mode</span>
+            </ons-toolbar-button>
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
                 <span style="vertical-align: top; font-size: 80%;">Logout</span>
@@ -112,8 +117,8 @@
                      the page itself scrolls (both ways; wide tables scroll it sideways). With nothing
                      scrolling or clipping between a header and the page, each table's header stays pinned. -->
                 <div id="gradesSummaryTable" style="width:100%; white-space: nowrap;"></div>
-                <ons-list-header>Deliverable Grades</ons-list-header>
-                <ons-list-item>
+                <ons-list-header id="gradesListHeader">Deliverable Grades</ons-list-header>
+                <ons-list-item id="gradesViewItem">
                     Show:
                     <select id="gradesViewSelect" style="margin-left: 1em;">
                         <option value="students">Students</option>

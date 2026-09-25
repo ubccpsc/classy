@@ -67,6 +67,16 @@ export class SortableTable {
 	 */
 	public fitToViewport = true;
 
+	/**
+	 * Ids of columns to leave out of the drawn table; class mode uses it to drop the column that
+	 * says whose rows these are.
+	 *
+	 * The rows keep every cell, so code that finds a column by its position among the headers -- a
+	 * course plugin rewriting cells in decorateRow, say -- is unaffected. The CSV export reads the
+	 * drawn table, so a hidden column is left out of the download too.
+	 */
+	public hiddenColumns: string[] = [];
+
 	public constructor(headers: TableHeader[], divName: string) {
 		this.headers = headers;
 		this.divName = divName;
@@ -193,11 +203,19 @@ export class SortableTable {
 		);
 	}
 
+	/** Whether a column is drawn; see hiddenColumns. A cell with no header is always drawn. */
+	private isDrawn(header: TableHeader | undefined): boolean {
+		return typeof header === "undefined" || this.hiddenColumns.indexOf(header.id) < 0;
+	}
+
 	private startTable() {
 		let tablePrefix = '<table class="sortableTable">';
 		tablePrefix += "<tr>";
 
 		for (const header of this.headers) {
+			if (this.isDrawn(header) === false) {
+				continue;
+			}
 			if (typeof header.style === "undefined") {
 				header.style = "";
 			}
@@ -266,7 +284,9 @@ export class SortableTable {
 
 		let i = 0;
 		for (const col of cols) {
-			row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + "</td>";
+			if (this.isDrawn(this.headers[i]) === true) {
+				row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + "</td>";
+			}
 			i++;
 		}
 		row += "</tr>";
@@ -420,14 +440,15 @@ export class SortableTable {
 		const colsWithMetadata = this.findColsWithMetadata(this.divName);
 
 		const rows = root.querySelectorAll("table tr");
+		// what was actually drawn, in order: cells skip hidden columns, so drawn cell j is drawn[j]
+		const drawn = this.headers.filter((header) => this.isDrawn(header));
 
 		for (let i = 0; i < rows.length; i++) {
 			const row = [];
 			const cols = rows[i].querySelectorAll("td, th");
 
 			for (let j = 0; j < cols.length; j++) {
-				// cells are rendered in header order, so column j is headers[j]
-				if (this.headers[j]?.downloadable === false) {
+				if (drawn[j]?.downloadable === false) {
 					continue;
 				}
 				if (i === 0) {

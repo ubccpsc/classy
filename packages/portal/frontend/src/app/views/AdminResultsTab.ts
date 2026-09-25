@@ -10,7 +10,7 @@ import {
 } from "@common/types/PortalTypes";
 import moment from "moment";
 import { OnsButtonElement } from "onsenui";
-
+import { ClassMode } from "../util/ClassMode";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 
@@ -173,10 +173,14 @@ export class AdminResultsTab extends AdminPage {
 
 		this.delivValue = deliv;
 		this.repoValue = repo;
+		// Class mode hides the filter, so one chosen before it was turned on must not keep narrowing
+		// a table that no longer says whose rows these are. The dropdown keeps its value; leaving
+		// class mode brings the filter back as it was.
+		const classMode = ClassMode.isOn();
 		// when the subclass filters by person, the repo filter is left open: the dropdown holds a
 		// person, not a repository id, and sending it as one would match nothing
-		const person = this.personFilter();
-		const repoFilter = person === null ? this.repoValue : "any";
+		const person = classMode === true ? null : this.personFilter();
+		const repoFilter = classMode === true || person !== null ? "any" : this.repoValue;
 		const values = await AdminResultsTab.getResults(this.remote, this.delivValue, repoFilter, AdminResultsTab.selectedView(), person);
 		Log.info("AdminResultsTab::performQueries(..) - done; # values: " + values.length + "; took: " + UI.took(start));
 		return values;
@@ -312,6 +316,7 @@ export class AdminResultsTab extends AdminPage {
 		const headers: TableHeader[] = this.buildHeaders();
 
 		const st = new SortableTable(headers, "#resultsListTable");
+		st.hiddenColumns = ClassMode.isOn() === true ? [ClassMode.SUBJECT_COLUMN] : [];
 
 		// this loop could not possibly be less efficient
 		for (const result of results) {
@@ -433,6 +438,8 @@ export class AdminResultsTab extends AdminPage {
 		} catch (err) {
 			Log.trace("AdminResultsTab::render(..) - updating select; MSG: " + err.message);
 		}
+		// after the widget exists, so hiding reaches it too
+		ClassMode.showFilter("resultsRepoLabel", "resultsRepoSelect", ClassMode.isOn() === false);
 	}
 
 	public static async getResults(

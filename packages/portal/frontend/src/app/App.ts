@@ -7,6 +7,7 @@ import { AuthTransportPayload, ConfigTransport, ConfigTransportPayload } from "@
 import { OnsButtonElement, OnsPageElement } from "onsenui";
 
 import { Factory } from "./Factory";
+import { ClassMode } from "./util/ClassMode";
 import { Network } from "./util/Network";
 import { UI } from "./util/UI";
 import { ViewAs } from "./util/ViewAs";
@@ -403,6 +404,7 @@ export class App {
 				// invalid username; logout
 				that.validated = false;
 				localStorage.clear(); // erase cached info
+				ClassMode.clear(); // held in sessionStorage, which the line above does not reach
 				document.cookie = "token=empty;expires=" + new Date(0).toUTCString(); // clear the cookies
 				location.href = location.href; // forces page refresh (intentional self reference)
 				return;

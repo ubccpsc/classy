@@ -7,7 +7,7 @@ import {
 	PersonTransport,
 	PersonView,
 } from "@common/types/PortalTypes";
-
+import { ClassMode } from "../util/ClassMode";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 
@@ -50,6 +50,10 @@ export class AdminGradesTab extends AdminPage {
 	 * customise admin.html and drop it).
 	 */
 	private static selectedView(): PersonView {
+		// the selector is hidden in class mode, so the summary uses the page's default
+		if (ClassMode.isOn() === true) {
+			return "students";
+		}
 		const select = document.querySelector("#gradesViewSelect") as HTMLSelectElement;
 		if (select === null) {
 			return "students";
@@ -71,6 +75,28 @@ export class AdminGradesTab extends AdminPage {
 
 	private render(grades: GradeTransport[], delivs: DeliverableTransport[], students: PersonTransport[]): void {
 		Log.trace("AdminGradesTab::render(..) - start");
+
+		// Class mode shows only the summary. The student table is not built at all, rather than
+		// built and hidden, and its heading, view selector and empty-state row go with it. The
+		// summary still needs every student's grades, so those were fetched as usual.
+		const classMode = ClassMode.isOn();
+		ClassMode.show(document.getElementById("gradesListHeader"), classMode === false);
+		ClassMode.show(document.getElementById("gradesViewItem"), classMode === false);
+		if (classMode === true) {
+			const list = document.getElementById("gradesListTable");
+			if (list !== null) {
+				list.innerHTML = "";
+			}
+			UI.hideSection("gradesListTable");
+			UI.hideSection("gradesListTableNone");
+			if (students.length > 0) {
+				UI.showSection("gradesSummaryTable");
+			} else {
+				UI.hideSection("gradesSummaryTable");
+			}
+			this.renderSummary(grades, delivs, students);
+			return;
+		}
 
 		const headers: TableHeader[] = [
 			{
