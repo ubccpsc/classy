@@ -10,9 +10,10 @@ import { GitHubController, IGitHubController } from "@backend/controllers/GitHub
 import { GradesController } from "@backend/controllers/GradesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
+import { ResultsController } from "@backend/controllers/ResultsController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Deliverable, Person, PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import { Deliverable, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -176,6 +177,20 @@ describe("AdminController", () => {
 		};
 		Log.test("Expected team: " + JSON.stringify(t));
 		expect(actual).to.deep.include(t); // make sure at least one student with the right format is in there
+	});
+
+	it("Should link every grade to its own person.", async () => {
+		// getGrades used to find each grade's person with a linear search of everyone; it is a Map now.
+		// Checked for every grade in every view, not just the one fixture row the test below looks for.
+		const host = Config.getInstance().getProp(ConfigKey.githubHost);
+		const people = new PersonController();
+		for (const view of ["students", "staff", "all"] as const) {
+			const res = await ac.getGrades(view);
+			for (const grade of res) {
+				const person = await people.getPerson(grade.personId);
+				expect(grade.personURL, view + ": " + grade.personId).to.equal(host + "/" + person.githubId);
+			}
+		}
 	});
 
 	it("Should be able to get a list of grades.", async () => {
@@ -355,6 +370,158 @@ describe("AdminController", () => {
 		const res = await ac.getResults("any", TestHarness.REPONAME1);
 		expect(res).to.be.an("array");
 		expect(res.length).to.equal(10);
+	});
+
+	describe("summary reads for the Results and Dashboard pages", function () {
+		// These pages read results through AdminController.SUMMARY_PROJECTION and, where it is safe,
+		// with their cap pushed into the query. Nothing here inserts a result: the sibling tests
+		// assert exact totals over the shared fixture, so the one record that needs a populated
+		// custom is upserted in place (writeResult upserts on delivId, repoId, commitSHA and ref).
+
+		const byRepo = (a: Result, b: Result) => a.input.target.repoId.localeCompare(b.input.target.repoId);
+		const byIdentity = (a: any, b: any) =>
+			(a.delivId + a.repoId + a.commitSHA + a.timestamp).localeCompare(b.delivId + b.repoId + b.commitSHA + b.timestamp);
+
+		it("Should build identical transports from a projected read and a full read.", async function () {
+			// The guard SUMMARY_PROJECTION's NOTE points at. A field the projection leaves out does not
+			// fail anything: it reads as undefined, and the transport quietly differs from what a full
+			// record produces. So build every transport both ways from the same records and compare.
+			const dbc = DatabaseController.getInstance();
+
+			// a non-empty custom, so this proves the projection carries it -- {} would match {} regardless
+			const latest = (await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1))[0];
+			expect(latest, "setup: expected fixture results").to.not.be.undefined;
+			(latest.output.report as any).custom = { studentTestsPassing: 7, bucket: "proficient" };
+			await dbc.writeResult(latest);
+
+			const full = (await dbc.getResultsForDeliverable(TestHarness.DELIVID0)).sort(byRepo);
+			const projected = (await dbc.getResultsForDeliverable(TestHarness.DELIVID0, AdminController.SUMMARY_PROJECTION)).sort(byRepo);
+			expect(full.length, "setup: expected fixture results").to.be.greaterThan(0);
+			expect(projected.length, "a projection must not change which records come back").to.equal(full.length);
+
+			// and it must really have projected, or everything below compares a record with itself
+			expect(full[0].output.report.feedback, "setup: fixture results carry feedback").to.equal("feedback");
+			expect(projected[0].output.report.feedback, "neither page shows feedback, so it must not be read").to.be.undefined;
+
+			const acAny = ac as any;
+			for (let i = 0; i < full.length; i++) {
+				const repoId = full[i].input.target.repoId;
+				expect(await acAny.clipAutoTestResult(projected[i]), "results row for " + repoId).to.deep.equal(
+					await acAny.clipAutoTestResult(full[i])
+				);
+				expect(await acAny.createDashboardTransport(projected[i]), "dashboard row for " + repoId).to.deep.equal(
+					await acAny.createDashboardTransport(full[i])
+				);
+			}
+
+			// and the populated custom reaches the page through the public path
+			const dashRow = (await ac.getDashboard(TestHarness.DELIVID0, "any")).find((r) => r.commitSHA === latest.commitSHA);
+			expect(dashRow, "the updated result must reach the dashboard").to.not.be.undefined;
+			expect(dashRow.custom.studentTestsPassing).to.equal(7);
+		});
+
+		it("Should serve every query shape the pages use with the same rows as a full read.", async function () {
+			// End to end through the public method, one case per read matchResults can choose. The
+			// expected rows are built from full reads of the same data, so any difference is the
+			// projection or the limit changing what a page shows.
+			const dbc = DatabaseController.getInstance();
+			const resC = new ResultsController();
+			const acAny = ac as any;
+			const clip = async (rows: Result[]) => Promise.all(rows.map((r) => acAny.clipAutoTestResult(r)));
+
+			const byDeliv = (await clip(await dbc.getResultsForDeliverable(TestHarness.DELIVID0))).sort(byIdentity);
+			expect((await ac.getResults(TestHarness.DELIVID0, "any")).sort(byIdentity), "by deliverable").to.deep.equal(byDeliv);
+
+			const byRepoRows = (await clip(await resC.getResultsForRepo(TestHarness.REPONAME1))).sort(byIdentity);
+			expect((await ac.getResults("any", TestHarness.REPONAME1)).sort(byIdentity), "by repo").to.deep.equal(byRepoRows);
+
+			// the one shape where the default view pushes the limit down
+			const everything = (await clip(await resC.getAllResults())).sort(byIdentity);
+			expect((await ac.getResults("any", "any")).sort(byIdentity), "everything").to.deep.equal(everything);
+		});
+
+		it("Should push the cap into the query only when nothing filters after it.", async function () {
+			// Truncating before a filter that runs in JS drops rows that filter would have kept, so the
+			// cap may move into the query only when the query itself applies every filter.
+			const calls: Array<{ read: string; opts: any }> = [];
+			(ac as any).resC = {
+				getAllResults: async (opts: any): Promise<Result[]> => {
+					calls.push({ read: "all", opts: opts });
+					return [];
+				},
+				getResultsForRepo: async (_repoId: string, opts: any): Promise<Result[]> => {
+					calls.push({ read: "repo", opts: opts });
+					return [];
+				},
+				getResultsForDeliverable: async (_delivId: string, _kind: any, projection: any): Promise<Result[]> => {
+					calls.push({ read: "deliv", opts: { projection: projection } });
+					return [];
+				},
+			};
+
+			const D = TestHarness.DELIVID0;
+			const R = TestHarness.REPONAME1;
+			const cases: Array<{ deliv: string; repo: string; view: any; person: string | null; read: string; limit: number; why: string }> = [
+				{ deliv: "any", repo: "any", view: "all", person: null, read: "all", limit: 1000, why: "nothing filters after the query" },
+				{ deliv: "any", repo: "any", view: "students", person: null, read: "all", limit: undefined, why: "the view filter runs in JS" },
+				{ deliv: "any", repo: "any", view: "all", person: "someone", read: "all", limit: undefined, why: "the person filter runs in JS" },
+				{ deliv: "any", repo: R, view: "all", person: null, read: "repo", limit: 1000, why: "the by-repo query applies the only filter" },
+				{
+					deliv: D,
+					repo: R,
+					view: "all",
+					person: null,
+					read: "repo",
+					limit: undefined,
+					why: "the by-repo query does not filter on deliverable",
+				},
+				{ deliv: D, repo: "any", view: "all", person: null, read: "deliv", limit: undefined, why: "that read is already one row per repo" },
+			];
+
+			for (const c of cases) {
+				calls.length = 0;
+				await ac.getResults(c.deliv, c.repo, undefined, c.view, c.person);
+				expect(calls.length, c.why).to.equal(1);
+				expect(calls[0].read, c.why).to.equal(c.read);
+				expect(calls[0].opts.limit, c.why).to.equal(c.limit);
+				expect(calls[0].opts.projection, "every page read is projected: " + c.why).to.equal(AdminController.SUMMARY_PROJECTION);
+			}
+		});
+
+		it("Should return the newest records when a read is limited.", async function () {
+			const dbc = DatabaseController.getInstance();
+			const sha = (r: Result) => r.commitSHA;
+
+			const all = await dbc.getAllResults();
+			expect(all.length, "setup: expected several fixture results").to.be.greaterThan(2);
+			expect((await dbc.getAllResults({ limit: 2 })).map(sha)).to.deep.equal(all.slice(0, 2).map(sha));
+
+			const repoAll = await dbc.getResultsForRepo(TestHarness.REPONAME1);
+			expect((await dbc.getResultsForRepo(TestHarness.REPONAME1, { limit: 1 })).map(sha)).to.deep.equal(repoAll.slice(0, 1).map(sha));
+		});
+
+		it("Should still read whole records when no options are given.", async function () {
+			// PrairieLearnAgent, the database validator and cs310's AllResults extractor read results
+			// this way and use fields neither page needs.
+			const dbc = DatabaseController.getInstance();
+			const reads = [
+				await dbc.getResultsForDeliverable(TestHarness.DELIVID0),
+				await dbc.getResultsForRepo(TestHarness.REPONAME1),
+				await dbc.getAllResults(),
+			];
+			for (const rows of reads) {
+				expect(rows.length, "setup: expected fixture results").to.be.greaterThan(0);
+				expect(rows[0].output.report.feedback).to.equal("feedback");
+				expect(rows[0].input.target.cloneURL).to.equal("cloneURL");
+			}
+		});
+
+		it("Should index results by deliverable, latest first.", async function () {
+			const coll = await (DatabaseController.getInstance() as any).getCollection("results");
+			const index = (await coll.indexes()).find((i: any) => i.name === "delivIdTs");
+			expect(index, "the delivIdTs index must exist").to.not.be.undefined;
+			expect(index.key).to.deep.equal({ delivId: 1, "input.target.timestamp": -1 });
+		});
 	});
 
 	it("Should be able to get a list of repositories.", async () => {

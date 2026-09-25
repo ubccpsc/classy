@@ -4,7 +4,7 @@ import "mocha";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GradesController } from "@backend/controllers/GradesController";
-import { PersonKind } from "@backend/Types";
+import { Grade, PersonKind } from "@backend/Types";
 import { TestHarness } from "@common/TestHarness";
 import { AutoTestGradeTransport } from "@common/types/PortalTypes";
 import { GradePayload } from "@common/types/SDMMTypes";
@@ -250,6 +250,85 @@ describe("GradeController", () => {
 		it("Should return everyone, withdrawn included, for the all view.", async function () {
 			const ids = await idsFor("all");
 			expect(ids).to.have.members(["viewStudent", "viewWithdrawn", "viewStaff", "viewAdmin", "viewAdminStaff"]);
+		});
+	});
+
+	describe("bulk reads for the grades page", function () {
+		// A deliverable of its own, so other suites' counts never see these grades; they are removed
+		// again afterwards (there is no DatabaseController::deleteGrade, so this goes to the collection).
+		const PERF_DELIV = "gradesPagePerfDeliv";
+		const STUDENT = "perfStudent";
+
+		function gradeFor(personId: string, score: number, displayScore: string): Grade {
+			return {
+				personId: personId,
+				delivId: PERF_DELIV,
+				score: score,
+				comment: "",
+				timestamp: Date.now(),
+				urlName: null,
+				URL: null,
+				custom: { displayScore: displayScore },
+			};
+		}
+
+		before(async function () {
+			const dbc = DatabaseController.getInstance();
+			await dbc.writePerson(TestHarness.createPerson(STUDENT, STUDENT + "CSID", STUDENT + "gh", PersonKind.STUDENT));
+			await dbc.writeGrade(gradeFor(STUDENT, 50, "developing"));
+			// a grade whose person does not exist, which every view must leave out
+			await dbc.writeGrade(gradeFor("perfGhost", 60, "proficient"));
+		});
+
+		after(async function () {
+			const dbc = DatabaseController.getInstance();
+			await (await dbc.getCollection("grades")).deleteMany({ delivId: PERF_DELIV });
+			await dbc.deletePerson(await dbc.getPerson(STUDENT));
+		});
+
+		it("Should return the same grades for every view as a lookup per grade did.", async function () {
+			// getAllGrades now reads everyone once instead of looking each grade's person up in turn.
+			// The expected list is built the old way, inline, from the same data.
+			const dbc = DatabaseController.getInstance();
+			for (const view of ["students", "staff", "all"] as const) {
+				const expected: Grade[] = [];
+				for (const grade of await dbc.getGrades()) {
+					const person = await dbc.getPerson(grade.personId);
+					if (person !== null && GradesController.matchesView(person, view)) {
+						expected.push(grade);
+					}
+				}
+				const actual = await gc.getAllGrades(view);
+				expect(actual, view).to.deep.equal(expected);
+				expect(
+					actual.find((g) => g.personId === "perfGhost"),
+					"a grade with no person is never returned"
+				).to.be.undefined;
+			}
+		});
+
+		it("Should keep regrade history out of bulk reads, but not out of the read that saves depend on.", async function () {
+			// saveGrade nests the existing record under custom.previousGrade. The bulk reads exclude it
+			// in the query now, where they used to delete it after it had crossed the wire; every other
+			// field of custom must survive. getGrade still returns it, since saveGrade builds on it.
+			const dbc = DatabaseController.getInstance();
+			await gc.saveGrade(gradeFor(STUDENT, 70, "proficient"));
+
+			const single = await dbc.getGrade(STUDENT, PERF_DELIV);
+			expect(single.custom.previousGrade, "setup: the save must have stored the grade it replaced").to.not.be.undefined;
+			expect(single.custom.previousGrade.score).to.equal(50);
+
+			const reads: Array<[string, Grade[]]> = [
+				["getGrades", await dbc.getGrades()],
+				["getGradesForDeliverable", await dbc.getGradesForDeliverable(PERF_DELIV)],
+			];
+			for (const [name, grades] of reads) {
+				const g = grades.find((each) => each.personId === STUDENT && each.delivId === PERF_DELIV);
+				expect(g, name).to.not.be.undefined;
+				expect(g.custom.previousGrade, name + " must not carry history").to.be.undefined;
+				expect(g.custom.displayScore, name + " keeps the rest of custom").to.equal("proficient");
+				expect(g.score, name).to.equal(70);
+			}
 		});
 	});
 });
