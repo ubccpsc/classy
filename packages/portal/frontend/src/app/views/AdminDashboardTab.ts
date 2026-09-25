@@ -220,6 +220,9 @@ export class AdminDashboardTab extends AdminPage {
 	 * protected for the same reason as AdminResultsTab::buildHeaders: a course plugin can relabel a
 	 * column, or add one, without re-implementing the table. A subclass that adds a header must
 	 * append the matching cell in decorateRow().
+	 *
+	 * NOTE: render() then narrows every column but "results" to its content; see compactColumns.
+	 * That overrides any width or horizontal padding a style here sets, a subclass's included.
 	 */
 	protected buildHeaders(): TableHeader[] {
 		return [
@@ -265,7 +268,7 @@ export class AdminDashboardTab extends AdminPage {
 			},
 			{
 				id: "testScore",
-				text: "Correctness %",
+				text: "Correct %",
 				sortable: true,
 				defaultSort: false,
 				sortDown: true,
@@ -285,7 +288,7 @@ export class AdminDashboardTab extends AdminPage {
 				sortable: false,
 				defaultSort: false,
 				sortDown: true,
-				style: "padding-left: 1em; padding-right: 1em;",
+				style: "padding-left: 0.5em; padding-right: 0.5em;",
 			},
 		];
 	}
@@ -330,7 +333,7 @@ export class AdminDashboardTab extends AdminPage {
 		repoNames.unshift("-Any-");
 		UI.setDropdownOptions("dashboardRepoSelect", repoNames, this.repoValue);
 
-		const headers: TableHeader[] = this.buildHeaders();
+		const headers: TableHeader[] = AdminDashboardTab.compactColumns(this.buildHeaders());
 		this.histograms = [];
 		const st = new DashboardTable(headers, "#dashboardListTable", () => this.fitHistograms());
 
@@ -585,6 +588,31 @@ export class AdminDashboardTab extends AdminPage {
 		container.onmouseleave = () => {
 			this.hideHistogramTip();
 		};
+	}
+
+	/**
+	 * Makes every column but the histogram only as wide as it needs to be, so the histogram gets the
+	 * rest of the page.
+	 *
+	 * The table used to give each column its full one-line heading plus 1em of padding either side,
+	 * which left headings such as "Mutation %" far wider than the numbers under them. width: 1px
+	 * is the table idiom for "no wider than your content": a cell's width is only a floor, so the
+	 * column settles at its widest unbreakable content, which is either a value or the longest
+	 * word of its heading. Headings now wrap at their spaces instead, and the padding halves.
+	 *
+	 * The declarations are appended to each column's style rather than replacing it. In one style
+	 * attribute the later declaration wins, so this holds whatever a subclass's buildHeaders set,
+	 * and a column a plugin adds is narrowed too.
+	 */
+	private static compactColumns(headers: TableHeader[]): TableHeader[] {
+		for (const header of headers) {
+			if (header.id !== "results") {
+				const style = (header.style ?? "").trim();
+				header.style =
+					(style === "" || style.endsWith(";") ? style : style + ";") + " padding-left: 0.5em; padding-right: 0.5em; width: 1px;";
+			}
+		}
+		return headers;
 	}
 
 	/**
