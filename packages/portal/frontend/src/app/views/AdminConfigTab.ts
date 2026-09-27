@@ -110,63 +110,17 @@ export class AdminConfigTab extends AdminPage {
 				});
 		};
 
-		(document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
+		(document.querySelector("#adminManageTeamsButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - team management page pressed");
 			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
 
 			that
-				.teamCreatePressed()
+				.pushPage("./adminTeamManagement.html", {})
 				.then(function () {
-					// worked
+					return that.initTeamManagementPage();
 				})
 				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamDeletePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamAddMemberPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamRemoveMemberPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: " + err.message);
+					Log.error("AdminConfigTab - adminTeamManagement ERROR: " + err.message);
 				});
 		};
 
@@ -261,10 +215,8 @@ export class AdminConfigTab extends AdminPage {
 		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
 		const gradesDeliverableDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 		const defaultDeliverableDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const teamDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
 
 		const defaultDeliverableOptions = ["--Not Set--"];
-		const provisionOptions = ["--Select--"];
 		const gradesOptions = ["--Select--"];
 		const allDeliverables = ["--Select--"];
 
@@ -275,14 +227,12 @@ export class AdminConfigTab extends AdminPage {
 			}
 			if (deliv.shouldProvision === true) {
 				// can only provision or release deliverables that are provisionable
-				provisionOptions.push(deliv.id);
 				gradesOptions.push(deliv.id);
 			}
 			allDeliverables.push(deliv.id);
 		}
 
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
-		this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
 
 		// set default deliverable, if it exists
@@ -456,6 +406,87 @@ export class AdminConfigTab extends AdminPage {
 		}
 
 		Log.trace("AdminConfigTab::uploadGradesPrairie(..) - end");
+	}
+
+	/**
+	 * Wires the Team Management page (adminTeamManagement.html) once it has been pushed. Its four
+	 * operations used to sit on the Config tab; they are rarely used, so they live on their own page
+	 * now, like the repositories page. Called from the button that pushes the page, since the page's
+	 * id is not one AdminView routes.
+	 */
+	private async initTeamManagementPage(): Promise<void> {
+		Log.info("AdminConfigTab::initTeamManagementPage(..) - start");
+		const that = this;
+
+		(document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamCreatePressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamDeletePressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamAddMemberPressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamRemoveMemberPressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: " + err.message);
+				});
+		};
+
+		// teams can only be created on provisionable deliverables
+		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+		const provisionOptions = ["--Select--"];
+		for (const deliv of deliverables) {
+			if (deliv.shouldProvision === true) {
+				provisionOptions.push(deliv.id);
+			}
+		}
+		this.populateDelivSelect(provisionOptions, document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement);
 	}
 
 	private async teamCreatePressed(): Promise<void> {
