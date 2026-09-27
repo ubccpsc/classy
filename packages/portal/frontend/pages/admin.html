@@ -420,67 +420,6 @@
                 </ons-list-item>
 
                 <ons-list-header>Upload Grades</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-file-upload"></ons-icon>
-                    </div>
-                    <div class="center">
-                        By Deliverable.&nbsp;&nbsp;Deliverable:
-                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        Select CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
-                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        The CSV must have a header row that contains the following columns:
-
-                        <pre>[CSID|CWL|GITHUB|STUDENTNUMBER],GRADE</pre>
-
-                        If the CSID column is not present but a CWL, GITHUB, or STUDENTNUMBER column is present,
-                        Classy tries to map from the CWL/GITHUB/STUDENTNUMBER column back to a CSID. This will
-                        overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
-                        A COMMENT column is optionally used to provide feedback to the student, if present.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-file-import"></ons-icon>
-                    </div>
-                    <div class="center">
-                        From PrairieLearn.&nbsp;&nbsp;
-                        Select GradeBook CSV <input id="adminGradePrairieCSV" style="padding-left: 1em" type="file"/>
-                        <ons-button id="adminSubmitGradePrairieCSV" modifier="medium">Upload Gradebook</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        The CSV must have a header row that contains the following columns:
-
-                        <pre>UID,UIN,Role,delivIdHeaders*</pre>
-                        The UID columns should be in CWL@ubc.ca format. Any empty grade cell will be ignored,
-                        but any present grade cell will overwrite whatever is already available online.
-                        This cannot be undone.
-                    </div>
-                </ons-list-item>
-
-                <!-- Hidden unless PRAIRIELEARN_* is configured in .env; see AdminConfigTab::initJobSections -->
-                <ons-list-item expandable id="adminPrairieLearnReinterpretItem" style="display: none;">
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-magic"></ons-icon>
-                    </div>
-                    <div class="center">
-                        <div>
-                            Re-derive PrairieLearn reports.&nbsp;&nbsp;
-                            <ons-button id="adminPrairieLearnReinterpretButton" modifier="medium">Re-derive</ons-button>
-                            <ons-button id="adminPrairieLearnReinterpretCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
-                        </div>
-                        <div class="list-item__subtitle" id="adminPrairieLearnReinterpretStatus"></div>
-                        <div class="list-item__subtitle" style="font-size: smaller;">
-                            Rebuilds what the Results and Dashboard tabs show from the grading payloads already
-                            stored, without contacting PrairieLearn. Run this after the grader or its
-                            interpretation changes. Grades are not affected.
-                        </div>
-                    </div>
-                </ons-list-item>
-
                 <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
                     <div class="left settingIcon">
                         <ons-icon icon="fa-sync-alt"></ons-icon>
@@ -538,6 +477,66 @@
                             <li><b>Un-gradeable submissions</b> a per-attempt breakdown of the above:
                                 <em>grader failed</em>, <em>no feedback</em> (not graded yet), <em>no usable score</em>.</li>
                         </ul>
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable id="adminPrairieLearnReinterpretItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-magic"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Re-derive PrairieLearn reports.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnReinterpretButton" modifier="medium">Re-derive</ons-button>
+                            <ons-button id="adminPrairieLearnReinterpretCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div class="list-item__subtitle" id="adminPrairieLearnReinterpretStatus"></div>
+                        <div class="list-item__subtitle" style="font-size: smaller;">
+                            Rebuilds what the Results and Dashboard tabs show from the grading payloads already
+                            stored, without contacting PrairieLearn. Run this after the grader or its
+                            interpretation changes. Grades are not affected.
+                        </div>
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-import"></ons-icon>
+                    </div>
+                    <div class="center">
+                        From PrairieLearn.&nbsp;&nbsp;
+                        Select GradeBook CSV <input id="adminGradePrairieCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradePrairieCSV" modifier="medium">Upload Gradebook</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>UID,UIN,Role,delivIdHeaders*</pre>
+                        The UID columns should be in CWL@ubc.ca format. Any empty grade cell will be ignored,
+                        but any present grade cell will overwrite whatever is already available online.
+                        This cannot be undone.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-upload"></ons-icon>
+                    </div>
+                    <div class="center">
+                        By Deliverable.&nbsp;&nbsp;Deliverable:
+                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        Select CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>[CSID|CWL|GITHUB|STUDENTNUMBER],GRADE</pre>
+
+                        If the CSID column is not present but a CWL, GITHUB, or STUDENTNUMBER column is present,
+                        Classy tries to map from the CWL/GITHUB/STUDENTNUMBER column back to a CSID. This will
+                        overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
+                        A COMMENT column is optionally used to provide feedback to the student, if present.
                     </div>
                 </ons-list-item>
 
@@ -1262,15 +1261,16 @@
                     Deletion events will
                     delete both database entries and GitHub entities.
                 </ons-list-item>
-                <ons-list-header>Select Deliverable to Delete</ons-list-header>
+                <ons-list-header>Select Deliverables to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-file-alt"></ons-icon>
                     </div>
                     <div class="center">
-                        Deliverable Name:
-                        <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;"
-                                   id="adminDeleteDeliverableText"></ons-input>
+                        Deliverables:
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="deliverableDeleteSelect">
+                        </select>
                         <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
                     </div>
                     <div class="expandable-content">
@@ -1517,7 +1517,7 @@
                             Prepare teams and repositories.&nbsp;&nbsp;
                             <ons-button id="adminManagePrepareButton" modifier="medium">Prepare</ons-button>
                             &nbsp;&nbsp;<input type="checkbox" id="provisionFormSingleCheckbox">
-                            <label for="provisionFormSingleCheckbox">Include people not in a team (students, staff, and admins each get their own repo)</label>
+                            <label for="provisionFormSingleCheckbox">Include people not in a team</label>
                         </div>
                         <div id="adminProvisionPrepareStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
                             Never run.
@@ -1528,11 +1528,15 @@
                         Nothing is created on GitHub, and nothing is visible to students. The lists below are empty
                         until this has been run.
                         <br/><br/>
+                        <b>Include people not in a team:</b> also plans a repository for everyone who is not on a
+                        team for this deliverable. Each such person, whether a student, staff member or admin, gets a
+                        repository of their own. Leave it unchecked to plan only for the teams that already exist.
+                        <br/><br/>
                         Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Select Repositories to Provision</ons-list-header>
+                <ons-list-header>Provision Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-square"></ons-icon>
@@ -1559,7 +1563,23 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Select Repositories to Release</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-plus-circle"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provisioned Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryProvisionedSelect"></select>
+                    </div>
+                    <div class="expandable-content">
+                        These are the repositories that have already been provisioned. There is nothing to do to them
+                        here: releasing is the section below, and removing one is on the Manage Database page.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Release Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-square"></ons-icon>
@@ -1583,24 +1603,6 @@
                     </div>
                 </ons-list-item>
 
-
-                <ons-list-header>Provisioned Repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-plus-circle"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Provisioned Repositories:
-                        <select multiple size="10"
-                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
-                                id="repositoryProvisionedSelect"></select>
-                    </div>
-                    <div class="expandable-content">
-                        These are the repositories that have already been provisioned.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-header>Released Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-circle"></ons-icon>

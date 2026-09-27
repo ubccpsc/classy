@@ -1,15 +1,17 @@
 import Log from "@common/Log";
-import { RepositoryTransport, TeamTransport } from "@common/types/PortalTypes";
+import { DeliverableTransport, RepositoryTransport, TeamTransport } from "@common/types/PortalTypes";
 import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
+import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminResultsTab } from "./AdminResultsTab";
 import { AdminTeamsTab } from "./AdminTeamsTab";
 import { AdminView } from "./AdminView";
 
 export class AdminDeletePage extends AdminPage {
+	private deliverables: DeliverableTransport[];
 	private teams: TeamTransport[];
 	private repos: RepositoryTransport[];
 
@@ -21,8 +23,9 @@ export class AdminDeletePage extends AdminPage {
 		const that = this;
 		Log.info("AdminDeletePage::init(..) - start");
 
-		UI.showModal("Retrieving repositories and teams.");
+		UI.showModal("Retrieving deliverables, repositories and teams.");
 
+		this.deliverables = (await AdminDeliverablesTab.getDeliverables(this.remote)).sort((a, b) => a.id.localeCompare(b.id));
 		this.teams = await AdminTeamsTab.getTeams(this.remote);
 		this.repos = await AdminResultsTab.getRepositories(this.remote);
 
@@ -33,6 +36,14 @@ export class AdminDeletePage extends AdminPage {
 		this.repos = this.repos.sort(function compare(a: RepositoryTransport, b: RepositoryTransport) {
 			return a.id.localeCompare(b.id);
 		});
+
+		const delivDelete = document.getElementById("deliverableDeleteSelect") as HTMLSelectElement;
+		delivDelete.innerHTML = "";
+		for (const deliv of this.deliverables) {
+			const option = document.createElement("option");
+			option.text = deliv.id;
+			delivDelete.add(option);
+		}
 
 		const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
 		teamDelete.innerHTML = "";
@@ -56,12 +67,8 @@ export class AdminDeletePage extends AdminPage {
 			Log.info("AdminDeletePage::handleDeliverableDelete(..) - delete pressed");
 			evt.stopPropagation(); // prevents list item expansion
 
-			let value = UI.getTextFieldValue("adminDeleteDeliverableText");
-			if (typeof value === "string") {
-				value = value.trim();
-			}
 			that
-				.deleteDeliverable(value)
+				.deleteDeliverablesPressed()
 				.then(function () {
 					// done
 				})
@@ -148,6 +155,43 @@ export class AdminDeletePage extends AdminPage {
 		if (selected.length > 0) {
 			UI.showSuccessToast("Repository deletion complete.", { buttonLabel: "Ok" });
 		}
+		// refresh the page
+		await this.init({});
+	}
+
+	/** Deletes every selected deliverable, one at a time, as deleteTeamPressed does for teams. */
+	private async deleteDeliverablesPressed(): Promise<void> {
+		const delivDelete = document.getElementById("deliverableDeleteSelect") as HTMLSelectElement;
+		const selected: string[] = [];
+		for (const opt of delivDelete.options) {
+			if (opt.selected) {
+				selected.push(opt.value || opt.text);
+			}
+		}
+
+		Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - start; # deliverables to delete: " + selected.length);
+		if (selected.length === 0) {
+			UI.showErrorToast("No deliverables selected for deletion.");
+			return;
+		}
+
+		for (let i = 0; i < selected.length; i++) {
+			const sel = selected[i];
+			try {
+				await this.deleteDeliverable(sel);
+				Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - delete complete; deliverable: " + sel);
+				UI.showSuccessToast("Deliverable deleted: " + sel + " ( " + (i + 1) + " of " + selected.length + " )", {
+					force: true,
+					animation: "none",
+				});
+			} catch (err) {
+				Log.error("AdminDeletePage::deleteDeliverablesPressed(..) - ERROR: " + err.message);
+				UI.showErrorToast("Deliverable NOT deleted: " + sel);
+			}
+		}
+
+		Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - done");
+		UI.showSuccessToast("Deliverable deletion complete.", { buttonLabel: "Ok" });
 		// refresh the page
 		await this.init({});
 	}
