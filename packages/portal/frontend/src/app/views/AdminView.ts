@@ -27,6 +27,7 @@ import { AdminTeamsTab } from "./AdminTeamsTab";
 import { IView } from "./IView";
 
 export interface AdminTabs {
+	/** No longer a tab: deliverables are a page pushed from Config. Kept so course plugins' tab lists still type. */
 	deliverables: boolean;
 	students: boolean;
 	teams: boolean;
@@ -73,7 +74,6 @@ export class AdminView implements IView {
 		Log.info("AdminView::renderPage( " + name + ", ... ) - start; options: " + JSON.stringify(opts));
 
 		if (this.tabs !== null) {
-			this.setTabVisibility("AdminDeliverableTab", this.tabs.deliverables);
 			this.setTabVisibility("AdminStudentTab", this.tabs.students);
 			this.setTabVisibility("AdminTeamTab", this.tabs.teams);
 			this.setTabVisibility("AdminResultTab", this.tabs.results);

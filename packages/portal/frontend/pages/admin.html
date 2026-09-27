@@ -15,10 +15,6 @@
     </ons-toolbar>
 
     <ons-tabbar id='adminTabbar' position="top" animation="none">
-        <!--
-        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
-        </ons-tab>
-        -->
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
@@ -48,14 +44,39 @@
         </div>
     </ons-modal>
 
-    <template id="deliverables.html">
+    <!-- Pushed from the Config tab, like adminProvision.html. The page id is what routes it to
+         AdminView::handleAdminDeliverables when it is shown; AdminDeliverablesTab draws the list. -->
+    <template id="adminDeliverables.html">
         <ons-page id="AdminDeliverables">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div class="center">Manage Deliverables</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
             <ons-list id="adminDeliverablesList">
                 <ons-list-header>Deliverables</ons-list-header>
             </ons-list>
-            <ons-fab id="adminAddDeliverable" position="bottom right">
-                <ons-icon icon="md-plus"></ons-icon>
-            </ons-fab>
+
+            <!-- one list item per operation, in the style of adminProvision.html; add more here -->
+            <ons-list>
+                <ons-list-header>Actions</ons-list-header>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-plus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminCreateDeliverableButton" modifier="medium">Create New Deliverable</ons-button>
+                    </div>
+                </ons-list-item>
+            </ons-list>
         </ons-page>
     </template>
 
@@ -252,10 +273,18 @@
 
     <template id="config.html">
         <ons-page id="AdminConfig">
-            <ons-list id="adminDeliverablesList">
-                <ons-list-header id="adminConfigDeliverablesHeader">Deliverables</ons-list-header>
-            </ons-list>
             <ons-list>
+                <ons-list-header>Deliverables</ons-list-header>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-alt"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminManageDeliverablesButton" modifier="medium">Manage Deliverables Page
+                        </ons-button>
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Manage Class List</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">

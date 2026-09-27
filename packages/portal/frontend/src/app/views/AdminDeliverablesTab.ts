@@ -47,7 +47,12 @@ export class AdminDeliverablesTab extends AdminPage {
 
 	private render(deliverables: DeliverableTransport[]) {
 		Log.info("AdminDeliverablesTab::render(..) - start");
-		const deliverableList = document.querySelector("#adminDeliverablesList") as HTMLElement;
+		const deliverableList = document.querySelector("#adminDeliverablesList") as HTMLElement | null;
+		if (deliverableList === null) {
+			// the page was popped (back pressed) before the deliverables arrived; nothing to draw into
+			Log.info("AdminDeliverablesTab::render(..) - list not on screen; skipping");
+			return;
+		}
 
 		// FlatPicker.setFlatPickerField(deliverable.open, OPEN_DELIV_KEY);
 		// FlatPicker.setFlatPickerField(deliverable.close, CLOSE_DELIV_KEY);
@@ -84,24 +89,21 @@ export class AdminDeliverablesTab extends AdminPage {
 			deliverableList.appendChild(UI.createListItem("Deliverables not yet specified."));
 		}
 
-		const createDeliverable = document.createElement("ons-button");
-		createDeliverable.setAttribute("modifier", "large");
-		createDeliverable.innerText = "Create New Deliverable";
-
-		createDeliverable.onclick = function () {
-			UI.pushPage("editDeliverable.html", { delivId: null })
-				.then(function () {
-					// success
-				})
-				.catch(function (err) {
-					Log.error("UI::pushPage(..) - ERROR: " + err.message);
-				});
-		};
-
-		const li = document.createElement("ons-list-item");
-		li.appendChild(createDeliverable);
-
-		deliverableList.appendChild(li);
+		// The create button is in the page's markup (the Actions list in adminDeliverables.html),
+		// beside where further operations will go, rather than appended to the list here. Assigned,
+		// not added: this runs on every render.
+		const createDeliverable = document.querySelector("#adminCreateDeliverableButton") as OnsButtonElement | null;
+		if (createDeliverable !== null) {
+			createDeliverable.onclick = function () {
+				UI.pushPage("editDeliverable.html", { delivId: null })
+					.then(function () {
+						// success
+					})
+					.catch(function (err) {
+						Log.error("UI::pushPage(..) - ERROR: " + err.message);
+					});
+			};
+		}
 	}
 
 	public async initEditDeliverablePage(opts: any): Promise<void> {

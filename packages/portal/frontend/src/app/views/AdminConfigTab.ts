@@ -17,14 +17,12 @@ export class AdminConfigTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
 
-	private deliverablesPage: AdminDeliverablesTab = null;
 	private course: CourseTransport = null;
 
 	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		this.isAdmin = isAdmin;
 		this.jobs = new JobRunner(remote);
-		this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
 	}
 
 	public setAdmin(isAdmin: boolean) {
@@ -38,8 +36,6 @@ export class AdminConfigTab extends AdminPage {
 		Log.info("AdminConfigTab::init(..) - start");
 		const that = this;
 		// Can init frame here if needed
-
-		await this.deliverablesPage.init(opts);
 
 		await this.initJobSections();
 
@@ -196,6 +192,18 @@ export class AdminConfigTab extends AdminPage {
 				.catch(function (err) {
 					Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
 				});
+		};
+
+		(document.querySelector("#adminManageDeliverablesButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - manage deliverables page pressed");
+			evt.preventDefault();
+
+			// Unlike the provision page, nothing is constructed here: the pushed page's id routes its
+			// show event to AdminView::handleAdminDeliverables, which draws the list. That is also
+			// what redraws it after the edit page pops back to it.
+			that.pushPage("./adminDeliverables.html", {}).catch(function (err) {
+				Log.error("AdminConfigTab - adminDeliverables ERROR: " + err.message);
+			});
 		};
 
 		(document.querySelector("#adminManageRepositoriesButton") as OnsButtonElement).onclick = function (evt) {
