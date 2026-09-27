@@ -89,10 +89,19 @@ export class AdminDeliverablesTab extends AdminPage {
 			deliverableList.appendChild(UI.createListItem("Deliverables not yet specified."));
 		}
 
-		// The create button is in the page's markup (the Actions list in adminDeliverables.html),
-		// beside where further operations will go, rather than appended to the list here. Assigned,
-		// not added: this runs on every render.
-		const createDeliverable = document.querySelector("#adminCreateDeliverableButton") as OnsButtonElement | null;
+		this.wireActions(deliverables);
+	}
+
+	/**
+	 * The Actions list on adminDeliverables.html: create, delete, download, upload. The buttons are
+	 * in the page's markup, so this only wires them; assigned, not added, since it runs on every
+	 * render. Each handler is a no-op when its element is absent (a course's own page may omit it).
+	 */
+	private wireActions(deliverables: DeliverableTransport[]): void {
+		const that = this;
+		const button = (id: string): OnsButtonElement | null => document.querySelector("#" + id) as OnsButtonElement | null;
+
+		const createDeliverable = button("adminCreateDeliverableButton");
 		if (createDeliverable !== null) {
 			createDeliverable.onclick = function () {
 				UI.pushPage("editDeliverable.html", { delivId: null })
@@ -104,6 +113,167 @@ export class AdminDeliverablesTab extends AdminPage {
 					});
 			};
 		}
+
+		const deleteSelect = document.querySelector("#adminDeleteDeliverableSelect") as HTMLSelectElement | null;
+		if (deleteSelect !== null) {
+			const ids = deliverables.map((d) => d.id).sort();
+			UI.setDropdownOptions("adminDeleteDeliverableSelect", ["-Select-"].concat(ids), "-Select-");
+		}
+		const deleteDeliverable = button("adminDeleteDeliverableSelectButton");
+		if (deleteDeliverable !== null) {
+			deleteDeliverable.onclick = function () {
+				that.deleteSelectedDeliverable().catch(function (err) {
+					UI.showError(err.message);
+				});
+			};
+		}
+
+		const download = button("adminDownloadDeliverablesButton");
+		if (download !== null) {
+			download.onclick = function () {
+				that.downloadConfiguration().catch(function (err) {
+					UI.showError(err.message);
+				});
+			};
+		}
+
+		const upload = button("adminUploadDeliverablesButton");
+		if (upload !== null) {
+			upload.onclick = function () {
+				that.uploadConfiguration().catch(function (err) {
+					UI.showError(err.message);
+				});
+			};
+		}
+	}
+
+	private async deleteSelectedDeliverable(): Promise<void> {
+		const delivId = UI.getDropdownValue("adminDeleteDeliverableSelect");
+		if (typeof delivId !== "string" || delivId === "-Select-" || delivId.length === 0) {
+			UI.showAlert("Select a deliverable to delete.");
+			return;
+		}
+		const that = this;
+		UI.notificationConfirm("Delete deliverable " + delivId + "? Its grades and results are kept.", async function (choice: number) {
+			if (choice !== 1) {
+				return;
+			}
+			try {
+				const options: any = AdminView.getOptions();
+				options.method = "delete";
+				const response = await fetch(that.remote + "/portal/admin/deliverable/" + encodeURIComponent(delivId), options);
+				const body = await response.json();
+				if (typeof body.success === "undefined") {
+					throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+				}
+				UI.showSuccessToast("Deliverable deleted: " + delivId);
+				await that.init({});
+			} catch (err) {
+				Log.error("AdminDeliverablesTab::deleteSelectedDeliverable( " + delivId + " ) - ERROR: " + err.message);
+				UI.showError("Unable to delete " + delivId + ": " + err.message);
+			}
+		});
+	}
+
+	/**
+	 * The file the download produces and the upload reads. A small envelope around the deliverables
+	 * as the backend sends them, so a stray JSON file is refused rather than half-imported.
+	 */
+	private static readonly CONFIG_KIND = "classy-deliverables";
+
+	private async downloadConfiguration(): Promise<void> {
+		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+		const file = {
+			kind: AdminDeliverablesTab.CONFIG_KIND,
+			exported: new Date().toISOString(),
+			deliverables: deliverables,
+		};
+		const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
+		const link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = "classy-deliverables-" + new Date().toISOString().slice(0, 10) + ".json";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(link.href);
+		Log.info("AdminDeliverablesTab::downloadConfiguration() - " + deliverables.length + " deliverables");
+	}
+
+	/**
+	 * Creates every deliverable in the chosen file that the course does not already have.
+	 *
+	 * The skip happens here, not on the server: POST /portal/admin/deliverable saves whatever it is
+	 * given, existing id or not, and a term's tuned deliverable must not be overwritten by last
+	 * term's. Each remaining deliverable is posted on its own, so one bad entry costs only itself.
+	 */
+	private async uploadConfiguration(): Promise<void> {
+		const input = document.querySelector("#adminUploadDeliverablesFile") as HTMLInputElement | null;
+		if (input === null || input.files === null || input.files.length === 0) {
+			UI.showAlert("Select a deliverable configuration file first.");
+			return;
+		}
+
+		let parsed: any;
+		try {
+			parsed = JSON.parse(await input.files[0].text());
+		} catch (_err) {
+			UI.showAlert("That file is not valid JSON.");
+			return;
+		}
+		if (parsed?.kind !== AdminDeliverablesTab.CONFIG_KIND || Array.isArray(parsed.deliverables) === false) {
+			UI.showAlert("That file is not a Classy deliverable configuration; use one saved by the download above.");
+			return;
+		}
+		const entries: any[] = parsed.deliverables;
+
+		UI.showModal("Uploading deliverables.");
+		const existing = new Set((await AdminDeliverablesTab.getDeliverables(this.remote)).map((d) => d.id));
+		const added: string[] = [];
+		const skipped: string[] = [];
+		const failed: string[] = [];
+		for (const entry of entries) {
+			const id = typeof entry?.id === "string" ? entry.id : null;
+			if (id === null || id.length < 2) {
+				failed.push(JSON.stringify(entry).slice(0, 40) + " (no id)");
+				continue;
+			}
+			if (existing.has(id)) {
+				skipped.push(id);
+				continue;
+			}
+			try {
+				const options: any = AdminView.getOptions();
+				options.method = "post";
+				options.body = JSON.stringify(entry);
+				const response = await fetch(this.remote + "/portal/admin/deliverable", options);
+				const body = await response.json();
+				if (typeof body.success === "undefined") {
+					throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+				}
+				added.push(id);
+				existing.add(id); // a file listing the same id twice creates it once
+			} catch (err) {
+				Log.error("AdminDeliverablesTab::uploadConfiguration( " + id + " ) - ERROR: " + err.message);
+				failed.push(id + " (" + err.message + ")");
+			}
+		}
+		UI.hideModal();
+		input.value = "";
+
+		let summary = "Added " + added.length + " deliverable" + (added.length === 1 ? "" : "s") + ".";
+		if (skipped.length > 0) {
+			summary += " Skipped, already exist: " + skipped.join(", ") + ".";
+		}
+		if (failed.length > 0) {
+			summary += " Failed: " + failed.join("; ") + ".";
+		}
+		Log.info("AdminDeliverablesTab::uploadConfiguration() - " + summary);
+		if (failed.length > 0) {
+			UI.showAlert(summary);
+		} else {
+			UI.notificationToast(summary, 8000);
+		}
+		await this.init({});
 	}
 
 	public async initEditDeliverablePage(opts: any): Promise<void> {

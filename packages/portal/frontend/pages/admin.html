@@ -76,6 +76,49 @@
                         <ons-button id="adminCreateDeliverableButton" modifier="medium">Create New Deliverable</ons-button>
                     </div>
                 </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-trash-alt"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminDeleteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminDeleteDeliverableSelectButton" modifier="medium">Delete Deliverable</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Removes the deliverable itself. Grades and results recorded against it are kept, as are any
+                        repositories and teams provisioned for it.
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-export"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminDownloadDeliverablesButton" modifier="medium">Download Deliverable Configuration
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Saves every deliverable, with all of its settings, as a JSON file. Keep it to set up the same
+                        deliverables in a future term with the upload below.
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-import"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Select configuration JSON
+                        <input id="adminUploadDeliverablesFile" style="padding-left: 1em" type="file" accept=".json,application/json"/>
+                        <ons-button id="adminUploadDeliverablesButton" modifier="medium">Upload Deliverable Configuration
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Creates every deliverable in the file that this course does not already have. A deliverable
+                        whose id already exists is skipped and left as it is. Deliverables are created exactly as
+                        they were saved, dates included, so edit each one afterwards.
+                    </div>
+                </ons-list-item>
             </ons-list>
         </ons-page>
     </template>
