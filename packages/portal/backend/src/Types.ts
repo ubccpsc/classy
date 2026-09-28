@@ -342,7 +342,7 @@ export enum AuditLabel {
 	REPO_RELEASE = "RepositoryRelease",
 	REPO_UNRELEASE = "RepositoryUnrelease",
 	CLASSLIST_UPLOAD = "Classlist_Upload",
-	STUDENT_WITHDRAW = "Student_Withdraw",
+	USER_SYNC = "User_Sync",
 	CLASSLIST_PRUNE = "Classlist_Prune",
 	IMPERSONATE = "Impersonate", // an admin started driving Classy as another user
 	GRADE_EXPORT = "Grade_Export", // an external system pulled grades; personId is the consumer name

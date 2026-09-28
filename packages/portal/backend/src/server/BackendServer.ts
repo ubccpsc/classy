@@ -187,9 +187,9 @@ export default class BackendServer {
 			jc.register("classlist-update", async (job, ctx) => {
 				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);
 			});
-			jc.register("student-withdraw", async (job, ctx) => {
+			jc.register("user-sync", async (job, ctx) => {
 				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
-				return { message: await ac.performStudentWithdraw(job.requestedBy, ctx) };
+				return { message: await ac.synchronizeUsers(job.requestedBy, ctx) };
 			});
 
 			// provisioning: prepare (database records) -> create (GitHub repos) -> release (teams).

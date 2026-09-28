@@ -376,19 +376,22 @@
                         <ons-icon icon="fa-user-slash"></ons-icon>
                     </div>
                     <div class="center">
-                        Synchronize class list
-                        <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark
-                            withdrawn students
+                        Synchronize users with GitHub teams
+                        <ons-button id="adminSynchronizeUsersButton" modifier="medium" style="margin-left: 1em">
+                            Synchronize users
                         </ons-button>
-                        <div id="adminPerformWithdrawStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminSynchronizeUsersStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
                     <div class="expandable-content">
-                        As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP
-                        query. This action
-                        just marks students not present in this list as withdrawn. It does not delete any teams, repos,
-                        grades, or results
+                        Reads the 'students', 'staff', and 'admin' teams on GitHub and sets every person's role from
+                        them: on staff or admin means staff or admin, otherwise on students means student, and on no
+                        team means withdrawn. As students drop the class they are taken out of the 'students' team by
+                        an LDAP query, so this is what marks them withdrawn; it also reinstates anyone who is back on
+                        the team, and it is the only thing that does (a classlist update never changes roles). If the
+                        staff or admin team cannot be read, staff and admin roles are left alone for that run. It does
+                        not delete any teams, repos, grades, or results
                         although the grades view does not show withdrawn students by default (e.g., so the course
                         statistics are correct); switch that page's Show selector to All to see them.
                         NOTE: you still need to manually upload the classlist.csv if you want to update lab

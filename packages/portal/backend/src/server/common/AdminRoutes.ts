@@ -77,7 +77,7 @@ export default class AdminRoutes implements IREST {
 
 	// Updating the classlist from the Classlist API, and marking withdrawn students, used to
 	// be PUT /portal/admin/classlist and POST /portal/admin/withdraw. Both now run as background
-	// jobs ("classlist-update" and "student-withdraw"; registered in BackendServer) started through
+	// jobs ("classlist-update" and "user-sync"; registered in BackendServer) started through
 	// postJob below, so neither can be cut off by the proxy's 90s read timeout mid-write.
 	//
 	// Uploading a classlist CSV is still a request: it carries a file, and it is bounded by it.

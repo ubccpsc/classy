@@ -521,36 +521,41 @@ export class AdminController {
 	}
 
 	/**
-	 * Gets the list of GitHub ids associated with the "students" team on GitHub
-	 * and marks them as PersonKind.WITHDRAWN. Does nothing if the students team
-	 * does not exist or is empty.
+	 * Settles every person's kind from the GitHub students, staff, and admin teams; see
+	 * PersonController::syncKindsWithTeams for the rules. Refuses to run if the students team
+	 * is empty or looks stale.
 	 *
 	 * @param requesterId Person.id of whoever asked; audited. Null skips the audit record.
 	 * @param ctx when this runs as a job: for progress
 	 * @returns {Promise<string>} a human-readable summary
 	 */
-	public async performStudentWithdraw(requesterId: string = null, ctx: JobContext = null): Promise<string> {
-		Log.info("AdminController::performStudentWithdraw() - start");
+	public async synchronizeUsers(requesterId: string = null, ctx: JobContext = null): Promise<string> {
+		Log.info("AdminController::synchronizeUsers() - start");
 		await ctx?.progress(0, 0, "reading the students team from GitHub");
 		// the injected client, not GitHubActions.getInstance(true): forcing the live client here
 		// meant this could only ever be exercised against the real org
 		const gha = this.gh.getActions();
-		const registeredGithubIds = await gha.getTeamMembers("students");
+		const registeredGithubIds = await gha.getTeamMembers(TeamController.STUDENTS_NAME);
+		const staffGithubIds = await gha.getTeamMembers(TeamController.STAFF_NAME);
+		const adminGithubIds = await gha.getTeamMembers(TeamController.ADMIN_NAME);
 		Log.info(
-			"AdminController::performStudentWithdraw() - GitHub students team: " +
+			"AdminController::synchronizeUsers() - GitHub teams: students " +
 				registeredGithubIds.length +
-				" login(s)" +
-				(registeredGithubIds.length > 0 ? "; first few: " + registeredGithubIds.slice(0, 5).join(", ") : "")
+				(registeredGithubIds.length > 0 ? " (first few: " + registeredGithubIds.slice(0, 5).join(", ") + ")" : "") +
+				"; staff " +
+				staffGithubIds.length +
+				"; admin " +
+				adminGithubIds.length
 		);
 		if (registeredGithubIds.length === 0) {
 			// getTeamMembers answers an empty list for a failed request as well as an empty team
 			Log.error(
-				"AdminController::performStudentWithdraw() - the students team came back empty. If it is not actually empty, " +
+				"AdminController::synchronizeUsers() - the students team came back empty. If it is not actually empty, " +
 					"the GitHubAction::getTeamMembers line above has the reason (a failed request is answered as an empty list)."
 			);
 		}
 
-		// Sanity floor. markStudentsWithdrawn() withdraws every STUDENT whose githubId is NOT in
+		// Sanity floor. syncKindsWithTeams() withdraws every STUDENT whose githubId is NOT in
 		// this list, so the list is trusted absolutely: if the GitHub "students" team is stale.
 		const currentStudents = (await this.pc.getAllPeople()).filter((p) => p.kind === PersonKind.STUDENT);
 		if (currentStudents.length > 0 && registeredGithubIds.length < currentStudents.length / 2) {
@@ -561,19 +566,19 @@ export class AdminController {
 				currentStudents.length +
 				" enrolled students. This usually means the team is stale (e.g. LDAP has not synced yet) " +
 				"rather than that the class has shrunk by half. Verify the team membership on GitHub first.";
-			Log.warn("AdminController::performStudentWithdraw() - " + msg);
+			Log.warn("AdminController::synchronizeUsers() - " + msg);
 			throw new Error(msg);
 		}
 
 		if (registeredGithubIds.length > 0) {
-			await ctx?.progress(0, registeredGithubIds.length, "marking withdrawn students");
+			await ctx?.progress(0, registeredGithubIds.length, "settling roles from the GitHub teams");
 			const pc = new PersonController();
-			const msg = await pc.markStudentsWithdrawn(registeredGithubIds);
-			Log.info("AdminController::performStudentWithdraw() - done; msg: " + msg);
+			const msg = await pc.syncKindsWithTeams({ students: registeredGithubIds, staff: staffGithubIds, admin: adminGithubIds });
+			Log.info("AdminController::synchronizeUsers() - done; msg: " + msg);
 			await ctx?.progress(registeredGithubIds.length, registeredGithubIds.length, msg);
 
 			if (requesterId !== null) {
-				await this.dbc.writeAudit(AuditLabel.STUDENT_WITHDRAW, requesterId, {}, {}, { message: msg });
+				await this.dbc.writeAudit(AuditLabel.USER_SYNC, requesterId, {}, {}, { message: msg });
 			}
 			return msg;
 		} else {

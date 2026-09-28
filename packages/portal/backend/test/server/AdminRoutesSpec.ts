@@ -1380,15 +1380,15 @@ describe("Admin Routes", function () {
 		//     expect(body.success.length).to.equal(0); // NOTE: this is terrible, something should be being released
 		// }).timeout(TIMEOUT * 30);
 
-		it("Should be able to start a withdraw task", async function () {
+		it("Should be able to start a user synchronization job", async function () {
 			// This is tricky because the live github data will have a different team id than we"re using locally
 
 			// NOTE: marking withdrawn students used to be POST /portal/admin/withdraw; it is now the
-			// "student-withdraw" job, so this returns as soon as the job is recorded rather than when
+			// "user-sync" job, so this returns as soon as the job is recorded rather than when
 			// the withdraw finishes. Whether the work itself succeeds depends on live GitHub data.
 			let response = null;
 			let body: Payload;
-			const url = "/portal/admin/job/student-withdraw";
+			const url = "/portal/admin/job/user-sync";
 			try {
 				response = await request(app).post(url).send({}).set({ user: userName, token: userToken });
 				body = response.body;
@@ -1398,7 +1398,7 @@ describe("Admin Routes", function () {
 			Log.test(response.status + " -> " + JSON.stringify(body));
 			expect(response.status).to.equal(200);
 			expect(body.success).to.not.be.undefined;
-			expect(body.success.kind).to.equal("student-withdraw");
+			expect(body.success.kind).to.equal("user-sync");
 			expect(body.success.state).to.equal("RUNNING");
 		}).timeout(TIMEOUT * 10);
 
@@ -2378,7 +2378,7 @@ describe("Admin Routes", function () {
 			// these are registered by BackendServer::start(); without them the buttons 400
 			const jc = JobController.getInstance();
 			expect(jc.isRegistered("classlist-update"), "classlist-update").to.be.true;
-			expect(jc.isRegistered("student-withdraw"), "student-withdraw").to.be.true;
+			expect(jc.isRegistered("user-sync"), "user-sync").to.be.true;
 			expect(jc.isRegistered("prairielearn-sync"), "prairielearn-sync").to.be.true;
 			expect(jc.isRegistered("provision-prepare"), "provision-prepare").to.be.true;
 			expect(jc.isRegistered("provision-create"), "provision-create").to.be.true;

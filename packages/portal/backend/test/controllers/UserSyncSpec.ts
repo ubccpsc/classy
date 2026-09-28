@@ -5,6 +5,7 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { IGitHubActions } from "@backend/controllers/GitHubActions";
 import { IGitHubController } from "@backend/controllers/GitHubController";
+import { TeamController } from "@backend/controllers/TeamController";
 import { AuditLabel, PersonKind } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -12,7 +13,8 @@ import { TestHarness } from "@common/TestHarness";
 import "@common/GlobalSpec"; // load first
 
 /**
- * AdminController::performStudentWithdraw, which marks every STUDENT missing from the GitHub
+ * AdminController::synchronizeUsers (formerly performStudentWithdraw), which settles every
+ * person's kind from the GitHub students, staff, and admin teams. Its original job, marking every STUDENT missing from the GitHub
  * "students" team as WITHDRAWN.
  *
  * This is the second whole-class operation Classy has (dbSanityCheck is the other), and it was the
@@ -24,12 +26,17 @@ import "@common/GlobalSpec"; // load first
  * missing from it gets withdrawn -- so a team that is merely stale (LDAP has not synced, which
  * happens exactly at term start) would otherwise withdraw most of the class in one call.
  */
-describe("AdminController::performStudentWithdraw", function () {
+describe("AdminController::synchronizeUsers", function () {
 	const dbc = DatabaseController.getInstance();
 
-	function controllerFor(githubIds: string[]): AdminController {
+	function controllerFor(students: string[], staff: string[] = [], admin: string[] = []): AdminController {
+		const byTeam: { [name: string]: string[] } = {
+			students: students,
+			[TeamController.STAFF_NAME]: staff,
+			[TeamController.ADMIN_NAME]: admin,
+		};
 		const gha = {
-			getTeamMembers: async (): Promise<string[]> => githubIds,
+			getTeamMembers: async (teamName: string): Promise<string[]> => byTeam[teamName] ?? [],
 		} as unknown as IGitHubActions;
 		return new AdminController({ getActions: () => gha } as unknown as IGitHubController);
 	}
@@ -44,12 +51,12 @@ describe("AdminController::performStudentWithdraw", function () {
 	}
 
 	before(async function () {
-		await TestHarness.suiteBefore("AdminController::performStudentWithdraw");
+		await TestHarness.suiteBefore("AdminController::synchronizeUsers");
 		await TestHarness.prepareDeliverables();
 	});
 
 	after(function () {
-		TestHarness.suiteAfter("AdminController::performStudentWithdraw");
+		TestHarness.suiteAfter("AdminController::synchronizeUsers");
 	});
 
 	beforeEach(async function () {
@@ -63,7 +70,7 @@ describe("AdminController::performStudentWithdraw", function () {
 		await makeStudent("withdrawGone", "ghGone");
 
 		// the team still has two of the three, which is above the floor
-		const msg = await controllerFor(["ghStays1", "ghStays2"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+		const msg = await controllerFor(["ghStays1", "ghStays2"]).synchronizeUsers(TestHarness.ADMIN1.id);
 
 		expect(await kindOf("withdrawGone"), "absent from the team means withdrawn").to.equal(PersonKind.WITHDRAWN);
 		expect(await kindOf("withdrawStays1"), "still on the team means still enrolled").to.equal(PersonKind.STUDENT);
@@ -77,7 +84,7 @@ describe("AdminController::performStudentWithdraw", function () {
 		await makeStudent("withdrawCase1", "ghcase1");
 		await makeStudent("withdrawCase2", "ghcase2");
 
-		const msg = await controllerFor(["GhCase1", "GHCASE2"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+		const msg = await controllerFor(["GhCase1", "GHCASE2"]).synchronizeUsers(TestHarness.ADMIN1.id);
 
 		expect(await kindOf("withdrawCase1"), "a capitalised login is still the same account").to.equal(PersonKind.STUDENT);
 		expect(await kindOf("withdrawCase2")).to.equal(PersonKind.STUDENT);
@@ -96,9 +103,10 @@ describe("AdminController::performStudentWithdraw", function () {
 			await dbc.writePerson(p);
 		}
 
-		const msg = await controllerFor(["ghNullStays", "ghNullOther"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+		const msg = await controllerFor(["ghNullStays", "ghNullOther"]).synchronizeUsers(TestHarness.ADMIN1.id);
 
-		expect(await kindOf("withdrawNullStays"), "on the team: kind left for login to re-derive").to.equal(null);
+		// settled from the teams now, rather than left for the next login to re-derive
+		expect(await kindOf("withdrawNullStays"), "on the team: settled to student").to.equal(PersonKind.STUDENT);
 		expect(await kindOf("withdrawNullGone"), "off the team: withdrawn like any student").to.equal(PersonKind.WITHDRAWN);
 		expect(msg).to.contain("# active: 2; # withdrawn: 1; # withdrawn (this run): 1");
 	});
@@ -111,16 +119,95 @@ describe("AdminController::performStudentWithdraw", function () {
 		await dbc.writePerson(TestHarness.createPerson("withdrawNoGh", "withdrawNoGh", null, PersonKind.STUDENT));
 
 		// ghTAOnly is on the team but is nobody in Classy (a TA, or someone not on the classlist)
-		const msg = await controllerFor(["ghActive1", "ghActive2", "ghBack", "ghTAOnly"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+		const msg = await controllerFor(["ghActive1", "ghActive2", "ghBack", "ghTAOnly"]).synchronizeUsers(TestHarness.ADMIN1.id);
 		Log.test(msg);
 
 		expect(await kindOf("withdrawBack"), "back on the team means reinstated").to.equal(PersonKind.STUDENT);
 		expect(await kindOf("withdrawNoGh"), "no githubId can never match the team").to.equal(PersonKind.WITHDRAWN);
 		expect(msg).to.contain("# active: 3; # withdrawn: 1; # withdrawn (this run): 1");
 		expect(msg).to.contain("# reinstated (this run): 1");
-		expect(msg).to.contain("# on GitHub students team: 4");
+		expect(msg).to.contain("# on GitHub teams: students 4");
 		expect(msg).to.contain("# team logins unknown to Classy: 1");
 		expect(msg).to.contain("# students without a GitHub id: 1");
+	});
+
+	async function makePerson(id: string, githubId: string, kind: PersonKind): Promise<void> {
+		await dbc.writePerson(TestHarness.createPerson(id, id, githubId, kind));
+	}
+
+	it("Should derive staff and admin kinds from their teams.", async function () {
+		await makeStudent("syncStudent", "ghStudent");
+		await makeStudent("syncNewTA", "ghNewTA");
+		await makeStudent("syncNewAdmin", "ghNewAdmin");
+		await makeStudent("syncNewBoth", "ghNewBoth");
+
+		const msg = await controllerFor(["ghStudent", "ghNewTA"], ["ghNewTA", "ghNewBoth"], ["ghNewAdmin", "ghNewBoth"]).synchronizeUsers(
+			TestHarness.ADMIN1.id
+		);
+		Log.test(msg);
+
+		expect(await kindOf("syncStudent")).to.equal(PersonKind.STUDENT);
+		expect(await kindOf("syncNewTA"), "staff wins over students").to.equal(PersonKind.STAFF);
+		expect(await kindOf("syncNewAdmin")).to.equal(PersonKind.ADMIN);
+		expect(await kindOf("syncNewBoth")).to.equal(PersonKind.ADMINSTAFF);
+		expect(msg).to.contain("# promoted (this run): 3");
+		expect(msg).to.contain("# withdrawn (this run): 0");
+	});
+
+	it("Should demote former staff who are no longer on the staff or admin team.", async function () {
+		await makeStudent("syncStudentA", "ghStudentA");
+		await makeStudent("syncStudentB", "ghStudentB");
+		await makePerson("syncFormerTA", "ghFormerTA", PersonKind.STAFF); // still enrolled as a student
+		await makePerson("syncGoneAdmin", "ghGoneAdmin", PersonKind.ADMIN); // on no team at all
+		await makePerson("syncStillAdmin", "ghStillAdmin", PersonKind.ADMIN);
+
+		const msg = await controllerFor(["ghStudentA", "ghStudentB", "ghFormerTA"], ["ghSomeTA"], ["ghStillAdmin"]).synchronizeUsers(
+			TestHarness.ADMIN1.id
+		);
+		Log.test(msg);
+
+		expect(await kindOf("syncFormerTA"), "off staff, on students: a student again").to.equal(PersonKind.STUDENT);
+		expect(await kindOf("syncGoneAdmin"), "off every team: withdrawn").to.equal(PersonKind.WITHDRAWN);
+		expect(await kindOf("syncStillAdmin")).to.equal(PersonKind.ADMIN);
+		expect(msg).to.contain("# demoted (this run): 1");
+		expect(msg).to.contain("# withdrawn (this run): 1");
+		expect(msg).to.contain("# team logins unknown to Classy: 1"); // ghSomeTA
+	});
+
+	it("Should leave staff and admin kinds alone when those teams cannot be read.", async function () {
+		// getTeamMembers answers an empty list for a failed request; a course always has an admin,
+		// so empty is read as unreadable rather than as "nobody is staff any more"
+		await makeStudent("syncGuardStudent", "ghGuardStudent");
+		await makeStudent("syncGuardWouldBeTA", "ghGuardWouldBeTA");
+		await makePerson("syncGuardTA", "ghGuardTA", PersonKind.STAFF); // on no team we can see
+		await makePerson("syncGuardAdmin", "ghGuardAdmin", PersonKind.ADMINSTAFF);
+
+		const msg = await controllerFor(["ghGuardStudent", "ghGuardWouldBeTA"], [], []).synchronizeUsers(TestHarness.ADMIN1.id);
+		Log.test(msg);
+
+		expect(await kindOf("syncGuardTA"), "not demoted on a run that could not read the teams").to.equal(PersonKind.STAFF);
+		expect(await kindOf("syncGuardAdmin")).to.equal(PersonKind.ADMINSTAFF);
+		expect(await kindOf("syncGuardWouldBeTA"), "not promoted either").to.equal(PersonKind.STUDENT);
+		expect(msg).to.contain("staff/admin unreadable");
+		expect(msg).to.contain("# promoted (this run): 0; # demoted (this run): 0");
+	});
+
+	it("Should settle a null kind from whichever team has them.", async function () {
+		await makeStudent("syncNullStudent", "ghNullStudent");
+		await makeStudent("syncNullTA", "ghNullTA");
+		await makeStudent("syncNullOther", "ghNullOther");
+		for (const id of ["syncNullStudent", "syncNullTA"]) {
+			const p = await dbc.getPerson(id);
+			p.kind = null;
+			await dbc.writePerson(p);
+		}
+
+		const msg = await controllerFor(["ghNullStudent", "ghNullOther"], ["ghNullTA"], ["ghAnAdmin"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		Log.test(msg);
+
+		expect(await kindOf("syncNullStudent")).to.equal(PersonKind.STUDENT);
+		expect(await kindOf("syncNullTA")).to.equal(PersonKind.STAFF);
+		expect(msg).to.contain("# null kinds settled (this run): 2");
 	});
 
 	it("Should refuse to run when the GitHub team looks stale.", async function () {
@@ -133,7 +220,7 @@ describe("AdminController::performStudentWithdraw", function () {
 
 		let message: string = null;
 		try {
-			await controllerFor(["ghStaleA"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+			await controllerFor(["ghStaleA"]).synchronizeUsers(TestHarness.ADMIN1.id);
 		} catch (err) {
 			message = err.message;
 		}
@@ -153,7 +240,7 @@ describe("AdminController::performStudentWithdraw", function () {
 
 		let message: string = null;
 		try {
-			await controllerFor([]).performStudentWithdraw(TestHarness.ADMIN1.id);
+			await controllerFor([]).synchronizeUsers(TestHarness.ADMIN1.id);
 		} catch (err) {
 			message = err.message;
 		}
@@ -166,9 +253,9 @@ describe("AdminController::performStudentWithdraw", function () {
 		await makeStudent("auditStays1", "ghAuditStays1");
 		await makeStudent("auditStays2", "ghAuditStays2");
 
-		const before = await dbc.getAudits(AuditLabel.STUDENT_WITHDRAW, 1000);
-		await controllerFor(["ghAuditStays1", "ghAuditStays2"]).performStudentWithdraw(TestHarness.ADMIN1.id);
-		const after = await dbc.getAudits(AuditLabel.STUDENT_WITHDRAW, 1000);
+		const before = await dbc.getAudits(AuditLabel.USER_SYNC, 1000);
+		await controllerFor(["ghAuditStays1", "ghAuditStays2"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const after = await dbc.getAudits(AuditLabel.USER_SYNC, 1000);
 
 		expect(after.length).to.equal(before.length + 1);
 		expect(after[0].personId).to.equal(TestHarness.ADMIN1.id);
@@ -180,9 +267,9 @@ describe("AdminController::performStudentWithdraw", function () {
 		await makeStudent("noAuditStays1", "ghNoAuditStays1");
 		await makeStudent("noAuditStays2", "ghNoAuditStays2");
 
-		const before = await dbc.getAudits(AuditLabel.STUDENT_WITHDRAW, 1000);
-		await controllerFor(["ghNoAuditStays1", "ghNoAuditStays2"]).performStudentWithdraw(null);
-		const after = await dbc.getAudits(AuditLabel.STUDENT_WITHDRAW, 1000);
+		const before = await dbc.getAudits(AuditLabel.USER_SYNC, 1000);
+		await controllerFor(["ghNoAuditStays1", "ghNoAuditStays2"]).synchronizeUsers(null);
+		const after = await dbc.getAudits(AuditLabel.USER_SYNC, 1000);
 
 		expect(after.length).to.equal(before.length);
 	});

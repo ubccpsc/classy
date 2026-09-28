@@ -6,6 +6,14 @@ import { Person, PersonKind, Repository } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { GitHubActions } from "./GitHubActions";
 
+/** The GitHub logins on each of the course's role teams; see PersonController::syncKindsWithTeams. */
+export interface TeamLogins {
+	students: string[];
+	/** empty means "could not be read": staff and admin kinds are then left alone */
+	staff: string[];
+	admin: string[];
+}
+
 export class PersonController {
 	private db: DatabaseController = DatabaseController.getInstance();
 
@@ -190,101 +198,154 @@ export class PersonController {
 	}
 
 	/**
-	 * Marks students as withdrawn if their gitHubId is not listed in the list of registered student githubIds.
-	 * @param {string[]} registeredGithubIds
-	 * @returns {Promise<string>}
+	 * Settles every person's kind from the GitHub teams, which are what actually grant access.
+	 * Precedence is the one the login path uses (AuthController::personPrivileged): on staff and
+	 * admin -> ADMINSTAFF, staff -> STAFF, admin -> ADMIN, otherwise students -> STUDENT, and on
+	 * no team -> WITHDRAWN. A null kind (login in progress) is settled the same way.
+	 *
+	 * This used to look only at the students team and only at students, so a TA added to the
+	 * staff team stayed a student until they next logged in, and an admin removed from the team
+	 * kept admin until they did.
+	 *
+	 * Guard: an empty staff or admin list is treated as "could not be read", not as empty -- a
+	 * course always has an admin, and getTeamMembers answers an empty list for a failed request.
+	 * On such a run privileged kinds are neither granted nor removed; the students logic still runs.
+	 *
+	 * @param teams the logins on each team
+	 * @returns {Promise<string>} a human-readable summary
 	 */
-	public async markStudentsWithdrawn(registeredGithubIds: string[]): Promise<string> {
+	public async syncKindsWithTeams(teams: TeamLogins): Promise<string> {
+		const prefix = "PersonController::syncKindsWithTeams( .. ) - ";
 		const people = await this.getAllPeople();
+		const privilegedReadable = teams.staff.length > 0 && teams.admin.length > 0;
 		Log.info(
-			"PersonController::markStudentsWithdrawn( .. ) - # people: " + people.length + "; # registered: " + registeredGithubIds.length
+			prefix +
+				"# people: " +
+				people.length +
+				"; students team: " +
+				teams.students.length +
+				"; staff team: " +
+				teams.staff.length +
+				"; admin team: " +
+				teams.admin.length
 		);
-		// Counted after each person's kind has been settled, so a re-enrolled student lands in
-		// active and a student dropped on this run lands in both withdrawn totals.
-		let numActive = 0;
-		let numWithdrawn = 0;
-		let numWithdrawnThisRun = 0;
-
-		// Everything needed to answer "why is this student not active?" from the log alone: who
-		// changed on this run and in which direction, who is still off the team, who can never
-		// match it, and which team logins match nobody. Until this existed the job logged one line
-		// per newly withdrawn student and nothing else, so a run that changed nothing said nothing.
-		const reinstated: string[] = [];
-		const withdrawnThisRun: string[] = [];
-		const stillWithdrawn: string[] = [];
-		const noGithubId: string[] = [];
-		const knownLogins = new Set<string>();
+		if (privilegedReadable === false) {
+			Log.warn(
+				prefix +
+					"the staff or admin team came back empty; treating both as unreadable, so staff and admin kinds are left as they are on this run"
+			);
+		}
 
 		// GitHub logins are case-insensitive, and Classy lowercases the CWL it stores as githubId;
 		// an exact compare withdrew anyone whose login GitHub reports with a capital letter, every run.
-		const registered = new Set(registeredGithubIds.map((id) => id.toLowerCase()));
+		const lower = (ids: string[]) => new Set(ids.map((id) => id.toLowerCase()));
+		const students = lower(teams.students);
+		const staff = lower(teams.staff);
+		const admin = lower(teams.admin);
+
+		// Everything needed to answer "why is this person this kind?" from the log alone.
+		const reinstated: string[] = [];
+		const withdrawnThisRun: string[] = [];
+		const promoted: string[] = [];
+		const demoted: string[] = [];
+		const settled: string[] = [];
+		const stillWithdrawn: string[] = [];
+		const noGithubId: string[] = [];
+		const knownLogins = new Set<string>();
+		let numActive = 0;
+		let numWithdrawn = 0;
+
 		for (const person of people) {
 			const hasGithubId = typeof person.githubId === "string" && person.githubId.length > 0;
-			if (hasGithubId === true) {
-				knownLogins.add(person.githubId.toLowerCase());
+			const login = hasGithubId ? person.githubId.toLowerCase() : null;
+			if (login !== null) {
+				knownLogins.add(login);
 			}
-			// A null kind is a student whose role is being re-derived: the login callback nulls it
-			// and the next privileged request fills it back in. Skipping them here made a student
-			// who logged in but never loaded a page invisible to both counts (AdminController::getPeople
-			// already treats null as a student for the same reason). On the team they count as
-			// active and kind is left null, so the pending re-derivation still runs; off the team
-			// they are withdrawn like any other student.
-			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN || person.kind === null) {
-				const label = person.id + " (githubId: " + person.githubId + ")";
-				if (hasGithubId === false) {
-					noGithubId.push(label);
-				}
-				if (hasGithubId === true && registered.has(person.githubId.toLowerCase())) {
-					// student is registered
-					if (person.kind === PersonKind.WITHDRAWN) {
-						// this will happen if they have withdrawn and then re-enrolled
-						person.kind = PersonKind.STUDENT;
-						await this.writePerson(person);
-						reinstated.push(label);
-					}
-					numActive++;
+			// NONE ("") is the older spelling of "not derived yet"
+			const current: PersonKind | null = person.kind === PersonKind.NONE || typeof person.kind === "undefined" ? null : person.kind;
+			const isPrivileged = current === PersonKind.STAFF || current === PersonKind.ADMIN || current === PersonKind.ADMINSTAFF;
+			const onStudents = login !== null && students.has(login);
+			const onStaff = privilegedReadable && login !== null && staff.has(login);
+			const onAdmin = privilegedReadable && login !== null && admin.has(login);
+
+			let target: PersonKind;
+			if (onStaff && onAdmin) {
+				target = PersonKind.ADMINSTAFF;
+			} else if (onStaff) {
+				target = PersonKind.STAFF;
+			} else if (onAdmin) {
+				target = PersonKind.ADMIN;
+			} else if (isPrivileged && (privilegedReadable === false || hasGithubId === false)) {
+				target = current; // cannot tell whether they still belong; keep what they have
+			} else if (onStudents) {
+				target = PersonKind.STUDENT;
+			} else {
+				target = PersonKind.WITHDRAWN;
+			}
+
+			const label = person.id + " (githubId: " + person.githubId + ")";
+			if (hasGithubId === false && isPrivileged === false) {
+				noGithubId.push(label);
+			}
+
+			if (target !== current) {
+				const change = label + ": " + current + " -> " + target;
+				if (target === PersonKind.WITHDRAWN) {
+					withdrawnThisRun.push(change); // including a null kind that is on no team
+				} else if (current === null) {
+					settled.push(change);
+				} else if (current === PersonKind.WITHDRAWN && target === PersonKind.STUDENT) {
+					reinstated.push(change);
+				} else if (target === PersonKind.STUDENT) {
+					demoted.push(change);
 				} else {
-					// student is not registered; mark as withdrawn
-					if (person.kind !== PersonKind.WITHDRAWN) {
-						numWithdrawnThisRun++;
-						person.kind = PersonKind.WITHDRAWN;
-						Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
-						await this.writePerson(person);
-						withdrawnThisRun.push(label);
-					} else {
-						stillWithdrawn.push(label);
-					}
-					numWithdrawn++;
+					promoted.push(change);
 				}
+				Log.info(prefix + "changing " + change);
+				person.kind = target;
+				await this.writePerson(person);
+			} else if (target === PersonKind.WITHDRAWN) {
+				stillWithdrawn.push(label);
+			}
+
+			if (target === PersonKind.STUDENT) {
+				numActive++;
+			} else if (target === PersonKind.WITHDRAWN) {
+				numWithdrawn++;
 			}
 		}
-		const unknownLogins = registeredGithubIds.filter((id) => knownLogins.has(id.toLowerCase()) === false);
 
-		const prefix = "PersonController::markStudentsWithdrawn( .. ) - ";
+		const unknownLogins = Array.from(new Set([...teams.students, ...teams.staff, ...teams.admin])).filter(
+			(id) => knownLogins.has(id.toLowerCase()) === false
+		);
+
 		if (reinstated.length > 0) {
-			Log.warn(prefix + "reinstated (WITHDRAWN -> STUDENT; back on the students team): " + PersonController.forLog(reinstated));
+			Log.warn(prefix + "reinstated (back on the students team): " + PersonController.forLog(reinstated));
 		}
 		if (withdrawnThisRun.length > 0) {
-			Log.warn(prefix + "withdrawn this run (githubId not on the students team): " + PersonController.forLog(withdrawnThisRun));
+			Log.warn(prefix + "withdrawn this run (githubId on no team): " + PersonController.forLog(withdrawnThisRun));
+		}
+		if (promoted.length > 0) {
+			Log.warn(prefix + "promoted (on the staff or admin team): " + PersonController.forLog(promoted));
+		}
+		if (demoted.length > 0) {
+			Log.warn(prefix + "demoted (no longer on the staff or admin team): " + PersonController.forLog(demoted));
+		}
+		if (settled.length > 0) {
+			Log.info(prefix + "null kinds settled from the teams: " + PersonController.forLog(settled));
 		}
 		if (stillWithdrawn.length > 0) {
 			Log.warn(
 				prefix +
-					"still withdrawn (githubId not on the students team; a classlist update never reinstates, only this job does): " +
+					"still withdrawn (githubId on no team; a classlist update never reinstates, only this job does): " +
 					PersonController.forLog(stillWithdrawn)
 			);
 		}
 		if (noGithubId.length > 0) {
-			Log.warn(
-				prefix + "students with no githubId, who can never match the team and are withdrawn: " + PersonController.forLog(noGithubId)
-			);
+			Log.warn(prefix + "students with no githubId, who can never match a team and are withdrawn: " + PersonController.forLog(noGithubId));
 		}
 		if (unknownLogins.length > 0) {
-			Log.info(
-				prefix +
-					"team logins with no matching Classy person (staff and TAs on the team, or not on the classlist): " +
-					PersonController.forLog(unknownLogins)
-			);
+			Log.info(prefix + "team logins with no matching Classy person (not on the classlist): " + PersonController.forLog(unknownLogins));
 		}
 
 		const msg =
@@ -293,11 +354,22 @@ export class PersonController {
 			"; # withdrawn: " +
 			numWithdrawn +
 			"; # withdrawn (this run): " +
-			numWithdrawnThisRun +
+			withdrawnThisRun.length +
 			"; # reinstated (this run): " +
 			reinstated.length +
-			"; # on GitHub students team: " +
-			registeredGithubIds.length +
+			"; # promoted (this run): " +
+			promoted.length +
+			"; # demoted (this run): " +
+			demoted.length +
+			"; # null kinds settled (this run): " +
+			settled.length +
+			"; # on GitHub teams: students " +
+			teams.students.length +
+			", staff " +
+			teams.staff.length +
+			", admin " +
+			teams.admin.length +
+			(privilegedReadable ? "" : " (staff/admin unreadable; privileged kinds untouched)") +
 			"; # team logins unknown to Classy: " +
 			unknownLogins.length +
 			(noGithubId.length > 0 ? "; # students without a GitHub id: " + noGithubId.length : "");

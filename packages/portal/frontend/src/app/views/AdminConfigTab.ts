@@ -649,7 +649,7 @@ export class AdminConfigTab extends AdminPage {
 
 	/**
 	 * The classlist-update summary as one line, in the same "# label: n; ..." shape as the
-	 * student-withdraw message so the two buttons read alike. `# registered` is the size of the
+	 * user-sync message so the two buttons read alike. `# registered` is the size of the
 	 * classlist that was processed, not the size of Classy's database.
 	 */
 	private static classlistSummaryMessage(summary: any): string {
@@ -697,15 +697,15 @@ export class AdminConfigTab extends AdminPage {
 				},
 			},
 			{
-				kind: "student-withdraw",
-				buttonId: "adminPerformWithdrawButton",
-				statusId: "adminPerformWithdrawStatus",
+				kind: "user-sync",
+				buttonId: "adminSynchronizeUsersButton",
+				statusId: "adminSynchronizeUsersStatus",
 				ran: "Last run",
 				detail: function (summary: any): string {
 					return summary.message;
 				},
 				onFinished: (summary: any) => {
-					UI.notificationToast("Withdraw marking successful: " + summary.message, 5000);
+					UI.notificationToast("User synchronization complete: " + summary.message, 5000);
 				},
 			},
 		];

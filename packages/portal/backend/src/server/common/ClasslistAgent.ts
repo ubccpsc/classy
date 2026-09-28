@@ -207,9 +207,9 @@ export class ClasslistAgent {
 		});
 
 		// The classlist update never changes kind, so a registered person can be anything but
-		// STUDENT: withdrawn earlier (only the withdraw job reinstates, and only if the GitHub
+		// STUDENT: withdrawn earlier (only the user synchronization job reinstates, and only if the GitHub
 		// students team has them), staff or admin who are also registered, or null while a login
-		// is re-deriving it. The withdraw job counts only STUDENT and WITHDRAWN, so this is the
+		// is re-deriving it. The user synchronization job counts only STUDENT and WITHDRAWN, so this is the
 		// only place the whole gap between "# registered" and "# active" gets names attached.
 		afterPeople.forEach(function (afterPerson) {
 			if (afterPerson.kind !== PersonKind.STUDENT) {
@@ -231,14 +231,14 @@ export class ClasslistAgent {
 				Log.warn(
 					"ClasslistAgent::getClasslistChanges(..) - " +
 						changeReport.notActiveByKind[String(PersonKind.WITHDRAWN)] +
-						" on the classlist are WITHDRAWN. Only the 'Mark withdrawn students' job reinstates them, and only when their " +
+						" on the classlist are WITHDRAWN. Only the 'Synchronize users' job reinstates them, and only when their " +
 						"githubId is on the GitHub students team; run it and read its log for these ids."
 				);
 			}
-			if ((changeReport.notActiveByKind["null"] ?? 0) > 0) {
+			if ((changeReport.notActiveByKind.null ?? 0) > 0) {
 				Log.info(
 					"ClasslistAgent::getClasslistChanges(..) - " +
-						changeReport.notActiveByKind["null"] +
+						changeReport.notActiveByKind.null +
 						" on the classlist have a null kind: they logged in and have not loaded a page since; the next request " +
 						"re-derives it. Treated as students meanwhile."
 				);

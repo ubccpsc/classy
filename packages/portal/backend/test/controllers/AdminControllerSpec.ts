@@ -1341,7 +1341,7 @@ describe("AdminController", () => {
 			}
 			expect(numWithrdrawnBefore).to.equal(0); // should not have any withdrawn students before
 
-			const res = await ac.performStudentWithdraw();
+			const res = await ac.synchronizeUsers();
 			Log.test("Result: " + JSON.stringify(res));
 			expect(res).to.be.an("string");
 
