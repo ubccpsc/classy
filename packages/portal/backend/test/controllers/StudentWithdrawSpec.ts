@@ -6,6 +6,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { IGitHubActions } from "@backend/controllers/GitHubActions";
 import { IGitHubController } from "@backend/controllers/GitHubController";
 import { AuditLabel, PersonKind } from "@backend/Types";
+import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
 import "@common/GlobalSpec"; // load first
@@ -100,6 +101,26 @@ describe("AdminController::performStudentWithdraw", function () {
 		expect(await kindOf("withdrawNullStays"), "on the team: kind left for login to re-derive").to.equal(null);
 		expect(await kindOf("withdrawNullGone"), "off the team: withdrawn like any student").to.equal(PersonKind.WITHDRAWN);
 		expect(msg).to.contain("# active: 2; # withdrawn: 1; # withdrawn (this run): 1");
+	});
+
+	it("Should account for reinstatements, unknown team logins, and students without a GitHub id.", async function () {
+		// the counts an admin needs to answer "why is this student not active?" from the summary
+		await makeStudent("withdrawActive1", "ghActive1");
+		await makeStudent("withdrawActive2", "ghActive2");
+		await dbc.writePerson(TestHarness.createPerson("withdrawBack", "withdrawBack", "ghBack", PersonKind.WITHDRAWN));
+		await dbc.writePerson(TestHarness.createPerson("withdrawNoGh", "withdrawNoGh", null, PersonKind.STUDENT));
+
+		// ghTAOnly is on the team but is nobody in Classy (a TA, or someone not on the classlist)
+		const msg = await controllerFor(["ghActive1", "ghActive2", "ghBack", "ghTAOnly"]).performStudentWithdraw(TestHarness.ADMIN1.id);
+		Log.test(msg);
+
+		expect(await kindOf("withdrawBack"), "back on the team means reinstated").to.equal(PersonKind.STUDENT);
+		expect(await kindOf("withdrawNoGh"), "no githubId can never match the team").to.equal(PersonKind.WITHDRAWN);
+		expect(msg).to.contain("# active: 3; # withdrawn: 1; # withdrawn (this run): 1");
+		expect(msg).to.contain("# reinstated (this run): 1");
+		expect(msg).to.contain("# on GitHub students team: 4");
+		expect(msg).to.contain("# team logins unknown to Classy: 1");
+		expect(msg).to.contain("# students without a GitHub id: 1");
 	});
 
 	it("Should refuse to run when the GitHub team looks stale.", async function () {

@@ -204,10 +204,25 @@ export class PersonController {
 		let numActive = 0;
 		let numWithdrawn = 0;
 		let numWithdrawnThisRun = 0;
+
+		// Everything needed to answer "why is this student not active?" from the log alone: who
+		// changed on this run and in which direction, who is still off the team, who can never
+		// match it, and which team logins match nobody. Until this existed the job logged one line
+		// per newly withdrawn student and nothing else, so a run that changed nothing said nothing.
+		const reinstated: string[] = [];
+		const withdrawnThisRun: string[] = [];
+		const stillWithdrawn: string[] = [];
+		const noGithubId: string[] = [];
+		const knownLogins = new Set<string>();
+
 		// GitHub logins are case-insensitive, and Classy lowercases the CWL it stores as githubId;
 		// an exact compare withdrew anyone whose login GitHub reports with a capital letter, every run.
 		const registered = new Set(registeredGithubIds.map((id) => id.toLowerCase()));
 		for (const person of people) {
+			const hasGithubId = typeof person.githubId === "string" && person.githubId.length > 0;
+			if (hasGithubId === true) {
+				knownLogins.add(person.githubId.toLowerCase());
+			}
 			// A null kind is a student whose role is being re-derived: the login callback nulls it
 			// and the next privileged request fills it back in. Skipping them here made a student
 			// who logged in but never loaded a page invisible to both counts (AdminController::getPeople
@@ -215,12 +230,17 @@ export class PersonController {
 			// active and kind is left null, so the pending re-derivation still runs; off the team
 			// they are withdrawn like any other student.
 			if (person.kind === PersonKind.STUDENT || person.kind === PersonKind.WITHDRAWN || person.kind === null) {
-				if (typeof person.githubId === "string" && registered.has(person.githubId.toLowerCase())) {
+				const label = person.id + " (githubId: " + person.githubId + ")";
+				if (hasGithubId === false) {
+					noGithubId.push(label);
+				}
+				if (hasGithubId === true && registered.has(person.githubId.toLowerCase())) {
 					// student is registered
 					if (person.kind === PersonKind.WITHDRAWN) {
 						// this will happen if they have withdrawn and then re-enrolled
 						person.kind = PersonKind.STUDENT;
 						await this.writePerson(person);
+						reinstated.push(label);
 					}
 					numActive++;
 				} else {
@@ -230,14 +250,67 @@ export class PersonController {
 						person.kind = PersonKind.WITHDRAWN;
 						Log.info("PersonController::markStudentsWithdrawn( .. ) - marking " + person.id + " as withdrawn");
 						await this.writePerson(person);
+						withdrawnThisRun.push(label);
+					} else {
+						stillWithdrawn.push(label);
 					}
 					numWithdrawn++;
 				}
 			}
 		}
-		const msg = "# active: " + numActive + "; # withdrawn: " + numWithdrawn + "; # withdrawn (this run): " + numWithdrawnThisRun;
-		Log.info("PersonController::markStudentsWithdrawn( .. ) - done; " + msg);
+		const unknownLogins = registeredGithubIds.filter((id) => knownLogins.has(id.toLowerCase()) === false);
+
+		const prefix = "PersonController::markStudentsWithdrawn( .. ) - ";
+		if (reinstated.length > 0) {
+			Log.warn(prefix + "reinstated (WITHDRAWN -> STUDENT; back on the students team): " + PersonController.forLog(reinstated));
+		}
+		if (withdrawnThisRun.length > 0) {
+			Log.warn(prefix + "withdrawn this run (githubId not on the students team): " + PersonController.forLog(withdrawnThisRun));
+		}
+		if (stillWithdrawn.length > 0) {
+			Log.warn(
+				prefix +
+					"still withdrawn (githubId not on the students team; a classlist update never reinstates, only this job does): " +
+					PersonController.forLog(stillWithdrawn)
+			);
+		}
+		if (noGithubId.length > 0) {
+			Log.warn(
+				prefix + "students with no githubId, who can never match the team and are withdrawn: " + PersonController.forLog(noGithubId)
+			);
+		}
+		if (unknownLogins.length > 0) {
+			Log.info(
+				prefix +
+					"team logins with no matching Classy person (staff and TAs on the team, or not on the classlist): " +
+					PersonController.forLog(unknownLogins)
+			);
+		}
+
+		const msg =
+			"# active: " +
+			numActive +
+			"; # withdrawn: " +
+			numWithdrawn +
+			"; # withdrawn (this run): " +
+			numWithdrawnThisRun +
+			"; # reinstated (this run): " +
+			reinstated.length +
+			"; # on GitHub students team: " +
+			registeredGithubIds.length +
+			"; # team logins unknown to Classy: " +
+			unknownLogins.length +
+			(noGithubId.length > 0 ? "; # students without a GitHub id: " + noGithubId.length : "");
+		Log.info(prefix + "done; " + msg);
 		return msg;
+	}
+
+	/** Up to 50 entries, then a count of the rest, so a whole-class list cannot flood the log. */
+	private static forLog(entries: string[], max: number = 50): string {
+		if (entries.length <= max) {
+			return entries.length + ": " + entries.join(", ");
+		}
+		return entries.length + ": " + entries.slice(0, max).join(", ") + ", ... and " + (entries.length - max) + " more";
 	}
 
 	public static personToTransport(person: Person): PersonTransport {

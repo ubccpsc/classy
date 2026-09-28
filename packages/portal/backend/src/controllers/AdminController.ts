@@ -536,6 +536,19 @@ export class AdminController {
 		// meant this could only ever be exercised against the real org
 		const gha = this.gh.getActions();
 		const registeredGithubIds = await gha.getTeamMembers("students");
+		Log.info(
+			"AdminController::performStudentWithdraw() - GitHub students team: " +
+				registeredGithubIds.length +
+				" login(s)" +
+				(registeredGithubIds.length > 0 ? "; first few: " + registeredGithubIds.slice(0, 5).join(", ") : "")
+		);
+		if (registeredGithubIds.length === 0) {
+			// getTeamMembers answers an empty list for a failed request as well as an empty team
+			Log.error(
+				"AdminController::performStudentWithdraw() - the students team came back empty. If it is not actually empty, " +
+					"the GitHubAction::getTeamMembers line above has the reason (a failed request is answered as an empty list)."
+			);
+		}
 
 		// Sanity floor. markStudentsWithdrawn() withdraws every STUDENT whose githubId is NOT in
 		// this list, so the list is trusted absolutely: if the GitHub "students" team is stale.

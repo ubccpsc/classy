@@ -1667,11 +1667,15 @@ export class GitHubActions implements IGitHubActions {
 				ids.push(teamMember.login);
 			}
 
-			Log.trace("GitHubAction::getTeamMembers( " + teamName + " ) - done; # results: " + ids.length + "; took: " + Util.took(start));
+			Log.info("GitHubAction::getTeamMembers( " + teamName + " ) - done; # results: " + ids.length + "; took: " + Util.took(start));
 
 			return ids;
 		} catch (err) {
-			Log.warn("GitHubAction::getTeamMembers(..) - ERROR: " + JSON.stringify(err));
+			// err.message, not JSON.stringify(err): an Error stringifies to "{}", which is what this
+			// used to log, so a failed fetch was indistinguishable from an empty team
+			Log.warn(
+				"GitHubAction::getTeamMembers( " + teamName + " ) - ERROR: " + (err?.message ?? String(err)) + "; answering with an empty list"
+			);
 			// just return empty [] rather than failing
 			return [];
 		}

@@ -78,6 +78,14 @@ export class ClasslistAgent {
 		if (path !== null) {
 			data = await new CSVParser().parsePath(path);
 		}
+		Log.info(
+			"ClasslistAgent::processClasslist(..) - source: " +
+				(path !== null ? "uploaded file" : "classlist service") +
+				"; # rows: " +
+				(Array.isArray(data) ? data.length : 0) +
+				"; # people in Classy before: " +
+				peopleBefore.length
+		);
 
 		this.duplicateDataCheck(data, ["ACCT", "CWL"]);
 		this.missingDataCheck(data, ["ACCT", "CWL"]);
@@ -215,9 +223,26 @@ export class ClasslistAgent {
 				"ClasslistAgent::getClasslistChanges(..) - on classlist but not an active student: " +
 					afterPeople
 						.filter((p) => p.kind !== PersonKind.STUDENT)
-						.map((p) => p.id + " (" + p.kind + ")")
+						.map((p) => p.id + " (kind: " + p.kind + "; githubId: " + p.githubId + ")")
 						.join(", ")
 			);
+			// The classlist update never changes kind, so say where each kind is resolved.
+			if ((changeReport.notActiveByKind[String(PersonKind.WITHDRAWN)] ?? 0) > 0) {
+				Log.warn(
+					"ClasslistAgent::getClasslistChanges(..) - " +
+						changeReport.notActiveByKind[String(PersonKind.WITHDRAWN)] +
+						" on the classlist are WITHDRAWN. Only the 'Mark withdrawn students' job reinstates them, and only when their " +
+						"githubId is on the GitHub students team; run it and read its log for these ids."
+				);
+			}
+			if ((changeReport.notActiveByKind["null"] ?? 0) > 0) {
+				Log.info(
+					"ClasslistAgent::getClasslistChanges(..) - " +
+						changeReport.notActiveByKind["null"] +
+						" on the classlist have a null kind: they logged in and have not loaded a page since; the next request " +
+						"re-derives it. Treated as students meanwhile."
+				);
+			}
 		}
 
 		beforePeople.forEach(function (person) {
