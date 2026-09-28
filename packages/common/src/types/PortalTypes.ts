@@ -67,7 +67,7 @@ export interface CourseTransportPayload {
 
 export interface CourseTransport {
 	id: string;
-	defaultDeliverableId: string;
+	defaultDeliverableId: string | null; // null when the course has no default
 	custom: object;
 }
 

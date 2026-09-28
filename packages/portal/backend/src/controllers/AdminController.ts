@@ -91,7 +91,9 @@ export class AdminController {
 			throw new Error(msg);
 		}
 
-		if (typeof courseTrans.defaultDeliverableId !== "string") {
+		// null is "no default", which is a valid state (see getCourse); it used to be rejected, so the
+		// Config page sent the string "null" instead, and that is what AutoTest was then handed
+		if (typeof courseTrans.defaultDeliverableId !== "string" && courseTrans.defaultDeliverableId !== null) {
 			const msg = "defaultDeliverableId not specified";
 			Log.error("AdminController::validateCourseTransport(..) - ERROR: " + msg);
 			return msg;
@@ -232,6 +234,12 @@ export class AdminController {
 				custom: {},
 			};
 			await this.dbc.writeCourseRecord(record);
+		}
+		// "No default" was stored as the string "null" (the Config page's --Not Set-- option had
+		// that as its value, and validateCourseTransport refused a real null), or as "". Every
+		// reader -- AutoTest's configuration, the dashboard's default filter -- wants null for it.
+		if (record.defaultDeliverableId === "null" || record.defaultDeliverableId === "") {
+			record.defaultDeliverableId = null;
 		}
 		return record;
 	}

@@ -1182,6 +1182,34 @@ describe("Admin Routes", function () {
 		expect(response.status).to.equal(200);
 	});
 
+	it('Should accept null as the default deliverable, and read a stored "null" back as null.', async function () {
+		// The Config page's --Not Set-- option used to save the string "null", because a real null
+		// was refused; AutoTest then received "null" as the deliverable to run by default.
+		const url = "/portal/admin/course";
+		const course: CourseTransport = {
+			id: Config.getInstance().getProp(ConfigKey.testname),
+			defaultDeliverableId: null,
+			custom: {},
+		};
+		let response = await request(app).post(url).send(course).set({ user: userName, token: userToken });
+		expect(response.status, "null is a valid default").to.equal(200);
+		response = await request(app).get(url).set({ user: userName, token: userToken });
+		expect(response.status).to.equal(200);
+		expect(response.body.success.defaultDeliverableId).to.equal(null);
+
+		// a record written by the old page, with the string "null"
+		course.defaultDeliverableId = "null";
+		response = await request(app).post(url).send(course).set({ user: userName, token: userToken });
+		expect(response.status).to.equal(200);
+		response = await request(app).get(url).set({ user: userName, token: userToken });
+		expect(response.body.success.defaultDeliverableId, "the stored string reads back as no default").to.equal(null);
+
+		// put the fixture back the way the test above left it
+		course.defaultDeliverableId = "d0";
+		response = await request(app).post(url).send(course).set({ user: userName, token: userToken });
+		expect(response.status).to.equal(200);
+	});
+
 	it("Should not be able to update the course object with invalid settings", async function () {
 		let response = null;
 		const url = "/portal/admin/course";

@@ -66,6 +66,11 @@ export class AdminConfigTab extends AdminPage {
 			if (isValid === true) {
 				const delivDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 				const delivId = delivDropdown.value;
+				if (delivId === "") {
+					// the --Select-- placeholder; it used to go out as the id "null"
+					UI.showAlert("Select the deliverable the grades are for.");
+					return;
+				}
 				that
 					.uploadGrades(fileInput.files, delivId)
 					.then(function () {
@@ -235,10 +240,16 @@ export class AdminConfigTab extends AdminPage {
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
 
-		// set default deliverable, if it exists
-		for (const o of (defaultDeliverableDropdown as any).children) {
-			if (o.value === this.course.defaultDeliverableId) {
-				o.selected = true;
+		// Show the stored default, or --Not Set-- (the first option) when there is none or it names a
+		// deliverable no longer offered. Selected explicitly: a select left with no selected option
+		// is at the browser's mercy, and rendered blank in at least one case.
+		defaultDeliverableDropdown.selectedIndex = 0;
+		const stored = this.course?.defaultDeliverableId;
+		if (typeof stored === "string" && stored.length > 0) {
+			for (const o of Array.from(defaultDeliverableDropdown.options)) {
+				if (o.value === stored) {
+					o.selected = true;
+				}
 			}
 		}
 
@@ -252,8 +263,8 @@ export class AdminConfigTab extends AdminPage {
 		for (const delivId of delivOptions) {
 			let value = delivId;
 			if (delivId.startsWith("--")) {
-				// handle the null case
-				value = null;
+				// the placeholder: "" rather than null, which a DOM string attribute turns into "null"
+				value = "";
 			}
 			const o: HTMLOptionElement = new Option(delivId, value, false, false);
 			dropdown.add(o);
@@ -493,6 +504,11 @@ export class AdminConfigTab extends AdminPage {
 		Log.trace("AdminConfigTab::teamCreatePressed(..) - start");
 		const delivDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
 		const delivId = delivDropdown.value;
+		if (delivId === "") {
+			// the --Select-- placeholder; it used to go out as the id "null"
+			UI.showAlert("Select the deliverable the team is for.");
+			return;
+		}
 
 		const names = UI.getTextFieldValue("adminTeamText");
 		let nameList = names.split(",");
@@ -819,7 +835,9 @@ export class AdminConfigTab extends AdminPage {
 	private async defaultDeliverablePressed(): Promise<void> {
 		Log.trace("AdminConfigTab::defaultDeliverablePressed(..) - start");
 		const delivDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
+		// the --Not Set-- option's value is "", which is saved as null: the backend accepts null and
+		// it is what AutoTest and the dashboard read as "no default" (it used to send "null")
+		const value = delivDropdown.value === "" ? null : delivDropdown.value;
 
 		this.course.defaultDeliverableId = value; // update with new value
 
