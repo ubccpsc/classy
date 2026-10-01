@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/style/noExcessiveLinesPerFile: will decompose tests in a future commit */
 import { expect } from "chai";
 import "mocha";
 

@@ -6,6 +6,9 @@
 **/yarn-error.log*
 **/.yarn-integrity
 
+# PNPM (in case someone tried pnpm install instead of yarn install)
+pnpm-lock.yaml
+
 # NYC
 **/.nyc_output
 **/coverage/
