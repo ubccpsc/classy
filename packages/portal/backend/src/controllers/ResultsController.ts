@@ -467,6 +467,29 @@ export class ResultsController {
 
 		return outcome;
 	}
+
+	/**
+	 * Gets every result for a given deliverable, not just the latest per repo; see
+	 * DatabaseController::getAllResultsForDeliverable.
+	 *
+	 * @param delivId
+	 */
+	public async getAllResultsForDeliverable(delivId: string, opts: ReadOptions = {}) {
+		Log.trace("ResultsController::getAllResultsForDeliverable( " + delivId + " ) - start");
+		const start = Date.now();
+
+		const outcome = await DatabaseController.getInstance().getAllResultsForDeliverable(delivId, opts);
+		Log.info(
+			"ResultsController::getAllResultsForDeliverable( " +
+				delivId +
+				" ) - done; # results: " +
+				outcome.length +
+				"; took: " +
+				Util.took(start)
+		);
+
+		return outcome;
+	}
 }
 
 export enum ResultsKind {

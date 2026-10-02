@@ -872,11 +872,41 @@ export class DatabaseController {
 	}
 
 	/**
+	 * Find all results for a given delivId, latest first. Unlike getResultsForDeliverable this is not pruned to one
+	 * row per repo, so it is for callers that filter further and need every row that survives -- one person's
+	 * submissions, say, which for a PrairieLearn course all share a repoId (the assessment instance).
+	 *
+	 * NOTE: These are _all_ results, the deliverable deadlines are not considered.
+	 *
+	 * @param delivId
+	 */
+	public async getAllResultsForDeliverable(delivId: string, opts: ReadOptions = {}): Promise<Result[]> {
+		const start = Date.now();
+		Log.trace("DatabaseController::getAllResultsForDeliverable( " + delivId + " ) - start");
+
+		// served by the delivIdTs index: match and order with no in-memory sort
+		const latestFirst = { "input.target.timestamp": -1 }; // most recent first
+		const results = (await this.readRecords(this.RESULTCOLL, QueryKind.SLOW, false, { delivId: delivId }, latestFirst, opts)) as Result[];
+		for (const result of results) {
+			if (typeof (result.input as any).pushInfo !== "undefined" && typeof result.input.target === "undefined") {
+				// this is a backwards compatibility step that can disappear in 2019 (except for sdmm which will need further changes)
+				result.input.target = (result.input as any).pushInfo;
+			}
+		}
+
+		Log.trace(
+			"DatabaseController::getAllResultsForDeliverable( " + delivId + " ) - done; #: " + results.length + "; took: " + Util.took(start)
+		);
+
+		return results;
+	}
+
+	/**
 	 * For a given deliverable, find the most recent result for each <repoId, delivId> tuple. The repoId restriction
 	 * exists because in large terms the results collection can be quite large and ends up being too slow to retrieve.
 	 * But this version is better than just retrieving the last 400 results because it means the results and dashboard
 	 * views will always have at least one row for each repo. This query only includes one row per repoId, to see all
-	 * the results for a given repoId, use getResultsForRepo.
+	 * the results for a given repoId, use getResultsForRepo; for every row of the deliverable, getAllResultsForDeliverable.
 	 *
 	 * NOTE: These are _all_ results, the deliverable deadlines are not considered.
 	 *

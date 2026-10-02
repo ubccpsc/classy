@@ -441,8 +441,11 @@ export class AdminController {
 			const repoId = result.input.target.repoId;
 			if (results.length < NUM_RESULTS) {
 				const resultTrans = await this.createDashboardTransport(result);
-				// just return the first result for a repo, unless they are specified
-				if (reqRepoId !== "any" || repoIds.indexOf(repoId) < 0) {
+				// just return the first result for a repo, unless they are specified. A person filter
+				// narrows the list just as a repo does (the two are alternatives; see AdminDashboardTab),
+				// so it keeps every row too: one person's submissions can all share a repo -- for a
+				// PrairieLearn course, the assessment instance -- and would collapse to the newest.
+				if (reqRepoId !== "any" || person !== null || repoIds.indexOf(repoId) < 0) {
 					results.push(resultTrans);
 					repoIds.push(repoId);
 				}
@@ -484,6 +487,12 @@ export class AdminController {
 				readOpts.limit = NUM_RESULTS;
 			}
 			allResults = await this.resC.getResultsForRepo(reqRepoId, readOpts);
+		} else if (reqDelivId !== WILDCARD && person !== null && kind === ResultsKind.ALL) {
+			// Not getResultsForDeliverable: that keeps only the newest row per repo, and one person's
+			// submissions can all share a repo (for a PrairieLearn course, the assessment instance), so
+			// picking a deliverable would shrink them to one. Uncapped, since the person filter runs
+			// in the loop below.
+			allResults = await this.resC.getAllResultsForDeliverable(reqDelivId, readOpts);
 		} else if (reqDelivId !== WILDCARD) {
 			allResults = await this.resC.getResultsForDeliverable(reqDelivId, kind, readOpts.projection);
 		} else {

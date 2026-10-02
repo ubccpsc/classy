@@ -329,6 +329,47 @@ describe("AdminController", () => {
 		expect(unfiltered.map((r) => r.commitSHA)).to.contain(others.commitSHA);
 	});
 
+	it("Should return every one of a person's results, not just the newest per repo.", async () => {
+		// The person filter is the CS210 plugin's stand-in for the repo filter, and its results all
+		// share one repoId per assessment instance. Picking a deliverable used to read the newest row
+		// per repo, and the dashboard kept only the first row per repo, so a person with several
+		// submissions saw one -- or none, if the newest belonged to someone else.
+		const dbc = DatabaseController.getInstance();
+
+		const person = TestHarness.createPerson("everyRowId", "everyRowId", "everyRowCwl", PersonKind.STUDENT);
+		await dbc.writePerson(person);
+
+		const all = await dbc.getResults(TestHarness.DELIVID0, TestHarness.REPONAME1);
+		expect(all.length, "setup").to.be.greaterThan(4);
+
+		// the oldest three, so the repo's newest row is not among them
+		const mine = all.slice(-3);
+		for (const result of mine) {
+			result.people = [person.id];
+			await dbc.writeResult(result); // upserts; no counts move
+		}
+		const mineShas = mine.map((r) => r.commitSHA).sort();
+
+		const shasOf = (rows: Array<{ commitSHA: string }>) => rows.map((r) => r.commitSHA).sort();
+
+		const byDeliv = await ac.getResults(TestHarness.DELIVID0, "any", undefined, "all", person.githubId);
+		expect(shasOf(byDeliv), "results, person + deliverable").to.deep.equal(mineShas);
+
+		const byAnyDeliv = await ac.getResults("any", "any", undefined, "all", person.githubId);
+		expect(shasOf(byAnyDeliv), "results, person + any deliverable").to.deep.equal(mineShas);
+
+		const dashByDeliv = await ac.getDashboard(TestHarness.DELIVID0, "any", undefined, undefined, "all", person.githubId);
+		expect(shasOf(dashByDeliv), "dashboard, person + deliverable").to.deep.equal(mineShas);
+
+		const dashByAnyDeliv = await ac.getDashboard("any", "any", undefined, undefined, "all", person.githubId);
+		expect(shasOf(dashByAnyDeliv), "dashboard, person + any deliverable").to.deep.equal(mineShas);
+
+		// without a person the overview is still one row per repo
+		const dashAll = await ac.getDashboard(TestHarness.DELIVID0, "any");
+		const repos = dashAll.map((r) => r.repoId);
+		expect(repos.length, "one dashboard row per repo").to.equal(new Set(repos).size);
+	});
+
 	it("Should be able to get a list of results with wildcards.", async () => {
 		const res = await ac.getResults("any", "any");
 		expect(res).to.be.an("array");
@@ -458,6 +499,10 @@ describe("AdminController", () => {
 					calls.push({ read: "deliv", opts: { projection: projection } });
 					return [];
 				},
+				getAllResultsForDeliverable: async (_delivId: string, opts: any): Promise<Result[]> => {
+					calls.push({ read: "delivAll", opts: opts });
+					return [];
+				},
 			};
 
 			const D = TestHarness.DELIVID0;
@@ -477,6 +522,15 @@ describe("AdminController", () => {
 					why: "the by-repo query does not filter on deliverable",
 				},
 				{ deliv: D, repo: "any", view: "all", person: null, read: "deliv", limit: undefined, why: "that read is already one row per repo" },
+				{
+					deliv: D,
+					repo: "any",
+					view: "all",
+					person: "someone",
+					read: "delivAll",
+					limit: undefined,
+					why: "a person's rows can share a repo, and the person filter runs in JS",
+				},
 			];
 
 			for (const c of cases) {
