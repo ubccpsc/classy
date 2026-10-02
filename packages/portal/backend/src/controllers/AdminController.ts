@@ -788,7 +788,12 @@ export class AdminController {
 
 		if (formSingleTeams === true) {
 			// now create teams for individuals
-			Log.info("AdminController::prepareProvision(..) - handling single teams");
+			Log.info(
+				"AdminController::prepareProvision(..) - handling single teams for " +
+					allPeople.length +
+					" person(s) not on a team (id / csId): " +
+					allPeople.map((p) => p.id + " / " + p.csId).join(", ")
+			);
 			for (const individual of allPeople) {
 				try {
 					const name = await cc.computeNames(deliv, [individual]);
@@ -802,6 +807,8 @@ export class AdminController {
 					Log.error(
 						"AdminController::prepareProvision(..) - single team creation ERROR for " +
 							individual.id +
+							" / " +
+							individual.csId +
 							" (" +
 							individual.kind +
 							"): " +
