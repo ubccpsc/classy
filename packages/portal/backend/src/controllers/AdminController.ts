@@ -681,9 +681,27 @@ export class AdminController {
 		let allPeople: Person[] = await this.pc.getAllPeople();
 		Log.info("AdminController::prepareProvision( .. ) - # people (all): " + allPeople.length);
 
+		const byKind: { [kind: string]: number } = {};
+		for (const person of allPeople) {
+			const kind = String(person.kind);
+			byKind[kind] = (byKind[kind] ?? 0) + 1;
+		}
+		Log.info("AdminController::prepareProvision( .. ) - # people by kind: " + JSON.stringify(byKind));
+
 		// remove all withdrawn people, we do not need to provision these
+		const withdrawn = allPeople.filter((person) => person.kind === PersonKind.WITHDRAWN);
 		allPeople = allPeople.filter((person) => person.kind !== PersonKind.WITHDRAWN);
 		Log.info("AdminController::prepareProvision( .. ) - # people (not withdrawn): " + allPeople.length);
+		if (withdrawn.length > 0) {
+			// named, because a withdrawn student gets no repo and is otherwise silently absent from the
+			// plan; a student is withdrawn when their githubId is not on the GitHub students team
+			Log.info(
+				"AdminController::prepareProvision( .. ) - skipping " +
+					withdrawn.length +
+					" withdrawn person(s) (id / csId / githubId): " +
+					withdrawn.map((p) => p.id + " / " + p.csId + " / " + p.githubId).join(", ")
+			);
+		}
 
 		// teams were either formed by students (or the admin in the UI)
 		// _or_ the deliv is for single students and we will form them below
