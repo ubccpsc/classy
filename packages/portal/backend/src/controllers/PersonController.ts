@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { PersonTransport } from "@common/types/PortalTypes";
+import { PersonTransport, UserSyncChangeTransport, UserSyncTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Person, PersonKind, Repository } from "../Types";
 
@@ -212,9 +212,9 @@ export class PersonController {
 	 * On such a run privileged kinds are neither granted nor removed; the students logic still runs.
 	 *
 	 * @param teams the logins on each team
-	 * @returns {Promise<string>} a human-readable summary
+	 * @returns what changed, with the people behind every count, plus the one-line summary
 	 */
-	public async syncKindsWithTeams(teams: TeamLogins): Promise<string> {
+	public async syncKindsWithTeams(teams: TeamLogins): Promise<UserSyncTransport> {
 		const prefix = "PersonController::syncKindsWithTeams( .. ) - ";
 		const people = await this.getAllPeople();
 		const privilegedReadable = teams.staff.length > 0 && teams.admin.length > 0;
@@ -243,14 +243,18 @@ export class PersonController {
 		const staff = lower(teams.staff);
 		const admin = lower(teams.admin);
 
-		// Everything needed to answer "why is this person this kind?" from the log alone.
-		const reinstated: string[] = [];
-		const withdrawnThisRun: string[] = [];
-		const promoted: string[] = [];
-		const demoted: string[] = [];
-		const settled: string[] = [];
-		const stillWithdrawn: string[] = [];
-		const noGithubId: string[] = [];
+		// Everything needed to answer "why is this person this kind?" -- returned to the page as well
+		// as logged, so it can be read without the log.
+		const reinstated: UserSyncChangeTransport[] = [];
+		const withdrawnThisRun: UserSyncChangeTransport[] = [];
+		const promoted: UserSyncChangeTransport[] = [];
+		const demoted: UserSyncChangeTransport[] = [];
+		const settled: UserSyncChangeTransport[] = [];
+		const stillWithdrawn: PersonTransport[] = [];
+		const noGithubId: PersonTransport[] = [];
+		const labelOf = (person: Person): string => person.id + " (githubId: " + person.githubId + ")";
+		const describe = (c: UserSyncChangeTransport): string => labelOf(c.person as any) + ": " + c.from + " -> " + c.to;
+		const named = (list: PersonTransport[]): string[] => list.map((person) => labelOf(person as any));
 		const knownLogins = new Set<string>();
 		let numActive = 0;
 		let numWithdrawn = 0;
@@ -283,13 +287,17 @@ export class PersonController {
 				target = PersonKind.WITHDRAWN;
 			}
 
-			const label = person.id + " (githubId: " + person.githubId + ")";
 			if (hasGithubId === false && isPrivileged === false) {
-				noGithubId.push(label);
+				noGithubId.push(PersonController.personToTransport(person));
 			}
 
 			if (target !== current) {
-				const change = label + ": " + current + " -> " + target;
+				person.kind = target;
+				const change: UserSyncChangeTransport = {
+					person: PersonController.personToTransport(person),
+					from: current === null ? null : String(current),
+					to: String(target),
+				};
 				if (target === PersonKind.WITHDRAWN) {
 					withdrawnThisRun.push(change); // including a null kind that is on no team
 				} else if (current === null) {
@@ -301,11 +309,10 @@ export class PersonController {
 				} else {
 					promoted.push(change);
 				}
-				Log.info(prefix + "changing " + change);
-				person.kind = target;
+				Log.info(prefix + "changing " + describe(change));
 				await this.writePerson(person);
 			} else if (target === PersonKind.WITHDRAWN) {
-				stillWithdrawn.push(label);
+				stillWithdrawn.push(PersonController.personToTransport(person));
 			}
 
 			if (target === PersonKind.STUDENT) {
@@ -320,29 +327,31 @@ export class PersonController {
 		);
 
 		if (reinstated.length > 0) {
-			Log.warn(prefix + "reinstated (back on the students team): " + PersonController.forLog(reinstated));
+			Log.warn(prefix + "reinstated (back on the students team): " + PersonController.forLog(reinstated.map(describe)));
 		}
 		if (withdrawnThisRun.length > 0) {
-			Log.warn(prefix + "withdrawn this run (githubId on no team): " + PersonController.forLog(withdrawnThisRun));
+			Log.warn(prefix + "withdrawn this run (githubId on no team): " + PersonController.forLog(withdrawnThisRun.map(describe)));
 		}
 		if (promoted.length > 0) {
-			Log.warn(prefix + "promoted (on the staff or admin team): " + PersonController.forLog(promoted));
+			Log.warn(prefix + "promoted (on the staff or admin team): " + PersonController.forLog(promoted.map(describe)));
 		}
 		if (demoted.length > 0) {
-			Log.warn(prefix + "demoted (no longer on the staff or admin team): " + PersonController.forLog(demoted));
+			Log.warn(prefix + "demoted (no longer on the staff or admin team): " + PersonController.forLog(demoted.map(describe)));
 		}
 		if (settled.length > 0) {
-			Log.info(prefix + "null kinds settled from the teams: " + PersonController.forLog(settled));
+			Log.info(prefix + "null kinds settled from the teams: " + PersonController.forLog(settled.map(describe)));
 		}
 		if (stillWithdrawn.length > 0) {
 			Log.warn(
 				prefix +
 					"still withdrawn (githubId on no team; a classlist update never reinstates, only this job does): " +
-					PersonController.forLog(stillWithdrawn)
+					PersonController.forLog(named(stillWithdrawn))
 			);
 		}
 		if (noGithubId.length > 0) {
-			Log.warn(prefix + "students with no githubId, who can never match a team and are withdrawn: " + PersonController.forLog(noGithubId));
+			Log.warn(
+				prefix + "students with no githubId, who can never match a team and are withdrawn: " + PersonController.forLog(named(noGithubId))
+			);
 		}
 		if (unknownLogins.length > 0) {
 			Log.info(prefix + "team logins with no matching Classy person (not on the classlist): " + PersonController.forLog(unknownLogins));
@@ -374,7 +383,21 @@ export class PersonController {
 			unknownLogins.length +
 			(noGithubId.length > 0 ? "; # students without a GitHub id: " + noGithubId.length : "");
 		Log.info(prefix + "done; " + msg);
-		return msg;
+		return {
+			message: msg,
+			active: numActive,
+			withdrawn: numWithdrawn,
+			teams: { students: teams.students.length, staff: teams.staff.length, admin: teams.admin.length },
+			privilegedReadable: privilegedReadable,
+			reinstated: reinstated,
+			withdrawnThisRun: withdrawnThisRun,
+			promoted: promoted,
+			demoted: demoted,
+			settled: settled,
+			stillWithdrawn: stillWithdrawn,
+			noGithubId: noGithubId,
+			unknownLogins: unknownLogins,
+		};
 	}
 
 	/** Up to 50 entries, then a count of the rest, so a whole-class list cannot flood the log. */

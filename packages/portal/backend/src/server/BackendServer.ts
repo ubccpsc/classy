@@ -189,7 +189,8 @@ export default class BackendServer {
 			});
 			jc.register("user-sync", async (job, ctx) => {
 				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
-				return { message: await ac.synchronizeUsers(job.requestedBy, ctx) };
+				// the summary carries its own `message`, plus the people behind every count
+				return await ac.synchronizeUsers(job.requestedBy, ctx);
 			});
 
 			// provisioning: prepare (database records) -> create (GitHub repos) -> release (teams).

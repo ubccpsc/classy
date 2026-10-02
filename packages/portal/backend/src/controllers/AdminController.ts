@@ -15,6 +15,7 @@ import {
 	ProvisionTransport,
 	RepositoryTransport,
 	TeamTransport,
+	UserSyncTransport,
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
@@ -529,7 +530,7 @@ export class AdminController {
 	 * @param ctx when this runs as a job: for progress
 	 * @returns {Promise<string>} a human-readable summary
 	 */
-	public async synchronizeUsers(requesterId: string = null, ctx: JobContext = null): Promise<string> {
+	public async synchronizeUsers(requesterId: string = null, ctx: JobContext = null): Promise<UserSyncTransport> {
 		Log.info("AdminController::synchronizeUsers() - start");
 		await ctx?.progress(0, 0, "reading the students team from GitHub");
 		// the injected client, not GitHubActions.getInstance(true): forcing the live client here
@@ -573,14 +574,29 @@ export class AdminController {
 		if (registeredGithubIds.length > 0) {
 			await ctx?.progress(0, registeredGithubIds.length, "settling roles from the GitHub teams");
 			const pc = new PersonController();
-			const msg = await pc.syncKindsWithTeams({ students: registeredGithubIds, staff: staffGithubIds, admin: adminGithubIds });
-			Log.info("AdminController::synchronizeUsers() - done; msg: " + msg);
-			await ctx?.progress(registeredGithubIds.length, registeredGithubIds.length, msg);
+			const result = await pc.syncKindsWithTeams({ students: registeredGithubIds, staff: staffGithubIds, admin: adminGithubIds });
+			Log.info("AdminController::synchronizeUsers() - done; msg: " + result.message);
+			await ctx?.progress(registeredGithubIds.length, registeredGithubIds.length, result.message);
 
 			if (requesterId !== null) {
-				await this.dbc.writeAudit(AuditLabel.USER_SYNC, requesterId, {}, {}, { message: msg });
+				// the message plus the ids behind each change, not the whole result: an audit record is
+				// a line of history, and the full people lists are the job's own summary
+				await this.dbc.writeAudit(
+					AuditLabel.USER_SYNC,
+					requesterId,
+					{},
+					{},
+					{
+						message: result.message,
+						reinstated: result.reinstated.map((c) => c.person.id),
+						withdrawnThisRun: result.withdrawnThisRun.map((c) => c.person.id),
+						promoted: result.promoted.map((c) => c.person.id),
+						demoted: result.demoted.map((c) => c.person.id),
+						settled: result.settled.map((c) => c.person.id),
+					}
+				);
 			}
-			return msg;
+			return result;
 		} else {
 			throw new Error("No students specified in the students team on GitHub; operation aborted.");
 		}

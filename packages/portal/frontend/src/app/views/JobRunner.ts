@@ -52,6 +52,8 @@ export class JobRunner {
 	 */
 	private readonly jobIds: { [kind: string]: string } = {};
 	private readonly jobTimers: { [kind: string]: any } = {};
+	/** Each button's own label, put back when its job is no longer running. */
+	private originalLabels: { [kind: string]: string } = {};
 	private readonly jobsStartedHere: { [kind: string]: boolean } = {};
 
 	public constructor(remote: string) {
@@ -101,6 +103,19 @@ export class JobRunner {
 
 	public async start(section: JobSection): Promise<void> {
 		Log.info("JobRunner::start( " + section.kind + " ) - start");
+
+		// Say so, rather than silently doing nothing. The button used to be disabled while a job
+		// ran, which looked like a press that did nothing: no request, no log line, and the only
+		// sign was the small status line. A press now explains itself, and the job's results still
+		// reflect the state when IT started -- which is why the toast says to wait for it.
+		if (this.isRunning(section)) {
+			UI.notificationToast(
+				"This job is already running (started by this page or another admin). It will finish on its own; " +
+					"its result reflects the course as it was when it started, so run it again afterwards if things have changed.",
+				8000
+			);
+			return;
+		}
 
 		let params: any = {};
 		if (typeof section.params === "function") {
@@ -177,16 +192,14 @@ export class JobRunner {
 
 		const job = Array.isArray(json.success) ? json.success[0] : json.success;
 		if (typeof job === "undefined" || job === null) {
+			this.setRunningLabel(section, false); // a job that was being watched may simply be gone
 			this.setStatus(section, section.neverRun ?? "Never run.");
 			return;
 		}
 		this.jobIds[section.kind] = job.id;
 
 		const running = job.state === "RUNNING";
-		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement;
-		if (button !== null) {
-			button.disabled = running;
-		}
+		this.setRunningLabel(section, running);
 		if (typeof section.cancelButtonId === "string") {
 			const cancelButton = document.querySelector("#" + section.cancelButtonId) as HTMLElement;
 			if (cancelButton !== null) {
@@ -224,6 +237,25 @@ export class JobRunner {
 		}
 
 		this.setStatus(section, JobRunner.describe(job, section));
+	}
+
+	/**
+	 * Shows a running job on its button, as "Running…", and puts the button's own label back when
+	 * the job is not running. The button stays clickable so a press can explain itself (see
+	 * start()); disabling it swallowed the press, and the status line below was easy to miss.
+	 */
+	private setRunningLabel(section: JobSection, running: boolean): void {
+		const button = document.querySelector("#" + section.buttonId) as OnsButtonElement | null;
+		if (button === null) {
+			return;
+		}
+		if (typeof this.originalLabels[section.kind] !== "string") {
+			this.originalLabels[section.kind] = button.innerText.trim();
+		}
+		const label = running ? "Running\u2026" : this.originalLabels[section.kind];
+		if (button.innerText.trim() !== label) {
+			button.innerText = label;
+		}
 	}
 
 	/**

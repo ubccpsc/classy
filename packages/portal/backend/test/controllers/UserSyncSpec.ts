@@ -70,7 +70,7 @@ describe("AdminController::synchronizeUsers", function () {
 		await makeStudent("withdrawGone", "ghGone");
 
 		// the team still has two of the three, which is above the floor
-		const msg = await controllerFor(["ghStays1", "ghStays2"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = (await controllerFor(["ghStays1", "ghStays2"]).synchronizeUsers(TestHarness.ADMIN1.id)).message;
 
 		expect(await kindOf("withdrawGone"), "absent from the team means withdrawn").to.equal(PersonKind.WITHDRAWN);
 		expect(await kindOf("withdrawStays1"), "still on the team means still enrolled").to.equal(PersonKind.STUDENT);
@@ -84,7 +84,7 @@ describe("AdminController::synchronizeUsers", function () {
 		await makeStudent("withdrawCase1", "ghcase1");
 		await makeStudent("withdrawCase2", "ghcase2");
 
-		const msg = await controllerFor(["GhCase1", "GHCASE2"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = (await controllerFor(["GhCase1", "GHCASE2"]).synchronizeUsers(TestHarness.ADMIN1.id)).message;
 
 		expect(await kindOf("withdrawCase1"), "a capitalised login is still the same account").to.equal(PersonKind.STUDENT);
 		expect(await kindOf("withdrawCase2")).to.equal(PersonKind.STUDENT);
@@ -103,7 +103,7 @@ describe("AdminController::synchronizeUsers", function () {
 			await dbc.writePerson(p);
 		}
 
-		const msg = await controllerFor(["ghNullStays", "ghNullOther"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = (await controllerFor(["ghNullStays", "ghNullOther"]).synchronizeUsers(TestHarness.ADMIN1.id)).message;
 
 		// settled from the teams now, rather than left for the next login to re-derive
 		expect(await kindOf("withdrawNullStays"), "on the team: settled to student").to.equal(PersonKind.STUDENT);
@@ -119,7 +119,21 @@ describe("AdminController::synchronizeUsers", function () {
 		await dbc.writePerson(TestHarness.createPerson("withdrawNoGh", "withdrawNoGh", null, PersonKind.STUDENT));
 
 		// ghTAOnly is on the team but is nobody in Classy (a TA, or someone not on the classlist)
-		const msg = await controllerFor(["ghActive1", "ghActive2", "ghBack", "ghTAOnly"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const result = await controllerFor(["ghActive1", "ghActive2", "ghBack", "ghTAOnly"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = result.message;
+		// the payload carries the people behind the counts, so a page can show them without the log
+		expect(
+			result.reinstated.map((c) => c.person.githubId),
+			"reinstated"
+		).to.deep.equal(["ghBack"]);
+		expect(result.reinstated[0].from, "from the kind it had").to.equal("withdrawn");
+		expect(result.reinstated[0].to).to.equal("student");
+		expect(result.withdrawnThisRun.length, "withdrawn this run").to.equal(1);
+		expect(result.unknownLogins, "team login unknown to Classy").to.deep.equal(["ghTAOnly"]);
+		expect(result.noGithubId.length, "students without a GitHub id").to.equal(1);
+		expect(result.teams.students).to.equal(4);
+		expect(result.active).to.equal(3);
+		expect(result.withdrawn).to.equal(1);
 		Log.test(msg);
 
 		expect(await kindOf("withdrawBack"), "back on the team means reinstated").to.equal(PersonKind.STUDENT);
@@ -141,9 +155,11 @@ describe("AdminController::synchronizeUsers", function () {
 		await makeStudent("syncNewAdmin", "ghNewAdmin");
 		await makeStudent("syncNewBoth", "ghNewBoth");
 
-		const msg = await controllerFor(["ghStudent", "ghNewTA"], ["ghNewTA", "ghNewBoth"], ["ghNewAdmin", "ghNewBoth"]).synchronizeUsers(
-			TestHarness.ADMIN1.id
-		);
+		const msg = (
+			await controllerFor(["ghStudent", "ghNewTA"], ["ghNewTA", "ghNewBoth"], ["ghNewAdmin", "ghNewBoth"]).synchronizeUsers(
+				TestHarness.ADMIN1.id
+			)
+		).message;
 		Log.test(msg);
 
 		expect(await kindOf("syncStudent")).to.equal(PersonKind.STUDENT);
@@ -161,9 +177,11 @@ describe("AdminController::synchronizeUsers", function () {
 		await makePerson("syncGoneAdmin", "ghGoneAdmin", PersonKind.ADMIN); // on no team at all
 		await makePerson("syncStillAdmin", "ghStillAdmin", PersonKind.ADMIN);
 
-		const msg = await controllerFor(["ghStudentA", "ghStudentB", "ghFormerTA"], ["ghSomeTA"], ["ghStillAdmin"]).synchronizeUsers(
-			TestHarness.ADMIN1.id
-		);
+		const msg = (
+			await controllerFor(["ghStudentA", "ghStudentB", "ghFormerTA"], ["ghSomeTA"], ["ghStillAdmin"]).synchronizeUsers(
+				TestHarness.ADMIN1.id
+			)
+		).message;
 		Log.test(msg);
 
 		expect(await kindOf("syncFormerTA"), "off staff, on students: a student again").to.equal(PersonKind.STUDENT);
@@ -182,7 +200,7 @@ describe("AdminController::synchronizeUsers", function () {
 		await makePerson("syncGuardTA", "ghGuardTA", PersonKind.STAFF); // on no team we can see
 		await makePerson("syncGuardAdmin", "ghGuardAdmin", PersonKind.ADMINSTAFF);
 
-		const msg = await controllerFor(["ghGuardStudent", "ghGuardWouldBeTA"], [], []).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = (await controllerFor(["ghGuardStudent", "ghGuardWouldBeTA"], [], []).synchronizeUsers(TestHarness.ADMIN1.id)).message;
 		Log.test(msg);
 
 		expect(await kindOf("syncGuardTA"), "not demoted on a run that could not read the teams").to.equal(PersonKind.STAFF);
@@ -202,7 +220,8 @@ describe("AdminController::synchronizeUsers", function () {
 			await dbc.writePerson(p);
 		}
 
-		const msg = await controllerFor(["ghNullStudent", "ghNullOther"], ["ghNullTA"], ["ghAnAdmin"]).synchronizeUsers(TestHarness.ADMIN1.id);
+		const msg = (await controllerFor(["ghNullStudent", "ghNullOther"], ["ghNullTA"], ["ghAnAdmin"]).synchronizeUsers(TestHarness.ADMIN1.id))
+			.message;
 		Log.test(msg);
 
 		expect(await kindOf("syncNullStudent")).to.equal(PersonKind.STUDENT);

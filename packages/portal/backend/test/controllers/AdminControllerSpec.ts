@@ -1344,7 +1344,7 @@ describe("AdminController", () => {
 
 			const res = await ac.synchronizeUsers();
 			Log.test("Result: " + JSON.stringify(res));
-			expect(res).to.be.an("string");
+			expect(res.message).to.be.a("string");
 
 			people = await pc.getAllPeople();
 			let numWithrdrawnAfter = 0;

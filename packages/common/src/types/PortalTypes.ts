@@ -38,6 +38,37 @@ export interface ClasslistChangesTransport {
 	message: string;
 }
 
+/** One person whose kind the user sync changed, and what it changed from and to. */
+export interface UserSyncChangeTransport {
+	person: PersonTransport;
+	from: string | null; // null: the kind had not been derived yet (login in progress)
+	to: string;
+}
+
+/**
+ * What a user sync did, with the people behind every count; see PersonController::syncKindsWithTeams.
+ * `message` is the same one-line summary the job always produced, for the status line.
+ */
+export interface UserSyncTransport {
+	message: string;
+	active: number;
+	withdrawn: number;
+	teams: { students: number; staff: number; admin: number };
+	/** false when the staff or admin team could not be read, in which case privileged kinds were left alone */
+	privilegedReadable: boolean;
+	reinstated: UserSyncChangeTransport[];
+	withdrawnThisRun: UserSyncChangeTransport[];
+	promoted: UserSyncChangeTransport[];
+	demoted: UserSyncChangeTransport[];
+	settled: UserSyncChangeTransport[];
+	/** withdrawn before this run and still on no team; only this job can reinstate them */
+	stillWithdrawn: PersonTransport[];
+	/** students with no githubId at all, who can never match a team */
+	noGithubId: PersonTransport[];
+	/** logins on the GitHub teams with no matching person in Classy (not on the classlist) */
+	unknownLogins: string[];
+}
+
 export interface ClasslistChangesTransportPayload {
 	success?: ClasslistChangesTransport; // only set if defined
 	failure?: FailurePayload; // only set if defined
