@@ -847,7 +847,8 @@ export default class AdminRoutes implements IREST {
 		try {
 			const kind = req.query.kind;
 			const query = typeof kind === "string" && kind !== "" ? { kind: kind } : {};
-			const jobs = await DatabaseController.getInstance().getJobs(query);
+			// through JobController, not the database: a dead job must not be reported as RUNNING
+			const jobs = await JobController.getInstance().getJobs(query);
 			res.send({ success: jobs });
 			return;
 		} catch (err) {
@@ -859,7 +860,7 @@ export default class AdminRoutes implements IREST {
 		const jobId = req.params.jobId;
 		Log.trace("AdminRoutes::getJob( " + jobId + " ) - start");
 		try {
-			const job = await DatabaseController.getInstance().getJob(jobId);
+			const job = await JobController.getInstance().getJob(jobId); // see getJobs
 			if (job === null) {
 				return AdminRoutes.handleError(404, "Unknown job: " + jobId, res);
 			}
