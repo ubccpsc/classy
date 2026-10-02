@@ -37,6 +37,10 @@ export enum ConfigKey {
 	prairieLearnUidDomain = "prairieLearnUidDomain",
 	prairieLearnTraceUids = "prairieLearnTraceUids",
 
+	// background jobs started at fixed times of day; see JobScheduler
+	jobSchedule = "jobSchedule",
+	jobScheduleTz = "jobScheduleTz",
+
 	// Grade export API; optional. Comma-separated consumer:token pairs. Unset disables the routes.
 	apiTokens = "apiTokens",
 
@@ -115,6 +119,9 @@ export default class Config {
 				prairieLearnCourseInstanceId: process.env.PRAIRIELEARN_COURSE_INSTANCE_ID,
 				prairieLearnUidDomain: process.env.PRAIRIELEARN_UID_DOMAIN,
 				prairieLearnTraceUids: process.env.PRAIRIELEARN_TRACE_UIDS,
+
+				jobSchedule: process.env.JOB_SCHEDULE,
+				jobScheduleTz: process.env.JOB_SCHEDULE_TZ,
 
 				apiTokens: process.env.API_TOKENS,
 

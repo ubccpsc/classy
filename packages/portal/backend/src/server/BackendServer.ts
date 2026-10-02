@@ -6,6 +6,7 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
+import { JobScheduler } from "@backend/controllers/JobScheduler";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
@@ -43,6 +44,7 @@ export default class BackendServer {
 	private rest: FastifyInstance;
 	private config: Config = null;
 	private useHttps = false;
+	private scheduler: JobScheduler = null;
 
 	public constructor(useHttps = true) {
 		Log.info("BackendServer::<init> - start");
@@ -78,6 +80,7 @@ export default class BackendServer {
 	 */
 	public async stop(): Promise<boolean> {
 		Log.info("BackendServer::stop() - start");
+		this.scheduler?.stop();
 		if (typeof this.rest === "undefined" || this.rest === null) {
 			return true;
 		}
@@ -290,6 +293,11 @@ export default class BackendServer {
 			const port = this.config.getProp(ConfigKey.backendPort);
 			await this.rest.listen({ port: port, host: "0.0.0.0" });
 			Log.info("BackendServer::start() - fastify listening on port: " + port);
+
+			// jobs started at fixed times of day (JOB_SCHEDULE); only once the server is up, so a
+			// backend that failed to start does not go on running jobs in the background
+			this.scheduler = JobScheduler.fromConfig(JobController.getInstance());
+			this.scheduler.start();
 
 			// after the Classy backend is up, check AutoTest
 			// (Docker should load AutoTest first, but the delay should not hurt)
