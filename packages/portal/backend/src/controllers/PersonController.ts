@@ -322,6 +322,13 @@ export class PersonController {
 			}
 		}
 
+		// a run that cannot trust the staff and admin teams adds nobody from them either
+		const fromTeams = privilegedReadable ? await this.addStaffFromTeams(teams, people, knownLogins) : { added: [], idTaken: [] };
+		for (const person of fromTeams.added) {
+			knownLogins.add(person.githubId.toLowerCase());
+		}
+		const staffAdded = fromTeams.added.map((person) => PersonController.personToTransport(person));
+
 		const unknownLogins = Array.from(new Set([...teams.students, ...teams.staff, ...teams.admin])).filter(
 			(id) => knownLogins.has(id.toLowerCase()) === false
 		);
@@ -340,6 +347,20 @@ export class PersonController {
 		}
 		if (settled.length > 0) {
 			Log.info(prefix + "null kinds settled from the teams: " + PersonController.forLog(settled.map(describe)));
+		}
+		if (fromTeams.added.length > 0) {
+			Log.info(
+				prefix +
+					"staff/admin added (on the staff or admin team, no person in Classy): " +
+					PersonController.forLog(fromTeams.added.map((person) => person.id + " (" + person.kind + ")"))
+			);
+		}
+		if (fromTeams.idTaken.length > 0) {
+			Log.warn(
+				prefix +
+					"on the staff or admin team but NOT added, because a person already has that id with a different githubId (correct that person's githubId): " +
+					PersonController.forLog(fromTeams.idTaken)
+			);
 		}
 		if (stillWithdrawn.length > 0) {
 			Log.warn(
@@ -372,6 +393,8 @@ export class PersonController {
 			demoted.length +
 			"; # null kinds settled (this run): " +
 			settled.length +
+			"; # staff/admin added (this run): " +
+			staffAdded.length +
 			"; # on GitHub teams: students " +
 			teams.students.length +
 			", staff " +
@@ -394,10 +417,75 @@ export class PersonController {
 			promoted: promoted,
 			demoted: demoted,
 			settled: settled,
+			staffAdded: staffAdded,
 			stillWithdrawn: stillWithdrawn,
 			noGithubId: noGithubId,
 			unknownLogins: unknownLogins,
 		};
+	}
+
+	/**
+	 * Creates a person for each login on the staff or admin team that no person has as their githubId.
+	 *
+	 * Staff are not on the classlist, so their team is the only record of who they are; with no
+	 * person, a TA's PrairieLearn grades (which join on githubId) were dropped as unmatched. They are
+	 * created in the shape the login path creates (see getGitHubPerson), login case and all, so a TA
+	 * who later logs in finds this record rather than getting a second one. Logins only on the
+	 * students team are never created: the classlist is the record for students.
+	 *
+	 * @param teams the logins on each team, as GitHub reports them
+	 * @param people everyone already in Classy
+	 * @param knownLogins the lowercased githubIds already in Classy
+	 * @returns the people created, and the logins skipped because a person already has that id
+	 */
+	private async addStaffFromTeams(
+		teams: TeamLogins,
+		people: Person[],
+		knownLogins: Set<string>
+	): Promise<{ added: Person[]; idTaken: string[] }> {
+		const staff = new Set(teams.staff.map((id) => id.toLowerCase()));
+		const admin = new Set(teams.admin.map((id) => id.toLowerCase()));
+		const takenIds = new Set(people.map((person) => String(person.id).toLowerCase()));
+
+		const toAdd = new Map<string, string>(); // lowercased login -> the login as GitHub reports it
+		for (const login of [...teams.staff, ...teams.admin]) {
+			const key = login.toLowerCase();
+			if (knownLogins.has(key) === false && toAdd.has(key) === false) {
+				toAdd.set(key, login);
+			}
+		}
+
+		const added: Person[] = [];
+		const idTaken: string[] = [];
+		for (const [key, login] of toAdd) {
+			if (takenIds.has(key) === true) {
+				// someone already has this id under a different githubId; writing would overwrite them
+				idTaken.push(login);
+				continue;
+			}
+			// the precedence syncKindsWithTeams uses
+			let kind = PersonKind.ADMIN;
+			if (staff.has(key) && admin.has(key)) {
+				kind = PersonKind.ADMINSTAFF;
+			} else if (staff.has(key)) {
+				kind = PersonKind.STAFF;
+			}
+			const person: Person = {
+				id: login,
+				csId: login,
+				githubId: login,
+				studentNumber: null,
+				fName: login,
+				lName: login,
+				URL: null,
+				labId: null,
+				kind: kind,
+				custom: {},
+			};
+			await this.writePerson(person);
+			added.push(person);
+		}
+		return { added: added, idTaken: idTaken };
 	}
 
 	/** Up to 50 entries, then a count of the rest, so a whole-class list cannot flood the log. */

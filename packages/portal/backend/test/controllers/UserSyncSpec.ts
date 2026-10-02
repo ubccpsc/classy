@@ -189,7 +189,9 @@ describe("AdminController::synchronizeUsers", function () {
 		expect(await kindOf("syncStillAdmin")).to.equal(PersonKind.ADMIN);
 		expect(msg).to.contain("# demoted (this run): 1");
 		expect(msg).to.contain("# withdrawn (this run): 1");
-		expect(msg).to.contain("# team logins unknown to Classy: 1"); // ghSomeTA
+		// ghSomeTA was nobody in Classy; being on the staff team is enough to be added
+		expect(msg).to.contain("# staff/admin added (this run): 1");
+		expect(msg).to.contain("# team logins unknown to Classy: 0");
 	});
 
 	it("Should leave staff and admin kinds alone when those teams cannot be read.", async function () {
@@ -227,6 +229,99 @@ describe("AdminController::synchronizeUsers", function () {
 		expect(await kindOf("syncNullStudent")).to.equal(PersonKind.STUDENT);
 		expect(await kindOf("syncNullTA")).to.equal(PersonKind.STAFF);
 		expect(msg).to.contain("# null kinds settled (this run): 2");
+	});
+
+	it("Should add a person for everyone on the staff or admin team that Classy does not know.", async function () {
+		// TAs are not on the classlist, so their team is the only record of them; without a person,
+		// their PrairieLearn grades had nowhere to go
+		await makeStudent("addStudent1", "ghAddStudent1");
+		await makeStudent("addStudent2", "ghAddStudent2");
+
+		const result = await controllerFor(
+			["ghAddStudent1", "ghAddStudent2", "ghAddNotOnClasslist"],
+			["ghAddTA", "ghAddBoth"],
+			["ghAddAdmin", "ghAddBoth"]
+		).synchronizeUsers(TestHarness.ADMIN1.id);
+		Log.test(result.message);
+
+		expect(await kindOf("ghAddTA")).to.equal(PersonKind.STAFF);
+		expect(await kindOf("ghAddAdmin")).to.equal(PersonKind.ADMIN);
+		expect(await kindOf("ghAddBoth"), "on both teams").to.equal(PersonKind.ADMINSTAFF);
+		const ta = await dbc.getPerson("ghAddTA");
+		expect(ta.githubId, "the shape the login path creates").to.equal("ghAddTA");
+		expect(ta.csId).to.equal("ghAddTA");
+
+		expect(await dbc.getPerson("ghAddNotOnClasslist"), "students come from the classlist, never from the team").to.be.null;
+		expect(result.unknownLogins).to.deep.equal(["ghAddNotOnClasslist"]);
+		expect(result.staffAdded.map((p) => p.id).sort()).to.deep.equal(["ghAddAdmin", "ghAddBoth", "ghAddTA"]);
+		expect(result.promoted.length, "a new person is added, not promoted").to.equal(0);
+		expect(result.message).to.contain("# staff/admin added (this run): 3");
+
+		const audit = (await dbc.getAudits(AuditLabel.USER_SYNC, 1))[0];
+		expect((audit.custom as any).staffAdded.sort()).to.deep.equal(["ghAddAdmin", "ghAddBoth", "ghAddTA"]);
+	});
+
+	it("Should keep the login's case on an added person, so logging in finds them.", async function () {
+		// login looks a person up by githubId exactly as GitHub reports it; a lowercased record would
+		// be missed, and logging in would create a second person for the same TA
+		await makeStudent("caseStudent1", "ghCaseStudent1");
+		await makeStudent("caseStudent2", "ghCaseStudent2");
+		await makePerson("caseKnownTA", "ghcaseknownta", PersonKind.STUDENT);
+
+		const result = await controllerFor(
+			["ghCaseStudent1", "ghCaseStudent2"],
+			["GhCaseTA", "GhCaseKnownTA"],
+			["ghCaseAdmin"]
+		).synchronizeUsers(TestHarness.ADMIN1.id);
+
+		expect((await dbc.getGitHubPerson("GhCaseTA"))?.id, "found by the exact login").to.equal("GhCaseTA");
+		expect(await kindOf("caseKnownTA"), "already known, whatever the case: promoted, not added").to.equal(PersonKind.STAFF);
+		expect(result.staffAdded.map((p) => p.id).sort()).to.deep.equal(["GhCaseTA", "ghCaseAdmin"]);
+	});
+
+	it("Should add nobody twice.", async function () {
+		await makeStudent("twiceStudent1", "ghTwiceStudent1");
+		await makeStudent("twiceStudent2", "ghTwiceStudent2");
+		const sync = () =>
+			controllerFor(["ghTwiceStudent1", "ghTwiceStudent2"], ["ghTwiceTA"], ["ghTwiceAdmin"]).synchronizeUsers(TestHarness.ADMIN1.id);
+
+		expect((await sync()).staffAdded.length).to.equal(2);
+		const people = (await dbc.getPeople()).length;
+
+		const again = await sync();
+		expect(again.staffAdded.length, "the first run's people are known now").to.equal(0);
+		expect(again.message).to.contain("# staff/admin added (this run): 0");
+		expect((await dbc.getPeople()).length).to.equal(people);
+	});
+
+	it("Should not overwrite a person whose id is a staff login but whose githubId differs.", async function () {
+		// writing the new person would replace this one, name and all; it is reported instead
+		await makeStudent("takenStudent", "ghTakenStudent");
+		await makePerson("ghTakenTA", "ghSomeoneElse", PersonKind.STUDENT);
+
+		const result = await controllerFor(["ghTakenStudent", "ghSomeoneElse"], ["ghTakenTA"], ["ghTakenAdmin"]).synchronizeUsers(
+			TestHarness.ADMIN1.id
+		);
+
+		const taken = await dbc.getPerson("ghTakenTA");
+		expect(taken.githubId, "untouched").to.equal("ghSomeoneElse");
+		expect(taken.fName).to.equal("first_ghTakenTA");
+		expect(taken.kind).to.equal(PersonKind.STUDENT);
+		expect(result.staffAdded.map((p) => p.id)).to.deep.equal(["ghTakenAdmin"]);
+		expect(result.unknownLogins, "still unknown, so it stays visible").to.deep.equal(["ghTakenTA"]);
+	});
+
+	it("Should add nobody when the staff or admin team cannot be read.", async function () {
+		// an empty admin list is read as a failed request, so neither team is trusted on this run
+		await makeStudent("unreadStudent1", "ghUnreadStudent1");
+		await makeStudent("unreadStudent2", "ghUnreadStudent2");
+
+		const result = await controllerFor(["ghUnreadStudent1", "ghUnreadStudent2"], ["ghUnreadTA"], []).synchronizeUsers(
+			TestHarness.ADMIN1.id
+		);
+
+		expect(await dbc.getPerson("ghUnreadTA")).to.be.null;
+		expect(result.staffAdded.length).to.equal(0);
 	});
 
 	it("Should refuse to run when the GitHub team looks stale.", async function () {

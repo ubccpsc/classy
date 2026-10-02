@@ -61,6 +61,8 @@ export interface UserSyncTransport {
 	promoted: UserSyncChangeTransport[];
 	demoted: UserSyncChangeTransport[];
 	settled: UserSyncChangeTransport[];
+	/** on the staff or admin team with no person in Classy, so created this run (staff are not on the classlist) */
+	staffAdded: PersonTransport[];
 	/** withdrawn before this run and still on no team; only this job can reinstate them */
 	stillWithdrawn: PersonTransport[];
 	/** students with no githubId at all, who can never match a team */

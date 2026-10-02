@@ -593,6 +593,7 @@ export class AdminController {
 						promoted: result.promoted.map((c) => c.person.id),
 						demoted: result.demoted.map((c) => c.person.id),
 						settled: result.settled.map((c) => c.person.id),
+						staffAdded: result.staffAdded.map((p) => p.id),
 					}
 				);
 			}
