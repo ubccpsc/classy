@@ -15,6 +15,14 @@ TS_NODE_BASEURL=. node --require dotenv/config --require tsconfig-paths/register
 
 Running `node src-util/<Script>.js` directly fails with `Cannot find module "@common/Config"`.
 
+These scripts are also excluded from coverage (`nyc.exclude` in `packages/portal/backend/package.json`, which is
+the config CI reads -- nyc resolves the nearest `package.json` to its working directory, so the root one does
+not apply there). They are one-off maintenance tools, not the service, and measuring them alongside it moves the
+project's coverage number for reasons that have nothing to do with the service's tests: when `DatabaseValidator`
+first became importable (2026-09-08) it entered the report at 13/264 lines and dropped backend line coverage from
+92.1% to 88.2% overnight, without a single service line losing coverage. `DatabaseValidatorSpec` still runs; it
+asserts behaviour (importable without side effects; dry-run writes nothing), which is what matters for a script.
+
 The full list is given below, but the most commonly used batch utilities are `InvokeAutoTest` and `TransformGrades`.
 
 * `ConcurrencyBenchmark`: Measures how much request concurrency actually helps against the configured GitHub instance. Read-only (only issues `GET /repos/{org}/{repo}`), so it is safe to run repeatedly. Use it to choose `AdminController.PROVISION_CONCURRENCY`: look for the level where speedup stops climbing, or where non-200 responses start appearing (GitHub secondary rate limits).
@@ -26,6 +34,8 @@ The full list is given below, but the most commonly used batch utilities are `In
 * `GitHubCleaner`: Batch deletion from DB and GitHub. You *REALLY* don't want to use this.
 
 * `InvokeAutoTest`: Batch invoke AutoTest on a specific set of commits. This is a pretty safe operation and is commonly used.
+
+* `TestDatasetGenerator`: Seeds the *test* database (`ConfigKey.testname`) with a small course dataset: a course record, an admin, 41 students, auth tokens, five deliverables, two teams, and two repositories. Idempotent, so it is safe to re-run. Convenience script: `yarn seed:testdb` from the repo root. This used to be `test/xRunLast/TestDatasetGeneratorSpec.ts`, where seven assertion-free tests relied on the directory name sorting last so the other suites would not clear the data back out; nothing in the test suite depends on it.
 
 * `TransformGrades`: Allows for post-hoc grade updates. This does modify the database, but can be helpful for changing grading rubrics etc.
 

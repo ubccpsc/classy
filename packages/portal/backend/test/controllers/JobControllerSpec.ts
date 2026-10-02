@@ -295,6 +295,90 @@ describe("JobController", function () {
 		expect(swept.state).to.equal(JobState.INTERRUPTED);
 	});
 
+	describe("reading jobs for the admin UI", function () {
+		/**
+		 * A job whose process died an hour ago: RUNNING in the database, but nothing is running it.
+		 */
+		function deadJob(id: string, kind: string): Job {
+			return {
+				id: id,
+				kind: kind,
+				state: JobState.RUNNING,
+				requestedBy: TestHarness.ADMIN1.id,
+				createdAt: Date.now() - 60 * 60 * 1000,
+				startedAt: Date.now() - 60 * 60 * 1000,
+				heartbeatAt: Date.now() - 60 * 60 * 1000,
+				completedAt: null,
+				cancelRequested: false,
+				progress: { done: 3, total: 10, message: "was running" },
+				summary: null,
+				errors: [],
+				params: {},
+			};
+		}
+
+		it("Should report a dead job in the listing as INTERRUPTED, not RUNNING.", async function () {
+			// the admin page disables a job's button while the listing says RUNNING, and only pressing
+			// it would sweep the job, so a dead job reported as RUNNING blocked its kind until a restart
+			const kind = "test-list-dead-" + Date.now();
+			const dead = deadJob("dead_list_" + Date.now(), kind);
+			await dc.writeJob(dead);
+
+			const jobs = await jc.getJobs({ kind: kind });
+
+			expect(jobs.length).to.equal(1);
+			expect(jobs[0].state, "the listing must not report a dead job as running").to.equal(JobState.INTERRUPTED);
+			expect((await dc.getJob(dead.id)).state, "and the sweep is persisted").to.equal(JobState.INTERRUPTED);
+		});
+
+		it("Should report a dead job read by id as INTERRUPTED, not RUNNING.", async function () {
+			// what the page polls while it watches a job
+			const dead = deadJob("dead_get_" + Date.now(), "test-get-dead-" + Date.now());
+			await dc.writeJob(dead);
+
+			const job = await jc.getJob(dead.id);
+
+			expect(job.state).to.equal(JobState.INTERRUPTED);
+			expect(job.progress.done, "partial progress is retained").to.equal(3);
+		});
+
+		it("Should return null when reading an unknown job.", async function () {
+			expect(await jc.getJob("noSuchJob_" + Date.now())).to.be.null;
+		});
+
+		it("Should never sweep a job running in this process, however long since its last progress.", async function () {
+			// the page polls every two seconds; were a quiet but live job swept, its button would be
+			// re-enabled while the work carried on, and the next press would start a second run
+			const kind = "test-quiet-" + Date.now();
+			let release: () => void = null;
+			const gate = new Promise<void>((resolve) => {
+				release = resolve;
+			});
+			jc.register(kind, async () => {
+				await gate; // busy, but not reporting progress
+				return null;
+			});
+
+			const job = await jc.start(kind, TestHarness.ADMIN1.id);
+
+			// make it look exactly like a dead job: no heartbeat for an hour
+			const quiet = await dc.getJob(job.id);
+			quiet.heartbeatAt = Date.now() - 60 * 60 * 1000;
+			await dc.writeJob(quiet);
+
+			expect((await jc.getJobs({ kind: kind }))[0].state, "listing").to.equal(JobState.RUNNING);
+			expect((await jc.getJob(job.id)).state, "read by id").to.equal(JobState.RUNNING);
+			await jc.sweepInterrupted();
+			expect((await dc.getJob(job.id)).state, "startup sweep").to.equal(JobState.RUNNING);
+			const again = await jc.start(kind, TestHarness.ADMIN1.id);
+			expect(again.id, "a second press returns the running job rather than starting another").to.equal(job.id);
+
+			release();
+			const done = await waitForState(job.id);
+			expect(done.state).to.equal(JobState.SUCCEEDED);
+		});
+	});
+
 	it("Should bound the errors array.", async function () {
 		const kind = "test-errors-" + Date.now();
 		jc.register(kind, async (_job: Job, ctx: JobContext) => {

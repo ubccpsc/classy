@@ -11,9 +11,9 @@ import type { FastifyInstance, FastifyReply } from "fastify";
 /**
  * One grade, as an external system sees it.
  *
- * The field names are the consumer's, not Classy's: this payload is a published contract
- * (docs/developer/elms-grade-sync-spec.md), so it deliberately does not reuse GradeTransport, which
- * exists to feed the admin UI and is free to change with it.
+ * The field names are the consumer's, not Classy's: this payload is a published contract with an
+ * external system, so it deliberately does not reuse GradeTransport, which exists to feed the
+ * admin UI and is free to change with it.
  */
 export interface ExportedGrade {
 	/**
@@ -63,8 +63,7 @@ export interface ExportedGrades {
  *
  * A fourth consumer class alongside the student UI (/portal/*), the admin UI (/portal/admin/*) and
  * AutoTest (/portal/at/*): its credential is issued and revoked without touching the other three.
- * See docs/developer/grade-export-api-plan.md for why, and
- * docs/developer/elms-grade-sync-spec.md for the contract this implements.
+ * The ExportedGrades interface above is the contract this implements.
  */
 export class ExportRoutes implements IREST {
 	/**
@@ -209,8 +208,20 @@ export class ExportRoutes implements IREST {
 
 			const grades: ExportedGrade[] = [];
 			for (const row of rows) {
+				// String(), not a string check: documents written before studentNumber was typed as
+				// a string still hold a number. null becomes "" rather than the literal "null".
+				const snum = row.person.studentNumber === null ? "" : String(row.person.studentNumber);
+				if (snum.length === 0) {
+					// Sent anyway, with a blank snum. This used to skip the row, on the reasoning
+					// that snum is the join key and an unmatched row is useless -- but that decided
+					// for the consumer. Every row also carries `cwl`, so the person is still
+					// identifiable, and ELMS ignores what it does not recognise. Someone created by
+					// login rather than by classlist import lands here, which is most staff.
+					Log.trace("ExportRoutes::exportGrades( " + delivId + " ) - no studentNumber, sending with cwl only: " + row.person.id);
+				}
+
 				const exported: ExportedGrade = {
-					snum: String(row.person.studentNumber),
+					snum: snum,
 					cwl: row.person.githubId,
 					score: row.grade.score,
 					feedback: typeof row.grade.comment === "string" ? row.grade.comment : "",

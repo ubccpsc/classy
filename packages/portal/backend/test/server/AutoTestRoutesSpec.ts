@@ -139,6 +139,24 @@ describe("AutoTest Routes", function () {
 			stub.reset();
 		});
 
+		it("Should forward the ?filters= query the admin UI sends.", async function () {
+			// Both callers build "/portal/at/docker/images?filters=" + JSON.stringify({reference:["grader"]}),
+			// and getDockerImages forwards req.url with only the "/portal/at" prefix stripped. Nothing
+			// asserted the query survived that rewrite -- if it were dropped, the UI would silently
+			// list every image on the host instead of just the graders.
+			const filters = JSON.stringify({ reference: ["grader"] });
+			stub.body = [];
+
+			const response = await request(app)
+				.get("/portal/at/docker/images?filters=" + encodeURIComponent(filters))
+				.set({ user: TestHarness.ADMIN1.github });
+
+			expect(response.status).to.equal(200);
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.url, "the /portal/at prefix is stripped").to.match(/^\/docker\/images\?/);
+			expect(decodeURIComponent(forwarded.url), "the filters query must reach AutoTest intact").to.contain(filters);
+		});
+
 		it("Should not count the AutoTest health poll as a forwarded request.", async function () {
 			// BackendServer::start polls GET /status on an un-awaited 500ms timer. Once this stub has
 			// redirected autotestUrl/autotestPort, that poll arrives *here*, at whatever point in the

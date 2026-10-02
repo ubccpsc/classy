@@ -62,5 +62,13 @@
         "supertest": "^7.2.2",
         "typescript": "7.0.2",
         "xunit-viewer": "^7.1.5"
+    },
+    "nyc": {
+        "exclude": [
+            "src-util/**",
+            "test/**",
+            "coverage/**",
+            "**/*.d.ts"
+        ]
     }
 }

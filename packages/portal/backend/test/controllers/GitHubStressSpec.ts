@@ -313,10 +313,9 @@ describe("GitHubStress", function () {
 
 	beforeEach(function () {
 		if (ENABLED === false) {
-			// NOTE: deliberately NOT gated on TestHarness.runSlowTest(); this must stay off in CI
+			// NOTE: deliberately NOT gated on hasGitHub(); this must stay off in CI
 			// and only run when someone explicitly asks for it.
-			Log.test("GitHubStressSpec - skipping (set GH_STRESS=true to enable)");
-			this.skip();
+			TestHarness.skip(this, "opt-in stress test (set GH_STRESS=true)");
 		}
 	});
 
@@ -356,9 +355,8 @@ describe("GitHubStress", function () {
 
 	it("Should measure template-based repo creation (what provisioning actually does).", async function () {
 		if (RUN_TEMPLATE === false) {
-			Log.test("GitHubStress - template measurement skipped (set GH_STRESS_TEMPLATE=true)");
-			this.skip();
-			return;
+			// NOTE: skip() throws, so nothing after this runs
+			TestHarness.skip(this, "opt-in stress test (set GH_STRESS_TEMPLATE=true)");
 		}
 
 		const org = Config.getInstance().getProp(ConfigKey.org);

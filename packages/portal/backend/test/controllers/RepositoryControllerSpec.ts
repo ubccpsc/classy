@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import "mocha";
 
+import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -96,6 +97,33 @@ describe("RepositoryController", () => {
 		expect(people).to.have.lengthOf(2);
 		expect(people).to.contain(TestHarness.USER1.id);
 		expect(people).to.contain(TestHarness.USER2.id);
+	});
+
+	it("Should tolerate a repo that references a deleted team.", async () => {
+		// Regression: handleTeamDelete removes the team but does not strip its id from the repos
+		// that referenced it, so Repository.teamIds outlives the team. getPeopleForRepo used to
+		// deref the null team and throw; because it sits on the AutoTest result-write path
+		// (ResultsController.createResult -> atPostResult), that meant every push for the repo
+		// 400d and no grade was ever saved.
+		const dbc = DatabaseController.getInstance();
+		const repos = await rc.getAllRepos();
+		const repo = repos[0];
+		const originalTeamIds = repo.teamIds.slice();
+
+		try {
+			repo.teamIds.push("teamThatWasDeleted");
+			await dbc.writeRepository(repo);
+
+			const people = await rc.getPeopleForRepo(repo.id);
+			Log.test("people with a dangling teamId: " + JSON.stringify(people));
+
+			// the surviving team's members are still returned; the dangling id is skipped
+			expect(people).to.contain(TestHarness.USER1.id);
+			expect(people).to.contain(TestHarness.USER2.id);
+		} finally {
+			repo.teamIds = originalTeamIds;
+			await dbc.writeRepository(repo);
+		}
 	});
 
 	it("Should be able to find repos for a person.", async () => {
