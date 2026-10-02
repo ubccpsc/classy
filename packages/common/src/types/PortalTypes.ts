@@ -352,6 +352,7 @@ export interface RepositoryTransport {
 	URL: string;
 	delivId: string;
 	gitHubStatus: string; // would be better if this were GithubStatus, but this is a transport type
+	studentAccess: string | null; // "pull" (read-only) or "push" (writeable) while RELEASED; null otherwise
 }
 
 export interface AutoTestResultPayload {

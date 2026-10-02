@@ -14,7 +14,7 @@ import { RepositoryController } from "@backend/controllers/RepositoryController"
 import { ResultsController } from "@backend/controllers/ResultsController";
 import { TeamController } from "@backend/controllers/TeamController";
 import { Factory } from "@backend/Factory";
-import { Deliverable, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "@backend/Types";
+import { Deliverable, Person, PersonKind, RepoStatus, Repository, Result, StudentAccess, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigCourses, ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -970,6 +970,7 @@ describe("AdminController", () => {
 		 */
 		class ScriptedUnreleaseController implements IGitHubController {
 			public seen: string[] = [];
+			public accessSeen: StudentAccess[] = [];
 
 			public getActions(): IGitHubActions {
 				return GitHubActions.getInstance();
@@ -992,6 +993,11 @@ describe("AdminController", () => {
 					throw outcome;
 				}
 				return outcome;
+			}
+
+			public async setStudentAccess(repo: Repository, _teams: Team[], access: StudentAccess): Promise<boolean> {
+				this.accessSeen.push(access);
+				return await this.unreleaseRepository(repo); // the same per-repo script
 			}
 
 			public async updateBranchProtection(): Promise<boolean> {
@@ -1154,6 +1160,51 @@ describe("AdminController", () => {
 			expect(aborted.name).to.equal("ProvisionAbortedError");
 			expect(gh.seen.length, "it must not try the other four").to.equal(1);
 		});
+
+		describe("performSetStudentAccess", function () {
+			// the same loop as performUnrelease, so the same double and the same three properties:
+			// what it acts on, that one bad repo does not cost the rest, and that a fatal one stops it
+
+			it("Should change only released repos, with the access asked for, and return those it changed.", async () => {
+				const released = makeRepos("ACCESS_OK", 3, RepoStatus.RELEASED);
+				const ready = makeRepos("ACCESS_NOT_RELEASED", 2, RepoStatus.READY);
+				const gh = new ScriptedUnreleaseController(() => true);
+
+				const result = await new AdminController(gh).performSetStudentAccess([...released, ...ready], StudentAccess.PULL);
+
+				expect(gh.seen.sort(), "a repo with no student team on it is skipped").to.deep.equal(released.map((r) => r.id).sort());
+				expect(gh.accessSeen).to.deep.equal([StudentAccess.PULL, StudentAccess.PULL, StudentAccess.PULL]);
+				expect(result.map((r) => r.id).sort()).to.deep.equal(released.map((r) => r.id).sort());
+			});
+
+			it("Should keep going when one repo cannot be changed.", async () => {
+				const repos = makeRepos("ACCESS_ONEBAD", 4, RepoStatus.RELEASED);
+				const bad = repos[2].id;
+				const gh = new ScriptedUnreleaseController((id) => id !== bad);
+
+				const result = await new AdminController(gh).performSetStudentAccess(repos, StudentAccess.PUSH);
+
+				expect(gh.seen.length, "every repo is still attempted").to.equal(4);
+				expect(result.map((r) => r.id)).to.not.contain(bad);
+				expect(result.length).to.equal(3);
+			});
+
+			it("Should abandon the run as soon as a failure is fatal.", async () => {
+				const repos = makeRepos("ACCESS_FATAL", 5, RepoStatus.RELEASED);
+				const gh = new ScriptedUnreleaseController(() => new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}'));
+
+				let aborted: any = null;
+				try {
+					await new AdminController(gh).performSetStudentAccess(repos, StudentAccess.PULL, null, 1);
+				} catch (err) {
+					aborted = err;
+				}
+
+				expect(aborted, "a fatal failure must stop the run").to.not.be.null;
+				expect(aborted.name).to.equal("ProvisionAbortedError");
+				expect(gh.seen.length, "it must not try the other four").to.equal(1);
+			});
+		});
 	});
 
 	it("Should abandon a provisioning run as soon as a failure is fatal.", async () => {
@@ -1178,6 +1229,10 @@ describe("AdminController", () => {
 			}
 
 			public async unreleaseRepository(): Promise<boolean> {
+				return true;
+			}
+
+			public async setStudentAccess(): Promise<boolean> {
 				return true;
 			}
 

@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
+import { RepoStatus, Repository, StudentAccess, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { ProvisionState } from "./ProvisionState";
@@ -32,6 +32,16 @@ export interface IGitHubController {
 	 * @returns {Promise<boolean>} whether the repo is now un-released
 	 */
 	unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean>;
+
+	/**
+	 * Switches the student teams on a released repository between read-only and writeable.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams the repo's teams; the org-wide staff and admin teams are never changed
+	 * @param {StudentAccess} access pull (read-only) or push (writeable)
+	 * @returns {Promise<boolean>} whether every student team now has that access
+	 */
+	setStudentAccess(repo: Repository, teams: Team[], access: StudentAccess): Promise<boolean>;
 
 	updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean>;
 
@@ -636,7 +646,95 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
-	 * Whether a team must never be detached from a repository.
+	 * Switches the student teams on a released repository between read-only and writeable.
+	 *
+	 * Uses the same call a release does: GitHub's "add or update team repository permissions"
+	 * replaces the permission of a team that is already attached. So the repo, its content, and the
+	 * staff and admin teams are untouched, and a team that is not attached must not be passed to it:
+	 * for such a team the same call would attach it, granting access rather than changing it.
+	 *
+	 * @param repo
+	 * @param teams the repo's teams
+	 * @param access pull (read-only) or push (writeable)
+	 * @returns {Promise<boolean>} whether every student team now has that access
+	 */
+	public async setStudentAccess(repo: Repository, teams: Team[], access: StudentAccess): Promise<boolean> {
+		Log.info("GitHubController::setStudentAccess( " + repo.id + ", " + access + " ) - start");
+		const start = Date.now();
+
+		await this.checkDatabase(repo.id, null);
+
+		if (repo.gitHubStatus !== RepoStatus.RELEASED) {
+			// no student team is attached, so there is nothing to change
+			Log.warn("GitHubController::setStudentAccess( " + repo.id + " ) - not released (" + repo.gitHubStatus + "); nothing to change");
+			return false;
+		}
+
+		// the same set unreleaseRepository detaches: the repo's own teams, never the org-wide ones
+		const studentTeams: Team[] = [];
+		for (const team of teams) {
+			if (team === null) {
+				continue;
+			}
+			if (GitHubController.isProtectedTeam(team) === true) {
+				Log.info("GitHubController::setStudentAccess( " + repo.id + " ) - leaving org-wide team as it is: " + team.id);
+			} else if (team.gitHubStatus !== TeamStatus.ATTACHED) {
+				// changing its permission would attach it; see above
+				Log.warn(
+					"GitHubController::setStudentAccess( " +
+						repo.id +
+						" ) - skipping team " +
+						team.id +
+						"; it is " +
+						team.gitHubStatus +
+						", not attached"
+				);
+			} else {
+				studentTeams.push(team);
+			}
+		}
+
+		if (studentTeams.length === 0) {
+			// released, but no attached student team to change; do not record an access nobody has
+			Log.warn("GitHubController::setStudentAccess( " + repo.id + " ) - no attached student team to change");
+			return false;
+		}
+
+		let allChanged = true;
+		for (const team of studentTeams) {
+			await this.checkDatabase(null, team.id);
+			try {
+				const res = await this.gha.addTeamToRepo(team.id, repo.id, access);
+				if (res.githubTeamNumber > 0) {
+					Log.info(
+						"GitHubController::setStudentAccess(..) - team ( " + team.id + " ) now has " + access + " on repository ( " + repo.id + " )"
+					);
+				} else {
+					Log.error("GitHubController::setStudentAccess(..) - ERROR changing team " + team.id + ": " + JSON.stringify(res));
+					allChanged = false;
+				}
+			} catch (err) {
+				Log.error("GitHubController::setStudentAccess(..) - ERROR changing team " + team.id + ": " + err.message);
+				allChanged = false;
+			}
+		}
+
+		if (allChanged === false) {
+			// as with releasing: a partial result must not be recorded as done, or the admin UI would
+			// list the repo as read-only while some of its students can still push. The record keeps
+			// its old access, so pressing the button again retries (the change itself is idempotent).
+			Log.error("GitHubController::setStudentAccess( " + repo.id + " ) - not changed; a team could not be updated");
+			return false;
+		}
+
+		await ProvisionState.setStudentAccess(repo, access, "student teams set to " + access);
+
+		Log.info("GitHubController::setStudentAccess( " + repo.id + ", " + access + " ) - done; took: " + Util.took(start));
+		return true;
+	}
+
+	/**
+	 * Whether a team must never be detached from a repository, or have its access to one changed.
 	 *
 	 * Only the org-wide staff and admin teams qualify. They are what actually keeps staff in a
 	 * repository: finalization adds them by name with "admin" permission, independently of whatever

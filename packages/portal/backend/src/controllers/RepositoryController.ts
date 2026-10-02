@@ -1,7 +1,7 @@
 import Log from "@common/Log";
 import { RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
-import { Deliverable, Person, RepoStatus, Repository, Team } from "../Types";
+import { Deliverable, Person, RepoStatus, Repository, StudentAccess, Team } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
@@ -20,6 +20,8 @@ export class RepositoryController {
 			URL: repository.URL,
 			delivId: repository.delivId,
 			gitHubStatus: repository.gitHubStatus.toString(),
+			// absent on a released repo means push; see Repository.studentAccess
+			studentAccess: repository.gitHubStatus === RepoStatus.RELEASED ? (repository.studentAccess ?? StudentAccess.PUSH) : null,
 		};
 
 		return repo;

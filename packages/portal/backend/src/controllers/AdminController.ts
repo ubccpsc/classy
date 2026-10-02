@@ -19,7 +19,20 @@ import {
 } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 import { Factory } from "../Factory";
-import { AuditLabel, Course, Deliverable, Grade, Person, PersonKind, RepoStatus, Repository, Result, Team, TeamStatus } from "../Types";
+import {
+	AuditLabel,
+	Course,
+	Deliverable,
+	Grade,
+	Person,
+	PersonKind,
+	RepoStatus,
+	Repository,
+	Result,
+	StudentAccess,
+	Team,
+	TeamStatus,
+} from "../Types";
 import { DatabaseController, ReadOptions } from "./DatabaseController";
 import { DeliverablesController } from "./DeliverablesController";
 import { GitHubController, IGitHubController } from "./GitHubController";
@@ -349,13 +362,7 @@ export class AdminController {
 		const allRepos = await this.rc.getAllRepos();
 		const repos: RepositoryTransport[] = [];
 		for (const repo of allRepos) {
-			const repoTransport: RepositoryTransport = {
-				id: repo.id,
-				URL: repo.URL,
-				delivId: repo.delivId,
-				gitHubStatus: repo.gitHubStatus.toString(),
-			};
-			repos.push(repoTransport);
+			repos.push(RepositoryController.repositoryToTransport(repo));
 		}
 		return repos;
 	}
@@ -894,8 +901,7 @@ export class AdminController {
 
 		const repoTrans: RepositoryTransport[] = [];
 		for (const repo of reposToProvision) {
-			const newRepo = { delivId: deliv.id, id: repo.id, URL: repo.URL, gitHubStatus: repo.gitHubStatus.toString() };
-			repoTrans.push(newRepo);
+			repoTrans.push(RepositoryController.repositoryToTransport(repo));
 		}
 
 		return repoTrans;
@@ -1280,6 +1286,94 @@ export class AdminController {
 		);
 
 		return unreleasedRepositoryTransport;
+	}
+
+	/**
+	 * Makes the student teams on released repositories read-only (pull) or writeable (push).
+	 *
+	 * Built like performUnrelease, failure policy included: a repo whose teams could not all be
+	 * changed keeps the access it had, so running this again retries only what is outstanding. Repos
+	 * that are not released have no student team on them and are skipped.
+	 *
+	 * @param repos
+	 * @param access
+	 * @param ctx
+	 * @param concurrency
+	 * @returns {Promise<RepositoryTransport[]>} the repos whose student teams now have that access
+	 */
+	public async performSetStudentAccess(
+		repos: Repository[],
+		access: StudentAccess,
+		ctx: JobContext = null,
+		concurrency: number = AdminController.PROVISION_CONCURRENCY
+	): Promise<RepositoryTransport[]> {
+		const ghc = this.gh; // see performProvision
+
+		Log.info(
+			"AdminController::performSetStudentAccess(..) - start; # repos: " +
+				repos.length +
+				"; access: " +
+				access +
+				"; concurrency: " +
+				concurrency
+		);
+		const start = Date.now();
+
+		const changedRepos: Repository[] = [];
+		let done = 0;
+		const policy = new ProvisionFailurePolicy(access === StudentAccess.PULL ? "making read-only" : "making writeable");
+
+		await Util.processConcurrently(repos, concurrency, async (repo: Repository) => {
+			if (ctx?.isCancelled() === true) {
+				Log.info("AdminController::performSetStudentAccess(..) - cancelled; skipping: " + repo.id);
+				return;
+			}
+			try {
+				const startRepo = Date.now();
+				if (repo.gitHubStatus === RepoStatus.RELEASED) {
+					const teams: Team[] = [];
+					for (const teamId of repo.teamIds) {
+						teams.push(await this.dbc.getTeam(teamId));
+					}
+
+					const success = await ghc.setStudentAccess(repo, teams, access);
+
+					if (success === true) {
+						Log.info("AdminController::performSetStudentAccess(..) - success: " + repo.id + "; took: " + Util.took(startRepo));
+						changedRepos.push(repo);
+						policy.recordSuccess();
+					} else {
+						Log.warn("AdminController::performSetStudentAccess(..) - FAILED: " + repo.id);
+						const stop = policy.recordFailure(null);
+						if (stop !== null) {
+							policy.abort(stop);
+						}
+					}
+				} else {
+					Log.info("AdminController::performSetStudentAccess(..) - skipped; repo not released: " + repo.id);
+				}
+			} catch (err) {
+				Log.error("AdminController::performSetStudentAccess(..) - FAILED: " + repo.id + "; ERROR: " + err.message);
+				await ctx?.error(repo.id + ": " + err.message);
+
+				const stop = policy.recordFailure(err);
+				if (stop !== null) {
+					policy.abort(stop);
+				}
+			}
+			done++;
+			await ctx?.progress(done, repos.length, repo.delivId + ": " + repo.id);
+		});
+
+		Log.info(
+			"AdminController::performSetStudentAccess(..) - complete; # now " +
+				access +
+				": " +
+				changedRepos.length +
+				"; took: " +
+				Util.took(start)
+		);
+		return changedRepos.map((repo) => RepositoryController.repositoryToTransport(repo));
 	}
 
 	/**

@@ -14,8 +14,8 @@ export class AdminProvisionPage extends AdminPage {
 	private readonly jobs: JobRunner;
 
 	/**
-	 * The three provisioning jobs. Built once; each reads the page's current selection when its
-	 * button is pressed.
+	 * The provisioning jobs, one per button. Built once; each reads the page's current selection when
+	 * its button is pressed.
 	 */
 	private readonly sections: JobSection[];
 
@@ -151,6 +151,36 @@ export class AdminProvisionPage extends AdminPage {
 					this.refreshLists();
 				},
 			},
+			{
+				kind: "provision-readonly",
+				buttonId: "adminManageReadOnlyButton",
+				cancelButtonId: "adminManageReadOnlyCancelButton",
+				statusId: "adminProvisionReadOnlyStatus",
+				ran: "Last made read-only",
+				confirmCancel:
+					"Stop after the repositories currently being changed finish?\n\n" +
+					"Repositories already made read-only stay read-only; pressing Make Read-only again does the rest.",
+				params: () => this.repoParams("repositoryWriteableSelect", "making read-only"),
+				detail: AdminProvisionPage.describeRepoSummary("changed", "made read-only"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
+			{
+				kind: "provision-writeable",
+				buttonId: "adminManageWriteableButton",
+				cancelButtonId: "adminManageWriteableCancelButton",
+				statusId: "adminProvisionWriteableStatus",
+				ran: "Last made writeable",
+				confirmCancel:
+					"Stop after the repositories currently being changed finish?\n\n" +
+					"Repositories already made writeable stay writeable; pressing Make Writeable again does the rest.",
+				params: () => this.repoParams("repositoryReadOnlySelect", "making writeable"),
+				detail: AdminProvisionPage.describeRepoSummary("changed", "made writeable"),
+				onTerminal: () => {
+					this.refreshLists();
+				},
+			},
 		];
 	}
 
@@ -175,9 +205,13 @@ export class AdminProvisionPage extends AdminPage {
 		return { delivId: delivId, repoIds: repoIds };
 	}
 
-	private static describeRepoSummary(verb: string): (summary: any) => string {
+	/**
+	 * @param field the summary's count of repos the job did something to
+	 * @param label how the status line says what that was; the field name unless given
+	 */
+	private static describeRepoSummary(field: string, label: string = field): (summary: any) => string {
 		return function (summary: any): string {
-			let detail = summary.delivId + ": " + summary[verb] + " of " + summary.requested + " " + verb + ".";
+			let detail = summary.delivId + ": " + summary[field] + " of " + summary.requested + " " + label + ".";
 			if (summary.skipped > 0) {
 				detail += " " + summary.skipped + " already done.";
 			}
@@ -225,6 +259,8 @@ export class AdminProvisionPage extends AdminPage {
 		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
 		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
 		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
+		const writeableSelect = document.getElementById("repositoryWriteableSelect") as HTMLSelectElement;
+		const readOnlySelect = document.getElementById("repositoryReadOnlySelect") as HTMLSelectElement;
 
 		const delivSelect = document.getElementById("provisionRepoDeliverableSelect") as HTMLSelectElement;
 		delivSelect.disabled = false;
@@ -239,6 +275,12 @@ export class AdminProvisionPage extends AdminPage {
 		}
 		if (releasedSelect !== null) {
 			releasedSelect.innerHTML = "";
+		}
+		if (writeableSelect !== null) {
+			writeableSelect.innerHTML = "";
+		}
+		if (readOnlySelect !== null) {
+			readOnlySelect.innerHTML = "";
 		}
 	}
 
@@ -282,8 +324,8 @@ export class AdminProvisionPage extends AdminPage {
 	}
 
 	/**
-	 * Repopulates the four lists from the backend. Read-only: choosing a deliverable no longer
-	 * creates teams and repositories as a side effect (that is what Prepare is for).
+	 * Repopulates the lists from the backend. Read-only: choosing a deliverable no longer creates
+	 * teams and repositories as a side effect (that is what Prepare is for).
 	 */
 	private async refreshLists(): Promise<void> {
 		const val = AdminProvisionPage.selectedDeliverable();
@@ -296,6 +338,8 @@ export class AdminProvisionPage extends AdminPage {
 		const provisionedSelect = document.getElementById("repositoryProvisionedSelect") as HTMLSelectElement;
 		const toReleaseSelect = document.getElementById("repositoryReleaseSelect") as HTMLSelectElement;
 		const releasedSelect = document.getElementById("repositoryReleasedSelect") as HTMLSelectElement;
+		const writeableSelect = document.getElementById("repositoryWriteableSelect") as HTMLSelectElement;
+		const readOnlySelect = document.getElementById("repositoryReadOnlySelect") as HTMLSelectElement;
 
 		try {
 			this.clearLists();
@@ -305,6 +349,8 @@ export class AdminProvisionPage extends AdminPage {
 
 			const provisioned: string[] = [];
 			const toProvision: string[] = [];
+			const writeable: string[] = [];
+			const readOnly: string[] = [];
 
 			for (const repo of provisionRepo) {
 				// NOT_CREATED has nothing on GitHub; CREATED exists but was never finalized, so both still
@@ -314,7 +360,18 @@ export class AdminProvisionPage extends AdminPage {
 				} else {
 					provisioned.push(repo.id);
 				}
+				// only a released repo has a student team whose access can change
+				if (repo.gitHubStatus === "RELEASED") {
+					if (repo.studentAccess === "pull") {
+						readOnly.push(repo.id);
+					} else {
+						writeable.push(repo.id);
+					}
+				}
 			}
+
+			AdminProvisionPage.fillSelect(writeableSelect, writeable.sort(), "No writeable repositories");
+			AdminProvisionPage.fillSelect(readOnlySelect, readOnly.sort(), "No read-only repositories");
 
 			AdminProvisionPage.fillSelect(provisionedSelect, provisioned.sort(), "No provisioned repositories");
 			// nothing exists until Prepare has been run, which is a different state from "all done"

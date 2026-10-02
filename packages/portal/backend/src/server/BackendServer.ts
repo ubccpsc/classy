@@ -10,6 +10,7 @@ import { JobScheduler } from "@backend/controllers/JobScheduler";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
+import { StudentAccess } from "@backend/Types";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -210,6 +211,25 @@ export default class BackendServer {
 			});
 			jc.register("provision-unrelease", async (job, ctx) => {
 				return await new ProvisionAgent().unrelease(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
+			});
+			// two kinds rather than one with an access parameter, so each has its own status on the page
+			jc.register("provision-readonly", async (job, ctx) => {
+				return await new ProvisionAgent().setStudentAccess(
+					job.params?.delivId,
+					job.params?.repoIds,
+					StudentAccess.PULL,
+					job.requestedBy,
+					ctx
+				);
+			});
+			jc.register("provision-writeable", async (job, ctx) => {
+				return await new ProvisionAgent().setStudentAccess(
+					job.params?.delivId,
+					job.params?.repoIds,
+					StudentAccess.PUSH,
+					job.requestedBy,
+					ctx
+				);
 			});
 			try {
 				const swept = await jc.sweepInterrupted();

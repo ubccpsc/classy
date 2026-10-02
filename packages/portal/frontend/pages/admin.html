@@ -1634,6 +1634,60 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Student Access</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-pencil"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Writeable Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryWriteableSelect"></select>
+                        <ons-button id="adminManageReadOnlyButton" modifier="medium">Make Read-only</ons-button>
+                        <ons-button id="adminManageReadOnlyCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionReadOnlyStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Released repositories whose students can push. Select any of them and press Make Read-only to
+                        switch the student team to GitHub's pull (read) permission: students can still see and clone
+                        the repository, but can no longer push to it. Only the student team changes; the staff and
+                        admin teams keep their access, and nothing in the repository is changed.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-lock"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Read-only Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryReadOnlySelect"></select>
+                        <ons-button id="adminManageWriteableButton" modifier="medium">Make Writeable</ons-button>
+                        <ons-button id="adminManageWriteableCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionWriteableStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Released repositories whose students can only read. Select any of them and press Make Writeable
+                        to switch the student team back to GitHub's push (write) permission.
+                        <br/><br/>
+                        Releasing always gives students write access, so a repository that is un-released and released
+                        again comes back writeable.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
             </ons-list>
 
         </ons-page>

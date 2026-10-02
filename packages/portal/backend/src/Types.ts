@@ -155,6 +155,15 @@ export enum RepoStatus {
 }
 
 /**
+ * The GitHub permission the student teams have on a released repository. These are GitHub's own
+ * names for the levels, as addTeamToRepo takes them: pull is read-only, push is read and write.
+ */
+export enum StudentAccess {
+	PULL = "pull",
+	PUSH = "push",
+}
+
+/**
  * How far a team has been provisioned **on GitHub**; see RepoStatus for what "on GitHub" means.
  */
 export enum TeamStatus {
@@ -255,6 +264,15 @@ export interface Repository {
 	 */
 	gitHubStatus: RepoStatus;
 
+	/**
+	 * What the student teams can do on GitHub, while the repo is RELEASED; absent otherwise.
+	 *
+	 * Absent on a released repo means push, which is all a release ever grants (records from before
+	 * this field existed have none). Only ProvisionState writes it: entering RELEASED sets push,
+	 * leaving RELEASED removes it, and the read-only / writeable jobs switch it in between.
+	 */
+	studentAccess?: StudentAccess;
+
 	custom: {};
 }
 
@@ -341,6 +359,7 @@ export enum AuditLabel {
 	REPO_PROVISION = "RepositoryProvision",
 	REPO_RELEASE = "RepositoryRelease",
 	REPO_UNRELEASE = "RepositoryUnrelease",
+	REPO_ACCESS = "RepositoryAccess", // the student teams switched between read-only (pull) and writeable (push)
 	CLASSLIST_UPLOAD = "Classlist_Upload",
 	USER_SYNC = "User_Sync",
 	CLASSLIST_PRUNE = "Classlist_Prune",
