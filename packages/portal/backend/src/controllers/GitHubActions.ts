@@ -919,6 +919,48 @@ export class GitHubActions implements IGitHubActions {
 	 * Rethrows a response that means nothing else will work either.
 	 *
 	 */
+	/**
+	 * What a non-JSON answer from the GitHub host actually was, for the log.
+	 *
+	 * The status and content-type alone could not say WHICH page came back: from CircleCI every API
+	 * call started getting 200 text/html in late September 2026 while the same URLs answered JSON
+	 * from campus, and the log held only the first ten characters of the body. This names the
+	 * server, any intermediary headers, the page title, and the start of the body. Request headers
+	 * are deliberately not included: they carry the token.
+	 */
+	public static describeNonJson(res: { status: number; headers: { get(name: string): string | null } }, body: string): string {
+		const header = (name: string): string | null => res.headers.get(name);
+		const headers: string[] = [];
+		for (const name of [
+			"content-type",
+			"server",
+			"via",
+			"x-cache",
+			"cf-ray",
+			"x-served-by",
+			"x-github-request-id",
+			"location",
+			"www-authenticate",
+		]) {
+			const value = header(name);
+			if (value !== null && value.length > 0) {
+				headers.push(name + "=" + value);
+			}
+		}
+		const title = /<title>([^<]{0,120})<\/title>/i.exec(body);
+		const start = body.replace(/\s+/g, " ").trim().slice(0, 300);
+		return (
+			"status " +
+			res.status +
+			"; headers: " +
+			(headers.length > 0 ? headers.join(", ") : "(none of interest)") +
+			"; title: " +
+			(title !== null ? JSON.stringify(title[1].trim()) : "(none)") +
+			"; body starts: " +
+			JSON.stringify(start)
+		);
+	}
+
 	private static throwIfFatal(status: number, body: string, context: string): void {
 		if (GitHubError.isFatal(status, body) === true) {
 			Log.error("GitHubAction::" + context + " - FATAL; status: " + status);
@@ -982,9 +1024,7 @@ export class GitHubActions implements IGitHubActions {
 		// throwIfFatal so the error says what was answered rather than just "returned 200".
 		const contentType = res.headers.get("content-type") ?? "";
 		if (contentType.toLowerCase().indexOf("json") < 0) {
-			Log.error(
-				"GitHubAction::repoExists( " + repoName + " ) - not an API answer; status: " + res.status + "; content-type: " + contentType
-			);
+			Log.error("GitHubAction::repoExists( " + repoName + " ) - not an API answer; " + GitHubActions.describeNonJson(res, body));
 			throw new GitHubError(
 				"repoExists( " +
 					repoName +
@@ -2575,6 +2615,14 @@ export class GitHubActions implements IGitHubActions {
 		try {
 			Log.trace("GitHubActions::handlePagination(..) - requesting: " + uri);
 			let response = await this.fetchWithRetry(uri, options);
+			// A non-JSON answer used to surface only as "Unexpected token '<'" with ten characters of
+			// body; say what page it was instead (see describeNonJson), then fail as before.
+			if ((response.headers.get("content-type") ?? "").toLowerCase().indexOf("json") < 0) {
+				const text = await response.clone().text();
+				Log.error(
+					"GitHubActions::handlePagination(..) - not an API answer for " + uri + "; " + GitHubActions.describeNonJson(response, text)
+				);
+			}
 			let body = await response.json();
 			let results: any[] = body; // save the first page of values
 
