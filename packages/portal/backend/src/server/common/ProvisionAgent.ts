@@ -1,4 +1,4 @@
-import { AdminController } from "@backend/controllers/AdminController";
+import { AdminController, ProvisionPlanReport } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
@@ -6,7 +6,7 @@ import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobContext } from "@backend/controllers/JobController";
 import { ProvisionAbortedError } from "@backend/controllers/ProvisionFailurePolicy";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
-import { AuditLabel, Deliverable, RepoStatus, Repository } from "@backend/Types";
+import { AuditLabel, Deliverable, RepoStatus, Repository, StudentAccess } from "@backend/Types";
 import Log from "@common/Log";
 import { RepositoryTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
@@ -16,6 +16,8 @@ export interface ProvisionPrepareSummary {
 	teamsCreated: number; // teams that did not exist before this run
 	reposCreated: number; // Repository records; nothing exists on GitHub yet
 	repos: number; // repos now planned for the deliverable, created or not
+	notPlaced: Array<{ personId: string; kind: string; reason: string }>; // people with no team who did not get a repo in this plan
+	peopleNotOnTeam: number;
 }
 
 export interface ProvisionCreateSummary {
@@ -51,6 +53,18 @@ export interface ProvisionUnreleaseSummary {
 	stopReason: string | null;
 }
 
+export interface ProvisionAccessSummary {
+	delivId: string;
+	access: StudentAccess; // pull (read-only) or push (writeable)
+	requested: number;
+	changed: number;
+	skipped: number; // not released, so there is no student team to change
+	failed: string[];
+	cancelled: boolean;
+	stoppedEarly: boolean;
+	stopReason: string | null;
+}
+
 /**
  * The three provisioning jobs.
  *
@@ -64,6 +78,8 @@ export interface ProvisionUnreleaseSummary {
  *   provision-create    creates the repositories on GitHub
  *   provision-release   attaches the student teams to them
  *   provision-unrelease detaches the student teams again
+ *   provision-readonly  makes the student teams read-only (pull) on released repos
+ *   provision-writeable makes them writeable (push) again
  *
  * Only one job per kind runs at a time, which is what we want here: two deliverables provisioning at
  * once would compete for the same GitHub secondary rate limits.
@@ -107,14 +123,37 @@ export class ProvisionAgent {
 		const teamsBefore = ProvisionAgent.countFor(await this.dbc.getTeams(), delivId);
 		const reposBefore = ProvisionAgent.countFor(await this.dbc.getRepositories(), delivId);
 
-		const planned = await ac.prepareProvision(deliv, formSingle, ctx);
+		const report: ProvisionPlanReport = { notPlaced: [], peopleNotOnTeam: 0 };
+		const planned = await ac.prepareProvision(deliv, formSingle, ctx, report);
 
 		const summary: ProvisionPrepareSummary = {
 			delivId: delivId,
 			teamsCreated: ProvisionAgent.countFor(await this.dbc.getTeams(), delivId) - teamsBefore,
 			reposCreated: ProvisionAgent.countFor(await this.dbc.getRepositories(), delivId) - reposBefore,
 			repos: planned.length,
+			notPlaced: report.notPlaced,
+			peopleNotOnTeam: report.peopleNotOnTeam,
 		};
+
+		if (report.notPlaced.length > 0) {
+			// grouped by reason so a page of "not selected" reads as one line, and a real failure stands out
+			const byReason: { [reason: string]: string[] } = {};
+			for (const n of report.notPlaced) {
+				(byReason[n.reason] = byReason[n.reason] ?? []).push(n.personId + " (" + n.kind + ")");
+			}
+			for (const reason of Object.keys(byReason)) {
+				Log.warn(
+					"ProvisionAgent::prepare( " +
+						delivId +
+						" ) - " +
+						byReason[reason].length +
+						" not placed: " +
+						reason +
+						"; people: " +
+						byReason[reason].join(", ")
+				);
+			}
+		}
 
 		await this.dbc.writeAudit(
 			AuditLabel.REPO_PROVISION,
@@ -333,6 +372,86 @@ export class ProvisionAgent {
 		return summary;
 	}
 
+	/**
+	 * Makes the student teams on released repositories read-only (pull) or writeable (push). The
+	 * staff and admin teams, the repositories, and their content are untouched.
+	 *
+	 * The same validation, audit shape, and partial-result handling as unrelease().
+	 */
+	public async setStudentAccess(
+		delivId: string,
+		repoIds: string[],
+		access: StudentAccess,
+		requesterId: string,
+		ctx: JobContext = null
+	): Promise<ProvisionAccessSummary> {
+		const start = Date.now();
+		Log.info("ProvisionAgent::setStudentAccess( " + delivId + ", " + access + " ) - start; # repos: " + (repoIds ?? []).length);
+
+		if (access !== StudentAccess.PULL && access !== StudentAccess.PUSH) {
+			throw new Error("Unknown access: " + access); // job params come from the client
+		}
+		await ProvisionAgent.getProvisionableDeliverable(delivId); // validate before doing any work
+		const repos = await this.resolveRepos(delivId, repoIds);
+		const ac = this.getAdminController();
+
+		// only a released repo has a student team whose access can change
+		const changeable = repos.filter((repo) => repo.gitHubStatus === RepoStatus.RELEASED);
+		const skipped = repos.length - changeable.length;
+
+		await this.dbc.writeAudit(
+			AuditLabel.REPO_ACCESS,
+			requesterId,
+			{},
+			{},
+			{
+				delivId: delivId,
+				access: access,
+				repoIds: repos.map((repo) => repo.id),
+			}
+		);
+
+		const summarize = (switched: RepositoryTransport[], stopReason: string | null): ProvisionAccessSummary => {
+			const switchedIds = switched.map((repo) => repo.id);
+			return {
+				delivId: delivId,
+				access: access,
+				requested: repos.length,
+				changed: switched.length,
+				skipped: skipped,
+				failed: changeable.filter((repo) => switchedIds.indexOf(repo.id) < 0).map((repo) => repo.id),
+				cancelled: ctx?.isCancelled() === true,
+				stoppedEarly: stopReason !== null,
+				stopReason: stopReason,
+			};
+		};
+
+		let changed: RepositoryTransport[] = [];
+		try {
+			changed = await ac.performSetStudentAccess(repos, access, ctx);
+		} catch (err) {
+			if (err instanceof ProvisionAbortedError) {
+				const partial = await this.accessIs(changeable, access);
+				throw new ProvisionAbortedError(err.message, summarize(partial, err.message));
+			}
+			throw err;
+		}
+
+		const summary = summarize(changed, null);
+
+		Log.info(
+			"ProvisionAgent::setStudentAccess( " +
+				delivId +
+				", " +
+				access +
+				" ) - done; " +
+				JSON.stringify(summary) +
+				"; took: " +
+				Util.took(start)
+		);
+		return summary;
+	}
+
 	private async resolveRepos(delivId: string, repoIds: string[]): Promise<Repository[]> {
 		if (Array.isArray(repoIds) === false || repoIds.length === 0) {
 			throw new Error("No repositories were selected.");
@@ -373,6 +492,22 @@ export class ProvisionAgent {
 	 */
 	private async unreleasedSoFar(repos: Repository[]): Promise<RepositoryTransport[]> {
 		return await this.statusIs(repos, [RepoStatus.READY]);
+	}
+
+	/**
+	 * Of the released repos a run was given, the ones whose student teams now have `access`. A repo
+	 * that already had it counts too; the record cannot tell the two apart, and either way that is
+	 * where the repo now stands.
+	 */
+	private async accessIs(repos: Repository[], access: StudentAccess): Promise<RepositoryTransport[]> {
+		const matched: RepositoryTransport[] = [];
+		for (const repo of repos) {
+			const current = await this.dbc.getRepository(repo.id);
+			if (current !== null && current.gitHubStatus === RepoStatus.RELEASED && (current.studentAccess ?? StudentAccess.PUSH) === access) {
+				matched.push(RepositoryController.repositoryToTransport(current));
+			}
+		}
+		return matched;
 	}
 
 	private async statusIs(repos: Repository[], wanted: RepoStatus[]): Promise<RepositoryTransport[]> {

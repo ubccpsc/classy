@@ -34,6 +34,20 @@ export class DeliverablesController {
 			deliv.autotest.studentDelay = MIN_DELAY;
 		}
 
+		// The AutoTest kill timer is armed from maxExecTime, and GradingJob.clampMaxExecTime falls
+		// back to this same default when the value is unusable. Coerce here too so the stored record
+		// matches what will actually run, and so the admin sees 300 rather than a silent 0. Mirrors
+		// the studentDelay handling above; the constant mirrors GradingJob.DEFAULT_MAX_EXEC_TIME
+		// (autotest is a separate package, so it is not imported).
+		const DEFAULT_MAX_EXEC_TIME = 300;
+		const maxExecTime = deliv.autotest.maxExecTime;
+		if (typeof maxExecTime !== "number" || Number.isFinite(maxExecTime) === false || maxExecTime <= 0) {
+			Log.warn(
+				"DeliverableController::saveDeliverable(..) - maxExecTime " + String(maxExecTime) + " is unusable; storing " + DEFAULT_MAX_EXEC_TIME
+			);
+			deliv.autotest.maxExecTime = DEFAULT_MAX_EXEC_TIME;
+		}
+
 		await this.db.writeDeliverable(deliv); // let this handle the update
 		Log.info("DeliverableController::saveDeliverable(..) - done");
 		return deliv;

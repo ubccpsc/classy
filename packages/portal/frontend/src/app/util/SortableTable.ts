@@ -9,8 +9,30 @@ export interface TableHeader {
 	text: string; // The displayed text for the column.
 	sortable: boolean; // Whether the column is sortable (sometimes sorting does not make sense).
 	defaultSort: boolean; // Whether the column is the default sort for the table. should only be true for one column.
-	sortDown: boolean; // Whether the column should initially sort descending or ascending.
+	/**
+	 * The direction this column sorts in when it is first sorted: true is descending, false is
+	 * ascending. Read literally -- the value you declare is the one that renders.
+	 *
+	 * Mutated when the user clicks a column that is already sorted, which is how re-clicking
+	 * reverses it.
+	 */
+	sortDown: boolean;
 	style?: string; // optional style hints for column
+	/**
+	 * Optional hover text for the column heading, rendered as the th's title attribute.
+	 *
+	 * Plain text, not markup: it is escaped on the way in. Keep `text` as the visible label
+	 * rather than smuggling a <span title=".."> through it, because the CSV export reads the
+	 * heading's innerText and the sorted column wraps `text` in <b>.
+	 */
+	tooltip?: string;
+	/**
+	 * Whether the column is included in the "Download Values as CSV" export. Optional; omitted
+	 * means true. Set false for a column whose value only makes sense on screen, such as a button
+	 * or a graphic: its cells export as empty text, or as a "_metadata" column of link targets.
+	 * A column left out takes its "_metadata" column with it.
+	 */
+	downloadable?: boolean;
 }
 
 export interface TableCell {
@@ -34,6 +56,26 @@ export class SortableTable {
 	 * @type {TableHeader | null}
 	 */
 	private sortHeader: TableHeader | null = null;
+
+	/**
+	 * Whether generate() sizes the table's container to the rest of the window (see
+	 * updateTableHeight), so a long table scrolls inside its own box with its header pinned there.
+	 *
+	 * A page that stacks tables should turn this off. Each one claims the height below it, so once
+	 * the upper table is tall enough the lower one is left almost no room; the page should scroll
+	 * instead. Off, the container is also not given a resize listener.
+	 */
+	public fitToViewport = true;
+
+	/**
+	 * Ids of columns to leave out of the drawn table; class mode uses it to drop the column that
+	 * says whose rows these are.
+	 *
+	 * The rows keep every cell, so code that finds a column by its position among the headers -- a
+	 * course plugin rewriting cells in decorateRow, say -- is unaffected. The CSV export reads the
+	 * drawn table, so a hidden column is left out of the download too.
+	 */
+	public hiddenColumns: string[] = [];
 
 	public constructor(headers: TableHeader[], divName: string) {
 		this.headers = headers;
@@ -89,6 +131,12 @@ export class SortableTable {
 		for (const c of this.headers) {
 			if (c.id === colId) {
 				if (c.sortable === true) {
+					// Clicking the column that already carries the arrow reverses it; clicking a
+					// different one sorts it the way it declares. performSort() used to do this by
+					// flipping on every render, which meant the first render inverted the default.
+					if (this.sortHeader !== null && this.sortHeader.id === c.id) {
+						c.sortDown = !c.sortDown;
+					}
 					this.sortHeader = c;
 				} else {
 					this.sortHeader = null;
@@ -131,6 +179,14 @@ export class SortableTable {
 
 		this.attachDownload();
 
+		if (this.fitToViewport === false) {
+			// the container grows with the table; clear any height an earlier render set
+			if (div !== null) {
+				(div as HTMLElement).style.height = "";
+			}
+			return;
+		}
+
 		setTimeout(() => {
 			Log.info("SortableTable::generate() - updating table height; div: " + this.divName);
 			this.updateTableHeight();
@@ -147,38 +203,64 @@ export class SortableTable {
 		);
 	}
 
+	/** Whether a column is drawn; see hiddenColumns. A cell with no header is always drawn. */
+	private isDrawn(header: TableHeader | undefined): boolean {
+		return typeof header === "undefined" || this.hiddenColumns.indexOf(header.id) < 0;
+	}
+
 	private startTable() {
 		let tablePrefix = '<table class="sortableTable">';
 		tablePrefix += "<tr>";
 
 		for (const header of this.headers) {
+			if (this.isDrawn(header) === false) {
+				continue;
+			}
 			if (typeof header.style === "undefined") {
 				header.style = "";
 			}
 
+			// hover text, when the column asked for one
+			const title =
+				typeof header.tooltip === "string" && header.tooltip.length > 0 ? ' title="' + SortableTable.escapeHTML(header.tooltip) + '"' : "";
+
+			// Both are course data rather than literals -- a column is often named after a
+			// deliverable, and a deliverable id is only checked for length when it is created --
+			// so a quote in either would end an attribute early and let the rest parse as markup.
+			//
+			// The id round-trips: getAttribute() decodes entities, so sort() still receives the
+			// value that matches header.id.
+			const id = SortableTable.escapeHTML(header.id);
+			const text = SortableTable.escapeHTML(header.text);
+
 			// decorate this.sorCol appropriately
 			if (this.sortHeader !== null && header.id === this.sortHeader.id) {
-				if (this.sortHeader.sortDown) {
+				// down is ▼: the arrow points the way the column is sorted
+				if (this.sortHeader.sortDown === false) {
 					tablePrefix +=
 						'<th class="sortableHeader" style="' +
 						header.style +
 						'" col="' +
-						header.id +
-						'"><b class="sortableHeader">' +
-						header.text +
+						id +
+						'"' +
+						title +
+						'><b class="sortableHeader">' +
+						text +
 						" ▲</b></th>";
 				} else {
 					tablePrefix +=
 						'<th class="sortableHeader"  style="' +
 						header.style +
 						'" col="' +
-						header.id +
-						'"><b class="sortableHeader">' +
-						header.text +
+						id +
+						'"' +
+						title +
+						'><b class="sortableHeader">' +
+						text +
 						" ▼</b></th>";
 				}
 			} else {
-				tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + header.id + '">' + header.text + "</th>";
+				tablePrefix += '<th class="sortableHeader" style="' + header.style + '" col="' + id + '"' + title + ">" + text + "</th>";
 			}
 		}
 		tablePrefix += "</tr>";
@@ -202,7 +284,9 @@ export class SortableTable {
 
 		let i = 0;
 		for (const col of cols) {
-			row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + "</td>";
+			if (this.isDrawn(this.headers[i]) === true) {
+				row += '<td class="sortableTableCell" style="color: black; ' + this.headers[i].style + '">' + (col as any).html + "</td>";
+			}
 			i++;
 		}
 		row += "</tr>";
@@ -231,10 +315,12 @@ export class SortableTable {
 			}
 		}
 
-		sortHead.sortDown = !sortHead.sortDown;
-		let mult = -1;
+		// Read, never flipped. This used to invert sortDown on every call, which had two
+		// consequences: a declared sortDown meant the opposite of what it rendered, and calling
+		// generate() twice silently reversed the table. Reversing on click belongs to sort().
+		let mult = 1;
 		if (sortHead.sortDown) {
-			mult = 1;
+			mult = -1;
 		}
 		Log.trace("SortableTable::sort() - col: " + sortHead.id + "; down: " + sortHead.sortDown + "; mult: " + mult + "; index: " + sortIndex);
 
@@ -318,6 +404,17 @@ export class SortableTable {
 		return colsWithMetadata;
 	}
 
+	/**
+	 * Escapes text on its way into the header markup, for both attribute values and element text.
+	 *
+	 * One escaper for both because over-escaping quotes in element text is harmless: the browser
+	 * decodes them again, so the heading reads the same and the CSV export -- which takes
+	 * innerText -- still sees the original characters.
+	 */
+	private static escapeHTML(value: string): string {
+		return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+	}
+
 	private escapeCSVValue(value: string): string {
 		let sanitized = value.replace(/"/g, ""); // remove all double quotes
 		sanitized = value.replace(/'/g, ""); // remove all single quotes
@@ -343,12 +440,17 @@ export class SortableTable {
 		const colsWithMetadata = this.findColsWithMetadata(this.divName);
 
 		const rows = root.querySelectorAll("table tr");
+		// what was actually drawn, in order: cells skip hidden columns, so drawn cell j is drawn[j]
+		const drawn = this.headers.filter((header) => this.isDrawn(header));
 
 		for (let i = 0; i < rows.length; i++) {
 			const row = [];
 			const cols = rows[i].querySelectorAll("td, th");
 
 			for (let j = 0; j < cols.length; j++) {
+				if (drawn[j]?.downloadable === false) {
+					continue;
+				}
 				if (i === 0) {
 					let text = (cols[j] as HTMLTableCellElement).innerText;
 					text = text.replace(" ▼", "");
@@ -363,10 +465,10 @@ export class SortableTable {
 
 				if (colsWithMetadata.indexOf(j) >= 0) {
 					if (i === 0) {
-						// header row
-						// add metadata prior column name
-						// strange math because we may have added columns to the left
-						row.push(row[j + colsWithMetadata.indexOf(j)] + "_metadata");
+						// header row: named after the heading pushed just above. (This used to be
+						// computed from j and the metadata columns to its left, which a column left
+						// out of the export would throw off.)
+						row.push(row[row.length - 1] + "_metadata");
 					} else {
 						// regular row
 						row.push(this.extractMetadata(cols[j] as HTMLElement));
@@ -379,39 +481,6 @@ export class SortableTable {
 		return csv.join("\n");
 	}
 
-	// no longer used
-	// private exportTableLinksToCSV() {
-	//     const csv = [];
-	//     const root = document.querySelector(this.divName);
-	//     const rows = root.querySelectorAll("table tr");
-	//
-	//     for (let i = 0; i < rows.length; i++) {
-	//         const row = [];
-	//         const cols = rows[i].querySelectorAll("td, th");
-	//
-	//         for (let j = 0; j < cols.length; j++) {
-	//             if (i === 0) {
-	//                 let text = (cols[j] as HTMLTableCellElement).innerText;
-	//                 text = text.replace(" ▼", "");
-	//                 text = text.replace(" ▲", "");
-	//                 row.push(text);
-	//             } else {
-	//                 const col = cols[j] as HTMLElement;
-	//
-	//                 // this is super brittle
-	//                 if (col.children.length > 0 && col.children[0] instanceof HTMLAnchorElement) {
-	//                     row.push((col.children[0] as HTMLAnchorElement).href);
-	//                 } else {
-	//                     row.push(col.innerText);
-	//                 }
-	//             }
-	//         }
-	//         csv.push(row.join(","));
-	//     }
-	//
-	//     return csv.join("\n");
-	// }
-
 	public numRows(): number {
 		return this.rows.length;
 	}
@@ -419,9 +488,8 @@ export class SortableTable {
 	private attachDownload() {
 		const csv = this.exportTableToCSV();
 		this.downloadCSV(csv, "classy.csv", "Download Values as CSV&nbsp;");
-		// no longer needed; regular csv now includes these
-		// const links = this.exportTableLinksToCSV();
-		// this.downloadCSV(links, "classyLinks.csv", "&nbsp;Download Links as CSV");
+		// there was a second "Download Links as CSV" button here; the regular csv now includes
+		// the link columns, so it was removed along with its exportTableLinksToCSV helper
 	}
 
 	/**

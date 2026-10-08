@@ -258,24 +258,6 @@ export class MongoDataStore implements IDataStore {
 		return null;
 	}
 
-	// public async getOutputRecord(commitURL: string, delivId: string): Promise<IAutoTestResult | null> {
-	//     Log.trace("MongoDataStore::getOutputRecord(..) - start");
-	//     try {
-	//         const start = Date.now();
-	//
-	//         const res = await this.getSingleRecord(this.OUTPUTCOLL, {"commitURL": commitURL, "input.delivId": delivId});
-	//         if (res === null) {
-	//             Log.trace("MongoDataStore::getOutputRecord(..) - record not found for: " + commitURL);
-	//         } else {
-	//             Log.trace("MongoDataStore::getOutputRecord(..) - found; took: " + Util.took(start));
-	//         }
-	//         return res as any;
-	//     } catch (err) {
-	//         Log.error("MongoDataStore::getOutputRecord(..) - ERROR: " + err);
-	//     }
-	//     return null;
-	// }
-
 	public async saveFeedbackGivenRecord(info: IFeedbackGiven): Promise<void> {
 		try {
 			await this.saveRecord(this.FEEDBACKCOLL, info);

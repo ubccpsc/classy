@@ -96,7 +96,7 @@ export class InvokeAutoTest {
 		// will work with the code below.
 		const gradesC = new GradesController();
 		Log.info("InvokeAutoTest::process() - requesting grades");
-		const allGrades = await gradesC.getAllGrades(false);
+		const allGrades = await gradesC.getAllGrades("all");
 		Log.info("InvokeAutoTest::process() - # grades retrieved: " + allGrades.length);
 
 		const grades = [];

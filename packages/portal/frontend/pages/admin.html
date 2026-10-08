@@ -2,6 +2,11 @@
     <ons-toolbar>
         <div class="center">Classy Admin Portal</div>
         <div id='indexLogin' class="right">
+            <!-- Class Mode: admins only, shown by AdminView when it knows who is signed in; see ClassMode -->
+            <ons-toolbar-button id="adminClassModeButton" style="display: none;">
+                <ons-icon icon="fa-chalkboard-teacher"></ons-icon>
+                <span id="adminClassModeLabel" style="vertical-align: top; font-size: 80%;">Enter Class Mode</span>
+            </ons-toolbar-button>
             <ons-toolbar-button onclick="myApp.logout();">
                 <ons-icon icon="fa-sign-out"></ons-icon>
                 <span style="vertical-align: top; font-size: 80%;">Logout</span>
@@ -10,10 +15,6 @@
     </ons-toolbar>
 
     <ons-tabbar id='adminTabbar' position="top" animation="none">
-        <!--
-        <ons-tab id="AdminDeliverableTab" page="deliverables.html" label="Deliverables" icon="ion-home, material:md-home" active>
-        </ons-tab>
-        -->
         <ons-tab id="AdminStudentTab" page="students.html" label="Students" icon="md-face" active-icon="md-face">
         </ons-tab>
 
@@ -43,14 +44,82 @@
         </div>
     </ons-modal>
 
-    <template id="deliverables.html">
+    <!-- Pushed from the Config tab, like adminProvision.html. The page id is what routes it to
+         AdminView::handleAdminDeliverables when it is shown; AdminDeliverablesTab draws the list. -->
+    <template id="adminDeliverables.html">
         <ons-page id="AdminDeliverables">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div class="center">Manage Deliverables</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
             <ons-list id="adminDeliverablesList">
                 <ons-list-header>Deliverables</ons-list-header>
             </ons-list>
-            <ons-fab id="adminAddDeliverable" position="bottom right">
-                <ons-icon icon="md-plus"></ons-icon>
-            </ons-fab>
+
+            <!-- one list item per operation, in the style of adminProvision.html; add more here -->
+            <ons-list>
+                <ons-list-header>Actions</ons-list-header>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-plus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminCreateDeliverableButton" modifier="medium">Create New Deliverable</ons-button>
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-trash-alt"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminDeleteDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminDeleteDeliverableSelectButton" modifier="medium">Delete Deliverable</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Removes the deliverable itself. Grades and results recorded against it are kept, as are any
+                        repositories and teams provisioned for it.
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-export"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminDownloadDeliverablesButton" modifier="medium">Download Deliverable Configuration
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Saves every deliverable, with all of its settings, as a JSON file. Keep it to set up the same
+                        deliverables in a future term with the upload below.
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-import"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Select configuration JSON
+                        <input id="adminUploadDeliverablesFile" style="padding-left: 1em" type="file" accept=".json,application/json"/>
+                        <ons-button id="adminUploadDeliverablesButton" modifier="medium">Upload Deliverable Configuration
+                        </ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Creates every deliverable in the file that this course does not already have. A deliverable
+                        whose id already exists is skipped and left as it is. Deliverables are created exactly as
+                        they were saved, dates included, so edit each one afterwards.
+                    </div>
+                </ons-list-item>
+            </ons-list>
         </ons-page>
     </template>
 
@@ -104,11 +173,24 @@
 
     <template id="grades.html">
         <ons-page id="AdminGrades">
-            <ons-list id="AdminGradesList">
+            <!-- overflow: visible undoes Onsen's .list { overflow: hidden }, which would otherwise cut off
+                 a table wider than the window and stop its header from pinning; see the tables below. -->
+            <ons-list id="AdminGradesList" style="overflow: visible;">
                 <ons-list-header>Grade Summary</ons-list-header>
-                <div id="gradesSummaryTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
-                <ons-list-header>Deliverable Grades</ons-list-header>
-                <div id="gradesListTable" style="width:100%; overflow-x: scroll; white-space: nowrap;"></div>
+                <!-- Not scroll boxes, unlike the other tabs' tables: this page stacks two long tables, so
+                     the page itself scrolls (both ways; wide tables scroll it sideways). With nothing
+                     scrolling or clipping between a header and the page, each table's header stays pinned. -->
+                <div id="gradesSummaryTable" style="width:100%; white-space: nowrap;"></div>
+                <ons-list-header id="gradesListHeader">Deliverable Grades</ons-list-header>
+                <ons-list-item id="gradesViewItem">
+                    Show:
+                    <select id="gradesViewSelect" style="margin-left: 1em;">
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
+                        <option value="all">All (incl. withdrawn)</option>
+                    </select>
+                </ons-list-item>
+                <div id="gradesListTable" style="width:100%; white-space: nowrap;"></div>
                 <div id="gradesListTableNone" class="noResultsRow">
                     No Results
                 </div>
@@ -119,14 +201,21 @@
     <template id="results.html">
         <ons-page id="AdminResults">
             <ons-list id="AdminResultsList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em;">Deliv:</span>
                     <select id="resultsDelivSelect" style="display: flex; height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="resultsRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="resultsRepoSelect" style="display: flex; width: 8em;">
                         <option value="any">-All-</option>
+                    </select>
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Show:</span>
+                    <select id="resultsViewSelect" style="display: flex; height: 2.5em;">
+                        <option value="all">All</option>
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
                     </select>
                     <button style="margin-left: 1em;" id="resultsUpdateButton">Update</button>
                 </div>
@@ -142,14 +231,21 @@
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
             <ons-list id="AdminDashboardList">
-                <div style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
+                <div
+                        style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em">Deliv:</span>
                     <select id="dashboardDelivSelect" style="height: 2.5em;">
                         <option value="any">-All-</option>
                     </select>
-                    <span style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
+                    <span id="dashboardRepoLabel" style="padding-left: 1em; padding-right: 0.5em;">Repo:</span>
                     <select id="dashboardRepoSelect" style="width: 8em;">
                         <option value="any">-All-</option>
+                    </select>
+                    <span style="padding-left: 1em; padding-right: 0.5em;">Show:</span>
+                    <select id="dashboardViewSelect" style="display: flex; height: 2.5em;">
+                        <option value="all">All</option>
+                        <option value="students">Students</option>
+                        <option value="staff">Staff &amp; Admins</option>
                     </select>
                     <button style="margin-left: 1em;" id="dashboardUpdateButton">Update</button>
                 </div>
@@ -166,24 +262,25 @@
         <ons-dialog id="adminDockerBuildDialog">
             <div id="adminDockerBuildDialog-header-container">
                 <ons-list-header style="text-align: center; font-weight: 700">
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-close">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Close
-                        </ons-button>
-                    </a>
-                    Build Logs
-                    <a style="padding: 10px" id="adminDockerBuildDialog-footer-save">
-                        <ons-button style="line-height: 100%; vertical-align: bottom; margin: 5px;">
-                            Save
-                        </ons-button>
-                    </a>
+                    <div style="display:flex; flex-direction: row; align-items: center; justify-content: center;">
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-close">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Close
+                            </ons-button>
+                        </a>
+                        <div style="display:flex; font-size: 125%;">Grader Build Logs</div>
+                        <a style="display:flex; padding: 10px;" id="adminDockerBuildDialog-footer-save">
+                            <ons-button style="line-height: 100%; margin: 5px;">
+                                Save
+                            </ons-button>
+                        </a>
+                    </div>
                 </ons-list-header>
             </div>
             <ons-scroller id="adminDockerBuildDialog-logs-container" style="max-height: 70vh; overflow-y: auto">
                 <div id="adminDockerBuildDialog-logs-text">
                 </div>
             </ons-scroller>
-            </div>
             <!--
             <div id="adminDockerBuildDialog-footer-container">
                 <ons-bottom-toolbar>
@@ -203,37 +300,57 @@
         </ons-dialog>
     </template>
 
+    <template id="classlistDialog.html">
+        <ons-dialog id="adminClasslistConfirmHeader">
+            <ons-list-header style="text-align: center; font-weight: 700">
+            </ons-list-header>
+            <ons-scroller>
+                <ons-list>
+                </ons-list>
+            </ons-scroller>
+            <ons-button>
+                Close
+            </ons-button>
+        </ons-dialog>
+    </template>
+
     <template id="config.html">
         <ons-page id="AdminConfig">
-            <ons-list id="adminDeliverablesList">
-                <ons-list-header id="adminConfigDeliverablesHeader">Deliverables</ons-list-header>
-            </ons-list>
             <ons-list>
-                <ons-list-header>Manage Class List</ons-list-header>
-                <ons-list-item expandable>
+                <ons-list-header>Deliverables</ons-list-header>
+                <ons-list-item>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-user-edit"></ons-icon>
+                        <ons-icon icon="fa-tasks"></ons-icon>
                     </div>
                     <div class="center">
-                        Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
-                        <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
+                        <ons-button id="adminManageDeliverablesButton" modifier="medium">Manage Deliverables Page
+                        </ons-button>
+                    </div>
+                </ons-list-item>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-star"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Default Deliverable
+                        <select id="adminDefaultDeliverableSelect"
+                                style="margin-left: 1em; margin-right: 1em;"></select>
+                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
-                        The CSV must have a header row that contains the following columns:
-
-                        <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
-                        The corresponding classlist command for this is:
-                        <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
-                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing
-                        GitHub logins presents
-                        its own issues that require manual effort on the part of course staff to handle).
-                        Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
+                        Setting the default deliverable is only required for AutoTest. This lets the container know what
+                        tests
+                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to
+                        be run
+                        automatically after a student push, just leave this blank.
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Manage Class List</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-user-edit"></ons-icon>
+                        <ons-icon icon="fa-cloud-download-alt"></ons-icon>
                     </div>
                     <div class="center">
                         Update class list via API
@@ -259,56 +376,138 @@
                         <ons-icon icon="fa-user-slash"></ons-icon>
                     </div>
                     <div class="center">
-                        Synchronize class list
-                        <ons-button id="adminPerformWithdrawButton" modifier="medium" style="margin-left: 1em">Mark
-                            withdrawn students
+                        Synchronize users with GitHub teams
+                        <ons-button id="adminSynchronizeUsersButton" modifier="medium" style="margin-left: 1em">
+                            Synchronize users
                         </ons-button>
-                        <div id="adminPerformWithdrawStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                        <div id="adminSynchronizeUsersStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
                             Never run.
                         </div>
                     </div>
                     <div class="expandable-content">
-                        As students drop the class they will be taken out of the 'students' group on GitHub by a LDAP
-                        query. This action
-                        just marks students not present in this list as withdrawn. It does not delete any teams, repos,
-                        grades, or results
-                        although the grades view will not return grades for students who are withdrawn (e.g., so the
-                        course statistics are
-                        correct). NOTE: you still need to manually upload the classlist.csv if you want to update lab
+                        Reads the 'students', 'staff', and 'admin' teams on GitHub and sets every person's role from
+                        them: on staff or admin means staff or admin, otherwise on students means student, and on no
+                        team means withdrawn. As students drop the class they are taken out of the 'students' team by
+                        an LDAP query, so this is what marks them withdrawn; it also reinstates anyone who is back on
+                        the team, and it is the only thing that does (a classlist update never changes roles). If the
+                        staff or admin team cannot be read, staff and admin roles are left alone for that run. It does
+                        not delete any teams, repos, grades, or results
+                        although the grades view does not show withdrawn students by default (e.g., so the course
+                        statistics are correct); switch that page's Show selector to All to see them.
+                        NOTE: you still need to manually upload the classlist.csv if you want to update lab
                         sections, etc.
                         <br/><br/>
                         Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Upload Grades</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-user-graduate"></ons-icon>
+                        <ons-icon icon="fa-file-csv"></ons-icon>
                     </div>
                     <div class="center">
-                        By Deliverable.&nbsp;&nbsp;Deliverable:
-                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        Select CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
-                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
+                        Select classlist CSV <input id="adminClasslistFile" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitClasslist" modifier="medium">Upload Classlist</ons-button>
                     </div>
                     <div class="expandable-content">
                         The CSV must have a header row that contains the following columns:
 
-                        <pre>CSID,GRADE,COMMENT</pre>
+                        <pre>ACCT,SNUM,CWL,LAST,FIRST,LAB</pre>
+                        The corresponding classlist command for this is:
+                        <pre>classlist -T -f "%ACCT,%SN,%CWL,%LN,%FN,%LAB" &lt;COURSENUM&gt;</pre>
+                        ACCT and SNUM are invariants and cannot change although ther fields can be updated (changing
+                        GitHub logins presents
+                        its own issues that require manual effort on the part of course staff to handle).
+                        Pre-existing Students, Teams, and Repositories <i>WILL NOT</i> be affected.
+                    </div>
+                </ons-list-item>
 
-                        If the CSID column is not present but a CWL or GITHUB column is present, Classy tries to map from the CWL/GITHUB
-                        column back to a CSID. This will overwrite any grade that exist for that the students listed in the CSV. This cannot
-                        be undone.
+                <ons-list-header>Upload Grades</ons-list-header>
+                <ons-list-item expandable id="adminPrairieLearnSyncItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-sync-alt"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Sync grades from PrairieLearn.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnSyncButton" modifier="medium">Sync Now</ons-button>
+                            <ons-button id="adminPrairieLearnCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                            <label style="padding-left: 1em; font-size: smaller;">
+                                <input type="checkbox" id="adminPrairieLearnForce" />
+                                Re-sync everything
+                            </label>
+                        </div>
+                        <div id="adminPrairieLearnStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;">
+                            Never synced.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Pulls grading records for each PrairieLearn assessment and records the best
+                        <em>on-time</em> bucket as the Classy grade. Runs in the background, so this page can be
+                        closed while it works; press Sync Now again to resume an interrupted run.
+                        <br/><br/>
+                        Only attempts made before a deliverable&apos;s close date are graded, so tightening a
+                        close date and re-syncing will lower a grade &mdash; but grades already recorded are
+                        never removed automatically.
+                        <br/><br/>
+                        Deliverables are created automatically for assessments that do not have one, with grades
+                        unreleased and hidden from students. They are never renamed or deleted.
+                        <br/><br/>
+                        The status line above reports what the last run did. Its terms:
+                        <ul style="margin-bottom: 0;">
+                            <li><b>Grades</b> Classy grades written: one per student per assessment, from their best
+                                <em>on-time</em> attempt.</li>
+                            <li><b>Results</b> grading records stored for the Results and Dashboard tabs. Every
+                                gradeable attempt is kept here, late ones included. Only the <em>grade</em> is protected by the
+                                close date.</li>
+                            <li><b>Unchanged</b> assessment instances skipped because PrairieLearn has not changed
+                                them since the last sync.</li>
+                            <li><b>Created</b> deliverables created for assessments that had none.</li>
+                            <li><b>Attempt(s) after close (not graded)</b> gradeable attempts made after the
+                                deliverable closed. Stored as results, not counted toward a grade.</li>
+                            <li><b>Unmatched student(s)</b> PrairieLearn accounts that did not match with a Classy
+                                person. The join is on the CWL (Person.githubId). After add/drop there should be few of these.</li>
+                            <li><b>Unmatched non-student(s)</b> the same for instructor, TA, and test accounts
+                                that are not on the classlist. Expected and permanent.</li>
+                            <li><b>Unchanged, still without a grade</b> students whose instance has not changed since
+                                the last sync, and whose last examination wrote no grade (never submitted, no gradeable
+                                submission, or graded only after close).</li>
+                            <li><b>With no gradeable submission</b> instances examined, but every attempt was
+                                still being graded, failed to grade, or reported no usable score.</li>
+                            <li><b>Graded only after close</b> students whose gradeable work all came after the
+                                close date. If that is a surprise, check the deliverable&apos;s close date.</li>
+                            <li><b>Never submitted</b> opened the assessment, never submitted.</li>
+                            <li><b>Un-gradeable submissions</b> a per-attempt breakdown of the above:
+                                <em>grader failed</em>, <em>no feedback</em> (not graded yet), <em>no usable score</em>.</li>
+                        </ul>
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable id="adminPrairieLearnReinterpretItem" style="display: none;">
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-magic"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div>
+                            Re-derive PrairieLearn reports.&nbsp;&nbsp;
+                            <ons-button id="adminPrairieLearnReinterpretButton" modifier="medium">Re-derive</ons-button>
+                            <ons-button id="adminPrairieLearnReinterpretCancelButton" modifier="quiet" style="display: none;">Cancel</ons-button>
+                        </div>
+                        <div class="list-item__subtitle" id="adminPrairieLearnReinterpretStatus"></div>
+                        <div class="list-item__subtitle" style="font-size: smaller;">
+                            Rebuilds what the Results and Dashboard tabs show from the grading payloads already
+                            stored, without contacting PrairieLearn. Run this after the grader or its
+                            interpretation changes. Grades are not affected.
+                        </div>
                     </div>
                 </ons-list-item>
 
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-user-graduate"></ons-icon>
+                        <ons-icon icon="fa-file-import"></ons-icon>
                     </div>
                     <div class="center">
-                        From PrairieLearn.&nbsp;&nbsp;
+                        Import PrairieLearn Gradebook CSV.&nbsp;&nbsp;
                         Select GradeBook CSV <input id="adminGradePrairieCSV" style="padding-left: 1em" type="file"/>
                         <ons-button id="adminSubmitGradePrairieCSV" modifier="medium">Upload Gradebook</ons-button>
                     </div>
@@ -322,143 +521,68 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Team Management</ons-list-header>
                 <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-upload"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Import CSV into Gradebook.&nbsp;&nbsp;Deliverable:
+                        <select id="adminGradeDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        Select CSV <input id="adminGradeCSV" style="padding-left: 1em" type="file"/>
+                        <ons-button id="adminSubmitGradeCSV" modifier="medium">Upload Grades</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        The CSV must have a header row that contains the following columns:
+
+                        <pre>[CSID|CWL|GITHUB|STUDENTNUMBER],GRADE</pre>
+
+                        If the CSID column is not present but a CWL, GITHUB, or STUDENTNUMBER column is present,
+                        Classy tries to map from the CWL/GITHUB/STUDENTNUMBER column back to a CSID. This will
+                        overwrite any grade that exist for that the students listed in the CSV. This cannot be undone.
+                        A COMMENT column is optionally used to provide feedback to the student, if present.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Manage Repositories &amp; Teams</ons-list-header>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-code-branch"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories Page
+                        </ons-button>
+                    </div>
+                </ons-list-item>
+                <ons-list-item>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-users"></ons-icon>
                     </div>
                     <div class="center">
-                        Deliverable
-                        <select id="adminTeamDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
-                        Members
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminTeamText"></ons-input>
-                        <ons-button id="adminCreateTeamButton" modifier="medium">Create Team</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be
-                        provided in the text box.
-                        This does the same thing as if the students created the team themselves but overrides the team
-                        size limits (e.g.,
-                        there can be more or fewer students than the deliverable requires). Students must NOT already be
-                        on a team
-                        for this deliverable. This also does not create the team on GitHub, to do that you will need to
-                        use the Provision
-                        and Release page.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-user-times"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Disband team; name:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminDeleteTeamManageTeam"></ons-input>
-                        <ons-button id="adminDeleteTeamManageButton" modifier="medium">Disband Team</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Disbands a team. This will detach the team from any GitHub repos that it knows about, remove the
-                        users from the
-                        team, delete the GitHub team, and delete the team from the local Classy database.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-user-plus"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Add member; team:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminTeamAddMemberTeam"></ons-input>
-                        User:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminTeamAddMemberMember"></ons-input>
-                        <ons-button id="adminTeamAddMemberButton" modifier="medium">Add Member</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Specify the team name and GitHub username for the user. Adds the user to the team. The user must
-                        not aleady be on a
-                        team for the deliverable the specified team is associated with. Team size limits will be
-                        ignored.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-user-minus"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Remove member; team:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminTeamRemoveMemberTeam"></ons-input>
-                        User:
-                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
-                                   id="adminTeamRemoveMemberMember"></ons-input>
-                        <ons-button id="adminTeamRemoveMemberButton" modifier="medium">Remove Member</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        Specify the team name and GitHub username for the user. User is removed from the team on GitHub
-                        (if provisioned) and
-                        local database.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-header>Set Default Deliverable (AutoTest Only)</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-file-alt"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Default Deliverable
-                        <select id="adminDefaultDeliverableSelect"
-                                style="margin-left: 1em; margin-right: 1em;"></select>
-                        <ons-button id="adminSubmitDefaultDeliverable" modifier="medium">Set Default Deliverable
+                        <ons-button id="adminManageTeamsButton" modifier="medium">Team Management Page
                         </ons-button>
                     </div>
-                    <div class="expandable-content">
-                        Setting the default deliverable is only required for AutoTest. This lets the container know what
-                        tests
-                        to run by default when a push is made. If you are not using AutoTest or do not want any tests to
-                        be run
-                        automatically after a student push, just leave this blank.
+                </ons-list-item>
+                <ons-list-item>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-database"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <ons-button id="adminDeletePageButton" modifier="medium">Manage Database</ons-button>
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Manage Repositories</ons-list-header>
+                <ons-list-header>AutoTest Grader Images</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-cogs"></ons-icon>
+                        <ons-icon icon="fa-boxes"></ons-icon>
                     </div>
                     <div class="center">
-                        <ons-button id="adminManageRepositoriesButton" modifier="medium">Manage Repositories
+                        <ons-button id="adminRemoveGraderImagesPageButton" modifier="medium">Grader Image Management Page
                         </ons-button>
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Manage and Apply Pull Requests</ons-list-header>
-                <ons-list-item>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-band-aid"></ons-icon>
-                    </div>
-                    <div class="center">
-                        <ons-button id="adminManagePullRequestsButton" modifier="medium">Manage Pull Requests
-                        </ons-button>
-                    </div>
-                </ons-list-item>
 
-                
-                <ons-list-header>Delete Inconsistent Repositories and Teams</ons-list-header>
-                <ons-list-item>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-trash-alt"></ons-icon>
-                    </div>
-                    <div class="center">
-                        <ons-button id="adminDeletePageButton">Manage Database</ons-button>
-                    </div>
-                </ons-list-item>
 
             </ons-list>
         </ons-page>
@@ -647,7 +771,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
+                            <span
+                                    title="The date that AutoTest will begin marking Github Repositories for a Deliverable.">Open</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-open" class="flatpickr right settingRight"
@@ -666,7 +791,8 @@
                             <ons-icon icon="md-calendar"></ons-icon>
                         </div>
                         <div class="center settingLabel">
-                            <span title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
+                            <span
+                                    title="The date that AutoTest will stop marking Github Repositories for a Deliverable.">Close</span>
                         </div>
                         <div class="right settingRight">
                             <input id="adminEditDeliverablePage-close" class="flatpickr right settingRight"
@@ -967,7 +1093,8 @@
                             </div>
                             <div class="expandable-content">
                                 Delay (in seconds) that students must wait between requesting AutoTest feedback.
-                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600 (6 hours), 43200 (12 hours), 86400 (24 hours).
+                                E.g., 0 for no feedback limit (not recommended!), 3600 (1 hour), 10800 (3 hours), 21600
+                                (6 hours), 43200 (12 hours), 86400 (24 hours).
                             </div>
                         </ons-list-item>
 
@@ -996,12 +1123,12 @@
                                 Custom AutoTest parameters
                             </div>
                             <div class="right settingRight">
-                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"></ons-input>
+                                <ons-input class="settingTextInput" id="adminEditDeliverablePage-atCustom"
+                                           spellcheck="false"></ons-input>
                             </div>
                             <div class="expandable-content">
                                 This field is a convenient way to pass custom parameters into a grading container for a
-                                specific
-                                deliverable. It must be a valid JSON object (or {}).
+                                specific deliverable. It must be a valid JSON object (or {}).
                             </div>
                         </ons-list-item>
                     </ons-list>
@@ -1045,7 +1172,9 @@
                             GitHub URL
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-context-input" type="url"
+                            <ons-input class="settingTextInput" style="width: 40em;" id="docker-image-context-input"
+                                       type="url"
+                                       value="https://github.students.cs.ubc.ca/CPSC310/project-resources.git#main"
                                        required></ons-input>
                         </div>
                         <div class="expandable-content">
@@ -1066,7 +1195,8 @@
                             Version
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput"  style="width: 20em;" id="docker-image-tag-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-tag-input"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. You can include the Git revision (commit or tag) for traceability.
@@ -1081,7 +1211,9 @@
                             Dockerfile name
                         </div>
                         <div class="right settingRight">
-                            <ons-input class="settingTextInput" style="width: 20em;" id="docker-image-file-input"></ons-input>
+                            <ons-input class="settingTextInput" style="width: 15em;"
+                                       id="docker-image-file-input"
+                                       value="grade.dockerfile"></ons-input>
                         </div>
                         <div class="expandable-content">
                             Optional. Specify the name of your Dockerfile if it is different from "Dockerfile".
@@ -1132,15 +1264,16 @@
                     Deletion events will
                     delete both database entries and GitHub entities.
                 </ons-list-item>
-                <ons-list-header>Select Deliverable to Delete</ons-list-header>
+                <ons-list-header>Select Deliverables to Delete</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-file-alt"></ons-icon>
                     </div>
                     <div class="center">
-                        Deliverable Name:
-                        <ons-input class="settingTextInput" style="margin-right: 1em; margin-left: 1em;"
-                                   id="adminDeleteDeliverableText"></ons-input>
+                        Deliverables:
+                        <select multiple size="10" style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="deliverableDeleteSelect">
+                        </select>
                         <ons-button id="adminDeleteDeliverableButton" modifier="medium">Delete Deliverable</ons-button>
                     </div>
                     <div class="expandable-content">
@@ -1204,11 +1337,117 @@
                         This will synchronize the database with GitHub. There is no UI or progress. You almost certainly
                         do not want to do
                         this. It will run for 60 minutes or more for any large course.
+                        With Dry Run on (the default) nothing is written: each repair that would be made is only
+                        logged by the portal. Turn Dry Run off to apply them.
                     </div>
                 </ons-list-item>
 
             </ons-list>
 
+        </ons-page>
+    </template>
+
+    <!-- Pushed from the Config tab, like adminProvision.html; AdminConfigTab::initTeamManagementPage wires it. -->
+    <template id="adminTeamManagement.html">
+        <ons-page id="AdminTeamManagement">
+            <ons-toolbar>
+                <div class="left">
+                    <ons-back-button></ons-back-button>
+                </div>
+                <div class="center">Team Management</div>
+                <div id='indexLogin' class="right">
+                    <ons-toolbar-button onclick="myApp.logout();">
+                        <ons-icon icon="fa-sign-out"></ons-icon>
+                        <span style="vertical-align: top; font-size: 80%;">Logout</span>
+                    </ons-toolbar-button>
+                </div>
+            </ons-toolbar>
+
+            <ons-list>
+                <ons-list-header>Team Management</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-users"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Deliverable
+                        <select id="adminTeamDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                        Members
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamText"></ons-input>
+                        <ons-button id="adminCreateTeamButton" modifier="medium">Create Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Manually creates a team for a deliverable. A comma-separated list of GitHub Ids should be
+                        provided in the text box.
+                        This does the same thing as if the students created the team themselves but overrides the team
+                        size limits (e.g.,
+                        there can be more or fewer students than the deliverable requires). Students must NOT already be
+                        on a team
+                        for this deliverable. This also does not create the team on GitHub, to do that you will need to
+                        use the Provision
+                        and Release page.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-times"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Disband team; name:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminDeleteTeamManageTeam"></ons-input>
+                        <ons-button id="adminDeleteTeamManageButton" modifier="medium">Disband Team</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Disbands a team. This will detach the team from any GitHub repos that it knows about, remove the
+                        users from the
+                        team, delete the GitHub team, and delete the team from the local Classy database.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-plus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Add member; team:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamAddMemberTeam"></ons-input>
+                        User:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamAddMemberMember"></ons-input>
+                        <ons-button id="adminTeamAddMemberButton" modifier="medium">Add Member</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Specify the team name and GitHub username for the user. Adds the user to the team. The user must
+                        not aleady be on a
+                        team for the deliverable the specified team is associated with. Team size limits will be
+                        ignored.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-user-minus"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Remove member; team:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamRemoveMemberTeam"></ons-input>
+                        User:
+                        <ons-input class="settingTextInput" style="margin-left: 1em; margin-right: 1em"
+                                   id="adminTeamRemoveMemberMember"></ons-input>
+                        <ons-button id="adminTeamRemoveMemberButton" modifier="medium">Remove Member</ons-button>
+                    </div>
+                    <div class="expandable-content">
+                        Specify the team name and GitHub username for the user. User is removed from the team on GitHub
+                        (if provisioned) and
+                        local database.
+                    </div>
+                </ons-list-item>
+            </ons-list>
         </ons-page>
     </template>
 
@@ -1264,7 +1503,6 @@
                         <select id="provisionRepoDeliverableSelect" style="margin-left: 1em;">
                             <option value="''">-None-</option>
                         </select></div>
-                    </div>
                     <div class="expandable-content">
                         Provisioning and releasing is on a deliverable-by-deliverable basis. Select the deliverable you
                         want to provision
@@ -1282,7 +1520,7 @@
                             Prepare teams and repositories.&nbsp;&nbsp;
                             <ons-button id="adminManagePrepareButton" modifier="medium">Prepare</ons-button>
                             &nbsp;&nbsp;<input type="checkbox" id="provisionFormSingleCheckbox">
-                            <label for="provisionFormSingleCheckbox">Include students not in a team</label>
+                            <label for="provisionFormSingleCheckbox">Include people not in a team</label>
                         </div>
                         <div id="adminProvisionPrepareStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
                             Never run.
@@ -1293,11 +1531,15 @@
                         Nothing is created on GitHub, and nothing is visible to students. The lists below are empty
                         until this has been run.
                         <br/><br/>
+                        <b>Include people not in a team:</b> also plans a repository for everyone who is not on a
+                        team for this deliverable. Each such person, whether a student, staff member or admin, gets a
+                        repository of their own. Leave it unchecked to plan only for the teams that already exist.
+                        <br/><br/>
                         Runs in the background, so this page can be closed while it works.
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Select Repositories to Provision</ons-list-header>
+                <ons-list-header>Provision Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-square"></ons-icon>
@@ -1324,7 +1566,23 @@
                     </div>
                 </ons-list-item>
 
-                <ons-list-header>Select Repositories to Release</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-plus-circle"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Provisioned Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryProvisionedSelect"></select>
+                    </div>
+                    <div class="expandable-content">
+                        These are the repositories that have already been provisioned. There is nothing to do to them
+                        here: releasing is the section below, and removing one is on the Manage Database page.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-header>Release Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-square"></ons-icon>
@@ -1348,24 +1606,6 @@
                     </div>
                 </ons-list-item>
 
-
-                <ons-list-header>Provisioned Repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-plus-circle"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Provisioned Repositories:
-                        <select multiple size="10"
-                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
-                                id="repositoryProvisionedSelect"></select>
-                    </div>
-                    <div class="expandable-content">
-                        These are the repositories that have already been provisioned.
-                    </div>
-                </ons-list-item>
-
-                <ons-list-header>Released Repositories</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
                         <ons-icon icon="fa-plus-circle"></ons-icon>
@@ -1394,18 +1634,72 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Student Access</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-pencil"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Writeable Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryWriteableSelect"></select>
+                        <ons-button id="adminManageReadOnlyButton" modifier="medium">Make Read-only</ons-button>
+                        <ons-button id="adminManageReadOnlyCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionReadOnlyStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Released repositories whose students can push. Select any of them and press Make Read-only to
+                        switch the student team to GitHub's pull (read) permission: students can still see and clone
+                        the repository, but can no longer push to it. Only the student team changes; the staff and
+                        admin teams keep their access, and nothing in the repository is changed.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-lock"></ons-icon>
+                    </div>
+                    <div class="center">
+                        Read-only Repositories:
+                        <select multiple size="10"
+                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
+                                id="repositoryReadOnlySelect"></select>
+                        <ons-button id="adminManageWriteableButton" modifier="medium">Make Writeable</ons-button>
+                        <ons-button id="adminManageWriteableCancelButton" modifier="quiet" style="display: none;">Cancel
+                        </ons-button>
+                        <div id="adminProvisionWriteableStatus" style="align-self: center; padding-left: 1.5em; font-size: smaller;">
+                            Never run.
+                        </div>
+                    </div>
+                    <div class="expandable-content">
+                        Released repositories whose students can only read. Select any of them and press Make Writeable
+                        to switch the student team back to GitHub's push (write) permission.
+                        <br/><br/>
+                        Releasing always gives students write access, so a repository that is un-released and released
+                        again comes back writeable.
+                        <br/><br/>
+                        Runs in the background, so this page can be closed while it works.
+                    </div>
+                </ons-list-item>
+
             </ons-list>
 
         </ons-page>
     </template>
 
-    <template id="adminPullRequests.html">
-        <ons-page id="adminPullRequests">
+    <template id="adminGraderImages.html">
+        <ons-page id="adminGraderImages">
             <ons-toolbar>
                 <div class="left">
                     <ons-back-button></ons-back-button>
                 </div>
-                <div class="center">Select & Create Pull Requests</div>
+                <div class="center">Manage Grader Images</div>
                 <div id='indexLogin' class="right">
                     <ons-toolbar-button onclick="myApp.logout();">
                         <ons-icon icon="fa-sign-out"></ons-icon>
@@ -1414,7 +1708,7 @@
                 </div>
             </ons-toolbar>
 
-            <ons-modal id="adminProgress">
+            <ons-modal id="adminGraderProgress">
                 <div style="display:flex; flex-direction:column; align-items: center;">
                     <div id="modalText" style="padding-top: 1em; padding-bottom: 1em;">Data is being retrieved.</div>
                     <ons-progress-circular indeterminate></ons-progress-circular>
@@ -1425,74 +1719,29 @@
             <ons-list>
                 <ons-list-header>Overview</ons-list-header>
                 <ons-list-item>
-                    This page is used for creating GitHub Pull Requests for learners' repositories.
-                    <!--<ul style="margin-bottom: 0;">-->
-                    <!--<li><b>Provisioning</b> creates the GitHub repository as specified by the Deliverable being provisioned. This is a-->
-                    <!--slow operation and can take a up to a minute or more to create a repository.-->
-                    <!--</li>-->
-                    <!--<li><b>Releasing</b> enables learners to access their repository. This is a relatively quick operation.</li>-->
-                    <!--</ul>-->
-                </ons-list-item>
-                <ons-list-header>Select Patch</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-file-alt"></ons-icon>
-                    </div>
-                    <div class="center">
-                        Select Patch:
-                        <select id="adminPatchSelect" style="margin-left: 1em; margin-right: 1em;">
-                            <option value="''">-None-</option>
-                        </select>
-                        Create branch from first commit
-                        <ons-switch id="headOrRoot" modifier="medium" onclick="" style="margin-left: 1em;"></ons-switch>
-                        <ons-button id="adminViewPatch" style="margin-left: 1em;" modifier="medium">View Selected
-                            Patch
-                        </ons-button>
-                        <ons-button id="adminRefreshPatches" style="margin-left: 1em;" modifier="medium">Refresh Patch
-                            List
-                        </ons-button>
-                    </div>
-                    </div>
-                    <div class="expandable-content">
-                        This is a list of all patches that the pull request tool currently has available.
-                        Click Refresh to pull any new patches from cpsc310/project-patches down to the tool.
-                    </div>
+                    This page is used for removing grader images that are no longer needed. Only images that are _not_ attached to an existing deliverable are shown.
                 </ons-list-item>
 
-                <ons-list-header>Patch individual repositories</ons-list-header>
+                <ons-list-header>Select Grader Images</ons-list-header>
                 <ons-list-item expandable>
                     <div class="left settingIcon">
-                        <ons-icon icon="fa-pen-square"></ons-icon>
+                        <ons-icon icon="fa-plus-square"></ons-icon>
                     </div>
                     <div class="center">
-                        Repositories:
+                        Images Available for Removal:
                         <select multiple size="10"
-                                style="width: 20em; margin-left: 1em; margin-right: 1em;"
-                                id="repositoryPatchSelect"></select>
-                        <ons-button id="adminPatchSubsetOfReposButton" modifier="medium">Begin Patch</ons-button>
+                                style="width: 30em; margin-left: 1em; margin-right: 1em;"
+                                id="graderImagesSelect"></select>
+                        <ons-button id="adminRemoveGraderImagesButton" modifier="medium">Remove Grader Images
+                        </ons-button>
                     </div>
                     <div class="expandable-content">
-                        Select the repositories you wish to patch.
+                        Select the grader images you wish to remove.
                     </div>
                 </ons-list-item>
-
-                <ons-list-header>Patch all repositories</ons-list-header>
-                <ons-list-item expandable>
-                    <div class="left settingIcon">
-                        <ons-icon icon="fa-pen-square"></ons-icon>
-                    </div>
-                    <div class="center">
-                        <ons-button id="adminPatchAllReposButton" modifier="medium">Begin Patch</ons-button>
-                    </div>
-                    <div class="expandable-content">
-                        This will create a pull request for every repository in the database.
-                    </div>
-                </ons-list-item>
-
             </ons-list>
 
         </ons-page>
     </template>
-
 </ons-page>
 

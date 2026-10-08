@@ -91,7 +91,7 @@ export class Factory {
 				// This is not required. But if it is added, it should never be pushed back to "classy/main"
 				Log.trace("Factory::getCourseController() - name: " + name + " - plug: CustomCourseController");
 				const controllerPath = "../../../../plugins/" + plugin + "/portal/backend/CustomCourseController";
-				Log.info("Factory::getCourseController() - loading CustomCourseController; full path: " + controllerPath);
+				Log.trace("Factory::getCourseController() - loading CustomCourseController; full path: " + controllerPath);
 				plug = await require(controllerPath);
 			} catch (err) {
 				const msg = "Factory::getCourseController() - plugins/" + plugin + "/portal/backend/CustomCourseController.ts must be defined";

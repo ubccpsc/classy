@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Classy">
+    <!--
+        Classy's mark: a white "C" on the UBC blue the previous favicon used (#003468, sampled
+        from that file rather than taken from a brand sheet).
+
+        The three numbers here were chosen at 16x16, which is the only size that really matters,
+        and each of them breaks the icon if changed casually:
+
+          stroke-width 6    at 7 the counter fills in at 16px and the C reads as an O; at 5 the
+                            stroke goes faint against the dark ground. A white glyph on a dark
+                            field also looks optically heavier than the reverse, so this is a
+                            touch lighter than it would be for dark on light.
+          aperture 110deg   the gap on the right is the only thing distinguishing C from O once
+                            antialiasing blurs the terminals together. 70deg closes up at 16px.
+          r 9.5             fills the frame without crowding the rounded corners.
+
+        Edit this file, then regenerate favicon.ico from it. Every size inside the .ico is
+        rendered from this source directly rather than downscaled from one larger bitmap, which
+        is what keeps the 16px entry crisp:
+
+          rsvg-convert -w 16 -h 16 favicon.svg -o /tmp/f16.png   (and 32, 48)
+          magick /tmp/f16.png /tmp/f32.png /tmp/f48.png favicon.ico
+    -->
+    <rect x="0" y="0" width="32" height="32" rx="7" fill="#003468"/>
+    <path d="M21.45 8.22 A9.5 9.5 0 1 0 21.45 23.78"
+          fill="none" stroke="#FFFFFF" stroke-width="6" stroke-linecap="round"/>
+</svg>

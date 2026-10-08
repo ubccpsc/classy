@@ -3,6 +3,7 @@ import * as fs from "fs-extra";
 import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { Factory } from "@backend/Factory";
 import BackendServer from "@backend/server/BackendServer";
 
 import Config, { ConfigKey } from "@common/Config";
@@ -139,6 +140,24 @@ describe("AutoTest Routes", function () {
 			stub.reset();
 		});
 
+		it("Should forward the ?filters= query the admin UI sends.", async function () {
+			// Both callers build "/portal/at/docker/images?filters=" + JSON.stringify({reference:["grader"]}),
+			// and getDockerImages forwards req.url with only the "/portal/at" prefix stripped. Nothing
+			// asserted the query survived that rewrite -- if it were dropped, the UI would silently
+			// list every image on the host instead of just the graders.
+			const filters = JSON.stringify({ reference: ["grader"] });
+			stub.body = [];
+
+			const response = await request(app)
+				.get("/portal/at/docker/images?filters=" + encodeURIComponent(filters))
+				.set({ user: TestHarness.ADMIN1.github });
+
+			expect(response.status).to.equal(200);
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.url, "the /portal/at prefix is stripped").to.match(/^\/docker\/images\?/);
+			expect(decodeURIComponent(forwarded.url), "the filters query must reach AutoTest intact").to.contain(filters);
+		});
+
 		it("Should not count the AutoTest health poll as a forwarded request.", async function () {
 			// BackendServer::start polls GET /status on an un-awaited 500ms timer. Once this stub has
 			// redirected autotestUrl/autotestPort, that poll arrives *here*, at whatever point in the
@@ -214,6 +233,67 @@ describe("AutoTest Routes", function () {
 			expect(response.status).to.equal(500);
 			expect(stub.requests, "it did try").to.have.lengthOf(1);
 		});
+
+		/**
+		 * The build endpoint streams: the route hijacks the reply and pipes AutoTest's build log to
+		 * the browser as it arrives. supertest buffers the body as JSON by default, so the raw text
+		 * is collected here instead.
+		 */
+		function postBuild(user: string, body: any): request.Test {
+			return request(app)
+				.post("/portal/at/docker/image")
+				.set({ user: user })
+				.send(body)
+				.buffer(true)
+				.parse((res: any, callback: any) => {
+					let text = "";
+					res.on("data", (chunk: any) => {
+						text += chunk.toString();
+					});
+					res.on("end", () => callback(null, text));
+				});
+		}
+
+		it("Should refuse to build a Docker image for a student.", async function () {
+			const response = await postBuild(TestHarness.USER1.github, { tag: "grader", remote: "https://example.com/grader.git" });
+			Log.test("student build -> " + response.status);
+
+			expect(response.status).to.equal(401);
+			expect(stub.requests, "a student must not be able to start a build").to.have.lengthOf(0);
+		});
+
+		it("Should stream the build output from AutoTest back to the admin.", async function () {
+			// the whole point of the endpoint: the admin watches the build log live, so every chunk
+			// AutoTest writes has to come through, in order, and the connection has to close when
+			// AutoTest's does
+			stub.stream = ["Step 1/3 : FROM node:20\n", "Step 2/3 : COPY . .\n", "Successfully tagged grader:latest\n"];
+			const build = { tag: "grader", remote: "https://example.com/grader.git", file: "Dockerfile" };
+
+			const response = await postBuild(TestHarness.ADMIN1.github, build);
+			Log.test("admin build -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal(stub.stream.join(""));
+
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.method).to.equal("POST");
+			expect(forwarded.url).to.equal("/docker/image");
+			expect(JSON.parse(forwarded.body), "the build request reaches AutoTest as sent").to.deep.equal(build);
+		});
+
+		it("Should still close the connection when AutoTest reports a failed build.", async function () {
+			// the headers are already on the wire when AutoTest's status is known, so the failure
+			// shows in the streamed log rather than the status; what must not happen is the admin's
+			// browser waiting forever on a socket nobody will finish
+			stub.status = 500;
+			stub.stream = ["ERROR: Dockerfile not found\n"];
+
+			const response = await postBuild(TestHarness.ADMIN1.github, { tag: "grader", remote: "https://example.com/grader.git" });
+			Log.test("failed build -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.body, "the admin sees why").to.contain("Dockerfile not found");
+			expect(stub.requests).to.have.lengthOf(1);
+		}).timeout(TIMEOUT);
 
 		it("Should refuse to delete a Docker image for a student.", async function () {
 			const response = await request(app).delete("/portal/at/docker/image/d0-latest").set({ user: TestHarness.USER1.github });
@@ -396,6 +476,42 @@ describe("AutoTest Routes", function () {
 		expect(response.status).to.equal(400);
 		expect(response.body?.success).to.be.undefined;
 		expect(response.body?.failure).to.not.be.undefined;
+	});
+
+	it("Should return the course's feedbackDelay answer when it implements one", async function () {
+		// the path a course plugin (cs310) takes: the controller's answer is passed through as-is,
+		// so AutoTest can show the student the course's own message
+		const url = "/portal/at/feedbackDelay";
+		const body = { delivId: TestHarness.DELIVID0, personId: TestHarness.USER1.id, timestamp: Date.now() };
+		const answer = { accepted: false, message: "Next request allowed in 12 minutes.", fullMessage: "Rate limited." };
+
+		const realFactory = Factory.getCourseController;
+		Factory.getCourseController = async () => ({ requestFeedbackDelay: async () => answer }) as any;
+		let response: any = null;
+		try {
+			response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+		} finally {
+			Factory.getCourseController = realFactory;
+		}
+		Log.test("feedbackDelay implemented: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(200);
+		expect(response.body.success.feedbackDelay).to.deep.equal(answer);
+	});
+
+	it("Should answer 400, not 500, to a body that is not JSON", async function () {
+		// the backend installs its own JSON parser (so an empty body is {}); a malformed body still
+		// has to be the client's error rather than a crash in the parser
+		const url = "/portal/at/feedbackDelay";
+
+		const response = await request(app)
+			.post(url)
+			.set("Content-Type", "application/json")
+			.set("token", Config.getInstance().getProp(ConfigKey.autotestSecret))
+			.send("{not json");
+		Log.test("malformed JSON: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(400);
 	});
 
 	it("Should report feedbackDelay as not implemented for the default course controller", async function () {

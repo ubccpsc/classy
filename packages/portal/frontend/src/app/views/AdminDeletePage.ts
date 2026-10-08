@@ -1,15 +1,17 @@
 import Log from "@common/Log";
-import { RepositoryTransport, TeamTransport } from "@common/types/PortalTypes";
+import { DeliverableTransport, RepositoryTransport, TeamTransport } from "@common/types/PortalTypes";
 import { OnsButtonElement } from "onsenui";
 
 import { UI } from "../util/UI";
 
+import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
 import { AdminPage } from "./AdminPage";
 import { AdminResultsTab } from "./AdminResultsTab";
 import { AdminTeamsTab } from "./AdminTeamsTab";
 import { AdminView } from "./AdminView";
 
 export class AdminDeletePage extends AdminPage {
+	private deliverables: DeliverableTransport[];
 	private teams: TeamTransport[];
 	private repos: RepositoryTransport[];
 
@@ -21,8 +23,9 @@ export class AdminDeletePage extends AdminPage {
 		const that = this;
 		Log.info("AdminDeletePage::init(..) - start");
 
-		UI.showModal("Retrieving repositories and teams.");
+		UI.showModal("Retrieving deliverables, repositories and teams.");
 
+		this.deliverables = (await AdminDeliverablesTab.getDeliverables(this.remote)).sort((a, b) => a.id.localeCompare(b.id));
 		this.teams = await AdminTeamsTab.getTeams(this.remote);
 		this.repos = await AdminResultsTab.getRepositories(this.remote);
 
@@ -33,6 +36,14 @@ export class AdminDeletePage extends AdminPage {
 		this.repos = this.repos.sort(function compare(a: RepositoryTransport, b: RepositoryTransport) {
 			return a.id.localeCompare(b.id);
 		});
+
+		const delivDelete = document.getElementById("deliverableDeleteSelect") as HTMLSelectElement;
+		delivDelete.innerHTML = "";
+		for (const deliv of this.deliverables) {
+			const option = document.createElement("option");
+			option.text = deliv.id;
+			delivDelete.add(option);
+		}
 
 		const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
 		teamDelete.innerHTML = "";
@@ -56,12 +67,8 @@ export class AdminDeletePage extends AdminPage {
 			Log.info("AdminDeletePage::handleDeliverableDelete(..) - delete pressed");
 			evt.stopPropagation(); // prevents list item expansion
 
-			let value = UI.getTextFieldValue("adminDeleteDeliverableText");
-			if (typeof value === "string") {
-				value = value.trim();
-			}
 			that
-				.deleteDeliverable(value)
+				.deleteDeliverablesPressed()
 				.then(function () {
 					// done
 				})
@@ -152,6 +159,43 @@ export class AdminDeletePage extends AdminPage {
 		await this.init({});
 	}
 
+	/** Deletes every selected deliverable, one at a time, as deleteTeamPressed does for teams. */
+	private async deleteDeliverablesPressed(): Promise<void> {
+		const delivDelete = document.getElementById("deliverableDeleteSelect") as HTMLSelectElement;
+		const selected: string[] = [];
+		for (const opt of delivDelete.options) {
+			if (opt.selected) {
+				selected.push(opt.value || opt.text);
+			}
+		}
+
+		Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - start; # deliverables to delete: " + selected.length);
+		if (selected.length === 0) {
+			UI.showErrorToast("No deliverables selected for deletion.");
+			return;
+		}
+
+		for (let i = 0; i < selected.length; i++) {
+			const sel = selected[i];
+			try {
+				await this.deleteDeliverable(sel);
+				Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - delete complete; deliverable: " + sel);
+				UI.showSuccessToast("Deliverable deleted: " + sel + " ( " + (i + 1) + " of " + selected.length + " )", {
+					force: true,
+					animation: "none",
+				});
+			} catch (err) {
+				Log.error("AdminDeletePage::deleteDeliverablesPressed(..) - ERROR: " + err.message);
+				UI.showErrorToast("Deliverable NOT deleted: " + sel);
+			}
+		}
+
+		Log.info("AdminDeletePage::deleteDeliverablesPressed(..) - done");
+		UI.showSuccessToast("Deliverable deletion complete.", { buttonLabel: "Ok" });
+		// refresh the page
+		await this.init({});
+	}
+
 	private async deleteTeamPressed(): Promise<void> {
 		const teamDelete = document.getElementById("teamDeleteSelect") as HTMLSelectElement;
 		const selected = [];
@@ -180,7 +224,7 @@ export class AdminDeletePage extends AdminPage {
 				});
 			} catch (err) {
 				Log.error("AdminDeletePage::deleteTeamPressed(..) - delete pressed ERROR: " + err.message);
-				UI.showErrorToast("Team deleted: " + sel);
+				UI.showErrorToast("Team NOT deleted: " + sel);
 			}
 		}
 
@@ -203,19 +247,22 @@ export class AdminDeletePage extends AdminPage {
 			const options: any = AdminView.getOptions();
 			options.method = "post";
 
-			const _response = await fetch(url, options);
-
-			UI.showSuccessToast("Sanitization complete.", { buttonLabel: "Ok" });
-			// const body = await response.json();
-			// if (typeof body.success !== "undefined") {
-			//     // UI.notificationToast(body.success.message);
-			// } else {
-			//     Log.error("Delete ERROR: " + body.failure.message);
-			//     UI.showError(body.failure.message);
-			// }
+			const response = await fetch(url, options);
+			const body = await response.json();
+			if (typeof body.success === "undefined") {
+				// this used to report "complete" whatever the server said, including a 400
+				throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+			}
 
 			Log.info("AdminDeletePage::sanitizeDBPressed(..) - done");
-			UI.showSuccessToast("Sanitiztion complete", { buttonLabel: "Ok" });
+			if (dryRun.checked === true) {
+				UI.showSuccessToast("Dry run complete: nothing was written. Repairs are in the portal log; turn Dry Run off to apply them.", {
+					buttonLabel: "Ok",
+					timeout: 8000,
+				});
+			} else {
+				UI.showSuccessToast("GitHub synchronization complete; the database now matches GitHub.", { buttonLabel: "Ok", timeout: 5000 });
+			}
 		} catch (err) {
 			Log.error("AdminDeletePage::sanitizeDBPressed(..) - ERROR: " + err.message);
 			UI.showErrorToast("Error sanitizing DB: " + err.message);
@@ -252,12 +299,12 @@ export class AdminDeletePage extends AdminPage {
 		const response = await fetch(url, options);
 		const body = await response.json();
 		if (typeof body.success !== "undefined") {
-			// UI.notificationToast(body.success.message);
 			return true;
-		} else {
-			Log.error("Delete ERROR: " + body.failure.message);
-			UI.showError(body.failure.message);
-			return false;
 		}
+		// Thrown rather than returned: the callers only look for a rejection, so a false here used
+		// to be toasted as "deleted" while the record was still in the database.
+		const message = body?.failure?.message ?? "HTTP " + response.status;
+		Log.error("AdminDeletePage::performDelete( " + url + " ) - ERROR: " + message);
+		throw new Error(message);
 	}
 }

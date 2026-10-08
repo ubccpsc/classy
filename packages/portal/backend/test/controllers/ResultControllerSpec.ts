@@ -88,6 +88,15 @@ describe("ResultController", () => {
 		expect(deliv).to.not.be.null;
 		expect(deliv).to.be.an("string");
 
+		// an input without a target is rejected, not thrown on (this used to read target.delivId first)
+		data = { delivId: "d0", repoId: "r1", commitURL: "url", commitSHA: "sha", input: {} } as AutoTestResultTransport;
+		deliv = await rc.validateAutoTestResult(data);
+		expect(deliv).to.equal("input target missing");
+
+		data = { delivId: "d0", repoId: "r1", commitURL: "url", commitSHA: "sha", input: { target: {} } } as AutoTestResultTransport;
+		deliv = await rc.validateAutoTestResult(data);
+		expect(deliv).to.equal("input delivId missing");
+
 		data = {
 			delivId: "d0",
 			repoId: "r1",
@@ -392,5 +401,17 @@ describe("ResultController", () => {
 		} as GradeReport;
 		valid = await rc.validateGradeReport(data);
 		expect(valid).to.be.null;
+
+		// the last two fields the validator looks at: the admin views index attachments, and the
+		// dashboard reads result as the row's state, so neither can be absent or the wrong shape
+		const complete = JSON.parse(JSON.stringify(data));
+		expect(await rc.validateGradeReport({ ...complete, attachments: undefined })).to.equal(
+			"output.report.attachments missing or not an array"
+		);
+		expect(await rc.validateGradeReport({ ...complete, attachments: "none" })).to.equal(
+			"output.report.attachments missing or not an array"
+		);
+		expect(await rc.validateGradeReport({ ...complete, result: undefined })).to.equal("output.report.result missing or not a string");
+		expect(await rc.validateGradeReport({ ...complete, result: 200 })).to.equal("output.report.result missing or not a string");
 	});
 });

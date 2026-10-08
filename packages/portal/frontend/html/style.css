@@ -185,6 +185,30 @@ Dashboard Page
     top: 0;
 }
 
+/*
+ * Grades page: the first column (the student's GitHub id / CWL) stays put when a wide grade table
+ * scrolls the page sideways, as the headings already do when it scrolls down. It pins to the page
+ * because nothing between it and the page scrolls or clips; see the grades template in admin.html.
+ *
+ * The pinned cells take their row's alternating colour, so cells scrolling under them are hidden.
+ * Layering, top to bottom: the corner heading, the other headings, the pinned column, the rest.
+ */
+#gradesListTable .sortableTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: inherit;
+}
+
+#gradesListTable .sortableTable th {
+    z-index: 2;
+}
+
+#gradesListTable .sortableTable th:first-child {
+    left: 0;
+    z-index: 3;
+}
+
 .selectable {
     user-select: auto;
     -webkit-user-select: auto;

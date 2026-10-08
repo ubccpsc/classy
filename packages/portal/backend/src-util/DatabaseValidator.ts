@@ -469,13 +469,22 @@ export class DatabaseValidator {
 	}
 }
 
-const dv = new DatabaseValidator();
-const start = Date.now();
-dv.validate()
-	.then(function () {
-		Log.info("DatabaseValidator::validate() - complete; took: " + Util.took(start));
-	})
-	.catch(function (err) {
-		Log.error("DatabaseValidator::validate() - ERROR: " + err.message);
-		process.exit();
-	});
+// Only run when invoked directly (node src-util/DatabaseValidator.js). Importing this module -- from a
+// test, say -- used to start a validation pass against whatever database .env pointed at, and
+// process.exit() on the first error, which is why nothing in src-util had tests.
+if (require.main === module) {
+	runDatabaseValidator();
+}
+
+function runDatabaseValidator(): void {
+	const dv = new DatabaseValidator();
+	const start = Date.now();
+	dv.validate()
+		.then(function () {
+			Log.info("DatabaseValidator::validate() - complete; took: " + Util.took(start));
+		})
+		.catch(function (err) {
+			Log.error("DatabaseValidator::validate() - ERROR: " + err.message);
+			process.exit();
+		});
+}
