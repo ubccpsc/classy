@@ -1137,6 +1137,21 @@ describe("Admin Routes", function () {
 		expect(body.success.message).to.contain("3 grades");
 	});
 
+	it("Should say when a PrairieLearn gradebook produced no grades", async function () {
+		// a well-formed gradebook whose students Classy does not know (or whose columns match no
+		// deliverable) imports nothing; the admin needs to be told that, not shown a success message
+		const url = "/portal/admin/grades/prairie";
+		const response = await request(app)
+			.post(url)
+			.attach("gradelist", __dirname + "/../data/prairieNoMatches.csv")
+			.set({ user: userName, token: userToken });
+		const body: Payload = response.body;
+		Log.test(response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.failure.message).to.contain("no grades were processed");
+	});
+
 	it("Should be able to get the course object", async function () {
 		let response = null;
 		let body: CourseTransportPayload;

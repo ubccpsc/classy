@@ -234,6 +234,67 @@ describe("AutoTest Routes", function () {
 			expect(stub.requests, "it did try").to.have.lengthOf(1);
 		});
 
+		/**
+		 * The build endpoint streams: the route hijacks the reply and pipes AutoTest's build log to
+		 * the browser as it arrives. supertest buffers the body as JSON by default, so the raw text
+		 * is collected here instead.
+		 */
+		function postBuild(user: string, body: any): request.Test {
+			return request(app)
+				.post("/portal/at/docker/image")
+				.set({ user: user })
+				.send(body)
+				.buffer(true)
+				.parse((res: any, callback: any) => {
+					let text = "";
+					res.on("data", (chunk: any) => {
+						text += chunk.toString();
+					});
+					res.on("end", () => callback(null, text));
+				});
+		}
+
+		it("Should refuse to build a Docker image for a student.", async function () {
+			const response = await postBuild(TestHarness.USER1.github, { tag: "grader", remote: "https://example.com/grader.git" });
+			Log.test("student build -> " + response.status);
+
+			expect(response.status).to.equal(401);
+			expect(stub.requests, "a student must not be able to start a build").to.have.lengthOf(0);
+		});
+
+		it("Should stream the build output from AutoTest back to the admin.", async function () {
+			// the whole point of the endpoint: the admin watches the build log live, so every chunk
+			// AutoTest writes has to come through, in order, and the connection has to close when
+			// AutoTest's does
+			stub.stream = ["Step 1/3 : FROM node:20\n", "Step 2/3 : COPY . .\n", "Successfully tagged grader:latest\n"];
+			const build = { tag: "grader", remote: "https://example.com/grader.git", file: "Dockerfile" };
+
+			const response = await postBuild(TestHarness.ADMIN1.github, build);
+			Log.test("admin build -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.status).to.equal(200);
+			expect(response.body).to.equal(stub.stream.join(""));
+
+			const forwarded = stub.onlyRequest();
+			expect(forwarded.method).to.equal("POST");
+			expect(forwarded.url).to.equal("/docker/image");
+			expect(JSON.parse(forwarded.body), "the build request reaches AutoTest as sent").to.deep.equal(build);
+		});
+
+		it("Should still close the connection when AutoTest reports a failed build.", async function () {
+			// the headers are already on the wire when AutoTest's status is known, so the failure
+			// shows in the streamed log rather than the status; what must not happen is the admin's
+			// browser waiting forever on a socket nobody will finish
+			stub.status = 500;
+			stub.stream = ["ERROR: Dockerfile not found\n"];
+
+			const response = await postBuild(TestHarness.ADMIN1.github, { tag: "grader", remote: "https://example.com/grader.git" });
+			Log.test("failed build -> " + response.status + "; body: " + JSON.stringify(response.body));
+
+			expect(response.body, "the admin sees why").to.contain("Dockerfile not found");
+			expect(stub.requests).to.have.lengthOf(1);
+		}).timeout(TIMEOUT);
+
 		it("Should refuse to delete a Docker image for a student.", async function () {
 			const response = await request(app).delete("/portal/at/docker/image/d0-latest").set({ user: TestHarness.USER1.github });
 			Log.test("student delete -> " + response.status);
