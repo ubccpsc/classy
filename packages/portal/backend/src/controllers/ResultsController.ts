@@ -104,23 +104,6 @@ export class ResultsController {
 	}
 
 	/**
-	 * Gets the results associated with a <commitURL, delivId> tuple.
-	 *
-	 * @param {string} url
-	 * @param {string} delivId
-	 * @returns {Result}
-	 */
-	public async getResultFromURL(url: string, delivId: string): Promise<Result | null> {
-		Log.trace("ResultsController::getResultFromURL() - start; deliv: " + delivId + "; url: " + url);
-		const start = Date.now();
-
-		const result = await this.db.getResultFromURL(url, delivId);
-		Log.trace("ResultsController::getResultFromURL() - start; deliv: " + delivId + "; url: " + url + "; took: " + Util.took(start));
-
-		return result;
-	}
-
-	/**
 	 * Create a Classy result record for a given AutoTest record and store it in the database.
 	 *
 	 * @param record
@@ -172,32 +155,6 @@ export class ResultsController {
 				"; took: " +
 				Util.took(start)
 		);
-		return outcome;
-	}
-
-	/**
-	 * Find all the results for a given deliverable and repo. Return [] if there are no results.
-	 *
-	 * @param delivId
-	 * @param repoId
-	 */
-	public async getResults(delivId: string, repoId: string): Promise<AutoTestResult[]> {
-		Log.info("ResultsController::getResults( " + delivId + ", " + repoId + " ) - start");
-		const start = Date.now();
-
-		const outcome = await DatabaseController.getInstance().getResults(delivId, repoId);
-
-		Log.info(
-			"ResultsController::getResults( " +
-				delivId +
-				", " +
-				repoId +
-				" ) - done; # results: " +
-				outcome.length +
-				"; took: " +
-				Util.took(start)
-		);
-
 		return outcome;
 	}
 
@@ -261,14 +218,16 @@ export class ResultsController {
 			return msg;
 		}
 
-		if (typeof record.input.target.delivId !== "string") {
-			const msg = "input delivId missing";
+		// target before target.delivId: checked the other way round, a record without a target threw
+		// here instead of being rejected with a message
+		if (typeof record.input.target !== "object" || record.input.target === null) {
+			const msg = "input target missing";
 			Log.error("ResultsController::validateAutoTestResult(..) - ERROR: " + msg);
 			return msg;
 		}
 
-		if (typeof record.input.target !== "object") {
-			const msg = "input target missing";
+		if (typeof record.input.target.delivId !== "string") {
+			const msg = "input delivId missing";
 			Log.error("ResultsController::validateAutoTestResult(..) - ERROR: " + msg);
 			return msg;
 		}

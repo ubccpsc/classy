@@ -73,6 +73,41 @@ describe("GitHubActions.fetchWithRetry", function () {
 		expect(requests.filter((r) => r.url === "/rl429")).to.have.lengthOf(2);
 	}).timeout(10000);
 
+	it("Should wait for a near x-ratelimit-reset when there is no Retry-After.", async function () {
+		// primary rate limits come with x-ratelimit-reset (epoch seconds) rather than Retry-After
+		// floor+1 so the reset is at most a second away; ceil+1 could be nearly two, indistinguishable
+		// from the 2s backoff this is checking it does NOT use
+		const resetAt = Math.floor(Date.now() / 1000) + 1;
+		script["/rlReset"] = [
+			{ status: 429, headers: { "x-ratelimit-reset": String(resetAt) } },
+			{ status: 200, body: '{"ok":true}' },
+		];
+
+		const start = Date.now();
+		const res = await fetchVia("/rlReset");
+		const took = Date.now() - start;
+
+		expect(res.status).to.equal(200);
+		expect(requests.filter((r) => r.url === "/rlReset")).to.have.lengthOf(2);
+		// waited until the reset (under a second away), not the 2s backoff it would use without a hint
+		expect(took, "and not the full backoff").to.be.lessThan(1900);
+	}).timeout(10000);
+
+	it("Should fall back to backoff when x-ratelimit-reset is too far away to wait for.", async function () {
+		script["/rlFarReset"] = [
+			{ status: 429, headers: { "x-ratelimit-reset": String(Math.ceil(Date.now() / 1000) + 3600) } },
+			{ status: 200, body: '{"ok":true}' },
+		];
+
+		const start = Date.now();
+		const res = await fetchVia("/rlFarReset");
+		const took = Date.now() - start;
+
+		expect(res.status).to.equal(200);
+		expect(took, "the first backoff step is 2s").to.be.at.least(1900);
+		expect(took, "it does not wait the hour").to.be.lessThan(5000);
+	}).timeout(10000);
+
 	it("Should retry a 403 whose body names the rate limit, and leave the body readable.", async function () {
 		// GitHub reports secondary limits as 403 with a message; detecting that consumes the body,
 		// so fetchWithRetry must clone() before it looks. The caller still needs to read it.

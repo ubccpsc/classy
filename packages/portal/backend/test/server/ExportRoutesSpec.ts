@@ -173,6 +173,25 @@ describe("Export Routes", function () {
 			}
 		});
 
+		it("Should skip malformed API_TOKENS entries and still honour the well-formed ones.", async function () {
+			// a typo in one entry must not take the export down for every consumer, and an entry with
+			// an empty token must never match an empty or truncated Authorization header
+			Config.getInstance().setProp(ConfigKey.apiTokens, "nocolon," + CONSUMER_B + ":," + CONSUMER_A + ":" + TOKEN_A + ",:orphan");
+			try {
+				const ok = await request(app)
+					.get(PREFIX + "/grades/" + RELEASED)
+					.set("Authorization", "Bearer " + TOKEN_A);
+				expect(ok.status, "the well-formed entry still works").to.equal(200);
+
+				const empty = await request(app)
+					.get(PREFIX + "/grades/" + RELEASED)
+					.set("Authorization", "Bearer " + TOKEN_B);
+				expect(empty.status, "the consumer whose token is blank is not let in").to.equal(401);
+			} finally {
+				Config.getInstance().setProp(ConfigKey.apiTokens, CONSUMER_A + ":" + TOKEN_A + "," + CONSUMER_B + ":" + TOKEN_B);
+			}
+		});
+
 		it("Should not echo the provided token back to the caller.", async function () {
 			const provided = "dddddddddddddddddddddddddddddddd";
 			const response = await request(app)

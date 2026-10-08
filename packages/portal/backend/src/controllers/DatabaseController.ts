@@ -38,7 +38,6 @@ export class DatabaseController {
 	private readonly REPOCOLL = "repositories";
 	private readonly AUTHCOLL = "auth";
 	private readonly AUDITCOLL = "audit";
-	private readonly TICKERCOLL = "ids";
 	private readonly FEEDBACKCOLL = "feedback";
 	private readonly JOBCOLL = "jobs";
 	// NOTE: shared across job kinds; rows are scoped by their `kind` field. Generic from the
@@ -339,27 +338,6 @@ export class DatabaseController {
 			Log.error("DatabaseController::getLatestFeedbackGiven(..) - ERROR: " + err);
 		}
 		return null;
-	}
-
-	/**
-	 * Gets and increments a per-deliverable counter. Numbers start at 000 and increment.
-	 *
-	 * Pre-padding with 0s for easier searching, but will be problematic for deliverables with > 1000 teams.
-	 *
-	 * @param {string} delivId
-	 * @returns {Promise<string>}
-	 */
-	public async getUniqueTeamNumber(delivId: string): Promise<string> {
-		const ticker = await this.readAndUpdateSingleRecord(this.TICKERCOLL, { tickerId: delivId }, { $inc: { ticker: 1 } });
-		let res: number = 0;
-		if (ticker !== null) {
-			Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker found: " + ticker.ticker);
-			res = ticker.ticker;
-		} else {
-			Log.trace("DatabaseController::getUniqueTeamNumber() - " + delivId + " ticker NOT found. Setting ticker");
-			await this.writeRecord(this.TICKERCOLL, { tickerId: delivId, ticker: 1 });
-		}
-		return ("00" + res).slice(-3);
 	}
 
 	public async writePerson(record: Person): Promise<boolean> {
@@ -699,7 +677,6 @@ export class DatabaseController {
 				this.AUTHCOLL,
 				this.COURSECOLL,
 				this.AUDITCOLL,
-				this.TICKERCOLL,
 				this.JOBCOLL,
 				this.JOBWATERMARKCOLL,
 			];
@@ -1049,24 +1026,6 @@ export class DatabaseController {
 			}
 		} catch (err) {
 			Log.error("DatabaseController::readSingleRecord(..) - ERROR: " + err);
-			return null;
-		}
-	}
-
-	private async readAndUpdateSingleRecord(column: string, query: {}, update: {}): Promise<any> {
-		try {
-			const col = await this.getCollection(column, QueryKind.WRITE);
-
-			const record: any = (await (col as any).findOneAndUpdate(query, update)).value;
-
-			if (record === null || record === undefined) {
-				return null;
-			} else {
-				delete record._id;
-				return record;
-			}
-		} catch (err) {
-			Log.error("DatabaseController::readAndUpdateSingleRecord(..) - ERROR: " + err);
 			return null;
 		}
 	}

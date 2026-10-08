@@ -713,6 +713,70 @@ describe("PrairieLearnAgent", function () {
 			expect(summary.resultsWithoutArchive, "counted as un-derivable").to.be.greaterThan(0);
 			expect(summary.resultsFailed, "and not reported as a failure").to.deep.equal([]);
 		});
+
+		it("Should leave a stored report alone when the course now finds the payload ungradeable.", async function () {
+			// a mapping change can make an old payload uninterpretable (null). Replacing the report
+			// with nothing would erase what the admin views showed; it is reported as failed instead.
+			const inst = instance({ assessment_instance_id: "reinterpNull", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpNull" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const before = await dc.getResults(DELIV_ID, "reinterpNull");
+			expect(before.length).to.equal(1);
+			const reportBefore = JSON.stringify(before[0].output.report);
+
+			const refusing = new CourseController(null);
+			refusing.interpretSubmission = async () => null;
+			const summary = await new PrairieLearnAgent(undefined, refusing).reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsFailed).to.include(before[0].commitSHA);
+			const after = await dc.getResults(DELIV_ID, "reinterpNull");
+			expect(JSON.stringify(after[0].output.report), "the stored report is kept").to.equal(reportBefore);
+		});
+
+		it("Should count a payload the course throws on as failed and keep going.", async function () {
+			const ids = ["reinterpThrowA", "reinterpThrowB"];
+			for (const id of ids) {
+				const inst = instance({ assessment_instance_id: id, assessment_label: DELIV_ID });
+				const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: id })];
+				await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+			}
+			const shaA = (await dc.getResults(DELIV_ID, ids[0]))[0].commitSHA;
+
+			const real = new CourseController(null);
+			const picky = new CourseController(null);
+			picky.interpretSubmission = async (submission: any, deliv: any) => {
+				if (submission.assessment_instance_id === ids[0]) {
+					throw new Error("unrecognised payload");
+				}
+				return await real.interpretSubmission(submission, deliv);
+			};
+			const summary = await new PrairieLearnAgent(undefined, picky).reinterpret(TestHarness.ADMIN1.id);
+
+			expect(summary.resultsFailed).to.include(shaA);
+			expect(summary.resultsRewritten, "the others are still rewritten").to.be.greaterThan(0);
+		});
+
+		it("Should stop when the job is cancelled, and say so.", async function () {
+			const inst = instance({ assessment_instance_id: "reinterpCancel", assessment_label: DELIV_ID });
+			const subs = [Object.assign(JSON.parse(JSON.stringify(allBuckets[1])), { assessment_instance_id: "reinterpCancel" })];
+			await new PrairieLearnAgent(fetcherFor([inst], subs)).sync(TestHarness.ADMIN1.id);
+
+			const cancelled: any = {
+				isCancelled: () => true,
+				progress: async () => {
+					//
+				},
+				error: async () => {
+					//
+				},
+			};
+			const summary = await new PrairieLearnAgent().reinterpret(TestHarness.ADMIN1.id, cancelled);
+
+			expect(summary.cancelled).to.be.true;
+			expect(summary.resultsSeen, "it still says how much there was to do").to.be.greaterThan(0);
+			expect(summary.resultsRewritten).to.equal(0);
+		});
 	});
 
 	it("Should re-sync an unchanged instance when forced.", async function () {

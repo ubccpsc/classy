@@ -811,8 +811,17 @@ describe("GitHubActions", () => {
 		const teamSuccess = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
 		Log.test("Added team to repo: " + JSON.stringify(teamSuccess));
 		expect(teamSuccess.githubTeamNumber).to.be.greaterThan(0);
+		expect((await gh.getTeamsOnRepo(REPONAME)).map((t) => t.teamName)).to.include(TEAMNAME);
 
-		// TODO: need gh.removeTeamFromRepo
+		// and back off again: this is what un-releasing a repo does
+		Log.test("Removing team from repo");
+		const removed = await gh.removeTeamFromRepo(TEAMNAME, REPONAME);
+		expect(removed).to.be.true;
+		expect((await gh.getTeamsOnRepo(REPONAME)).map((t) => t.teamName)).to.not.include(TEAMNAME);
+
+		// a team GitHub does not have has nothing to detach; false rather than an error, because the
+		// database is simply ahead of the org
+		expect(await gh.removeTeamFromRepo(TestHarness.INVALIDTEAMNAME, REPONAME)).to.be.false;
 	});
 
 	it("Should be able to clone a source repo into a newly created repository.", async function () {

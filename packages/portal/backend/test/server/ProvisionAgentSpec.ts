@@ -5,6 +5,7 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubError } from "@backend/controllers/GitHubActions";
+import { ProvisionFailurePolicy } from "@backend/controllers/ProvisionFailurePolicy";
 import { ProvisionState } from "@backend/controllers/ProvisionState";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
 import { AuditLabel, PersonKind, RepoStatus, Repository, StudentAccess } from "@backend/Types";
@@ -352,6 +353,104 @@ describe("ProvisionAgent", function () {
 			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
 			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
 			expect(calls).to.be.lessThan(REPO_COUNT);
+		});
+	});
+
+	describe("giving up on a run that is not working", function () {
+		// Not every failure is fatal. provisionRepository/releaseRepository answer false for a repo
+		// that could not be set up, and the run carries on past one of those -- but a run whose first
+		// attempts ALL fail is misconfigured (an unreachable importURL, a template that is not one),
+		// and grinding through the rest would only make more work to undo. ProvisionFailurePolicy
+		// stops it, and the agent still has to report what happened.
+		const REPO_COUNT = ProvisionFailurePolicy.STARTUP_FAILURES + AdminController.PROVISION_CONCURRENCY + 2;
+
+		function controllerAnswering(result: boolean): any {
+			return {
+				provisionRepository: async () => result,
+				releaseRepository: async () => result,
+				unreleaseRepository: async () => result,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+		}
+
+		async function makeRepos(prefix: string, status: RepoStatus): Promise<string[]> {
+			const ids: string[] = [];
+			for (let n = 1; n <= REPO_COUNT; n++) {
+				const repo: Repository = {
+					id: prefix + n,
+					delivId: TestHarness.DELIVID0,
+					teamIds: [],
+					URL: status === RepoStatus.NOT_CREATED ? null : "https://example.com/" + prefix + n,
+					cloneURL: null,
+					gitHubStatus: status,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				ids.push(repo.id);
+			}
+			return ids;
+		}
+
+		before(async function () {
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+		});
+
+		it("Should stop creating repositories when the first attempts all fail.", async function () {
+			const repoIds = await makeRepos("provisionAgentSpecGiveUpCreate", RepoStatus.NOT_CREATED);
+			const givingUp = new ProvisionAgent(new AdminController(controllerAnswering(false)));
+
+			let caught: any = null;
+			try {
+				await givingUp.create(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught, "a run with nothing working must not grind on").to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+			// the repos already in flight when the policy gives up finish too, so the count it reports
+			// can be a little above the threshold; what matters is that it stopped there
+			const reason = /the first (\d+) attempts all failed/.exec(caught.message);
+			expect(reason, caught.message).to.not.be.null;
+			expect(Number(reason[1])).to.be.at.least(ProvisionFailurePolicy.STARTUP_FAILURES);
+			expect(Number(reason[1])).to.be.lessThan(REPO_COUNT);
+
+			const summary = caught.summary;
+			expect(summary.provisioned).to.equal(0);
+			expect(summary.stoppedEarly).to.be.true;
+			expect(summary.stopReason).to.contain("attempts all failed");
+			expect(summary.failed.length, "every requested repo is reported as not done").to.equal(REPO_COUNT);
+			for (const id of repoIds) {
+				expect((await dbc.getRepository(id)).gitHubStatus, "nothing claims to be provisioned").to.equal(RepoStatus.NOT_CREATED);
+			}
+		});
+
+		it("Should stop releasing repositories when the first attempts all fail.", async function () {
+			const repoIds = await makeRepos("provisionAgentSpecGiveUpRelease", RepoStatus.READY);
+			const givingUp = new ProvisionAgent(new AdminController(controllerAnswering(false)));
+
+			let caught: any = null;
+			try {
+				await givingUp.release(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught).to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+			expect(caught.summary.released).to.equal(0);
+			expect(caught.summary.stoppedEarly).to.be.true;
+			expect(caught.summary.stopReason).to.contain("attempts all failed");
+			for (const id of repoIds) {
+				expect((await dbc.getRepository(id)).gitHubStatus, "a failed release leaves the repo READY").to.equal(RepoStatus.READY);
+			}
 		});
 	});
 

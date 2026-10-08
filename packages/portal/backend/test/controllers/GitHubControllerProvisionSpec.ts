@@ -642,6 +642,48 @@ describe("GitHubController provisioning paths", function () {
 			expect(afterTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED);
 		});
 
+		it("Should refuse to un-release a RELEASED repo that has no team to detach.", async function () {
+			// RELEASED with nothing attached is an inconsistency (a team deleted by hand, a record
+			// repaired half way). Quietly flipping it to READY would hide that; it stays as it is and
+			// the admin sees a failure, and dbSanityCheck is the tool that repairs it.
+			const repoId = "ghcUnreleaseNoTeams";
+			const repo = await makeReleasedRepo(repoId, "ghcUnreleaseNoTeamsTeam", []);
+			repo.teamIds = [];
+			await dbc.writeRepository(repo);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.unreleaseRepository(repo, []), "nothing to detach is not a successful un-release").to.be.false;
+			expect(gha.removed, "and GitHub is not asked to detach anything").to.deep.equal([]);
+			expect((await dbc.getRepository(repoId)).gitHubStatus, "the status is left for the sanity check to repair").to.equal(
+				RepoStatus.RELEASED
+			);
+
+			// a null team (a stale id in teamIds) is skipped, not dereferenced
+			expect(await ghc.unreleaseRepository(repo, [null])).to.be.false;
+		});
+
+		it("Should treat a detach that throws like one that failed.", async function () {
+			// GitHub answering 5xx on the DELETE: the team must stay ATTACHED so that un-releasing
+			// again retries it, and the error must not escape to take the rest of the job down
+			await makePerson("unrelStudent5", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseThrows";
+			const teamId = "ghcUnreleaseThrowsTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent5"]);
+
+			class TeamRemoveThrowsActions extends RecordingActions {
+				public async removeTeamFromRepo(_teamName: string, _repoName: string): Promise<boolean> {
+					throw new Error("Internal Server Error");
+				}
+			}
+			const ghc = new GitHubController(new TeamRemoveThrowsActions());
+
+			expect(await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId)])).to.be.false;
+			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.RELEASED);
+			expect((await dbc.getTeam(teamId)).gitHubStatus, "still attached, so the next attempt retries").to.equal(TeamStatus.ATTACHED);
+		});
+
 		it("Should survive a full release / un-release / release round trip.", async function () {
 			await makePerson("unrelStudent4", PersonKind.STUDENT);
 			const repoId = "ghcUnreleaseRoundTrip";

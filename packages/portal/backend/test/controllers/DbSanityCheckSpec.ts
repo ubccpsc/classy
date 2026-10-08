@@ -137,4 +137,77 @@ describe("AdminController::dbSanityCheck", function () {
 		const stored = await dbc.getRepository(repo.id);
 		expect(stored.gitHubStatus).to.equal(RepoStatus.READY);
 	});
+
+	describe("a team attached on GitHub", function () {
+		// the other half of the second pass: GitHub says a student team is on the repo, so the repo is
+		// RELEASED and the team ATTACHED whatever the records claimed. This is the state a course is in
+		// after releasing by hand, or after the release job was interrupted between GitHub and the
+		// database.
+		async function makeAttachedPair(suffix: string): Promise<{ repo: Repository; team: Team }> {
+			const team: Team = {
+				id: "sanityAttachedTeam" + suffix,
+				delivId: TestHarness.DELIVID0,
+				personIds: [],
+				URL: "https://github.example/orgs/org/teams/sanityAttachedTeam" + suffix,
+				githubId: 7000,
+				gitHubStatus: TeamStatus.CREATED, // GitHub disagrees: it is attached
+				custom: {},
+			};
+			await dbc.writeTeam(team);
+			const repo: Repository = {
+				id: "sanityAttachedRepo" + suffix,
+				delivId: TestHarness.DELIVID0,
+				teamIds: [team.id],
+				URL: "https://github.example/org/sanityAttachedRepo" + suffix,
+				cloneURL: null,
+				gitHubStatus: RepoStatus.READY, // GitHub disagrees: a team is on it, so it is released
+				custom: {},
+			};
+			await dbc.writeRepository(repo);
+			return { repo, team };
+		}
+
+		function orgWith(repo: Repository, team: Team): IGitHubActions {
+			const tuple: GitTeamTuple = { teamName: team.id, githubTeamNumber: team.githubId };
+			return {
+				repoExists: async (): Promise<boolean> => true,
+				listWebhooks: async (): Promise<Array<{}>> => [{ id: 1 }],
+				getTeam: async (): Promise<GitTeamTuple | null> => tuple,
+				getTeamNumber: async (): Promise<number> => team.githubId,
+				getTeamsOnRepo: async (repoId: string): Promise<GitTeamTuple[]> => (repoId === repo.id ? [tuple] : []),
+			} as unknown as IGitHubActions;
+		}
+
+		it("Should mark the repo RELEASED and the team ATTACHED when dryRun is false.", async function () {
+			const { repo, team } = await makeAttachedPair("A");
+
+			await controllerFor(orgWith(repo, team)).dbSanityCheck(false);
+
+			expect((await dbc.getRepository(repo.id)).gitHubStatus).to.equal(RepoStatus.RELEASED);
+			const storedTeam = await dbc.getTeam(team.id);
+			expect(storedTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED);
+			expect(storedTeam.githubId, "the cached team number was right and is kept").to.equal(7000);
+		});
+
+		it("Should only report the repair when dryRun is true.", async function () {
+			const { repo, team } = await makeAttachedPair("B");
+
+			await controllerFor(orgWith(repo, team)).dbSanityCheck(true);
+
+			expect((await dbc.getRepository(repo.id)).gitHubStatus).to.equal(RepoStatus.READY);
+			expect((await dbc.getTeam(team.id)).gitHubStatus).to.equal(TeamStatus.CREATED);
+		});
+
+		it("Should not detach a team that GitHub has on a repo while demoting ones it does not.", async function () {
+			// both teams say ATTACHED; only one really is. The third pass demotes the other, and must
+			// use what the second pass learned rather than demoting everything.
+			const { repo, team } = await makeAttachedPair("C");
+			const stray = await makeStaleTeam("sanityStrayTeamC"); // ATTACHED, but on no repo
+
+			await controllerFor(orgWith(repo, team)).dbSanityCheck(false);
+
+			expect((await dbc.getTeam(team.id)).gitHubStatus).to.equal(TeamStatus.ATTACHED);
+			expect((await dbc.getTeam(stray.id)).gitHubStatus, "attached to nothing on GitHub").to.not.equal(TeamStatus.ATTACHED);
+		});
+	});
 });

@@ -152,6 +152,27 @@ describe("JobScheduler", function () {
 		}
 	});
 
+	it("Should run one timer at a time, and none after stop().", async function () {
+		// start() is called once from BackendServer, but a second call must not leave a second
+		// interval ticking: that would start every scheduled job twice
+		const { jc } = fakeJobs();
+		const scheduler = new JobScheduler(jc, "prairielearn-sync@06:15", TZ);
+		const timerOf = () => (scheduler as any).timer;
+
+		expect(timerOf(), "nothing runs until start()").to.equal(null);
+		scheduler.start();
+		const first = timerOf();
+		expect(first).to.not.equal(null);
+
+		scheduler.start();
+		expect(timerOf(), "a second start replaces the timer").to.not.equal(first);
+
+		scheduler.stop();
+		expect(timerOf()).to.equal(null);
+		scheduler.stop(); // idempotent
+		expect(timerOf()).to.equal(null);
+	});
+
 	it("Should keep going when a job cannot be started.", async function () {
 		const { jc, calls } = fakeJobs((attempt) => attempt === 1);
 		const scheduler = new JobScheduler(jc, "prairielearn-sync@06:15", TZ);

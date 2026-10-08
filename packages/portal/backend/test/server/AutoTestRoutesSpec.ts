@@ -3,6 +3,7 @@ import * as fs from "fs-extra";
 import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
+import { Factory } from "@backend/Factory";
 import BackendServer from "@backend/server/BackendServer";
 
 import Config, { ConfigKey } from "@common/Config";
@@ -414,6 +415,42 @@ describe("AutoTest Routes", function () {
 		expect(response.status).to.equal(400);
 		expect(response.body?.success).to.be.undefined;
 		expect(response.body?.failure).to.not.be.undefined;
+	});
+
+	it("Should return the course's feedbackDelay answer when it implements one", async function () {
+		// the path a course plugin (cs310) takes: the controller's answer is passed through as-is,
+		// so AutoTest can show the student the course's own message
+		const url = "/portal/at/feedbackDelay";
+		const body = { delivId: TestHarness.DELIVID0, personId: TestHarness.USER1.id, timestamp: Date.now() };
+		const answer = { accepted: false, message: "Next request allowed in 12 minutes.", fullMessage: "Rate limited." };
+
+		const realFactory = Factory.getCourseController;
+		Factory.getCourseController = async () => ({ requestFeedbackDelay: async () => answer }) as any;
+		let response: any = null;
+		try {
+			response = await request(app).post(url).send(body).set("token", Config.getInstance().getProp(ConfigKey.autotestSecret));
+		} finally {
+			Factory.getCourseController = realFactory;
+		}
+		Log.test("feedbackDelay implemented: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(200);
+		expect(response.body.success.feedbackDelay).to.deep.equal(answer);
+	});
+
+	it("Should answer 400, not 500, to a body that is not JSON", async function () {
+		// the backend installs its own JSON parser (so an empty body is {}); a malformed body still
+		// has to be the client's error rather than a crash in the parser
+		const url = "/portal/at/feedbackDelay";
+
+		const response = await request(app)
+			.post(url)
+			.set("Content-Type", "application/json")
+			.set("token", Config.getInstance().getProp(ConfigKey.autotestSecret))
+			.send("{not json");
+		Log.test("malformed JSON: " + response.status + " -> " + JSON.stringify(response.body));
+
+		expect(response.status).to.equal(400);
 	});
 
 	it("Should report feedbackDelay as not implemented for the default course controller", async function () {
