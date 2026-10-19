@@ -8,6 +8,7 @@ import {
 	PersonView,
 } from "@common/types/PortalTypes";
 import { ClassMode } from "../util/ClassMode";
+import { Markdown } from "../util/Markdown";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 
@@ -192,6 +193,7 @@ export class AdminGradesTab extends AdminPage {
 		// course, so building the table cost students x deliverables x grades -- and a new
 		// deliverable adds both columns and grades, so it grew fastest exactly as the term went on.
 		const gradeFor = AdminGradesTab.indexGrades(grades);
+		this.gradeFor = gradeFor;
 
 		for (const student of students) {
 			const row: TableCell[] = [
@@ -214,6 +216,7 @@ export class AdminGradesTab extends AdminPage {
 			st.addRow(row);
 		}
 		st.generate();
+		this.wireFeedback(document.getElementById("gradesListTable"), students);
 
 		if (st.numRows() > 0) {
 			UI.showSection("gradesListTable");
@@ -248,8 +251,48 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	/** One grade's cell in the grades table; unchanged from when it was built inline in render(). */
+	/** The grades of the last render, for the feedback dialog; set by render(). */
+	private gradeFor: ((personId: string, delivId: string) => GradeTransport | undefined) | null = null;
+
+	/**
+	 * Opens the comment behind a bold grade, rendered the way the student sees it. One listener on
+	 * the table container, attached once, because SortableTable rewrites the rows on every sort.
+	 */
+	private wireFeedback(container: HTMLElement | null, students: PersonTransport[]): void {
+		if (container === null || container.dataset.feedbackWired === "true") {
+			return;
+		}
+		container.dataset.feedbackWired = "true";
+		const that = this;
+		container.addEventListener("click", function (evt: Event) {
+			const target = evt.target as HTMLElement;
+			if (target.closest("a") !== null) {
+				return; // the score's own link to the commit keeps working
+			}
+			const cell = target.closest("strong.gradeFeedback") as HTMLElement | null;
+			if (cell === null || that.gradeFor === null) {
+				return;
+			}
+			const grade = that.gradeFor(cell.dataset.personId, cell.dataset.delivId);
+			if (typeof grade === "undefined") {
+				return;
+			}
+			const student = students.find((s) => s.id === grade.personId);
+			const who = typeof student === "undefined" ? grade.personId : student.githubId;
+			let html = Markdown.render(grade.comment ?? "");
+			if (grade.URL !== null) {
+				const url = AdminGradesTab.makeHTMLSafe(grade.URL);
+				html = `<p><a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a></p>` + html;
+			}
+			UI.showHtmlDialog("Feedback: " + who + " / " + grade.delivId, html);
+		});
+	}
+
 	private static gradeCell(grade: GradeTransport): TableCell {
-		const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment);
+		// the hover shows the start of the comment; the dialog shows all of it, rendered
+		const comment = grade.comment ?? "";
+		const preview = comment.length > 300 ? comment.slice(0, 300) + "…" : comment;
+		const hoverComment = AdminGradesTab.makeHTMLSafe(preview);
 		let scoreText: string = "";
 		let scorePrepend = "";
 
@@ -279,7 +322,9 @@ export class AdminGradesTab extends AdminPage {
 		// better cross-browser compatability using
 		// strong here than adding a div (specifically for CSV download)
 		if (hoverComment !== null && hoverComment.length > 1) {
-			html = `<strong title="${hoverComment}">${html}</strong>`;
+			const personId = AdminGradesTab.makeHTMLSafe(grade.personId);
+			const delivId = AdminGradesTab.makeHTMLSafe(grade.delivId);
+			html = `<strong class="gradeFeedback" title="${hoverComment}" data-person-id="${personId}" data-deliv-id="${delivId}">${html}</strong>`;
 		}
 		return { value: scoreText, html };
 	}

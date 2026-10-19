@@ -315,3 +315,9 @@ stdio viewer Page
     text-align: center;
     width: 100%;
 }
+
+/* Grades page: a bold grade has feedback behind it; clicking opens it (AdminGradesTab.wireFeedback). */
+#gradesListTable strong.gradeFeedback {
+    cursor: pointer;
+    text-decoration: underline dotted;
+}
