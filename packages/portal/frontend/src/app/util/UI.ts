@@ -267,6 +267,43 @@ export class UI {
 		return ons.notification.alert(message);
 	}
 
+	/**
+	 * Shows already-sanitised HTML (a rendered grade comment, say) in a scrollable dialog with a
+	 * heading and a close button. The dialog is built here rather than from a page template so
+	 * every page, including the plugin-owned student page, can use it without carrying markup.
+	 *
+	 * The dialog removes itself from the document when hidden; an alert would not fit a long
+	 * comment and a popup window cannot be styled.
+	 *
+	 * @param title shown as the dialog heading; treated as text, not HTML
+	 * @param html the body; the caller is responsible for it being safe (see util/Markdown)
+	 */
+	public static showHtmlDialog(title: string, html: string): Promise<void> {
+		const markup =
+			'<ons-dialog class="htmlDialog" cancelable>' +
+			'<div class="htmlDialogHeader"><span class="htmlDialogTitle"></span>' +
+			'<ons-button modifier="quiet" class="htmlDialogClose" aria-label="Close">&times;</ons-button></div>' +
+			'<div class="htmlDialogBody"></div>' +
+			"</ons-dialog>";
+		// NOTE: Promise.resolve because ons.createElement only returns a promise for a template
+		// path; for a markup string like this one it returns the element itself
+		return Promise.resolve(ons.createElement(markup, { append: true }))
+			.then(function (dialog: any) {
+				(dialog.querySelector(".htmlDialogTitle") as HTMLElement).textContent = title;
+				(dialog.querySelector(".htmlDialogBody") as HTMLElement).innerHTML = html;
+				(dialog.querySelector(".htmlDialogClose") as HTMLElement).onclick = function () {
+					dialog.hide();
+				};
+				dialog.addEventListener("posthide", function () {
+					dialog.remove();
+				});
+				dialog.show();
+			})
+			.catch(function (err: Error) {
+				Log.error("UI::showHtmlDialog(..) - ERROR: " + err.message);
+			});
+	}
+
 	public static templateConfirm(template: string, options: { header?: string; listContent?: Array<{ text: string; subtext?: string }> }) {
 		return ons
 			.createElement(template, { append: true })

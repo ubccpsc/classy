@@ -701,6 +701,7 @@ export class AdminController {
 	 *
 	 * @returns {Promise<RepositoryTransport[]>}
 	 */
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: one pass over the teams and repos; splitting it would scatter the planning log
 	public async prepareProvision(
 		deliv: Deliverable,
 		formSingleTeams: boolean,

@@ -215,6 +215,65 @@ Dashboard Page
 }
 
 /**
+ * HTML dialog (UI.showHtmlDialog): a rendered grade comment, for one.
+ *
+ * Onsen sizes a dialog to its content, which is wrong for a comment of unknown length: the body
+ * scrolls inside a bounded height instead, and the dialog takes most of the width so code blocks
+ * and tables in the comment have room.
+ */
+.htmlDialog .dialog {
+    width: 85%;
+    max-width: 960px;
+}
+
+.htmlDialogHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px 16px;
+    border-bottom: 1px solid #ddd;
+}
+
+.htmlDialogTitle {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.htmlDialogClose {
+    font-size: 1.4em;
+    line-height: 1;
+}
+
+.htmlDialogBody {
+    max-height: 70vh;
+    overflow: auto;
+    padding: 8px 16px 16px 16px;
+    text-align: left;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.htmlDialogBody pre {
+    overflow: auto;
+    padding: 8px;
+    background-color: #f5f5f5;
+}
+
+.htmlDialogBody code {
+    font-size: 0.9em;
+}
+
+.htmlDialogBody table {
+    border-collapse: collapse;
+}
+
+.htmlDialogBody th,
+.htmlDialogBody td {
+    border: 1px solid #ccc;
+    padding: 2px 8px;
+}
+
+/**
 stdio viewer Page
  */
 #stdioViewer {

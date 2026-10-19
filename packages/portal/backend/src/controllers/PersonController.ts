@@ -214,6 +214,7 @@ export class PersonController {
 	 * @param teams the logins on each team
 	 * @returns what changed, with the people behind every count, plus the one-line summary
 	 */
+	// biome-ignore lint/complexity/noExcessiveLinesPerFunction: one reconciliation pass whose steps share the same tallies
 	public async syncKindsWithTeams(teams: TeamLogins): Promise<UserSyncTransport> {
 		const prefix = "PersonController::syncKindsWithTeams( .. ) - ";
 		const people = await this.getAllPeople();
