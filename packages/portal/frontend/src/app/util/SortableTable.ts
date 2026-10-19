@@ -415,20 +415,29 @@ export class SortableTable {
 		return value.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 	}
 
-	private escapeCSVValue(value: string): string {
-		let sanitized = value.replace(/"/g, ""); // remove all double quotes
-		sanitized = value.replace(/'/g, ""); // remove all single quotes
-		sanitized = sanitized.replace(/&nbsp;/g, " "); // replace all &nbsp; with a space
-		sanitized = sanitized.replace(/,/g, " "); // remove all commas
-		return sanitized;
+	/**
+	 * Quotes one value for a CSV cell (RFC 4180): a value holding a comma, a double quote or a line
+	 * break is wrapped in double quotes, with any double quotes inside it doubled.
+	 *
+	 * This replaced stripping those characters out. A grade comment is exported through the cell's
+	 * hover text and is often several lines of Markdown, so stripping could not work: every line
+	 * break became a new CSV row and the table fell apart from that cell on. (The old code also
+	 * reassigned from `value` after removing double quotes, so they were never removed anyway.)
+	 */
+	private static csvField(value: string): string {
+		const text = (value ?? "").replace(/&nbsp;/g, " ").replace(/\u00a0/g, " ");
+		if (/[",\r\n]/.test(text) === true) {
+			return '"' + text.replace(/"/g, '""') + '"';
+		}
+		return text;
 	}
 
 	private extractMetadata(elem: HTMLElement) {
 		let out = "";
 		if (elem.children[0] instanceof HTMLAnchorElement) {
-			out = this.escapeCSVValue((elem.children[0] as HTMLAnchorElement).href);
+			out = SortableTable.csvField((elem.children[0] as HTMLAnchorElement).href);
 		} else if (typeof (elem as any).children[0]?.title === "string") {
-			out = this.escapeCSVValue((elem as any).children[0].title);
+			out = SortableTable.csvField((elem as any).children[0].title);
 		}
 		// Log.info("SortableTable::extractMetadata() - value: " + out); // remove after working
 		return out;
@@ -451,24 +460,20 @@ export class SortableTable {
 				if (drawn[j]?.downloadable === false) {
 					continue;
 				}
+				let text = (cols[j] as HTMLTableCellElement).innerText;
 				if (i === 0) {
-					let text = (cols[j] as HTMLTableCellElement).innerText;
 					text = text.replace(" ▼", "");
 					text = text.replace(" ▲", "");
-					text = text.trim();
-					row.push(text);
-				} else {
-					let text = (cols[j] as HTMLTableCellElement).innerText;
-					text = text.trim();
-					row.push(text);
 				}
+				text = text.trim();
+				row.push(SortableTable.csvField(text));
 
 				if (colsWithMetadata.indexOf(j) >= 0) {
 					if (i === 0) {
 						// header row: named after the heading pushed just above. (This used to be
 						// computed from j and the metadata columns to its left, which a column left
 						// out of the export would throw off.)
-						row.push(row[row.length - 1] + "_metadata");
+						row.push(SortableTable.csvField(text + "_metadata"));
 					} else {
 						// regular row
 						row.push(this.extractMetadata(cols[j] as HTMLElement));

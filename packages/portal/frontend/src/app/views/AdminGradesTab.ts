@@ -289,10 +289,9 @@ export class AdminGradesTab extends AdminPage {
 	}
 
 	private static gradeCell(grade: GradeTransport): TableCell {
-		// the hover shows the start of the comment; the dialog shows all of it, rendered
-		const comment = grade.comment ?? "";
-		const preview = comment.length > 300 ? comment.slice(0, 300) + "…" : comment;
-		const hoverComment = AdminGradesTab.makeHTMLSafe(preview);
+		// NOTE: the whole comment, not a preview: the CSV download exports a bold cell's title as
+		// its metadata column, so truncating it here would truncate the export
+		const hoverComment = AdminGradesTab.makeHTMLSafe(grade.comment ?? "");
 		let scoreText: string = "";
 		let scorePrepend = "";
 
