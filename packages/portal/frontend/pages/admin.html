@@ -200,7 +200,9 @@
 
     <template id="results.html">
         <ons-page id="AdminResults">
-            <ons-list id="AdminResultsList">
+            <!-- overflow: visible undoes Onsen's .list { overflow: hidden }, which would otherwise clip the
+                 repository filter's dropdown to the first few options -->
+            <ons-list id="AdminResultsList" style="overflow: visible;">
                 <div
                         style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em;">Deliv:</span>
@@ -230,7 +232,9 @@
 
     <template id="dashboard.html">
         <ons-page id="AdminDashboard">
-            <ons-list id="AdminDashboardList">
+            <!-- overflow: visible undoes Onsen's .list { overflow: hidden }, which would otherwise clip the
+                 repository filter's dropdown to the first few options -->
+            <ons-list id="AdminDashboardList" style="overflow: visible;">
                 <div
                         style="display:flex; flex-direction: row; justify-content: center; align-items: center; padding: 1em;">
                     <span style="padding-right: 0.5em">Deliv:</span>
