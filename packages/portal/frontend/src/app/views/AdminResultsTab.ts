@@ -20,6 +20,16 @@ import { AdminView } from "./AdminView";
 
 declare let TomSelect: any;
 
+/** Attributes for a filter's search box: no spell-check, autocorrect or autofill. */
+const SEARCH_BOX_ATTRS: { [attr: string]: string } = {
+	spellcheck: "false",
+	autocomplete: "off",
+	autocorrect: "off",
+	autocapitalize: "off",
+	"data-lpignore": "true", // LastPass
+	"data-1p-ignore": "true", // 1Password
+};
+
 export class AdminResultsTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private delivValue: string | null = null;
@@ -419,6 +429,13 @@ export class AdminResultsTab extends AdminPage {
 				maxOptions: null,
 				maxItems: 1,
 				closeAfterSelect: true,
+				onInitialize: function () {
+					// the search box takes repository names, which the browser otherwise underlines
+					// as misspelt and offers to autocomplete from unrelated form history
+					for (const [attr, value] of Object.entries(SEARCH_BOX_ATTRS)) {
+						this.control_input.setAttribute(attr, value);
+					}
+				},
 				onDropdownOpen: function () {
 					Log.trace("AdminResultsTab::render(..)::repoSelect - Clearing input: " + this);
 					this.setValue("");
