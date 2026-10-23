@@ -22,6 +22,8 @@ describe("ProvisionFailurePolicy", function () {
 			[403, '{"message":"API rate limit exceeded"}', "the rate limit"],
 			[403, '{"message":"You have exceeded a secondary rate limit; please wait"}', "a secondary rate limit"],
 			[0, "getaddrinfo ENOTFOUND github.students.cs.ubc.ca", "an unreachable host"],
+			[200, "<!DOCTYPE html>\n<html><head><title>Sign in</title></head></html>", "a login page where the API should be"],
+			[200, "  <html><body>VPN required</body></html>", "a VPN gate answering for the API"],
 		];
 
 		for (const [status, body, why] of fatal) {
@@ -35,6 +37,7 @@ describe("ProvisionFailurePolicy", function () {
 			[422, '{"message":"Repository creation failed"}', "one repo GitHub would not create"],
 			[500, "", "GitHub having a bad minute"],
 			[403, '{"message":"Resource not accessible"}', "a permission problem on one resource"],
+			[502, "<!DOCTYPE html><html><body>Unicorn! GitHub is having a bad minute</body></html>", "GitHub's own HTML error page"],
 		];
 
 		for (const [status, body, why] of survivable) {

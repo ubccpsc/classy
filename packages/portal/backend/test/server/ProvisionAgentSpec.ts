@@ -5,9 +5,10 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubError } from "@backend/controllers/GitHubActions";
+import { ProvisionFailurePolicy } from "@backend/controllers/ProvisionFailurePolicy";
 import { ProvisionState } from "@backend/controllers/ProvisionState";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
-import { AuditLabel, RepoStatus, Repository } from "@backend/Types";
+import { AuditLabel, PersonKind, RepoStatus, Repository, StudentAccess } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -116,7 +117,114 @@ describe("ProvisionAgent", function () {
 		);
 	});
 
+	/**
+	 * prepare() is the planning step: it creates the Team and Repository records an admin then
+	 * selects from. Nothing here reaches GitHub -- the repos it "creates" are database records with
+	 * gitHubStatus NOT_CREATED.
+	 *
+	 * It was completely uncovered. The counts it returns are what the UI reports back to the admin
+	 * ("N repos created"), and they are computed as a before/after difference rather than from what
+	 * was planned, so they are easy to get subtly wrong in a way no other test would notice.
+	 */
+	describe("prepare", function () {
+		const PREPARE_DELIV = "provisionAgentPrepareDeliv";
+
+		async function seedDeliverable(): Promise<void> {
+			const deliv = TestHarness.createDeliverable(PREPARE_DELIV);
+			deliv.shouldProvision = true;
+			deliv.teamMinSize = 1;
+			deliv.teamMaxSize = 1; // singleton teams, so one student gives one repo
+			deliv.teamStudentsForm = false;
+			await dbc.writeDeliverable(deliv);
+		}
+
+		it("Should carry who was not placed, and why, in the summary the page renders.", async function () {
+			// the report is what the Manage Repositories page shows; a plan that quietly omits people is
+			// the failure this exists to prevent, so the fields must always be present even when empty
+			await seedDeliverable();
+			const summary = await agent.prepare(PREPARE_DELIV, false, TestHarness.ADMIN1.id);
+
+			expect(summary.notPlaced, "notPlaced is always an array").to.be.an("array");
+			expect(summary.peopleNotOnTeam, "peopleNotOnTeam is always a number").to.be.a("number");
+			for (const n of summary.notPlaced) {
+				expect(n).to.have.all.keys("personId", "kind", "reason");
+			}
+		});
+
+		it("Should create a team and a repo for each student, and count them.", async function () {
+			await seedDeliverable();
+			const person = TestHarness.createPerson("prepareSpecPerson", "prepareSpecPerson", "prepareSpecGithub", PersonKind.STUDENT);
+			await dbc.writePerson(person);
+
+			const summary = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+
+			expect(summary.delivId).to.equal(PREPARE_DELIV);
+			expect(summary.reposCreated, "a singleton deliverable gives each student a repo").to.be.greaterThan(0);
+			expect(summary.teamsCreated, "and the team that owns it").to.be.greaterThan(0);
+			expect(summary.repos, "repos planned must be at least the repos created").to.be.greaterThan(0);
+
+			// the records exist, and nothing has been created on GitHub
+			const repos = (await dbc.getRepositories()).filter((r) => r.delivId === PREPARE_DELIV);
+			expect(repos.length).to.equal(summary.repos);
+			for (const repo of repos) {
+				expect(repo.gitHubStatus, "prepare must not claim anything exists on GitHub").to.equal(RepoStatus.NOT_CREATED);
+			}
+		});
+
+		it("Should count nothing as created when it is run twice.", async function () {
+			// the idempotence that makes the count meaningful: the admin who runs prepare a second
+			// time must be told 0, not the total. Both counts are before/after differences, so a
+			// regression here reads as "everything was just created" on a re-run.
+			await seedDeliverable();
+			const person = TestHarness.createPerson("prepareTwicePerson", "prepareTwicePerson", "prepareTwiceGithub", PersonKind.STUDENT);
+			await dbc.writePerson(person);
+
+			const first = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+			expect(first.reposCreated).to.be.greaterThan(0);
+
+			const second = await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+			expect(second.reposCreated, "nothing new to create").to.equal(0);
+			expect(second.teamsCreated, "nothing new to create").to.equal(0);
+			expect(second.repos, "but the planned repos are still reported").to.equal(first.repos);
+		});
+
+		it("Should write one audit record naming the requester.", async function () {
+			await seedDeliverable();
+			const before = await dbc.getAudits(AuditLabel.REPO_PROVISION, 1000);
+
+			await agent.prepare(PREPARE_DELIV, true, TestHarness.ADMIN1.id);
+
+			const after = await dbc.getAudits(AuditLabel.REPO_PROVISION, 1000);
+			expect(after.length, "exactly one audit record per prepare").to.equal(before.length + 1);
+
+			expect(after[0].personId).to.equal(TestHarness.ADMIN1.id);
+			expect((after[0].custom as any).action).to.equal("prepare");
+			expect((after[0].custom as any).delivId).to.equal(PREPARE_DELIV);
+		});
+
+		it("Should reject a deliverable that is not provisionable, before creating anything.", async function () {
+			// DELIVID1 has shouldProvision false. The guard has to come first: the whole point of
+			// prepare is that it writes records, so a late rejection would leave them behind.
+			const teamsBefore = (await dbc.getTeams()).length;
+			const reposBefore = (await dbc.getRepositories()).length;
+
+			const msg = await messageFrom(agent.prepare(TestHarness.DELIVID1, true, TestHarness.ADMIN1.id));
+			expect(msg).to.contain("not provisionable");
+
+			expect((await dbc.getTeams()).length, "nothing may be written").to.equal(teamsBefore);
+			expect((await dbc.getRepositories()).length, "nothing may be written").to.equal(reposBefore);
+		});
+
+		it("Should reject an unknown deliverable.", async function () {
+			const msg = await messageFrom(agent.prepare("provisionAgentNoSuchDeliv", true, TestHarness.ADMIN1.id));
+			expect(msg).to.contain("Unknown deliverable");
+		});
+	});
+
 	describe("when a run gives up", function () {
+		// release and un-release run PROVISION_CONCURRENCY repos at a time
+		const REPO_COUNT = AdminController.PROVISION_CONCURRENCY * 3;
+
 		// NOTE: the create side of this is covered in AdminControllerSpec; release had nothing, and it
 		// is the half that reads back what it managed to do (performRelease throws out of its loop, so
 		// its return value is lost -- the statuses in the database are the record).
@@ -125,9 +233,10 @@ describe("ProvisionAgent", function () {
 			deliv.shouldProvision = true;
 			await dbc.writeDeliverable(deliv);
 
-			// three repos ready to release; the second one kills the run
+			// more repos than run at once, so there is something left to not schedule; the second
+			// one to reach GitHub kills the run
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecRelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -178,7 +287,9 @@ describe("ProvisionAgent", function () {
 			expect(partial.released, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
 		});
 
 		it("Should report what it un-released before a fatal failure stopped it.", async function () {
@@ -188,7 +299,7 @@ describe("ProvisionAgent", function () {
 			await dbc.writeDeliverable(deliv);
 
 			const repoIds: string[] = [];
-			for (const n of [1, 2, 3]) {
+			for (let n = 1; n <= REPO_COUNT; n++) {
 				const repo: Repository = {
 					id: "provisionAgentSpecUnrelease" + n,
 					delivId: TestHarness.DELIVID0,
@@ -239,7 +350,107 @@ describe("ProvisionAgent", function () {
 			expect(partial.unreleased, "the one that worked is kept").to.equal(1);
 			expect(partial.stoppedEarly).to.be.true;
 			expect(partial.stopReason).to.contain("fatally");
-			expect(calls, "it must not try the third").to.equal(2);
+			// repos already in flight finish, but nothing new is scheduled once the run is abandoned
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
+			expect(calls).to.be.lessThan(REPO_COUNT);
+		});
+	});
+
+	describe("giving up on a run that is not working", function () {
+		// Not every failure is fatal. provisionRepository/releaseRepository answer false for a repo
+		// that could not be set up, and the run carries on past one of those -- but a run whose first
+		// attempts ALL fail is misconfigured (an unreachable importURL, a template that is not one),
+		// and grinding through the rest would only make more work to undo. ProvisionFailurePolicy
+		// stops it, and the agent still has to report what happened.
+		const REPO_COUNT = ProvisionFailurePolicy.STARTUP_FAILURES + AdminController.PROVISION_CONCURRENCY + 2;
+
+		function controllerAnswering(result: boolean): any {
+			return {
+				provisionRepository: async () => result,
+				releaseRepository: async () => result,
+				unreleaseRepository: async () => result,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+		}
+
+		async function makeRepos(prefix: string, status: RepoStatus): Promise<string[]> {
+			const ids: string[] = [];
+			for (let n = 1; n <= REPO_COUNT; n++) {
+				const repo: Repository = {
+					id: prefix + n,
+					delivId: TestHarness.DELIVID0,
+					teamIds: [],
+					URL: status === RepoStatus.NOT_CREATED ? null : "https://example.com/" + prefix + n,
+					cloneURL: null,
+					gitHubStatus: status,
+					custom: {},
+				};
+				await dbc.writeRepository(repo);
+				ids.push(repo.id);
+			}
+			return ids;
+		}
+
+		before(async function () {
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+		});
+
+		it("Should stop creating repositories when the first attempts all fail.", async function () {
+			const repoIds = await makeRepos("provisionAgentSpecGiveUpCreate", RepoStatus.NOT_CREATED);
+			const givingUp = new ProvisionAgent(new AdminController(controllerAnswering(false)));
+
+			let caught: any = null;
+			try {
+				await givingUp.create(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught, "a run with nothing working must not grind on").to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+			// the repos already in flight when the policy gives up finish too, so the count it reports
+			// can be a little above the threshold; what matters is that it stopped there
+			const reason = /the first (\d+) attempts all failed/.exec(caught.message);
+			expect(reason, caught.message).to.not.be.null;
+			expect(Number(reason[1])).to.be.at.least(ProvisionFailurePolicy.STARTUP_FAILURES);
+			expect(Number(reason[1])).to.be.lessThan(REPO_COUNT);
+
+			const summary = caught.summary;
+			expect(summary.provisioned).to.equal(0);
+			expect(summary.stoppedEarly).to.be.true;
+			expect(summary.stopReason).to.contain("attempts all failed");
+			expect(summary.failed.length, "every requested repo is reported as not done").to.equal(REPO_COUNT);
+			for (const id of repoIds) {
+				expect((await dbc.getRepository(id)).gitHubStatus, "nothing claims to be provisioned").to.equal(RepoStatus.NOT_CREATED);
+			}
+		});
+
+		it("Should stop releasing repositories when the first attempts all fail.", async function () {
+			const repoIds = await makeRepos("provisionAgentSpecGiveUpRelease", RepoStatus.READY);
+			const givingUp = new ProvisionAgent(new AdminController(controllerAnswering(false)));
+
+			let caught: any = null;
+			try {
+				await givingUp.release(TestHarness.DELIVID0, repoIds, TestHarness.ADMIN1.id);
+			} catch (err) {
+				caught = err;
+			}
+			Log.test("caught: " + caught?.message + "; summary: " + JSON.stringify(caught?.summary));
+
+			expect(caught).to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+			expect(caught.summary.released).to.equal(0);
+			expect(caught.summary.stoppedEarly).to.be.true;
+			expect(caught.summary.stopReason).to.contain("attempts all failed");
+			for (const id of repoIds) {
+				expect((await dbc.getRepository(id)).gitHubStatus, "a failed release leaves the repo READY").to.equal(RepoStatus.READY);
+			}
 		});
 	});
 
@@ -361,6 +572,143 @@ describe("ProvisionAgent", function () {
 			expect(summary.cancelled, "the summary must say the run was cancelled").to.be.true;
 			expect(summary.unreleased).to.equal(1);
 			expect(summary.failed, "the repo it never reached is not a failure").to.deep.equal([second]);
+		});
+	});
+
+	describe("read-only and writeable summaries", function () {
+		async function makeRepo(id: string, status: RepoStatus): Promise<string> {
+			const repo: Repository = {
+				id: id,
+				delivId: TestHarness.DELIVID0,
+				teamIds: [],
+				URL: "https://example.com/" + id,
+				cloneURL: null,
+				gitHubStatus: status,
+				custom: {},
+			};
+			await dbc.writeRepository(repo);
+			return repo.id;
+		}
+
+		function controllerFor(behaviour: (repo: Repository, access: StudentAccess) => Promise<boolean>): any {
+			return {
+				setStudentAccess: async (repo: Repository, _teams: any[], access: StudentAccess) => await behaviour(repo, access),
+				unreleaseRepository: async () => true,
+				releaseRepository: async () => true,
+				provisionRepository: async () => true,
+				updateBranchProtection: async () => true,
+				createIssues: async () => true,
+				getRepositoryUrl: () => "https://example.com",
+				getTeamUrl: async () => "https://example.com",
+			};
+		}
+
+		/** What GitHubController does once GitHub has accepted the change. */
+		const recordIt = async (repo: Repository, access: StudentAccess): Promise<boolean> => {
+			await ProvisionState.setStudentAccess(repo, access, "spec");
+			return true;
+		};
+
+		before(async function () {
+			const deliv = await new DeliverablesController().getDeliverable(TestHarness.DELIVID0);
+			deliv.shouldProvision = true;
+			await dbc.writeDeliverable(deliv);
+		});
+
+		it("Should count what it made read-only, skipped, and failed.", async function () {
+			const ok = await makeRepo("agentAccessOk_" + Date.now(), RepoStatus.RELEASED);
+			const bad = await makeRepo("agentAccessBad_" + Date.now(), RepoStatus.RELEASED);
+			// not released, so there is no student team to change: skipped, not failed
+			const skipped = await makeRepo("agentAccessSkip_" + Date.now(), RepoStatus.READY);
+
+			const gh = controllerFor(async (repo, access) => (repo.id === bad ? false : await recordIt(repo, access)));
+			const summary = await new ProvisionAgent(new AdminController(gh)).setStudentAccess(
+				TestHarness.DELIVID0,
+				[ok, bad, skipped],
+				StudentAccess.PULL,
+				TestHarness.ADMIN1.id
+			);
+
+			expect(summary.access).to.equal(StudentAccess.PULL);
+			expect(summary.requested).to.equal(3);
+			expect(summary.changed).to.equal(1);
+			expect(summary.skipped).to.equal(1);
+			expect(summary.failed).to.deep.equal([bad]);
+			expect(summary.stoppedEarly).to.be.false;
+			expect((await dbc.getRepository(ok)).studentAccess).to.equal(StudentAccess.PULL);
+			expect((await dbc.getRepository(bad)).studentAccess, "a failed repo keeps the access it had").to.be.undefined;
+		});
+
+		it("Should write exactly one audit record naming the requester and the access.", async function () {
+			const repoId = await makeRepo("agentAccessAudit_" + Date.now(), RepoStatus.RELEASED);
+
+			const before = await dbc.getAudits(AuditLabel.REPO_ACCESS, 1000);
+			await new ProvisionAgent(new AdminController(controllerFor(recordIt))).setStudentAccess(
+				TestHarness.DELIVID0,
+				[repoId],
+				StudentAccess.PUSH,
+				TestHarness.ADMIN1.id
+			);
+			const after = await dbc.getAudits(AuditLabel.REPO_ACCESS, 1000);
+
+			expect(after.length).to.equal(before.length + 1);
+			expect(after[0].personId).to.equal(TestHarness.ADMIN1.id);
+			expect((after[0].custom as any).access).to.equal(StudentAccess.PUSH);
+			expect((after[0].custom as any).repoIds).to.deep.equal([repoId]);
+		});
+
+		it("Should reject an access other than pull or push, before doing anything.", async function () {
+			// job params come from the client; "admin" in particular must never reach a student team
+			const repoId = await makeRepo("agentAccessBadValue_" + Date.now(), RepoStatus.RELEASED);
+			let calls = 0;
+			const gh = controllerFor(async () => {
+				calls++;
+				return true;
+			});
+
+			const before = await dbc.getAudits(AuditLabel.REPO_ACCESS, 1000);
+			const msg = await messageFrom(
+				new ProvisionAgent(new AdminController(gh)).setStudentAccess(TestHarness.DELIVID0, [repoId], "admin" as any, TestHarness.ADMIN1.id)
+			);
+
+			expect(msg).to.contain("Unknown access");
+			expect(calls).to.equal(0);
+			expect((await dbc.getAudits(AuditLabel.REPO_ACCESS, 1000)).length, "nothing audited").to.equal(before.length);
+		});
+
+		it("Should report what it changed before a fatal failure stopped it.", async function () {
+			const repoIds: string[] = [];
+			for (let n = 1; n <= AdminController.PROVISION_CONCURRENCY * 3; n++) {
+				repoIds.push(await makeRepo("agentAccessFatal" + n + "_" + Date.now(), RepoStatus.RELEASED));
+			}
+
+			// the first change works, every later one is fatal
+			let calls = 0;
+			const gh = controllerFor(async (repo, access) => {
+				calls++;
+				if (calls === 1) {
+					return await recordIt(repo, access);
+				}
+				throw new GitHubError("GitHub returned 401", 401, '{"message":"Bad credentials"}');
+			});
+
+			let caught: any = null;
+			try {
+				await new ProvisionAgent(new AdminController(gh)).setStudentAccess(
+					TestHarness.DELIVID0,
+					repoIds,
+					StudentAccess.PULL,
+					TestHarness.ADMIN1.id
+				);
+			} catch (err) {
+				caught = err;
+			}
+
+			expect(caught, "a fatal failure must stop the run").to.not.be.null;
+			expect(caught.name).to.equal("ProvisionAbortedError");
+			expect(caught.summary.changed, "the one that worked is reported").to.equal(1);
+			expect(caught.summary.stoppedEarly).to.be.true;
+			expect(calls, "it must stop scheduling repos").to.be.at.most(AdminController.PROVISION_CONCURRENCY);
 		});
 	});
 });

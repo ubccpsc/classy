@@ -185,9 +185,92 @@ Dashboard Page
     top: 0;
 }
 
+/*
+ * Grades page: the first column (the student's GitHub id / CWL) stays put when a wide grade table
+ * scrolls the page sideways, as the headings already do when it scrolls down. It pins to the page
+ * because nothing between it and the page scrolls or clips; see the grades template in admin.html.
+ *
+ * The pinned cells take their row's alternating colour, so cells scrolling under them are hidden.
+ * Layering, top to bottom: the corner heading, the other headings, the pinned column, the rest.
+ */
+#gradesListTable .sortableTable td:first-child {
+    position: sticky;
+    left: 0;
+    z-index: 1;
+    background-color: inherit;
+}
+
+#gradesListTable .sortableTable th {
+    z-index: 2;
+}
+
+#gradesListTable .sortableTable th:first-child {
+    left: 0;
+    z-index: 3;
+}
+
 .selectable {
     user-select: auto;
     -webkit-user-select: auto;
+}
+
+/**
+ * HTML dialog (UI.showHtmlDialog): a rendered grade comment, for one.
+ *
+ * Onsen sizes a dialog to its content, which is wrong for a comment of unknown length: the body
+ * scrolls inside a bounded height instead, and the dialog takes most of the width so code blocks
+ * and tables in the comment have room.
+ */
+.htmlDialog .dialog {
+    width: 85%;
+    max-width: 960px;
+}
+
+.htmlDialogHeader {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 16px 8px 16px;
+    border-bottom: 1px solid #ddd;
+}
+
+.htmlDialogTitle {
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.htmlDialogClose {
+    font-size: 1.4em;
+    line-height: 1;
+}
+
+.htmlDialogBody {
+    max-height: 70vh;
+    overflow: auto;
+    padding: 8px 16px 16px 16px;
+    text-align: left;
+    user-select: text;
+    -webkit-user-select: text;
+}
+
+.htmlDialogBody pre {
+    overflow: auto;
+    padding: 8px;
+    background-color: #f5f5f5;
+}
+
+.htmlDialogBody code {
+    font-size: 0.9em;
+}
+
+.htmlDialogBody table {
+    border-collapse: collapse;
+}
+
+.htmlDialogBody th,
+.htmlDialogBody td {
+    border: 1px solid #ccc;
+    padding: 2px 8px;
 }
 
 /**
@@ -231,4 +314,10 @@ stdio viewer Page
 #adminClasslistConfirmHeader ons-button {
     text-align: center;
     width: 100%;
+}
+
+/* Grades page: a bold grade has feedback behind it; clicking opens it (AdminGradesTab.wireFeedback). */
+#gradesListTable strong.gradeFeedback {
+    cursor: pointer;
+    text-decoration: underline dotted;
 }

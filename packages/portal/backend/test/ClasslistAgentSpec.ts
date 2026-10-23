@@ -3,6 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
+import { PersonKind } from "@backend/Types";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
 
@@ -232,6 +233,36 @@ describe("ClasslistAgent", function () {
 		const secondUpdate = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
 		expect(firstUpdate.removed.length).to.be.lessThan(secondUpdate.removed.length);
 		expect(secondUpdate.removed.length).to.equal(firstUpdate.removed.length + 1);
+	});
+
+	it("Should name the people on the classlist who are not active students", async function () {
+		// The classlist update never changes a person's kind, so someone the registrar lists who is
+		// WITHDRAWN (or has no kind yet) stays that way; this is what explains "# registered" being
+		// larger than "# active", and the report has to say who, by kind, so the admin knows which
+		// job (user sync) resolves each.
+		const data = mockAPIData.slice();
+		await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
+
+		const dbc = DatabaseController.getInstance();
+		const withdrawn = await dbc.getPerson(data[0].ACCT.toLowerCase());
+		withdrawn.kind = PersonKind.WITHDRAWN;
+		await dbc.writePerson(withdrawn);
+		const unknown = await dbc.getPerson(data[1].ACCT.toLowerCase());
+		unknown.kind = null;
+		await dbc.writePerson(unknown);
+
+		const changes = await ca.processClasslist(TestHarness.ADMIN1.id, null, data);
+
+		expect(changes.classlist.length, "everyone on the list is still registered").to.equal(data.length);
+		expect(changes.notActive.map((p) => p.id).sort()).to.deep.equal([withdrawn.id, unknown.id].sort());
+		expect(changes.notActiveByKind).to.deep.equal({ [PersonKind.WITHDRAWN]: 1, null: 1 });
+		expect((await dbc.getPerson(withdrawn.id)).kind, "the classlist does not reinstate anyone").to.equal(PersonKind.WITHDRAWN);
+
+		// put them back so the suites that follow see students
+		withdrawn.kind = PersonKind.STUDENT;
+		await dbc.writePerson(withdrawn);
+		unknown.kind = PersonKind.STUDENT;
+		await dbc.writePerson(unknown);
 	});
 
 	it("Should produce a list of UPDATED users if a property has changed via classlist API", async function () {

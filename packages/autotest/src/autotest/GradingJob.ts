@@ -5,6 +5,7 @@ import { AutoTestResult } from "@common/types/AutoTestTypes";
 import { ContainerInput, ContainerState } from "@common/types/ContainerTypes";
 import Util from "@common/Util";
 import { exec } from "child_process";
+import * as crypto from "crypto";
 import * as Docker from "dockerode";
 import * as fs from "fs-extra";
 import { promisify } from "util";
@@ -17,11 +18,22 @@ export class GradingJob {
 	public readonly input: ContainerInput;
 	public readonly path: string;
 	public readonly id: string;
+	/** id, plus the ref when there is one; the on-disk run directory. See the constructor. */
+	public readonly dirName: string;
 
 	public constructor(containerInput: ContainerInput) {
 		this.input = containerInput;
 		this.id = this.input.target.commitSHA + "-" + this.input.target.delivId;
-		this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.id;
+		// NOTE: the run directory is keyed on the ref as well as the id, but the id is NOT.
+		// The queue admits one job per (commit, deliv, ref) -- see Queue.indexOf and
+		// AutoTest.isCommitExecuting, both of which include ref -- so the same SHA pushed to two
+		// refs yields two concurrent jobs. They used to share one directory and cross-delete each
+		// other's report.json (emptyDir here, removeSync of /assn in run()), which surfaces as a
+		// student getting another job's score or a spurious "make a new commit". The id is left
+		// alone deliberately: it is the container's EXEC_ID and the record's graderTaskId, and
+		// graders may parse it.
+		this.dirName = this.id + GradingJob.refSuffix(this.input.target.ref);
+		this.path = Config.getInstance().getProp(ConfigKey.persistDir) + "/runs/" + this.dirName;
 
 		// Populate record with default values in case the commit fails
 		// spectacularly, or is timed out by Docker itself
@@ -54,6 +66,27 @@ export class GradingJob {
 		};
 	}
 
+	/**
+	 * A filesystem-safe, collision-free suffix for a ref.
+	 *
+	 * Refs arrive as "refs/heads/<branch>" and the branch half is student-controlled, so this
+	 * cannot be used as a path segment directly: slashes would nest (or escape) the run
+	 * directory, and a long branch name would blow the path length. The readable part is
+	 * sanitized and truncated for debugging; the hash is what actually guarantees two different
+	 * refs get two different directories, since sanitizing alone would collide "a/b" with "a_b".
+	 *
+	 * Returns "" when there is no ref (ContainerInput.target.ref is optional -- comment-triggered
+	 * jobs have none), which preserves the previous directory name for those.
+	 */
+	private static refSuffix(ref: string | undefined): string {
+		if (typeof ref !== "string" || ref.length === 0) {
+			return "";
+		}
+		const readable = ref.replace(/[^A-Za-z0-9._-]/g, "_").substring(0, 24);
+		const digest = crypto.createHash("sha1").update(ref).digest("hex").substring(0, 8);
+		return "-" + readable + "-" + digest;
+	}
+
 	public async prepare(): Promise<void> {
 		try {
 			Log.trace("GradingJob::prepare() - start: " + this.id);
@@ -84,7 +117,8 @@ export class GradingJob {
 
 	public async run(docker: Docker): Promise<AutoTestResult> {
 		Log.info("GradingJob::run() - start; repo: " + this?.input?.target?.repoId + "; id: " + this.id);
-		const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.id;
+		// must match this.path's directory, or the bind mounts below point at the wrong run
+		const hostDir = Config.getInstance().getProp(ConfigKey.hostDir) + "/runs/" + this.dirName;
 
 		const container = await docker.createContainer({
 			User: Config.getInstance().getProp(ConfigKey.dockerUid),
@@ -201,6 +235,21 @@ export class GradingJob {
 		return this.record;
 	}
 
+	/** Seconds a grading container may run when the deliverable does not say, or says something unusable. */
+	public static readonly DEFAULT_MAX_EXEC_TIME = 300;
+
+	/**
+	 * The timeout runContainer will actually use for a configured maxExecTime.
+	 * Positive finite numbers pass through; anything else falls back to DEFAULT_MAX_EXEC_TIME.
+	 */
+	public static clampMaxExecTime(maxExecTime: unknown): number {
+		if (typeof maxExecTime === "number" && Number.isFinite(maxExecTime) === true && maxExecTime > 0) {
+			return maxExecTime;
+		}
+		Log.warn("GradingJob::clampMaxExecTime( " + String(maxExecTime) + " ) - unusable; using " + GradingJob.DEFAULT_MAX_EXEC_TIME + "s");
+		return GradingJob.DEFAULT_MAX_EXEC_TIME;
+	}
+
 	public static async runContainer(container: Docker.Container, maxExecTime: number): Promise<number> {
 		let result: any;
 		let timer: any;
@@ -208,13 +257,16 @@ export class GradingJob {
 
 		await container.start();
 
-		if (maxExecTime > 0) {
-			// Set a timer to kill the container if it does not finish in the allotted time
-			timer = setTimeout(async () => {
-				timedOut = true;
-				await container.stop();
-			}, maxExecTime * 1000);
-		}
+		// NOTE: this timer is the only thing that stops a hung container, and maxExecTime arrives from
+		// the deliverable form. A 0, a negative, or a NaN used to skip the timer entirely; a job whose
+		// container never exited then held its slot until the process restarted -- and was re-queued
+		// on restart. Clamp rather than trust (DeliverablesController also rejects these on save).
+		const effectiveMaxExecTime = GradingJob.clampMaxExecTime(maxExecTime);
+		// Set a timer to kill the container if it does not finish in the allotted time
+		timer = setTimeout(async () => {
+			timedOut = true;
+			await container.stop();
+		}, effectiveMaxExecTime * 1000);
 
 		try {
 			result = await container.wait();

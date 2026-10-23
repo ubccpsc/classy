@@ -250,43 +250,6 @@ export class UI {
 		}
 	}
 
-	public static createTextInputField(key: string, value: string, type: string) {
-		const inputField = ons.createElement(
-			'<input type="text" style="margin: 0 0 0 15px" class="text-input text-input--underbar" value="">' + value + "</input>"
-		) as HTMLElement;
-
-		return inputField;
-	}
-
-	// <ons-page id="studentTeamsPage">
-	//     <ons-list id="student-team-list">
-	//         <section style="margin-top: 50px;" class="studentTeamPage-header">
-	//             <h2 style="text-align: center;">You are currently not on any teams</h2>
-	//         </section>
-
-	//         <section class="studentTeamPage-add-team-cta" style="padding: 30px;">
-	//             <div class="studentTeamPage-add-team-cta__container" style="width: 100%; margin: auto; text-align: center;">
-	//                 <ons-button class="studentTeamPage-add-team-cta__button" modifier="medium">Add a Team</ons-button>
-	//             </div>
-	//           </section>
-
-	//         <ons-list-header>Tappable / Ripple</ons-list-header>
-	//         <ons-list-item tappable>Tap me</ons-list-item>
-
-	//         <ons-list-header>Chevron</ons-list-header>
-	//         <ons-list-item modifier="chevron" tappable>Chevron</ons-list-item>
-
-	//         <ons-list-header>Thumbnails and titles</ons-list-header>
-	//         <ons-list-item>
-	//           <div class="left">
-	//             <img class="list-item__thumbnail" src="http://placekitten.com/g/40/40">
-	//           </div>
-	//           <div class="center">
-	//             <span class="list-item__title">Cutest kitty</span><span class="list-item__subtitle">On the Internet</span>
-	//           </div>
-	//     </ons-list>
-	// </ons-page>
-
 	public static hideModal() {
 		const modals = document.querySelectorAll("ons-modal") as any;
 		for (const m of modals) {
@@ -302,6 +265,43 @@ export class UI {
 
 	public static showAlert(message: string) {
 		return ons.notification.alert(message);
+	}
+
+	/**
+	 * Shows already-sanitised HTML (a rendered grade comment, say) in a scrollable dialog with a
+	 * heading and a close button. The dialog is built here rather than from a page template so
+	 * every page, including the plugin-owned student page, can use it without carrying markup.
+	 *
+	 * The dialog removes itself from the document when hidden; an alert would not fit a long
+	 * comment and a popup window cannot be styled.
+	 *
+	 * @param title shown as the dialog heading; treated as text, not HTML
+	 * @param html the body; the caller is responsible for it being safe (see util/Markdown)
+	 */
+	public static showHtmlDialog(title: string, html: string): Promise<void> {
+		const markup =
+			'<ons-dialog class="htmlDialog" cancelable>' +
+			'<div class="htmlDialogHeader"><span class="htmlDialogTitle"></span>' +
+			'<ons-button modifier="quiet" class="htmlDialogClose" aria-label="Close">&times;</ons-button></div>' +
+			'<div class="htmlDialogBody"></div>' +
+			"</ons-dialog>";
+		// NOTE: Promise.resolve because ons.createElement only returns a promise for a template
+		// path; for a markup string like this one it returns the element itself
+		return Promise.resolve(ons.createElement(markup, { append: true }))
+			.then(function (dialog: any) {
+				(dialog.querySelector(".htmlDialogTitle") as HTMLElement).textContent = title;
+				(dialog.querySelector(".htmlDialogBody") as HTMLElement).innerHTML = html;
+				(dialog.querySelector(".htmlDialogClose") as HTMLElement).onclick = function () {
+					dialog.hide();
+				};
+				dialog.addEventListener("posthide", function () {
+					dialog.remove();
+				});
+				dialog.show();
+			})
+			.catch(function (err: Error) {
+				Log.error("UI::showHtmlDialog(..) - ERROR: " + err.message);
+			});
 	}
 
 	public static templateConfirm(template: string, options: { header?: string; listContent?: Array<{ text: string; subtext?: string }> }) {
@@ -354,25 +354,6 @@ export class UI {
 
 	public static confirm(message: string, options: { template: string; header?: string }) {
 		return ons.notification.confirm(message);
-	}
-
-	// SDMM: move
-	public static showD1TeamDialog() {
-		const dialog: any = document.getElementById("d1teamDialog");
-
-		if (dialog) {
-			dialog.show();
-		} else {
-			ons.createElement("d1team.html", { append: true }).then(function (diag: any) {
-				diag.show();
-			});
-		}
-	}
-
-	// SDMM: move
-	public static hideD1TeamDialog() {
-		const elem: any = document.getElementById("d1teamDialog");
-		elem.hide();
 	}
 
 	public static took(start: number): string {

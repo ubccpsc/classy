@@ -33,6 +33,31 @@ describe("DatabaseController", () => {
 		TestHarness.suiteAfter("DatabaseController");
 	});
 
+	it("Should not create the unique id index over a collection that already has duplicate ids.", async () => {
+		// createIndex(unique) would fail on such a collection; the guard reports the ids instead and
+		// carries on, and the index comes back once the duplicates are gone. Done on the repositories
+		// collection, which is empty when this suite starts.
+		const coll = await dc.getCollection("repositories");
+		const indexNames = async (): Promise<string[]> => (await coll.indexes()).map((idx: any) => idx.name);
+		expect(await indexNames(), "setup: the index is normally there").to.include("uniqueId");
+
+		await coll.dropIndex("uniqueId");
+		await coll.insertMany([
+			{ id: "dupeRepo", delivId: "d0" },
+			{ id: "dupeRepo", delivId: "d1" },
+		]);
+		try {
+			await (dc as any).ensureUniqueIdIndexes();
+			expect(await indexNames(), "not created over duplicates").to.not.include("uniqueId");
+			expect(await coll.countDocuments({ id: "dupeRepo" }), "and nothing is deleted to make room for it").to.equal(2);
+		} finally {
+			await coll.deleteMany({ id: "dupeRepo" });
+		}
+
+		await (dc as any).ensureUniqueIdIndexes();
+		expect(await indexNames(), "restored once the duplicates are gone").to.include("uniqueId");
+	});
+
 	function expectEmptyArray(records: any) {
 		expect(records).to.not.be.null;
 		expect(records).to.be.an("array");

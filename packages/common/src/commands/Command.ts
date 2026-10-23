@@ -38,7 +38,15 @@ export class Command implements ICommand {
 					resolve([code, out]);
 				} else {
 					Log.warn(Config.sanitize(`Command::executeCommand(..) -> EXIT ${code}: ${this.cmdName} ${args.join(" ")}. ${out}`));
-					reject([code, Config.sanitize(out)]);
+					// An Error, not the [code, out] tuple this used to reject with: every catcher reads
+					// err.message and was getting "undefined" (GradingJob::prepare logged "ERROR: undefined"
+					// for every failed clone). The exit code and output stay reachable as properties. The
+					// resolve path still returns the CommandResult tuple.
+					const safeOut = Config.sanitize(out);
+					const err: any = new Error(safeOut.length > 0 ? safeOut : this.cmdName + " exited with code " + code);
+					err.code = code;
+					err.output = safeOut;
+					reject(err);
 				}
 			});
 		});

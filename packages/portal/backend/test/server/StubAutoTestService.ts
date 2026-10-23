@@ -41,6 +41,13 @@ export class StubAutoTestService {
 	public status = 200;
 	public body: any = {};
 
+	/**
+	 * When set, the answer is streamed: each chunk is written on its own, a moment apart, and the
+	 * connection is then closed. This is how AutoTest answers a Docker image build (the build log
+	 * arrives as it is produced), and the route under test pipes that stream to the browser.
+	 */
+	public stream: string[] | null = null;
+
 	private server: http.Server = null;
 	private realUrl: string = null;
 	private realPort: string = null;
@@ -63,6 +70,20 @@ export class StubAutoTestService {
 
 				this.requests.push({ method: req.method, url: req.url, body: raw });
 				Log.test("StubAutoTestService - " + req.method + " " + req.url + " -> " + this.status);
+				if (this.stream !== null) {
+					res.writeHead(this.status, { "Content-Type": "application/octet-stream" });
+					const chunks = this.stream.slice();
+					const writeNext = () => {
+						if (chunks.length === 0) {
+							res.end();
+							return;
+						}
+						res.write(chunks.shift());
+						setTimeout(writeNext, 20);
+					};
+					writeNext();
+					return;
+				}
 				res.writeHead(this.status, { "Content-Type": "application/json" });
 				res.end(JSON.stringify(this.body));
 			});
@@ -104,6 +125,7 @@ export class StubAutoTestService {
 		this.requests.length = 0;
 		this.status = 200;
 		this.body = {};
+		this.stream = null;
 		// healthChecks is deliberately NOT reset: it is cumulative background noise, not per-test state
 	}
 

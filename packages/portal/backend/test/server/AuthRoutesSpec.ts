@@ -3,6 +3,7 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import BackendServer from "@backend/server/BackendServer";
+import { PersonKind } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 
 import Log from "@common/Log";
@@ -10,6 +11,7 @@ import { TestHarness } from "@common/TestHarness";
 import { AuthTransportPayload } from "@common/types/PortalTypes";
 import type * as http from "http";
 import request from "supertest";
+import { StubGitHubService } from "./StubGitHubService";
 
 describe("Auth Routes", function () {
 	let app: http.Server = null; // fastify exposes the raw Node server; supertest attaches to that
@@ -278,4 +280,92 @@ describe("Auth Routes", function () {
 		expect(response.status).to.equal(400);
 		expect(body.failure).to.not.be.undefined;
 	}).timeout(TestHarness.TIMEOUT);
+
+	describe("the OAuth callback", function () {
+		// AuthRoutes.performAuthCallback exchanges the code for a token and then reads the GitHub
+		// username, so with nothing listening only its failure path could ever run. StubGitHubService
+		// stands in for both endpoints, which makes the whole login flow testable offline -- including
+		// the kind reset, which nothing else pins.
+		const stub = new StubGitHubService();
+		const dc = DatabaseController.getInstance();
+
+		before(async function () {
+			await stub.start();
+		});
+
+		after(async function () {
+			await stub.stop();
+		});
+
+		beforeEach(function () {
+			stub.reset();
+		});
+
+		it("Should exchange the code and set a session cookie for a registered user.", async function () {
+			stub.login = TestHarness.USER1.github;
+
+			const response = await request(app).get("/authCallback?code=someOAuthCode").set({ host: "localhost:3000" });
+			Log.test("callback -> " + response.status + "; cookie: " + response.headers["set-cookie"]);
+
+			expect(response.status, "a successful login redirects").to.equal(302);
+
+			// the frontend reads "<token>__<user>" back out of this cookie
+			const cookie = String(response.headers["set-cookie"]);
+			expect(cookie).to.contain(stub.accessToken);
+			expect(cookie).to.contain("__" + TestHarness.USER1.id);
+
+			// and the token is persisted, or every later request would be unauthenticated
+			const auth = await dc.getAuth(TestHarness.USER1.id);
+			expect(auth, "an Auth record must be written").to.not.be.null;
+			expect(auth.token).to.equal(stub.accessToken);
+		});
+
+		it("Should reset the person's kind on login.", async function () {
+			// AuthRoutes deliberately clears kind ("forces update of user role on login") so
+			// AuthController.personPrivileged re-derives it from GitHub team membership. Everything
+			// that reads kind depends on this happening, and nothing tested it: the grades page's
+			// Kind column shows blank for exactly this window.
+			const before = await dc.getPerson(TestHarness.USER1.id);
+			before.kind = PersonKind.STUDENT;
+			await dc.writePerson(before);
+
+			stub.login = TestHarness.USER1.github;
+			await request(app).get("/authCallback?code=someOAuthCode").set({ host: "localhost:3000" });
+
+			const after = await dc.getPerson(TestHarness.USER1.id);
+			expect(after.kind, "kind must be cleared so it is re-derived").to.be.null;
+		});
+
+		it("Should send an unregistered GitHub user to the invalid page, with no session.", async function () {
+			// the default CourseController.handleUnknownUser returns null, so there is never a person
+			stub.login = "someoneNotInTheCourse";
+
+			const response = await request(app).get("/authCallback?code=someOAuthCode").set({ host: "localhost:3000" });
+			Log.test("unknown user -> " + response.status + "; location: " + response.headers.location);
+
+			expect(response.status).to.equal(302);
+			expect(response.headers.location, "unknown users land on the invalid screen").to.contain("invalid.html");
+			expect(response.headers["set-cookie"], "and must not be given a session").to.be.undefined;
+		});
+
+		it("Should report a failed token exchange rather than hanging.", async function () {
+			// an expired or replayed code; restify used to end the chain without replying, leaving
+			// the request open until the client timed out
+			stub.tokenExchangeSucceeds = false;
+			stub.login = TestHarness.USER1.github;
+
+			const response = await request(app).get("/authCallback?code=expiredCode").set({ host: "localhost:3000" });
+			Log.test("failed exchange -> " + response.status);
+
+			expect(response.status).to.equal(400);
+			expect(response.text).to.contain("Authentication failed");
+		});
+
+		it("Should not call GitHub at all when the callback carries no code.", async function () {
+			const response = await request(app).get("/authCallback").set({ host: "localhost:3000" });
+
+			expect(response.status).to.equal(400);
+			expect(stub.requests, "no code means nothing to exchange").to.have.lengthOf(0);
+		});
+	});
 });

@@ -39,16 +39,6 @@ export class AdminDeliverablesTab extends AdminPage {
 	public async init(opts: any): Promise<void> {
 		Log.info("AdminDeliverablesTab::init(..) - start");
 
-		// const fab = document.querySelector("#adminAddDeliverable") as OnsFabElement;
-		// if (this.isAdmin === false) {
-		//     fab.style.display = "none";
-		// } else {
-		//     fab.onclick = function(evt: any) {
-		//         Log.info("AdminDeliverablesTab::init(..)::addDeliverable::onClick");
-		//         UI.pushPage("editDeliverable.html", {delivId: null});
-		//     };
-		// }
-
 		UI.showModal("Retrieving deliverables.");
 		const delivs = await AdminDeliverablesTab.getDeliverables(this.remote);
 		this.render(delivs);
@@ -57,7 +47,12 @@ export class AdminDeliverablesTab extends AdminPage {
 
 	private render(deliverables: DeliverableTransport[]) {
 		Log.info("AdminDeliverablesTab::render(..) - start");
-		const deliverableList = document.querySelector("#adminDeliverablesList") as HTMLElement;
+		const deliverableList = document.querySelector("#adminDeliverablesList") as HTMLElement | null;
+		if (deliverableList === null) {
+			// the page was popped (back pressed) before the deliverables arrived; nothing to draw into
+			Log.info("AdminDeliverablesTab::render(..) - list not on screen; skipping");
+			return;
+		}
 
 		// FlatPicker.setFlatPickerField(deliverable.open, OPEN_DELIV_KEY);
 		// FlatPicker.setFlatPickerField(deliverable.close, CLOSE_DELIV_KEY);
@@ -94,24 +89,191 @@ export class AdminDeliverablesTab extends AdminPage {
 			deliverableList.appendChild(UI.createListItem("Deliverables not yet specified."));
 		}
 
-		const createDeliverable = document.createElement("ons-button");
-		createDeliverable.setAttribute("modifier", "large");
-		createDeliverable.innerText = "Create New Deliverable";
+		this.wireActions(deliverables);
+	}
 
-		createDeliverable.onclick = function () {
-			UI.pushPage("editDeliverable.html", { delivId: null })
-				.then(function () {
-					// success
-				})
-				.catch(function (err) {
-					Log.error("UI::pushPage(..) - ERROR: " + err.message);
+	/**
+	 * The Actions list on adminDeliverables.html: create, delete, download, upload. The buttons are
+	 * in the page's markup, so this only wires them; assigned, not added, since it runs on every
+	 * render. Each handler is a no-op when its element is absent (a course's own page may omit it).
+	 */
+	private wireActions(deliverables: DeliverableTransport[]): void {
+		const that = this;
+		const button = (id: string): OnsButtonElement | null => document.querySelector("#" + id) as OnsButtonElement | null;
+
+		const createDeliverable = button("adminCreateDeliverableButton");
+		if (createDeliverable !== null) {
+			createDeliverable.onclick = function () {
+				UI.pushPage("editDeliverable.html", { delivId: null })
+					.then(function () {
+						// success
+					})
+					.catch(function (err) {
+						Log.error("UI::pushPage(..) - ERROR: " + err.message);
+					});
+			};
+		}
+
+		const deleteSelect = document.querySelector("#adminDeleteDeliverableSelect") as HTMLSelectElement | null;
+		if (deleteSelect !== null) {
+			const ids = deliverables.map((d) => d.id).sort();
+			UI.setDropdownOptions("adminDeleteDeliverableSelect", ["-Select-"].concat(ids), "-Select-");
+		}
+		const deleteDeliverable = button("adminDeleteDeliverableSelectButton");
+		if (deleteDeliverable !== null) {
+			deleteDeliverable.onclick = function () {
+				that.deleteSelectedDeliverable().catch(function (err) {
+					UI.showError(err.message);
 				});
+			};
+		}
+
+		const download = button("adminDownloadDeliverablesButton");
+		if (download !== null) {
+			download.onclick = function () {
+				that.downloadConfiguration().catch(function (err) {
+					UI.showError(err.message);
+				});
+			};
+		}
+
+		const upload = button("adminUploadDeliverablesButton");
+		if (upload !== null) {
+			upload.onclick = function () {
+				that.uploadConfiguration().catch(function (err) {
+					UI.showError(err.message);
+				});
+			};
+		}
+	}
+
+	private async deleteSelectedDeliverable(): Promise<void> {
+		const delivId = UI.getDropdownValue("adminDeleteDeliverableSelect");
+		if (typeof delivId !== "string" || delivId === "-Select-" || delivId.length === 0) {
+			UI.showAlert("Select a deliverable to delete.");
+			return;
+		}
+		const that = this;
+		UI.notificationConfirm("Delete deliverable " + delivId + "? Its grades and results are kept.", async function (choice: number) {
+			if (choice !== 1) {
+				return;
+			}
+			try {
+				const options: any = AdminView.getOptions();
+				options.method = "delete";
+				const response = await fetch(that.remote + "/portal/admin/deliverable/" + encodeURIComponent(delivId), options);
+				const body = await response.json();
+				if (typeof body.success === "undefined") {
+					throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+				}
+				UI.showSuccessToast("Deliverable deleted: " + delivId);
+				await that.init({});
+			} catch (err) {
+				Log.error("AdminDeliverablesTab::deleteSelectedDeliverable( " + delivId + " ) - ERROR: " + err.message);
+				UI.showError("Unable to delete " + delivId + ": " + err.message);
+			}
+		});
+	}
+
+	/**
+	 * The file the download produces and the upload reads. A small envelope around the deliverables
+	 * as the backend sends them, so a stray JSON file is refused rather than half-imported.
+	 */
+	private static readonly CONFIG_KIND = "classy-deliverables";
+
+	private async downloadConfiguration(): Promise<void> {
+		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+		const file = {
+			kind: AdminDeliverablesTab.CONFIG_KIND,
+			exported: new Date().toISOString(),
+			deliverables: deliverables,
 		};
+		const blob = new Blob([JSON.stringify(file, null, 2)], { type: "application/json" });
+		const link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = "classy-deliverables-" + new Date().toISOString().slice(0, 10) + ".json";
+		document.body.appendChild(link);
+		link.click();
+		document.body.removeChild(link);
+		URL.revokeObjectURL(link.href);
+		Log.info("AdminDeliverablesTab::downloadConfiguration() - " + deliverables.length + " deliverables");
+	}
 
-		const li = document.createElement("ons-list-item");
-		li.appendChild(createDeliverable);
+	/**
+	 * Creates every deliverable in the chosen file that the course does not already have.
+	 *
+	 * The skip happens here, not on the server: POST /portal/admin/deliverable saves whatever it is
+	 * given, existing id or not, and a term's tuned deliverable must not be overwritten by last
+	 * term's. Each remaining deliverable is posted on its own, so one bad entry costs only itself.
+	 */
+	private async uploadConfiguration(): Promise<void> {
+		const input = document.querySelector("#adminUploadDeliverablesFile") as HTMLInputElement | null;
+		if (input === null || input.files === null || input.files.length === 0) {
+			UI.showAlert("Select a deliverable configuration file first.");
+			return;
+		}
 
-		deliverableList.appendChild(li);
+		let parsed: any;
+		try {
+			parsed = JSON.parse(await input.files[0].text());
+		} catch (_err) {
+			UI.showAlert("That file is not valid JSON.");
+			return;
+		}
+		if (parsed?.kind !== AdminDeliverablesTab.CONFIG_KIND || Array.isArray(parsed.deliverables) === false) {
+			UI.showAlert("That file is not a Classy deliverable configuration; use one saved by the download above.");
+			return;
+		}
+		const entries: any[] = parsed.deliverables;
+
+		UI.showModal("Uploading deliverables.");
+		const existing = new Set((await AdminDeliverablesTab.getDeliverables(this.remote)).map((d) => d.id));
+		const added: string[] = [];
+		const skipped: string[] = [];
+		const failed: string[] = [];
+		for (const entry of entries) {
+			const id = typeof entry?.id === "string" ? entry.id : null;
+			if (id === null || id.length < 2) {
+				failed.push(JSON.stringify(entry).slice(0, 40) + " (no id)");
+				continue;
+			}
+			if (existing.has(id)) {
+				skipped.push(id);
+				continue;
+			}
+			try {
+				const options: any = AdminView.getOptions();
+				options.method = "post";
+				options.body = JSON.stringify(entry);
+				const response = await fetch(this.remote + "/portal/admin/deliverable", options);
+				const body = await response.json();
+				if (typeof body.success === "undefined") {
+					throw new Error(body?.failure?.message ?? "HTTP " + response.status);
+				}
+				added.push(id);
+				existing.add(id); // a file listing the same id twice creates it once
+			} catch (err) {
+				Log.error("AdminDeliverablesTab::uploadConfiguration( " + id + " ) - ERROR: " + err.message);
+				failed.push(id + " (" + err.message + ")");
+			}
+		}
+		UI.hideModal();
+		input.value = "";
+
+		let summary = "Added " + added.length + " deliverable" + (added.length === 1 ? "" : "s") + ".";
+		if (skipped.length > 0) {
+			summary += " Skipped, already exist: " + skipped.join(", ") + ".";
+		}
+		if (failed.length > 0) {
+			summary += " Failed: " + failed.join("; ") + ".";
+		}
+		Log.info("AdminDeliverablesTab::uploadConfiguration() - " + summary);
+		if (failed.length > 0) {
+			UI.showAlert(summary);
+		} else {
+			UI.notificationToast(summary, 8000);
+		}
+		await this.init({});
 	}
 
 	public async initEditDeliverablePage(opts: any): Promise<void> {
@@ -175,7 +337,10 @@ export class AdminDeliverablesTab extends AdminPage {
 						// worked
 					})
 					.catch(function (err) {
-						Log.info("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
+						// shown, not just logged: a save that fails silently looks like a dead button,
+						// which is exactly how the unguarded date pickers presented
+						Log.error("AdminView::renderEditDeliverablePage(..)::adminEditDeliverableSave::onClick - ERROR: " + err.message);
+						UI.showError("Could not save the deliverable: " + err.message);
 					});
 			};
 		}
@@ -208,12 +373,34 @@ export class AdminDeliverablesTab extends AdminPage {
 			that.updateHiddenBlocks();
 		};
 
-		const flatpickrOptions = {
-			enableTime: true,
-			time_24hr: true,
-			utc: true,
-			dateFormat: "Y/m/d @ H:i",
-			defaultDate: new Date(),
+		/**
+		 * Options for one date picker, with a default date only when the stored value is usable.
+		 *
+		 * `new Date(x)` yields an Invalid Date for a timestamp that is missing, not a number, or
+		 * outside the range a Date can represent (Number.MAX_SAFE_INTEGER is, for instance). flatpickr
+		 * then selects nothing and leaves latestSelectedDateObj undefined, which used to surface as
+		 * save() throwing a TypeError that only reached the console -- the button appeared dead.
+		 *
+		 * A bad value leaves the field EMPTY rather than defaulting to now. Quietly substituting the
+		 * current time for a close date would be worse than refusing: it would silently make
+		 * everything submitted afterwards late.
+		 */
+		const pickerOptions = function (timestamp?: number): any {
+			const options: any = {
+				enableTime: true,
+				time_24hr: true,
+				utc: true,
+				dateFormat: "Y/m/d @ H:i",
+			};
+			if (typeof timestamp === "number" && Number.isFinite(timestamp) === true) {
+				const date = new Date(timestamp);
+				if (isNaN(date.getTime()) === false) {
+					options.defaultDate = date;
+				} else {
+					Log.warn("AdminDeliverablesTab::pickerOptions(..) - unusable timestamp: " + timestamp);
+				}
+			}
+			return options;
 		};
 
 		let selectedDockerImage: string = "";
@@ -221,10 +408,8 @@ export class AdminDeliverablesTab extends AdminPage {
 		if (deliv === null) {
 			// new deliverable, set defaults
 
-			flatpickrOptions.defaultDate = new Date();
-			this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
-			flatpickrOptions.defaultDate = new Date();
-			this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+			this.openPicker = flatpickr("#adminEditDeliverablePage-open", pickerOptions(Date.now()));
+			this.closePicker = flatpickr("#adminEditDeliverablePage-close", pickerOptions(Date.now()));
 
 			UI.setDropdownSelected("adminEditDeliverablePage-minTeamSize", 1, this.isAdmin);
 			UI.setDropdownSelected("adminEditDeliverablePage-maxTeamSize", 1, this.isAdmin);
@@ -255,10 +440,8 @@ export class AdminDeliverablesTab extends AdminPage {
 			this.setTextField("adminEditDeliverablePage-repoPrefix", deliv.repoPrefix, this.isAdmin);
 			this.setTextField("adminEditDeliverablePage-teamPrefix", deliv.teamPrefix, this.isAdmin);
 
-			flatpickrOptions.defaultDate = new Date(deliv.openTimestamp);
-			this.openPicker = flatpickr("#adminEditDeliverablePage-open", flatpickrOptions);
-			flatpickrOptions.defaultDate = new Date(deliv.closeTimestamp);
-			this.closePicker = flatpickr("#adminEditDeliverablePage-close", flatpickrOptions);
+			this.openPicker = flatpickr("#adminEditDeliverablePage-open", pickerOptions(deliv.openTimestamp));
+			this.closePicker = flatpickr("#adminEditDeliverablePage-close", pickerOptions(deliv.closeTimestamp));
 			this.setToggle("adminEditDeliverablePage-lateAutoTest", deliv.lateAutoTest, this.isAdmin);
 
 			this.setToggle("adminEditDeliverablePage-shouldProvision", deliv.shouldProvision, this.isAdmin);
@@ -376,14 +559,36 @@ export class AdminDeliverablesTab extends AdminPage {
 		}
 	}
 
+	/**
+	 * The time a picker has selected, or null when it has none.
+	 *
+	 * latestSelectedDateObj is undefined until flatpickr successfully parses a date, so it cannot be
+	 * dereferenced blind; selectedDates is checked too because a picker the user has just edited
+	 * populates that first.
+	 */
+	private static selectedTimestamp(picker: any): number | null {
+		const selected = picker?.latestSelectedDateObj ?? picker?.selectedDates?.[0];
+		if (typeof selected === "undefined" || selected === null || isNaN(selected.getTime()) === true) {
+			return null;
+		}
+		return selected.getTime();
+	}
+
 	private async save(): Promise<void> {
 		Log.info("AdminDeliverablesTab::save() - start");
 
 		const id = UI.getTextFieldValue("adminEditDeliverablePage-name");
 		const URL = UI.getTextFieldValue("adminEditDeliverablePage-url");
 
-		const openTimestamp = this.openPicker.latestSelectedDateObj.getTime();
-		const closeTimestamp = this.closePicker.latestSelectedDateObj.getTime();
+		const openTimestamp = AdminDeliverablesTab.selectedTimestamp(this.openPicker);
+		const closeTimestamp = AdminDeliverablesTab.selectedTimestamp(this.closePicker);
+		if (openTimestamp === null || closeTimestamp === null) {
+			// this used to be an unguarded `.latestSelectedDateObj.getTime()`, so a picker with no
+			// selection threw a TypeError that the save button's handler only logged
+			const which = openTimestamp === null ? "Open" : "Close";
+			UI.showError(which + " date is not set. Pick a date and time, then save again.");
+			return;
+		}
 
 		const shouldProvision = UI.getToggleValue("adminEditDeliverablePage-shouldProvision");
 		const importURL = UI.getTextFieldValue("adminEditDeliverablePage-importURL");

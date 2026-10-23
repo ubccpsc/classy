@@ -158,6 +158,49 @@ describe("CSVParser", function () {
 		expect(ex).to.not.be.null;
 	});
 
+	describe("unusable grade cells", function () {
+		// Regression: the non-numeric branch did `Number(gradeScore) // might as well try`. A blank
+		// cell is Number("") === 0 and overwrote a grade the student had already earned; "N/A" wrote
+		// NaN, which then blocked AutoTest from ever updating that student. And the final message
+		// said "unsuccessful" after the good rows had already been written.
+		it("Should skip blank and non-numeric grades, keep existing grades, and report what was written.", async function () {
+			const dbc = DatabaseController.getInstance();
+			const gc = new GradesController();
+			for (const id of ["csvUnusableGood", "csvUnusableBlank", "csvUnusableNA"]) {
+				await dbc.writePerson(TestHarness.createPerson(id, id + "CSID", id + "gh", PersonKind.STUDENT));
+			}
+			// the grade a blank cell must NOT overwrite
+			await gc.saveGrade({
+				personId: "csvUnusableBlank",
+				delivId: TestHarness.DELIVID0,
+				score: 61,
+				comment: "",
+				timestamp: Date.now(),
+				urlName: "seed",
+				URL: null,
+				custom: {},
+			});
+
+			let message: string = null;
+			try {
+				await new CSVParser().processGrades(TestHarness.ADMIN1.id, TestHarness.DELIVID0, __dirname + "/data/gradesUnusable.csv");
+			} catch (err) {
+				message = err.message;
+			}
+			Log.test("upload message: " + message);
+
+			expect(message, "skipped rows must still be flagged to the admin").to.not.be.null;
+			expect(message).to.contain("1 grade(s) written");
+			expect(message).to.contain("csvUnusableBlank");
+			expect(message).to.contain("csvUnusableNA");
+
+			expect((await gc.getGrade("csvUnusableGood", TestHarness.DELIVID0)).score).to.equal(88);
+			expect((await gc.getGrade("csvUnusableBlank", TestHarness.DELIVID0)).score, "a blank cell must not overwrite").to.equal(61);
+			const na = await gc.getGrade("csvUnusableNA", TestHarness.DELIVID0);
+			expect(na === null || typeof na === "undefined", "N/A must not write NaN").to.be.true;
+		});
+	});
+
 	describe("grade sheets that are not keyed by CSID", function () {
 		// NOTE: an admin exports marks from wherever they keep them, so the key column is often a
 		// student number or a CWL rather than a Classy id. All of that mapping -- and every message

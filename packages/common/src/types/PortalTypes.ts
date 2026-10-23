@@ -27,11 +27,48 @@ export interface Payload {
 // Introduced to produce Classlist Change data - helps with understanding future
 // manual/automatic repo provisioning after Classlist update
 export interface ClasslistChangesTransport {
-	updated: StudentTransport[];
-	created: StudentTransport[];
-	removed: StudentTransport[];
-	classlist: StudentTransport[];
+	updated: PersonTransport[];
+	created: PersonTransport[];
+	removed: PersonTransport[];
+	/** on the classlist, yet not an active STUDENT in Classy (withdrawn, staff, admin, or kind not yet derived) */
+	notActive: PersonTransport[];
+	/** notActive tallied by kind; a null kind is reported under "null" */
+	notActiveByKind: { [kind: string]: number };
+	classlist: PersonTransport[];
 	message: string;
+}
+
+/** One person whose kind the user sync changed, and what it changed from and to. */
+export interface UserSyncChangeTransport {
+	person: PersonTransport;
+	from: string | null; // null: the kind had not been derived yet (login in progress)
+	to: string;
+}
+
+/**
+ * What a user sync did, with the people behind every count; see PersonController::syncKindsWithTeams.
+ * `message` is the same one-line summary the job always produced, for the status line.
+ */
+export interface UserSyncTransport {
+	message: string;
+	active: number;
+	withdrawn: number;
+	teams: { students: number; staff: number; admin: number };
+	/** false when the staff or admin team could not be read, in which case privileged kinds were left alone */
+	privilegedReadable: boolean;
+	reinstated: UserSyncChangeTransport[];
+	withdrawnThisRun: UserSyncChangeTransport[];
+	promoted: UserSyncChangeTransport[];
+	demoted: UserSyncChangeTransport[];
+	settled: UserSyncChangeTransport[];
+	/** on the staff or admin team with no person in Classy, so created this run (staff are not on the classlist) */
+	staffAdded: PersonTransport[];
+	/** withdrawn before this run and still on no team; only this job can reinstate them */
+	stillWithdrawn: PersonTransport[];
+	/** students with no githubId at all, who can never match a team */
+	noGithubId: PersonTransport[];
+	/** logins on the GitHub teams with no matching person in Classy (not on the classlist) */
+	unknownLogins: string[];
 }
 
 export interface ClasslistChangesTransportPayload {
@@ -63,7 +100,7 @@ export interface CourseTransportPayload {
 
 export interface CourseTransport {
 	id: string;
-	defaultDeliverableId: string;
+	defaultDeliverableId: string | null; // null when the course has no default
 	custom: object;
 }
 
@@ -84,18 +121,37 @@ export interface AuthTransport {
 	isStaff: boolean;
 }
 
-export interface StudentTransportPayload {
-	success?: StudentTransport[]; // only set if defined
+/**
+ * Which people a listing should include.
+ *
+ * The admin listings default to "students", which is what the pages have always shown. "staff" and
+ * "all" exist because staff grades are useful when debugging a grade sheet: staff repos are
+ * provisioned so staff can see what students see, so they accumulate real results.
+ *
+ * - students: PersonKind.STUDENT only; excludes withdrawn students
+ * - staff:    PersonKind.STAFF, ADMIN and ADMINSTAFF
+ * - all:      everyone, including withdrawn students
+ */
+export type PersonView = "all" | "students" | "staff";
+
+export const PERSON_VIEWS: PersonView[] = ["students", "staff", "all"];
+
+export interface PersonTransportPayload {
+	success?: PersonTransport[]; // only set if defined
 	failure?: FailurePayload; // only set if defined
 }
 
-export interface StudentTransport {
+/**
+ * A person in an admin listing.
+ *
+ */
+export interface PersonTransport {
 	id: string;
 	firstName: string;
 	lastName: string;
 	githubId: string;
 	userUrl: string;
-	studentNum: number;
+	studentNum: string | null; // an identifier, not a quantity; null if the person was not on a classlist
 	labId: string;
 
 	// these were added later and need to be optional
@@ -103,6 +159,12 @@ export interface StudentTransport {
 	isStaff?: boolean;
 	kind?: PersonKind;
 }
+
+/** @deprecated use PersonTransport. */
+export type StudentTransport = PersonTransport;
+
+/** @deprecated use PersonTransportPayload. */
+export type StudentTransportPayload = PersonTransportPayload;
 
 export interface DeliverableTransportPayload {
 	success?: DeliverableTransport[]; // only set if defined
@@ -290,6 +352,7 @@ export interface RepositoryTransport {
 	URL: string;
 	delivId: string;
 	gitHubStatus: string; // would be better if this were GithubStatus, but this is a transport type
+	studentAccess: string | null; // "pull" (read-only) or "push" (writeable) while RELEASED; null otherwise
 }
 
 export interface AutoTestResultPayload {
@@ -323,6 +386,15 @@ export interface AutoTestResultSummaryTransport {
 	scoreOverall: number | null; // null if result !== "SUCCESS"
 	scoreCover: number | null; // null if result !== "SUCCESS"
 	scoreTests: number | null; // null if result !== "SUCCESS"
+
+	// Person.ids this result belongs to. The admin views could not name the owner of a result
+	// without this; for PrairieLearn rows, where repoId is an assessment instance id rather than
+	// anything human-readable, it is the only identifying field.
+	people: string[];
+
+	// GradeReport.custom, verbatim -- the container's own channel to the UI layer. NOT
+	// Result.output.custom, which is the archive (210 keeps submitted files there) and is
+	// deliberately not transported.
 	custom: any;
 }
 

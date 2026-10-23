@@ -488,7 +488,9 @@ export class AutoTestRoutes implements IREST {
 				Log.info("AutoTestRoutes::getDockerImages(..) - done; isOk: " + atResponse.ok);
 
 				if (!atResponse.ok) {
-					throw new Error("AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" + " status: " + res.status);
+					throw new Error(
+						"AutoTestRoutes::getDockerImages(..) - ERROR sending request to AutoTest service;" + " status: " + atResponse.status
+					);
 				}
 
 				const body = await atResponse.json();

@@ -1,6 +1,7 @@
 import Log from "@common/Log";
-import { GradeTransport, RepositoryTransport, StudentTransport } from "@common/types/PortalTypes";
+import { GradeTransport, PersonTransport, RepositoryTransport } from "@common/types/PortalTypes";
 import { Factory } from "../Factory";
+import { Markdown } from "../util/Markdown";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 import { ViewAs } from "../util/ViewAs";
@@ -8,7 +9,7 @@ import { IView } from "./IView";
 
 export abstract class AbstractStudentView implements IView {
 	protected remote: string = null;
-	protected person: StudentTransport = null;
+	protected person: PersonTransport = null;
 	protected grades: GradeTransport[] = [];
 	protected repos: RepositoryTransport[] = [];
 
@@ -37,7 +38,7 @@ export abstract class AbstractStudentView implements IView {
 		this.renderRepositories();
 	}
 
-	protected getStudent(): StudentTransport {
+	protected getStudent(): PersonTransport {
 		return this.person;
 	}
 
@@ -87,7 +88,7 @@ export abstract class AbstractStudentView implements IView {
 		this.person = null;
 
 		try {
-			this.person = (await this.fetchData("/portal/person")) as StudentTransport;
+			this.person = (await this.fetchData("/portal/person")) as PersonTransport;
 		} catch (err) {
 			Log.error("AbstractStudentView::prepareData() - fetching person; ERROR: " + err.message);
 			UI.showError(err.message);
@@ -185,9 +186,11 @@ export abstract class AbstractStudentView implements IView {
 				let commentDisplay = "";
 				let commentHTML = "";
 				if (comment !== "") {
-					// if there is a comment
+					// The link only carries the row's position; the comment itself is rendered when
+					// the link is clicked (see showFeedback). It used to be spliced into an inline
+					// onclick as a JavaScript string, which broke on the first quote or newline.
 					commentDisplay = "View Comment";
-					commentHTML = this.constructFeedbackString(comment);
+					commentHTML = '<a href="#" class="studentFeedbackLink" data-grade-index="' + this.grades.indexOf(grade) + '">View Feedback</a>';
 				} else {
 					commentDisplay = "No Comment";
 					commentHTML = "";
@@ -202,19 +205,44 @@ export abstract class AbstractStudentView implements IView {
 			}
 
 			st.generate();
+			this.wireFeedbackLinks(document.getElementById("studentGradeTable"));
 		}
 	}
 
-	private constructFeedbackString(comment: string): string {
-		let feedbackString = '<a href="" onclick="';
-		feedbackString += "  var data = \'<html><head><title>Feedback</title></head><body><p>";
-		feedbackString += comment;
-		feedbackString += " </p></body></html>';\n";
-		feedbackString += "  var myWindow = window.open('_blank');\n";
-		feedbackString += "  var doc = myWindow.document.open();\n";
-		feedbackString += "  doc.write(data); doc.close(); ";
-		feedbackString += '">View Feedback</a>';
-		return feedbackString;
+	/**
+	 * Opens the comment behind a "View Feedback" link. One listener on the table's container,
+	 * attached once: SortableTable rewrites the rows whenever a heading is clicked to sort, so a
+	 * handler on the links themselves would be lost on the first sort.
+	 */
+	private wireFeedbackLinks(container: HTMLElement): void {
+		if (container.dataset.feedbackWired === "true") {
+			return;
+		}
+		container.dataset.feedbackWired = "true";
+		const that = this;
+		container.addEventListener("click", function (evt: Event) {
+			const link = (evt.target as HTMLElement).closest("a.studentFeedbackLink") as HTMLElement | null;
+			if (link === null) {
+				return;
+			}
+			evt.preventDefault();
+			const grade = that.grades[Number(link.dataset.gradeIndex)];
+			if (typeof grade === "undefined") {
+				Log.warn("AbstractStudentView::wireFeedbackLinks(..) - no grade for index: " + link.dataset.gradeIndex);
+				return;
+			}
+			that.showFeedback(grade);
+		});
+	}
+
+	/**
+	 * Comments are shown as Markdown: a grader script or a staff member can write headings, lists
+	 * and code blocks, and a plain-text comment still reads as it was typed since line breaks are
+	 * kept. The HTML is sanitised before it reaches the page.
+	 */
+	protected showFeedback(grade: GradeTransport): void {
+		Log.info("AbstractStudentView::showFeedback( " + grade.delivId + " ) - start");
+		UI.showHtmlDialog("Feedback: " + grade.delivId, Markdown.render(grade.comment ?? ""));
 	}
 
 	private renderRepositories() {
@@ -241,15 +269,6 @@ export abstract class AbstractStudentView implements IView {
 					sortDown: false, // Whether the column should initially sort descending or ascending.
 					style: "padding-left: 1em; padding-right: 1em; text-align: center;",
 				},
-				// could be result in the future (provisioned | detached)
-				// {
-				//     id:          "result",
-				//     text:        "State",
-				//     sortable:    false,
-				//     defaultSort: false,
-				//     sortDown:    true,
-				//     style:       "padding-left: 1em; padding-right: 1em; text-align: left;"
-				// }
 			];
 
 			const st = new SortableTable(headers, "#studentRepoTable");

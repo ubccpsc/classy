@@ -5,10 +5,19 @@
 #   ./classy.sh pull      update classy and the course plugin
 #   ./classy.sh build     build the container images
 #   ./classy.sh deploy    (re)start the stack in the background
+#   ./classy.sh all       pull, then build, then deploy
 #   ./classy.sh logs      follow the autotest and portal logs
 #
 # Stop on the first error so a failed pull never rolls on into a build/deploy.
-set -euo pipefail
+# -E so the ERR trap below is inherited by functions; without it a failure inside do_pull
+# aborts the script (set -e) but prints nothing about which step it was.
+set -Eeuo pipefail
+
+# Names the step that was running when something failed. Without this a failure in `all` prints
+# whatever the underlying tool said and nothing about where it happened, which matters most when
+# it is a deploy half way through a sequence.
+current_step=""
+trap 'status=$?; if [ -n "${current_step}" ]; then echo "ERROR: ${current_step} failed (exit ${status}); stopping." >&2; fi' ERR
 
 # Always operate from the repo root: docker compose needs to find docker-compose.yml,
 # and the plugin path below is relative to it. This makes the script safe to call by
@@ -32,18 +41,60 @@ plugin_dir() {
 	echo "plugins/${plugin}"
 }
 
+# Optional plugin hooks: plugins/<name>/scripts/hooks/<phase>. A plugin that does not need
+# one simply does not ship the file, so this is a no-op for every existing plugin. Same
+# opt-in convention as the plugin's docker/ and nginx/ directories, which
+# helper-scripts/bootstrap-plugin.sh copies only when they exist.
+#
+# A hook is for work `docker compose` cannot do itself -- most usefully, building an image
+# the plugin's override declares with an `image:` and no `build:`, which Compose would
+# otherwise try (and fail) to pull.
+run_hook() {
+	local phase="$1"
+	# Assigned separately from `local`: `local x=$(cmd)` swallows the exit status, so a
+	# failing plugin_dir would not trip `set -e`.
+	local dir root hook
+	dir=$(plugin_dir)
+	root=$(pwd)
+	hook="${dir}/scripts/hooks/${phase}"
+
+	if [ ! -f "${hook}" ]; then
+		return 0
+	fi
+	if [ ! -x "${hook}" ]; then
+		# Worth saying out loud rather than skipping silently: a hook that exists but is
+		# not executable is a lost chmod far more often than a deliberate disable.
+		echo "WARNING: ${hook} exists but is not executable; skipping" >&2
+		return 0
+	fi
+
+	echo "running plugin hook: ${phase}"
+	# The hook runs with the plugin as its working directory so its own paths are
+	# plugin-relative; CLASSY_ROOT is absolute so it can still reach .env and the compose
+	# files. Subshell so this function does not move the caller's working directory.
+	(cd "${dir}" && CLASSY_ROOT="${root}" "./scripts/hooks/${phase}")
+}
+
 usage() {
-	echo "Usage: $(basename "$0") {pull|build|deploy|logs}"
+	echo "Usage: $(basename "$0") {pull|build|deploy|all|logs}"
 	echo
 	echo "  pull     git pull classy, then git pull the plugin named by PLUGIN in .env"
-	echo "  build    docker compose build"
-	echo "  deploy   docker compose up -d"
+	echo "  build    bootstrap the plugin, run its pre-build hook, then docker compose build"
+	echo "  deploy   run the plugin's pre-deploy hook, then docker compose up -d"
+	echo "  all      pull, then build, then deploy; stops at the first failure"
 	echo "  logs     docker compose logs --tail 10000 -f autotest portal"
 	exit 1
 }
 
-case "${1:-}" in
-pull)
+# Announces a step and records it for the ERR trap above.
+step() {
+	current_step="$1"
+	echo
+	echo "=== ${current_step} ==="
+}
+
+do_pull() {
+	step "pull"
 	git pull
 	PLUGIN_DIR=$(plugin_dir)
 	if [ -d "${PLUGIN_DIR}/.git" ]; then
@@ -54,12 +105,46 @@ pull)
 	else
 		echo "WARNING: ${PLUGIN_DIR} is not a git checkout; skipping plugin pull" >&2
 	fi
+}
+
+do_build() {
+	step "build"
+	# Refresh the plugin's docker-compose.override.yml and nginx.rconf first. Both are
+	# gitignored copies, so a plugin change never reaches them on its own: without this the
+	# root override silently drifts behind the plugin checkout.
+	./helper-scripts/bootstrap-plugin.sh
+	run_hook pre-build
+	docker compose build
+}
+
+do_deploy() {
+	step "deploy"
+	# Gives the plugin a chance to build anything its override declares but Compose cannot
+	# build itself; see plugins/cs310/scripts/hooks/pre-deploy for the worked example.
+	run_hook pre-deploy
+	docker compose up -d
+}
+
+case "${1:-}" in
+pull)
+	do_pull
 	;;
 build)
-	docker compose build
+	do_build
 	;;
 deploy)
-	docker compose up -d
+	do_deploy
+	;;
+all)
+	# set -e already aborts the script the moment one of these fails, so a broken pull never
+	# reaches build and a broken build never reaches deploy -- which is the whole point: a
+	# half-updated checkout deployed over a working stack is worse than not deploying at all.
+	do_pull
+	do_build
+	do_deploy
+	current_step=""
+	echo
+	echo "=== done: pull, build, deploy ==="
 	;;
 logs)
 	# follows until interrupted; Ctrl-C is the normal way out

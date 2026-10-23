@@ -21,6 +21,8 @@ describe("ClassPortal Service", () => {
 	let cp: IClassPortal;
 
 	let backend: BackendServer = null;
+	let realBackendUrl: string = null;
+
 	before(async function () {
 		Log.test("ClassPortalSpec::before() - start");
 
@@ -32,6 +34,16 @@ describe("ClassPortal Service", () => {
 		} else {
 			Log.test("ClassPortalSpec::before() - not running in CI; using http");
 			backend = new BackendServer(false);
+
+			// ClassPortal builds its URLs from backendUrl, which .env sets to https://localhost for
+			// the deployed server. The local server started above speaks http, so every call in this
+			// suite failed with "SSL routines ... wrong version number" -- nine tests red on every
+			// local run, all term, for a protocol mismatch rather than a broken feature. Point the
+			// config at what is actually listening, and restore it afterwards. Same approach as
+			// StubAutoTestService, which overrides autotestUrl the same way.
+			const config = Config.getInstance();
+			realBackendUrl = config.getProp(ConfigKey.backendUrl);
+			config.setProp(ConfigKey.backendUrl, "http://localhost");
 		}
 
 		await backend.start();
@@ -45,6 +57,9 @@ describe("ClassPortal Service", () => {
 	after(async function () {
 		Log.test("ClassPortalSpec::after() - start");
 		await backend.stop();
+		if (realBackendUrl !== null) {
+			Config.getInstance().setProp(ConfigKey.backendUrl, realBackendUrl);
+		}
 		Log.test("ClassPortalSpec::after() - done");
 	});
 
@@ -296,5 +311,99 @@ describe("ClassPortal Service", () => {
 		Log.test("Actual: " + JSON.stringify(actual));
 
 		expect(actual).to.be.null;
+	});
+
+	/**
+	 * The three functions AutoTest asks the portal on the hot path, and what they do when the answer
+	 * is unusable.
+	 *
+	 * All three are written to fail safe rather than throw, because they run per push and per
+	 * comment: shouldPromotePush defaults to not promoting, requestFeedbackDelay to no custom
+	 * scheduler, formatFeedback to null. Those defaults were never exercised, and they are exactly
+	 * what runs when the portal is mid-restart during a deploy -- which happens in week 1.
+	 */
+	describe("hot-path defaults", () => {
+		/**
+		 * Points the portal client at a closed port for one call, so the fetch fails the way it does
+		 * when the backend is restarting. Restored afterwards.
+		 */
+		async function withUnreachableBackend<T>(work: (portal: IClassPortal) => Promise<T>): Promise<T> {
+			const config = Config.getInstance();
+			const current = config.getProp(ConfigKey.backendUrl);
+			// port 1 is reserved and nothing listens there: connection refused, immediately
+			config.setProp(ConfigKey.backendUrl, "http://127.0.0.1");
+			const previousPort = config.getProp(ConfigKey.backendPort);
+			config.setProp(ConfigKey.backendPort, "1" as any);
+			try {
+				return await work(new ClassPortal());
+			} finally {
+				config.setProp(ConfigKey.backendUrl, current);
+				config.setProp(ConfigKey.backendPort, previousPort as any);
+			}
+		}
+
+		const target: any = {
+			delivId: TestHarness.DELIVID0,
+			repoId: TestHarness.REPONAME1,
+			commitSHA: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+			commitURL: "https://github.example/org/repo/commit/aaaaaaa",
+			botMentioned: false,
+			personId: TestHarness.USER1.id,
+			kind: "push",
+			timestamp: 1787900000000,
+		};
+
+		it("Should answer the promote question for a real push.", async () => {
+			// the default CourseController does not prioritize anything, so false is the answer;
+			// what matters is that a well-formed exchange produces a boolean rather than throwing
+			const promote = await cp.shouldPromotePush(target);
+			expect(promote).to.be.a("boolean");
+		});
+
+		it("Should not promote a push when the portal cannot be reached.", async () => {
+			// promoting on failure would let a network blip jump one student ahead of the queue
+			const promote = await withUnreachableBackend((portal) => portal.shouldPromotePush(target));
+			expect(promote, "an unreachable portal must not promote").to.be.false;
+		});
+
+		it("Should report no custom feedback schedule when the course does not implement one.", async () => {
+			// the default CourseController returns null, which the route sends as 204 notImplemented;
+			// null here means "use the normal delay rules", not "something went wrong"
+			const delay = await cp.requestFeedbackDelay(TestHarness.DELIVID0, TestHarness.USER1.id, Date.now());
+			expect(delay).to.be.null;
+		});
+
+		it("Should report no custom feedback schedule when the portal cannot be reached.", async () => {
+			// falling back to the normal rules is right; the alternative is locking students out
+			const delay = await withUnreachableBackend((portal) =>
+				portal.requestFeedbackDelay(TestHarness.DELIVID0, TestHarness.USER1.id, Date.now())
+			);
+			expect(delay, "an unreachable portal must fall back to the normal delay rules").to.be.null;
+		});
+
+		it("Should return the feedback from a result, unmodified.", async () => {
+			// the truncation inside formatFeedback is for its own log line only; the student gets
+			// the whole report, newlines and all
+			const feedback = "## AutoTest\n\n42/45 passed.\n\nSee the handbook for the ones that did not.";
+			const res: any = {
+				delivId: TestHarness.DELIVID0,
+				repoId: TestHarness.REPONAME1,
+				commitSHA: "abc",
+				commitURL: "u",
+				output: { report: { feedback: feedback } },
+			};
+
+			expect(await cp.formatFeedback(res)).to.equal(feedback);
+		});
+
+		it("Should return null for a result with no report to format.", async () => {
+			// a container that produced no report at all; the caller posts nothing rather than
+			// posting "undefined" to the student's commit
+			const res: any = { delivId: TestHarness.DELIVID0, repoId: TestHarness.REPONAME1, commitSHA: "abc", commitURL: "u", output: {} };
+			expect(await cp.formatFeedback(res)).to.be.null;
+
+			const noOutput: any = { delivId: TestHarness.DELIVID0, repoId: TestHarness.REPONAME1, commitSHA: "abc", commitURL: "u" };
+			expect(await cp.formatFeedback(noOutput)).to.be.null;
+		});
 	});
 });

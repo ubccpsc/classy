@@ -3,8 +3,9 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubController, GitTeamTuple } from "@backend/controllers/GitHubController";
+import { RepositoryController } from "@backend/controllers/RepositoryController";
 import { TeamController } from "@backend/controllers/TeamController";
-import { PersonKind, RepoStatus, Repository, Team, TeamStatus } from "@backend/Types";
+import { PersonKind, RepoStatus, Repository, StudentAccess, Team, TeamStatus } from "@backend/Types";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import { TestHarness } from "@common/TestHarness";
@@ -98,6 +99,22 @@ describe("GitHubController provisioning paths", function () {
 	}
 
 	/**
+	 * Team creation works but adding the members fails once -- the shape of a single mistyped CWL.
+	 */
+	class TeamMembersFailOnceActions extends RecordingActions {
+		public addMembersCalls = 0;
+
+		public async addMembersToTeam(teamName: string, members: string[]): Promise<GitTeamTuple> {
+			this.addMembersCalls++;
+			if (this.addMembersCalls === 1) {
+				Log.test("TeamMembersFailOnceActions::addMembersToTeam( " + teamName + " ) - failing on purpose, once");
+				throw new Error("addMembersToTeam failed on purpose");
+			}
+			return await super.addMembersToTeam(teamName, members);
+		}
+	}
+
+	/**
 	 * Adding the team to the repo is the one step release depends on.
 	 */
 	class TeamAttachFailsActions extends RecordingActions {
@@ -124,6 +141,25 @@ describe("GitHubController provisioning paths", function () {
 	class TeamRemoveFailsActions extends RecordingActions {
 		public async removeTeamFromRepo(_teamName: string, _repoName: string): Promise<boolean> {
 			return false;
+		}
+	}
+
+	/**
+	 * Records every team permission change. addTeamToRepo is the call that both attaches a team and
+	 * changes the permission of one already attached.
+	 */
+	class PermissionRecordingActions extends RecordingActions {
+		public changed: string[] = [];
+
+		public async addTeamToRepo(teamName: string, repoName: string, permission: string): Promise<GitTeamTuple> {
+			this.changed.push(teamName + "@" + repoName + ":" + permission);
+			return { teamName: teamName, githubTeamNumber: 1 };
+		}
+	}
+
+	class PermissionFailsActions extends RecordingActions {
+		public async addTeamToRepo(): Promise<GitTeamTuple> {
+			throw new Error("GitHub refused the change");
 		}
 	}
 
@@ -190,6 +226,47 @@ describe("GitHubController provisioning paths", function () {
 		const after = await dbc.getRepository(REPO_FINALIZE_FAILS);
 		expect(after.gitHubStatus, "must stay retryable").to.equal(RepoStatus.CREATED);
 		expect(after.URL, "informational, but it should still be recorded").to.not.be.null;
+	});
+
+	it("Should not mark a team CREATED until its members are added, so a re-run adds them.", async function () {
+		// Regression: provisionTeam used to set TeamStatus.CREATED right after createTeam, before
+		// addMembersToTeam. The early return at the top of provisionTeam treats CREATED as "nothing to
+		// do", so a first run that created the team and then failed adding members (one mistyped CWL)
+		// left a member-less team that every later run reported as fully provisioned. Students could
+		// not see their repo and nothing said why.
+		const repoId = "ghcProvisionSpecMembersFailOnce";
+		const teamId = "ghcProvisionSpecMembersTeam";
+		const team: Team = await TestHarness.createTeam(teamId, TestHarness.DELIVID0, [TestHarness.USER1.id]);
+		await dbc.writeTeam(team);
+		await dbc.writeRepository({
+			id: repoId,
+			delivId: TestHarness.DELIVID0,
+			teamIds: [teamId],
+			URL: null,
+			cloneURL: null,
+			gitHubStatus: RepoStatus.NOT_CREATED,
+			custom: {},
+		});
+
+		const gha = new TeamMembersFailOnceActions();
+		const ghc = new GitHubController(gha);
+
+		// run 1: members fail -> finalization fails -> the team must NOT be marked CREATED
+		let message: string = null;
+		try {
+			await ghc.provisionRepository(repoId, [await dbc.getTeam(teamId)], IMPORT_URL);
+		} catch (err) {
+			message = err.message;
+		}
+		expect(message, "run 1 must report the failure").to.contain("finalization failed");
+		expect(gha.addMembersCalls).to.equal(1);
+		expect((await dbc.getTeam(teamId)).gitHubStatus, "a team with no members is not CREATED").to.not.equal(TeamStatus.CREATED);
+
+		// run 2 (resume): the team is retried, the members are added this time, and only then is it CREATED
+		const provisioned = await ghc.provisionRepository(repoId, [await dbc.getTeam(teamId)], IMPORT_URL);
+		expect(provisioned, "the resume must succeed").to.be.true;
+		expect(gha.addMembersCalls, "the members must be added on the re-run").to.equal(2);
+		expect((await dbc.getTeam(teamId)).gitHubStatus).to.equal(TeamStatus.CREATED);
 	});
 
 	it("Should prune a template import to the requested branch and rename it to main.", async function () {
@@ -565,6 +642,48 @@ describe("GitHubController provisioning paths", function () {
 			expect(afterTeam.gitHubStatus).to.equal(TeamStatus.ATTACHED);
 		});
 
+		it("Should refuse to un-release a RELEASED repo that has no team to detach.", async function () {
+			// RELEASED with nothing attached is an inconsistency (a team deleted by hand, a record
+			// repaired half way). Quietly flipping it to READY would hide that; it stays as it is and
+			// the admin sees a failure, and dbSanityCheck is the tool that repairs it.
+			const repoId = "ghcUnreleaseNoTeams";
+			const repo = await makeReleasedRepo(repoId, "ghcUnreleaseNoTeamsTeam", []);
+			repo.teamIds = [];
+			await dbc.writeRepository(repo);
+
+			const gha = new TeamRemoveRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.unreleaseRepository(repo, []), "nothing to detach is not a successful un-release").to.be.false;
+			expect(gha.removed, "and GitHub is not asked to detach anything").to.deep.equal([]);
+			expect((await dbc.getRepository(repoId)).gitHubStatus, "the status is left for the sanity check to repair").to.equal(
+				RepoStatus.RELEASED
+			);
+
+			// a null team (a stale id in teamIds) is skipped, not dereferenced
+			expect(await ghc.unreleaseRepository(repo, [null])).to.be.false;
+		});
+
+		it("Should treat a detach that throws like one that failed.", async function () {
+			// GitHub answering 5xx on the DELETE: the team must stay ATTACHED so that un-releasing
+			// again retries it, and the error must not escape to take the rest of the job down
+			await makePerson("unrelStudent5", PersonKind.STUDENT);
+			const repoId = "ghcUnreleaseThrows";
+			const teamId = "ghcUnreleaseThrowsTeam";
+			const repo = await makeReleasedRepo(repoId, teamId, ["unrelStudent5"]);
+
+			class TeamRemoveThrowsActions extends RecordingActions {
+				public async removeTeamFromRepo(_teamName: string, _repoName: string): Promise<boolean> {
+					throw new Error("Internal Server Error");
+				}
+			}
+			const ghc = new GitHubController(new TeamRemoveThrowsActions());
+
+			expect(await ghc.unreleaseRepository(repo, [await dbc.getTeam(teamId)])).to.be.false;
+			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.RELEASED);
+			expect((await dbc.getTeam(teamId)).gitHubStatus, "still attached, so the next attempt retries").to.equal(TeamStatus.ATTACHED);
+		});
+
 		it("Should survive a full release / un-release / release round trip.", async function () {
 			await makePerson("unrelStudent4", PersonKind.STUDENT);
 			const repoId = "ghcUnreleaseRoundTrip";
@@ -582,6 +701,128 @@ describe("GitHubController provisioning paths", function () {
 			expect(reReleased, "an un-released repo can be released again").to.be.true;
 			expect((await dbc.getRepository(repoId)).gitHubStatus).to.equal(RepoStatus.RELEASED);
 			expect((await dbc.getTeam(teamId)).gitHubStatus).to.equal(TeamStatus.ATTACHED);
+		});
+	});
+
+	describe("read-only and writeable", function () {
+		/**
+		 * A released repo whose only team is `teamId`; written directly, since nothing here depends
+		 * on who is on the team.
+		 */
+		async function releasedRepo(repoId: string, teamId: string, teamStatus: TeamStatus = TeamStatus.ATTACHED): Promise<Repository> {
+			const team: Team = {
+				id: teamId,
+				delivId: TestHarness.DELIVID0,
+				githubId: null,
+				personIds: [],
+				URL: null,
+				gitHubStatus: teamStatus,
+				custom: {},
+			};
+			await dbc.writeTeam(team);
+			const repo: Repository = {
+				id: repoId,
+				delivId: TestHarness.DELIVID0,
+				teamIds: [teamId],
+				URL: "https://example.com/" + repoId,
+				cloneURL: "https://example.com/" + repoId + ".git",
+				gitHubStatus: RepoStatus.RELEASED,
+				custom: {},
+			};
+			await dbc.writeRepository(repo);
+			return repo;
+		}
+
+		it("Should make the student team read-only, and writeable again.", async function () {
+			const repo = await releasedRepo("ghcAccessRepo", "ghcAccessTeam");
+			const gha = new PermissionRecordingActions();
+			const ghc = new GitHubController(gha);
+			const team = await dbc.getTeam("ghcAccessTeam");
+
+			expect(RepositoryController.repositoryToTransport(repo).studentAccess, "a release grants push").to.equal(StudentAccess.PUSH);
+
+			expect(await ghc.setStudentAccess(repo, [team], StudentAccess.PULL)).to.be.true;
+			expect(gha.changed).to.deep.equal(["ghcAccessTeam@ghcAccessRepo:pull"]);
+			const readOnly = await dbc.getRepository("ghcAccessRepo");
+			expect(readOnly.studentAccess).to.equal(StudentAccess.PULL);
+			expect(readOnly.gitHubStatus, "still released: the team is attached, only its permission changed").to.equal(RepoStatus.RELEASED);
+			expect((await dbc.getTeam("ghcAccessTeam")).gitHubStatus).to.equal(TeamStatus.ATTACHED);
+
+			expect(await ghc.setStudentAccess(readOnly, [team], StudentAccess.PUSH)).to.be.true;
+			expect(gha.changed[1]).to.equal("ghcAccessTeam@ghcAccessRepo:push");
+			expect((await dbc.getRepository("ghcAccessRepo")).studentAccess).to.equal(StudentAccess.PUSH);
+		});
+
+		it("Should never change the org-wide staff or admin team.", async function () {
+			const repo = await releasedRepo("ghcAccessProtectedRepo", "ghcAccessProtectedTeam");
+			const orgWide = (id: string): Team => ({
+				id: id,
+				delivId: TestHarness.DELIVID0,
+				githubId: null,
+				personIds: [],
+				URL: null,
+				gitHubStatus: TeamStatus.ATTACHED,
+				custom: {},
+			});
+			const gha = new PermissionRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			const teams = [orgWide(TeamController.STAFF_NAME), await dbc.getTeam("ghcAccessProtectedTeam"), orgWide(TeamController.ADMIN_NAME)];
+			expect(await ghc.setStudentAccess(repo, teams, StudentAccess.PULL)).to.be.true;
+			expect(gha.changed, "only the student team").to.deep.equal(["ghcAccessProtectedTeam@ghcAccessProtectedRepo:pull"]);
+		});
+
+		it("Should not touch a team that is not attached.", async function () {
+			// for an unattached team the same call would attach it: granting access, not changing it
+			const repo = await releasedRepo("ghcAccessUnattachedRepo", "ghcAccessUnattachedTeam", TeamStatus.CREATED);
+			const gha = new PermissionRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.setStudentAccess(repo, [await dbc.getTeam("ghcAccessUnattachedTeam")], StudentAccess.PULL)).to.be.false;
+			expect(gha.changed).to.deep.equal([]);
+			expect((await dbc.getRepository("ghcAccessUnattachedRepo")).studentAccess, "nothing recorded").to.be.undefined;
+		});
+
+		it("Should refuse a repo that is not released.", async function () {
+			const repo = await releasedRepo("ghcAccessReadyRepo", "ghcAccessReadyTeam");
+			repo.gitHubStatus = RepoStatus.READY;
+			await dbc.writeRepository(repo);
+			const gha = new PermissionRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.setStudentAccess(repo, [await dbc.getTeam("ghcAccessReadyTeam")], StudentAccess.PULL)).to.be.false;
+			expect(gha.changed).to.deep.equal([]);
+			expect(RepositoryController.repositoryToTransport(repo).studentAccess, "no student team, no access").to.be.null;
+		});
+
+		it("Should keep the old access when GitHub refuses the change.", async function () {
+			// so the page does not list it as read-only while its students can still push
+			const repo = await releasedRepo("ghcAccessFailsRepo", "ghcAccessFailsTeam");
+			const ghc = new GitHubController(new PermissionFailsActions());
+
+			expect(await ghc.setStudentAccess(repo, [await dbc.getTeam("ghcAccessFailsTeam")], StudentAccess.PULL)).to.be.false;
+			const after = await dbc.getRepository("ghcAccessFailsRepo");
+			expect(after.studentAccess).to.be.undefined;
+			expect(after.gitHubStatus).to.equal(RepoStatus.RELEASED);
+		});
+
+		it("Should be writeable again after an un-release and a fresh release.", async function () {
+			// a release only ever grants push, so the record must not carry the old read-only across
+			const repo = await releasedRepo("ghcAccessCycleRepo", "ghcAccessCycleTeam");
+			const gha = new PermissionRecordingActions();
+			const ghc = new GitHubController(gha);
+
+			expect(await ghc.setStudentAccess(repo, [await dbc.getTeam("ghcAccessCycleTeam")], StudentAccess.PULL)).to.be.true;
+			expect(await ghc.unreleaseRepository(await dbc.getRepository("ghcAccessCycleRepo"), [await dbc.getTeam("ghcAccessCycleTeam")])).to.be
+				.true;
+			expect((await dbc.getRepository("ghcAccessCycleRepo")).studentAccess, "detached, so no access").to.be.undefined;
+
+			expect(await ghc.releaseRepository(await dbc.getRepository("ghcAccessCycleRepo"), [await dbc.getTeam("ghcAccessCycleTeam")], false))
+				.to.be.true;
+			expect((await dbc.getRepository("ghcAccessCycleRepo")).studentAccess).to.equal(StudentAccess.PUSH);
+			expect(gha.changed[gha.changed.length - 1], "and the release attached it with push").to.equal(
+				"ghcAccessCycleTeam@ghcAccessCycleRepo:push"
+			);
 		});
 	});
 });

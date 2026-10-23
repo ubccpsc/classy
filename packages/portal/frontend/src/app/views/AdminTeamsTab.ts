@@ -1,6 +1,6 @@
 import Log from "@common/Log";
 
-import { CourseTransport, RepositoryTransport, StudentTransport, TeamTransport, TeamTransportPayload } from "@common/types/PortalTypes";
+import { CourseTransport, PersonTransport, RepositoryTransport, TeamTransport, TeamTransportPayload } from "@common/types/PortalTypes";
 
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
@@ -12,8 +12,8 @@ import { AdminView } from "./AdminView";
 
 export class AdminTeamsTab extends AdminPage {
 	private teams: TeamTransport[] = [];
-	private students: StudentTransport[] = [];
-	private staff: StudentTransport[] = [];
+	private students: PersonTransport[] = [];
+	private staff: PersonTransport[] = [];
 	private course: CourseTransport = null;
 	private repos: RepositoryTransport[] = [];
 
@@ -39,7 +39,7 @@ export class AdminTeamsTab extends AdminPage {
 		const provisionDelivs = (await AdminDeliverablesTab.getDeliverables(this.remote)).filter((deliv) => deliv.shouldProvision);
 		this.repos = await AdminResultsTab.getRepositories(this.remote);
 		this.teams = await AdminTeamsTab.getTeams(this.remote);
-		this.students = await AdminStudentsTab.getStudents(this.remote);
+		this.students = await AdminStudentsTab.getPeopleForView(this.remote);
 
 		this.staff = await AdminStudentsTab.getStaff(this.remote);
 
@@ -273,11 +273,11 @@ export class AdminTeamsTab extends AdminPage {
 		return [...new Set(labs)].sort().join(",");
 	}
 
-	private getPerson(personId: string): StudentTransport | null {
+	private getPerson(personId: string): PersonTransport | null {
 		return this.students.find((student) => student.id === personId) ?? null;
 	}
 
-	private getStaff(personId: string): StudentTransport | null {
+	private getStaff(personId: string): PersonTransport | null {
 		return this.staff.find((staff) => staff.id === personId) ?? null;
 	}
 
@@ -328,7 +328,7 @@ export class AdminTeamsTab extends AdminPage {
 		return render;
 	}
 
-	private renderIndividuals(teams: TeamTransport[], students: StudentTransport[], delivId: string, labSection: string): void {
+	private renderIndividuals(teams: TeamTransport[], students: PersonTransport[], delivId: string, labSection: string): void {
 		Log.trace("AdminTeamsTab::renderIndividuals(.., " + delivId + ", " + labSection + ") - start");
 
 		const headers: TableHeader[] = [
