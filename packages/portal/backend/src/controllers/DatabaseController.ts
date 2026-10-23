@@ -897,26 +897,33 @@ export class DatabaseController {
 		// winning plan is an IXSCAN on it with no SORT stage, where the delivId index alone needed
 		// an in-memory sort of every result for the deliverable.
 		//
-		// The optional $project goes LAST, after $group has kept one record per repo. Placed before
-		// $group it reshapes every result for the deliverable, most of which $group then discards;
-		// that measured slower than no projection at all.
+		// $group keeps only the _id of the newest result per repo, and the documents are fetched in a
+		// second query. It used to keep the whole document ($first: "$$ROOT"), which made the group
+		// stage hold one full result per repo: once results carried archived grader payloads and
+		// submitted files that passed the 100 MB a $group may use and the dashboard failed with
+		// "Exceeded memory limit for $group". Ids are a few bytes each, so the stage now stays small
+		// however large the results get; allowDiskUse is a backstop, not the plan.
 		const pipeline: object[] = [
 			{ $match: { delivId: delivId } },
 			{ $sort: { "input.target.timestamp": -1 } },
 			{
 				$group: {
 					_id: { delivId: "$delivId", repoId: "$repoId" },
-					doc: { $first: "$$ROOT" },
+					id: { $first: "$_id" },
 				},
 			},
-			{ $replaceRoot: { newRoot: "$doc" } },
 		];
-		if (typeof projection !== "undefined") {
-			pipeline.push({ $project: projection });
-		}
 
 		const col = await this.getCollection(this.RESULTCOLL, QueryKind.FAST);
-		const records: any[] = await (col as any).aggregate(pipeline).toArray();
+		const newest: any[] = await (col as any).aggregate(pipeline, { allowDiskUse: true }).toArray();
+		const ids = newest.map((n) => n.id);
+
+		// the projection applies here, so the result documents are trimmed as they are read rather
+		// than after being buffered
+		const findOptions: any = typeof projection !== "undefined" ? { projection: projection } : {};
+		const records: any[] = ids.length === 0 ? [] : await (col as any).find({ _id: { $in: ids } }, findOptions).toArray();
+		// newest first, which is the order the sort above established and $in does not preserve
+		records.sort((a, b) => (b?.input?.target?.timestamp ?? 0) - (a?.input?.target?.timestamp ?? 0));
 
 		if (records === null || records.length === 0) {
 			Log.trace("DatabaseController::readRecords(..) - done; no records found");
