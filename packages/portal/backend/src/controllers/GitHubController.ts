@@ -87,8 +87,31 @@ export interface BranchRule {
 
 export interface Issue {
 	title: string;
+	/**
+	 * Markdown; GitHub renders it.
+	 */
 	body: string;
-	// assignees: string[];
+	/**
+	 * GitHub logins to assign. Each must have push access to the repo (students get this through
+	 * the team attached when the repo is released), otherwise GitHub rejects the whole issue with
+	 * a 422. At most 10.
+	 */
+	assignees?: string[];
+	/**
+	 * Label names. Labels that do not exist in the repo are created by GitHub as a side effect.
+	 */
+	labels?: string[];
+}
+
+/**
+ * The subset of a GitHub issue that callers need to recognise one they filed earlier.
+ */
+export interface GitIssueTuple {
+	number: number;
+	title: string;
+	state: string;
+	labels: string[];
+	url: string;
 }
 
 export class GitHubController implements IGitHubController {
@@ -964,7 +987,8 @@ export class GitHubController implements IGitHubController {
 		if (!(await this.gha.repoExists(repo.id, true))) {
 			throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
 		}
-		const successes = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));
+		const urls = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));
+		const successes = urls.map((url) => url !== null);
 		const allSuccess = successes.every((success) => success === true);
 		Log.info("GitHubController::createIssues(", repo.id, ") - All issues created successfully:", allSuccess);
 		return allSuccess;

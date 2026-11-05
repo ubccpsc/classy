@@ -7,7 +7,7 @@ import fetch, { RequestInit, Response } from "node-fetch";
 import parseLinkHeader from "parse-link-header";
 import { Factory } from "../Factory";
 import { DatabaseController } from "./DatabaseController";
-import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
+import { BranchRule, GitIssueTuple, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "./GitHubController";
 import { addAuthTokenToUrl, RepoImporter } from "./RepoImporter";
 import { TeamController } from "./TeamController";
 
@@ -302,7 +302,16 @@ export interface IGitHubActions {
 
 	addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean>;
 
-	makeIssue(repoId: string, issue: Issue): Promise<boolean>;
+	/**
+	 * Creates an issue. Returns the new issue's URL, or null if GitHub refused it (the status and
+	 * response body are logged).
+	 */
+	makeIssue(repoId: string, issue: Issue): Promise<string | null>;
+
+	/**
+	 * Lists the issues in a repo, open and closed, oldest first. Pull requests are excluded.
+	 */
+	listIssues(repoId: string): Promise<GitIssueTuple[]>;
 
 	/**
 	 * Lists the branches in a repo.
@@ -2349,19 +2358,28 @@ export class GitHubActions implements IGitHubActions {
 	}
 
 	/**
-	 * Creates a new issue on the specified repo
+	 * Creates a new issue on the specified repo.
+	 *
 	 * @param repoId
 	 * @param issue
+	 * @returns the issue's html_url, or null if it was not created
 	 */
-	public async makeIssue(repoId: string, issue: Issue): Promise<boolean> {
+	public async makeIssue(repoId: string, issue: Issue): Promise<string | null> {
 		Log.info("GitHubAction::makeIssue(..) - start; repo:", repoId, "; issue:", issue.title);
 		const start = Date.now();
 		try {
 			const uri = `${this.apiPath}/repos/${this.org}/${repoId}/issues`;
-			const body = JSON.stringify({
+			const payload: { title: string; body: string; assignees?: string[]; labels?: string[] } = {
 				title: issue.title,
 				body: issue.body,
-			});
+			};
+			if (Array.isArray(issue.assignees) && issue.assignees.length > 0) {
+				payload.assignees = issue.assignees;
+			}
+			if (Array.isArray(issue.labels) && issue.labels.length > 0) {
+				payload.labels = issue.labels;
+			}
+			const body = JSON.stringify(payload);
 			const options: RequestInit = {
 				method: "POST",
 				headers: {
@@ -2376,14 +2394,54 @@ export class GitHubActions implements IGitHubActions {
 				// fetch does not reject on 4xx/5xx, so the status must be checked explicitly
 				const respBody = await response.text();
 				Log.warn("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - failed; status:", response.status, "; response:", respBody);
-				return false;
+				return null;
 			}
-			Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! took: ", Util.took(start));
-			return true;
+			const created: any = await response.json();
+			const url: string = typeof created?.html_url === "string" ? created.html_url : "";
+			Log.info("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - Success! url:", url, "; took: ", Util.took(start));
+			return url;
 		} catch (err) {
 			Log.warn("GitHubAction::makeIssue(", repoId, ",", issue.title, ") - ERROR:", err.message);
 		}
-		return false;
+		return null;
+	}
+
+	/**
+	 * Lists the issues in a repo, open and closed. GitHub returns pull requests from the issues
+	 * endpoint too; those are dropped here.
+	 *
+	 * @param repoId
+	 */
+	public async listIssues(repoId: string): Promise<GitIssueTuple[]> {
+		Log.info("GitHubAction::listIssues( " + repoId + " ) - start");
+		const start = Date.now();
+
+		const uri = this.apiPath + "/repos/" + this.org + "/" + repoId + "/issues?state=all&per_page=" + this.pageSize;
+		const options: RequestInit = {
+			method: "GET",
+			headers: {
+				Authorization: this.gitHubAuthToken,
+				"User-Agent": this.gitHubUserName,
+				Accept: "application/json",
+			},
+		};
+
+		const raw: any[] = await this.handlePagination(uri, options);
+
+		const rows: GitIssueTuple[] = [];
+		for (const entry of raw) {
+			if (typeof entry.pull_request !== "undefined") {
+				continue;
+			}
+			const labels: string[] = [];
+			for (const label of entry.labels ?? []) {
+				labels.push(typeof label === "string" ? label : label.name);
+			}
+			rows.push({ number: entry.number, title: entry.title, state: entry.state, labels: labels, url: entry.html_url });
+		}
+
+		Log.info("GitHubAction::listIssues( " + repoId + " ) - done; # issues: " + rows.length + "; took: " + Util.took(start));
+		return rows;
 	}
 
 	public async simulateWebhookComment(projectName: string, sha: string, message: string): Promise<boolean> {

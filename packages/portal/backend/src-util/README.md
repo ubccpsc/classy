@@ -33,6 +33,8 @@ The full list is given below, but the most commonly used batch utilities are `In
 
 * `GitHubCleaner`: Batch deletion from DB and GitHub. You *REALLY* don't want to use this.
 
+* `IssueFiler`: Files the same issue on every repository provisioned for a deliverable, assigned to the students on each repository's team and labelled so a rerun can recognise it and skip it. Takes the deliverable id, a title, and a Markdown file for the body; dry-run unless `--live` is given. An issue GitHub refuses because of its assignees is filed again unassigned and flagged, and `--report` writes a CSV of each repository's outcome and issue URL. See the comment at the top of the file for the options.
+
 * `InvokeAutoTest`: Batch invoke AutoTest on a specific set of commits. This is a pretty safe operation and is commonly used.
 
 * `TestDatasetGenerator`: Seeds the *test* database (`ConfigKey.testname`) with a small course dataset: a course record, an admin, 41 students, auth tokens, five deliverables, two teams, and two repositories. Idempotent, so it is safe to re-run. Convenience script: `yarn seed:testdb` from the repo root. This used to be `test/xRunLast/TestDatasetGeneratorSpec.ts`, where seven assertion-free tests relied on the directory name sorting last so the other suites would not clear the data back out; nothing in the test suite depends on it.

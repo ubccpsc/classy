@@ -2,7 +2,7 @@
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
-import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
+import { BranchRule, GitIssueTuple, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
 import { TeamController } from "@backend/controllers/TeamController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -356,7 +356,11 @@ export class TestGitHubActions implements IGitHubActions {
 		return true;
 	}
 
-	public async makeIssue(repoId: string, issue: Issue): Promise<boolean> {
-		return true;
+	public async makeIssue(repoId: string, issue: Issue): Promise<string | null> {
+		return "https://github.test/" + repoId + "/issues/1";
+	}
+
+	public async listIssues(repoId: string): Promise<GitIssueTuple[]> {
+		return [];
 	}
 }
