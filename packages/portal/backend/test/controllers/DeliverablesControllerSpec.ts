@@ -80,6 +80,30 @@ describe("DeliverablesController", () => {
 		expect(deliv).to.be.an("string");
 	});
 
+	it("Should accept an empty Import URL and reject a malformed one.", async () => {
+		const base = { id: "d1validate" } as DeliverableTransport;
+
+		// empty is allowed: the bootstrap repo may not exist when the deliverable is created
+		expect(dc.validateDeliverableTransport({ ...base, importURL: null })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "" })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "   " })).to.be.null;
+
+		// both accepted forms
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "https://github.test/org/bootstrap.git" })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "https://github.test/org/bootstrap.git#main:dir" })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "git@github.test:org/bootstrap.git" })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "org/template" })).to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "org/template#main" })).to.be.null;
+
+		// neither a git URL nor owner/repo
+		for (const bad of ["bootstrap", "org/", "/template", "org/sub/template", "org/template.git", "github.test/org/bootstrap.git"]) {
+			const msg = dc.validateDeliverableTransport({ ...base, importURL: bad });
+			expect(msg, bad).to.be.a("string");
+			expect(msg, bad).to.contain("Import URL");
+		}
+		expect(dc.validateDeliverableTransport({ ...base, importURL: " org/template" })).to.contain("whitespace");
+	});
+
 	// this test should be last
 	it("Should enforce minimum constraint on student delay in deliverables when saving.", async () => {
 		const db = DatabaseController.getInstance();

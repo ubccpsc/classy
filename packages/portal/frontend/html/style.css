@@ -149,6 +149,10 @@ Dashboard Page
     background-color: hsl(348, 100%, 61%);
 }
 
+.toast--warning {
+    background-color: hsl(36, 100%, 42%);
+}
+
 .hidden {
     display: none;
 }

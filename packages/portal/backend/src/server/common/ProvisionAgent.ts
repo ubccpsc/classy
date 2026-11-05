@@ -185,7 +185,7 @@ export class ProvisionAgent {
 		const start = Date.now();
 		Log.info("ProvisionAgent::create( " + delivId + " ) - start; # repos: " + (repoIds ?? []).length);
 
-		const deliv = await ProvisionAgent.getProvisionableDeliverable(delivId);
+		const deliv = await ProvisionAgent.getProvisionableDeliverable(delivId, true);
 		const repos = await this.resolveRepos(delivId, repoIds);
 		const ac = this.getAdminController();
 
@@ -525,13 +525,28 @@ export class ProvisionAgent {
 		return records.filter((record) => record.delivId === delivId).length;
 	}
 
-	private static async getProvisionableDeliverable(delivId: string): Promise<Deliverable> {
+	/**
+	 * @param delivId
+	 * @param forCreate whether repositories are about to be created, which needs the Import URL
+	 *                  too; releasing and un-releasing do not
+	 */
+	private static async getProvisionableDeliverable(delivId: string, forCreate: boolean = false): Promise<Deliverable> {
 		const deliv = await new DeliverablesController().getDeliverable(delivId);
 		if (deliv === null) {
 			throw new Error("Unknown deliverable: " + delivId);
 		}
 		if (deliv.shouldProvision !== true) {
 			throw new Error("Deliverable is not provisionable: " + delivId);
+		}
+		if (forCreate === true) {
+			// Checked here, before the audit record and before any GitHub call. Without this the
+			// job failed once per repository with a message about string parsing, and the policy
+			// then stopped it with "the first 3 attempts all failed" (ubccpsc/classy#469).
+			const problem = GitHubController.validateImportURL(deliv.importURL);
+			if (problem !== null) {
+				const fix = problem === "no Import URL is set" ? "Set it" : "Fix it";
+				throw new Error("Deliverable " + delivId + ": " + problem + ". " + fix + " on the deliverable page, then provision again.");
+			}
 		}
 		return deliv;
 	}

@@ -705,6 +705,11 @@ export class AdminDeliverablesTab extends AdminPage {
 			// worked
 			UI.showSuccessToast("Deliverable saved successfully.");
 			UI.popPage();
+			if (shouldProvision === true && importURL.trim().length === 0) {
+				// saving is allowed (the bootstrap repo may not exist yet) but provisioning will
+				// refuse to start, and it is better to hear that now than from the job
+				UI.showWarningToast("Repos cannot be provisioned for " + id + " until an Import URL is set.");
+			}
 		} else {
 			UI.showError(body); // may not be a Classy payload; see UI.showError
 		}

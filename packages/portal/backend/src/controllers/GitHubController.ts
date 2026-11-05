@@ -293,6 +293,48 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
+	 * Whether an Import URL names a template repo (ownerName/templateName#branchName) rather than a
+	 * git URL to import from.
+	 */
+	public static isTemplateImport(importUrl: string): boolean {
+		return !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+	}
+
+	/**
+	 * Checks a deliverable's Import URL, which is what every repository provisioned for the
+	 * deliverable is created from. Two forms are accepted: a git URL (starting with https:// or
+	 * git@), optionally suffixed #branch or #branch:directory, which is imported; or
+	 * ownerName/templateName, optionally suffixed #branch, which is used as a GitHub template.
+	 *
+	 * Shared by the deliverable save (a malformed URL is rejected there), by ProvisionAgent (a job
+	 * is refused before it starts) and by createOnGitHub (the backstop), so all three say the same
+	 * thing.
+	 *
+	 * @returns null if usable, otherwise what is wrong, phrased for an admin
+	 */
+	public static validateImportURL(importUrl: string | null | undefined): string | null {
+		if (typeof importUrl !== "string" || importUrl.trim().length === 0) {
+			return "no Import URL is set";
+		}
+		if (importUrl !== importUrl.trim()) {
+			return "Import URL has leading or trailing whitespace: '" + importUrl + "'";
+		}
+		if (GitHubController.isTemplateImport(importUrl) === false) {
+			return null; // a git URL; whether it can actually be cloned is only known at import time
+		}
+		const parts = importUrl.split("/");
+		const template = parts.length === 2 ? parts[1].split("#")[0] : "";
+		if (parts.length !== 2 || parts[0].length === 0 || template.length === 0 || template.indexOf(".git") >= 0) {
+			return (
+				"Import URL must be a git URL starting with https:// or git@, or ownerName/templateName#branchName for a template; was: '" +
+				importUrl +
+				"'"
+			);
+		}
+		return null;
+	}
+
+	/**
 	 * Creates the repository on GitHub, from a template or by importing from a git URL.
 	 *
 	 * NOTE: this is only the GitHub side; the repo is not usable until finalization has attached the
@@ -303,25 +345,26 @@ export class GitHubController implements IGitHubController {
 	 * @returns {Promise<boolean>} whether the repo now exists on GitHub with its content
 	 */
 	private async createOnGitHub(repoName: string, importUrl: string): Promise<boolean> {
+		// A deliverable saved without an Import URL used to get this far and fail with a TypeError
+		// from the string methods below, once per repository, which told the admin nothing about
+		// what to fix (ubccpsc/classy#469). ProvisionAgent now refuses such a job before it starts;
+		// this is the backstop for any other caller.
+		const problem = GitHubController.validateImportURL(importUrl);
+		if (problem !== null) {
+			const msg = "GitHubController::provisionRepository( " + repoName + " ) - " + problem;
+			Log.error(msg);
+			throw new Error(msg);
+		}
+
 		// The NOT_CREATED -> CREATED transition is performed here rather than in
 		// GitHubActions::createRepo. That method records the URL, because it is the only code that
 		// knows it, but a low-level API wrapper should not be deciding lifecycle: doing so is what
 		// used to mark a repo provisioned before it had a webhook or any staff teams.
 		let provisionSuccessful = false;
-		const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+		const provisionWithTemplate = GitHubController.isTemplateImport(importUrl);
 
 		if (provisionWithTemplate) {
 			Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from template; importURL: " + importUrl);
-
-			if (importUrl.split("/").length !== 2) {
-				const msg =
-					"GitHubController::provisionRepository( " +
-					repoName +
-					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-					importUrl;
-				Log.error(msg);
-				throw new Error(msg);
-			}
 
 			const templateOwner = importUrl.split("/")[0];
 			let templateRepo = importUrl.split("/")[1];
@@ -343,17 +386,6 @@ export class GitHubController implements IGitHubController {
 							importUrl
 					);
 				}
-			}
-
-			if (templateRepo.indexOf(".git") > 0) {
-				// this is a git URL, not a org/repo pair
-				const msg =
-					"GitHubController::provisionRepository( " +
-					repoName +
-					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-					importUrl;
-				Log.error(msg);
-				throw new Error(msg);
 			}
 
 			provisionSuccessful = await this.provisionRepositoryFromTemplate(repoName, templateOwner, templateRepo, branchesToKeep);

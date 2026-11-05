@@ -91,6 +91,43 @@ describe("ProvisionAgent", function () {
 		expect(msg).to.contain("not provisionable");
 	});
 
+	it("Should refuse to create repos for a deliverable with no Import URL, but still release them.", async function () {
+		// the case from ubccpsc/classy#469: provisionable, but nothing to provision from
+		const delivC = new DeliverablesController();
+		const deliv = await delivC.getDeliverable(TestHarness.DELIVID0);
+		const original = deliv.importURL;
+		try {
+			for (const missing of [null, "", "   "]) {
+				deliv.importURL = missing;
+				await dbc.writeDeliverable(deliv);
+				const msg = await messageFrom(agent.create(TestHarness.DELIVID0, ["noSuchRepo"], TestHarness.ADMIN1.id));
+				Log.test("message: " + msg);
+				expect(msg, JSON.stringify(missing)).to.contain("no Import URL is set");
+				expect(msg, JSON.stringify(missing)).to.contain("Set it on the deliverable page");
+			}
+
+			deliv.importURL = "not a url";
+			await dbc.writeDeliverable(deliv);
+			const malformed = await messageFrom(agent.create(TestHarness.DELIVID0, ["noSuchRepo"], TestHarness.ADMIN1.id));
+			expect(malformed).to.contain("Import URL must be");
+			expect(malformed).to.contain("Fix it on the deliverable page");
+
+			// release and un-release do not create anything, so they do not need the URL: the
+			// repo check is the next thing they do and it is what rejects here
+			deliv.importURL = null;
+			await dbc.writeDeliverable(deliv);
+			expect(await messageFrom(agent.release(TestHarness.DELIVID0, ["noSuchRepo"], TestHarness.ADMIN1.id))).to.contain(
+				"Unknown repository"
+			);
+			expect(await messageFrom(agent.unrelease(TestHarness.DELIVID0, ["noSuchRepo"], TestHarness.ADMIN1.id))).to.contain(
+				"Unknown repository"
+			);
+		} finally {
+			deliv.importURL = original;
+			await dbc.writeDeliverable(deliv);
+		}
+	});
+
 	it("Should reject an un-release with the same validation as a release.", async function () {
 		// un-release has no planning step: the selection comes straight from the released list, so
 		// resolveRepos is the only thing standing between a bad request and the GitHub calls

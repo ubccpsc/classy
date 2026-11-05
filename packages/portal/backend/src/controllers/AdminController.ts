@@ -1002,6 +1002,10 @@ export class AdminController {
 						policy.recordSuccess();
 					} else {
 						Log.warn("AdminController::performProvision(..) - provision FAILED: " + repo.id + "; URL: " + repo.URL);
+						// recorded on the job so the admin UI can show it; a thrown failure is
+						// recorded in the catch below, but this path used to leave only a log line
+						// (ubccpsc310/classy#107)
+						await ctx?.error(repo.id + ": provisioning did not complete; see the server log for why");
 						const stop = policy.recordFailure(null);
 						if (stop !== null) {
 							policy.abort(stop);

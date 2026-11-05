@@ -4,6 +4,7 @@ import { AutoTestConfigTransport, DeliverableTransport } from "@common/types/Por
 import { Deliverable } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
+import { GitHubController } from "./GitHubController";
 
 export class DeliverablesController {
 	private db: DatabaseController = DatabaseController.getInstance();
@@ -77,6 +78,16 @@ export class DeliverablesController {
 			const msg = "invalid delivId: " + deliv.id;
 			Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + msg);
 			return msg;
+		}
+
+		// An empty Import URL is allowed, so a deliverable can be created before its bootstrap repo
+		// exists; provisioning refuses to start until one is set. A non-empty one has to be usable.
+		if (typeof deliv.importURL === "string" && deliv.importURL.trim().length > 0) {
+			const problem = GitHubController.validateImportURL(deliv.importURL);
+			if (problem !== null) {
+				Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + problem);
+				return problem;
+			}
 		}
 
 		Log.trace("DeliverablesController::validateDeliverableTransport(..) - done; object is valid");

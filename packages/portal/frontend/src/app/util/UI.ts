@@ -75,6 +75,13 @@ export class UI {
 		ons.notification.toast({ message: text, buttonLabel: "Ok", modifier: "danger" });
 	}
 
+	/**
+	 * Something worked, but the admin should know about a consequence. Stays until dismissed.
+	 */
+	public static showWarningToast(text: string) {
+		ons.notification.toast({ message: text, buttonLabel: "Ok", modifier: "warning" });
+	}
+
 	public static showSuccessToast(text: string, opts?: any) {
 		// TODO: change colour: https://onsen.io/v2/api/js/ons.notification.html#method-toast
 		if (typeof opts === "undefined") {
