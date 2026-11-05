@@ -351,6 +351,16 @@ describe("General Routes", function () {
 
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(404);
+
+		// the page explains the likely cause (an archived run) and how to get a new report; the
+		// lstat error it used to send, with the server's filesystem path in it, is not shown
+		expect(response.headers["content-type"]).to.contain("text/html");
+		expect(response.text).to.contain("Report not found");
+		expect(response.text).to.contain("archived");
+		expect(response.text).to.contain("fresh report");
+		expect(response.text).to.contain("/INVALIDID/student/NONEXISTENT/FILE.txt");
+		expect(response.text).to.not.contain("ENOENT");
+		expect(response.text).to.not.contain(Config.getInstance().getProp(ConfigKey.persistDir));
 	});
 
 	it("Student should be able to get get a student resource.", async function () {
@@ -578,6 +588,24 @@ describe("General Routes", function () {
 		expect(response.status).to.equal(400);
 		expect(body.failure).to.not.be.undefined;
 		expect(body.failure.message).to.contain("duplicate");
+	});
+
+	it("Should reject a team request whose githubIds are not strings.", async function () {
+		// Regression: req.body is cast to TeamFormationTransport and each githubId flowed into
+		// readSingleRecord({ githubId }) unvalidated, so an object here is a Mongo operator that
+		// matched an arbitrary classmate and put them on the caller's team.
+		const dc: DatabaseController = DatabaseController.getInstance();
+		const auth = await dc.getAuth(TestHarness.USER1.id);
+		expect(auth).to.not.be.null;
+
+		const teamReq: any = { delivId: TestHarness.DELIVID0, githubIds: [{ $ne: null }] };
+		const response = await request(app).post("/portal/team").send(teamReq).set({ user: auth.personId, token: auth.token });
+		const body: Payload = response.body;
+		Log.test("operator in githubIds: " + response.status + " -> " + JSON.stringify(body));
+
+		expect(response.status).to.equal(400);
+		expect(body.success).to.be.undefined;
+		expect(body.failure.message).to.contain("malformed");
 	});
 
 	it("Should not be able to form a team with invalid credentials.", async function () {

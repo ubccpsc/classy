@@ -46,14 +46,7 @@ describe("GitHubActions", () => {
 	beforeEach(function () {
 		gh.setPageSize(2); // force a small page size for testing
 
-		const exec = TestHarness.runSlowTest();
-		// exec = true;
-		if (exec === true) {
-			Log.test("GitHubActionSpec::beforeEach() - running in CI; not skipping");
-		} else {
-			Log.test("GitHubActionSpec::beforeEach() - skipping (not CI)");
-			this.skip();
-		}
+		TestHarness.requiresGitHub(this);
 	});
 
 	afterEach(function () {
@@ -527,6 +520,48 @@ describe("GitHubActions", () => {
 		expect(teamsOnRepo).to.have.length(1);
 	}).timeout(TIMEOUT);
 
+	it("Should be able to file a labelled, assigned issue and list it again.", async function () {
+		// the team just attached has push on the repo, which is what assignment requires
+		const before = await gh.listIssues(REPONAME);
+		expect(before).to.be.an("array");
+
+		const title = "Issue " + Date.now();
+		const made = await gh.makeIssue(REPONAME, {
+			title: title,
+			body: "# Heading\n\nSome *Markdown* body.",
+			labels: ["classy", "test-label"],
+			assignees: [TestHarness.GITHUB1.github],
+		});
+		expect(made, "issue created").to.be.a("string");
+		expect(made).to.contain(REPONAME);
+
+		const after = await gh.listIssues(REPONAME);
+		expect(after).to.have.length(before.length + 1);
+		const issue = after.find((i) => i.title === title);
+		expect(issue, "new issue listed").to.not.be.undefined;
+		expect(issue.state).to.equal("open");
+		expect(issue.number).to.be.greaterThan(0);
+		expect(issue.url).to.equal(made);
+		expect(issue.labels).to.have.members(["classy", "test-label"]);
+	}).timeout(TIMEOUT);
+
+	it("Should file an issue without optional fields and reject one with an invalid assignee.", async function () {
+		const plain = await gh.makeIssue(REPONAME, { title: "Plain " + Date.now(), body: "no labels, no assignees" });
+		expect(plain, "plain issue created").to.be.a("string");
+
+		// GitHub answers 422 for an assignee without access; makeIssue reports it as null rather than throwing
+		const bad = await gh.makeIssue(REPONAME, { title: "Bad assignee", body: "x", assignees: ["no-such-user-" + Date.now()] });
+		expect(bad, "invalid assignee rejected").to.be.null;
+	}).timeout(TIMEOUT);
+
+	it("Should report no issues, and fail to file one, on a repo that does not exist.", async function () {
+		const missing = "repo_" + Date.now();
+		const listed = await gh.listIssues(missing);
+		expect(listed).to.deep.equal([]);
+		const made = await gh.makeIssue(missing, { title: "t", body: "b" });
+		expect(made).to.be.null;
+	}).timeout(TIMEOUT);
+
 	it("Should fail to create a repo if there is no corresponding Repository object.", async function () {
 		let res = null;
 		let ex = null;
@@ -818,8 +853,17 @@ describe("GitHubActions", () => {
 		const teamSuccess = await gh.addTeamToRepo(TEAMNAME, REPONAME, "push");
 		Log.test("Added team to repo: " + JSON.stringify(teamSuccess));
 		expect(teamSuccess.githubTeamNumber).to.be.greaterThan(0);
+		expect((await gh.getTeamsOnRepo(REPONAME)).map((t) => t.teamName)).to.include(TEAMNAME);
 
-		// TODO: need gh.removeTeamFromRepo
+		// and back off again: this is what un-releasing a repo does
+		Log.test("Removing team from repo");
+		const removed = await gh.removeTeamFromRepo(TEAMNAME, REPONAME);
+		expect(removed).to.be.true;
+		expect((await gh.getTeamsOnRepo(REPONAME)).map((t) => t.teamName)).to.not.include(TEAMNAME);
+
+		// a team GitHub does not have has nothing to detach; false rather than an error, because the
+		// database is simply ahead of the org
+		expect(await gh.removeTeamFromRepo(TestHarness.INVALIDTEAMNAME, REPONAME)).to.be.false;
 	});
 
 	it("Should be able to clone a source repo into a newly created repository.", async function () {

@@ -4,6 +4,7 @@ import { AutoTestConfigTransport, DeliverableTransport } from "@common/types/Por
 import { Deliverable } from "../Types";
 
 import { DatabaseController } from "./DatabaseController";
+import { GitHubController } from "./GitHubController";
 
 export class DeliverablesController {
 	private db: DatabaseController = DatabaseController.getInstance();
@@ -32,6 +33,20 @@ export class DeliverablesController {
 
 		if (deliv.autotest.studentDelay < MIN_DELAY) {
 			deliv.autotest.studentDelay = MIN_DELAY;
+		}
+
+		// The AutoTest kill timer is armed from maxExecTime, and GradingJob.clampMaxExecTime falls
+		// back to this same default when the value is unusable. Coerce here too so the stored record
+		// matches what will actually run, and so the admin sees 300 rather than a silent 0. Mirrors
+		// the studentDelay handling above; the constant mirrors GradingJob.DEFAULT_MAX_EXEC_TIME
+		// (autotest is a separate package, so it is not imported).
+		const DEFAULT_MAX_EXEC_TIME = 300;
+		const maxExecTime = deliv.autotest.maxExecTime;
+		if (typeof maxExecTime !== "number" || Number.isFinite(maxExecTime) === false || maxExecTime <= 0) {
+			Log.warn(
+				"DeliverableController::saveDeliverable(..) - maxExecTime " + String(maxExecTime) + " is unusable; storing " + DEFAULT_MAX_EXEC_TIME
+			);
+			deliv.autotest.maxExecTime = DEFAULT_MAX_EXEC_TIME;
 		}
 
 		await this.db.writeDeliverable(deliv); // let this handle the update
@@ -63,6 +78,16 @@ export class DeliverablesController {
 			const msg = "invalid delivId: " + deliv.id;
 			Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + msg);
 			return msg;
+		}
+
+		// An empty Import URL is allowed, so a deliverable can be created before its bootstrap repo
+		// exists; provisioning refuses to start until one is set. A non-empty one has to be usable.
+		if (typeof deliv.importURL === "string" && deliv.importURL.trim().length > 0) {
+			const problem = GitHubController.validateImportURL(deliv.importURL);
+			if (problem !== null) {
+				Log.error("DeliverableController::validateDeliverableTransport(..) - ERROR: " + problem);
+				return problem;
+			}
 		}
 
 		Log.trace("DeliverablesController::validateDeliverableTransport(..) - done; object is valid");

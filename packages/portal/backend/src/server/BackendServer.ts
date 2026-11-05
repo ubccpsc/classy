@@ -6,9 +6,11 @@ import { AdminController } from "@backend/controllers/AdminController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController } from "@backend/controllers/GitHubController";
 import { JobController } from "@backend/controllers/JobController";
+import { JobScheduler } from "@backend/controllers/JobScheduler";
 import { ClasslistAgent } from "@backend/server/common/ClasslistAgent";
 import { PrairieLearnAgent } from "@backend/server/common/PrairieLearnAgent";
 import { ProvisionAgent } from "@backend/server/common/ProvisionAgent";
+import { StudentAccess } from "@backend/Types";
 
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -43,6 +45,7 @@ export default class BackendServer {
 	private rest: FastifyInstance;
 	private config: Config = null;
 	private useHttps = false;
+	private scheduler: JobScheduler = null;
 
 	public constructor(useHttps = true) {
 		Log.info("BackendServer::<init> - start");
@@ -58,6 +61,13 @@ export default class BackendServer {
 	 *
 	 * @returns {http.Server}
 	 */
+	/** method, url, and the names of the preHandler guards, for every registered route. See the onRoute hook in start(). */
+	private readonly registeredRoutes: Array<{ method: string; url: string; guards: string[] }> = [];
+
+	public getRegisteredRoutes(): Array<{ method: string; url: string; guards: string[] }> {
+		return this.registeredRoutes.slice();
+	}
+
 	public getServer(): http.Server {
 		Log.trace("BackendServer::getServer()");
 		return this.rest.server as http.Server;
@@ -71,6 +81,7 @@ export default class BackendServer {
 	 */
 	public async stop(): Promise<boolean> {
 		Log.info("BackendServer::stop() - start");
+		this.scheduler?.stop();
 		if (typeof this.rest === "undefined" || this.rest === null) {
 			return true;
 		}
@@ -167,14 +178,23 @@ export default class BackendServer {
 			// leaves its record claiming to be RUNNING forever.
 			const jc = JobController.getInstance();
 			jc.register("prairielearn-sync", async (job, ctx) => {
-				return await new PrairieLearnAgent().sync(job.requestedBy, ctx);
+				return await new PrairieLearnAgent().sync(
+					job.requestedBy,
+					ctx,
+					job.params?.force === true,
+					PrairieLearnAgent.traceUidsFrom(job.params)
+				);
+			});
+			jc.register("prairielearn-reinterpret", async (job, ctx) => {
+				return await new PrairieLearnAgent().reinterpret(job.requestedBy, ctx);
 			});
 			jc.register("classlist-update", async (job, ctx) => {
 				return await new ClasslistAgent().updateClasslist(job.requestedBy, ctx);
 			});
-			jc.register("student-withdraw", async (job, ctx) => {
+			jc.register("user-sync", async (job, ctx) => {
 				const ac = new AdminController(new GitHubController(GitHubActions.getInstance()));
-				return { message: await ac.performStudentWithdraw(job.requestedBy, ctx) };
+				// the summary carries its own `message`, plus the people behind every count
+				return await ac.synchronizeUsers(job.requestedBy, ctx);
 			});
 
 			// provisioning: prepare (database records) -> create (GitHub repos) -> release (teams).
@@ -192,6 +212,25 @@ export default class BackendServer {
 			jc.register("provision-unrelease", async (job, ctx) => {
 				return await new ProvisionAgent().unrelease(job.params?.delivId, job.params?.repoIds, job.requestedBy, ctx);
 			});
+			// two kinds rather than one with an access parameter, so each has its own status on the page
+			jc.register("provision-readonly", async (job, ctx) => {
+				return await new ProvisionAgent().setStudentAccess(
+					job.params?.delivId,
+					job.params?.repoIds,
+					StudentAccess.PULL,
+					job.requestedBy,
+					ctx
+				);
+			});
+			jc.register("provision-writeable", async (job, ctx) => {
+				return await new ProvisionAgent().setStudentAccess(
+					job.params?.delivId,
+					job.params?.repoIds,
+					StudentAccess.PUSH,
+					job.requestedBy,
+					ctx
+				);
+			});
 			try {
 				const swept = await jc.sweepInterrupted();
 				if (swept > 0) {
@@ -206,6 +245,19 @@ export default class BackendServer {
 			Log.info("BackendServer::start() - Registering common handlers");
 
 			// authentication
+			// Record every route as it is registered, with the name of its preHandler guard. The
+			// authorization sweep in AdminRoutesSpec derives its route list from this rather than from
+			// a hand-maintained table, so an admin route added without a guard fails a test instead
+			// of going silently untested. Must be attached before any registerRoutes() call.
+			this.rest.addHook("onRoute", (routeOptions) => {
+				const methods = Array.isArray(routeOptions.method) ? routeOptions.method : [routeOptions.method];
+				const pre: any = routeOptions.preHandler;
+				const guards: string[] = (Array.isArray(pre) ? pre : pre ? [pre] : []).map((fn: any) => fn?.name ?? "anonymous");
+				for (const method of methods) {
+					this.registeredRoutes.push({ method: String(method).toUpperCase(), url: routeOptions.url, guards });
+				}
+			});
+
 			new AuthRoutes().registerRoutes(this.rest);
 
 			// autotest
@@ -261,6 +313,11 @@ export default class BackendServer {
 			const port = this.config.getProp(ConfigKey.backendPort);
 			await this.rest.listen({ port: port, host: "0.0.0.0" });
 			Log.info("BackendServer::start() - fastify listening on port: " + port);
+
+			// jobs started at fixed times of day (JOB_SCHEDULE); only once the server is up, so a
+			// backend that failed to start does not go on running jobs in the background
+			this.scheduler = JobScheduler.fromConfig(JobController.getInstance());
+			this.scheduler.start();
 
 			// after the Classy backend is up, check AutoTest
 			// (Docker should load AutoTest first, but the delay should not hurt)

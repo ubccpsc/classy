@@ -2,7 +2,7 @@ import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
 import Util from "@common/Util";
 
-import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
+import { RepoStatus, Repository, StudentAccess, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 import { IGitHubActions } from "./GitHubActions";
 import { ProvisionState } from "./ProvisionState";
@@ -33,6 +33,16 @@ export interface IGitHubController {
 	 */
 	unreleaseRepository(repo: Repository, teams: Team[]): Promise<boolean>;
 
+	/**
+	 * Switches the student teams on a released repository between read-only and writeable.
+	 *
+	 * @param {Repository} repo
+	 * @param {Team[]} teams the repo's teams; the org-wide staff and admin teams are never changed
+	 * @param {StudentAccess} access pull (read-only) or push (writeable)
+	 * @returns {Promise<boolean>} whether every student team now has that access
+	 */
+	setStudentAccess(repo: Repository, teams: Team[], access: StudentAccess): Promise<boolean>;
+
 	updateBranchProtection(repo: Repository, rules: BranchRule[]): Promise<boolean>;
 
 	getRepositoryUrl(repo: Repository): string;
@@ -42,6 +52,15 @@ export interface IGitHubController {
 	getTeamUrl(team: Team): Promise<string>;
 
 	releaseRepository(repo: Repository, teams: Team[], asCollaborators?: boolean): Promise<boolean>;
+
+	/**
+	 * The GitHub client this controller was constructed with.
+	 *
+	 * Callers that hold an IGitHubController should go through it rather than calling
+	 * GitHubActions.getInstance(true) themselves: forcing the live client makes the calling code
+	 * untestable, because a test then talks to the real org (see AdminController.dbSanityCheck).
+	 */
+	getActions(): IGitHubActions;
 }
 
 export interface GitPersonTuple {
@@ -68,8 +87,31 @@ export interface BranchRule {
 
 export interface Issue {
 	title: string;
+	/**
+	 * Markdown; GitHub renders it.
+	 */
 	body: string;
-	// assignees: string[];
+	/**
+	 * GitHub logins to assign. Each must have push access to the repo (students get this through
+	 * the team attached when the repo is released), otherwise GitHub rejects the whole issue with
+	 * a 422. At most 10.
+	 */
+	assignees?: string[];
+	/**
+	 * Label names. Labels that do not exist in the repo are created by GitHub as a side effect.
+	 */
+	labels?: string[];
+}
+
+/**
+ * The subset of a GitHub issue that callers need to recognise one they filed earlier.
+ */
+export interface GitIssueTuple {
+	number: number;
+	title: string;
+	state: string;
+	labels: string[];
+	url: string;
 }
 
 export class GitHubController implements IGitHubController {
@@ -80,6 +122,10 @@ export class GitHubController implements IGitHubController {
 
 	public constructor(gha: IGitHubActions) {
 		this.gha = gha;
+	}
+
+	public getActions(): IGitHubActions {
+		return this.gha;
 	}
 
 	public getRepositoryUrl(repo: Repository): string {
@@ -247,6 +293,48 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
+	 * Whether an Import URL names a template repo (ownerName/templateName#branchName) rather than a
+	 * git URL to import from.
+	 */
+	public static isTemplateImport(importUrl: string): boolean {
+		return !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+	}
+
+	/**
+	 * Checks a deliverable's Import URL, which is what every repository provisioned for the
+	 * deliverable is created from. Two forms are accepted: a git URL (starting with https:// or
+	 * git@), optionally suffixed #branch or #branch:directory, which is imported; or
+	 * ownerName/templateName, optionally suffixed #branch, which is used as a GitHub template.
+	 *
+	 * Shared by the deliverable save (a malformed URL is rejected there), by ProvisionAgent (a job
+	 * is refused before it starts) and by createOnGitHub (the backstop), so all three say the same
+	 * thing.
+	 *
+	 * @returns null if usable, otherwise what is wrong, phrased for an admin
+	 */
+	public static validateImportURL(importUrl: string | null | undefined): string | null {
+		if (typeof importUrl !== "string" || importUrl.trim().length === 0) {
+			return "no Import URL is set";
+		}
+		if (importUrl !== importUrl.trim()) {
+			return "Import URL has leading or trailing whitespace: '" + importUrl + "'";
+		}
+		if (GitHubController.isTemplateImport(importUrl) === false) {
+			return null; // a git URL; whether it can actually be cloned is only known at import time
+		}
+		const parts = importUrl.split("/");
+		const template = parts.length === 2 ? parts[1].split("#")[0] : "";
+		if (parts.length !== 2 || parts[0].length === 0 || template.length === 0 || template.indexOf(".git") >= 0) {
+			return (
+				"Import URL must be a git URL starting with https:// or git@, or ownerName/templateName#branchName for a template; was: '" +
+				importUrl +
+				"'"
+			);
+		}
+		return null;
+	}
+
+	/**
 	 * Creates the repository on GitHub, from a template or by importing from a git URL.
 	 *
 	 * NOTE: this is only the GitHub side; the repo is not usable until finalization has attached the
@@ -257,25 +345,26 @@ export class GitHubController implements IGitHubController {
 	 * @returns {Promise<boolean>} whether the repo now exists on GitHub with its content
 	 */
 	private async createOnGitHub(repoName: string, importUrl: string): Promise<boolean> {
+		// A deliverable saved without an Import URL used to get this far and fail with a TypeError
+		// from the string methods below, once per repository, which told the admin nothing about
+		// what to fix (ubccpsc/classy#469). ProvisionAgent now refuses such a job before it starts;
+		// this is the backstop for any other caller.
+		const problem = GitHubController.validateImportURL(importUrl);
+		if (problem !== null) {
+			const msg = "GitHubController::provisionRepository( " + repoName + " ) - " + problem;
+			Log.error(msg);
+			throw new Error(msg);
+		}
+
 		// The NOT_CREATED -> CREATED transition is performed here rather than in
 		// GitHubActions::createRepo. That method records the URL, because it is the only code that
 		// knows it, but a low-level API wrapper should not be deciding lifecycle: doing so is what
 		// used to mark a repo provisioned before it had a webhook or any staff teams.
 		let provisionSuccessful = false;
-		const provisionWithTemplate = !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+		const provisionWithTemplate = GitHubController.isTemplateImport(importUrl);
 
 		if (provisionWithTemplate) {
 			Log.info("GitHubController::provisionRepository( " + repoName + " ) - provisioning from template; importURL: " + importUrl);
-
-			if (importUrl.split("/").length !== 2) {
-				const msg =
-					"GitHubController::provisionRepository( " +
-					repoName +
-					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-					importUrl;
-				Log.error(msg);
-				throw new Error(msg);
-			}
 
 			const templateOwner = importUrl.split("/")[0];
 			let templateRepo = importUrl.split("/")[1];
@@ -297,17 +386,6 @@ export class GitHubController implements IGitHubController {
 							importUrl
 					);
 				}
-			}
-
-			if (templateRepo.indexOf(".git") > 0) {
-				// this is a git URL, not a org/repo pair
-				const msg =
-					"GitHubController::provisionRepository( " +
-					repoName +
-					" ) - importUrl must be ownerName/templateName#branchName for template import; was: " +
-					importUrl;
-				Log.error(msg);
-				throw new Error(msg);
 			}
 
 			provisionSuccessful = await this.provisionRepositoryFromTemplate(repoName, templateOwner, templateRepo, branchesToKeep);
@@ -623,7 +701,95 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
-	 * Whether a team must never be detached from a repository.
+	 * Switches the student teams on a released repository between read-only and writeable.
+	 *
+	 * Uses the same call a release does: GitHub's "add or update team repository permissions"
+	 * replaces the permission of a team that is already attached. So the repo, its content, and the
+	 * staff and admin teams are untouched, and a team that is not attached must not be passed to it:
+	 * for such a team the same call would attach it, granting access rather than changing it.
+	 *
+	 * @param repo
+	 * @param teams the repo's teams
+	 * @param access pull (read-only) or push (writeable)
+	 * @returns {Promise<boolean>} whether every student team now has that access
+	 */
+	public async setStudentAccess(repo: Repository, teams: Team[], access: StudentAccess): Promise<boolean> {
+		Log.info("GitHubController::setStudentAccess( " + repo.id + ", " + access + " ) - start");
+		const start = Date.now();
+
+		await this.checkDatabase(repo.id, null);
+
+		if (repo.gitHubStatus !== RepoStatus.RELEASED) {
+			// no student team is attached, so there is nothing to change
+			Log.warn("GitHubController::setStudentAccess( " + repo.id + " ) - not released (" + repo.gitHubStatus + "); nothing to change");
+			return false;
+		}
+
+		// the same set unreleaseRepository detaches: the repo's own teams, never the org-wide ones
+		const studentTeams: Team[] = [];
+		for (const team of teams) {
+			if (team === null) {
+				continue;
+			}
+			if (GitHubController.isProtectedTeam(team) === true) {
+				Log.info("GitHubController::setStudentAccess( " + repo.id + " ) - leaving org-wide team as it is: " + team.id);
+			} else if (team.gitHubStatus !== TeamStatus.ATTACHED) {
+				// changing its permission would attach it; see above
+				Log.warn(
+					"GitHubController::setStudentAccess( " +
+						repo.id +
+						" ) - skipping team " +
+						team.id +
+						"; it is " +
+						team.gitHubStatus +
+						", not attached"
+				);
+			} else {
+				studentTeams.push(team);
+			}
+		}
+
+		if (studentTeams.length === 0) {
+			// released, but no attached student team to change; do not record an access nobody has
+			Log.warn("GitHubController::setStudentAccess( " + repo.id + " ) - no attached student team to change");
+			return false;
+		}
+
+		let allChanged = true;
+		for (const team of studentTeams) {
+			await this.checkDatabase(null, team.id);
+			try {
+				const res = await this.gha.addTeamToRepo(team.id, repo.id, access);
+				if (res.githubTeamNumber > 0) {
+					Log.info(
+						"GitHubController::setStudentAccess(..) - team ( " + team.id + " ) now has " + access + " on repository ( " + repo.id + " )"
+					);
+				} else {
+					Log.error("GitHubController::setStudentAccess(..) - ERROR changing team " + team.id + ": " + JSON.stringify(res));
+					allChanged = false;
+				}
+			} catch (err) {
+				Log.error("GitHubController::setStudentAccess(..) - ERROR changing team " + team.id + ": " + err.message);
+				allChanged = false;
+			}
+		}
+
+		if (allChanged === false) {
+			// as with releasing: a partial result must not be recorded as done, or the admin UI would
+			// list the repo as read-only while some of its students can still push. The record keeps
+			// its old access, so pressing the button again retries (the change itself is idempotent).
+			Log.error("GitHubController::setStudentAccess( " + repo.id + " ) - not changed; a team could not be updated");
+			return false;
+		}
+
+		await ProvisionState.setStudentAccess(repo, access, "student teams set to " + access);
+
+		Log.info("GitHubController::setStudentAccess( " + repo.id + ", " + access + " ) - done; took: " + Util.took(start));
+		return true;
+	}
+
+	/**
+	 * Whether a team must never be detached from a repository, or have its access to one changed.
 	 *
 	 * Only the org-wide staff and admin teams qualify. They are what actually keeps staff in a
 	 * repository: finalization adds them by name with "admin" permission, independently of whatever
@@ -725,6 +891,19 @@ export class GitHubController implements IGitHubController {
 		const res = await this.gha.deleteRepo(repoName);
 		Log.info("GitHubController::provisionRepository( " + repoName + " ) - repo removed: " + res);
 
+		// deleteRepo() answers false both for "there was nothing to delete" and, now that it checks the
+		// HTTP status, for "GitHub refused the DELETE". Only roll the record back if the repo is really
+		// gone: a record saying NOT_CREATED for a repo that still exists made every later run refuse it
+		// with a bare entry in the job's failed list. Left as-is, checkDatabase repairs this state.
+		if (res === false && (await this.gha.repoExists(repoName, true)) === true) {
+			Log.error(
+				"GitHubController::provisionRepository( " +
+					repoName +
+					" ) - repo still exists on GitHub after a failed delete; record left for checkDatabase"
+			);
+			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo could not be removed for retry");
+		}
+
 		// and put the Repository record back the way it was. GitHubActions::createRepo writes URL and
 		// cloneURL as soon as GitHub answers, so a failure after that point (an import that cannot
 		// reach the source repo, say) would otherwise leave a record pointing at a repo that no
@@ -780,7 +959,11 @@ export class GitHubController implements IGitHubController {
 					team.URL = await this.getTeamUrl(team); // informational
 					team.githubId = teamValue.githubTeamNumber;
 					await this.dbc.writeTeam(team);
-					await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub");
+					// NOTE: CREATED is set below, AFTER the members are added. It used to be set here, and
+					// the early return at the top of this method treats CREATED as "nothing to do" -- so a
+					// run that created the team and then failed on addMembersToTeam (one mistyped CWL)
+					// left a member-less team that every later run reported as fully provisioned.
+					// Students could not see their repo and nothing said why.
 				} else {
 					// never observed in practice, but logged just in case
 					Log.error("GitHubController::provisionTeam( " + team.id + " ) - team NOT created: " + JSON.stringify(teamValue));
@@ -798,6 +981,10 @@ export class GitHubController implements IGitHubController {
 				const addMembers = await this.gha.addMembersToTeam(teamValue.teamName, memberGithubIds);
 				// should probably check for success here
 				Log.info("GitHubController::provisionTeam( " + team.id + " ) - addMembers: " + addMembers.teamName);
+
+				// only now is the team really provisioned; a throw above leaves it un-CREATED so the next
+				// run comes back through createTeam (idempotent) and addMembersToTeam
+				await ProvisionState.setTeamStatus(team, TeamStatus.CREATED, "created on GitHub with members");
 			}
 		} catch (err) {
 			// NOTE: this used to swallow the error and return true, which made every team
@@ -814,7 +1001,7 @@ export class GitHubController implements IGitHubController {
 		}
 
 		Log.info("GitHubController::updateBranchProtection(", repo.id, ", ...) - start");
-		if (!(await this.gha.repoExists(repo.id))) {
+		if (!(await this.gha.repoExists(repo.id, true))) {
 			throw new Error("GitHubController::updateBranchProtection() - " + repo.id + " did not exist");
 		}
 		const successes = await Promise.all(rules.map((r) => this.gha.addBranchProtectionRule(repo.id, r)));
@@ -829,10 +1016,11 @@ export class GitHubController implements IGitHubController {
 		}
 
 		Log.info("GitHubController::createIssues(", repo.id, ", ...) - start");
-		if (!(await this.gha.repoExists(repo.id))) {
+		if (!(await this.gha.repoExists(repo.id, true))) {
 			throw new Error("GitHubController::createIssues() - " + repo.id + " did not exist");
 		}
-		const successes = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));
+		const urls = await Promise.all(issues.map((issue) => this.gha.makeIssue(repo.id, issue)));
+		const successes = urls.map((url) => url !== null);
 		const allSuccess = successes.every((success) => success === true);
 		Log.info("GitHubController::createIssues(", repo.id, ") - All issues created successfully:", allSuccess);
 		return allSuccess;

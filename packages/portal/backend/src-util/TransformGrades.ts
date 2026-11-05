@@ -3,7 +3,6 @@ import Util from "@common/Util";
 
 import { DatabaseController } from "../src/controllers/DatabaseController";
 import { GradesController } from "../src/controllers/GradesController";
-import { ResultsController } from "../src/controllers/ResultsController";
 
 import { AuditLabel, Grade } from "../src/Types";
 
@@ -51,7 +50,6 @@ export class TransformGrades {
 		Log.info("TransformGrades::process() - start for delivId: " + this.DELIVID);
 
 		const gradesC = new GradesController();
-		const resultsC = new ResultsController();
 		const dbc = DatabaseController.getInstance();
 
 		// get all the DELIVID grade records eligible for updating
@@ -71,7 +69,7 @@ export class TransformGrades {
 		for (const grade of grades) {
 			const url = grade.URL;
 
-			const result = await resultsC.getResultFromURL(url, this.DELIVID);
+			const result = await this.dc.getResultFromURL(url, this.DELIVID);
 			if (result !== null) {
 				Log.info("Considering grade for " + this.DELIVID + " for url: " + url);
 

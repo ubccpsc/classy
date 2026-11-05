@@ -1,10 +1,9 @@
 import { JobContext } from "@backend/controllers/JobController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
-import { ClasslistChangesTransport, ClasslistTransport, StudentTransport } from "@common/types/PortalTypes";
+import { ClasslistChangesTransport, ClasslistTransport, PersonTransport } from "@common/types/PortalTypes";
 import Util from "@common/Util";
 
-import * as https from "https";
 import fetch from "node-fetch";
 
 import { DatabaseController } from "../../controllers/DatabaseController";
@@ -23,18 +22,23 @@ export class ClasslistAgent {
 	public async fetchClasslist(): Promise<ClasslistTransport[]> {
 		Log.info("ClasslistAgent::fetchClasslist - start");
 		try {
-			const uri = this.getClasslistUri();
-			const options = {
-				headers: {
-					"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0", // for testing
-				},
-				agent: new https.Agent({ rejectUnauthorized: false }),
-			};
-			const res = await fetch(uri, options);
-			return res.json();
+			const { uri, headers } = this.getClasslistRequest();
+			// NOTE: no custom https.Agent. This used to pass rejectUnauthorized:false, which disabled
+			// TLS verification on the one outbound call that carries a shared password. The registrar
+			// endpoint presents a publicly-trusted certificate (checked 2026-09-08), so the default
+			// agent is correct. If that ever changes, pin its CA with https.Agent({ ca }) rather than
+			// turning verification off.
+			const res = await fetch(uri, { headers });
+			if (res.ok === false) {
+				throw new Error("registrar answered HTTP " + res.status);
+			}
+			// await, not a bare return: `return res.json()` inside try rejects the *caller's* await
+			// when the body is not JSON, so this catch -- and its sanitized message -- never ran.
+			return await res.json();
 		} catch (err) {
-			Log.error("ClasslistAgent::fetchClasslist - ERROR: " + err);
-			throw new Error("Could not fetch Classlist " + err.message);
+			const msg = Config.sanitize(String(err?.message ?? err));
+			Log.error("ClasslistAgent::fetchClasslist - ERROR: " + msg);
+			throw new Error("Could not fetch Classlist: " + msg);
 		}
 	}
 
@@ -74,9 +78,26 @@ export class ClasslistAgent {
 		if (path !== null) {
 			data = await new CSVParser().parsePath(path);
 		}
+		Log.info(
+			"ClasslistAgent::processClasslist(..) - source: " +
+				(path !== null ? "uploaded file" : "classlist service") +
+				"; # rows: " +
+				(Array.isArray(data) ? data.length : 0) +
+				"; # people in Classy before: " +
+				peopleBefore.length
+		);
 
 		this.duplicateDataCheck(data, ["ACCT", "CWL"]);
 		this.missingDataCheck(data, ["ACCT", "CWL"]);
+		// Validate EVERY row before ANY write. The per-row guard in the loop below used to be the only
+		// check for SNUM/LAST/LAB and the name columns, and it ran inside the write loop: one bad row
+		// rejected its promise after every other createPerson() had already fired, so the job said
+		// FAILED with several hundred people created -- wrong in exactly the direction that causes
+		// re-runs. These pre-flights apply the row guard's exact contract up front: the columns must
+		// be PRESENT. Empty is allowed (a student with no lab section yet has LAB === ""), which is
+		// why this is not missingDataCheck(), whose rule is non-empty.
+		this.requiredColumnsCheck(data, ["SNUM", "LAST", "LAB"]);
+		this.missingNameCheck(data);
 		const peoplePromises: Array<Promise<Person>> = [];
 
 		for (const row of data) {
@@ -117,16 +138,27 @@ export class ClasslistAgent {
 		return classlistChanges;
 	}
 
-	private getClasslistUri() {
+	/**
+	 * The registrar request: the URI plus an Authorization header.
+	 *
+	 * The credential used to be embedded in the URI as https://user:pass@host. node-fetch puts the
+	 * full URL in its error messages ("request to https://user:pass@... failed"), so a bad day at
+	 * the registrar wrote the classlist password into the job record and onto the admin screen. A
+	 * header is never echoed that way.
+	 */
+	private getClasslistRequest(): { uri: string; headers: { [key: string]: string } } {
 		const config = Config.getInstance();
-		const auth = config.getProp(ConfigKey.classlist_username) + ":" + config.getProp(ConfigKey.classlist_password);
 		const uri = config.getProp(ConfigKey.classlist_uri);
-
-		if (uri.indexOf("https://") === 0) {
-			return "https://" + auth + "@" + uri.slice(8);
-		} else {
+		if (typeof uri !== "string" || uri.indexOf("https://") !== 0) {
 			throw new Error("https:// protocol is required for API integration");
 		}
+
+		const credential = config.getProp(ConfigKey.classlist_username) + ":" + config.getProp(ConfigKey.classlist_password);
+		const headers = {
+			Authorization: "Basic " + Buffer.from(credential, "utf8").toString("base64"),
+			"User-Agent": "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:40.0) Gecko/20100101 Firefox/40.0", // for testing
+		};
+		return { uri, headers };
 	}
 
 	/**
@@ -143,7 +175,7 @@ export class ClasslistAgent {
 		const afterCSIDs = afterPeople.map(function (person) {
 			return person.csId;
 		});
-		const classlist: StudentTransport[] = afterPeople.map(function (person) {
+		const classlist: PersonTransport[] = afterPeople.map(function (person) {
 			return PersonController.personToTransport(person);
 		});
 
@@ -152,6 +184,8 @@ export class ClasslistAgent {
 			created: [], // new registrations
 			updated: [], // only students whose CWL or lab has changed
 			removed: [], // precludes withdrawn students; next step should be to withdraw students who end up appearing here
+			notActive: [], // diagnostic: registered but not an active student; see below
+			notActiveByKind: {},
 			classlist, // created from list of people in the classlist upload returned from data layer
 		};
 
@@ -171,6 +205,45 @@ export class ClasslistAgent {
 				}
 			}
 		});
+
+		// The classlist update never changes kind, so a registered person can be anything but
+		// STUDENT: withdrawn earlier (only the user synchronization job reinstates, and only if the GitHub
+		// students team has them), staff or admin who are also registered, or null while a login
+		// is re-deriving it. The user synchronization job counts only STUDENT and WITHDRAWN, so this is the
+		// only place the whole gap between "# registered" and "# active" gets names attached.
+		afterPeople.forEach(function (afterPerson) {
+			if (afterPerson.kind !== PersonKind.STUDENT) {
+				const kind = afterPerson.kind === null || typeof afterPerson.kind === "undefined" ? "null" : String(afterPerson.kind);
+				changeReport.notActive.push(PersonController.personToTransport(afterPerson));
+				changeReport.notActiveByKind[kind] = (changeReport.notActiveByKind[kind] ?? 0) + 1;
+			}
+		});
+		if (changeReport.notActive.length > 0) {
+			Log.warn(
+				"ClasslistAgent::getClasslistChanges(..) - on classlist but not an active student: " +
+					afterPeople
+						.filter((p) => p.kind !== PersonKind.STUDENT)
+						.map((p) => p.id + " (kind: " + p.kind + "; githubId: " + p.githubId + ")")
+						.join(", ")
+			);
+			// The classlist update never changes kind, so say where each kind is resolved.
+			if ((changeReport.notActiveByKind[String(PersonKind.WITHDRAWN)] ?? 0) > 0) {
+				Log.warn(
+					"ClasslistAgent::getClasslistChanges(..) - " +
+						changeReport.notActiveByKind[String(PersonKind.WITHDRAWN)] +
+						" on the classlist are WITHDRAWN. Only the 'Synchronize users' job reinstates them, and only when their " +
+						"githubId is on the GitHub students team; run it and read its log for these ids."
+				);
+			}
+			if ((changeReport.notActiveByKind.null ?? 0) > 0) {
+				Log.info(
+					"ClasslistAgent::getClasslistChanges(..) - " +
+						changeReport.notActiveByKind.null +
+						" on the classlist have a null kind: they logged in and have not loaded a page since; the next request " +
+						"re-derives it. Treated as students meanwhile."
+				);
+			}
+		}
 
 		beforePeople.forEach(function (person) {
 			if (afterCSIDs.indexOf(person.csId) === -1 && person.kind === PersonKind.STUDENT) {
@@ -220,6 +293,27 @@ export class ClasslistAgent {
 			}
 			return false;
 		});
+	}
+
+	/** Every row must carry each of these columns (present, not necessarily non-empty). */
+	private requiredColumnsCheck(data: any[], columns: string[]) {
+		const rows = data.filter((row) => columns.some((column) => typeof row[column] === "undefined"));
+		if (rows.length > 0) {
+			Log.error("ClasslistAgent::requiredColumnsCheck(..) - ERROR: rows missing one of " + columns.join("/") + ": " + JSON.stringify(rows));
+			throw new Error("Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).");
+		}
+	}
+
+	/**
+	 * A row needs FIRST or PREF to be present; requiredColumnsCheck() cannot express either-or.
+	 * Same message as the row guard used to reject with, so callers see one vocabulary.
+	 */
+	private missingNameCheck(data: any[]) {
+		const rows = data.filter((row) => typeof row.FIRST === "undefined" && typeof row.PREF === "undefined");
+		if (rows.length > 0) {
+			Log.error("ClasslistAgent::missingNameCheck(..) - ERROR: rows with neither FIRST nor PREF: " + JSON.stringify(rows));
+			throw new Error("Required column missing (required: ACCT, CWL, SNUM, FIRST, LAST, LAB).");
+		}
 	}
 
 	private missingDataCheck(data: any[], columns: string[]) {

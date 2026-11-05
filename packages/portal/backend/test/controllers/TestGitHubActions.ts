@@ -2,7 +2,7 @@
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { GitHubActions, IGitHubActions } from "@backend/controllers/GitHubActions";
-import { BranchRule, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
+import { BranchRule, GitIssueTuple, GitPersonTuple, GitRepoTuple, GitTeamTuple, Issue } from "@backend/controllers/GitHubController";
 import { TeamController } from "@backend/controllers/TeamController";
 import Config, { ConfigKey } from "@common/Config";
 import Log from "@common/Log";
@@ -346,15 +346,21 @@ export class TestGitHubActions implements IGitHubActions {
 		return;
 	}
 
-	public getTeamsOnRepo(repoId: string): Promise<GitTeamTuple[]> {
-		return;
+	public async getTeamsOnRepo(_repoId: string): Promise<GitTeamTuple[]> {
+		// the mock does not track team-repo attachment; an empty list is what GitHub answers for a
+		// repo with no teams (and, via the catch in the live client, for a repo that does not exist)
+		return [];
 	}
 
 	public async addBranchProtectionRule(repoId: string, rule: BranchRule): Promise<boolean> {
 		return true;
 	}
 
-	public async makeIssue(repoId: string, issue: Issue): Promise<boolean> {
-		return true;
+	public async makeIssue(repoId: string, issue: Issue): Promise<string | null> {
+		return "https://github.test/" + repoId + "/issues/1";
+	}
+
+	public async listIssues(repoId: string): Promise<GitIssueTuple[]> {
+		return [];
 	}
 }

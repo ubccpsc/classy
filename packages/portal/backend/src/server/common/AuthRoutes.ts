@@ -224,7 +224,6 @@ export class AuthRoutes implements IREST {
 		}
 	}
 
-	/* istanbul ignore next */
 	private static async performAuthCallback(
 		url: string,
 		host: string

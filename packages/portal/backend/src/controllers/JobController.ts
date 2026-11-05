@@ -187,13 +187,45 @@ export class JobController {
 	public async getRunning(kind: string): Promise<Job | null> {
 		const jobs = await this.db.getJobs({ kind: kind, state: JobState.RUNNING });
 		for (const job of jobs) {
-			if (this.isStale(job) === true) {
-				await this.interrupt(job);
-			} else {
+			if ((await this.sweepIfDead(job)) === false) {
 				return job;
 			}
 		}
 		return null;
+	}
+
+	/**
+	 * Jobs matching a query, newest first, as the admin UI should see them.
+	 *
+	 * NOTE: the admin page disables a job's button while this says the job is RUNNING, so it has to
+	 * apply the same rule as start(). It used to read the database directly, which reported a dead
+	 * job as RUNNING; that disabled the one button whose press would have swept it, and the kind
+	 * stayed blocked until the next restart.
+	 *
+	 * @param query as for DatabaseController.getJobs
+	 * @returns {Promise<Job[]>}
+	 */
+	public async getJobs(query: {} = {}): Promise<Job[]> {
+		const jobs = await this.db.getJobs(query);
+		for (const job of jobs) {
+			await this.sweepIfDead(job);
+		}
+		return jobs;
+	}
+
+	/**
+	 * One job, as the admin UI should see it; see getJobs. This is what the page polls while a job
+	 * runs, so a job that dies while someone is watching is reported as such.
+	 *
+	 * @param jobId
+	 * @returns {Promise<Job | null>} the job, or null if unknown
+	 */
+	public async getJob(jobId: string): Promise<Job | null> {
+		const job = await this.db.getJob(jobId);
+		if (job !== null) {
+			await this.sweepIfDead(job);
+		}
+		return job;
 	}
 
 	/**
@@ -210,8 +242,7 @@ export class JobController {
 		const jobs = await this.db.getJobs({ state: JobState.RUNNING }, 1000);
 		let count = 0;
 		for (const job of jobs) {
-			if (this.isStale(job) === true) {
-				await this.interrupt(job);
+			if ((await this.sweepIfDead(job)) === true) {
 				count++;
 			}
 		}
@@ -219,9 +250,34 @@ export class JobController {
 		return count;
 	}
 
-	private isStale(job: Job): boolean {
+	/**
+	 * Whether a job claims to be RUNNING but its process is gone.
+	 *
+	 * A job running in *this* process is alive however long it has been since it reported progress,
+	 * so it is never dead. That matters now that the admin page's polling sweeps too: a handler that
+	 * went quiet for longer than STALE_MS would otherwise be marked INTERRUPTED while it carried on,
+	 * its button re-enabled, and the next press would start a second run alongside it.
+	 */
+	private isDead(job: Job): boolean {
+		if (job.state !== JobState.RUNNING || this.running.has(job.id) === true) {
+			return false;
+		}
 		const beat = job.heartbeatAt === null ? job.createdAt : job.heartbeatAt;
 		return Date.now() - beat > JobController.STALE_MS;
+	}
+
+	/**
+	 * Sweeps a dead job to INTERRUPTED. The job is updated in place, so the caller's copy reports the
+	 * new state too.
+	 *
+	 * @returns {Promise<boolean>} whether the job was swept
+	 */
+	private async sweepIfDead(job: Job): Promise<boolean> {
+		if (this.isDead(job) === false) {
+			return false;
+		}
+		await this.interrupt(job);
+		return true;
 	}
 
 	private async interrupt(job: Job): Promise<void> {

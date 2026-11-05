@@ -6,7 +6,6 @@ import { DatabaseController } from "../src/controllers/DatabaseController";
 import { DeliverablesController } from "../src/controllers/DeliverablesController";
 import { GradesController } from "../src/controllers/GradesController";
 import { RepositoryController } from "../src/controllers/RepositoryController";
-import { ResultsController } from "../src/controllers/ResultsController";
 
 import { Grade } from "../src/Types";
 
@@ -58,7 +57,6 @@ export class TraverseResults {
 
 		const reposC = new RepositoryController();
 		const gradesC = new GradesController();
-		const resultsC = new ResultsController();
 
 		const delivC = new DeliverablesController();
 
@@ -78,7 +76,7 @@ export class TraverseResults {
 		}
 
 		for (const url of URLs) {
-			const res = await resultsC.getResultFromURL(url, deliv.id);
+			const res = await this.dc.getResultFromURL(url, deliv.id);
 			if (res === null) {
 				throw new Error("Result should not be null for deliv: " + deliv.id + "; and URL: " + url);
 			}
@@ -87,7 +85,7 @@ export class TraverseResults {
 
 			Log.info("Considering results for: " + repoId);
 
-			let resultsForRepo = await resultsC.getResults(deliv.id, repoId);
+			let resultsForRepo = (await this.dc.getResults(deliv.id, repoId)) as AutoTestResult[];
 			if (resultsForRepo === null || resultsForRepo.length < 1) {
 				throw new Error("Should have results deliv: " + deliv.id + "; and repo: " + repoId);
 			}

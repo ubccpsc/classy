@@ -4,10 +4,11 @@ import {
 	ConfigTransportPayload,
 	GradeTransport,
 	GradeTransportPayload,
+	HandbackTransportPayload,
 	Payload,
+	PersonTransport,
 	RepositoryPayload,
 	RepositoryTransport,
-	StudentTransport,
 	TeamFormationTransport,
 	TeamTransport,
 	TeamTransportPayload,
@@ -21,6 +22,7 @@ import { DeliverablesController } from "../../controllers/DeliverablesController
 import { GitHubActions } from "../../controllers/GitHubActions";
 import { GitHubController } from "../../controllers/GitHubController";
 import { GradesController } from "../../controllers/GradesController";
+import { HandbackController } from "../../controllers/HandbackController";
 import { PersonController } from "../../controllers/PersonController";
 import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
@@ -28,7 +30,7 @@ import { Factory } from "../../Factory";
 import { AuditLabel, Person, RepoStatus } from "../../Types";
 import IREST, { type ClassyRequest } from "../IREST";
 import { AuthRoutes } from "./AuthRoutes";
-import { ClasslistAgent } from "./ClasslistAgent";
+// import { ClasslistAgent } from "./ClasslistAgent"; // see disabled updateClasslist below
 import { PrairieLearnAgent } from "./PrairieLearnAgent";
 import { type ClassyIdentity, RouteUtil, ViewAsError } from "./RouteUtil";
 
@@ -109,6 +111,92 @@ export default class GeneralRoutes implements IREST {
 			res.code(400).send(payload);
 			return;
 		}
+	}
+
+	/**
+	 * The files handed back to the caller (or, for an admin viewing as a student, to that student).
+	 */
+	public static async getHandbacks(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		Log.trace("GeneralRoutes::getHandbacks(..) - start; user: " + identity.user);
+
+		try {
+			const isValid = await new AuthController().isValid(identity.actedBy, identity.token);
+			if (isValid === false) {
+				throw new Error("Invalid credentials");
+			}
+			const handbacks = await new HandbackController().getHandbacksForPerson(identity.user);
+			const payload: HandbackTransportPayload = { success: handbacks.map((h) => HandbackController.toTransport(h, false)) };
+			res.code(200).send(payload);
+		} catch (err) {
+			Log.info("GeneralRoutes::getHandbacks(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+		}
+	}
+
+	/**
+	 * Downloads one of the caller's handbacks. The student is taken from the caller's identity, so
+	 * the only way to another student's file is to be an admin viewing as them. Opened from a
+	 * plain link on the student page, so the token comes from the cookie (see RouteUtil.processAuth).
+	 */
+	public static async getHandback(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return;
+		}
+		const delivId = req.params.delivId;
+		const fileName = req.params.fileName;
+		Log.info("GeneralRoutes::getHandback( " + delivId + ", " + fileName + " ) - user: " + identity.user);
+
+		try {
+			const isValid = await new AuthController().isValid(identity.actedBy, identity.token);
+			if (isValid === false) {
+				return GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res);
+			}
+			await GeneralRoutes.sendHandback(delivId, identity.user, fileName, res);
+		} catch (err) {
+			Log.error("GeneralRoutes::getHandback( " + delivId + ", " + fileName + " ) - ERROR: " + err.message);
+			GeneralRoutes.handleError(400, "Problem encountered getting handback: " + err.message, res);
+		}
+	}
+
+	/**
+	 * Streams a handback as a download, or sends the not-found page. Shared with the admin route.
+	 */
+	public static async sendHandback(delivId: string, personId: string, fileName: string, res: FastifyReply): Promise<void> {
+		const hc = new HandbackController();
+		const handback = await hc.getHandback(delivId, personId, fileName);
+		const file = handback === null ? null : HandbackController.pathFor(handback);
+		if (file === null || fs.existsSync(file) === false) {
+			Log.info("GeneralRoutes::sendHandback( " + delivId + ", " + personId + ", " + fileName + " ) - not found");
+			res.code(404).header("Content-Type", "text/html").send(GeneralRoutes.missingHandbackHtml(delivId, fileName));
+			return;
+		}
+		// NOTE: awaited for the same reason as the stream in getResource: Fastify finalises the
+		// reply when the handler resolves, and the reply is thenable until it has been flushed
+		await res
+			.code(200)
+			.header("Content-Type", HandbackController.contentType(handback.fileName))
+			.header("Content-Disposition", 'attachment; filename="' + handback.fileName.replace(/"/g, "") + '"')
+			.header("Content-Length", String(handback.size))
+			.send(fs.createReadStream(file));
+	}
+
+	private static missingHandbackHtml(delivId: string, fileName: string): string {
+		const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		return (
+			'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>File not found</title>' +
+			"<style>body{font-family:sans-serif;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}</style></head><body>" +
+			"<h1>File not found</h1><p>There is no file named <code>" +
+			esc(fileName) +
+			"</code> handed back to you for <code>" +
+			esc(delivId) +
+			"</code>. It may have been removed or replaced; the list on your portal page is current.</p></body></html>"
+		);
 	}
 
 	public static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -194,8 +282,12 @@ export default class GeneralRoutes implements IREST {
 					await res.code(200).send(rs);
 				}
 			} catch (err) {
-				Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-				res.code(404).send(err.message);
+				// Usually an archived run: AutoTest output is only kept on disk for a while (see
+				// docs/tech-staff/backups.md). Students open these links from a GitHub comment, so
+				// the answer is a page that says that, not the lstat error with the server path in
+				// it (ubccpsc/classy#452). Logged at info: a student following an old link is routine.
+				Log.info("GeneralRoutes::getResource(..) - resource does not exist: " + path + "; " + err.message);
+				res.code(404).header("Content-Type", "text/html").send(GeneralRoutes.missingResourceHtml(path));
 			}
 		} catch (err) {
 			Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
@@ -206,6 +298,34 @@ export default class GeneralRoutes implements IREST {
 			Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
 			GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res);
 		}
+	}
+
+	/**
+	 * The page a student sees for a report that is no longer on disk.
+	 *
+	 * How long runs are kept is a deployment decision made in a cron job outside Classy, so the
+	 * page does not quote a number of days. The recovery steps are the ones course staff give out
+	 * by hand: a fresh run on the latest commit, or a new commit on a branch from the old one.
+	 */
+	public static missingResourceHtml(path: string): string {
+		const shown = path.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		return (
+			'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Report not found</title>' +
+			"<style>body{font-family:sans-serif;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}code{word-break:break-all}</style>" +
+			"</head><body>" +
+			"<h1>Report not found</h1>" +
+			"<p>There is no report at <code>" +
+			shown +
+			"</code>.</p>" +
+			"<p>Reports are only kept for a limited time after a run. The most likely reason this one is gone is that it has been archived.</p>" +
+			"<p>To get a new report:</p>" +
+			"<ul>" +
+			"<li>If the assessment is still open, ask the bot for a fresh report on your latest commit, as usual.</li>" +
+			"<li>If you need a report for an older commit, make a branch that starts at that commit, push a small new commit on that branch, and ask the bot for a report on that commit.</li>" +
+			"</ul>" +
+			"<p>If the link is recent and you believe the report should still be here, contact the course staff and include this address.</p>" +
+			"</body></html>"
+		);
 	}
 
 	public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
@@ -322,43 +442,47 @@ export default class GeneralRoutes implements IREST {
 		}
 	}
 
-	public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
-		Log.info("GeneralRoutes::updateClasslist(..) - start");
-		const ca = new ClasslistAgent();
-		// NOTE: req.ip replaces restify's req.connection.remoteAddress, which Fastify does not
-		// expose. Fastify resolves it from the socket (and honours x-forwarded-for when trustProxy
-		// is on), but the explicit header check is kept because trustProxy is not enabled here.
-		const ipAddr = req.headers["x-forwarded-for"] || req.ip;
-		const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
-		let auditInfo: string;
-
-		if (ipReg.test(ipAddr) === false) {
-			return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res);
-		}
-
-		auditInfo = req.headers.user || ipAddr;
-
-		try {
-			const data = await ca.fetchClasslist();
-			const classlistChanges = await ca.processClasslist(auditInfo, null, data);
-
-			if (classlistChanges.classlist.length) {
-				const payload: Payload = {
-					success: {
-						message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
-					},
-				};
-				res.code(200).send(payload);
-				Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
-			} else {
-				const msg = "Classlist upload not successful; no students were processed from CSV.";
-				return GeneralRoutes.handleError(400, msg, res);
-			}
-		} catch (_err) {
-			const msg = "Classlist upload not successful; no students were processed from CSV.";
-			return GeneralRoutes.handleError(400, msg, res);
-		}
-	}
+	// DISABLED 2026-09 (26W1) together with its route registration; see registerRoutes() for why.
+	// TODO: delete this handler (and the ClasslistAgent import) if it has not been missed by the
+	// end of 26W2. The supported path for an API-driven classlist pull is the "classlist-update"
+	// job: POST /portal/admin/job/classlist-update, guarded by AdminRoutes.isAdmin.
+	// public static async updateClasslist(req: ClassyRequest, res: FastifyReply): Promise<void> {
+	// 	Log.info("GeneralRoutes::updateClasslist(..) - start");
+	// 	const ca = new ClasslistAgent();
+	// 	// NOTE: req.ip replaces restify's req.connection.remoteAddress, which Fastify does not
+	// 	// expose. Fastify resolves it from the socket (and honours x-forwarded-for when trustProxy
+	// 	// is on), but the explicit header check is kept because trustProxy is not enabled here.
+	// 	const ipAddr = req.headers["x-forwarded-for"] || req.ip;
+	// 	const ipReg: RegExp = /(142\.103\.[1-9]+\.[1-9]+)/;
+	// 	let auditInfo: string;
+	//
+	// 	if (ipReg.test(ipAddr) === false) {
+	// 		return await GeneralRoutes.handleError(403, "Forbidden error; user not privileged", res);
+	// 	}
+	//
+	// 	auditInfo = req.headers.user || ipAddr;
+	//
+	// 	try {
+	// 		const data = await ca.fetchClasslist();
+	// 		const classlistChanges = await ca.processClasslist(auditInfo, null, data);
+	//
+	// 		if (classlistChanges.classlist.length) {
+	// 			const payload: Payload = {
+	// 				success: {
+	// 					message: "Classlist upload successful. " + classlistChanges.classlist.length + " students processed.",
+	// 				},
+	// 			};
+	// 			res.code(200).send(payload);
+	// 			Log.info("GeneralRoutes::updateClasslist(..) - done: " + payload.success.message);
+	// 		} else {
+	// 			const msg = "Classlist upload not successful; no students were processed from CSV.";
+	// 			return GeneralRoutes.handleError(400, msg, res);
+	// 		}
+	// 	} catch (_err) {
+	// 		const msg = "Classlist upload not successful; no students were processed from CSV.";
+	// 		return GeneralRoutes.handleError(400, msg, res);
+	// 	}
+	// }
 
 	/**
 	 * The identity for a student-facing request: who is calling, and whose data they are asking for.
@@ -382,7 +506,7 @@ export default class GeneralRoutes implements IREST {
 		RouteUtil.handleError("GeneralRoutes", code, msg, res);
 	}
 
-	private static async performGetPerson(identity: ClassyIdentity): Promise<StudentTransport> {
+	private static async performGetPerson(identity: ClassyIdentity): Promise<PersonTransport> {
 		const ac = new AuthController();
 		// NOTE: validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students
@@ -404,6 +528,19 @@ export default class GeneralRoutes implements IREST {
 
 	private static async performPostTeam(identity: ClassyIdentity, requestedTeam: TeamFormationTransport): Promise<TeamTransport> {
 		Log.info("GeneralRoutes::performPostTeam(..) - team: " + JSON.stringify(requestedTeam));
+
+		// Shape check before anything reads the body. requestedTeam is req.body cast to the transport
+		// type, and each githubId flows into readSingleRecord({ githubId }); an object such as
+		// {"$ne": null} in place of a string is a Mongo operator, and matched an arbitrary classmate.
+		if (
+			typeof requestedTeam !== "object" ||
+			requestedTeam === null ||
+			typeof requestedTeam.delivId !== "string" ||
+			Array.isArray(requestedTeam.githubIds) === false ||
+			requestedTeam.githubIds.some((id) => typeof id !== "string")
+		) {
+			throw new Error("Team not created; malformed request.");
+		}
 		const ac = new AuthController();
 		// Validated as the caller; `user` below is whose data this is about, which differs
 		// only when an admin is viewing as one of their students
@@ -575,13 +712,30 @@ export default class GeneralRoutes implements IREST {
 		// used by students to get their repos
 		server.get("/portal/repos", GeneralRoutes.getRepos);
 
+		// files handed back to the student (listing, and a download of their own copy)
+		server.get("/portal/handbacks", GeneralRoutes.getHandbacks);
+		server.get("/portal/handback/:delivId/:fileName", GeneralRoutes.getHandback);
+
 		// used by students to create their teams
 		server.post("/portal/team", GeneralRoutes.postTeam);
 
 		// server.get("/portal/resource/:path", GeneralRoutes.getResource);
 		server.get("/portal/resource/*", GeneralRoutes.getResource);
 
-		// IP restricted
-		server.put("/portal/classlist", GeneralRoutes.updateClasslist);
+		// DISABLED 2026-09 (26W1): this endpoint duplicated the "classlist-update" job
+		// (POST /portal/admin/job/classlist-update, isAdmin-guarded) but authorized its callers
+		// with a regex against x-forwarded-for. That header is client-supplied, and nginx forwards
+		// it with $proxy_add_x_forwarded_for (packages/proxy/proxy.conf:4), which APPENDS the real
+		// client address rather than replacing it -- so a caller who simply claimed to be
+		// 142.103.5.99 passed the check. The regex was wrong in the other direction too: [1-9]+
+		// rejects any octet containing a 0, so real UBC addresses (142.103.10.5) were refused.
+		//
+		// Nothing appears to call it: the Update Classlist button uses the job route
+		// (AdminConfigTab.ts:620) and no inbound caller is documented. Commented out rather than
+		// deleted in case a campus cron turns up during the soak.
+		//
+		// TODO: if this has not been missed by the end of 26W2, delete this registration, the
+		// updateClasslist handler below, and the ClasslistAgent import.
+		// server.put("/portal/classlist", GeneralRoutes.updateClasslist);
 	}
 }

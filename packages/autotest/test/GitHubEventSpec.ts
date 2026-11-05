@@ -24,6 +24,8 @@ describe("GitHub Event Parser", () => {
 	const TIMEOUT = 1000;
 
 	let backend: BackendServer = null;
+	let realBackendUrl: string = null;
+
 	before(async function () {
 		Log.test("GitHubEventParserSpec::before() - start");
 
@@ -35,6 +37,14 @@ describe("GitHub Event Parser", () => {
 		} else {
 			Log.test("GitHubEventParserSpec::before() - not running in CI; using http");
 			backend = new BackendServer(false);
+
+			// see ClassPortalSpec: GitHubUtil.processComment asks ClassPortal for the deliverable
+			// list, and ClassPortal builds its URL from backendUrl, which .env points at
+			// https://localhost. The local server speaks http, so getConfiguration() returned null
+			// and these tests failed on "Cannot read properties of null (reading 'deliverableIds')".
+			const config = Config.getInstance();
+			realBackendUrl = config.getProp(ConfigKey.backendUrl);
+			config.setProp(ConfigKey.backendUrl, "http://localhost");
 		}
 
 		await backend.start();
@@ -103,6 +113,9 @@ describe("GitHub Event Parser", () => {
 	after(async function () {
 		Log.test("GitHubEventParserSpec::after() - start");
 		await backend.stop();
+		if (realBackendUrl !== null) {
+			Config.getInstance().setProp(ConfigKey.backendUrl, realBackendUrl);
+		}
 		Log.test("GitHubEventParserSpec::after() - done");
 	});
 
