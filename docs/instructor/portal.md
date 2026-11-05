@@ -4,6 +4,7 @@
 - [Portal Manual](#portal-manual)
   - [Overview](#overview)
   - [Classlist Enrollment](#classlist-enrollment)
+  - [Handing Back Files](#handing-back-files)
   - [Deliverable Configuration](#deliverable-configuration)
   - [Distributing Assignments and Repository Creation](#distributing-assignments-and-repository-creation)
 <!-- /TOC -->
@@ -21,6 +22,19 @@ The **Admin Settings** view contains an **Update Classlist** button that automat
 If more customizable classlist updates are necessary, a CSV may be uploaded with a custom classlist by the instructor. To upload a custom CSV, you will need to add the `ACCT`, `SNUM`, `CWL`, `LAST`, `FIRST`, and `LAB` headers to the CSV to produce a format accepted by Classy.
 
 <img src="../assets/admin-config-classlist.png" alt="Classlist API update and customizable classlist upload feature">
+
+## Handing Back Files
+
+Course staff can hand files back to individual students through the portal: a marked midterm, a code review, anything one student (and only that student) should be able to download. Students see a **Handed Back Files** section on their portal page listing each file with the deliverable it belongs to; each student can only download their own files.
+
+The **Hand Back Files** section of **Admin Settings** takes a deliverable and either:
+
+- a **zip** of per-student files named by CSID, which is what a marking tool's per-student export looks like. `a1b2c.pdf`, `a1b2c_midterm.pdf` and `A1B2C-v2.pdf` all go to the student with CSID `a1b2c`. Files whose name matches no student are reported and not stored, so a zip can be fixed and uploaded again.
+- a **single file** together with the student's CSID.
+
+Uploading a file with the same name for the same student and deliverable replaces the earlier one. The list under the upload shows everything handed back for the selected deliverable, with a download link and a **remove** action for each file. Every upload and removal is recorded in the audit log.
+
+Files are stored beside the AutoTest run output (`<persist dir>/handbacks/`), not inside it, so the cron job that archives old runs leaves them alone. They should be archived with the rest of the course data at the end of the term.
 
 ## Deliverable Configuration
 
