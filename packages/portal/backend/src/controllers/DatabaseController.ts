@@ -11,6 +11,7 @@ import {
 	Deliverable,
 	FeedbackRecord,
 	Grade,
+	Handback,
 	Job,
 	JobWatermark,
 	Person,
@@ -39,6 +40,7 @@ export class DatabaseController {
 	private readonly AUTHCOLL = "auth";
 	private readonly AUDITCOLL = "audit";
 	private readonly FEEDBACKCOLL = "feedback";
+	private readonly HANDBACKCOLL = "handbacks";
 	private readonly JOBCOLL = "jobs";
 	// NOTE: shared across job kinds; rows are scoped by their `kind` field. Generic from the
 	// start because renaming a populated collection later needs a data migration.
@@ -679,6 +681,7 @@ export class DatabaseController {
 				this.AUDITCOLL,
 				this.JOBCOLL,
 				this.JOBWATERMARKCOLL,
+				this.HANDBACKCOLL,
 			];
 
 			for (const col of cols) {
@@ -775,6 +778,50 @@ export class DatabaseController {
 			Log.error("DatabaseController::readRecords(..) - ERROR: " + err);
 		}
 		return [];
+	}
+
+	public async getHandbacksForPerson(personId: string): Promise<Handback[]> {
+		const records = (await this.readRecords(this.HANDBACKCOLL, QueryKind.FAST, false, { personId: personId })) as Handback[];
+		Log.trace("DatabaseController::getHandbacksForPerson( " + personId + " ) - #: " + records.length);
+		return records;
+	}
+
+	public async getHandbacksForDeliverable(delivId: string): Promise<Handback[]> {
+		const records = (await this.readRecords(this.HANDBACKCOLL, QueryKind.FAST, false, { delivId: delivId })) as Handback[];
+		Log.trace("DatabaseController::getHandbacksForDeliverable( " + delivId + " ) - #: " + records.length);
+		return records;
+	}
+
+	public async getHandback(delivId: string, personId: string, fileName: string): Promise<Handback | null> {
+		const record = (await this.readSingleRecord(this.HANDBACKCOLL, {
+			delivId: delivId,
+			personId: personId,
+			fileName: fileName,
+		})) as Handback;
+		Log.trace("DatabaseController::getHandback( " + delivId + ", " + personId + ", " + fileName + " ) - found: " + (record !== null));
+		return record;
+	}
+
+	/**
+	 * One record per (deliverable, person, file name); writing the same name again replaces it.
+	 */
+	public async writeHandback(record: Handback): Promise<boolean> {
+		Log.trace("DatabaseController::writeHandback( " + record.delivId + ", " + record.personId + ", " + record.fileName + " ) - start");
+		const query = { delivId: record.delivId, personId: record.personId, fileName: record.fileName };
+		const existing = await this.readSingleRecord(this.HANDBACKCOLL, query);
+		if (existing === null) {
+			return await this.writeRecord(this.HANDBACKCOLL, record);
+		}
+		return await this.updateRecord(this.HANDBACKCOLL, query, record);
+	}
+
+	public async deleteHandback(record: Handback): Promise<boolean> {
+		Log.trace("DatabaseController::deleteHandback( " + record.delivId + ", " + record.personId + ", " + record.fileName + " ) - start");
+		return await this.deleteRecord(this.HANDBACKCOLL, {
+			delivId: record.delivId,
+			personId: record.personId,
+			fileName: record.fileName,
+		});
 	}
 
 	public async writeAuth(record: Auth): Promise<boolean> {

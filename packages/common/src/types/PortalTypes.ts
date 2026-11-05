@@ -216,6 +216,41 @@ export interface TeamFormationTransport {
 	githubIds: string[];
 }
 
+export interface HandbackTransport {
+	personId: string;
+	delivId: string;
+	fileName: string;
+	size: number;
+	timestamp: number;
+	/**
+	 * Where the file can be fetched, relative to the backend. Different for the student (their own
+	 * copy) and for an admin (anyone's copy); see HandbackController.toTransport.
+	 */
+	URL: string;
+}
+
+export interface HandbackTransportPayload {
+	success?: HandbackTransport[]; // only set if defined
+	failure?: FailurePayload; // only set if defined
+}
+
+/**
+ * What an upload did. Files are matched to students by CSID, so a name that matches nobody is
+ * reported rather than stored, and a file replacing one already handed back is reported too.
+ */
+export interface HandbackUploadSummary {
+	delivId: string;
+	stored: Array<{ csId: string; fileName: string }>;
+	replaced: string[]; // fileNames that overwrote a previous handback
+	unmatched: string[]; // fileNames that matched no student
+	skipped: string[]; // entries ignored (directories, unsafe names)
+}
+
+export interface HandbackUploadPayload {
+	success?: HandbackUploadSummary; // only set if defined
+	failure?: FailurePayload; // only set if defined
+}
+
 export interface GradeTransportPayload {
 	success?: GradeTransport[]; // only set if defined
 	failure?: FailurePayload; // only set if defined

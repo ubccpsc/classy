@@ -1,5 +1,5 @@
 import Log from "@common/Log";
-import { GradeTransport, PersonTransport, RepositoryTransport } from "@common/types/PortalTypes";
+import { GradeTransport, HandbackTransport, PersonTransport, RepositoryTransport } from "@common/types/PortalTypes";
 import { Factory } from "../Factory";
 import { Markdown } from "../util/Markdown";
 import { SortableTable, TableCell, TableHeader } from "../util/SortableTable";
@@ -12,6 +12,7 @@ export abstract class AbstractStudentView implements IView {
 	protected person: PersonTransport = null;
 	protected grades: GradeTransport[] = [];
 	protected repos: RepositoryTransport[] = [];
+	protected handbacks: HandbackTransport[] = [];
 
 	public abstract renderPage(pageName: string, opts: {}): void;
 
@@ -35,6 +36,7 @@ export abstract class AbstractStudentView implements IView {
 		await this.prepareData(); // sets fields
 
 		this.renderGrades();
+		this.renderHandbacks();
 		this.renderRepositories();
 	}
 
@@ -104,6 +106,14 @@ export abstract class AbstractStudentView implements IView {
 			Log.error("AbstractStudentView::prepareData() - fetching person; ERROR: " + err.message);
 			UI.showError(err.message);
 			this.grades = [];
+		}
+
+		try {
+			this.handbacks = ((await this.fetchData("/portal/handbacks")) as HandbackTransport[]) ?? [];
+		} catch (err) {
+			Log.error("AbstractStudentView::prepareData() - fetching handbacks; ERROR: " + err.message);
+			UI.showError(err.message);
+			this.handbacks = [];
 		}
 
 		try {
@@ -243,6 +253,63 @@ export abstract class AbstractStudentView implements IView {
 	protected showFeedback(grade: GradeTransport): void {
 		Log.info("AbstractStudentView::showFeedback( " + grade.delivId + " ) - start");
 		UI.showHtmlDialog("Feedback: " + grade.delivId, Markdown.render(grade.comment ?? ""));
+	}
+
+	/**
+	 * Files course staff have handed back to this student (a marked midterm, say). The section is
+	 * optional: a course page without a studentHandbackTable element simply does not show it.
+	 */
+	private renderHandbacks() {
+		Log.trace("AbstractStudentView::renderHandbacks() - start");
+		const el = document.getElementById("studentHandbackTable");
+		if (el === null) {
+			return;
+		}
+		if (this.handbacks.length < 1) {
+			el.innerHTML = "No files have been handed back.";
+			return;
+		}
+
+		const headers: TableHeader[] = [
+			{
+				id: "delivId",
+				text: "Deliv Id",
+				sortable: true,
+				defaultSort: true,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{
+				id: "file",
+				text: "File",
+				sortable: true,
+				defaultSort: false,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "date",
+				text: "Handed Back",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+		];
+		const st = new SortableTable(headers, "#studentHandbackTable");
+		for (const hb of this.handbacks) {
+			// a plain link: the backend reads the token from the cookie, and the browser downloads
+			// the file (Content-Disposition) rather than navigating away from the portal
+			const name = hb.fileName.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+			const link = '<a href="' + this.remote + hb.URL + '" download>' + name + "</a>";
+			const when = new Date(hb.timestamp);
+			st.addRow([
+				{ value: hb.delivId, html: hb.delivId },
+				{ value: hb.fileName, html: link },
+				{ value: hb.timestamp, html: when.toLocaleDateString() },
+			]);
+		}
+		st.generate();
 	}
 
 	private renderRepositories() {

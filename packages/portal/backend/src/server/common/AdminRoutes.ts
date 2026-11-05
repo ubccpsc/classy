@@ -6,6 +6,7 @@ import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
 import { GitHubActions } from "@backend/controllers/GitHubActions";
 import { GitHubController, IGitHubController } from "@backend/controllers/GitHubController";
+import { HandbackController } from "@backend/controllers/HandbackController";
 import { JobController } from "@backend/controllers/JobController";
 import { PersonController } from "@backend/controllers/PersonController";
 import { RepositoryController } from "@backend/controllers/RepositoryController";
@@ -25,6 +26,8 @@ import {
 	DeliverableTransport,
 	DeliverableTransportPayload,
 	GradeTransportPayload,
+	HandbackTransportPayload,
+	HandbackUploadPayload,
 	Payload,
 	PERSON_VIEWS,
 	PersonTransportPayload,
@@ -43,6 +46,7 @@ import * as http from "http";
 import fetch, { RequestInit } from "node-fetch";
 import { ClasslistAgent } from "./ClasslistAgent";
 import { CSVParser } from "./CSVParser";
+import GeneralRoutes from "./GeneralRoutes";
 import { RouteUtil } from "./RouteUtil";
 
 export default class AdminRoutes implements IREST {
@@ -678,6 +682,83 @@ export default class AdminRoutes implements IREST {
 			AdminRoutes.handleError(400, "Classlist upload not successful; no students were processed from CSV.", res);
 		} catch (err) {
 			return AdminRoutes.handleError(400, "Classlist upload unsuccessful. ERROR: " + err.message, res);
+		}
+	}
+
+	/**
+	 * Hands files back to students for a deliverable. The upload is either a zip of per-student
+	 * files named by CSID, or, with ?csId=, one file for that student. Field name: "handback".
+	 */
+	private static async postHandback(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const delivId = req.params.delivId;
+		const csId = req.query?.csId;
+		Log.info("AdminRoutes::postHandback( " + delivId + " ) - start; csId: " + csId);
+
+		try {
+			const userName = RouteUtil.getAuthenticatedUser(req);
+			const deliv = await new DeliverablesController().getDeliverable(delivId);
+			if (deliv === null) {
+				return AdminRoutes.handleError(400, "Unknown deliverable: " + delivId, res);
+			}
+			const saved = await req.saveRequestFiles();
+			const upload = saved.files.find((file: any) => file.fieldname === "handback");
+			if (typeof upload === "undefined") {
+				return AdminRoutes.handleError(400, "No file uploaded for field: handback", res);
+			}
+
+			const hc = new HandbackController();
+			let summary: any;
+			if (typeof csId === "string" && csId.trim().length > 0) {
+				summary = await hc.importSingle(delivId, csId, upload.filename, upload.filepath, userName);
+			} else if ((upload.filename ?? "").toLowerCase().endsWith(".zip")) {
+				summary = await hc.importZip(delivId, upload.filepath, userName);
+			} else {
+				return AdminRoutes.handleError(400, "Upload a zip of files named by CSID, or give ?csId= for a single file.", res);
+			}
+			const payload: HandbackUploadPayload = { success: summary };
+			res.code(200).send(payload);
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Handback upload unsuccessful. ERROR: " + err.message, res);
+		}
+	}
+
+	private static async getHandbacks(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const delivId = req.params.delivId;
+		Log.info("AdminRoutes::getHandbacks( " + delivId + " ) - start");
+		try {
+			const handbacks = await new HandbackController().getHandbacksForDeliverable(delivId);
+			const payload: HandbackTransportPayload = { success: handbacks.map((h) => HandbackController.toTransport(h, true)) };
+			res.code(200).send(payload);
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to list handbacks: " + err.message, res);
+		}
+	}
+
+	private static async getHandback(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const { delivId, personId, fileName } = req.params;
+		Log.info("AdminRoutes::getHandback( " + delivId + ", " + personId + ", " + fileName + " ) - start");
+		try {
+			await GeneralRoutes.sendHandback(delivId, personId, fileName, res);
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to get handback: " + err.message, res);
+		}
+	}
+
+	private static async deleteHandback(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const { delivId, personId, fileName } = req.params;
+		Log.info("AdminRoutes::deleteHandback( " + delivId + ", " + personId + ", " + fileName + " ) - start");
+		try {
+			const userName = RouteUtil.getAuthenticatedUser(req);
+			const hc = new HandbackController();
+			const handback = await hc.getHandback(delivId, personId, fileName);
+			if (handback === null) {
+				return AdminRoutes.handleError(404, "No such handback: " + delivId + "/" + personId + "/" + fileName, res);
+			}
+			await hc.remove(handback, userName);
+			const payload: Payload = { success: { message: "Handback removed: " + fileName } };
+			res.code(200).send(payload);
+		} catch (err) {
+			return AdminRoutes.handleError(400, "Unable to remove handback: " + err.message, res);
 		}
 	}
 
@@ -1323,6 +1404,12 @@ export default class AdminRoutes implements IREST {
 
 		server.post("/portal/admin/classlist", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postClasslist);
 		server.post("/portal/admin/grades/csv/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGrades);
+
+		// files handed back to individual students
+		server.post("/portal/admin/handback/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postHandback);
+		server.get("/portal/admin/handbacks/:delivId", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getHandbacks);
+		server.get("/portal/admin/handback/:delivId/:personId/:fileName", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.getHandback);
+		server.delete("/portal/admin/handback/:delivId/:personId/:fileName", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.deleteHandback);
 		server.post("/portal/admin/grades/prairie", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postGradesPrairie);
 		server.post("/portal/admin/deliverable", { preHandler: AdminRoutes.isAdmin }, AdminRoutes.postDeliverable);
 

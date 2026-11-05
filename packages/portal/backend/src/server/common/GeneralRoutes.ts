@@ -4,6 +4,7 @@ import {
 	ConfigTransportPayload,
 	GradeTransport,
 	GradeTransportPayload,
+	HandbackTransportPayload,
 	Payload,
 	PersonTransport,
 	RepositoryPayload,
@@ -21,6 +22,7 @@ import { DeliverablesController } from "../../controllers/DeliverablesController
 import { GitHubActions } from "../../controllers/GitHubActions";
 import { GitHubController } from "../../controllers/GitHubController";
 import { GradesController } from "../../controllers/GradesController";
+import { HandbackController } from "../../controllers/HandbackController";
 import { PersonController } from "../../controllers/PersonController";
 import { RepositoryController } from "../../controllers/RepositoryController";
 import { TeamController } from "../../controllers/TeamController";
@@ -109,6 +111,92 @@ export default class GeneralRoutes implements IREST {
 			res.code(400).send(payload);
 			return;
 		}
+	}
+
+	/**
+	 * The files handed back to the caller (or, for an admin viewing as a student, to that student).
+	 */
+	public static async getHandbacks(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return; // the response has already been sent (a view-as request that is not allowed)
+		}
+		Log.trace("GeneralRoutes::getHandbacks(..) - start; user: " + identity.user);
+
+		try {
+			const isValid = await new AuthController().isValid(identity.actedBy, identity.token);
+			if (isValid === false) {
+				throw new Error("Invalid credentials");
+			}
+			const handbacks = await new HandbackController().getHandbacksForPerson(identity.user);
+			const payload: HandbackTransportPayload = { success: handbacks.map((h) => HandbackController.toTransport(h, false)) };
+			res.code(200).send(payload);
+		} catch (err) {
+			Log.info("GeneralRoutes::getHandbacks(..) - ERROR: " + err.message); // intentionally info
+			const payload: Payload = { failure: { message: err.message, shouldLogout: false } };
+			res.code(400).send(payload);
+		}
+	}
+
+	/**
+	 * Downloads one of the caller's handbacks. The student is taken from the caller's identity, so
+	 * the only way to another student's file is to be an admin viewing as them. Opened from a
+	 * plain link on the student page, so the token comes from the cookie (see RouteUtil.processAuth).
+	 */
+	public static async getHandback(req: ClassyRequest, res: FastifyReply): Promise<void> {
+		const identity = await GeneralRoutes.identityFor(req, res);
+		if (identity === null) {
+			return;
+		}
+		const delivId = req.params.delivId;
+		const fileName = req.params.fileName;
+		Log.info("GeneralRoutes::getHandback( " + delivId + ", " + fileName + " ) - user: " + identity.user);
+
+		try {
+			const isValid = await new AuthController().isValid(identity.actedBy, identity.token);
+			if (isValid === false) {
+				return GeneralRoutes.handleError(401, "Authorization error; unknown user/token.", res);
+			}
+			await GeneralRoutes.sendHandback(delivId, identity.user, fileName, res);
+		} catch (err) {
+			Log.error("GeneralRoutes::getHandback( " + delivId + ", " + fileName + " ) - ERROR: " + err.message);
+			GeneralRoutes.handleError(400, "Problem encountered getting handback: " + err.message, res);
+		}
+	}
+
+	/**
+	 * Streams a handback as a download, or sends the not-found page. Shared with the admin route.
+	 */
+	public static async sendHandback(delivId: string, personId: string, fileName: string, res: FastifyReply): Promise<void> {
+		const hc = new HandbackController();
+		const handback = await hc.getHandback(delivId, personId, fileName);
+		const file = handback === null ? null : HandbackController.pathFor(handback);
+		if (file === null || fs.existsSync(file) === false) {
+			Log.info("GeneralRoutes::sendHandback( " + delivId + ", " + personId + ", " + fileName + " ) - not found");
+			res.code(404).header("Content-Type", "text/html").send(GeneralRoutes.missingHandbackHtml(delivId, fileName));
+			return;
+		}
+		// NOTE: awaited for the same reason as the stream in getResource: Fastify finalises the
+		// reply when the handler resolves, and the reply is thenable until it has been flushed
+		await res
+			.code(200)
+			.header("Content-Type", HandbackController.contentType(handback.fileName))
+			.header("Content-Disposition", 'attachment; filename="' + handback.fileName.replace(/"/g, "") + '"')
+			.header("Content-Length", String(handback.size))
+			.send(fs.createReadStream(file));
+	}
+
+	private static missingHandbackHtml(delivId: string, fileName: string): string {
+		const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+		return (
+			'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>File not found</title>' +
+			"<style>body{font-family:sans-serif;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}</style></head><body>" +
+			"<h1>File not found</h1><p>There is no file named <code>" +
+			esc(fileName) +
+			"</code> handed back to you for <code>" +
+			esc(delivId) +
+			"</code>. It may have been removed or replaced; the list on your portal page is current.</p></body></html>"
+		);
 	}
 
 	public static async getTeams(req: ClassyRequest, res: FastifyReply): Promise<void> {
@@ -623,6 +711,10 @@ export default class GeneralRoutes implements IREST {
 
 		// used by students to get their repos
 		server.get("/portal/repos", GeneralRoutes.getRepos);
+
+		// files handed back to the student (listing, and a download of their own copy)
+		server.get("/portal/handbacks", GeneralRoutes.getHandbacks);
+		server.get("/portal/handback/:delivId/:fileName", GeneralRoutes.getHandback);
 
 		// used by students to create their teams
 		server.post("/portal/team", GeneralRoutes.postTeam);

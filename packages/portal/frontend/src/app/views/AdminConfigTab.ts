@@ -1,8 +1,17 @@
 import Log from "@common/Log";
-import { CourseTransport, Payload, PersonTransport, ProvisionTransport, TeamFormationTransport } from "@common/types/PortalTypes";
+import {
+	CourseTransport,
+	HandbackTransport,
+	HandbackUploadSummary,
+	Payload,
+	PersonTransport,
+	ProvisionTransport,
+	TeamFormationTransport,
+} from "@common/types/PortalTypes";
 import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
 import { OnsButtonElement } from "onsenui";
 import { Network } from "../util/Network";
+import { SortableTable, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 import { AdminDeletePage } from "./AdminDeletePage";
 import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
@@ -55,6 +64,31 @@ export class AdminConfigTab extends AdminPage {
 						Log.error("AdminConfigTab::handleAdminConfig(..) - upload classlist pressed ERROR: " + err.message);
 					});
 			}
+		};
+
+		(document.querySelector("#adminSubmitHandback") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - upload handback pressed");
+			evt.stopPropagation(); // prevents list item expansion
+
+			const fileInput = document.querySelector("#adminHandbackFile") as HTMLInputElement;
+			if (that.validateFileSpecified(fileInput) !== true) {
+				return;
+			}
+			const delivId = (document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).value;
+			if (delivId === "") {
+				UI.showAlert("Select the deliverable the files are for.");
+				return;
+			}
+			const csId = (document.querySelector("#adminHandbackCsId") as HTMLInputElement).value.trim();
+			that.uploadHandback(fileInput.files, delivId, csId).catch(function (err) {
+				Log.error("AdminConfigTab::handleAdminConfig(..) - upload handback pressed ERROR: " + err.message);
+			});
+		};
+
+		(document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).onchange = function () {
+			that.renderHandbackList().catch(function (err) {
+				Log.error("AdminConfigTab::handleAdminConfig(..) - handback list ERROR: " + err.message);
+			});
 		};
 
 		(document.querySelector("#adminSubmitGradeCSV") as OnsButtonElement).onclick = function (evt) {
@@ -239,6 +273,7 @@ export class AdminConfigTab extends AdminPage {
 
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
+		this.populateDelivSelect(allDeliverables, document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement);
 
 		// Show the stored default, or --Not Set-- (the first option) when there is none or it names a
 		// deliverable no longer offered. Selected explicitly: a select left with no selected option
@@ -327,6 +362,171 @@ export class AdminConfigTab extends AdminPage {
 		}
 
 		Log.trace("AdminConfigTab::uploadClasslist(..) - end");
+	}
+
+	/**
+	 * @param fileList the zip (or single file) chosen
+	 * @param delivId
+	 * @param csId the student, for a single file; empty for a zip named by CSID
+	 */
+	public async uploadHandback(fileList: FileList, delivId: string, csId: string): Promise<void> {
+		Log.info("AdminConfigTab::uploadHandback( " + delivId + ", " + csId + " ) - start");
+		let url = this.remote + "/portal/admin/handback/" + delivId;
+		if (csId.length > 0) {
+			url += "?csId=" + encodeURIComponent(csId);
+		}
+		UI.showModal("Uploading files.");
+		const status = document.querySelector("#adminHandbackStatus") as HTMLElement;
+		try {
+			const formData = new FormData();
+			formData.append("handback", fileList[0]);
+			const opts = {
+				headers: {
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
+					user: localStorage.user,
+					token: localStorage.token,
+				},
+			};
+			const response: Response = await Network.httpPostFile(url, opts, formData);
+			const data: any = await response.json();
+			UI.hideModal();
+			if (response.status >= 200 && response.status < 300 && typeof data.success !== "undefined") {
+				const summary: HandbackUploadSummary = data.success;
+				let msg = summary.stored.length + " file(s) handed back for " + summary.delivId + ".";
+				if (summary.replaced.length > 0) {
+					msg += " " + summary.replaced.length + " replaced an earlier file.";
+				}
+				if (summary.unmatched.length > 0) {
+					msg += " <b>" + summary.unmatched.length + " matched no student:</b> " + summary.unmatched.join(", ") + ".";
+				}
+				if (summary.skipped.length > 0) {
+					msg += " " + summary.skipped.length + " skipped (not files).";
+				}
+				status.innerHTML = msg;
+				UI.showSuccessToast(summary.stored.length + " file(s) handed back.");
+				await this.renderHandbackList();
+			} else {
+				status.innerHTML = "";
+				UI.showError(data);
+			}
+		} catch (err) {
+			UI.hideModal();
+			Log.error("AdminConfigTab::uploadHandback(..) - ERROR: " + err.message);
+			AdminView.showError(err);
+		}
+	}
+
+	/**
+	 * What has been handed back for the deliverable selected in the handback section.
+	 */
+	public async renderHandbackList(): Promise<void> {
+		const delivId = (document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).value;
+		const container = document.querySelector("#adminHandbackList") as HTMLElement;
+		if (delivId === "") {
+			container.innerHTML = "";
+			return;
+		}
+		const response = await fetch(this.remote + "/portal/admin/handbacks/" + delivId, AdminView.getOptions());
+		const json = await response.json();
+		if (typeof json.success === "undefined") {
+			container.innerHTML = "";
+			UI.showError(json);
+			return;
+		}
+		const handbacks: HandbackTransport[] = json.success;
+		if (handbacks.length === 0) {
+			container.innerHTML = "<span style='font-size: smaller;'>Nothing handed back for " + delivId + " yet.</span>";
+			return;
+		}
+		const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		const headers: TableHeader[] = [
+			{
+				id: "person",
+				text: "Student",
+				sortable: true,
+				defaultSort: true,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "file",
+				text: "File",
+				sortable: true,
+				defaultSort: false,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "size",
+				text: "Size",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: right;",
+			},
+			{
+				id: "date",
+				text: "Handed Back",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{ id: "remove", text: "", sortable: false, defaultSort: false, sortDown: false, style: "padding-left: 1em; padding-right: 1em;" },
+		];
+		const st = new SortableTable(headers, "#adminHandbackList");
+		for (const hb of handbacks) {
+			const remove =
+				'<a href="#" class="handbackRemove" data-deliv-id="' +
+				esc(hb.delivId) +
+				'" data-person-id="' +
+				esc(hb.personId) +
+				'" data-file-name="' +
+				esc(hb.fileName) +
+				'">remove</a>';
+			st.addRow([
+				{ value: hb.personId, html: esc(hb.personId) },
+				{ value: hb.fileName, html: '<a href="' + this.remote + hb.URL + '" download>' + esc(hb.fileName) + "</a>" },
+				{ value: hb.size, html: Math.max(1, Math.round(hb.size / 1024)) + " KB" },
+				{ value: hb.timestamp, html: new Date(hb.timestamp).toLocaleString() },
+				{ value: "", html: remove },
+			]);
+		}
+		st.generate();
+		this.wireHandbackRemove(container);
+	}
+
+	private wireHandbackRemove(container: HTMLElement): void {
+		if (container.dataset.removeWired === "true") {
+			return;
+		}
+		container.dataset.removeWired = "true";
+		const that = this;
+		container.addEventListener("click", function (evt: Event) {
+			const link = (evt.target as HTMLElement).closest("a.handbackRemove") as HTMLElement | null;
+			if (link === null) {
+				return;
+			}
+			evt.preventDefault();
+			const { delivId, personId, fileName } = link.dataset;
+			UI.notificationConfirm("Remove " + fileName + " handed back to " + personId + "?", async function (choice: number) {
+				if (choice !== 1) {
+					return;
+				}
+				const url =
+					that.remote + "/portal/admin/handback/" + delivId + "/" + encodeURIComponent(personId) + "/" + encodeURIComponent(fileName);
+				const opts: any = AdminView.getOptions();
+				opts.method = "delete";
+				const response = await fetch(url, opts);
+				const json = await response.json();
+				if (typeof json.success !== "undefined") {
+					UI.showSuccessToast("Removed " + fileName + ".");
+					await that.renderHandbackList();
+				} else {
+					UI.showError(json);
+				}
+			});
+		});
 	}
 
 	public async uploadGrades(fileList: FileList, delivId: string) {

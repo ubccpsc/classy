@@ -365,6 +365,22 @@ export enum AuditLabel {
 	CLASSLIST_PRUNE = "Classlist_Prune",
 	IMPERSONATE = "Impersonate", // an admin started driving Classy as another user
 	GRADE_EXPORT = "Grade_Export", // an external system pulled grades; personId is the consumer name
+	HANDBACK_UPLOAD = "Handback_Upload", // files handed back to students (see HandbackController)
+	HANDBACK_DELETE = "Handback_Delete",
+}
+
+/**
+ * A file course staff have handed back to one student for one deliverable: a marked midterm, a
+ * code review, and the like. The file itself lives on disk (HandbackController.pathFor); this is
+ * what the student's page lists and what access is checked against.
+ */
+export interface Handback {
+	personId: string; // Person.id, never the GitHub id (which can change)
+	delivId: string;
+	fileName: string; // base name only, as stored on disk
+	size: number; // bytes
+	uploadedBy: string; // Person.id of the staff member
+	timestamp: number;
 }
 
 export interface AuditEvent {

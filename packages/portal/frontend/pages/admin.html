@@ -547,6 +547,34 @@
                     </div>
                 </ons-list-item>
 
+                <ons-list-header>Hand Back Files</ons-list-header>
+                <ons-list-item expandable>
+                    <div class="left settingIcon">
+                        <ons-icon icon="fa-file-export"></ons-icon>
+                    </div>
+                    <div class="center">
+                        <div style="width: 100%;">
+                            Deliverable:
+                            <select id="adminHandbackDeliverableSelect" style="margin-left: 1em; margin-right: 1em;"></select>
+                            Select zip or file <input id="adminHandbackFile" style="padding-left: 1em" type="file"/>
+                            CSID (single file only): <input id="adminHandbackCsId" type="text" size="10" autocomplete="off" spellcheck="false" style="margin-right: 1em;"/>
+                            <ons-button id="adminSubmitHandback" modifier="medium">Upload</ons-button>
+                        </div>
+                        <div id="adminHandbackStatus" style="width: 100%; box-sizing: border-box; padding-top: 0.5em; padding-left: 1em; font-size: smaller;"></div>
+                        <div id="adminHandbackList" style="width: 100%; box-sizing: border-box; padding-top: 0.5em;"></div>
+                    </div>
+                    <div class="expandable-content">
+                        Hands files back to individual students, who see them in a <em>Handed Back Files</em> section of
+                        their portal page. Each student can only download their own files.
+                        <br/><br/>
+                        Upload a <b>zip</b> of per-student files named by CSID: <code>a1b2c.pdf</code>,
+                        <code>a1b2c_midterm.pdf</code> and <code>A1B2C-v2.pdf</code> all go to <code>a1b2c</code>. Files
+                        whose name matches no student are reported and not stored. Or upload a single file and give the
+                        student&apos;s CSID. Uploading a file with the same name again replaces it. The list below shows what has
+                        been handed back for the selected deliverable; <em>remove</em> deletes a file.
+                    </div>
+                </ons-list-item>
+
                 <ons-list-header>Manage Repositories &amp; Teams</ons-list-header>
                 <ons-list-item>
                     <div class="left settingIcon">
