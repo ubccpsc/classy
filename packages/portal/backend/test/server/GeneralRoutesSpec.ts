@@ -351,6 +351,16 @@ describe("General Routes", function () {
 
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(404);
+
+		// the page explains the likely cause (an archived run) and how to get a new report; the
+		// lstat error it used to send, with the server's filesystem path in it, is not shown
+		expect(response.headers["content-type"]).to.contain("text/html");
+		expect(response.text).to.contain("Report not found");
+		expect(response.text).to.contain("archived");
+		expect(response.text).to.contain("fresh report");
+		expect(response.text).to.contain("/INVALIDID/student/NONEXISTENT/FILE.txt");
+		expect(response.text).to.not.contain("ENOENT");
+		expect(response.text).to.not.contain(Config.getInstance().getProp(ConfigKey.persistDir));
 	});
 
 	it("Student should be able to get get a student resource.", async function () {

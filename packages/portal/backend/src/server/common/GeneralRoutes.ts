@@ -194,8 +194,12 @@ export default class GeneralRoutes implements IREST {
 					await res.code(200).send(rs);
 				}
 			} catch (err) {
-				Log.error("GeneralRoutes::getResource(..) - ERROR Requested resource does not exist: " + path);
-				res.code(404).send(err.message);
+				// Usually an archived run: AutoTest output is only kept on disk for a while (see
+				// docs/tech-staff/backups.md). Students open these links from a GitHub comment, so
+				// the answer is a page that says that, not the lstat error with the server path in
+				// it (ubccpsc/classy#452). Logged at info: a student following an old link is routine.
+				Log.info("GeneralRoutes::getResource(..) - resource does not exist: " + path + "; " + err.message);
+				res.code(404).header("Content-Type", "text/html").send(GeneralRoutes.missingResourceHtml(path));
 			}
 		} catch (err) {
 			Log.error("GeneralRoutes::getResource(..) - ERROR: " + err);
@@ -206,6 +210,34 @@ export default class GeneralRoutes implements IREST {
 			Log.info("GeneralRoutes::getResource(..) - ERROR: " + err.message); // intentionally info
 			GeneralRoutes.handleError(400, "Problem encountered getting resource: " + err.message, res);
 		}
+	}
+
+	/**
+	 * The page a student sees for a report that is no longer on disk.
+	 *
+	 * How long runs are kept is a deployment decision made in a cron job outside Classy, so the
+	 * page does not quote a number of days. The recovery steps are the ones course staff give out
+	 * by hand: a fresh run on the latest commit, or a new commit on a branch from the old one.
+	 */
+	public static missingResourceHtml(path: string): string {
+		const shown = path.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		return (
+			'<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Report not found</title>' +
+			"<style>body{font-family:sans-serif;max-width:40em;margin:3em auto;padding:0 1em;line-height:1.5}code{word-break:break-all}</style>" +
+			"</head><body>" +
+			"<h1>Report not found</h1>" +
+			"<p>There is no report at <code>" +
+			shown +
+			"</code>.</p>" +
+			"<p>Reports are only kept for a limited time after a run. The most likely reason this one is gone is that it has been archived.</p>" +
+			"<p>To get a new report:</p>" +
+			"<ul>" +
+			"<li>If the assessment is still open, ask the bot for a fresh report on your latest commit, as usual.</li>" +
+			"<li>If you need a report for an older commit, make a branch that starts at that commit, push a small new commit on that branch, and ask the bot for a report on that commit.</li>" +
+			"</ul>" +
+			"<p>If the link is recent and you believe the report should still be here, contact the course staff and include this address.</p>" +
+			"</body></html>"
+		);
 	}
 
 	public static generateDirectoryHtml(absolutePath: string, relativePath: string, baseUrl: string): string {
