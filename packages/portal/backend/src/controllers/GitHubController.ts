@@ -293,18 +293,74 @@ export class GitHubController implements IGitHubController {
 	}
 
 	/**
+	 * Simplifies a provisioning failure down to something that fits on the admin's status line: the
+	 * lines git itself marked as the problem if there are any, otherwise the first line. The
+	 * failed command is in these messages and carries the bot token in its URL, so the text is
+	 * sanitised before it goes anywhere near a job record.
+	 *
+	 * @returns "" when there is nothing useful to add, otherwise "; cause: ..."
+	 */
+	public static summarizeCause(err: any): string {
+		const text = Config.sanitize(String(err?.message ?? err ?? ""));
+		const lines = text
+			.split(/\r?\n/)
+			.map((line) => line.trim())
+			.filter((line) => line.length > 0);
+		if (lines.length === 0) {
+			return "";
+		}
+		const marked = lines.filter((line) => /^(error|fatal|remote):/i.test(line));
+		let summary = marked.length > 0 ? marked.slice(0, 2).join("; ") : lines[0];
+		// the wrappers each prepend "X::y( repo ) - ERROR: Error: "; only the innermost part is news
+		summary = summary.replace(/^(?:.*?- ERROR: )+/, "").replace(/^(?:Error: )+/, "");
+		if (summary.length > 240) {
+			summary = summary.substring(0, 240) + "...";
+		}
+		return "; cause: " + summary;
+	}
+
+	/**
 	 * Whether an Import URL names a template repo (ownerName/templateName#branchName) rather than a
 	 * git URL to import from.
 	 */
 	public static isTemplateImport(importUrl: string): boolean {
-		return !(importUrl.startsWith("https://") || importUrl.startsWith("git@"));
+		return importUrl.startsWith("https://") === false && GitHubController.isSshUrl(importUrl) === false;
+	}
+
+	/**
+	 * Whether this is an SSH clone address: git@host:org/repo.git or ssh://git@host/org/repo.git.
+	 */
+	public static isSshUrl(url: string): boolean {
+		return url.startsWith("git@") || url.startsWith("ssh://");
+	}
+
+	/**
+	 * The HTTPS address of the repository an SSH clone address names, or null if it cannot be
+	 * worked out. Only used to suggest what to type instead.
+	 */
+	public static httpsEquivalent(sshUrl: string): string | null {
+		const scp = /^git@([^:/\s]+):(.+)$/.exec(sshUrl);
+		if (scp !== null) {
+			return "https://" + scp[1] + "/" + scp[2];
+		}
+		const ssh = /^ssh:\/\/(?:[^@/\s]+@)?([^:/\s]+)(?::\d+)?\/(.+)$/.exec(sshUrl);
+		if (ssh !== null) {
+			return "https://" + ssh[1] + "/" + ssh[2];
+		}
+		return null;
 	}
 
 	/**
 	 * Checks a deliverable's Import URL, which is what every repository provisioned for the
-	 * deliverable is created from. Two forms are accepted: a git URL (starting with https:// or
-	 * git@), optionally suffixed #branch or #branch:directory, which is imported; or
-	 * ownerName/templateName, optionally suffixed #branch, which is used as a GitHub template.
+	 * deliverable is created from. Two forms are accepted: an https:// git URL, optionally
+	 * suffixed #branch or #branch:directory, which is imported; or ownerName/templateName,
+	 * optionally suffixed #branch, which is used as a GitHub template.
+	 *
+	 * SSH addresses (git@host:org/repo.git) are refused. They look like the obvious thing to paste
+	 * from GitHub's clone button, and they were accepted here for years, but they cannot work: the
+	 * portal image has no ssh client or keys, and the bot token is added to the URL after its "//",
+	 * which an SSH address does not have. The failure only showed up once per repository, at clone
+	 * time, as "cannot run ssh: No such file or directory".
 	 *
 	 * Shared by the deliverable save (a malformed URL is rejected there), by ProvisionAgent (a job
 	 * is refused before it starts) and by createOnGitHub (the backstop), so all three say the same
@@ -319,16 +375,24 @@ export class GitHubController implements IGitHubController {
 		if (importUrl !== importUrl.trim()) {
 			return "Import URL has leading or trailing whitespace: '" + importUrl + "'";
 		}
+		if (GitHubController.isSshUrl(importUrl) === true) {
+			const https = GitHubController.httpsEquivalent(importUrl);
+			return (
+				"Import URL is an SSH address, which Classy cannot clone from; use the https:// address instead" +
+				(https === null ? "" : " (" + https + ")") +
+				"; was: '" +
+				importUrl +
+				"'"
+			);
+		}
 		if (GitHubController.isTemplateImport(importUrl) === false) {
-			return null; // a git URL; whether it can actually be cloned is only known at import time
+			return null; // an https git URL; whether it can actually be cloned is only known at import time
 		}
 		const parts = importUrl.split("/");
 		const template = parts.length === 2 ? parts[1].split("#")[0] : "";
 		if (parts.length !== 2 || parts[0].length === 0 || template.length === 0 || template.indexOf(".git") >= 0) {
 			return (
-				"Import URL must be a git URL starting with https:// or git@, or ownerName/templateName#branchName for a template; was: '" +
-				importUrl +
-				"'"
+				"Import URL must be a git URL starting with https://, or ownerName/templateName#branchName for a template; was: '" + importUrl + "'"
 			);
 		}
 		return null;
@@ -833,6 +897,9 @@ export class GitHubController implements IGitHubController {
 		// tracks whether the repo exists on GitHub (and may already hold imported content);
 		// if it does, the failure path below must not delete it
 		let repoCreated = false;
+		// what went wrong, for the errors thrown below. These reach the job record and the admin UI;
+		// "failed to create repo" on its own sent admins to the server log for the actual reason.
+		let cause = "";
 		let resuming = false;
 
 		if (isRepoProvisioned === true) {
@@ -875,6 +942,7 @@ export class GitHubController implements IGitHubController {
 			// if we encounter an exception, something critical must have failed above
 			// and we should consider the repo to not be provisioned
 			Log.error("GitHubController::provisionRepository( " + repoName + " ) - ERROR: " + err);
+			cause = GitHubController.summarizeCause(err);
 		}
 
 		// get here if true hasn't been returned or an exception has been thrown
@@ -883,7 +951,7 @@ export class GitHubController implements IGitHubController {
 			// NOT deleted here; finalization (teams / webhooks / settings) is what failed and that
 			// is recoverable by re-running finalization, whereas deleting the repo is not.
 			Log.error("GitHubController::provisionRepository( " + repoName + " ) - created but not finalized; repo left in place for retry");
-			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo created but finalization failed");
+			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo created but finalization failed" + cause);
 		}
 
 		// repo creation failed; remove if needed (requires createRepo be permissive if already exists)
@@ -901,7 +969,7 @@ export class GitHubController implements IGitHubController {
 					repoName +
 					" ) - repo still exists on GitHub after a failed delete; record left for checkDatabase"
 			);
-			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo could not be removed for retry");
+			throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; repo could not be removed for retry" + cause);
 		}
 
 		// and put the Repository record back the way it was. GitHubActions::createRepo writes URL and
@@ -911,7 +979,7 @@ export class GitHubController implements IGitHubController {
 		// repo waiting to be finalized rather than one waiting to be created.
 		await this.markNotProvisioned(repoName);
 
-		throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; failed to create repo");
+		throw new Error("GitHubController::provisionRepository( " + repoName + " ) failed; failed to create repo" + cause);
 	}
 
 	/**

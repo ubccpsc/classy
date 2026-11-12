@@ -3,7 +3,9 @@ import "mocha";
 
 import { DatabaseController } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
+import { GitHubController } from "@backend/controllers/GitHubController";
 import { Deliverable } from "@backend/Types";
+import Config, { ConfigKey } from "@common/Config";
 import { TestHarness } from "@common/TestHarness";
 import { DeliverableTransport } from "@common/types/PortalTypes";
 
@@ -91,7 +93,6 @@ describe("DeliverablesController", () => {
 		// both accepted forms
 		expect(dc.validateDeliverableTransport({ ...base, importURL: "https://github.test/org/bootstrap.git" })).to.be.null;
 		expect(dc.validateDeliverableTransport({ ...base, importURL: "https://github.test/org/bootstrap.git#main:dir" })).to.be.null;
-		expect(dc.validateDeliverableTransport({ ...base, importURL: "git@github.test:org/bootstrap.git" })).to.be.null;
 		expect(dc.validateDeliverableTransport({ ...base, importURL: "org/template" })).to.be.null;
 		expect(dc.validateDeliverableTransport({ ...base, importURL: "org/template#main" })).to.be.null;
 
@@ -102,6 +103,50 @@ describe("DeliverablesController", () => {
 			expect(msg, bad).to.contain("Import URL");
 		}
 		expect(dc.validateDeliverableTransport({ ...base, importURL: " org/template" })).to.contain("whitespace");
+	});
+
+	it("Should reject an SSH Import URL and suggest the HTTPS one.", async () => {
+		// Classy clones over HTTPS with the bot token; the portal image has no ssh client, so these
+		// only ever failed at clone time, once per repository
+		const base = { id: "d1validate" } as DeliverableTransport;
+
+		const scp = dc.validateDeliverableTransport({ ...base, importURL: "git@github.test:org/bootstrap.git" });
+		expect(scp).to.contain("SSH address");
+		expect(scp).to.contain("https://github.test/org/bootstrap.git");
+
+		const withBranch = dc.validateDeliverableTransport({ ...base, importURL: "git@github.test:org/bootstrap.git#main:dir" });
+		expect(withBranch, "the branch specifier is kept").to.contain("https://github.test/org/bootstrap.git#main:dir");
+
+		const ssh = dc.validateDeliverableTransport({ ...base, importURL: "ssh://git@github.test:22/org/bootstrap.git" });
+		expect(ssh).to.contain("SSH address");
+		expect(ssh).to.contain("https://github.test/org/bootstrap.git");
+
+		expect(GitHubController.httpsEquivalent("git@"), "nothing to suggest").to.be.null;
+		expect(dc.validateDeliverableTransport({ ...base, importURL: "git@" })).to.contain("SSH address");
+	});
+
+	it("Should summarise a provisioning failure without the token or the wrappers.", async () => {
+		const token = Config.getInstance().getProp(ConfigKey.githubBotToken).replace("token ", "");
+		const err = new Error(
+			"GithubController::provisionRepositoryFromFS( r1 ) - ERROR: Error: ChildProcessError: Command failed: git clone -q https://" +
+				token +
+				"@github.test/org/bootstrap /tmp/x\nerror: cannot run ssh: No such file or directory\nfatal: unable to fork\n `git clone` (exited with error code 128)"
+		);
+		const cause = GitHubController.summarizeCause(err);
+		expect(cause).to.equal("; cause: error: cannot run ssh: No such file or directory; fatal: unable to fork");
+
+		// no git-marked lines: the first line, minus the nested "- ERROR: Error:" prefixes, and never the token
+		const plain = GitHubController.summarizeCause(
+			new Error("A::b( r1 ) - ERROR: Error: C::d() - ERROR: Error: clone of https://" + token + "@h/x failed")
+		);
+		expect(plain.startsWith("; cause: clone of https://")).to.be.true;
+		if (token.length >= 8) {
+			expect(plain).to.not.contain(token);
+		}
+
+		expect(GitHubController.summarizeCause(new Error(""))).to.equal("");
+		expect(GitHubController.summarizeCause(undefined)).to.equal("");
+		expect(GitHubController.summarizeCause(new Error("x".repeat(500))).length).to.be.lessThan(270);
 	});
 
 	// this test should be last

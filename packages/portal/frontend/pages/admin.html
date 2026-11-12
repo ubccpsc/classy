@@ -893,11 +893,19 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-importURL"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repos are provisioned for this deliverable, where should they be imported from
-                            (e.g., the boostrap clone URL).
-                            <br><br>
-                            You can optionally import from a branch or subdirectory using the syntax
-                            `https://bootstrap.git#branch:directory`
+                            Where the repos provisioned for this deliverable are created from. Required before
+                            repos can be provisioned. Either:
+                            <ul style="margin-bottom: 0;">
+                                <li>the <b>HTTPS</b> clone URL of the bootstrap repo, e.g.
+                                    <code>https://github.example.com/org/bootstrap.git</code>. Add
+                                    <code>#branch</code> or <code>#branch:directory</code> to import from a branch or a
+                                    subdirectory.</li>
+                                <li><code>ownerName/templateName</code> (optionally <code>#branch</code>) to create
+                                    them from a GitHub template repo.</li>
+                            </ul>
+                            <br>
+                            SSH addresses (<code>git@host:org/repo.git</code>) are not accepted: Classy clones with the
+                            bot&apos;s token over HTTPS and has no SSH client or keys.
                         </div>
                     </ons-list-item>
 
