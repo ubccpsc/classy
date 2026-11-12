@@ -913,9 +913,17 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-repoPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any repositories are generated as a part of this deliverable, this prefix will be used
-                            when naming. Will
-                            default to '&lt;delivId&gt;_' if empty.
+                            Used when naming the repositories provisioned for this deliverable. By default the prefix
+                            is added <em>in front of</em> the deliverable id, not in place of it:
+                            <code>&lt;prefix&gt;_&lt;delivId&gt;_&lt;csid&gt;</code>, or
+                            <code>&lt;delivId&gt;_&lt;csid&gt;</code> if this is empty. For example, deliverable
+                            <code>d1</code> with prefix <code>project</code> gives <code>project_d1_a1b2c</code>.
+                            <br/><br/>
+                            A course plugin can change this rule by overriding <code>computeNames</code> in its
+                            <code>CustomCourseController</code> (for instance, so the prefix replaces the deliverable
+                            id), so check your course's plugin if the names you see differ. Names are fixed when
+                            <em>Prepare</em> runs on the provisioning page; changing the prefix afterwards does not
+                            rename repositories that have already been prepared.
                         </div>
                     </ons-list-item>
                     <ons-list-item expandable>
@@ -929,9 +937,11 @@
                             <ons-input class="settingTextInput" id="adminEditDeliverablePage-teamPrefix"></ons-input>
                         </div>
                         <div class="expandable-content">
-                            If any teams are generated as a part of this deliverable, this prefix will be used when
-                            naming. Will revert to '&lt;delivId&gt;_'
-                            if empty.
+                            Used when naming the teams created for this deliverable. By default the prefix is added
+                            <em>in front of</em> the deliverable id, not in place of it:
+                            <code>&lt;prefix&gt;_&lt;delivId&gt;_&lt;csid&gt;</code>, or
+                            <code>&lt;delivId&gt;_&lt;csid&gt;</code> if this is empty. A course plugin can change this
+                            rule by overriding <code>computeNames</code> in its <code>CustomCourseController</code>.
                         </div>
                     </ons-list-item>
 
