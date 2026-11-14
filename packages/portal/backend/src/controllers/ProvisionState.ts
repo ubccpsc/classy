@@ -1,6 +1,6 @@
 import Log from "@common/Log";
 
-import { RepoStatus, Repository, Team, TeamStatus } from "../Types";
+import { RepoStatus, Repository, StudentAccess, Team, TeamStatus } from "../Types";
 import { DatabaseController } from "./DatabaseController";
 
 /**
@@ -66,6 +66,42 @@ export class ProvisionState {
 
 		Log.info("ProvisionState::setRepoStatus( " + repo.id + " ) - " + from + " -> " + to + " (" + why + ")");
 		repo.gitHubStatus = to;
+		// A release attaches the student teams with push, and nothing else attaches them; leaving
+		// RELEASED detaches them, and their access goes with them. So a repo made read-only, then
+		// un-released and released again, is writeable again, exactly as GitHub has it.
+		if (to === RepoStatus.RELEASED) {
+			repo.studentAccess = StudentAccess.PUSH;
+		} else if (from === RepoStatus.RELEASED) {
+			delete repo.studentAccess;
+		}
+		await DatabaseController.getInstance().writeRepository(repo);
+		return true;
+	}
+
+	/**
+	 * Records what the student teams can now do on a released repository, once GitHub has it.
+	 *
+	 * @param repo
+	 * @param to
+	 * @param why for the log
+	 * @returns {Promise<boolean>} false if refused because the repo is not released (untouched)
+	 */
+	public static async setStudentAccess(repo: Repository, to: StudentAccess, why: string): Promise<boolean> {
+		if (repo.gitHubStatus !== RepoStatus.RELEASED) {
+			// no student team is attached, so there is no access to record
+			Log.error(
+				"ProvisionState::setStudentAccess( " + repo.id + " ) - REFUSED: " + repo.gitHubStatus + " repo -> " + to + " (" + why + ")"
+			);
+			return false;
+		}
+
+		if (repo.studentAccess === to) {
+			return true;
+		}
+
+		const from = repo.studentAccess ?? StudentAccess.PUSH; // absent means push; see Repository.studentAccess
+		Log.info("ProvisionState::setStudentAccess( " + repo.id + " ) - " + from + " -> " + to + " (" + why + ")");
+		repo.studentAccess = to;
 		await DatabaseController.getInstance().writeRepository(repo);
 		return true;
 	}

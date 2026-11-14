@@ -1,8 +1,17 @@
 import Log from "@common/Log";
-import { CourseTransport, Payload, ProvisionTransport, StudentTransport, TeamFormationTransport } from "@common/types/PortalTypes";
+import {
+	CourseTransport,
+	HandbackTransport,
+	HandbackUploadSummary,
+	Payload,
+	PersonTransport,
+	ProvisionTransport,
+	TeamFormationTransport,
+} from "@common/types/PortalTypes";
 import { AdminDeleteGraderPage } from "@frontend/views/AdminDeleteGraderPage";
 import { OnsButtonElement } from "onsenui";
 import { Network } from "../util/Network";
+import { SortableTable, TableHeader } from "../util/SortableTable";
 import { UI } from "../util/UI";
 import { AdminDeletePage } from "./AdminDeletePage";
 import { AdminDeliverablesTab } from "./AdminDeliverablesTab";
@@ -17,14 +26,12 @@ export class AdminConfigTab extends AdminPage {
 	// private readonly remote: string; // url to backend
 	private isAdmin: boolean;
 
-	private deliverablesPage: AdminDeliverablesTab = null;
 	private course: CourseTransport = null;
 
 	public constructor(remote: string, isAdmin: boolean) {
 		super(remote);
 		this.isAdmin = isAdmin;
 		this.jobs = new JobRunner(remote);
-		this.deliverablesPage = new AdminDeliverablesTab(remote, isAdmin);
 	}
 
 	public setAdmin(isAdmin: boolean) {
@@ -38,8 +45,6 @@ export class AdminConfigTab extends AdminPage {
 		Log.info("AdminConfigTab::init(..) - start");
 		const that = this;
 		// Can init frame here if needed
-
-		await this.deliverablesPage.init(opts);
 
 		await this.initJobSections();
 
@@ -61,6 +66,31 @@ export class AdminConfigTab extends AdminPage {
 			}
 		};
 
+		(document.querySelector("#adminSubmitHandback") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - upload handback pressed");
+			evt.stopPropagation(); // prevents list item expansion
+
+			const fileInput = document.querySelector("#adminHandbackFile") as HTMLInputElement;
+			if (that.validateFileSpecified(fileInput) !== true) {
+				return;
+			}
+			const delivId = (document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).value;
+			if (delivId === "") {
+				UI.showAlert("Select the deliverable the files are for.");
+				return;
+			}
+			const csId = (document.querySelector("#adminHandbackCsId") as HTMLInputElement).value.trim();
+			that.uploadHandback(fileInput.files, delivId, csId).catch(function (err) {
+				Log.error("AdminConfigTab::handleAdminConfig(..) - upload handback pressed ERROR: " + err.message);
+			});
+		};
+
+		(document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).onchange = function () {
+			that.renderHandbackList().catch(function (err) {
+				Log.error("AdminConfigTab::handleAdminConfig(..) - handback list ERROR: " + err.message);
+			});
+		};
+
 		(document.querySelector("#adminSubmitGradeCSV") as OnsButtonElement).onclick = function (evt) {
 			Log.info("AdminConfigTab::handleAdminConfig(..) - upload grades pressed");
 			evt.stopPropagation(); // prevents list item expansion
@@ -70,6 +100,11 @@ export class AdminConfigTab extends AdminPage {
 			if (isValid === true) {
 				const delivDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 				const delivId = delivDropdown.value;
+				if (delivId === "") {
+					// the --Select-- placeholder; it used to go out as the id "null"
+					UI.showAlert("Select the deliverable the grades are for.");
+					return;
+				}
 				that
 					.uploadGrades(fileInput.files, delivId)
 					.then(function () {
@@ -114,63 +149,17 @@ export class AdminConfigTab extends AdminPage {
 				});
 		};
 
-		(document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
+		(document.querySelector("#adminManageTeamsButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - team management page pressed");
 			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
 
 			that
-				.teamCreatePressed()
+				.pushPage("./adminTeamManagement.html", {})
 				.then(function () {
-					// worked
+					return that.initTeamManagementPage();
 				})
 				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamDeletePressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamAddMemberPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: " + err.message);
-				});
-		};
-
-		(document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
-			Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
-			evt.preventDefault();
-			evt.stopPropagation(); // prevents list item expansion
-
-			that
-				.teamRemoveMemberPressed()
-				.then(function () {
-					// worked
-				})
-				.catch(function (err) {
-					Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: " + err.message);
+					Log.error("AdminConfigTab - adminTeamManagement ERROR: " + err.message);
 				});
 		};
 
@@ -196,6 +185,18 @@ export class AdminConfigTab extends AdminPage {
 				.catch(function (err) {
 					Log.error("AdminConfigTab - adminDelete ERROR: " + err.message);
 				});
+		};
+
+		(document.querySelector("#adminManageDeliverablesButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - manage deliverables page pressed");
+			evt.preventDefault();
+
+			// Unlike the provision page, nothing is constructed here: the pushed page's id routes its
+			// show event to AdminView::handleAdminDeliverables, which draws the list. That is also
+			// what redraws it after the edit page pops back to it.
+			that.pushPage("./adminDeliverables.html", {}).catch(function (err) {
+				Log.error("AdminConfigTab - adminDeliverables ERROR: " + err.message);
+			});
 		};
 
 		(document.querySelector("#adminManageRepositoriesButton") as OnsButtonElement).onclick = function (evt) {
@@ -246,24 +247,6 @@ export class AdminConfigTab extends AdminPage {
 				});
 		};
 
-		// (document.querySelector("#adminManagePullRequestsButton") as OnsButtonElement).onclick = function(evt) {
-		//     Log.info("AdminConfigTab::handleAdminConfig(..) - manage PRs page pressed");
-		//     evt.preventDefault();
-
-		//     that.pushPage("./adminPullRequests.html", {}).then(function() {
-		//         const pullRequestsPage = new AdminPullRequestsPage(that.remote);
-		//         pullRequestsPage.init({}).then(function() {
-		//             // success
-		//             Log.info("AdminConfigTab::handleAdminConfig(..) - PRs page init");
-		//         }).catch(function(err) {
-		//             // error
-		//             Log.error("AdminConfigTab::handleAdminConfig(..) - PRs page ERROR: " + err);
-		//         });
-		//     }).catch(function(err) {
-		//         Log.error("AdminConfigTab - adminPullRequests ERROR: " + err.message);
-		//     });
-		// };
-
 		UI.showModal("Retriving config / deliverable details.");
 
 		this.course = await AdminView.getCourse(this.remote);
@@ -271,10 +254,8 @@ export class AdminConfigTab extends AdminPage {
 		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
 		const gradesDeliverableDropdown = document.querySelector("#adminGradeDeliverableSelect") as HTMLSelectElement;
 		const defaultDeliverableDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const teamDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
 
 		const defaultDeliverableOptions = ["--Not Set--"];
-		const provisionOptions = ["--Select--"];
 		const gradesOptions = ["--Select--"];
 		const allDeliverables = ["--Select--"];
 
@@ -285,20 +266,25 @@ export class AdminConfigTab extends AdminPage {
 			}
 			if (deliv.shouldProvision === true) {
 				// can only provision or release deliverables that are provisionable
-				provisionOptions.push(deliv.id);
 				gradesOptions.push(deliv.id);
 			}
 			allDeliverables.push(deliv.id);
 		}
 
 		this.populateDelivSelect(defaultDeliverableOptions, defaultDeliverableDropdown);
-		this.populateDelivSelect(provisionOptions, teamDropdown); // can only create teams on provisionable deliverables
 		this.populateDelivSelect(allDeliverables, gradesDeliverableDropdown);
+		this.populateDelivSelect(allDeliverables, document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement);
 
-		// set default deliverable, if it exists
-		for (const o of (defaultDeliverableDropdown as any).children) {
-			if (o.value === this.course.defaultDeliverableId) {
-				o.selected = true;
+		// Show the stored default, or --Not Set-- (the first option) when there is none or it names a
+		// deliverable no longer offered. Selected explicitly: a select left with no selected option
+		// is at the browser's mercy, and rendered blank in at least one case.
+		defaultDeliverableDropdown.selectedIndex = 0;
+		const stored = this.course?.defaultDeliverableId;
+		if (typeof stored === "string" && stored.length > 0) {
+			for (const o of Array.from(defaultDeliverableDropdown.options)) {
+				if (o.value === stored) {
+					o.selected = true;
+				}
 			}
 		}
 
@@ -312,8 +298,8 @@ export class AdminConfigTab extends AdminPage {
 		for (const delivId of delivOptions) {
 			let value = delivId;
 			if (delivId.startsWith("--")) {
-				// handle the null case
-				value = null;
+				// the placeholder: "" rather than null, which a DOM string attribute turns into "null"
+				value = "";
 			}
 			const o: HTMLOptionElement = new Option(delivId, value, false, false);
 			dropdown.add(o);
@@ -378,6 +364,171 @@ export class AdminConfigTab extends AdminPage {
 		Log.trace("AdminConfigTab::uploadClasslist(..) - end");
 	}
 
+	/**
+	 * @param fileList the zip (or single file) chosen
+	 * @param delivId
+	 * @param csId the student, for a single file; empty for a zip named by CSID
+	 */
+	public async uploadHandback(fileList: FileList, delivId: string, csId: string): Promise<void> {
+		Log.info("AdminConfigTab::uploadHandback( " + delivId + ", " + csId + " ) - start");
+		let url = this.remote + "/portal/admin/handback/" + delivId;
+		if (csId.length > 0) {
+			url += "?csId=" + encodeURIComponent(csId);
+		}
+		UI.showModal("Uploading files.");
+		const status = document.querySelector("#adminHandbackStatus") as HTMLElement;
+		try {
+			const formData = new FormData();
+			formData.append("handback", fileList[0]);
+			const opts = {
+				headers: {
+					// NOTE: no Content-Type; httpPostFile lets the browser set the multipart boundary
+					user: localStorage.user,
+					token: localStorage.token,
+				},
+			};
+			const response: Response = await Network.httpPostFile(url, opts, formData);
+			const data: any = await response.json();
+			UI.hideModal();
+			if (response.status >= 200 && response.status < 300 && typeof data.success !== "undefined") {
+				const summary: HandbackUploadSummary = data.success;
+				let msg = summary.stored.length + " file(s) handed back for " + summary.delivId + ".";
+				if (summary.replaced.length > 0) {
+					msg += " " + summary.replaced.length + " replaced an earlier file.";
+				}
+				if (summary.unmatched.length > 0) {
+					msg += " <b>" + summary.unmatched.length + " matched no student:</b> " + summary.unmatched.join(", ") + ".";
+				}
+				if (summary.skipped.length > 0) {
+					msg += " " + summary.skipped.length + " skipped (not files).";
+				}
+				status.innerHTML = msg;
+				UI.showSuccessToast(summary.stored.length + " file(s) handed back.");
+				await this.renderHandbackList();
+			} else {
+				status.innerHTML = "";
+				UI.showError(data);
+			}
+		} catch (err) {
+			UI.hideModal();
+			Log.error("AdminConfigTab::uploadHandback(..) - ERROR: " + err.message);
+			AdminView.showError(err);
+		}
+	}
+
+	/**
+	 * What has been handed back for the deliverable selected in the handback section.
+	 */
+	public async renderHandbackList(): Promise<void> {
+		const delivId = (document.querySelector("#adminHandbackDeliverableSelect") as HTMLSelectElement).value;
+		const container = document.querySelector("#adminHandbackList") as HTMLElement;
+		if (delivId === "") {
+			container.innerHTML = "";
+			return;
+		}
+		const response = await fetch(this.remote + "/portal/admin/handbacks/" + delivId, AdminView.getOptions());
+		const json = await response.json();
+		if (typeof json.success === "undefined") {
+			container.innerHTML = "";
+			UI.showError(json);
+			return;
+		}
+		const handbacks: HandbackTransport[] = json.success;
+		if (handbacks.length === 0) {
+			container.innerHTML = "<span style='font-size: smaller;'>Nothing handed back for " + delivId + " yet.</span>";
+			return;
+		}
+		const esc = (v: string) => v.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+		const headers: TableHeader[] = [
+			{
+				id: "person",
+				text: "Student",
+				sortable: true,
+				defaultSort: true,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "file",
+				text: "File",
+				sortable: true,
+				defaultSort: false,
+				sortDown: false,
+				style: "padding-left: 1em; padding-right: 1em; text-align: left;",
+			},
+			{
+				id: "size",
+				text: "Size",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: right;",
+			},
+			{
+				id: "date",
+				text: "Handed Back",
+				sortable: true,
+				defaultSort: false,
+				sortDown: true,
+				style: "padding-left: 1em; padding-right: 1em; text-align: center;",
+			},
+			{ id: "remove", text: "", sortable: false, defaultSort: false, sortDown: false, style: "padding-left: 1em; padding-right: 1em;" },
+		];
+		const st = new SortableTable(headers, "#adminHandbackList");
+		for (const hb of handbacks) {
+			const remove =
+				'<a href="#" class="handbackRemove" data-deliv-id="' +
+				esc(hb.delivId) +
+				'" data-person-id="' +
+				esc(hb.personId) +
+				'" data-file-name="' +
+				esc(hb.fileName) +
+				'">remove</a>';
+			st.addRow([
+				{ value: hb.personId, html: esc(hb.personId) },
+				{ value: hb.fileName, html: '<a href="' + this.remote + hb.URL + '" download>' + esc(hb.fileName) + "</a>" },
+				{ value: hb.size, html: Math.max(1, Math.round(hb.size / 1024)) + " KB" },
+				{ value: hb.timestamp, html: new Date(hb.timestamp).toLocaleString() },
+				{ value: "", html: remove },
+			]);
+		}
+		st.generate();
+		this.wireHandbackRemove(container);
+	}
+
+	private wireHandbackRemove(container: HTMLElement): void {
+		if (container.dataset.removeWired === "true") {
+			return;
+		}
+		container.dataset.removeWired = "true";
+		const that = this;
+		container.addEventListener("click", function (evt: Event) {
+			const link = (evt.target as HTMLElement).closest("a.handbackRemove") as HTMLElement | null;
+			if (link === null) {
+				return;
+			}
+			evt.preventDefault();
+			const { delivId, personId, fileName } = link.dataset;
+			UI.notificationConfirm("Remove " + fileName + " handed back to " + personId + "?", async function (choice: number) {
+				if (choice !== 1) {
+					return;
+				}
+				const url =
+					that.remote + "/portal/admin/handback/" + delivId + "/" + encodeURIComponent(personId) + "/" + encodeURIComponent(fileName);
+				const opts: any = AdminView.getOptions();
+				opts.method = "delete";
+				const response = await fetch(url, opts);
+				const json = await response.json();
+				if (typeof json.success !== "undefined") {
+					UI.showSuccessToast("Removed " + fileName + ".");
+					await that.renderHandbackList();
+				} else {
+					UI.showError(json);
+				}
+			});
+		});
+	}
+
 	public async uploadGrades(fileList: FileList, delivId: string) {
 		Log.info("AdminConfigTab::uploadGrades(..) - start");
 		const url = this.remote + "/portal/admin/grades/csv/" + delivId;
@@ -405,11 +556,9 @@ export class AdminConfigTab extends AdminPage {
 				const reason = await response.json();
 				UI.hideModal();
 				if (typeof reason.failure && typeof reason.failure.message) {
-					UI.notification(
-						"There was an issue uploading your grade CSV. " +
-							"Please ensure the CSV file includes all required columns. <br/>Details: " +
-							reason.failure.message
-					);
+					// the backend says what was wrong; guessing "missing columns" on top of it sent
+					// people looking at their header row for a file that was simply too large
+					UI.notification("There was an issue uploading your grade CSV.<br/>Details: " + reason.failure.message);
 				} else {
 					UI.notification("There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns.");
 				}
@@ -468,10 +617,96 @@ export class AdminConfigTab extends AdminPage {
 		Log.trace("AdminConfigTab::uploadGradesPrairie(..) - end");
 	}
 
+	/**
+	 * Wires the Team Management page (adminTeamManagement.html) once it has been pushed. Its four
+	 * operations used to sit on the Config tab; they are rarely used, so they live on their own page
+	 * now, like the repositories page. Called from the button that pushes the page, since the page's
+	 * id is not one AdminView routes.
+	 */
+	private async initTeamManagementPage(): Promise<void> {
+		Log.info("AdminConfigTab::initTeamManagementPage(..) - start");
+		const that = this;
+
+		(document.querySelector("#adminCreateTeamButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamCreatePressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - create team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminDeleteTeamManageButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamDeletePressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - delete team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminTeamAddMemberButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamAddMemberPressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - add member to team pressed; ERROR: " + err.message);
+				});
+		};
+
+		(document.querySelector("#adminTeamRemoveMemberButton") as OnsButtonElement).onclick = function (evt) {
+			Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed");
+			evt.preventDefault();
+			evt.stopPropagation(); // prevents list item expansion
+
+			that
+				.teamRemoveMemberPressed()
+				.then(function () {
+					// worked
+				})
+				.catch(function (err) {
+					Log.info("AdminConfigTab::handleAdminConfig(..) - remove member to team pressed; ERROR: " + err.message);
+				});
+		};
+
+		// teams can only be created on provisionable deliverables
+		const deliverables = await AdminDeliverablesTab.getDeliverables(this.remote);
+		const provisionOptions = ["--Select--"];
+		for (const deliv of deliverables) {
+			if (deliv.shouldProvision === true) {
+				provisionOptions.push(deliv.id);
+			}
+		}
+		this.populateDelivSelect(provisionOptions, document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement);
+	}
+
 	private async teamCreatePressed(): Promise<void> {
 		Log.trace("AdminConfigTab::teamCreatePressed(..) - start");
 		const delivDropdown = document.querySelector("#adminTeamDeliverableSelect") as HTMLSelectElement;
 		const delivId = delivDropdown.value;
+		if (delivId === "") {
+			// the --Select-- placeholder; it used to go out as the id "null"
+			UI.showAlert("Select the deliverable the team is for.");
+			return;
+		}
 
 		const names = UI.getTextFieldValue("adminTeamText");
 		let nameList = names.split(",");
@@ -579,7 +814,7 @@ export class AdminConfigTab extends AdminPage {
 
 	private showClasslistChanges(classlistChanges: any): void {
 		Log.info("AdminConfigTab::showClasslistChanges(..) - changes: " + JSON.stringify(classlistChanges));
-		const mapToTextAndSubtext = function (people: StudentTransport[]) {
+		const mapToTextAndSubtext = function (people: PersonTransport[]) {
 			return people.map(function (person) {
 				return {
 					text: person.id + "/" + person.studentNum + "/" + person.githubId + ": " + person.firstName + " " + person.lastName,
@@ -611,6 +846,35 @@ export class AdminConfigTab extends AdminPage {
 	}
 
 	/**
+	 * The classlist-update summary as one line, in the same "# label: n; ..." shape as the
+	 * user-sync message so the two buttons read alike. `# registered` is the size of the
+	 * classlist that was processed, not the size of Classy's database.
+	 */
+	private static classlistSummaryMessage(summary: any): string {
+		return (
+			"# registered: " +
+			summary.classlist.length +
+			"; # added: " +
+			summary.created.length +
+			"; # updated: " +
+			summary.updated.length +
+			"; # removed: " +
+			summary.removed.length +
+			"; # not active (on classlist): " +
+			summary.notActive.length +
+			AdminConfigTab.kindBreakdown(summary.notActiveByKind)
+		);
+	}
+
+	/** " (WITHDRAWN: 3, STAFF: 1, null: 1)", or "" when there is nothing to break down. */
+	private static kindBreakdown(byKind: { [kind: string]: number } | undefined): string {
+		const parts = Object.keys(byKind ?? {})
+			.sort()
+			.map((kind) => kind + ": " + byKind[kind]);
+		return parts.length > 0 ? " (" + parts.join(", ") + ")" : "";
+	}
+
+	/**
 	 * Describes every button on this page whose work runs as a background job; JobRunner does the
 	 * starting and watching.
 	 */
@@ -622,30 +886,44 @@ export class AdminConfigTab extends AdminPage {
 				statusId: "adminUpdateClasslistStatus",
 				ran: "Last updated",
 				detail: function (summary: any): string {
-					return summary.created.length + " added, " + summary.updated.length + " updated, " + summary.removed.length + " removed.";
+					return AdminConfigTab.classlistSummaryMessage(summary);
 				},
 				// only for the run this page started; arriving at a finished job should not reopen it
 				onFinished: (summary: any) => {
-					UI.notificationToast("Classlist updated: " + summary.classlist.length + " students processed.");
+					UI.notificationToast("Classlist updated: " + AdminConfigTab.classlistSummaryMessage(summary));
 					this.showClasslistChanges(summary);
 				},
 			},
 			{
-				kind: "student-withdraw",
-				buttonId: "adminPerformWithdrawButton",
-				statusId: "adminPerformWithdrawStatus",
+				kind: "user-sync",
+				buttonId: "adminSynchronizeUsersButton",
+				statusId: "adminSynchronizeUsersStatus",
 				ran: "Last run",
 				detail: function (summary: any): string {
 					return summary.message;
 				},
 				onFinished: (summary: any) => {
-					UI.notificationToast("Withdraw marking successful: " + summary.message, 5000);
+					UI.notificationToast("User synchronization complete: " + summary.message, 5000);
 				},
 			},
 		];
 
 		if ((await this.isPrairieLearnEnabled()) === true) {
 			(document.querySelector("#adminPrairieLearnSyncItem") as HTMLElement).style.display = "";
+
+			const reinterpretItem = document.querySelector("#adminPrairieLearnReinterpretItem") as HTMLElement;
+			if (reinterpretItem !== null) {
+				reinterpretItem.style.display = "";
+				sections.push({
+					kind: "prairielearn-reinterpret",
+					buttonId: "adminPrairieLearnReinterpretButton",
+					cancelButtonId: "adminPrairieLearnReinterpretCancelButton",
+					statusId: "adminPrairieLearnReinterpretStatus",
+					ran: "Last re-derived",
+					neverRun: "Never re-derived.",
+					detail: AdminConfigTab.describePrairieLearnReinterpret,
+				});
+			}
 			sections.push({
 				kind: "prairielearn-sync",
 				buttonId: "adminPrairieLearnSyncButton",
@@ -654,6 +932,12 @@ export class AdminConfigTab extends AdminPage {
 				ran: "Last synced",
 				neverRun: "Never synced.",
 				detail: AdminConfigTab.describePrairieLearnSummary,
+				// a Result's report is derived at sync time and then stored, so changing how the
+				// payload is read does not update rows that are already synced; this forces them
+				params: () => {
+					const force = document.querySelector("#adminPrairieLearnForce") as HTMLInputElement;
+					return { force: force !== null && force.checked === true };
+				},
 			});
 		}
 
@@ -677,6 +961,27 @@ export class AdminConfigTab extends AdminPage {
 		}
 	}
 
+	/**
+	 * The one-line summary shown under the Re-derive button.
+	 */
+	private static describePrairieLearnReinterpret(summary: any): string {
+		if (typeof summary === "undefined" || summary === null) {
+			return "";
+		}
+		const parts: string[] = [summary.resultsRewritten + " of " + summary.resultsSeen + " results re-derived"];
+		if (summary.resultsWithoutArchive > 0) {
+			// these predate the archive, so only a forced sync can refresh them
+			parts.push(summary.resultsWithoutArchive + " have no stored payload (force a sync for those)");
+		}
+		if (Array.isArray(summary.resultsFailed) && summary.resultsFailed.length > 0) {
+			parts.push(summary.resultsFailed.length + " could not be read");
+		}
+		if (summary.cancelled === true) {
+			parts.push("cancelled");
+		}
+		return parts.join("; ");
+	}
+
 	private static describePrairieLearnSummary(summary: any): string {
 		let detail = summary.gradesWritten + " grades, " + summary.resultsWritten + " results, " + summary.instancesSkipped + " unchanged";
 		if (summary.deliverablesCreated?.length > 0) {
@@ -687,7 +992,40 @@ export class AdminConfigTab extends AdminPage {
 		}
 		if (summary.unmatchedUids?.length > 0) {
 			// a systematic mismatch looks like "nobody has submitted"; make it loud
-			detail += "; <b>" + summary.unmatchedUids.length + " unmatched user(s)</b>";
+			detail += "; <b>" + summary.unmatchedUids.length + " unmatched student(s)</b>";
+		}
+		if (summary.unmatchedNonStudentUids?.length > 0) {
+			// expected and permanent (staff need not be in the classlist), so it is stated plainly
+			// rather than bolded: bolding it would train people to ignore the line above
+			detail += "; " + summary.unmatchedNonStudentUids.length + " unmatched non-student(s)";
+		}
+		// why examined instances produced no grade (added 2026-09-15; older summaries lack these)
+		if (summary.skippedWithoutGrade?.length > 0) {
+			// informational, not an alarm: after a forced sync this is simply every student whose
+			// last examination wrote no grade (never submitted, nothing gradeable, or only after
+			// close). It only matters for a student who now has feedback on PrairieLearn, and a
+			// forced sync is what picks that up.
+			detail += "; " + summary.skippedWithoutGrade.length + " unchanged, still without a grade";
+		}
+		if (summary.noGradeableSubmission?.length > 0) {
+			detail += "; " + summary.noGradeableSubmission.length + " with no gradeable submission";
+		}
+		if (summary.allAfterClose?.length > 0) {
+			detail += "; " + summary.allAfterClose.length + " graded only after close";
+		}
+		if (summary.noSubmissions > 0) {
+			detail += "; " + summary.noSubmissions + " never submitted";
+		}
+		if (summary.submissionsNotGradeable) {
+			const n = summary.submissionsNotGradeable;
+			detail +=
+				"; un-gradeable submissions: " +
+				n.graderFailed +
+				" grader failed, " +
+				n.noFeedback +
+				" no feedback, " +
+				n.noUsableScore +
+				" no usable score";
 		}
 		return detail + ".";
 	}
@@ -695,7 +1033,9 @@ export class AdminConfigTab extends AdminPage {
 	private async defaultDeliverablePressed(): Promise<void> {
 		Log.trace("AdminConfigTab::defaultDeliverablePressed(..) - start");
 		const delivDropdown = document.querySelector("#adminDefaultDeliverableSelect") as HTMLSelectElement;
-		const value = delivDropdown.value;
+		// the --Not Set-- option's value is "", which is saved as null: the backend accepts null and
+		// it is what AutoTest and the dashboard read as "no default" (it used to send "null")
+		const value = delivDropdown.value === "" ? null : delivDropdown.value;
 
 		this.course.defaultDeliverableId = value; // update with new value
 

@@ -107,9 +107,13 @@ export class RepoImporter {
 		} catch (err) {
 			/* istanbul ignore next */
 			// NOTE: redact; a failed git command puts the whole command line (which carries the
-			// bot token in the remote URL) into the error message
-			Log.error(label + " - ERROR: " + this.redact(String(err)));
-			throw err;
+			// bot token in the remote URL) into the error message. The rethrown error is redacted
+			// as well: the callers (provisionRepositoryFromFS, provisionRepository) log it again
+			// and have no way of knowing what it carries. Redacting only the local log line left
+			// the token in the next two.
+			const redacted = new Error(this.redact(String(err)));
+			Log.error(label + " - ERROR: " + redacted.message);
+			throw redacted;
 		} finally {
 			// cleanup has to happen on both paths, hence the finally
 			if (seedTempDir !== null) {

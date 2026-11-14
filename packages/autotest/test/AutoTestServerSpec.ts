@@ -176,10 +176,8 @@ describe("AutoTest AutoTestServer", function () {
 		// this will be slow the first time (~5 minutes), but fast thereafter (~5 seconds)
 		// once docker has cached the image
 
-		// this test cannot pass on CircleCI, and is for localhost testing only
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		// needs a real daemon: builds from a remote git context, which the daemon fetches itself
+		TestHarness.requiresDocker(this);
 
 		// valid opts
 		const opts = {
@@ -205,10 +203,8 @@ describe("AutoTest AutoTestServer", function () {
 	}).timeout(TIMEOUT * 60 * 10);
 
 	it("Should fail to create a docker image for a bad remote.", async function () {
-		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
+		// needs a real daemon; asserts the daemon's error is surfaced rather than hung on
+		TestHarness.requiresDocker(this);
 
 		// invalid repo
 		const opts = {
@@ -279,65 +275,48 @@ describe("AutoTest AutoTestServer", function () {
 		expect(res.body?.message, "should say the tag is unknown").to.be.a("string");
 	}).timeout(TIMEOUT);
 
-	xit("Should be able to remove a docker image.", async function () {
-		let res: any;
-		try {
-			// this test cannot pass on CircleCI (also not working locally though)
-			if (TestHarness.isCI() === true) {
-				this.skip();
-			}
+	it("Should be able to remove a docker image, even one that has dependent child images.", async function () {
+		// Re-enabled 2026-09-08. This used to fail whenever the grader image had a child layer:
+		// removeDockerImage() resolved the tag to an Id and remove()d by Id, which Docker refuses
+		// outright ("(HTTP 409) conflict ... cannot be forced ... dependent child images"). The handler
+		// now falls back to untagging by RepoTag, which is what the admin actually wants and is
+		// always permitted. The build test above guarantees a `grader` image exists.
+		TestHarness.requiresDocker(this);
+		const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
 
-			Log.test("Requesting docker listing");
-			const getUrl = '/docker/images?filters={"reference":["grader"]}';
-			res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
-			const dockerListing = res.body;
-			Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
-			expect(dockerListing.length).to.be.greaterThan(0);
+		const before = await request(app).get('/docker/images?filters={"reference":["grader"]}').set("user", TestHarness.ADMIN1.github);
+		expect(before.status).to.equal(200);
+		expect(before.body, "the build test should have left a grader image").to.have.length.greaterThan(0);
+		const imgId: string = before.body[0].Id;
 
-			const imgId = dockerListing[0].Id;
-			let delUrl = "/docker/image/";
-			delUrl = delUrl + imgId;
+		const res = await request(app)
+			.del("/docker/image/" + imgId)
+			.set("user", TestHarness.ADMIN1.github)
+			.set("token", atSecret);
+		Log.test("remove -> " + res.status + "; body: " + JSON.stringify(res.body));
+		expect(res.status).to.equal(200);
+		expect(res.body?.success).to.equal(true);
 
-			const atSecret = Config.getInstance().getProp(ConfigKey.autotestSecret);
+		const after = await request(app).get('/docker/images?filters={"reference":["grader"]}').set("user", TestHarness.ADMIN1.github);
+		expect(
+			after.body.map((i: any) => i.Id),
+			"the grader tag must be gone"
+		).to.not.include(imgId);
+	}).timeout(TIMEOUT * 6);
 
-			// NOTE: right now this test always fails because the image we have created has "dependent child images"
-			res = await request(app).del(delUrl).set("user", TestHarness.ADMIN1.github).set("token", atSecret);
-			Log.test("Docker image removed");
-		} catch (err) {
-			res = err;
-		} finally {
-			const body = res.body;
-			Log.test("Docker image removal body: " + JSON.stringify(body));
-			expect(res.status).to.equal(200);
-			expect(body).to.be.an("Array");
-		}
-	});
+	it("Should refuse to remove a docker image when no secret is provided.", async function () {
+		// NOTE: needs no Docker. removeDockerImage() checks the secret before it contacts the daemon
+		// (AutoTestRouteHandler.ts:437), so this is the missing-header counterpart to the bad-header
+		// case above: request.headers.token is undefined rather than merely wrong.
+		//
+		// This was previously an xit that first listed images and asserted length > 0, which made an
+		// authorization test depend on a live daemon and on a prior build having run. Dropping that
+		// prerequisite is what let it be revived; the assertion it actually cares about is unchanged.
+		const res = await request(app).del("/docker/image/sometag").set("user", TestHarness.USER1.github);
+		Log.test("remove with no secret -> " + res.status + "; body: " + JSON.stringify(res.body));
 
-	xit("Should fail to remove a docker image for an invalid user.", async function () {
-		let res: any;
-		// this test cannot pass on CircleCI, but works great locally
-		if (TestHarness.isCI() === true) {
-			this.skip();
-		}
-
-		try {
-			Log.test("Requesting docker listing");
-			const getUrl = '/docker/images?filters={"reference":["grader"]}';
-			res = await request(app).get(getUrl).set("user", TestHarness.ADMIN1.github);
-			const dockerListing = res.body;
-			Log.test("Docker listing returned: " + JSON.stringify(dockerListing));
-			expect(dockerListing.length).to.be.greaterThan(0);
-
-			const imgId = dockerListing[0].Id;
-			const delUrl = "/docker/image/" + imgId;
-			res = await request(app).del(delUrl).set("user", TestHarness.USER1.github);
-			Log.test("docker image should not removed (invalid user)");
-		} catch (err) {
-			res = err;
-		} finally {
-			const body = res.body;
-			Log.test("Docker image removal body: " + JSON.stringify(body));
-			expect(res.status).to.equal(403);
-		}
-	});
+		expect(res.status).to.equal(403);
+		expect(res.body?.success).to.equal(false);
+		expect(res.body?.message, "should name the secret mismatch").to.contain("secret mismatch");
+	}).timeout(TIMEOUT);
 });

@@ -58,6 +58,33 @@ export class RouteUtil {
 	 * @param res
 	 * @returns {void}
 	 */
+	/**
+	 * The largest file an admin can upload (a classlist or grade CSV, a zip of handback files).
+	 *
+	 * NOTE: @fastify/multipart caps a file at Fastify's bodyLimit unless told otherwise, and that
+	 * is 1 MiB: enough for a classlist, but a grade CSV with a feedback comment per student passes
+	 * it easily, and failed with a bare "request file too large". The nginx proxy in front of the
+	 * portal has its own cap (client_max_body_size in packages/proxy/proxy.conf), which must be at
+	 * least this or nginx answers 413 before the request gets here.
+	 */
+	public static readonly MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
+
+	/**
+	 * Saves a multipart request's files to disk (see AdminRoutes.getUploadedFilePath for why they
+	 * go to disk), turning the size-limit failure into a message that says what the limit is.
+	 */
+	public static async saveUploads(req: ClassyRequest): Promise<{ files: any[] }> {
+		try {
+			return await req.saveRequestFiles();
+		} catch (err) {
+			if (err?.code === "FST_REQ_FILE_TOO_LARGE") {
+				const mb = Math.round(RouteUtil.MAX_UPLOAD_BYTES / (1024 * 1024));
+				throw new Error("the uploaded file is larger than the " + mb + " MB limit");
+			}
+			throw err;
+		}
+	}
+
 	public static handleError(source: string, code: number, msg: string, res: FastifyReply): void {
 		const payload: Payload = { failure: { message: msg, shouldLogout: false } };
 		if (code === 401 || code < 400) {
