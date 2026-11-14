@@ -646,7 +646,7 @@ export default class AdminRoutes implements IREST {
 	 * @returns {Promise<string>} the path of the uploaded file on disk
 	 */
 	private static async getUploadedFilePath(req: ClassyRequest, fieldName: string): Promise<string> {
-		const saved = await req.saveRequestFiles();
+		const saved = await RouteUtil.saveUploads(req);
 		const match = saved.files.find(function (file: any) {
 			return file.fieldname === fieldName;
 		});
@@ -700,7 +700,7 @@ export default class AdminRoutes implements IREST {
 			if (deliv === null) {
 				return AdminRoutes.handleError(400, "Unknown deliverable: " + delivId, res);
 			}
-			const saved = await req.saveRequestFiles();
+			const saved = await RouteUtil.saveUploads(req);
 			const upload = saved.files.find((file: any) => file.fieldname === "handback");
 			if (typeof upload === "undefined") {
 				return AdminRoutes.handleError(400, "No file uploaded for field: handback", res);

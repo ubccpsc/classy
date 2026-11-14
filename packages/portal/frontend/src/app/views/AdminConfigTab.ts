@@ -556,11 +556,9 @@ export class AdminConfigTab extends AdminPage {
 				const reason = await response.json();
 				UI.hideModal();
 				if (typeof reason.failure && typeof reason.failure.message) {
-					UI.notification(
-						"There was an issue uploading your grade CSV. " +
-							"Please ensure the CSV file includes all required columns. <br/>Details: " +
-							reason.failure.message
-					);
+					// the backend says what was wrong; guessing "missing columns" on top of it sent
+					// people looking at their header row for a file that was simply too large
+					UI.notification("There was an issue uploading your grade CSV.<br/>Details: " + reason.failure.message);
 				} else {
 					UI.notification("There was an issue uploading your grade CSV. " + "Please ensure the CSV file includes all required columns.");
 				}

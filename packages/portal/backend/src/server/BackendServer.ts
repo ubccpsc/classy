@@ -27,6 +27,7 @@ import { AuthRoutes } from "./common/AuthRoutes";
 import { AutoTestRoutes } from "./common/AutoTestRoutes";
 import { ExportRoutes } from "./common/ExportRoutes";
 import GeneralRoutes from "./common/GeneralRoutes";
+import { RouteUtil } from "./common/RouteUtil";
 
 /**
  * This configures the REST endpoints for the server.
@@ -154,8 +155,10 @@ export default class BackendServer {
 				}
 			});
 
-			// multipart uploads (classlist / grade CSVs); handlers call request.saveRequestFiles()
-			await this.rest.register(fastifyMultipart);
+			// multipart uploads (classlist / grade CSVs, handback zips); handlers save the files to disk
+			// through RouteUtil.saveUploads(). Without an explicit fileSize the plugin falls back to
+			// Fastify's 1 MiB bodyLimit; see RouteUtil.MAX_UPLOAD_BYTES.
+			await this.rest.register(fastifyMultipart, { limits: { fileSize: RouteUtil.MAX_UPLOAD_BYTES } });
 
 			this.rest.addHook("onRequest", async (request, reply): Promise<void> => {
 				// NOTE: restify's crossOrigin hook set Access-Control-Allow-Origin on *every*

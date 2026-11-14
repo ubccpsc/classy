@@ -2,6 +2,9 @@
 import { expect } from "chai";
 import "mocha";
 
+import * as nodeFs from "node:fs";
+import * as nodeOs from "node:os";
+import * as nodePath from "node:path";
 import { AdminController } from "@backend/controllers/AdminController";
 import { DatabaseController, QueryKind } from "@backend/controllers/DatabaseController";
 import { DeliverablesController } from "@backend/controllers/DeliverablesController";
@@ -1053,6 +1056,28 @@ describe("Admin Routes", function () {
 		Log.test(response.status + " -> " + JSON.stringify(body));
 		expect(response.status).to.equal(404);
 		expect(body).to.not.haveOwnProperty("success");
+	});
+
+	it("Should accept a grade CSV well past 1 MB, keeping its long comments whole.", async function () {
+		// @fastify/multipart's default cap is Fastify's 1 MiB bodyLimit, which a CSV with a feedback
+		// comment per student exceeds; that failed with "request file too large"
+		const comment = "## Feedback\n\n" + "A line of detailed feedback, with a comma. ".repeat(40000) + "End."; // ~1.7 MB
+		const csv = "CSID,GRADE,COMMENT\n" + TestHarness.USER1.id + ',77,"' + comment + '"\n';
+		expect(csv.length).to.be.greaterThan(1024 * 1024);
+		const file = nodePath.join(nodeOs.tmpdir(), "bigGrades_" + Date.now() + ".csv");
+		nodeFs.writeFileSync(file, csv);
+
+		const response = await request(app)
+			.post("/portal/admin/grades/csv/" + TestHarness.DELIVID1)
+			.attach("gradelist", file)
+			.set({ user: userName, token: userToken });
+		Log.test(response.status + " -> " + JSON.stringify(response.body));
+		expect(response.status).to.equal(200);
+
+		const grade = await DatabaseController.getInstance().getGrade(TestHarness.USER1.id, TestHarness.DELIVID1);
+		expect(grade.score).to.equal(77);
+		expect(grade.comment.length, "the comment is stored whole").to.equal(comment.length);
+		nodeFs.unlinkSync(file);
 	});
 
 	it("Should be able to upload a new grades with CSV", async function () {
